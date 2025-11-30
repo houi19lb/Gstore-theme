@@ -1,0 +1,195 @@
+/**
+ * ==========================================
+ * GSTORE UTILITY CLASSES
+ * ==========================================
+ * Classes utilitárias reutilizáveis para
+ * espaçamento, tipografia, cores, etc.
+ */
+
+/* ========================================
+   ESPAÇAMENTOS - MARGEM
+   ======================================== */
+
+/* Margin Top */
+.mt-0 { margin-top: var(--gstore-spacing-0) !important; }
+.mt-1 { margin-top: var(--gstore-spacing-1) !important; }
+.mt-2 { margin-top: var(--gstore-spacing-2) !important; }
+.mt-3 { margin-top: var(--gstore-spacing-3) !important; }
+.mt-4 { margin-top: var(--gstore-spacing-4) !important; }
+.mt-6 { margin-top: var(--gstore-spacing-6) !important; }
+.mt-8 { margin-top: var(--gstore-spacing-8) !important; }
+
+/* Margin Bottom */
+.mb-0 { margin-bottom: var(--gstore-spacing-0) !important; }
+.mb-1 { margin-bottom: var(--gstore-spacing-1) !important; }
+.mb-2 { margin-bottom: var(--gstore-spacing-2) !important; }
+.mb-3 { margin-bottom: var(--gstore-spacing-3) !important; }
+.mb-4 { margin-bottom: var(--gstore-spacing-4) !important; }
+.mb-6 { margin-bottom: var(--gstore-spacing-6) !important; }
+.mb-8 { margin-bottom: var(--gstore-spacing-8) !important; }
+
+/* Margin Horizontal */
+.mx-auto { margin-left: auto !important; margin-right: auto !important; }
+.mx-0 { margin-left: var(--gstore-spacing-0) !important; margin-right: var(--gstore-spacing-0) !important; }
+.mx-4 { margin-left: var(--gstore-spacing-4) !important; margin-right: var(--gstore-spacing-4) !important; }
+
+/* ========================================
+   ESPAÇAMENTOS - PADDING
+   ======================================== */
+
+/* Padding */
+.p-0 { padding: var(--gstore-spacing-0) !important; }
+.p-2 { padding: var(--gstore-spacing-2) !important; }
+.p-4 { padding: var(--gstore-spacing-4) !important; }
+.p-6 { padding: var(--gstore-spacing-6) !important; }
+.p-8 { padding: var(--gstore-spacing-8) !important; }
+
+/* Padding Vertical */
+.py-2 { padding-top: var(--gstore-spacing-2) !important; padding-bottom: var(--gstore-spacing-2) !important; }
+.py-4 { padding-top: var(--gstore-spacing-4) !important; padding-bottom: var(--gstore-spacing-4) !important; }
+.py-6 { padding-top: var(--gstore-spacing-6) !important; padding-bottom: var(--gstore-spacing-6) !important; }
+.py-8 { padding-top: var(--gstore-spacing-8) !important; padding-bottom: var(--gstore-spacing-8) !important; }
+
+/* Padding Horizontal */
+.px-2 { padding-left: var(--gstore-spacing-2) !important; padding-right: var(--gstore-spacing-2) !important; }
+.px-4 { padding-left: var(--gstore-spacing-4) !important; padding-right: var(--gstore-spacing-4) !important; }
+.px-6 { padding-left: var(--gstore-spacing-6) !important; padding-right: var(--gstore-spacing-6) !important; }
+
+/* ========================================
+   TIPOGRAFIA
+   ======================================== */
+
+/* Tamanhos */
+.text-xs { font-size: var(--gstore-font-size-xs) !important; }
+.text-sm { font-size: var(--gstore-font-size-sm) !important; }
+.text-base { font-size: var(--gstore-font-size-base) !important; }
+.text-lg { font-size: var(--gstore-font-size-lg) !important; }
+.text-xl { font-size: var(--gstore-font-size-xl) !important; }
+.text-2xl { font-size: var(--gstore-font-size-2xl) !important; }
+.text-3xl { font-size: var(--gstore-font-size-3xl) !important; }
+
+/* Pesos */
+.font-normal { font-weight: var(--gstore-font-weight-normal) !important; }
+.font-medium { font-weight: var(--gstore-font-weight-medium) !important; }
+.font-semibold { font-weight: var(--gstore-font-weight-semibold) !important; }
+.font-bold { font-weight: var(--gstore-font-weight-bold) !important; }
+
+/* Cores de Texto */
+.text-primary { color: var(--gstore-color-text-primary) !important; }
+.text-secondary { color: var(--gstore-color-text-secondary) !important; }
+.text-muted { color: var(--gstore-color-text-muted) !important; }
+.text-accent { color: var(--gstore-color-accent) !important; }
+.text-light { color: var(--gstore-color-text-light) !important; }
+
+/* Alinhamento */
+.text-left { text-align: left !important; }
+.text-center { text-align: center !important; }
+.text-right { text-align: right !important; }
+
+/* Transformação */
+.uppercase { text-transform: uppercase !important; }
+.lowercase { text-transform: lowercase !important; }
+.capitalize { text-transform: capitalize !important; }
+
+/* Espaçamento de Letras */
+.tracking-wide { letter-spacing: var(--gstore-letter-spacing-wide) !important; }
+.tracking-wider { letter-spacing: var(--gstore-letter-spacing-wider) !important; }
+.tracking-widest { letter-spacing: var(--gstore-letter-spacing-widest) !important; }
+
+/* ========================================
+   CORES DE FUNDO
+   ======================================== */
+
+.bg-base { background-color: var(--gstore-color-bg-base) !important; }
+.bg-light { background-color: var(--gstore-color-bg-light) !important; }
+.bg-muted { background-color: var(--gstore-color-bg-muted) !important; }
+.bg-dark { background-color: var(--gstore-color-bg-dark) !important; }
+.bg-accent { background-color: var(--gstore-color-accent) !important; }
+
+/* ========================================
+   DISPLAY
+   ======================================== */
+
+.block { display: block !important; }
+.inline-block { display: inline-block !important; }
+.inline { display: inline !important; }
+.flex { display: flex !important; }
+.inline-flex { display: inline-flex !important; }
+.grid { display: grid !important; }
+.hidden { display: none !important; }
+
+/* ========================================
+   FLEXBOX
+   ======================================== */
+
+.flex-col { flex-direction: column !important; }
+.flex-row { flex-direction: row !important; }
+.flex-wrap { flex-wrap: wrap !important; }
+.flex-nowrap { flex-wrap: nowrap !important; }
+.items-center { align-items: center !important; }
+.items-start { align-items: flex-start !important; }
+.items-end { align-items: flex-end !important; }
+.justify-center { justify-content: center !important; }
+.justify-between { justify-content: space-between !important; }
+.justify-start { justify-content: flex-start !important; }
+.justify-end { justify-content: flex-end !important; }
+.gap-2 { gap: var(--gstore-spacing-2) !important; }
+.gap-4 { gap: var(--gstore-spacing-4) !important; }
+.gap-6 { gap: var(--gstore-spacing-6) !important; }
+.gap-8 { gap: var(--gstore-spacing-8) !important; }
+
+/* ========================================
+   POSICIONAMENTO
+   ======================================== */
+
+.relative { position: relative !important; }
+.absolute { position: absolute !important; }
+.fixed { position: fixed !important; }
+.sticky { position: sticky !important; }
+
+/* ========================================
+   BORDAS
+   ======================================== */
+
+.rounded { border-radius: var(--gstore-radius-base) !important; }
+.rounded-sm { border-radius: var(--gstore-radius-sm) !important; }
+.rounded-md { border-radius: var(--gstore-radius-md) !important; }
+.rounded-lg { border-radius: var(--gstore-radius-lg) !important; }
+.rounded-full { border-radius: var(--gstore-radius-full) !important; }
+
+.border { border: 1px solid var(--gstore-color-border) !important; }
+.border-accent { border-color: var(--gstore-color-accent) !important; }
+
+/* ========================================
+   SOMBRAS
+   ======================================== */
+
+.shadow-none { box-shadow: var(--gstore-shadow-none) !important; }
+.shadow-sm { box-shadow: var(--gstore-shadow-sm) !important; }
+.shadow-md { box-shadow: var(--gstore-shadow-md) !important; }
+.shadow-lg { box-shadow: var(--gstore-shadow-lg) !important; }
+
+/* ========================================
+   RESPONSIVIDADE - HELPERS
+   ======================================== */
+
+/* Wrapper fluido responsivo */
+.responsive-container {
+	width: 100%;
+	padding-left: var(--gstore-container-padding-inline);
+	padding-right: var(--gstore-container-padding-inline);
+}
+
+/* Espaçamento fluido com clamp */
+.fluid-spacing {
+	padding: clamp(24px, 4vw, 64px) clamp(16px, 4vw, 48px);
+}
+
+/* Texto fluido */
+.fluid-text {
+	font-size: clamp(1rem, 2vw, 1.5rem);
+}
+
+
+
+

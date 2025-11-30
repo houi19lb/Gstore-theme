@@ -1,0 +1,51 @@
+/**
+ * Mini-cart (Ajax) ajustes visuais
+ * Clareia o drawer do carrinho e garante contraste consistente.
+ */
+
+body .wc-block-components-drawer__screen-overlay {
+	background-color: rgba(10, 10, 10, 0.2) !important;
+	backdrop-filter: blur(2px);
+}
+
+body .wc-block-mini-cart__drawer {
+	background-color: var(--gstore-color-bg-light, #ffffff) !important;
+	color: var(--gstore-color-text-primary, #1a1a1a);
+}
+
+body .wc-block-mini-cart__drawer .wc-block-mini-cart__template-part,
+body .wc-block-mini-cart__drawer .wp-block-woocommerce-mini-cart-contents,
+body .wc-block-mini-cart__drawer .wc-block-mini-cart__items,
+body .wc-block-mini-cart__drawer .wc-block-mini-cart__footer {
+	background-color: var(--gstore-color-bg-light, #ffffff);
+	color: var(--gstore-color-text-primary, #1a1a1a);
+}
+
+body .wc-block-mini-cart__drawer .wc-block-mini-cart__items,
+body .wc-block-mini-cart__drawer .wc-block-cart-items {
+	border: 1px solid var(--gstore-color-border-light, #e8e8e6);
+	border-radius: var(--gstore-radius-base, 4px);
+	padding: var(--gstore-spacing-sm, 0.75rem);
+	background-color: var(--gstore-color-bg-muted, #f0f2f5);
+}
+
+body .wc-block-mini-cart__drawer .wc-block-mini-cart__footer {
+	border-top: 1px solid var(--gstore-color-border, #e6e6e6);
+	padding-top: var(--gstore-spacing-md, 1rem);
+}
+
+body .wc-block-mini-cart__drawer .wc-block-mini-cart__totals th,
+body .wc-block-mini-cart__drawer .wc-block-mini-cart__totals td,
+body .wc-block-mini-cart__drawer .wc-block-mini-cart__title,
+body .wc-block-mini-cart__drawer .wc-block-mini-cart__amount,
+body .wc-block-mini-cart__drawer .wc-block-mini-cart__tax-label {
+	color: var(--gstore-color-text-primary, #1a1a1a);
+}
+
+body .wc-block-mini-cart__drawer .wc-block-components-button,
+body .wc-block-mini-cart__drawer .wp-element-button {
+	border-radius: var(--gstore-radius-base, 4px);
+}
+
+
+

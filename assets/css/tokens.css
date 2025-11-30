@@ -1,0 +1,196 @@
+/**
+ * ==========================================
+ * GSTORE DESIGN TOKENS
+ * ==========================================
+ * Sistema centralizado de variáveis CSS
+ * para garantir consistência visual e facilitar manutenção.
+ */
+
+:root {
+	/* ========================================
+	   CORES - Semânticas
+	   ======================================== */
+	
+	/* Fundos */
+	--gstore-color-bg-base: #f5f5f2;
+	--gstore-color-bg-light: #ffffff;
+	--gstore-color-bg-muted: #f0f2f5;
+	--gstore-color-bg-dark: #0a0a0a;
+	--gstore-color-bg-darker: #1a1a1a;
+	--gstore-color-bg-card-meta: #f6f6f6;
+	
+	/* Textos */
+	--gstore-color-text-primary: #1a1a1a;
+	--gstore-color-text-secondary: #6b6b6b;
+	--gstore-color-text-muted: #7a7a7a;
+	--gstore-color-text-light: #f5f5f5;
+	--gstore-color-text-accent: #5c6b5a;
+	
+	/* Acentos e Estados */
+	--gstore-color-accent: #FF5C00;
+	--gstore-color-accent-hover: #E65000;
+	--gstore-color-accent-dark: #CC4A00;
+	--gstore-color-accent-light: #FF7A33;
+	--gstore-color-brass: #FF5C00;
+	--gstore-color-success: #2e9b3b;
+	--gstore-color-warning: #FF8C5C;
+	--gstore-color-error: #ff4757;
+	
+	/* Bordas */
+	--gstore-color-border: #e6e6e6;
+	--gstore-color-border-dark: #2a2a2a;
+	--gstore-color-border-light: #e8e8e6;
+	--gstore-color-border-accent: #dfe2df;
+	
+	/* Ratings e Avaliações */
+	--gstore-color-rating: #FF8C5C;
+	
+	/* ========================================
+	   TIPOGRAFIA
+	   ======================================== */
+	
+	/* Família de Fontes */
+	--gstore-font-family-base: "Inter", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	--gstore-font-family-system: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, sans-serif;
+	
+	/* Tamanhos de Fonte */
+	--gstore-font-size-xs: 0.75rem;    /* 12px */
+	--gstore-font-size-sm: 0.875rem;   /* 14px */
+	--gstore-font-size-base: 1rem;     /* 16px */
+	--gstore-font-size-lg: 1.125rem;   /* 18px */
+	--gstore-font-size-xl: 1.25rem;    /* 20px */
+	--gstore-font-size-2xl: 1.5rem;    /* 24px */
+	--gstore-font-size-3xl: 1.875rem;  /* 30px */
+	--gstore-font-size-4xl: 2.25rem;   /* 36px */
+	--gstore-font-size-5xl: 3rem;      /* 48px */
+	
+	/* Pesos de Fonte */
+	--gstore-font-weight-normal: 400;
+	--gstore-font-weight-medium: 500;
+	--gstore-font-weight-semibold: 600;
+	--gstore-font-weight-bold: 700;
+	
+	/* Altura de Linha */
+	--gstore-line-height-tight: 1.25;
+	--gstore-line-height-normal: 1.5;
+	--gstore-line-height-relaxed: 1.6;
+	--gstore-line-height-loose: 1.75;
+	
+	/* Espaçamento de Letras */
+	--gstore-letter-spacing-tight: -0.025em;
+	--gstore-letter-spacing-normal: 0;
+	--gstore-letter-spacing-wide: 0.05em;
+	--gstore-letter-spacing-wider: 0.08em;
+	--gstore-letter-spacing-widest: 0.14em;
+	
+	/* ========================================
+	   ESPAÇAMENTOS
+	   ======================================== */
+	
+	/* Sistema de espaçamento baseado em 4px (0.25rem) */
+	--gstore-spacing-0: 0;
+	--gstore-spacing-1: 0.25rem;  /* 4px */
+	--gstore-spacing-2: 0.5rem;   /* 8px */
+	--gstore-spacing-3: 0.75rem;  /* 12px */
+	--gstore-spacing-4: 1rem;     /* 16px */
+	--gstore-spacing-5: 1.25rem;  /* 20px */
+	--gstore-spacing-6: 1.5rem;   /* 24px */
+	--gstore-spacing-8: 2rem;     /* 32px */
+	--gstore-spacing-10: 2.5rem;  /* 40px */
+	--gstore-spacing-12: 3rem;    /* 48px */
+	--gstore-spacing-16: 4rem;    /* 64px */
+	--gstore-spacing-20: 5rem;    /* 80px */
+	
+	/* Aliases para compatibilidade */
+	--gstore-spacing-xs: var(--gstore-spacing-2);
+	--gstore-spacing-sm: var(--gstore-spacing-3);
+	--gstore-spacing-md: var(--gstore-spacing-4);
+	--gstore-spacing-lg: var(--gstore-spacing-6);
+	--gstore-spacing-xl: var(--gstore-spacing-8);
+	
+	/* ========================================
+	   RAIO DE BORDA
+	   ======================================== */
+	
+	--gstore-radius-none: 0;
+	--gstore-radius-sm: 2px;
+	--gstore-radius-base: 4px;
+	--gstore-radius-md: 6px;
+	--gstore-radius-lg: 8px;
+	--gstore-radius-xl: 12px;
+	--gstore-radius-full: 9999px;
+	
+	/* ========================================
+	   SOMBRAS
+	   ======================================== */
+	
+	--gstore-shadow-none: none;
+	--gstore-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.06);
+	--gstore-shadow-md: 0 3px 10px rgba(0, 0, 0, 0.08);
+	--gstore-shadow-lg: 0 10px 30px rgba(0, 0, 0, 0.12);
+	--gstore-shadow-xl: 0 20px 60px rgba(17, 24, 39, 0.08);
+	
+	/* Aliases para compatibilidade */
+	--shadow-sm: var(--gstore-shadow-sm);
+	--shadow-md: var(--gstore-shadow-md);
+	
+	/* ========================================
+	   TRANSIÇÕES
+	   ======================================== */
+	
+	--gstore-transition-fast: 150ms ease-in-out;
+	--gstore-transition-base: 250ms ease-in-out;
+	--gstore-transition-slow: 350ms ease-in-out;
+	
+	/* ========================================
+	   LAYOUT E CONTAINERS
+	   ======================================== */
+	
+	--gstore-container-max-width: 1280px;
+	--gstore-container-padding-inline: clamp(16px, 4vw, 48px);
+	--gstore-container-padding-inline-mobile: 20px;
+	
+	/* Offset para elementos sticky */
+	--gstore-sticky-offset: 110px;
+	
+	/* ========================================
+	   Z-INDEX (Camadas)
+	   ======================================== */
+	
+	--gstore-z-base: 1;
+	--gstore-z-dropdown: 100;
+	--gstore-z-sticky: 200;
+	--gstore-z-overlay: 300;
+	--gstore-z-modal: 400;
+	--gstore-z-tooltip: 500;
+	
+	/* ========================================
+	   BREAKPOINTS (para uso em media queries)
+	   ======================================== */
+	
+	/* Valores mínimos de largura */
+	--gstore-breakpoint-sm: 640px;
+	--gstore-breakpoint-md: 768px;
+	--gstore-breakpoint-lg: 1024px;
+	--gstore-breakpoint-xl: 1280px;
+	--gstore-breakpoint-2xl: 1536px;
+}
+
+/* ========================================
+   CORES LEGADAS (Compatibilidade)
+   ======================================== */
+
+:root {
+	--green: var(--gstore-color-accent-light);
+	--green-dark: var(--gstore-color-accent-dark);
+	--gray-bg: var(--gstore-color-bg-muted);
+	--card-meta-bg: var(--gstore-color-bg-card-meta);
+	--gray-border: var(--gstore-color-border);
+	--text-main: var(--gstore-color-text-primary);
+	--text-muted: var(--gstore-color-text-secondary);
+	--rating-color: var(--gstore-color-rating);
+}
+
+
+
+

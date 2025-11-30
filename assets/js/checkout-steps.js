@@ -1,0 +1,1310 @@
+/**
+ * Checkout em 3 Etapas - Gstore
+ * 
+ * Transforma o checkout clássico do WooCommerce em um fluxo de 3 etapas:
+ * - Etapa 1: Dados Pessoais
+ * - Etapa 2: Endereço de Entrega  
+ * - Etapa 3: Pagamento
+ */
+
+(function($) {
+	'use strict';
+
+	// Configuração das etapas
+	const STEPS = [
+		{
+			id: 'personal',
+			name: 'Dados Pessoais',
+			icon: 'fa-user',
+			title: 'Seus Dados',
+			description: 'Informe seus dados pessoais para identificação do pedido.',
+			fields: [
+				'billing_first_name',
+				'billing_last_name', 
+				'billing_cpf',
+				'billing_email',
+				'billing_phone'
+			]
+		},
+		{
+			id: 'shipping',
+			name: 'Entrega',
+			icon: 'fa-truck',
+			title: 'Endereço de Entrega',
+			description: 'Preencha o endereço onde deseja receber sua compra.',
+			fields: [
+				'billing_postcode',
+				'billing_address_1',
+				'billing_number',
+				'billing_address_2',
+				'billing_neighborhood',
+				'billing_city',
+				'billing_state'
+			]
+		},
+		{
+			id: 'payment',
+			name: 'Pagamento',
+			icon: 'fa-credit-card',
+			title: 'Pagamento',
+			description: 'Escolha a forma de pagamento e finalize seu pedido com segurança.',
+			fields: []
+		}
+	];
+
+	let currentStep = 0;
+	let $checkoutForm = null;
+	let $stepsContainer = null;
+	let initialized = false;
+
+	/**
+	 * Inicializa o checkout de etapas
+	 */
+	function init() {
+		if (initialized) return;
+		
+		$checkoutForm = $('form.checkout.woocommerce-checkout');
+		
+		if (!$checkoutForm.length) {
+			// console.log('Gstore Steps: Aguardando formulário de checkout...');
+			return;
+		}
+
+		// Verifica se já foi inicializado
+		if ($('.Gstore-checkout-steps').length) {
+			return;
+		}
+
+		buildStepsUI();
+		bindEvents();
+		loadCartSummary();
+		
+		initialized = true;
+		// console.log('Gstore Checkout Steps: Inicializado com sucesso');
+	}
+
+	/**
+	 * Constrói a interface do checkout em etapas
+	 */
+	function buildStepsUI() {
+		const $shell = $('.Gstore-checkout-steps-shell');
+		if (!$shell.length) return;
+
+		// Esconde o wrapper original do checkout (mas NÃO o form)
+		$shell.find('.Gstore-checkout').hide();
+
+		// Cria container principal
+		$stepsContainer = $('<div class="Gstore-checkout-steps"></div>');
+
+		// 1. Resumo do pedido no topo
+		$stepsContainer.append(buildSummaryTop());
+
+		// 2. Stepper
+		$stepsContainer.append(buildStepper());
+
+		// 3. Container das etapas
+		const $stepsContent = $('<div class="Gstore-checkout-steps__content"></div>');
+
+		STEPS.forEach((step, index) => {
+			$stepsContent.append(buildStepPanel(step, index));
+		});
+
+		$stepsContainer.append($stepsContent);
+
+		// Adiciona à shell para manter o layout
+		$shell.append($stepsContainer);
+
+		// Move campos para as etapas corretas
+		organizeFields();
+
+		// Ativa primeira etapa sem forçar scroll (evita pular para o fim na carga inicial)
+		setActiveStep(0, false);
+	}
+
+	/**
+	 * Constrói o resumo do pedido no topo
+	 */
+	function buildSummaryTop() {
+		return `
+			<div class="Gstore-checkout-summary-top">
+				<div class="Gstore-checkout-summary-top__inner">
+					<div class="Gstore-checkout-summary-top__info">
+						<div class="Gstore-checkout-summary-top__icon">
+							<i class="fa-solid fa-shopping-bag"></i>
+						</div>
+						<div class="Gstore-checkout-summary-top__text">
+							<h2>Seu Pedido</h2>
+							<p class="Gstore-summary-items-count">Carregando...</p>
+						</div>
+					</div>
+					<div class="Gstore-checkout-summary-top__actions">
+						<span class="Gstore-checkout-summary-top__total-amount" aria-live="polite">R$ --,--</span>
+						<span class="Gstore-checkout-summary-top__actions-divider" aria-hidden="true"></span>
+						<button type="button" class="Gstore-checkout-summary-top__toggle">
+							Ver detalhes
+							<i class="fa-solid fa-chevron-down"></i>
+						</button>
+					</div>
+				</div>
+				<div class="Gstore-checkout-summary-top__details">
+					<div class="Gstore-checkout-summary-top__items"></div>
+					<div class="Gstore-checkout-summary-top__totals"></div>
+				</div>
+			</div>
+		`;
+	}
+
+	/**
+	 * Constrói o stepper
+	 */
+	function buildStepper() {
+		let html = '<nav class="Gstore-checkout-stepper" aria-label="Etapas do checkout">';
+
+		STEPS.forEach((step, index) => {
+			if (index > 0) {
+				html += `<div class="Gstore-checkout-stepper__connector" data-connector="${index}"></div>`;
+			}
+			html += `
+				<button type="button" class="Gstore-checkout-stepper__step" data-step-index="${index}">
+					<span class="Gstore-checkout-stepper__number">
+						<span>${index + 1}</span>
+					</span>
+					<span class="Gstore-checkout-stepper__label">${step.name}</span>
+				</button>
+			`;
+		});
+
+		html += '</nav>';
+		return html;
+	}
+
+	/**
+	 * Constrói o painel de uma etapa
+	 */
+	function buildStepPanel(step, index) {
+		const isLast = index === STEPS.length - 1;
+		
+		let actionsHtml = '';
+		if (!isLast) {
+			actionsHtml = `
+				<div class="Gstore-checkout-step__actions">
+					${index > 0 ? '<button type="button" class="Gstore-btn Gstore-btn--back" data-action="prev"><i class="fa-solid fa-arrow-left"></i> Voltar</button>' : '<div></div>'}
+					<button type="button" class="Gstore-btn Gstore-btn--continue" data-action="next">
+						Continuar
+						<i class="fa-solid fa-arrow-right"></i>
+					</button>
+				</div>
+			`;
+		} else {
+			actionsHtml = `
+				<div class="Gstore-checkout-step__actions Gstore-checkout-step__actions--payment">
+					<button type="button" class="Gstore-btn Gstore-btn--back" data-action="prev">
+						<i class="fa-solid fa-arrow-left"></i> Voltar
+					</button>
+				</div>
+			`;
+		}
+
+		return `
+			<div class="Gstore-checkout-step" data-step="${step.id}" data-step-index="${index}">
+				<div class="Gstore-checkout-step__header">
+					<span class="Gstore-checkout-step__eyebrow">
+						<i class="fa-solid ${step.icon}"></i>
+						Etapa ${index + 1} de ${STEPS.length}
+					</span>
+					<h2 class="Gstore-checkout-step__title">${step.title}</h2>
+					<p class="Gstore-checkout-step__description">${step.description}</p>
+				</div>
+				<div class="Gstore-checkout-step__fields"></div>
+				${actionsHtml}
+				${isLast ? '<div class="Gstore-checkout-step__payment-container"></div>' : ''}
+			</div>
+		`;
+	}
+
+	/**
+	 * Organiza os campos nas etapas corretas
+	 */
+	function organizeFields() {
+		// Etapa 1: Dados Pessoais
+		const $personalStep = $('[data-step="personal"] .Gstore-checkout-step__fields');
+		STEPS[0].fields.forEach(fieldId => {
+			const $field = $(`#${fieldId}_field`);
+			if ($field.length) {
+				$personalStep.append($field.detach());
+			}
+		});
+
+		// Etapa 2: Endereço
+		const $shippingStep = $('[data-step="shipping"] .Gstore-checkout-step__fields');
+		STEPS[1].fields.forEach(fieldId => {
+			const $field = $(`#${fieldId}_field`);
+			if ($field.length) {
+				$shippingStep.append($field.detach());
+			}
+		});
+
+		// Adiciona container de opções de envio na etapa 2
+		const $shippingMethods = $('#shipping_method, .woocommerce-shipping-methods').closest('tr, .woocommerce-shipping-totals');
+		if ($shippingMethods.length) {
+			$shippingStep.append(`
+				<div class="Gstore-checkout-section">
+					<h3 class="Gstore-checkout-section__title">
+						<i class="fa-solid fa-truck-fast"></i>
+						Opções de Envio
+					</h3>
+					<div class="Gstore-shipping-container"></div>
+				</div>
+			`);
+		}
+
+		// Etapa 3: Pagamento
+		const $paymentStep = $('[data-step="payment"] .Gstore-checkout-step__payment-container');
+		
+		// 1. Adiciona resumo dos dados do cliente
+		$paymentStep.append(`
+			<div class="Gstore-checkout-review">
+				<div class="Gstore-checkout-review__section">
+					<div class="Gstore-checkout-review__header">
+						<i class="fa-solid fa-user"></i>
+						<span>Dados Pessoais</span>
+						<button type="button" class="Gstore-checkout-review__edit" data-goto-step="0">
+							<i class="fa-solid fa-pen"></i> Editar
+						</button>
+					</div>
+					<div class="Gstore-checkout-review__content" id="review-personal"></div>
+				</div>
+				<div class="Gstore-checkout-review__section">
+					<div class="Gstore-checkout-review__header">
+						<i class="fa-solid fa-location-dot"></i>
+						<span>Endereço de Entrega</span>
+						<button type="button" class="Gstore-checkout-review__edit" data-goto-step="1">
+							<i class="fa-solid fa-pen"></i> Editar
+						</button>
+					</div>
+					<div class="Gstore-checkout-review__content" id="review-shipping"></div>
+				</div>
+			</div>
+		`);
+
+		// DEBUG: Log para verificar se chegamos até aqui
+		// console.log('Gstore Steps: Organizando etapa de pagamento');
+
+		// 2. Adiciona toggle para observações
+		$paymentStep.append(`
+			<div class="Gstore-checkout-notes-toggle">
+				<label class="Gstore-toggle">
+					<span class="Gstore-toggle__label">Adicionar observações ao pedido</span>
+					<input type="checkbox" id="toggle-order-notes">
+					<span class="Gstore-toggle__slider"></span>
+				</label>
+				<div class="Gstore-checkout-notes-container" style="display: none;"></div>
+			</div>
+		`);
+
+		// Move campos adicionais (notas do pedido) para dentro do container
+		const $additionalFields = $('.woocommerce-additional-fields');
+		if ($additionalFields.length) {
+			$('.Gstore-checkout-notes-container').append($additionalFields.detach());
+		}
+
+		// 3. Move seção de pagamento
+		const $paymentSection = $('#payment');
+		if ($paymentSection.length) {
+			$paymentStep.append($paymentSection.detach());
+			
+			// Garante que o botão de finalizar pedido esteja visível
+			setTimeout(function() {
+				const $placeOrderBtn = $('#place_order');
+				if ($placeOrderBtn.length) {
+					$placeOrderBtn.show().css({
+						'display': 'inline-block',
+						'visibility': 'visible',
+						'opacity': '1'
+					});
+					// console.log('Gstore Steps: Botão de finalizar pedido encontrado e exibido');
+				} else {
+					// console.warn('Gstore Steps: Botão #place_order não encontrado');
+				}
+			}, 100);
+		}
+
+		// 3.1 Melhora o card da Blu com badges de confiança
+		const $bluPaymentBox = $('.payment_method_blu_checkout .payment_box');
+		if ($bluPaymentBox.length) {
+			$bluPaymentBox.append(`
+				<div class="Gstore-blu-trust-badges">
+					<span class="Gstore-blu-trust-badge">
+						<i class="fa-solid fa-lock"></i> 256-bit SSL
+					</span>
+					<span class="Gstore-blu-trust-badge">
+						<i class="fa-solid fa-shield-halved"></i> Anti-fraude
+					</span>
+					<span class="Gstore-blu-trust-badge">
+						<i class="fa-solid fa-credit-card"></i> PCI DSS
+					</span>
+					<span class="Gstore-blu-trust-badge">
+						<i class="fa-solid fa-user-shield"></i> LGPD
+					</span>
+				</div>
+			`);
+		}
+
+		// Esconde seções vazias do WooCommerce
+		$('.woocommerce-billing-fields').hide();
+		$('.woocommerce-shipping-fields').hide();
+
+		// 4. Adiciona garantias após o pagamento
+		$paymentStep.append(`
+			<div class="Gstore-checkout-assurance">
+				<div class="Gstore-assurance-card">
+					<i class="fa-solid fa-headset"></i>
+					<div class="Gstore-assurance-card__text">
+						<strong>Atendimento Dedicado</strong>
+						<span>Equipe pronta para ajudar</span>
+					</div>
+				</div>
+				<div class="Gstore-assurance-card">
+					<i class="fa-solid fa-shield-halved"></i>
+					<div class="Gstore-assurance-card__text">
+						<strong>Compra Segura</strong>
+						<span>Pagamento criptografado</span>
+					</div>
+				</div>
+			</div>
+		`);
+	}
+
+	/**
+	 * Atualiza o resumo dos dados do cliente
+	 */
+	function updateReviewData() {
+		// Dados pessoais
+		const firstName = $('#billing_first_name').val() || '';
+		const lastName = $('#billing_last_name').val() || '';
+		const cpf = $('#billing_cpf').val() || '';
+		const email = $('#billing_email').val() || '';
+		const phone = $('#billing_phone').val() || '';
+
+		let personalHtml = '';
+		if (firstName || lastName) {
+			personalHtml += `<p><strong>${firstName} ${lastName}</strong></p>`;
+		}
+		if (cpf) {
+			personalHtml += `<p>CPF: ${cpf}</p>`;
+		}
+		if (email) {
+			personalHtml += `<p>${email}</p>`;
+		}
+		if (phone) {
+			personalHtml += `<p>${phone}</p>`;
+		}
+		$('#review-personal').html(personalHtml || '<p class="Gstore-checkout-review__empty">Dados não preenchidos</p>');
+
+		// Endereço
+		const address = $('#billing_address_1').val() || '';
+		const number = $('#billing_number').val() || '';
+		const complement = $('#billing_address_2').val() || '';
+		const neighborhood = $('#billing_neighborhood').val() || '';
+		const city = $('#billing_city').val() || '';
+		const state = $('#billing_state').val() || '';
+		const postcode = $('#billing_postcode').val() || '';
+
+		let shippingHtml = '';
+		if (address) {
+			shippingHtml += `<p>${address}${number ? ', ' + number : ''}${complement ? ' - ' + complement : ''}</p>`;
+		}
+		if (neighborhood || city || state) {
+			shippingHtml += `<p>${neighborhood}${neighborhood && city ? ' - ' : ''}${city}${state ? '/' + state : ''}</p>`;
+		}
+		if (postcode) {
+			shippingHtml += `<p>CEP: ${postcode}</p>`;
+		}
+		$('#review-shipping').html(shippingHtml || '<p class="Gstore-checkout-review__empty">Endereço não preenchido</p>');
+	}
+
+	/**
+	 * Define a etapa ativa
+	 */
+	function setActiveStep(index, shouldScroll = true) {
+		if (index < 0 || index >= STEPS.length) return;
+
+		currentStep = index;
+
+		// Atualiza painéis
+		$('.Gstore-checkout-step').removeClass('is-active')
+			.eq(index).addClass('is-active');
+
+		// Atualiza stepper
+		$('.Gstore-checkout-stepper__step').each(function(i) {
+			$(this).removeClass('is-active is-complete');
+			if (i === index) {
+				$(this).addClass('is-active');
+			} else if (i < index) {
+				$(this).addClass('is-complete');
+			}
+		});
+
+		// Atualiza conectores
+		$('.Gstore-checkout-stepper__connector').each(function(i) {
+			$(this).toggleClass('is-complete', i < index);
+		});
+
+		// Scroll suave para o topo apenas quando solicitado
+		if (shouldScroll) {
+			$('html, body').animate({
+				scrollTop: $('.Gstore-checkout-steps__content').offset().top - 100
+			}, 300);
+		}
+
+		// Atualiza resumo quando entrar na etapa de pagamento
+		if (index === 2) {
+			updateReviewData();
+			
+			// Reinicializa os eventos do WooCommerce na etapa de pagamento
+			setTimeout(function() {
+				$(document.body).trigger('update_checkout');
+				
+				// Garante que o botão place_order esteja visível e clicável
+				const $placeOrderBtn = $('#place_order');
+				if ($placeOrderBtn.length) {
+					$placeOrderBtn.prop('disabled', false).show();
+					// console.log('Gstore Steps: Botão finalizar pedido habilitado na etapa 3');
+				}
+				
+				// Remove class 'processing' se existir (pode ter ficado de tentativa anterior)
+				$checkoutForm.removeClass('processing');
+			}, 200);
+		}
+
+		// Trigger evento para outros scripts
+		$(document.body).trigger('gstore_checkout_step_changed', [index, STEPS[index]]);
+	}
+
+	/**
+	 * Valida os campos da etapa atual
+	 */
+	function validateCurrentStep() {
+		const step = STEPS[currentStep];
+		let isValid = true;
+		let $firstError = null;
+
+		step.fields.forEach(fieldId => {
+			const $fieldWrapper = $(`#${fieldId}_field`);
+			const $input = $fieldWrapper.find('input, select, textarea');
+			
+			if (!$input.length) return;
+
+			const isRequired = $fieldWrapper.hasClass('validate-required') || 
+			                   $input.prop('required') ||
+			                   $input.attr('aria-required') === 'true';
+
+			const value = $input.val() ? $input.val().trim() : '';
+
+			// Remove estado de erro anterior
+			$fieldWrapper.removeClass('woocommerce-invalid woocommerce-invalid-required-field');
+
+			// Validação de campo obrigatório
+			if (isRequired && !value) {
+				isValid = false;
+				$fieldWrapper.addClass('woocommerce-invalid woocommerce-invalid-required-field');
+				if (!$firstError) $firstError = $input;
+			}
+
+			// Validação de email
+			if (fieldId === 'billing_email' && value) {
+				const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+				if (!emailRegex.test(value)) {
+					isValid = false;
+					$fieldWrapper.addClass('woocommerce-invalid woocommerce-invalid-email');
+					if (!$firstError) $firstError = $input;
+				}
+			}
+
+			// Validação de CPF
+			if (fieldId === 'billing_cpf' && value) {
+				const cpf = value.replace(/\D/g, '');
+				if (cpf.length !== 11) {
+					isValid = false;
+					$fieldWrapper.addClass('woocommerce-invalid');
+					if (!$firstError) $firstError = $input;
+				}
+			}
+
+			// Validação de CEP
+			if (fieldId === 'billing_postcode' && value) {
+				const cep = value.replace(/\D/g, '');
+				if (cep.length !== 8) {
+					isValid = false;
+					$fieldWrapper.addClass('woocommerce-invalid');
+					if (!$firstError) $firstError = $input;
+				}
+			}
+		});
+
+		// Foca no primeiro campo com erro
+		if ($firstError) {
+			$firstError.focus();
+			
+			// Mostra mensagem de erro
+			showNotice('Por favor, preencha todos os campos obrigatórios corretamente.', 'error');
+		}
+
+		return isValid;
+	}
+
+	/**
+	 * Mostra uma notificação
+	 */
+	function showNotice(message, type) {
+		const $notice = $(`
+			<div class="woocommerce-notice woocommerce-notice--${type} woocommerce-${type}" role="alert">
+				${message}
+			</div>
+		`);
+
+		// Remove notificações anteriores
+		$('.Gstore-checkout-step.is-active .woocommerce-notice').remove();
+
+		// Adiciona nova notificação
+		$('.Gstore-checkout-step.is-active .Gstore-checkout-step__header').after($notice);
+
+		// Remove após 5 segundos
+		setTimeout(() => {
+			$notice.fadeOut(300, function() {
+				$(this).remove();
+			});
+		}, 5000);
+	}
+
+	/**
+	 * Avança para a próxima etapa
+	 */
+	function nextStep() {
+		if (!validateCurrentStep()) {
+			return;
+		}
+
+		if (currentStep < STEPS.length - 1) {
+			setActiveStep(currentStep + 1);
+			
+			// Atualiza cálculos do checkout
+			$(document.body).trigger('update_checkout');
+		}
+	}
+
+	/**
+	 * Volta para a etapa anterior
+	 */
+	function prevStep() {
+		if (currentStep > 0) {
+			setActiveStep(currentStep - 1);
+		}
+	}
+
+	/**
+	 * Carrega o resumo do carrinho via AJAX
+	 */
+	function loadCartSummary() {
+		$.ajax({
+			url: wc_checkout_params.ajax_url,
+			type: 'POST',
+			data: {
+				action: 'gstore_get_cart_summary'
+			},
+			success: function(response) {
+				if (response.success) {
+					renderSummary(response.data);
+				}
+			},
+			error: function() {
+				// Fallback: extrai do DOM
+				extractSummaryFromDOM();
+			}
+		});
+	}
+
+	/**
+	 * Renderiza o resumo do carrinho
+	 */
+	function renderSummary(data) {
+		// Atualiza contagem de itens
+		$('.Gstore-summary-items-count').text(
+			`${data.items_count} ${data.items_count === 1 ? 'item' : 'itens'} no carrinho`
+		);
+
+		// Atualiza total
+		$('.Gstore-checkout-summary-top__total-amount').html(data.total);
+
+		// Renderiza itens
+		let itemsHtml = '';
+		if (data.items && data.items.length) {
+			data.items.forEach(item => {
+				itemsHtml += `
+					<div class="Gstore-summary-item">
+						<img src="${item.image}" alt="${item.name}" class="Gstore-summary-item__image">
+						<div class="Gstore-summary-item__info">
+							<h4>${item.name}</h4>
+							<span>Qtd: ${item.quantity}</span>
+						</div>
+						<span class="Gstore-summary-item__price">${item.subtotal}</span>
+					</div>
+				`;
+			});
+		}
+		$('.Gstore-checkout-summary-top__items').html(itemsHtml);
+
+		// Renderiza totais
+		let totalsHtml = `
+			<div class="Gstore-summary-row">
+				<span>Subtotal</span>
+				<span>${data.totals.subtotal}</span>
+			</div>
+		`;
+
+		if (data.totals.shipping) {
+			totalsHtml += `
+				<div class="Gstore-summary-row">
+					<span>Frete</span>
+					<span>${data.totals.shipping}</span>
+				</div>
+			`;
+		}
+
+		if (data.totals.discount) {
+			totalsHtml += `
+				<div class="Gstore-summary-row">
+					<span>Desconto</span>
+					<span>-${data.totals.discount}</span>
+				</div>
+			`;
+		}
+
+		totalsHtml += `
+			<div class="Gstore-summary-row Gstore-summary-row--total">
+				<span>Total</span>
+				<span>${data.total}</span>
+			</div>
+		`;
+
+		$('.Gstore-checkout-summary-top__totals').html(totalsHtml);
+	}
+
+	/**
+	 * Extrai resumo do DOM (fallback)
+	 */
+	function extractSummaryFromDOM() {
+		const $orderReview = $('.woocommerce-checkout-review-order-table');
+		
+		if (!$orderReview.length) return;
+
+		// Conta itens
+		const itemsCount = $orderReview.find('.cart_item').length;
+		$('.Gstore-summary-items-count').text(
+			`${itemsCount} ${itemsCount === 1 ? 'item' : 'itens'} no carrinho`
+		);
+
+		// Total
+		const total = $orderReview.find('.order-total .amount').html();
+		if (total) {
+			$('.Gstore-checkout-summary-top__total-amount').html(total);
+		}
+	}
+
+	/**
+	 * Vincula eventos
+	 */
+	function bindEvents() {
+		// Navegação entre etapas
+		$(document).on('click', '[data-action="next"]', function(e) {
+			e.preventDefault();
+			nextStep();
+		});
+
+		$(document).on('click', '[data-action="prev"]', function(e) {
+			e.preventDefault();
+			prevStep();
+		});
+
+		// Clique no stepper
+		$(document).on('click', '.Gstore-checkout-stepper__step', function(e) {
+			e.preventDefault();
+			const index = parseInt($(this).data('step-index'), 10);
+			
+			// Só permite ir para etapas anteriores ou validar para ir para próximas
+			if (index < currentStep) {
+				setActiveStep(index);
+			} else if (index === currentStep + 1) {
+				nextStep();
+			}
+		});
+
+		// Toggle do resumo
+		$(document).on('click', '.Gstore-checkout-summary-top__toggle', function() {
+			const $toggle = $(this);
+			const $details = $('.Gstore-checkout-summary-top__details');
+			
+			$toggle.toggleClass('is-open');
+			$details.toggleClass('is-visible');
+			
+			// Atualiza texto e ícone
+			const isOpen = $toggle.hasClass('is-open');
+			$toggle.html(
+				(isOpen ? 'Ocultar detalhes' : 'Ver detalhes') +
+				' <i class="fa-solid fa-chevron-down"></i>'
+			);
+		});
+
+		// Atualiza resumo quando checkout é atualizado
+		$(document.body).on('updated_checkout', function() {
+			loadCartSummary();
+		});
+
+		// Toggle para observações do pedido
+		$(document).on('change', '#toggle-order-notes', function() {
+			const $container = $('.Gstore-checkout-notes-container');
+			if ($(this).is(':checked')) {
+				$container.slideDown(200);
+			} else {
+				$container.slideUp(200);
+				// Limpa o campo quando esconde
+				$container.find('textarea').val('');
+			}
+		});
+
+		// Botões de editar no resumo
+		$(document).on('click', '.Gstore-checkout-review__edit', function(e) {
+			e.preventDefault();
+			const stepIndex = parseInt($(this).data('goto-step'), 10);
+			setActiveStep(stepIndex);
+		});
+
+		// Máscara para CPF
+		$(document).on('input', '#billing_cpf', function() {
+			let value = $(this).val().replace(/\D/g, '');
+			if (value.length > 11) value = value.slice(0, 11);
+			
+			if (value.length > 9) {
+				value = value.replace(/(\d{3})(\d{3})(\d{3})(\d{1,2})/, '$1.$2.$3-$4');
+			} else if (value.length > 6) {
+				value = value.replace(/(\d{3})(\d{3})(\d{1,3})/, '$1.$2.$3');
+			} else if (value.length > 3) {
+				value = value.replace(/(\d{3})(\d{1,3})/, '$1.$2');
+			}
+			
+			$(this).val(value);
+		});
+
+		// Máscara para CEP
+		$(document).on('input', '#billing_postcode', function() {
+			let value = $(this).val().replace(/\D/g, '');
+			if (value.length > 8) value = value.slice(0, 8);
+			
+			if (value.length > 5) {
+				value = value.replace(/(\d{5})(\d{1,3})/, '$1-$2');
+			}
+			
+			$(this).val(value);
+		});
+
+		// Máscara para telefone
+		$(document).on('input', '#billing_phone', function() {
+			let value = $(this).val().replace(/\D/g, '');
+			if (value.length > 11) value = value.slice(0, 11);
+			
+			if (value.length > 10) {
+				value = value.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3');
+			} else if (value.length > 6) {
+				value = value.replace(/(\d{2})(\d{4,5})(\d{0,4})/, '($1) $2-$3');
+			} else if (value.length > 2) {
+				value = value.replace(/(\d{2})(\d{0,5})/, '($1) $2');
+			}
+			
+			$(this).val(value);
+		});
+
+		// Garante que o botão de finalizar pedido funcione corretamente
+		$(document).on('click', '#place_order', function(e) {
+			e.preventDefault();
+			// console.log('Gstore Steps: Botão "Finalizar Pedido" clicado');
+			
+			// Verifica se estamos na etapa de pagamento
+			if (currentStep !== 2) {
+				// console.warn('Gstore Steps: Usuário não está na etapa de pagamento');
+				setActiveStep(2);
+				return false;
+			}
+			
+			// Valida se um método de pagamento foi selecionado
+			const $paymentMethod = $('input[name="payment_method"]:checked');
+			if (!$paymentMethod.length) {
+				showNotice('Por favor, selecione um método de pagamento.', 'error');
+				// console.warn('Gstore Steps: Nenhum método de pagamento selecionado');
+				return false;
+			}
+			
+			// console.log('Gstore Steps: Método de pagamento selecionado:', $paymentMethod.val());
+			
+			// Verifica se o formulário está em processamento
+			if ($checkoutForm.hasClass('processing')) {
+				// console.log('Gstore Steps: Formulário já está processando, aguarde...');
+				return false;
+			}
+			
+			// Mostra o modal de carregamento
+			showProcessingModal();
+			
+			// console.log('Gstore Steps: Iniciando submit do checkout...');
+			
+			// Primeiro atualiza o checkout para garantir nonce válido, depois submete
+			refreshAndSubmit();
+		});
+
+		/**
+		 * Mostra o modal de processamento
+		 */
+		function showProcessingModal() {
+			// Remove modal existente se houver
+			$('.Gstore-processing-modal').remove();
+			
+			const modalHtml = `
+				<div class="Gstore-processing-modal">
+					<div class="Gstore-processing-modal__backdrop"></div>
+					<div class="Gstore-processing-modal__content">
+						<div class="Gstore-processing-modal__spinner">
+							<div class="Gstore-spinner"></div>
+						</div>
+						<div class="Gstore-processing-modal__text">
+							<h3>Processando seu pedido...</h3>
+							<p>Aguarde enquanto preparamos seu pagamento seguro.</p>
+						</div>
+						<div class="Gstore-processing-modal__steps">
+							<div class="Gstore-processing-step is-active" data-step="1">
+								<i class="fa-solid fa-circle-check"></i>
+								<span>Validando dados</span>
+							</div>
+							<div class="Gstore-processing-step" data-step="2">
+								<i class="fa-solid fa-circle"></i>
+								<span>Criando pedido</span>
+							</div>
+							<div class="Gstore-processing-step" data-step="3">
+								<i class="fa-solid fa-circle"></i>
+								<span>Redirecionando para pagamento</span>
+							</div>
+						</div>
+					</div>
+				</div>
+			`;
+			
+			$('body').append(modalHtml);
+			
+			// Anima a entrada
+			setTimeout(function() {
+				$('.Gstore-processing-modal').addClass('is-visible');
+			}, 10);
+			
+			// Avança os passos automaticamente para dar feedback visual
+			setTimeout(function() {
+				updateProcessingStep(2);
+			}, 800);
+		}
+
+		/**
+		 * Atualiza o passo do modal de processamento
+		 */
+		function updateProcessingStep(step) {
+			$('.Gstore-processing-step').each(function() {
+				const $step = $(this);
+				const stepNum = parseInt($step.data('step'));
+				
+				if (stepNum < step) {
+					$step.removeClass('is-active').addClass('is-complete');
+					$step.find('i').removeClass('fa-circle fa-circle-notch fa-spin').addClass('fa-circle-check');
+				} else if (stepNum === step) {
+					$step.addClass('is-active');
+					$step.find('i').removeClass('fa-circle fa-circle-check').addClass('fa-circle-notch fa-spin');
+				}
+			});
+		}
+
+		/**
+		 * Mostra sucesso no modal antes de redirecionar
+		 */
+		function showProcessingSuccess() {
+			updateProcessingStep(4); // Marca todos como completos
+			
+			$('.Gstore-processing-modal__text h3').text('Pedido criado com sucesso!');
+			$('.Gstore-processing-modal__text p').text('Redirecionando para o pagamento seguro...');
+			$('.Gstore-processing-modal__spinner .Gstore-spinner').replaceWith(
+				'<i class="fa-solid fa-circle-check Gstore-success-icon"></i>'
+			);
+		}
+
+		/**
+		 * Esconde o modal de processamento
+		 */
+		function hideProcessingModal() {
+			$('.Gstore-processing-modal').removeClass('is-visible');
+			setTimeout(function() {
+				$('.Gstore-processing-modal').remove();
+			}, 300);
+		}
+
+		/**
+		 * Submete o checkout diretamente sem tentar atualizar primeiro
+		 * (O update_order_review está dando 403, então vamos direto)
+		 */
+		function refreshAndSubmit() {
+			// console.log('Gstore Steps: Iniciando submit do checkout...');
+			submitCheckoutDirectly();
+		}
+
+		/**
+		 * Submit direto do checkout via AJAX
+		 */
+		function submitCheckoutDirectly() {
+			// console.log('Gstore Steps: Executando submit direto do checkout');
+			
+			const $form = $('form.checkout');
+			if (!$form.length) {
+				// console.error('Gstore Steps: Formulário de checkout não encontrado');
+				return;
+			}
+
+			// Verifica se já está processando
+			if ($form.hasClass('processing')) {
+				// console.log('Gstore Steps: Já está processando');
+				return;
+			}
+
+			// Debug: verifica campos importantes - procura em TODA a página
+			const nonceInPage = $('#woocommerce-process-checkout-nonce').val() || 
+			                    $('input[name="woocommerce-process-checkout-nonce"]').val();
+			const paymentMethodInPage = $('input[name="payment_method"]:checked').val();
+			
+			// console.log('Gstore Steps: === DEBUG DE FORMULÁRIO ===');
+			// console.log('Gstore Steps: Nonce na página:', nonceInPage ? 'OK (' + nonceInPage.substring(0, 10) + '...)' : 'FALTANDO!');
+			// console.log('Gstore Steps: Payment Method na página:', paymentMethodInPage);
+			// console.log('Gstore Steps: Billing First Name:', $('#billing_first_name').val());
+			// console.log('Gstore Steps: Billing Email:', $('#billing_email').val());
+			
+			// Lista todos os campos de nonce na página
+			// console.log('Gstore Steps: Campos nonce encontrados:');
+			// $('input[id*="nonce"], input[name*="nonce"]').each(function() {
+			// 	console.log('  -', $(this).attr('name') || $(this).attr('id'), '=', $(this).val() ? $(this).val().substring(0, 15) + '...' : 'vazio');
+			// });
+			
+			// Verifica campos obrigatórios
+			const requiredFields = ['billing_first_name', 'billing_last_name', 'billing_email', 'billing_phone', 
+			                        'billing_postcode', 'billing_address_1', 'billing_city', 'billing_state'];
+			let missingFields = [];
+			
+			requiredFields.forEach(function(field) {
+				const $field = $form.find('#' + field);
+				if ($field.length && (!$field.val() || $field.val().trim() === '')) {
+					missingFields.push(field);
+				}
+			});
+			
+			// if (missingFields.length > 0) {
+			// 	console.warn('Gstore Steps: Campos obrigatórios vazios:', missingFields);
+			// }
+
+			$form.addClass('processing');
+
+			// Bloqueia o formulário visualmente
+			$form.block({
+				message: null,
+				overlayCSS: {
+					background: '#fff',
+					opacity: 0.6
+				}
+			});
+
+			// IMPORTANTE: Coleta TODOS os campos da página manualmente
+			// Os campos foram movidos para fora do formulário pelo sistema de etapas
+			const formDataObj = {};
+			
+			// 1. Coleta campos de billing
+			$('[id^="billing_"]').each(function() {
+				const $input = $(this);
+				const name = $input.attr('name') || $input.attr('id');
+				if (name && $input.val()) {
+					formDataObj[name] = $input.val();
+				}
+			});
+			
+			// 2. Coleta campos de shipping (se houver)
+			$('[id^="shipping_"]').each(function() {
+				const $input = $(this);
+				const name = $input.attr('name') || $input.attr('id');
+				if (name && $input.val()) {
+					formDataObj[name] = $input.val();
+				}
+			});
+			
+			// 3. Coleta payment_method - procura em qualquer lugar
+			const $paymentRadio = $('input[name="payment_method"]:checked');
+			if ($paymentRadio.length) {
+				formDataObj['payment_method'] = $paymentRadio.val();
+			} else {
+				// Fallback: usa o primeiro método disponível
+				const $firstPayment = $('input[name="payment_method"]').first();
+				if ($firstPayment.length) {
+					formDataObj['payment_method'] = $firstPayment.val();
+				}
+			}
+			
+			// 4. Coleta o nonce - procura em TODOS os lugares possíveis
+			let nonceValue = null;
+			
+			// Procura em toda a página (os campos podem estar em qualquer lugar)
+			const nonceSelectors = [
+				'#woocommerce-process-checkout-nonce',
+				'input[name="woocommerce-process-checkout-nonce"]',
+				'#_wpnonce',
+				'input[name="_wpnonce"]'
+			];
+			
+			for (let selector of nonceSelectors) {
+				const $el = $(selector);
+				if ($el.length && $el.val()) {
+					nonceValue = $el.val();
+					// console.log('Gstore Steps: Nonce encontrado via:', selector);
+					break;
+				}
+			}
+			
+			// Fallback: procura qualquer input com "nonce" no nome
+			if (!nonceValue) {
+				$('input').each(function() {
+					const name = $(this).attr('name') || '';
+					const id = $(this).attr('id') || '';
+					if ((name.indexOf('nonce') !== -1 || id.indexOf('nonce') !== -1) && $(this).val()) {
+						nonceValue = $(this).val();
+						// console.log('Gstore Steps: Nonce encontrado em campo:', name || id);
+						return false; // break
+					}
+				});
+			}
+			
+			// Último fallback: variável global do WooCommerce
+			if (!nonceValue && typeof wc_checkout_params !== 'undefined') {
+				if (wc_checkout_params.update_order_review_nonce) {
+					nonceValue = wc_checkout_params.update_order_review_nonce;
+					// console.log('Gstore Steps: Usando nonce do wc_checkout_params');
+				}
+			}
+			
+			if (nonceValue) {
+				formDataObj['woocommerce-process-checkout-nonce'] = nonceValue;
+				formDataObj['_wpnonce'] = nonceValue;
+			} else {
+				// console.error('Gstore Steps: NONCE NÃO ENCONTRADO!');
+				// Lista todos os inputs hidden para debug
+				// console.log('Gstore Steps: Inputs hidden na página:');
+				// $('input[type="hidden"]').each(function() {
+				// 	const name = $(this).attr('name');
+				// 	if (name) {
+				// 		console.log('  -', name, '=', $(this).val() ? $(this).val().substring(0, 20) + '...' : 'vazio');
+				// 	}
+				// });
+			}
+			
+			// 5. Coleta campos hidden importantes
+			$('input[type="hidden"]').each(function() {
+				const $input = $(this);
+				const name = $input.attr('name');
+				if (name && $input.val()) {
+					// Inclui apenas campos relevantes para o checkout
+					if (name.indexOf('wc_') === 0 || 
+					    name.indexOf('woocommerce') === 0 || 
+					    name.indexOf('_wp') === 0 ||
+					    name === 'terms' ||
+					    name === 'terms-field' ||
+					    name === 'ship_to_different_address') {
+						formDataObj[name] = $input.val();
+					}
+				}
+			});
+			
+			// 6. Coleta campos do formulário original que ainda existem
+			$form.find('input, select, textarea').each(function() {
+				const $input = $(this);
+				const name = $input.attr('name');
+				if (name && !formDataObj[name]) {
+					if ($input.is(':checkbox')) {
+						if ($input.is(':checked')) {
+							formDataObj[name] = $input.val() || '1';
+						}
+					} else if ($input.is(':radio')) {
+						if ($input.is(':checked')) {
+							formDataObj[name] = $input.val();
+						}
+					} else {
+						const val = $input.val();
+						if (val) formDataObj[name] = val;
+					}
+				}
+			});
+			
+			// 7. Garante campos obrigatórios para o WooCommerce
+			formDataObj['woocommerce_checkout_place_order'] = '1';
+			
+			// Converte para query string
+			let formData = $.param(formDataObj);
+			
+			// console.log('Gstore Steps: Enviando dados para:', wc_checkout_params.checkout_url);
+			// console.log('Gstore Steps: Campos coletados:', Object.keys(formDataObj).length);
+			// console.log('Gstore Steps: billing_first_name:', formDataObj['billing_first_name'] || 'FALTANDO');
+			// console.log('Gstore Steps: billing_email:', formDataObj['billing_email'] || 'FALTANDO');
+			// console.log('Gstore Steps: payment_method:', formDataObj['payment_method'] || 'FALTANDO');
+			// console.log('Gstore Steps: nonce:', formDataObj['woocommerce-process-checkout-nonce'] ? 'OK' : 'FALTANDO');
+			
+			// Debug: lista todos os campos
+			// console.log('Gstore Steps: Todos os campos:', Object.keys(formDataObj));
+
+			$.ajax({
+				type: 'POST',
+				url: wc_checkout_params.checkout_url,
+				data: formData,
+				dataType: 'json',
+				success: function(response) {
+					// console.log('Gstore Steps: Resposta recebida:', response);
+					
+					// Atualiza para passo 3 (criando pedido)
+					updateProcessingStep(3);
+					
+					if (response.result === 'success') {
+						// console.log('Gstore Steps: Sucesso! Redirecionando para:', response.redirect);
+						
+						// Mostra sucesso no modal
+						setTimeout(function() {
+							showProcessingSuccess();
+						}, 500);
+						
+						// Aguarda um momento para o usuário ver a mensagem de sucesso
+						setTimeout(function() {
+							window.location.href = response.redirect;
+						}, 1500);
+					} else if (response.result === 'failure') {
+						// console.warn('Gstore Steps: Falha no checkout');
+						// console.warn('Gstore Steps: Refresh:', response.refresh);
+						// console.warn('Gstore Steps: Reload:', response.reload);
+						
+						// Esconde o modal de processamento
+						hideProcessingModal();
+						
+						// Remove bloqueio
+						$form.removeClass('processing').unblock();
+						
+						// Se precisa refresh, atualiza o checkout primeiro
+						if (response.refresh) {
+							// console.log('Gstore Steps: Atualizando checkout...');
+							$(document.body).trigger('update_checkout');
+						}
+						
+						// Mostra mensagens de erro
+						if (response.messages) {
+							$('.woocommerce-notices-wrapper, .woocommerce-error').remove();
+							
+							// Mostra na etapa ativa
+							const $activeStep = $('.Gstore-checkout-step.is-active');
+							if ($activeStep.length) {
+								$activeStep.find('.Gstore-checkout-step__header').after(
+									'<div class="woocommerce-notices-wrapper">' + response.messages + '</div>'
+								);
+							} else {
+								$form.prepend('<div class="woocommerce-notices-wrapper">' + response.messages + '</div>');
+							}
+							
+							$('html, body').animate({
+								scrollTop: $('.Gstore-checkout-steps__content').offset().top - 100
+							}, 500);
+						}
+						
+						// Recarrega o checkout se necessário
+						if (response.reload) {
+							setTimeout(function() {
+								window.location.reload();
+							}, 2000);
+						}
+					}
+				},
+				error: function(xhr, status, error) {
+					// console.error('Gstore Steps: Erro no submit:', error);
+					// console.error('Gstore Steps: Status:', status);
+					// console.error('Gstore Steps: Response:', xhr.responseText);
+					
+					// Esconde o modal
+					hideProcessingModal();
+					
+					$form.removeClass('processing').unblock();
+					showNotice('Ocorreu um erro ao processar o pedido. Por favor, tente novamente.', 'error');
+				}
+			});
+		}
+
+		// Monitora o evento de submit do formulário do checkout
+		$checkoutForm.on('submit', function(e) {
+			// console.log('Gstore Steps: Formulário de checkout sendo submetido');
+			// console.log('Gstore Steps: Etapa atual:', currentStep);
+			// console.log('Gstore Steps: Form action:', $checkoutForm.attr('action'));
+			// console.log('Gstore Steps: Nonce presente:', $checkoutForm.find('#woocommerce-process-checkout-nonce').length > 0);
+		});
+
+		// Handler alternativo: se o WooCommerce não processar, fazemos via AJAX manual
+		$(document).on('checkout_place_order', function(event) {
+			// console.log('Gstore Steps: Evento checkout_place_order disparado');
+		});
+
+		$(document).on('checkout_place_order_blu_checkout', function(event) {
+			// console.log('Gstore Steps: Evento checkout_place_order_blu_checkout disparado');
+		});
+	}
+
+	// Inicializa quando o DOM estiver pronto
+	$(document).ready(function() {
+		// Aguarda um momento para o WooCommerce carregar
+		setTimeout(init, 100);
+	});
+
+	// Reinicializa quando o checkout é atualizado via AJAX
+	$(document.body).on('init_checkout updated_checkout', function() {
+		if (!initialized) {
+			setTimeout(init, 100);
+		}
+	});
+
+	// Monitora eventos de checkout para debug
+	$(document.body).on('checkout_error', function(event, error_message) {
+		// console.error('Gstore Steps: Erro no checkout:', error_message);
+	});
+
+	// Monitora quando o pagamento é processado
+	$(document.body).on('payment_method_selected', function() {
+		// console.log('Gstore Steps: Método de pagamento selecionado');
+	});
+
+	// Intercepta a resposta do checkout para garantir redirect
+	$(document).ajaxComplete(function(event, xhr, settings) {
+		// Verifica se é a requisição do checkout
+		if (settings.url && settings.url.indexOf('wc-ajax=checkout') !== -1) {
+			// console.log('Gstore Steps: Resposta do checkout recebida');
+			
+			try {
+				const response = JSON.parse(xhr.responseText);
+				// console.log('Gstore Steps: Resposta:', response);
+				
+				// Se houver redirect, executa
+				if (response.result === 'success' && response.redirect) {
+					// console.log('Gstore Steps: Redirecionando para:', response.redirect);
+					window.location.href = response.redirect;
+				}
+			} catch (e) {
+				// console.log('Gstore Steps: Não foi possível parsear resposta (normal se não for JSON)');
+			}
+		}
+	});
+
+})(jQuery);

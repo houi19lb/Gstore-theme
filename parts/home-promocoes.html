@@ -1,0 +1,29 @@
+<!-- wp:group {"align":"full","className":"Gstore-home-section Gstore-home-products Gstore-products-shell","style":{"spacing":{"padding":{"top":"48px","bottom":"56px","left":"0px","right":"0px"}}},"layout":{"type":"constrained","wideSize":"1280px"}} -->
+<div class="wp-block-group alignfull Gstore-home-section Gstore-home-products Gstore-products-shell" style="padding-top:48px;padding-bottom:56px;padding-left:0px;padding-right:0px">
+	<!-- wp:group {"className":"Gstore-home-section__header Gstore-home-section__header--left","layout":{"type":"constrained","contentSize":"1280px"}} -->
+	<div class="wp-block-group Gstore-home-section__header Gstore-home-section__header--left">
+		<!-- wp:html -->
+		<div class="Gstore-home-section__title-wrapper">
+			<h2 class="wp-block-heading has-text-align-left has-x-large-font-size">Promoções</h2>
+			<span class="Gstore-home-section__separator" aria-hidden="true"></span>
+		</div>
+		<!-- /wp:html -->
+	</div>
+	<!-- /wp:group -->
+	<!-- wp:group {"className":"Gstore-products-grid","layout":{"type":"default"}} -->
+	<div class="wp-block-group Gstore-products-grid">
+		<!-- wp:shortcode -->
+		[products limit="8" columns="4" on_sale="true" paginate="false"]
+		<!-- /wp:shortcode -->
+	</div>
+	<!-- /wp:group -->
+	<!-- wp:buttons {"style":{"spacing":{"margin":{"top":"32px"}}},"layout":{"type":"flex","justifyContent":"center"}} -->
+	<div class="wp-block-buttons" style="margin-top:32px">
+		<!-- wp:button {"className":"is-style-primary"} -->
+		<div class="wp-block-button is-style-primary"><a class="wp-block-button__link wp-element-button" href="/catalogo/?filter=on_sale">Ver mais promoções</a></div>
+		<!-- /wp:button -->
+	</div>
+	<!-- /wp:buttons -->
+</div>
+<!-- /wp:group -->
+

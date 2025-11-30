@@ -1,0 +1,279 @@
+/**
+ * ==========================================
+ * GSTORE RESPONSIVE SYSTEM
+ * ==========================================
+ * Breakpoints consistentes e mixins
+ * para responsividade em todo o tema.
+ */
+
+/* ========================================
+   BREAKPOINTS
+   ======================================== */
+
+/**
+ * Mobile First Approach
+ * 
+ * Breakpoints:
+ * - sm: 640px   (tablets pequenos)
+ * - md: 768px   (tablets)
+ * - lg: 1024px  (desktop pequeno)
+ * - xl: 1280px  (desktop)
+ * - 2xl: 1536px (desktop grande)
+ */
+
+/* ========================================
+   GRID RESPONSIVO
+   ======================================== */
+
+/* Grid de produtos responsivo */
+.Gstore-responsive-grid {
+	display: grid;
+	gap: var(--gstore-spacing-6);
+	grid-template-columns: 1fr;
+}
+
+@media (min-width: 640px) {
+	.Gstore-responsive-grid {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+	}
+}
+
+@media (min-width: 1024px) {
+	.Gstore-responsive-grid {
+		grid-template-columns: repeat(3, minmax(0, 1fr));
+		gap: var(--gstore-spacing-8);
+	}
+}
+
+@media (min-width: 1280px) {
+	.Gstore-responsive-grid {
+		grid-template-columns: repeat(4, minmax(0, 1fr));
+	}
+}
+
+/* Grid de 2 colunas responsivo */
+.Gstore-responsive-grid-2 {
+	display: grid;
+	gap: var(--gstore-spacing-6);
+	grid-template-columns: 1fr;
+}
+
+@media (min-width: 768px) {
+	.Gstore-responsive-grid-2 {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+		gap: clamp(32px, 5vw, 60px);
+	}
+}
+
+/* Grid de 3 colunas responsivo */
+.Gstore-responsive-grid-3 {
+	display: grid;
+	gap: var(--gstore-spacing-6);
+	grid-template-columns: 1fr;
+}
+
+@media (min-width: 640px) {
+	.Gstore-responsive-grid-3 {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+	}
+}
+
+@media (min-width: 1024px) {
+	.Gstore-responsive-grid-3 {
+		grid-template-columns: repeat(3, minmax(0, 1fr));
+		gap: var(--gstore-spacing-8);
+	}
+}
+
+/* ========================================
+   ESPAÇAMENTOS RESPONSIVOS
+   ======================================== */
+
+/* Padding responsivo fluido */
+.Gstore-responsive-padding {
+	padding: clamp(
+		var(--gstore-spacing-6),
+		4vw,
+		var(--gstore-spacing-16)
+	) clamp(
+		var(--gstore-spacing-4),
+		4vw,
+		var(--gstore-spacing-12)
+	);
+}
+
+/* Margin responsivo fluido */
+.Gstore-responsive-margin {
+	margin-top: clamp(
+		var(--gstore-spacing-6),
+		4vw,
+		var(--gstore-spacing-16)
+	);
+	margin-bottom: clamp(
+		var(--gstore-spacing-6),
+		4vw,
+		var(--gstore-spacing-16)
+	);
+}
+
+/* ========================================
+   TIPOGRAFIA RESPONSIVA
+   ======================================== */
+
+/* Título responsivo fluido */
+.Gstore-responsive-title {
+	font-size: clamp(
+		var(--gstore-font-size-2xl),
+		4vw,
+		var(--gstore-font-size-4xl)
+	);
+	line-height: var(--gstore-line-height-tight);
+}
+
+/* Subtítulo responsivo fluido */
+.Gstore-responsive-subtitle {
+	font-size: clamp(
+		var(--gstore-font-size-lg),
+		2vw,
+		var(--gstore-font-size-xl)
+	);
+}
+
+/* Texto base responsivo fluido */
+.Gstore-responsive-text {
+	font-size: clamp(
+		var(--gstore-font-size-base),
+		1.5vw,
+		var(--gstore-font-size-lg)
+	);
+}
+
+/* ========================================
+   CONTAINER RESPONSIVO
+   ======================================== */
+
+.Gstore-responsive-container {
+	width: 100%;
+	max-width: var(--gstore-container-max-width);
+	margin-left: auto;
+	margin-right: auto;
+	padding-left: clamp(
+		var(--gstore-container-padding-inline-mobile),
+		4vw,
+		var(--gstore-container-padding-inline)
+	);
+	padding-right: clamp(
+		var(--gstore-container-padding-inline-mobile),
+		4vw,
+		var(--gstore-container-padding-inline)
+	);
+}
+
+/* ========================================
+   VISIBILIDADE RESPONSIVA
+   ======================================== */
+
+/* Ocultar em mobile */
+@media (max-width: 639px) {
+	.hide-mobile {
+		display: none !important;
+	}
+}
+
+/* Ocultar em tablet */
+@media (min-width: 640px) and (max-width: 1023px) {
+	.hide-tablet {
+		display: none !important;
+	}
+}
+
+/* Ocultar em desktop */
+@media (min-width: 1024px) {
+	.hide-desktop {
+		display: none !important;
+	}
+}
+
+/* Mostrar apenas em mobile */
+.show-mobile-only {
+	display: block !important;
+}
+
+@media (min-width: 640px) {
+	.show-mobile-only {
+		display: none !important;
+	}
+}
+
+/* Mostrar apenas em desktop */
+.show-desktop-only {
+	display: none !important;
+}
+
+@media (min-width: 1024px) {
+	.show-desktop-only {
+		display: block !important;
+	}
+}
+
+/* ========================================
+   UTILITÁRIOS RESPONSIVOS COMUNS
+   ======================================== */
+
+/* Direção de flex responsiva */
+.Gstore-flex-responsive {
+	flex-direction: column;
+}
+
+@media (min-width: 768px) {
+	.Gstore-flex-responsive {
+		flex-direction: row;
+	}
+}
+
+/* Alinhamento de texto responsivo */
+.Gstore-text-responsive {
+	text-align: center;
+}
+
+@media (min-width: 768px) {
+	.Gstore-text-responsive {
+		text-align: left;
+	}
+}
+
+/* Gap responsivo */
+.Gstore-gap-responsive {
+	gap: var(--gstore-spacing-4);
+}
+
+@media (min-width: 768px) {
+	.Gstore-gap-responsive {
+		gap: var(--gstore-spacing-6);
+	}
+}
+
+@media (min-width: 1024px) {
+	.Gstore-gap-responsive {
+		gap: var(--gstore-spacing-8);
+	}
+}
+
+/* ========================================
+   MEDIA QUERIES REUTILIZÁVEIS
+   ======================================== */
+
+/**
+ * Para usar em outros arquivos CSS, importe este arquivo
+ * e use os breakpoints definidos nas variáveis:
+ * 
+ * @media (min-width: 640px) { ... }   -> sm
+ * @media (min-width: 768px) { ... }   -> md
+ * @media (min-width: 1024px) { ... }  -> lg
+ * @media (min-width: 1280px) { ... }  -> xl
+ * @media (min-width: 1536px) { ... }  -> 2xl
+ */
+
+
+
+

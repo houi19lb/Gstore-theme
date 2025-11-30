@@ -1,0 +1,45 @@
+# WordPress
+.DS_Store
+Thumbs.db
+
+# Arquivos de debug e backup
+*.broken
+*.corrupted-*
+*backup*.php
+*CLEAN.php
+debug_*.txt
+diagnostic-*.php
+
+# Logs
+*.log
+error_log
+
+# Arquivos temporários
+*.tmp
+*.temp
+*~
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Node modules (se houver)
+node_modules/
+package-lock.json
+
+# Arquivos de sistema
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Arquivos de build (se houver)
+dist/
+build/
+
+# Arquivos de configuração local
+wp-config-local.php
+local-config.php
+

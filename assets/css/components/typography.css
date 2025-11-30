@@ -1,0 +1,179 @@
+/**
+ * ==========================================
+ * GSTORE TYPOGRAPHY
+ * ==========================================
+ * Estilos para títulos, headings e tipografia
+ * com foco em contraste e legibilidade
+ */
+
+/* ========================================
+   HEADINGS BASE - GARANTIR CONTRASTE
+   ======================================== */
+
+/**
+ * Garante contraste adequado para títulos em fundo branco
+ * Sobrescreve cores herdadas do tema pai que possam ter pouco contraste
+ */
+
+/* Headings padrão do WordPress/Gutenberg */
+.wp-block-heading:not(.Gstore-header-shell *):not(.Gstore-header *):not(.Gstore-top-bar *),
+h1.wp-block-heading:not(.Gstore-header-shell *):not(.Gstore-header *):not(.Gstore-top-bar *),
+h2.wp-block-heading:not(.Gstore-header-shell *):not(.Gstore-header *):not(.Gstore-top-bar *),
+h3.wp-block-heading:not(.Gstore-header-shell *):not(.Gstore-header *):not(.Gstore-top-bar *),
+h4.wp-block-heading:not(.Gstore-header-shell *):not(.Gstore-header *):not(.Gstore-top-bar *),
+h5.wp-block-heading:not(.Gstore-header-shell *):not(.Gstore-header *):not(.Gstore-top-bar *),
+h6.wp-block-heading:not(.Gstore-header-shell *):not(.Gstore-header *):not(.Gstore-top-bar *) {
+	color: var(--gstore-color-text-primary) !important;
+	font-weight: var(--gstore-font-weight-bold);
+}
+
+/* Headings em fundo branco ou claro */
+.Gstore-container .wp-block-heading,
+.Gstore-home-products .wp-block-heading,
+.Gstore-home-blog .wp-block-heading,
+.Gstore-products-shell .wp-block-heading,
+[class*="Gstore-"][class*="shell"] .wp-block-heading,
+[style*="background-color: #fff"],
+[style*="background-color: #ffffff"],
+[style*="background-color: white"],
+.bg-light .wp-block-heading,
+.has-white-background-color .wp-block-heading {
+	color: var(--gstore-color-text-primary) !important;
+}
+
+/* Headings em seções com fundo branco */
+.wp-block-group:not([class*="Gstore-hero"]):not([class*="dark"]) .wp-block-heading,
+.wp-block-group[style*="background-color"]:not([style*="background-color: #000"]):not([style*="background-color: #0a0a0a"]) .wp-block-heading {
+	color: var(--gstore-color-text-primary) !important;
+}
+
+/* Títulos específicos de seções brancas */
+.Gstore-home-products h1,
+.Gstore-home-products h2,
+.Gstore-home-products h3,
+.Gstore-home-blog h1,
+.Gstore-home-blog h2,
+.Gstore-home-blog h3,
+.Gstore-products-shell h1,
+.Gstore-products-shell h2,
+.Gstore-products-shell h3 {
+	color: var(--gstore-color-text-primary) !important;
+}
+
+/* ========================================
+   HEADINGS COM CLASSES DE FONTE DO GUTENBERG
+   ======================================== */
+
+.wp-block-heading.has-x-large-font-size,
+h2.wp-block-heading.has-x-large-font-size,
+h1.wp-block-heading.has-x-large-font-size {
+	color: var(--gstore-color-text-primary) !important;
+	font-size: var(--gstore-font-size-4xl);
+	font-weight: var(--gstore-font-weight-bold);
+}
+
+/* Garantir contraste para títulos específicos da home-products */
+.Gstore-home-products .wp-block-heading,
+.Gstore-home-products h1,
+.Gstore-home-products h2,
+.Gstore-home-products h3,
+.Gstore-home-section__header .wp-block-heading,
+.Gstore-home-section__header h1,
+.Gstore-home-section__header h2,
+.Gstore-home-section__header h3 {
+	color: var(--gstore-color-text-primary) !important;
+}
+
+.wp-block-heading.has-large-font-size,
+h3.wp-block-heading.has-large-font-size {
+	color: var(--gstore-color-text-primary) !important;
+	font-size: var(--gstore-font-size-2xl);
+	font-weight: var(--gstore-font-weight-bold);
+}
+
+.wp-block-heading.has-medium-font-size {
+	color: var(--gstore-color-text-primary) !important;
+	font-size: var(--gstore-font-size-xl);
+	font-weight: var(--gstore-font-weight-semibold);
+}
+
+/* ========================================
+   HEADINGS EM ALINHAMENTO CENTRAL
+   ======================================== */
+
+.wp-block-heading.has-text-align-center,
+h1.has-text-align-center,
+h2.has-text-align-center,
+h3.has-text-align-center,
+h4.has-text-align-center,
+h5.has-text-align-center,
+h6.has-text-align-center {
+	color: var(--gstore-color-text-primary) !important;
+}
+
+/* Combinação específica: título centralizado com fonte grande */
+.wp-block-heading.has-text-align-center.has-x-large-font-size,
+h2.wp-block-heading.has-text-align-center.has-x-large-font-size {
+	color: var(--gstore-color-text-primary) !important;
+}
+
+/* ========================================
+   HEADINGS EM DIFERENTES CONTEXTOS
+   ======================================== */
+
+/* Seção de produtos */
+.Gstore-home-section__header .wp-block-heading,
+.Gstore-home-section__header h1,
+.Gstore-home-section__header h2 {
+	color: var(--gstore-color-text-primary) !important;
+}
+
+/* Cards e containers brancos */
+.Gstore-card .wp-block-heading,
+.Gstore-card h1,
+.Gstore-card h2,
+.Gstore-card h3 {
+	color: var(--gstore-color-text-primary) !important;
+}
+
+/* ========================================
+   OVERRIDE GLOBAL PARA FUNDOS BRANCOS
+   ======================================== */
+
+/**
+ * Regra geral: qualquer heading em container com fundo branco/claro
+ * deve ter cor escura para contraste adequado
+ */
+
+:where(.wp-block-group, [class*="Gstore-"], main, section)[style*="background-color: #fff"] :where(h1, h2, h3, h4, h5, h6, .wp-block-heading),
+:where(.wp-block-group, [class*="Gstore-"], main, section)[style*="background-color: #ffffff"] :where(h1, h2, h3, h4, h5, h6, .wp-block-heading),
+:where(.wp-block-group, [class*="Gstore-"], main, section)[style*="background-color: white"] :where(h1, h2, h3, h4, h5, h6, .wp-block-heading),
+:where(.wp-block-group, [class*="Gstore-"], main, section).has-white-background-color :where(h1, h2, h3, h4, h5, h6, .wp-block-heading),
+:where(.wp-block-group, [class*="Gstore-"], main, section)[class*="bg-light"] :where(h1, h2, h3, h4, h5, h6, .wp-block-heading) {
+	color: var(--gstore-color-text-primary) !important;
+}
+
+/* ========================================
+   HEADINGS EM CONTEXTOS ESPECÍFICOS DO TEMA
+   ======================================== */
+
+/* Remover qualquer herança de cor clara */
+main:not([class*="hero"]):not([class*="dark"]):not(.Gstore-header-shell) .wp-block-heading:not(.Gstore-header__logo-text *),
+section:not([class*="hero"]):not([class*="dark"]):not(.Gstore-header-shell):not(.Gstore-header):not(.Gstore-top-bar) .wp-block-heading {
+	color: var(--gstore-color-text-primary) !important;
+}
+
+/* ========================================
+   RESPONSIVIDADE
+   ======================================== */
+
+@media (max-width: 768px) {
+	.wp-block-heading.has-x-large-font-size {
+		font-size: var(--gstore-font-size-3xl);
+	}
+	
+	.wp-block-heading.has-large-font-size {
+		font-size: var(--gstore-font-size-2xl);
+	}
+}
+

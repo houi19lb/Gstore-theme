@@ -1,0 +1,258 @@
+/**
+ * ==========================================
+ * GSTORE PRODUCT CARD
+ * ==========================================
+ * Componente específico para cards de produtos
+ * (pode usar o card base como fundamento)
+ */
+
+/* ========================================
+   PRODUCT CARD BASE
+   ======================================== */
+
+.Gstore-product-card {
+	list-style: none !important;
+	margin: 0 !important;
+	padding: 0 !important;
+}
+
+.Gstore-product-card__inner {
+	position: relative;
+	background: var(--gstore-color-bg-light);
+	border-radius: var(--gstore-radius-base);
+	border: 1px solid var(--gstore-color-border);
+	display: flex;
+	flex-direction: column;
+	overflow: hidden;
+	box-shadow: var(--gstore-shadow-sm);
+	transition: all var(--gstore-transition-base);
+	height: 100%;
+	color: var(--gstore-color-text-primary);
+}
+
+.Gstore-product-card__inner:hover {
+	box-shadow: var(--gstore-shadow-md);
+	transform: translateY(-2px);
+}
+
+/* ========================================
+   ÁREA SUPERIOR - IMAGEM + BADGES
+   ======================================== */
+
+.Gstore-product-card__top {
+	padding: var(--gstore-spacing-6);
+	background: var(--gstore-color-bg-light);
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	min-height: 200px;
+	position: relative;
+	border-bottom: 2px solid #f0f0f0;
+}
+
+.Gstore-product-card__image {
+	width: 100%;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+}
+
+.Gstore-product-card__image-link {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 100%;
+	height: 100%;
+}
+
+.Gstore-product-card__image img {
+	width: 100%;
+	max-width: 200px;
+	border-radius: var(--gstore-radius-base);
+	object-fit: contain;
+}
+
+/* ========================================
+   BADGES
+   ======================================== */
+
+.Gstore-product-card__badge {
+	position: absolute;
+	top: var(--gstore-spacing-4);
+	left: var(--gstore-spacing-4);
+	background: var(--gstore-color-brass);
+	color: #ffffff;
+	padding: 6px 10px;
+	border-radius: var(--gstore-radius-base);
+	font-size: var(--gstore-font-size-xs);
+	font-weight: var(--gstore-font-weight-bold);
+	z-index: var(--gstore-z-dropdown);
+	text-transform: uppercase;
+	letter-spacing: 0.5px;
+	user-select: none;
+	box-shadow: var(--gstore-shadow-sm);
+}
+
+/* ========================================
+   BOTÃO DE FAVORITOS
+   ======================================== */
+
+.Gstore-product-card__favorite {
+	position: absolute;
+	top: var(--gstore-spacing-4);
+	right: var(--gstore-spacing-4);
+	width: 36px;
+	height: 36px;
+	border-radius: var(--gstore-radius-full);
+	border: 1.5px solid var(--gstore-color-border);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background: var(--gstore-color-bg-light);
+	color: var(--gstore-color-text-secondary);
+	cursor: pointer;
+	transition: transform var(--gstore-transition-fast), 
+	            border-color var(--gstore-transition-fast), 
+	            color var(--gstore-transition-fast);
+	box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+	z-index: var(--gstore-z-dropdown);
+}
+
+.Gstore-product-card__favorite:hover {
+	border-color: #ff4757;
+	color: #ff4757;
+	transform: scale(1.1);
+}
+
+.Gstore-product-card__favorite-icon {
+	font-size: 18px;
+	color: currentColor;
+	transition: color var(--gstore-transition-fast);
+}
+
+.Gstore-product-card__favorite.is-favorited {
+	background: var(--gstore-color-accent);
+	border-color: var(--gstore-color-accent);
+	color: #ffffff;
+}
+
+/* ========================================
+   CORPO DO CARD
+   ======================================== */
+
+.Gstore-product-card__body {
+	flex: 1;
+	display: flex;
+	flex-direction: column;
+}
+
+/* Área de Meta (Avaliação + Título) */
+.Gstore-product-card__meta {
+	background: var(--gstore-color-bg-card-meta);
+	padding: var(--gstore-spacing-4);
+	display: flex;
+	flex-direction: column;
+	gap: var(--gstore-spacing-2);
+	min-height: 80px;
+}
+
+.Gstore-product-card__rating {
+	display: flex;
+	align-items: center;
+	gap: var(--gstore-spacing-2);
+}
+
+.Gstore-product-card__title {
+	font-size: var(--gstore-font-size-base);
+	font-weight: var(--gstore-font-weight-semibold);
+	color: var(--gstore-color-text-primary);
+	margin: 0;
+	line-height: var(--gstore-line-height-tight);
+	display: -webkit-box;
+	-webkit-line-clamp: 2;
+	-webkit-box-orient: vertical;
+	overflow: hidden;
+}
+
+.Gstore-product-card__title a {
+	color: inherit;
+	text-decoration: none;
+	transition: color var(--gstore-transition-fast);
+}
+
+.Gstore-product-card__title a:hover {
+	color: var(--gstore-color-accent);
+}
+
+/* ========================================
+   BLOCO DE PREÇO
+   ======================================== */
+
+.Gstore-product-card__price {
+	background: var(--gstore-color-bg-light);
+	padding: var(--gstore-spacing-4);
+	border-top: 1px solid var(--gstore-color-border);
+}
+
+.Gstore-product-card__price-value {
+	font-size: var(--gstore-font-size-xl);
+	font-weight: var(--gstore-font-weight-bold);
+	color: var(--gstore-color-text-primary);
+}
+
+.Gstore-payment-label {
+	font-size: var(--gstore-font-size-xs);
+	font-weight: var(--gstore-font-weight-bold);
+	color: var(--gstore-color-accent);
+	text-transform: uppercase;
+	letter-spacing: var(--gstore-letter-spacing-wide);
+	margin-bottom: var(--gstore-spacing-2);
+}
+
+.Gstore-installment-text {
+	font-size: var(--gstore-font-size-sm);
+	color: var(--gstore-color-text-secondary);
+	margin-top: var(--gstore-spacing-2);
+}
+
+/* ========================================
+   RODAPÉ DO CARD
+   ======================================== */
+
+.Gstore-product-card__footer {
+	background: var(--gstore-color-bg-muted);
+	padding: var(--gstore-spacing-4);
+	border-top: 1px solid var(--gstore-color-border);
+}
+
+/* ========================================
+   RESPONSIVIDADE
+   ======================================== */
+
+@media (max-width: 640px) {
+	.Gstore-product-card__top {
+		min-height: 180px;
+		padding: var(--gstore-spacing-4);
+	}
+	
+	.Gstore-product-card__image img {
+		max-width: 150px;
+	}
+	
+	.Gstore-product-card__meta {
+		min-height: auto;
+		padding: var(--gstore-spacing-3);
+	}
+	
+	.Gstore-product-card__price {
+		padding: var(--gstore-spacing-3);
+	}
+	
+	.Gstore-product-card__price-value {
+		font-size: var(--gstore-font-size-lg);
+	}
+}
+
+
+
+

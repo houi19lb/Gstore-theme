@@ -1,0 +1,513 @@
+/**
+ * ==========================================
+ * GSTORE HOME LAYOUT
+ * ==========================================
+ * Estilos específicos da página inicial
+ */
+
+/* ========================================
+   HOME SHELL
+   ======================================== */
+
+.Gstore-home-shell {
+	width: 100%;
+	min-height: 100vh;
+}
+
+/* ========================================
+   HOME HERO
+   ======================================== */
+
+.Gstore-home-hero {
+	padding: clamp(var(--gstore-spacing-12), 8vw, var(--gstore-spacing-20)) 
+	         clamp(var(--gstore-spacing-4), 4vw, var(--gstore-spacing-12));
+	background: linear-gradient(135deg, var(--gstore-color-bg-dark) 0%, var(--gstore-color-bg-darker) 100%);
+	color: var(--gstore-color-text-light);
+	position: relative;
+	overflow: hidden;
+}
+
+.Gstore-home-hero__content {
+	max-width: var(--gstore-container-max-width);
+	margin: 0 auto;
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: clamp(var(--gstore-spacing-8), 5vw, var(--gstore-spacing-16));
+	align-items: center;
+}
+
+.Gstore-home-hero__text {
+	z-index: var(--gstore-z-base);
+}
+
+.Gstore-home-hero__eyebrow {
+	display: inline-block;
+	font-size: var(--gstore-font-size-sm);
+	font-weight: var(--gstore-font-weight-bold);
+	text-transform: uppercase;
+	letter-spacing: var(--gstore-letter-spacing-widest);
+	color: var(--gstore-color-accent-light);
+	margin-bottom: var(--gstore-spacing-4);
+}
+
+.Gstore-home-hero__title {
+	font-size: clamp(var(--gstore-font-size-3xl), 5vw, var(--gstore-font-size-5xl));
+	font-weight: var(--gstore-font-weight-bold);
+	line-height: var(--gstore-line-height-tight);
+	margin-bottom: var(--gstore-spacing-6);
+	color: var(--gstore-color-text-light);
+}
+
+.Gstore-home-hero__description {
+	font-size: clamp(var(--gstore-font-size-base), 2vw, var(--gstore-font-size-lg));
+	line-height: var(--gstore-line-height-relaxed);
+	color: var(--gstore-color-text-secondary);
+	margin-bottom: var(--gstore-spacing-8);
+}
+
+.Gstore-home-hero__actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--gstore-spacing-4);
+}
+
+.Gstore-home-hero__metrics {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--gstore-spacing-8);
+	margin-top: var(--gstore-spacing-8);
+}
+
+.Gstore-home-hero__metric {
+	display: flex;
+	flex-direction: column;
+	gap: var(--gstore-spacing-2);
+}
+
+.Gstore-home-hero__metric-value {
+	font-size: var(--gstore-font-size-3xl);
+	font-weight: var(--gstore-font-weight-bold);
+	color: var(--gstore-color-accent-light);
+}
+
+.Gstore-home-hero__metric-label {
+	font-size: var(--gstore-font-size-sm);
+	color: var(--gstore-color-text-secondary);
+	text-transform: uppercase;
+	letter-spacing: var(--gstore-letter-spacing-wide);
+}
+
+/* ========================================
+   HOME BENEFITS
+   ======================================== */
+
+.Gstore-home-benefits {
+	background-color: var(--gstore-color-bg-dark);
+	padding: var(--gstore-spacing-6) 0;
+}
+
+.Gstore-home-benefits__inner {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: space-between;
+	align-items: center;
+	gap: var(--gstore-spacing-6);
+	max-width: var(--gstore-container-max-width);
+	margin: 0 auto;
+	padding: 0 var(--gstore-container-padding-inline);
+}
+
+.Gstore-home-benefits__item {
+	display: flex;
+	align-items: center;
+	gap: var(--gstore-spacing-4);
+	flex: 1 1 auto;
+	min-width: 200px;
+}
+
+.Gstore-home-benefits__icon {
+	font-size: 26px;
+	color: var(--gstore-color-accent-light);
+	flex-shrink: 0;
+}
+
+.Gstore-home-benefits__content {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+}
+
+.Gstore-home-benefits__title {
+	margin: 0;
+	font-size: var(--gstore-font-size-base);
+	font-weight: var(--gstore-font-weight-bold);
+	text-transform: uppercase;
+	letter-spacing: var(--gstore-letter-spacing-wide);
+	color: var(--gstore-color-text-light);
+}
+
+.Gstore-home-benefits__subtitle {
+	margin: 0;
+	font-size: var(--gstore-font-size-sm);
+	color: rgba(255, 255, 255, 0.85);
+	text-transform: uppercase;
+	letter-spacing: var(--gstore-letter-spacing-wider);
+}
+
+/* ========================================
+   HOME PRODUCTS
+   ======================================== */
+
+.Gstore-home-products {
+	background: var(--gstore-color-bg-muted);
+	border-bottom: 1px solid var(--gstore-color-border);
+	padding: clamp(var(--gstore-spacing-8), 4vw, var(--gstore-spacing-16)) 0;
+}
+
+/* Garantir contraste para títulos na seção de produtos */
+.Gstore-home-products .wp-block-heading,
+.Gstore-home-products h1,
+.Gstore-home-products h2,
+.Gstore-home-products h3,
+.Gstore-home-section__header .wp-block-heading,
+.Gstore-home-section__header h1,
+.Gstore-home-section__header h2,
+.Gstore-home-section__header h3 {
+	color: var(--gstore-color-text-primary) !important;
+}
+
+.Gstore-home-products__filters {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--gstore-spacing-3);
+	margin-bottom: var(--gstore-spacing-8);
+	justify-content: center;
+}
+
+.Gstore-home-products__filters .wp-block-button__link {
+	border-radius: var(--gstore-radius-base);
+	padding: 10px 20px;
+	text-transform: uppercase;
+	font-size: var(--gstore-font-size-sm);
+	letter-spacing: var(--gstore-letter-spacing-widest);
+}
+
+.Gstore-home-products__filters .is-style-outline .wp-block-button__link {
+	border: 1px solid var(--gstore-color-border);
+	color: var(--gstore-color-text-primary);
+}
+
+.Gstore-home-products__filters .is-style-outline .wp-block-button__link:hover {
+	border-color: var(--gstore-color-accent);
+	color: var(--gstore-color-accent);
+}
+
+/* Botões "Ver mais" nas seções de produtos - Verde para harmonizar com botões "Adicionar ao carrinho" */
+.Gstore-home-section .wp-block-button.is-style-primary .wp-block-button__link,
+.Gstore-home-products .wp-block-button.is-style-primary .wp-block-button__link {
+	background: var(--green) !important;
+	color: #fff !important;
+	border: none !important;
+	box-shadow: none !important;
+	transition: background var(--gstore-transition-fast) !important;
+}
+
+.Gstore-home-section .wp-block-button.is-style-primary .wp-block-button__link:hover,
+.Gstore-home-products .wp-block-button.is-style-primary .wp-block-button__link:hover {
+	background: var(--green-dark) !important;
+	transform: none;
+	box-shadow: none !important;
+}
+
+.Gstore-home-section .wp-block-button.is-style-primary .wp-block-button__link:active,
+.Gstore-home-products .wp-block-button.is-style-primary .wp-block-button__link:active {
+	transform: none !important;
+}
+
+/* Título alinhado à esquerda com linha separadora (estilo Mercado Livre) */
+.Gstore-home-section__header--left {
+	text-align: left;
+	position: relative;
+	padding-left: 0;
+	padding-right: 0;
+}
+
+.Gstore-home-section__header--left .Gstore-home-section__title-wrapper {
+	display: flex;
+	align-items: center;
+	gap: 16px;
+	width: 100%;
+}
+
+.Gstore-home-section__header--left .wp-block-heading {
+	margin: 0;
+	flex-shrink: 0;
+	white-space: nowrap;
+	font-size: clamp(var(--gstore-font-size-lg), 2.5vw, var(--gstore-font-size-2xl));
+	font-weight: var(--gstore-font-weight-bold);
+}
+
+.Gstore-home-section__header--left .Gstore-home-section__separator {
+	flex: 1;
+	height: 1px;
+	background: var(--gstore-color-border, #e5e5e5);
+	opacity: 0.3;
+	min-width: 0;
+	position: relative;
+	top: 0.25em; /* Ajuste ótico para alinhar com caracteres minúsculos */
+}
+
+/* ========================================
+   HOME PRODUCTS CAROUSEL
+   ======================================== */
+
+.Gstore-products-grid--has-carousel {
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	gap: var(--gstore-spacing-4);
+}
+
+.Gstore-products-carousel__viewport {
+	width: 100%;
+}
+
+/* Container de controles de navegação */
+.Gstore-products-carousel__controls {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	gap: var(--gstore-spacing-3);
+	padding: var(--gstore-spacing-2) 0;
+	width: 100%;
+}
+
+.Gstore-products-carousel__button {
+	position: relative;
+	width: 40px;
+	height: 40px;
+	border-radius: 999px;
+	border: 1px solid var(--gstore-color-border);
+	background: rgba(255, 255, 255, 0.95);
+	backdrop-filter: blur(8px);
+	color: var(--gstore-color-text-primary);
+	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	cursor: pointer;
+	transition: all 0.2s ease;
+	flex-shrink: 0;
+}
+
+.Gstore-products-carousel__button:hover:not([disabled]) {
+	transform: scale(1.1);
+	background: rgba(255, 255, 255, 1);
+	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.Gstore-products-carousel__button:active:not([disabled]) {
+	transform: scale(0.95);
+}
+
+.Gstore-products-carousel__button[disabled] {
+	opacity: 0.3;
+	pointer-events: none;
+	cursor: not-allowed;
+}
+
+.Gstore-products-carousel__button--prev,
+.Gstore-products-carousel__button--next {
+	position: relative;
+	left: auto;
+	right: auto;
+}
+
+@media (min-width: 769px) {
+	.Gstore-products-carousel__controls {
+		display: none;
+	}
+}
+
+@media (max-width: 768px) {
+	.Gstore-home-section.Gstore-home-products {
+		width: 100%;
+		margin-left: 0;
+		margin-right: 0;
+		padding-left: 0;
+		padding-right: 0;
+	}
+
+	.Gstore-home-products .Gstore-home-section__header {
+		padding-left: clamp(var(--gstore-spacing-3), 4vw, var(--gstore-spacing-5));
+		padding-right: clamp(var(--gstore-spacing-3), 4vw, var(--gstore-spacing-5));
+	}
+
+	.Gstore-home-products .Gstore-products-grid {
+		padding-left: 0;
+		padding-right: 0;
+	}
+
+	.Gstore-products-grid--has-carousel {
+		padding-bottom: 0;
+	}
+
+	/* Full-bleed: escapa dos containers pai usando 100vw + margens negativas */
+	.Gstore-products-carousel__viewport {
+		width: 100vw;
+		position: relative;
+		left: 50%;
+		right: 50%;
+		margin-left: -50vw;
+		margin-right: -50vw;
+		overflow-x: auto;
+		scroll-snap-type: x mandatory;
+		-webkit-overflow-scrolling: touch;
+		padding-left: clamp(12px, 4vw, 20px);
+		padding-right: clamp(12px, 4vw, 20px);
+		scroll-padding-inline: calc((100vw - min(320px, 80vw)) / 2);
+		scrollbar-width: none;
+		box-sizing: border-box;
+	}
+
+	.Gstore-products-carousel__viewport::-webkit-scrollbar {
+		display: none;
+	}
+
+	.Gstore-products-carousel__viewport ul.products,
+	.Gstore-products-carousel__viewport ul.wc-block-product-template,
+	.Gstore-products-carousel__viewport .wc-block-product-template {
+		display: flex !important;
+		flex-wrap: nowrap;
+		gap: var(--gstore-spacing-4);
+		width: max-content;
+		list-style: none;
+		margin: 0;
+		padding: 0;
+	}
+
+	.Gstore-products-carousel__viewport ul.products > li.product,
+	.Gstore-products-carousel__viewport ul.wc-block-product-template > li,
+	.Gstore-products-carousel__viewport .wc-block-product-template > .wc-block-product {
+		flex: 0 0 min(320px, 80vw);
+		scroll-snap-align: center;
+		scroll-snap-stop: always;
+	}
+
+	.Gstore-products-carousel__viewport .Gstore-product-card__inner,
+	.Gstore-products-carousel__viewport .wc-block-product {
+		height: 100%;
+	}
+}
+
+/* ========================================
+   HOME BLOG
+   ======================================== */
+
+.Gstore-home-blog {
+	background: var(--gstore-color-bg-light);
+	border-radius: var(--gstore-radius-base);
+	border: 1px solid var(--gstore-color-border);
+	box-shadow: var(--gstore-shadow-sm);
+	padding: clamp(var(--gstore-spacing-8), 4vw, var(--gstore-spacing-16)) 0;
+}
+
+.Gstore-home-blog__query {
+	width: 100%;
+	display: flex;
+	flex-direction: column;
+	gap: var(--gstore-spacing-6);
+	max-width: var(--gstore-container-max-width);
+	margin: 0 auto;
+	padding: 0 var(--gstore-container-padding-inline);
+}
+
+.Gstore-home-blog__card {
+	background: var(--gstore-color-bg-muted);
+	border-radius: var(--gstore-radius-base);
+	border: 1px solid var(--gstore-color-border);
+	padding: var(--gstore-spacing-4);
+	box-shadow: var(--gstore-shadow-sm);
+	min-height: 100%;
+}
+
+.Gstore-home-blog__image img {
+	border-radius: var(--gstore-radius-base);
+	object-fit: cover;
+}
+
+.Gstore-home-blog__content {
+	gap: var(--gstore-spacing-3);
+	padding: var(--gstore-spacing-3) var(--gstore-spacing-1) 0;
+}
+
+.Gstore-home-blog__date {
+	font-size: var(--gstore-font-size-sm);
+	color: var(--gstore-color-text-secondary);
+	letter-spacing: var(--gstore-letter-spacing-widest);
+	text-transform: uppercase;
+}
+
+.Gstore-home-blog__title {
+	font-size: var(--gstore-font-size-xl);
+	font-weight: var(--gstore-font-weight-bold);
+	min-height: 56px;
+}
+
+.Gstore-home-blog__title a {
+	color: var(--gstore-color-text-primary);
+	text-decoration: none;
+}
+
+.Gstore-home-blog__title a:hover {
+	color: var(--gstore-color-accent);
+}
+
+.Gstore-home-blog__excerpt {
+	color: var(--gstore-color-text-secondary);
+	font-size: var(--gstore-font-size-sm);
+}
+
+/* ========================================
+   RESPONSIVIDADE
+   ======================================== */
+
+@media (max-width: 1024px) {
+	.Gstore-home-hero__content {
+		grid-template-columns: 1fr;
+		text-align: center;
+	}
+	
+	.Gstore-home-hero__actions {
+		justify-content: center;
+	}
+	
+	.Gstore-home-hero__metrics {
+		justify-content: center;
+	}
+}
+
+@media (max-width: 640px) {
+	.Gstore-home-hero__actions .wp-block-button__link {
+		width: 100%;
+		text-align: center;
+	}
+	
+	.Gstore-home-hero__metrics {
+		flex-direction: column;
+		gap: var(--gstore-spacing-4);
+	}
+	
+	.Gstore-home-blog__card {
+		padding: var(--gstore-spacing-4);
+	}
+	
+	.Gstore-home-section__header--left .Gstore-home-section__title-wrapper {
+		gap: 12px;
+	}
+	
+	.Gstore-home-section__header--left .wp-block-heading {
+		font-size: var(--gstore-font-size-lg);
+	}
+}
+

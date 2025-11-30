@@ -1,0 +1,112 @@
+<!-- wp:template-part {"slug":"header","area":"header"} /-->
+
+<!-- wp:group {"tagName":"main","className":"Gstore-catalog-shell Gstore-catalog-shell--light","layout":{"type":"constrained"}} -->
+<main class="wp-block-group Gstore-catalog-shell Gstore-catalog-shell--light">
+	<!-- wp:group {"align":"wide","className":"Gstore-catalog-container","layout":{"type":"constrained"}} -->
+	<div class="wp-block-group alignwide Gstore-catalog-container">
+		<!-- wp:group {"className":"Gstore-catalog-header","layout":{"type":"flex","flexWrap":"nowrap","justifyContent":"space-between","verticalAlignment":"center"}} -->
+		<div class="wp-block-group Gstore-catalog-header">
+			<!-- wp:heading {"level":1,"className":"Gstore-catalog-title"} -->
+			<h1 class="wp-block-heading Gstore-catalog-title">Catálogo</h1>
+			<!-- /wp:heading -->
+
+			<!-- wp:group {"className":"Gstore-catalog-header__actions","layout":{"type":"flex","flexWrap":"nowrap","verticalAlignment":"center"}} -->
+			<div class="wp-block-group Gstore-catalog-header__actions">
+				<!-- wp:group {"className":"Gstore-catalog-breadcrumb","layout":{"type":"flex","flexWrap":"nowrap"}} -->
+				<div class="wp-block-group Gstore-catalog-breadcrumb">
+					<!-- wp:html -->
+					<nav class="Gstore-breadcrumb" aria-label="Navegação">
+						<a href="/">Início</a>
+						<span class="Gstore-breadcrumb__separator">/</span>
+						<span class="Gstore-breadcrumb__current">Catálogo</span>
+					</nav>
+					<!-- /wp:html -->
+				</div>
+				<!-- /wp:group -->
+
+				<!-- wp:html -->
+				<button class="Gstore-catalog-filters-toggle" aria-label="Abrir filtros" aria-expanded="false">
+					<svg class="Gstore-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+						<path d="M3 6h18M7 12h10M11 18h2"/>
+					</svg>
+					<span>Filtros</span>
+				</button>
+				<!-- /wp:html -->
+			</div>
+			<!-- /wp:group -->
+		</div>
+		<!-- /wp:group -->
+
+		<!-- wp:columns {"align":"wide","className":"Gstore-catalog-layout","style":{"spacing":{"blockGap":{"top":"var:preset|spacing|40","left":"var:preset|spacing|40"}}}} -->
+		<div class="wp-block-columns alignwide Gstore-catalog-layout">
+			<!-- wp:column {"width":"260px","className":"Gstore-catalog-sidebar"} -->
+			<div class="wp-block-column Gstore-catalog-sidebar" style="flex-basis:260px">
+				<!-- wp:group {"className":"Gstore-catalog-sidebar__inner Gstore-catalog-sidebar__inner--collapsible"} -->
+				<div class="wp-block-group Gstore-catalog-sidebar__inner Gstore-catalog-sidebar__inner--collapsible">
+					<!-- wp:group {"className":"Gstore-catalog-sidebar__title-wrapper","layout":{"type":"flex","flexWrap":"nowrap","justifyContent":"space-between"}} -->
+					<div class="wp-block-group Gstore-catalog-sidebar__title-wrapper">
+						<!-- wp:heading {"level":3,"className":"Gstore-catalog-sidebar__title"} -->
+						<h3 class="wp-block-heading Gstore-catalog-sidebar__title">Filtros</h3>
+						<!-- /wp:heading -->
+						
+						<!-- wp:html -->
+						<button class="Gstore-catalog-sidebar__close" aria-label="Fechar filtros">
+							<svg class="Gstore-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+								<path d="M18 6L6 18M6 6l12 12"/>
+							</svg>
+						</button>
+						<!-- /wp:html -->
+					</div>
+					<!-- /wp:group -->
+
+					<!-- wp:search {"label":"Buscar produtos","showLabel":false,"placeholder":"Buscar produtos...","buttonText":"Buscar","buttonUseIcon":true,"className":"Gstore-catalog-search"} /-->
+
+					<!-- wp:spacer {"height":"20px"} -->
+					<div style="height:20px" aria-hidden="true" class="wp-block-spacer"></div>
+					<!-- /wp:spacer -->
+
+					<!-- wp:group {"className":"Gstore-catalog-filter-section"} -->
+					<div class="wp-block-group Gstore-catalog-filter-section">
+						<!-- wp:heading {"level":4,"className":"Gstore-catalog-sidebar__subtitle"} -->
+						<h4 class="wp-block-heading Gstore-catalog-sidebar__subtitle">Categorias</h4>
+						<!-- /wp:heading -->
+						<!-- wp:woocommerce/product-categories {"isDropdown":false,"showCounts":true,"showHierarchy":true} /-->
+					</div>
+					<!-- /wp:group -->
+
+					<!-- wp:spacer {"height":"16px"} -->
+					<div style="height:16px" aria-hidden="true" class="wp-block-spacer"></div>
+					<!-- /wp:spacer -->
+
+					<!-- wp:group {"className":"Gstore-catalog-filter-section"} -->
+					<div class="wp-block-group Gstore-catalog-filter-section">
+						<!-- wp:heading {"level":4,"className":"Gstore-catalog-sidebar__subtitle"} -->
+						<h4 class="wp-block-heading Gstore-catalog-sidebar__subtitle">Faixa de Preço</h4>
+						<!-- /wp:heading -->
+						<!-- wp:woocommerce/price-filter {"heading":""} /-->
+					</div>
+					<!-- /wp:group -->
+				</div>
+				<!-- /wp:group -->
+			</div>
+			<!-- /wp:column -->
+
+			<!-- wp:column {"className":"Gstore-catalog-content"} -->
+			<div class="wp-block-column Gstore-catalog-content">
+				<!-- wp:group {"className":"Gstore-products-grid Gstore-products-grid--light"} -->
+				<div class="wp-block-group Gstore-products-grid Gstore-products-grid--light">
+					<!-- wp:shortcode -->
+					[products limit="12" columns="3" paginate="true"]
+					<!-- /wp:shortcode -->
+				</div>
+				<!-- /wp:group -->
+			</div>
+			<!-- /wp:column -->
+		</div>
+		<!-- /wp:columns -->
+	</div>
+	<!-- /wp:group -->
+</main>
+<!-- /wp:group -->
+
+<!-- wp:template-part {"slug":"footer","area":"footer"} /-->

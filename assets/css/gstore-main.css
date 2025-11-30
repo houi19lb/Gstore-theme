@@ -1,0 +1,79 @@
+/**
+ * ==========================================
+ * GSTORE MAIN STYLESHEET
+ * ==========================================
+ * Arquivo principal que importa todos os módulos CSS
+ * de forma organizada e hierárquica.
+ * 
+ * Ordem de importação:
+ * 1. Tokens (variáveis CSS)
+ * 2. Base (reset, normalização)
+ * 3. Utilities (classes utilitárias)
+ * 4. Responsive (sistema responsivo)
+ * 5. Components (componentes reutilizáveis)
+ * 6. Layouts (layouts específicos)
+ */
+
+/* ========================================
+   1. TOKENS
+   ======================================== */
+@import url('./tokens.css');
+
+/* ========================================
+   2. BASE
+   ======================================== */
+@import url('./base.css');
+
+/* ========================================
+   3. UTILITIES
+   ======================================== */
+@import url('./utilities.css');
+
+/* ========================================
+   4. RESPONSIVE
+   ======================================== */
+@import url('./responsive.css');
+
+/* ========================================
+   5. COMPONENTS
+   ======================================== */
+@import url('./components/typography.css');
+@import url('./components/buttons.css');
+@import url('./components/cards.css');
+@import url('./components/product-card.css');
+@import url('./components/mini-cart.css');
+
+/* ========================================
+   6. LAYOUTS
+   ======================================== */
+@import url('./layouts/header.css');
+@import url('./layouts/home.css');
+@import url('./my-account.css');
+
+/* ========================================
+   ESTILOS LEGADOS (Compatibilidade)
+   ======================================== */
+
+/**
+ * Mantém compatibilidade com estilos existentes
+ * que ainda não foram migrados para os módulos
+ */
+
+/* Bridge block theme wrappers */
+.wp-block-group.alignfull {
+	width: 100%;
+	max-width: none;
+}
+
+/* Remove espaçamentos automáticos entre blocos dentro da home */
+.Gstore-home-shell .wp-block-group,
+.Gstore-home-shell .wp-block-group > * {
+	margin-block-start: 0;
+	margin-block-end: 0;
+}
+
+/* Mantém o espaçamento entre header da seção e o grid de produtos */
+.Gstore-home-shell .Gstore-home-section__header.wp-block-group {
+	margin-block-end: clamp(32px, 5vw, 56px) !important;
+}
+

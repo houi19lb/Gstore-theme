@@ -1,0 +1,2007 @@
+/**
+ * Checkout em 3 Etapas - Gstore
+ * 
+ * Design System:
+ * - Bordas: 4px
+ * - Accent: #FF8C5C (accent para steppers/títulos)
+ * - Verde: #5a8900 (botões de ação/continuar)
+ * - Background: #f5f5f2 (base do tema)
+ * - Texto: #111111 (foreground)
+ */
+
+/* ===========================================
+   VARIÁVEIS CSS
+   =========================================== */
+:root {
+	--gstore-brass: #FF8C5C;
+	--gstore-brass-dark: #CC4A00;
+	--gstore-green: #5a8900;
+	--gstore-green-hover: #4b7600;
+	--gstore-base: #f5f5f2;
+	--gstore-foreground: #111111;
+	--gstore-muted: #d7d7d2;
+	--gstore-border-radius: 4px;
+	--gstore-card-bg: #ffffff;
+	--gstore-text-muted: #6b7280;
+	--gstore-shadow-sm: none;
+	--gstore-shadow-md: none;
+}
+
+/* ===========================================
+   HEADER MINIMALISTA DO CHECKOUT
+   =========================================== */
+.Gstore-checkout-header {
+	background: var(--gstore-card-bg);
+	border-bottom: 1px solid var(--gstore-muted);
+	padding: 16px 24px;
+}
+
+.Gstore-checkout-header__inner {
+	max-width: 1000px;
+	margin: 0 auto;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 24px;
+}
+
+.Gstore-checkout-header__logo {
+	margin: 0 !important;
+}
+
+.Gstore-checkout-header__logo a {
+	font-size: 1.25rem;
+	font-weight: 700;
+	color: var(--gstore-foreground);
+	text-decoration: none;
+	text-transform: uppercase;
+	letter-spacing: 0.08em;
+}
+
+.Gstore-checkout-header__secure {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	color: var(--gstore-green);
+	font-size: 0.85rem;
+}
+
+.Gstore-checkout-header__secure i {
+	font-size: 1rem;
+}
+
+.Gstore-checkout-header__secure-text {
+	margin: 0;
+	font-weight: 600;
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+}
+
+/* ===========================================
+   FOOTER MINIMALISTA DO CHECKOUT
+   =========================================== */
+.Gstore-checkout-footer {
+	background: var(--gstore-card-bg);
+	border-top: 1px solid var(--gstore-muted);
+	padding: 24px;
+	margin-top: auto;
+}
+
+.Gstore-checkout-footer__inner {
+	max-width: 1000px;
+	margin: 0 auto;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 8px;
+	text-align: center;
+}
+
+.Gstore-checkout-footer__copyright {
+	margin: 0;
+	font-size: 0.8rem;
+	color: var(--gstore-text-muted);
+}
+
+.Gstore-checkout-footer__links {
+	margin: 0;
+	font-size: 0.75rem;
+}
+
+.Gstore-checkout-footer__links a {
+	color: var(--gstore-text-muted);
+	text-decoration: none;
+	transition: color 0.2s ease;
+}
+
+.Gstore-checkout-footer__links a:hover {
+	color: var(--gstore-foreground);
+	text-decoration: underline;
+}
+
+/* Layout do body para checkout */
+body.woocommerce-checkout {
+	display: flex;
+	flex-direction: column;
+	min-height: 100vh;
+}
+
+body.woocommerce-checkout .Gstore-checkout-steps-shell {
+	flex: 1;
+}
+
+/* ===========================================
+   SHELL DO CHECKOUT
+   =========================================== */
+.Gstore-checkout-steps-shell {
+	background: var(--gstore-base);
+	padding: clamp(24px, 4vw, 48px) clamp(16px, 4vw, 32px);
+	min-height: 100vh;
+}
+
+.Gstore-checkout-steps-shell *,
+.Gstore-checkout-steps-shell *::before,
+.Gstore-checkout-steps-shell *::after {
+	box-sizing: border-box;
+}
+
+/* Container principal */
+.Gstore-checkout-steps {
+	max-width: 1000px;
+	margin: 0 auto;
+	display: flex;
+	flex-direction: column;
+	gap: 24px;
+}
+
+/* ===========================================
+   RESUMO DO PEDIDO - TOPO (STICKY)
+   =========================================== */
+.Gstore-checkout-summary-top {
+	background: var(--gstore-card-bg);
+	border: 1px solid var(--gstore-muted);
+	border-radius: var(--gstore-border-radius);
+	padding: 20px 24px;
+	position: sticky;
+	top: 16px;
+	z-index: 100;
+	box-shadow: none;
+}
+
+.Gstore-checkout-summary-top__inner {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 24px;
+	flex-wrap: wrap;
+}
+
+.Gstore-checkout-summary-top__info {
+	display: flex;
+	align-items: center;
+	gap: 16px;
+}
+
+.Gstore-checkout-summary-top__icon {
+	width: 44px;
+	height: 44px;
+	background: linear-gradient(135deg, var(--gstore-brass), var(--gstore-brass-dark));
+	border-radius: var(--gstore-border-radius);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	color: #fff;
+	font-size: 1.1rem;
+}
+
+.Gstore-checkout-summary-top__text h2 {
+	margin: 0 0 2px;
+	font-size: 1rem;
+	font-weight: 700;
+	color: var(--gstore-foreground);
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+}
+
+.Gstore-checkout-summary-top__text p {
+	margin: 0;
+	font-size: 0.85rem;
+	color: var(--gstore-text-muted);
+}
+
+.Gstore-checkout-summary-top__actions {
+	margin-left: auto;
+	display: inline-flex;
+	align-items: center;
+	gap: 16px;
+}
+
+.Gstore-checkout-summary-top__total-amount {
+	font-size: 1.5rem;
+	font-weight: 800;
+	color: var(--gstore-foreground);
+}
+
+.Gstore-checkout-summary-top__actions-divider {
+	width: 1px;
+	height: 28px;
+	background: var(--gstore-muted);
+	display: block;
+}
+
+.Gstore-checkout-summary-top__toggle {
+	background: transparent;
+	border: 1px solid var(--gstore-muted);
+	border-radius: var(--gstore-border-radius);
+	padding: 8px 16px;
+	font-size: 0.8rem;
+	font-weight: 600;
+	color: var(--gstore-brass-dark);
+	cursor: pointer;
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	transition: all 0.2s ease;
+}
+
+.Gstore-checkout-summary-top__toggle:hover {
+	background: var(--gstore-base);
+	border-color: var(--gstore-brass);
+}
+
+.Gstore-checkout-summary-top__toggle i {
+	transition: transform 0.2s ease;
+}
+
+.Gstore-checkout-summary-top__toggle.is-open i {
+	transform: rotate(180deg);
+}
+
+/* Detalhes expandíveis */
+.Gstore-checkout-summary-top__details {
+	display: none;
+	margin-top: 20px;
+	padding-top: 20px;
+	border-top: 1px solid var(--gstore-muted);
+}
+
+.Gstore-checkout-summary-top__details.is-visible {
+	display: block;
+}
+
+.Gstore-checkout-summary-top__items {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+	margin-bottom: 16px;
+}
+
+.Gstore-summary-item {
+	display: grid;
+	grid-template-columns: 56px 1fr auto;
+	gap: 12px;
+	align-items: center;
+	padding: 12px;
+	background: var(--gstore-base);
+	border-radius: var(--gstore-border-radius);
+}
+
+.Gstore-summary-item__image {
+	width: 56px;
+	height: 56px;
+	border-radius: var(--gstore-border-radius);
+	object-fit: cover;
+	background: var(--gstore-muted);
+}
+
+.Gstore-summary-item__info h4 {
+	margin: 0 0 4px;
+	font-size: 0.9rem;
+	font-weight: 600;
+	color: var(--gstore-foreground);
+}
+
+.Gstore-summary-item__info span {
+	font-size: 0.8rem;
+	color: var(--gstore-text-muted);
+}
+
+.Gstore-summary-item__price {
+	font-size: 0.95rem;
+	font-weight: 700;
+	color: var(--gstore-foreground);
+	text-align: right;
+}
+
+.Gstore-checkout-summary-top__totals {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	padding-top: 16px;
+	border-top: 1px solid var(--gstore-muted);
+}
+
+.Gstore-summary-row {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	font-size: 0.9rem;
+}
+
+.Gstore-summary-row span:first-child {
+	color: var(--gstore-text-muted);
+}
+
+.Gstore-summary-row span:last-child {
+	font-weight: 600;
+	color: var(--gstore-foreground);
+}
+
+.Gstore-summary-row--total {
+	padding-top: 12px;
+	margin-top: 8px;
+	border-top: 2px solid var(--gstore-foreground);
+}
+
+.Gstore-summary-row--total span:first-child {
+	font-size: 0.95rem;
+	font-weight: 700;
+	color: var(--gstore-foreground);
+	text-transform: uppercase;
+}
+
+.Gstore-summary-row--total span:last-child {
+	font-size: 1.25rem;
+	font-weight: 800;
+}
+
+/* ===========================================
+   STEPPER - INDICADOR DE ETAPAS
+   =========================================== */
+.Gstore-checkout-stepper {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 0;
+	padding: 24px 0;
+}
+
+.Gstore-checkout-stepper__step {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	cursor: pointer;
+	border: none;
+	background: transparent;
+	padding: 0;
+	transition: all 0.2s ease;
+}
+
+.Gstore-checkout-stepper__step:hover .Gstore-checkout-stepper__number {
+	transform: scale(1.05);
+}
+
+.Gstore-checkout-stepper__number {
+	width: 40px;
+	height: 40px;
+	border-radius: 50%;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-size: 0.9rem;
+	font-weight: 700;
+	transition: all 0.3s ease;
+	border: 2px solid var(--gstore-muted);
+	background: var(--gstore-card-bg);
+	color: var(--gstore-text-muted);
+}
+
+.Gstore-checkout-stepper__label {
+	font-size: 0.85rem;
+	font-weight: 600;
+	color: var(--gstore-text-muted);
+	transition: color 0.2s ease;
+}
+
+/* Estado: Etapa Ativa */
+.Gstore-checkout-stepper__step.is-active .Gstore-checkout-stepper__number {
+	background: linear-gradient(135deg, var(--gstore-brass), var(--gstore-brass-dark));
+	border-color: var(--gstore-brass);
+	color: #fff;
+	box-shadow: none;
+}
+
+.Gstore-checkout-stepper__step.is-active .Gstore-checkout-stepper__label {
+	color: var(--gstore-foreground);
+}
+
+/* Estado: Etapa Completa */
+.Gstore-checkout-stepper__step.is-complete .Gstore-checkout-stepper__number {
+	background: var(--gstore-green);
+	border-color: var(--gstore-green);
+	color: #fff;
+}
+
+.Gstore-checkout-stepper__step.is-complete .Gstore-checkout-stepper__number::before {
+	content: '\f00c';
+	font-family: 'Font Awesome 6 Free';
+	font-weight: 900;
+}
+
+.Gstore-checkout-stepper__step.is-complete .Gstore-checkout-stepper__number span {
+	display: none;
+}
+
+.Gstore-checkout-stepper__step.is-complete .Gstore-checkout-stepper__label {
+	color: var(--gstore-green);
+}
+
+/* Linha conectora entre etapas */
+.Gstore-checkout-stepper__connector {
+	width: 60px;
+	height: 2px;
+	background: var(--gstore-muted);
+	margin: 0 12px;
+	transition: background 0.3s ease;
+}
+
+.Gstore-checkout-stepper__connector.is-complete {
+	background: var(--gstore-green);
+}
+
+/* ===========================================
+   CONTAINER DAS ETAPAS
+   =========================================== */
+.Gstore-checkout-steps__content {
+	background: var(--gstore-card-bg);
+	border: 1px solid var(--gstore-muted);
+	border-radius: var(--gstore-border-radius);
+	overflow: hidden;
+}
+
+/* Painel de cada etapa */
+.Gstore-checkout-step {
+	display: none;
+	padding: clamp(24px, 4vw, 40px);
+	animation: fadeIn 0.3s ease;
+}
+
+.Gstore-checkout-step.is-active {
+	display: block;
+}
+
+@keyframes fadeIn {
+	from {
+		opacity: 0;
+		transform: translateY(10px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
+/* Cabeçalho da etapa */
+.Gstore-checkout-step__header {
+	margin-bottom: 32px;
+	padding-bottom: 20px;
+	border-bottom: 1px solid var(--gstore-muted);
+}
+
+.Gstore-checkout-step__eyebrow {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	font-size: 0.7rem;
+	text-transform: uppercase;
+	letter-spacing: 0.15em;
+	color: var(--gstore-brass);
+	font-weight: 600;
+	margin-bottom: 8px;
+}
+
+.Gstore-checkout-step__eyebrow i {
+	font-size: 0.8rem;
+}
+
+.Gstore-checkout-step__title {
+	margin: 0 0 8px;
+	font-size: clamp(1.3rem, 3vw, 1.75rem);
+	font-weight: 700;
+	color: var(--gstore-foreground);
+}
+
+.Gstore-checkout-step__description {
+	margin: 0;
+	font-size: 0.95rem;
+	color: var(--gstore-text-muted);
+	max-width: 600px;
+}
+
+/* ===========================================
+   FORMULÁRIO - CAMPOS
+   =========================================== */
+.Gstore-checkout-step__fields {
+	display: grid;
+	grid-template-columns: 1fr;
+	gap: 16px;
+}
+
+@media (min-width: 640px) {
+	.Gstore-checkout-step__fields {
+		grid-template-columns: repeat(2, 1fr);
+		gap: 16px 20px;
+	}
+	
+	.Gstore-checkout-step__fields .field-full {
+		grid-column: 1 / -1;
+	}
+}
+
+.Gstore-field {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+}
+
+.Gstore-field label {
+	font-size: 0.85rem;
+	font-weight: 600;
+	color: var(--gstore-foreground);
+}
+
+.Gstore-field label .required {
+	color: #dc2626;
+	margin-left: 2px;
+}
+
+.Gstore-field input,
+.Gstore-field select,
+.Gstore-field textarea {
+	width: 100%;
+	padding: 14px 16px;
+	font-size: 0.95rem;
+	border: 1px solid var(--gstore-muted);
+	border-radius: var(--gstore-border-radius);
+	background: var(--gstore-card-bg);
+	color: var(--gstore-foreground);
+	transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.Gstore-field input:focus,
+.Gstore-field select:focus,
+.Gstore-field textarea:focus {
+	outline: none;
+	border-color: var(--gstore-brass);
+	box-shadow: none;
+}
+
+.Gstore-field input::placeholder {
+	color: #9ca3af;
+}
+
+.Gstore-field--error input,
+.Gstore-field--error select {
+	border-color: #dc2626;
+}
+
+.Gstore-field__error {
+	font-size: 0.8rem;
+	color: #dc2626;
+	display: none;
+}
+
+.Gstore-field--error .Gstore-field__error {
+	display: block;
+}
+
+/* ===========================================
+   SEÇÕES DENTRO DAS ETAPAS
+   =========================================== */
+.Gstore-checkout-section {
+	margin-bottom: 32px;
+}
+
+.Gstore-checkout-section:last-child {
+	margin-bottom: 0;
+}
+
+.Gstore-checkout-section__title {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	font-size: 0.8rem;
+	text-transform: uppercase;
+	letter-spacing: 0.1em;
+	font-weight: 700;
+	color: var(--gstore-foreground);
+	margin-bottom: 20px;
+	padding-bottom: 12px;
+	border-bottom: 1px solid var(--gstore-muted);
+}
+
+.Gstore-checkout-section__title i {
+	color: var(--gstore-brass);
+	font-size: 1rem;
+}
+
+/* ===========================================
+   OPÇÕES DE ENVIO
+   =========================================== */
+.Gstore-shipping-options {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+}
+
+.Gstore-shipping-option {
+	display: flex;
+	align-items: center;
+	gap: 16px;
+	padding: 16px 20px;
+	border: 1px solid var(--gstore-muted);
+	border-radius: var(--gstore-border-radius);
+	cursor: pointer;
+	transition: all 0.2s ease;
+	background: var(--gstore-card-bg);
+}
+
+.Gstore-shipping-option:hover {
+	border-color: var(--gstore-brass);
+	background: rgba(201, 184, 140, 0.05);
+}
+
+.Gstore-shipping-option.is-selected {
+	border-color: var(--gstore-green);
+	background: rgba(90, 137, 0, 0.05);
+}
+
+.Gstore-shipping-option input[type="radio"] {
+	width: 20px;
+	height: 20px;
+	accent-color: var(--gstore-green);
+}
+
+.Gstore-shipping-option__info {
+	flex: 1;
+}
+
+.Gstore-shipping-option__name {
+	font-weight: 600;
+	color: var(--gstore-foreground);
+	margin-bottom: 2px;
+}
+
+.Gstore-shipping-option__time {
+	font-size: 0.85rem;
+	color: var(--gstore-text-muted);
+}
+
+.Gstore-shipping-option__price {
+	font-size: 1rem;
+	font-weight: 700;
+	color: var(--gstore-foreground);
+}
+
+/* ===========================================
+   ETAPA 3: PAGAMENTO - LAYOUT ESPECIAL
+   =========================================== */
+
+/* Container de pagamento usa flexbox para reordenar elementos - APENAS quando ativo */
+.Gstore-checkout-step[data-step="payment"].is-active {
+	display: flex;
+	flex-direction: column;
+}
+
+.Gstore-checkout-step[data-step="payment"] .Gstore-checkout-step__header {
+	order: 1;
+}
+
+.Gstore-checkout-step[data-step="payment"] .Gstore-checkout-step__fields {
+	order: 2;
+}
+
+/* Container de pagamento (observações + métodos) */
+.Gstore-checkout-step[data-step="payment"] .Gstore-checkout-step__payment-container {
+	order: 3;
+}
+
+/* Botão Voltar vai para baixo, próximo do Finalizar Pedido */
+.Gstore-checkout-step[data-step="payment"] .Gstore-checkout-step__actions--payment {
+	order: 4;
+	margin-top: 16px;
+	padding-top: 0;
+	border-top: none;
+}
+
+/* Garantias vão por último */
+.Gstore-checkout-step[data-step="payment"] .Gstore-checkout-assurance {
+	order: 5;
+}
+
+/* ===========================================
+   MÉTODOS DE PAGAMENTO
+   =========================================== */
+.Gstore-payment-methods {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+}
+
+.Gstore-payment-method {
+	border: 1px solid var(--gstore-muted);
+	border-radius: var(--gstore-border-radius);
+	overflow: hidden;
+	transition: all 0.2s ease;
+}
+
+.Gstore-payment-method:hover {
+	border-color: var(--gstore-brass);
+}
+
+.Gstore-payment-method.is-selected {
+	border-color: var(--gstore-green);
+}
+
+.Gstore-payment-method__header {
+	display: flex;
+	align-items: center;
+	gap: 16px;
+	padding: 16px 20px;
+	cursor: pointer;
+	background: var(--gstore-card-bg);
+}
+
+.Gstore-payment-method.is-selected .Gstore-payment-method__header {
+	background: rgba(90, 137, 0, 0.05);
+}
+
+.Gstore-payment-method__header input[type="radio"] {
+	width: 20px;
+	height: 20px;
+	accent-color: var(--gstore-green);
+}
+
+.Gstore-payment-method__icon {
+	width: 40px;
+	height: 40px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background: var(--gstore-base);
+	border-radius: var(--gstore-border-radius);
+	color: var(--gstore-brass);
+	font-size: 1.1rem;
+}
+
+.Gstore-payment-method__info {
+	flex: 1;
+}
+
+.Gstore-payment-method__name {
+	font-weight: 600;
+	color: var(--gstore-foreground);
+	margin-bottom: 2px;
+}
+
+.Gstore-payment-method__description {
+	font-size: 0.85rem;
+	color: var(--gstore-text-muted);
+}
+
+.Gstore-payment-method__content {
+	display: none;
+	padding: 20px;
+	background: var(--gstore-base);
+	border-top: 1px solid var(--gstore-muted);
+}
+
+.Gstore-payment-method.is-selected .Gstore-payment-method__content {
+	display: block;
+}
+
+/* ===========================================
+   NAVEGAÇÃO ENTRE ETAPAS
+   =========================================== */
+.Gstore-checkout-step__actions {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 16px;
+	margin-top: 40px;
+	padding-top: 24px;
+	border-top: 1px solid var(--gstore-muted);
+	flex-wrap: wrap;
+}
+
+.Gstore-checkout-steps-shell .Gstore-btn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 10px;
+	padding: 14px 28px;
+	font-size: 0.9rem;
+	font-weight: 700;
+	text-transform: uppercase;
+	letter-spacing: 0.06em;
+	border-radius: var(--gstore-border-radius);
+	cursor: pointer;
+	transition: all 0.2s ease;
+	border: none;
+}
+
+/* Botão Voltar */
+.Gstore-checkout-steps-shell .Gstore-btn--back {
+	background: transparent;
+	border: 1px solid var(--gstore-muted);
+	color: var(--gstore-text-muted);
+}
+
+.Gstore-checkout-steps-shell .Gstore-btn--back:hover {
+	border-color: var(--gstore-foreground);
+	color: var(--gstore-foreground);
+}
+
+/* Botão Continuar (Verde) */
+.Gstore-checkout-steps-shell .Gstore-btn--continue {
+	background: var(--gstore-green);
+	color: #fff;
+	box-shadow: none;
+}
+
+.Gstore-checkout-steps-shell .Gstore-btn--continue:hover {
+	background: var(--gstore-green-hover);
+	transform: translateY(-1px);
+	box-shadow: none;
+}
+
+.Gstore-checkout-steps-shell .Gstore-btn--continue:active {
+	transform: translateY(0);
+}
+
+/* Botão Finalizar (Verde maior) */
+.Gstore-checkout-steps-shell .Gstore-btn--submit {
+	background: var(--gstore-green);
+	color: #fff;
+	font-size: 1rem;
+	padding: 18px 40px;
+	width: 100%;
+	box-shadow: none;
+}
+
+.Gstore-checkout-steps-shell .Gstore-btn--submit:hover {
+	background: var(--gstore-green-hover);
+	transform: translateY(-2px);
+	box-shadow: none;
+}
+
+.Gstore-checkout-steps-shell .Gstore-btn:disabled {
+	opacity: 0.6;
+	cursor: not-allowed;
+	transform: none !important;
+	box-shadow: none !important;
+}
+
+/* ===========================================
+   GARANTIAS / ASSURANCE
+   =========================================== */
+.Gstore-checkout-assurance {
+	display: grid;
+	grid-template-columns: repeat(2, 1fr);
+	gap: 12px;
+	margin-top: 24px;
+	padding-top: 20px;
+	border-top: 1px solid var(--gstore-muted);
+}
+
+.Gstore-assurance-card {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	padding: 12px;
+	background: var(--gstore-base);
+	border-radius: var(--gstore-border-radius);
+}
+
+.Gstore-assurance-card i {
+	font-size: 1.25rem;
+	color: var(--gstore-brass);
+}
+
+.Gstore-assurance-card__text strong {
+	display: block;
+	font-size: 0.8rem;
+	font-weight: 600;
+	color: var(--gstore-foreground);
+	margin-bottom: 2px;
+}
+
+.Gstore-assurance-card__text span {
+	font-size: 0.75rem;
+	color: var(--gstore-text-muted);
+}
+
+/* ===========================================
+   MENSAGEM DE SUCESSO / ETAPA FINAL
+   =========================================== */
+.Gstore-checkout-success {
+	text-align: center;
+	padding: 48px 24px;
+}
+
+.Gstore-checkout-success__icon {
+	width: 80px;
+	height: 80px;
+	margin: 0 auto 24px;
+	background: var(--gstore-green);
+	border-radius: 50%;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	color: #fff;
+	font-size: 2rem;
+}
+
+.Gstore-checkout-success h2 {
+	font-size: 1.75rem;
+	font-weight: 700;
+	color: var(--gstore-foreground);
+	margin: 0 0 12px;
+}
+
+.Gstore-checkout-success p {
+	font-size: 1rem;
+	color: var(--gstore-text-muted);
+	max-width: 500px;
+	margin: 0 auto;
+}
+
+/* ===========================================
+   RESPONSIVIDADE
+   =========================================== */
+@media (max-width: 768px) {
+	.Gstore-checkout-summary-top__inner {
+		flex-direction: column;
+		align-items: stretch;
+		gap: 20px;
+	}
+	
+	.Gstore-checkout-summary-top__info {
+		flex-direction: row;
+		align-items: center;
+		gap: 12px;
+	}
+
+	.Gstore-checkout-summary-top__icon {
+		flex-shrink: 0;
+	}
+
+	.Gstore-checkout-summary-top__text {
+		flex: 1;
+	}
+	
+	.Gstore-checkout-summary-top__actions {
+		width: 100%;
+		margin-left: 0;
+		display: flex;
+		flex-direction: column;
+		align-items: flex-start;
+		gap: 12px;
+		border-top: none;
+		padding-top: 0;
+	}
+	
+	.Gstore-checkout-summary-top__actions-divider {
+		display: none;
+	}
+	
+	.Gstore-checkout-stepper {
+		flex-direction: row;
+		justify-content: space-between;
+		gap: 12px;
+		padding: 16px 8px;
+		overflow-x: auto;
+		scrollbar-width: none;
+		-webkit-overflow-scrolling: touch;
+	}
+	
+	.Gstore-checkout-stepper::-webkit-scrollbar {
+		display: none;
+	}
+	
+	.Gstore-checkout-stepper__connector {
+		width: 32px;
+		height: 2px;
+		margin: 0 4px;
+		flex-shrink: 0;
+	}
+	
+	.Gstore-checkout-stepper__step {
+		flex-direction: column;
+		align-items: center;
+		gap: 6px;
+		width: auto;
+		justify-content: center;
+		padding: 0;
+		background: transparent;
+		border-radius: 0;
+	}
+	
+	.Gstore-checkout-stepper__label {
+		text-align: center;
+		white-space: nowrap;
+	}
+	
+	.Gstore-checkout-step__actions {
+		flex-direction: column;
+	}
+	
+	.Gstore-checkout-steps-shell .Gstore-btn--back {
+		order: 1;
+		width: 100%;
+	}
+	
+	.Gstore-checkout-steps-shell .Gstore-btn--continue {
+		width: 100%;
+		padding: 18px 32px;
+		font-size: 1rem;
+	}
+	
+	.Gstore-checkout-assurance {
+		grid-template-columns: 1fr;
+	}
+	
+	.Gstore-summary-item {
+		grid-template-columns: 48px 1fr;
+	}
+	
+	.Gstore-summary-item__price {
+		grid-column: 2;
+		text-align: left;
+		margin-top: 4px;
+	}
+}
+
+@media (max-width: 480px) {
+	.Gstore-checkout-steps-shell {
+		padding: 16px;
+	}
+	
+	.Gstore-checkout-step {
+		padding: 20px;
+	}
+	
+	.Gstore-checkout-stepper__label {
+		font-size: 0.8rem;
+	}
+	
+	.Gstore-checkout-stepper__number {
+		width: 36px;
+		height: 36px;
+		font-size: 0.85rem;
+	}
+	
+	/* Header/Footer mobile */
+	.Gstore-checkout-header {
+		padding: 12px 16px;
+	}
+	
+	.Gstore-checkout-header__logo a {
+		font-size: 1rem;
+	}
+	
+	.Gstore-checkout-header__secure-text {
+		display: none;
+	}
+	
+	.Gstore-checkout-footer {
+		padding: 20px 16px;
+	}
+}
+
+/* ===========================================
+   INTEGRAÇÃO COM WOOCOMMERCE
+   =========================================== */
+
+/* Mantém o formulário funcional mas reorganizado */
+.Gstore-checkout-steps-shell .Gstore-checkout {
+	display: none !important;
+}
+
+/* Form wrapper - visível apenas quando JS não carregou */
+.Gstore-checkout-steps-shell form.checkout.woocommerce-checkout {
+	max-width: 1000px;
+	margin: 0 auto;
+}
+
+/* Reset estilos WooCommerce dentro dos steps */
+.Gstore-checkout-step .woocommerce-billing-fields,
+.Gstore-checkout-step .woocommerce-shipping-fields,
+.Gstore-checkout-step .woocommerce-additional-fields {
+	background: transparent;
+	border: none;
+	padding: 0;
+	margin: 0;
+}
+
+.Gstore-checkout-step .woocommerce-billing-fields__field-wrapper,
+.Gstore-checkout-step .woocommerce-shipping-fields__field-wrapper {
+	display: grid;
+	grid-template-columns: repeat(2, 1fr);
+	gap: 16px 20px;
+}
+
+@media (max-width: 640px) {
+	.Gstore-checkout-step .woocommerce-billing-fields__field-wrapper,
+	.Gstore-checkout-step .woocommerce-shipping-fields__field-wrapper {
+		grid-template-columns: 1fr;
+	}
+}
+
+.Gstore-checkout-step .form-row {
+	margin: 0;
+	padding: 0;
+}
+
+.Gstore-checkout-step .form-row-wide {
+	grid-column: 1 / -1;
+}
+
+.Gstore-checkout-step .form-row-first,
+.Gstore-checkout-step .form-row-last {
+	grid-column: span 1;
+}
+
+.Gstore-checkout-step .form-row label {
+	font-size: 0.85rem;
+	font-weight: 600;
+	color: var(--gstore-foreground);
+	margin-bottom: 6px;
+	display: block;
+}
+
+.Gstore-checkout-step .form-row input.input-text,
+.Gstore-checkout-step .form-row select {
+	width: 100%;
+	padding: 14px 16px;
+	font-size: 0.95rem;
+	border: 1px solid var(--gstore-muted);
+	border-radius: var(--gstore-border-radius);
+	background: var(--gstore-card-bg);
+	color: var(--gstore-foreground);
+	transition: border-color 0.2s ease, box-shadow 0.2s ease;
+	min-height: 48px;
+}
+
+.Gstore-checkout-step .form-row input.input-text:focus,
+.Gstore-checkout-step .form-row select:focus {
+	outline: none;
+	border-color: var(--gstore-brass);
+	box-shadow: none;
+}
+
+/* Esconde títulos padrão do WooCommerce nos steps */
+.Gstore-checkout-step .woocommerce-billing-fields > h3,
+.Gstore-checkout-step .woocommerce-shipping-fields > h3,
+.Gstore-checkout-step .woocommerce-additional-fields > h3,
+.Gstore-checkout-step #order_review_heading {
+	display: none !important;
+}
+
+/* Estilo para métodos de pagamento WooCommerce */
+.Gstore-checkout-step #payment {
+	background: transparent;
+	border: none;
+	padding: 0;
+	margin-top: 16px;
+}
+
+.Gstore-checkout-step #payment .payment_methods,
+.woocommerce-checkout .Gstore-checkout-step #payment ul.payment_methods {
+	margin: 0;
+	padding: 0 !important;
+	list-style: none;
+	border: none;
+	border-bottom: none !important;
+	background: transparent;
+}
+
+/* Remove padding padrão do WooCommerce no form-row do payment */
+.Gstore-checkout-step #payment div.form-row,
+.woocommerce-checkout .Gstore-checkout-step #payment div.form-row {
+	padding: 0 !important;
+}
+
+.Gstore-checkout-step #payment .payment_methods li {
+	border: 1px solid var(--gstore-muted);
+	border-radius: var(--gstore-border-radius);
+	margin-bottom: 0;
+	overflow: hidden;
+	background: var(--gstore-card-bg);
+}
+
+.Gstore-checkout-step #payment .payment_methods li label {
+	display: block;
+	padding: 12px 16px;
+	cursor: pointer;
+	font-weight: 600;
+	font-size: 0.95rem;
+	color: var(--gstore-foreground);
+	margin: 0;
+	background: transparent;
+}
+
+.Gstore-checkout-step #payment .payment_methods li input[type="radio"] {
+	display: none;
+}
+
+/* Remove estilo de tooltip/seta do payment_box */
+.Gstore-checkout-step #payment .payment_box {
+	padding: 12px 16px;
+	background: var(--gstore-base);
+	border-top: none;
+	margin: 0;
+	border-radius: 0 0 var(--gstore-border-radius) var(--gstore-border-radius);
+	font-size: 0.85rem;
+	color: var(--gstore-text-muted);
+	line-height: 1.4;
+}
+
+/* Remove ::before que cria a seta do tooltip */
+.Gstore-checkout-step #payment .payment_box::before,
+.Gstore-checkout-step #payment .payment_box::after {
+	display: none !important;
+	content: none !important;
+}
+
+.Gstore-checkout-step #payment .payment_box p {
+	margin: 0;
+}
+
+/* Botão de finalizar pedido */
+.Gstore-checkout-step #payment .place-order {
+	margin-top: 16px;
+	padding: 0;
+}
+
+.Gstore-checkout-step #payment #place_order {
+	width: 100%;
+	background: var(--gstore-green) !important;
+	border: none !important;
+	border-radius: var(--gstore-border-radius) !important;
+	color: #fff !important;
+	font-weight: 700 !important;
+	font-size: 1rem !important;
+	padding: 18px 40px !important;
+	text-transform: uppercase;
+	letter-spacing: 0.06em;
+	box-shadow: none !important;
+	cursor: pointer;
+	transition: all 0.2s ease !important;
+}
+
+.Gstore-checkout-step #payment #place_order:hover {
+	background: var(--gstore-green-hover) !important;
+	transform: translateY(-2px);
+	box-shadow: none !important;
+}
+
+/* ===========================================
+   CAMPOS DO WOOCOMMERCE NAS ETAPAS
+   =========================================== */
+
+/* Grid de campos */
+.Gstore-checkout-step__fields {
+	display: grid;
+	grid-template-columns: repeat(2, 1fr);
+	gap: 16px 20px;
+}
+
+@media (max-width: 640px) {
+	.Gstore-checkout-step__fields {
+		grid-template-columns: 1fr;
+	}
+}
+
+/* Campos WooCommerce */
+.Gstore-checkout-step__fields .form-row {
+	margin: 0;
+	padding: 0;
+}
+
+.Gstore-checkout-step__fields .form-row-wide {
+	grid-column: 1 / -1;
+}
+
+.Gstore-checkout-step__fields .form-row-first {
+	grid-column: 1;
+}
+
+.Gstore-checkout-step__fields .form-row-last {
+	grid-column: 2;
+}
+
+@media (max-width: 640px) {
+	.Gstore-checkout-step__fields .form-row-first,
+	.Gstore-checkout-step__fields .form-row-last {
+		grid-column: 1;
+	}
+}
+
+/* Labels dos campos */
+.Gstore-checkout-step__fields label {
+	display: block;
+	font-size: 0.85rem;
+	font-weight: 600;
+	color: var(--gstore-foreground);
+	margin-bottom: 8px;
+}
+
+.Gstore-checkout-step__fields label .required {
+	color: #dc2626;
+	margin-left: 2px;
+}
+
+.Gstore-checkout-step__fields label .optional {
+	font-weight: 400;
+	color: var(--gstore-text-muted);
+	font-size: 0.8rem;
+}
+
+/* Inputs */
+.Gstore-checkout-step__fields .input-text,
+.Gstore-checkout-step__fields select,
+.Gstore-checkout-step__fields textarea {
+	width: 100%;
+	padding: 14px 16px;
+	font-size: 0.95rem;
+	border: 1px solid var(--gstore-muted);
+	border-radius: var(--gstore-border-radius);
+	background: var(--gstore-card-bg);
+	color: var(--gstore-foreground);
+	transition: border-color 0.2s ease, box-shadow 0.2s ease;
+	min-height: 48px;
+}
+
+.Gstore-checkout-step__fields .input-text:focus,
+.Gstore-checkout-step__fields select:focus,
+.Gstore-checkout-step__fields textarea:focus {
+	outline: none;
+	border-color: var(--gstore-brass);
+	box-shadow: none;
+}
+
+/* Campo inválido */
+.Gstore-checkout-step__fields .woocommerce-invalid .input-text,
+.Gstore-checkout-step__fields .woocommerce-invalid select {
+	border-color: #dc2626;
+}
+
+.Gstore-checkout-step__fields .woocommerce-invalid .input-text:focus,
+.Gstore-checkout-step__fields .woocommerce-invalid select:focus {
+	box-shadow: none;
+}
+
+/* Select2 (se usado) */
+.Gstore-checkout-step__fields .select2-container {
+	width: 100% !important;
+}
+
+.Gstore-checkout-step__fields .select2-container--default .select2-selection--single {
+	height: 48px;
+	border: 1px solid var(--gstore-muted);
+	border-radius: var(--gstore-border-radius);
+	padding: 10px 16px;
+}
+
+.Gstore-checkout-step__fields .select2-container--default .select2-selection--single .select2-selection__rendered {
+	line-height: 26px;
+	color: var(--gstore-foreground);
+}
+
+.Gstore-checkout-step__fields .select2-container--default .select2-selection--single .select2-selection__arrow {
+	height: 46px;
+}
+
+/* Seções dentro das etapas */
+.Gstore-checkout-step__fields .Gstore-checkout-section {
+	grid-column: 1 / -1;
+	margin-top: 24px;
+	padding-top: 24px;
+	border-top: 1px solid var(--gstore-muted);
+}
+
+.Gstore-checkout-step__fields .Gstore-checkout-section:first-child {
+	margin-top: 0;
+	padding-top: 0;
+	border-top: none;
+}
+
+/* Campos adicionais (notas do pedido) */
+.Gstore-checkout-step .woocommerce-additional-fields {
+	margin-bottom: 0;
+	padding: 0;
+}
+
+.Gstore-checkout-step .woocommerce-additional-fields__field-wrapper {
+	display: block;
+}
+
+.Gstore-checkout-step .woocommerce-additional-fields h3 {
+	display: none !important;
+}
+
+/* Label das observações */
+.Gstore-checkout-step .woocommerce-additional-fields label {
+	font-size: 0.85rem;
+	font-weight: 600;
+	color: var(--gstore-foreground);
+	display: block;
+	margin-bottom: 8px;
+}
+
+.Gstore-checkout-step .woocommerce-additional-fields textarea {
+	min-height: 100px;
+	resize: vertical;
+	border-radius: var(--gstore-border-radius) !important;
+	width: 100%;
+	padding: 14px 16px;
+	font-size: 0.95rem;
+	border: 1px solid var(--gstore-muted);
+	background: var(--gstore-card-bg);
+	color: var(--gstore-foreground);
+	transition: border-color 0.2s ease;
+}
+
+.Gstore-checkout-step .woocommerce-additional-fields textarea:focus {
+	outline: none;
+	border-color: var(--gstore-brass);
+}
+
+/* ===========================================
+   NOTIFICAÇÕES
+   =========================================== */
+.Gstore-checkout-step .woocommerce-notice,
+.Gstore-checkout-step .woocommerce-error,
+.Gstore-checkout-step .woocommerce-message,
+.Gstore-checkout-step .woocommerce-info {
+	padding: 16px 20px;
+	border-radius: var(--gstore-border-radius);
+	margin-bottom: 20px;
+	font-size: 0.95rem;
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	position: relative;
+}
+
+/* Corrige sobreposição do ícone ::before em elementos com role="alert" */
+.Gstore-checkout-step .woocommerce-error[role="alert"],
+.Gstore-checkout-step .woocommerce-message[role="alert"],
+.Gstore-checkout-step .woocommerce-info[role="alert"] {
+	padding-left: 3.5rem;
+}
+
+.Gstore-checkout-step .woocommerce-error[role="alert"]::before,
+.Gstore-checkout-step .woocommerce-message[role="alert"]::before,
+.Gstore-checkout-step .woocommerce-info[role="alert"]::before {
+	position: absolute;
+	left: 1.25rem;
+	top: 50%;
+	transform: translateY(-50%);
+	margin-right: 0;
+}
+
+.Gstore-checkout-step .woocommerce-error {
+	background: #fef2f2;
+	border: 1px solid #fecaca;
+	color: #991b1b;
+}
+
+.Gstore-checkout-step .woocommerce-message {
+	background: #ecfdf5;
+	border: 1px solid #a7f3d0;
+	color: #065f46;
+}
+
+.Gstore-checkout-step .woocommerce-info {
+	background: #eef2ff;
+	border: 1px solid #c7d2fe;
+	color: #312e81;
+}
+
+/* ===========================================
+   AJUSTES FINAIS DE BORDAS (4px)
+   =========================================== */
+.Gstore-checkout-summary-top,
+.Gstore-checkout-steps__content,
+.Gstore-checkout-step__fields .input-text,
+.Gstore-checkout-step__fields select,
+.Gstore-checkout-step__fields textarea,
+.Gstore-summary-item,
+.Gstore-assurance-card,
+.Gstore-shipping-option,
+.Gstore-payment-method,
+.Gstore-checkout-step .woocommerce-notice,
+.Gstore-checkout-step #payment .payment_methods li {
+	border-radius: var(--gstore-border-radius) !important;
+}
+
+/* Botões com 4px */
+.Gstore-checkout-steps-shell .Gstore-btn,
+.Gstore-checkout-step #payment #place_order {
+	border-radius: var(--gstore-border-radius) !important;
+}
+
+/* ===========================================
+   RESUMO DOS DADOS DO CLIENTE
+   =========================================== */
+.Gstore-checkout-review {
+	display: grid;
+	grid-template-columns: repeat(2, 1fr);
+	gap: 16px;
+	margin-bottom: 24px;
+}
+
+.Gstore-checkout-review__section {
+	background: var(--gstore-base);
+	border: 1px solid var(--gstore-muted);
+	border-radius: var(--gstore-border-radius);
+	padding: 16px;
+}
+
+.Gstore-checkout-review__header {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	margin-bottom: 12px;
+	padding-bottom: 10px;
+	border-bottom: 1px solid var(--gstore-muted);
+}
+
+.Gstore-checkout-review__header i {
+	color: var(--gstore-brass);
+	font-size: 0.9rem;
+}
+
+.Gstore-checkout-review__header span {
+	flex: 1;
+	font-weight: 600;
+	font-size: 0.85rem;
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+	color: var(--gstore-foreground);
+}
+
+.Gstore-checkout-review__edit {
+	background: transparent;
+	border: none;
+	color: var(--gstore-brass-dark);
+	font-size: 0.75rem;
+	font-weight: 600;
+	cursor: pointer;
+	display: flex;
+	align-items: center;
+	gap: 4px;
+	padding: 4px 8px;
+	border-radius: var(--gstore-border-radius);
+	transition: all 0.2s ease;
+}
+
+.Gstore-checkout-review__edit:hover {
+	background: rgba(201, 184, 140, 0.15);
+	color: var(--gstore-brass);
+}
+
+.Gstore-checkout-review__content {
+	font-size: 0.9rem;
+	color: var(--gstore-foreground);
+	line-height: 1.5;
+}
+
+.Gstore-checkout-review__content p {
+	margin: 0 0 4px;
+}
+
+.Gstore-checkout-review__content p:last-child {
+	margin-bottom: 0;
+}
+
+.Gstore-checkout-review__empty {
+	color: var(--gstore-text-muted);
+	font-style: italic;
+}
+
+@media (max-width: 640px) {
+	.Gstore-checkout-review {
+		grid-template-columns: 1fr;
+	}
+}
+
+/* ===========================================
+   TOGGLE DE OBSERVAÇÕES
+   =========================================== */
+.Gstore-checkout-notes-toggle {
+	margin-bottom: 24px;
+	background: var(--gstore-base);
+	border: 1px solid var(--gstore-muted);
+	border-radius: var(--gstore-border-radius);
+	padding: 14px 16px;
+}
+
+.Gstore-toggle {
+	position: relative;
+	display: flex !important;
+	flex-direction: row !important;
+	flex-wrap: nowrap !important;
+	align-items: center !important;
+	justify-content: space-between !important;
+	gap: 12px;
+	cursor: pointer;
+	user-select: none;
+}
+
+.Gstore-toggle input,
+.Gstore-toggle input[type="checkbox"] {
+	position: absolute !important;
+	width: 0 !important;
+	height: 0 !important;
+	opacity: 0 !important;
+	pointer-events: none !important;
+}
+
+.Gstore-toggle__slider {
+	position: relative;
+	display: inline-block !important;
+	width: 36px !important;
+	min-width: 36px !important;
+	height: 20px !important;
+	min-height: 20px !important;
+	background: #d7d7d2 !important;
+	border-radius: 10px !important;
+	transition: all 0.2s ease;
+	flex-shrink: 0;
+	vertical-align: middle;
+}
+
+.Gstore-toggle__slider::after {
+	content: '' !important;
+	display: block !important;
+	position: absolute !important;
+	top: 2px !important;
+	left: 2px !important;
+	width: 16px !important;
+	height: 16px !important;
+	background: #ffffff !important;
+	border-radius: 50% !important;
+	transition: all 0.2s ease;
+	box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+
+.Gstore-toggle input:checked ~ .Gstore-toggle__slider {
+	background: var(--gstore-green) !important;
+}
+
+.Gstore-toggle input:checked ~ .Gstore-toggle__slider::after {
+	left: 18px !important;
+}
+
+.Gstore-toggle__label {
+	font-size: 0.9rem;
+	font-weight: 500;
+	color: var(--gstore-foreground);
+	flex: 1;
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+
+.Gstore-toggle__label::before {
+	content: '\f249';
+	font-family: 'Font Awesome 6 Free';
+	font-weight: 400;
+	color: var(--gstore-brass);
+}
+
+.Gstore-checkout-notes-container {
+	margin-top: 16px;
+	padding-top: 16px;
+	border-top: 1px solid var(--gstore-muted);
+}
+
+/* ===========================================
+   CARD DE PAGAMENTO BLU - TEMA AZUL PREMIUM
+   =========================================== */
+:root {
+	--blu-primary: #1a56db;
+	--blu-primary-dark: #1e40af;
+	--blu-primary-light: #dbeafe;
+	--blu-accent: #3b82f6;
+	--blu-gradient: linear-gradient(135deg, #1a56db 0%, #1e40af 50%, #1e3a8a 100%);
+	--blu-gradient-light: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+}
+
+.Gstore-checkout-step #payment .payment_methods li.payment_method_blu_checkout {
+	border: 1px solid rgba(26, 86, 219, 0.15);
+	background: #fff;
+	position: relative;
+	overflow: hidden;
+	box-shadow: none;
+}
+
+/* Borda gradiente simulada */
+.Gstore-checkout-step #payment .payment_methods li.payment_method_blu_checkout::before {
+	content: '';
+	position: absolute;
+	inset: -2px;
+	background: var(--blu-gradient);
+	border-radius: calc(var(--gstore-border-radius) + 2px);
+	z-index: -1;
+}
+
+/* Header do card com gradiente */
+.Gstore-checkout-step #payment .payment_methods li.payment_method_blu_checkout label {
+	padding: 20px;
+	font-weight: 700;
+	color: #fff;
+	font-size: 1rem;
+	background: var(--blu-gradient);
+	border-radius: var(--gstore-border-radius) var(--gstore-border-radius) 0 0;
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	position: relative;
+}
+
+/* Ícone do Blu */
+.Gstore-checkout-step #payment .payment_methods li.payment_method_blu_checkout label::before {
+	content: '\f3ed';
+	font-family: 'Font Awesome 6 Free';
+	font-weight: 900;
+	font-size: 1.4rem;
+	background: rgba(255,255,255,0.2);
+	width: 44px;
+	height: 44px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	border-radius: 10px;
+}
+
+/* Badge de verificado */
+.Gstore-checkout-step #payment .payment_methods li.payment_method_blu_checkout label::after {
+	content: '\f058';
+	font-family: 'Font Awesome 6 Free';
+	font-weight: 900;
+	margin-left: auto;
+	font-size: 1.2rem;
+	opacity: 0.9;
+}
+
+.Gstore-checkout-step #payment .payment_methods li.payment_method_blu_checkout .payment_box {
+	background: #fff;
+	border-top: none;
+	padding: 20px;
+	border-radius: 0 0 var(--gstore-border-radius) var(--gstore-border-radius);
+}
+
+.Gstore-checkout-step #payment .payment_methods li.payment_method_blu_checkout .payment_box p {
+	color: var(--gstore-foreground);
+	font-size: 0.9rem;
+	margin: 0 0 16px;
+	line-height: 1.6;
+	padding-left: 32px;
+	position: relative;
+}
+
+.Gstore-checkout-step #payment .payment_methods li.payment_method_blu_checkout .payment_box p::before {
+	content: '\f3c5';
+	font-family: 'Font Awesome 6 Free';
+	font-weight: 900;
+	position: absolute;
+	left: 0;
+	top: 0;
+	color: var(--blu-accent);
+	font-size: 1.1rem;
+}
+
+/* Badges de confiança dentro do card Blu */
+.Gstore-blu-trust-badges {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	padding-top: 16px;
+	border-top: 1px dashed rgba(26, 86, 219, 0.2);
+}
+
+.Gstore-blu-trust-badge {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	font-size: 0.75rem;
+	font-weight: 600;
+	color: var(--blu-primary-dark);
+	background: var(--blu-primary-light);
+	padding: 8px 12px;
+	border-radius: 20px;
+	transition: all 0.2s ease;
+}
+
+.Gstore-blu-trust-badge:hover {
+	background: var(--blu-primary);
+	color: #fff;
+}
+
+.Gstore-blu-trust-badge:hover i {
+	color: #fff;
+}
+
+.Gstore-blu-trust-badge i {
+	color: var(--blu-accent);
+	font-size: 0.85rem;
+}
+
+/* ===========================================
+   MODAL DE PROCESSAMENTO
+   =========================================== */
+.Gstore-processing-modal {
+	position: fixed;
+	inset: 0;
+	z-index: 99999;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	opacity: 0;
+	visibility: hidden;
+	transition: all 0.3s ease;
+}
+
+.Gstore-processing-modal.is-visible {
+	opacity: 1;
+	visibility: visible;
+}
+
+.Gstore-processing-modal__backdrop {
+	position: absolute;
+	inset: 0;
+	background: rgba(0, 0, 0, 0.7);
+	backdrop-filter: blur(4px);
+}
+
+.Gstore-processing-modal__content {
+	position: relative;
+	background: #fff;
+	border-radius: 4px;
+	padding: 48px 40px;
+	max-width: 420px;
+	width: 90%;
+	text-align: center;
+	box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+	transform: scale(0.9) translateY(20px);
+	transition: transform 0.3s ease;
+}
+
+.Gstore-processing-modal.is-visible .Gstore-processing-modal__content {
+	transform: scale(1) translateY(0);
+}
+
+.Gstore-processing-modal__spinner {
+	margin-bottom: 24px;
+}
+
+/* Spinner animado */
+.Gstore-spinner {
+	width: 64px;
+	height: 64px;
+	border: 4px solid #e5e7eb;
+	border-top-color: var(--gstore-green, #5a8900);
+	border-radius: 50%;
+	animation: gstore-spin 1s linear infinite;
+	margin: 0 auto;
+}
+
+@keyframes gstore-spin {
+	to {
+		transform: rotate(360deg);
+	}
+}
+
+/* Ícone de sucesso */
+.Gstore-success-icon {
+	font-size: 64px;
+	color: var(--gstore-green, #5a8900);
+	animation: gstore-success-pop 0.4s ease;
+}
+
+@keyframes gstore-success-pop {
+	0% {
+		transform: scale(0);
+		opacity: 0;
+	}
+	50% {
+		transform: scale(1.2);
+	}
+	100% {
+		transform: scale(1);
+		opacity: 1;
+	}
+}
+
+.Gstore-processing-modal__text h3 {
+	margin: 0 0 8px 0;
+	font-size: 1.5rem;
+	font-weight: 700;
+	color: #111827;
+}
+
+.Gstore-processing-modal__text p {
+	margin: 0;
+	font-size: 0.95rem;
+	color: #6b7280;
+}
+
+/* Passos do processamento */
+.Gstore-processing-modal__steps {
+	margin-top: 32px;
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+	text-align: left;
+}
+
+.Gstore-processing-step {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	padding: 12px 16px;
+	background: #f9fafb;
+	border-radius: 4px;
+	font-size: 0.9rem;
+	color: #9ca3af;
+	transition: all 0.3s ease;
+}
+
+.Gstore-processing-step i {
+	font-size: 1.1rem;
+	width: 20px;
+	text-align: center;
+}
+
+.Gstore-processing-step.is-active {
+	background: #f0fdf4;
+	color: #166534;
+}
+
+.Gstore-processing-step.is-active i {
+	color: var(--gstore-green, #5a8900);
+}
+
+.Gstore-processing-step.is-complete {
+	background: #f0fdf4;
+	color: #166534;
+}
+
+.Gstore-processing-step.is-complete i {
+	color: var(--gstore-green, #5a8900);
+}
+
+/* Responsivo */
+@media (max-width: 480px) {
+	.Gstore-processing-modal__content {
+		padding: 32px 24px;
+	}
+	
+	.Gstore-processing-modal__text h3 {
+		font-size: 1.25rem;
+	}
+	
+	.Gstore-spinner {
+		width: 48px;
+		height: 48px;
+	}
+	
+	.Gstore-success-icon {
+		font-size: 48px;
+	}
+}
+

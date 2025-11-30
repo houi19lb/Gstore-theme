@@ -1,0 +1,130 @@
+{
+	"$schema": "https://schemas.wp.org/wp/6.6/theme.json",
+	"version": 3,
+	"templateParts": [
+		{
+			"name": "header",
+			"title": "Header",
+			"area": "header"
+		},
+		{
+			"name": "footer",
+			"title": "Footer",
+			"area": "footer"
+		},
+		{
+			"name": "home-hero",
+			"title": "Home Hero",
+			"area": "uncategorized"
+		},
+		{
+			"name": "home-products",
+			"title": "Home Products",
+			"area": "uncategorized"
+		},
+		{
+			"name": "home-blog",
+			"title": "Home Blog",
+			"area": "uncategorized"
+		}
+	],
+	"settings": {
+		"appearanceTools": true,
+		"custom": {
+			"gstore": {
+				"description": "Configurações base do child theme Gstore focadas em WooCommerce."
+			}
+		},
+		"color": {
+			"palette": [
+				{
+					"name": "Fundo",
+					"slug": "base",
+					"color": "#f5f5f2"
+				},
+				{
+					"name": "Texto",
+					"slug": "foreground",
+					"color": "#111111"
+				},
+				{
+					"name": "Acento positivo",
+					"slug": "accent",
+					"color": "#FF5C00"
+				},
+				{
+					"name": "Neutral",
+					"slug": "muted",
+					"color": "#d7d7d2"
+				}
+			],
+			"defaultPalette": false,
+			"defaultGradients": false
+		},
+		"layout": {
+			"contentSize": "720px",
+			"wideSize": "1280px"
+		},
+		"spacing": {
+			"units": [
+				"px",
+				"em",
+				"rem",
+				"vw"
+			]
+		},
+		"typography": {
+			"fontFamilies": [
+				{
+					"fontFamily": "\"Inter\", \"Helvetica Neue\", Helvetica, Arial, sans-serif",
+					"name": "Inter",
+					"slug": "inter"
+				}
+			],
+			"defaultFontSizes": false,
+			"fluid": true
+		}
+	},
+	"styles": {
+		"color": {
+			"background": "var(--wp--preset--color--base)",
+			"text": "var(--wp--preset--color--foreground)"
+		},
+		"elements": {
+			"button": {
+				"border": {
+					"radius": "4px",
+					"width": "0"
+				},
+				"color": {
+					"background": "var(--wp--preset--color--accent)",
+					"text": "#ffffff"
+				}
+			}
+		},
+		"blocks": {
+			"core/button": {
+				"border": {
+					"radius": "4px",
+					"style": "solid",
+					"width": "0"
+				},
+				"color": {
+					"background": "var(--wp--preset--color--accent)",
+					"text": "#ffffff"
+				},
+				"typography": {
+					"fontWeight": "600",
+					"textTransform": "none"
+				}
+			},
+			"core/site-title": {
+				"typography": {
+					"textTransform": "uppercase",
+					"letterSpacing": "0.08em"
+				}
+			}
+		}
+	}
+}
+

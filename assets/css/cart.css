@@ -1,0 +1,911 @@
+/**
+ * ==========================================
+ * GSTORE CART PAGE STYLES - REFATORADO
+ * ==========================================
+ * 
+ * Abordagem: CSS Isolation para evitar interferências do WordPress
+ * 
+ * Estratégia:
+ * 1. Isolation via contain: layout style
+ * 2. Reset específico com :where() para baixa especificidade
+ * 3. Container centralizado igual ao header (1280px)
+ * 4. Variáveis CSS para consistência
+ */
+
+/* ==========================================
+   VARIÁVEIS DO CARRINHO
+   ========================================== */
+:root {
+	--gstore-cart-container-width: 1280px;
+	--gstore-cart-padding-inline: 20px;
+	--gstore-cart-bg: #ffffff;
+	--gstore-cart-accent: #FF5C00;
+	--gstore-cart-accent-hover: #E65000;
+	--gstore-cart-text: #1a1a1a;
+	--gstore-cart-text-muted: #6b7280;
+	--gstore-cart-border: #e5e7eb;
+	--gstore-cart-radius: 6px;
+	--gstore-cart-green: #5a8900;
+	--gstore-cart-green-hover: #4f7900;
+}
+
+/* ==========================================
+   RESET E ISOLATION DO WORDPRESS
+   ==========================================
+   Usando :where() para baixa especificidade e evitar !important
+   O WordPress Block Theme adiciona padding/margin via:
+   - .is-layout-constrained
+   - .wp-block-group-is-layout-constrained
+   - --wp--style--root--padding-*
+*/
+
+/* Remove padding do body quando está na página do carrinho */
+body.woocommerce-cart,
+body.gstore-cart-template {
+	--wp--style--root--padding-left: 0;
+	--wp--style--root--padding-right: 0;
+	--wp--style--root--padding-top: 0;
+	--wp--style--root--padding-bottom: 0;
+}
+
+/* Main da página do carrinho - reset completo */
+main.Gstore-cart-page,
+main[data-page="cart"] {
+	display: block;
+	width: 100%;
+	max-width: none;
+	margin: 0;
+	padding: 0;
+	background: var(--gstore-cart-bg, #ffffff);
+}
+
+/* Esconde título da página que o WordPress insere */
+body.woocommerce-cart .wp-block-post-title,
+body.gstore-cart-template .wp-block-post-title,
+body:has(.Gstore-cart-shell) .wp-block-post-title {
+	display: none !important;
+}
+
+/* Reset do wrapper principal - alta especificidade */
+body.woocommerce-cart main,
+body.gstore-cart-template main,
+body.woocommerce-cart .wp-site-blocks > main,
+body.gstore-cart-template .wp-site-blocks > main,
+body.woocommerce-cart .entry-content,
+body.gstore-cart-template .entry-content,
+body.woocommerce-cart .wp-block-post-content,
+body.gstore-cart-template .wp-block-post-content {
+	width: 100%;
+	max-width: none;
+	padding: 0;
+	margin: 0;
+	background: var(--gstore-cart-bg);
+}
+
+/* Reset do is-layout-constrained APENAS para elementos fora do container */
+body.woocommerce-cart .is-layout-constrained > *:not(.Gstore-cart-container),
+body.gstore-cart-template .is-layout-constrained > *:not(.Gstore-cart-container),
+body:has(.Gstore-cart-shell) .is-layout-constrained > *:not(.Gstore-cart-container) {
+	max-width: none;
+	margin-left: 0;
+	margin-right: 0;
+}
+
+/* ==========================================
+   SHELL - WRAPPER EXTERNO (100% LARGURA)
+   ==========================================
+   A shell ocupa toda a largura da tela.
+   O container interno limita o conteúdo a 1280px.
+*/
+
+.Gstore-cart-shell {
+	/* Isolation - cria novo contexto de stacking e layout */
+	contain: layout style;
+	isolation: isolate;
+	
+	/* Layout */
+	display: block;
+	width: 100%;
+	max-width: none;
+	margin: 0;
+	padding: 48px 0;
+	
+	/* Visual */
+	background: var(--gstore-cart-bg);
+	color: var(--gstore-cart-text);
+	
+	/* Tipografia */
+	font-family: inherit;
+	line-height: 1.5;
+	
+	/* Box model */
+	box-sizing: border-box;
+}
+
+/* Reset de qualquer classe do WordPress na shell */
+.Gstore-cart-shell.wp-block-group,
+.Gstore-cart-shell.is-layout-constrained,
+.Gstore-cart-shell.wp-block-group-is-layout-constrained,
+section.Gstore-cart-shell {
+	width: 100%;
+	max-width: none;
+	margin: 0;
+	padding: 48px 0;
+}
+
+/* ==========================================
+   CONTAINER - LIMITA A 1280PX E CENTRALIZA
+   ==========================================
+   Este é o elemento que garante a centralização.
+   Mesma largura máxima do header.
+*/
+
+.Gstore-cart-container {
+	/* Container centralizado */
+	width: 100%;
+	max-width: var(--gstore-cart-container-width);
+	margin-left: auto;
+	margin-right: auto;
+	padding-left: var(--gstore-cart-padding-inline);
+	padding-right: var(--gstore-cart-padding-inline);
+	
+	/* Layout interno */
+	display: flex;
+	flex-direction: column;
+	gap: 32px;
+	
+	/* Box model */
+	box-sizing: border-box;
+}
+
+/* Força centralização mesmo com classes do WP */
+.Gstore-cart-shell .Gstore-cart-container,
+section.Gstore-cart-shell div.Gstore-cart-container,
+.woocommerce .Gstore-cart-shell .Gstore-cart-container,
+div.woocommerce section.Gstore-cart-shell div.Gstore-cart-container {
+	max-width: var(--gstore-cart-container-width);
+	width: 100%;
+	margin-left: auto;
+	margin-right: auto;
+	padding-left: var(--gstore-cart-padding-inline);
+	padding-right: var(--gstore-cart-padding-inline);
+	box-sizing: border-box;
+}
+
+/* ==========================================
+   HEADER DO CARRINHO
+   ========================================== */
+
+.Gstore-cart-header {
+	background: var(--gstore-cart-bg);
+	border: 1px solid var(--gstore-cart-border);
+	border-radius: var(--gstore-cart-radius);
+	padding: 32px 40px;
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+	align-items: flex-start;
+	width: 100%;
+	box-sizing: border-box;
+}
+
+.Gstore-cart-eyebrow {
+	font-size: 0.8rem;
+	text-transform: uppercase;
+	letter-spacing: 0.2em;
+	font-weight: 700;
+	color: var(--gstore-cart-accent);
+	margin: 0;
+}
+
+.Gstore-cart-header h1 {
+	margin: 0;
+	font-size: clamp(1.6rem, 4vw, 2.4rem);
+	font-weight: 700;
+	color: var(--gstore-cart-text);
+	line-height: 1.2;
+}
+
+.Gstore-cart-header p {
+	margin: 0;
+	color: var(--gstore-cart-text-muted);
+	font-size: 1rem;
+	line-height: 1.6;
+}
+
+/* ==========================================
+   FORMULÁRIO DO CARRINHO
+   ========================================== */
+
+.Gstore-cart-form {
+	display: flex;
+	flex-direction: column;
+	gap: 32px;
+	width: 100%;
+}
+
+/* ==========================================
+   LAYOUT PRINCIPAL - GRID 2 COLUNAS
+   ========================================== */
+
+.Gstore-cart-layout {
+	display: grid;
+	grid-template-columns: minmax(0, 1.5fr) minmax(280px, 0.9fr);
+	gap: 24px;
+	align-items: flex-start;
+	width: 100%;
+}
+
+.Gstore-cart-main {
+	display: flex;
+	flex-direction: column;
+	gap: 20px;
+	min-width: 0; /* Previne overflow */
+}
+
+.Gstore-cart-list {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+}
+
+/* ==========================================
+   CARD DE PRODUTO
+   ========================================== */
+
+.Gstore-cart-card {
+	background: var(--gstore-cart-bg);
+	border: 1px solid var(--gstore-cart-border);
+	border-radius: var(--gstore-cart-radius);
+	padding: 24px;
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+	width: 100%;
+	box-sizing: border-box;
+}
+
+.Gstore-cart-card.cart_item {
+	flex-direction: row;
+	align-items: stretch;
+	gap: 24px;
+	padding: 20px;
+}
+
+/* Thumbnail do produto */
+.Gstore-cart-card__media {
+	flex: 0 0 160px;
+	background: #fafafa;
+	border: 1px solid var(--gstore-cart-border);
+	border-radius: var(--gstore-cart-radius);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 12px;
+	overflow: hidden;
+}
+
+.Gstore-cart-card__thumb {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 100%;
+	height: 100%;
+}
+
+.Gstore-cart-card__media img {
+	max-width: 140px;
+	width: 100%;
+	height: auto;
+	object-fit: contain;
+}
+
+/* Body do card */
+.Gstore-cart-card__body {
+	flex: 1;
+	display: flex;
+	flex-direction: column;
+	gap: 20px;
+	min-width: 0;
+}
+
+.Gstore-cart-card__top {
+	display: flex;
+	align-items: flex-start;
+	justify-content: space-between;
+	gap: 16px;
+}
+
+.Gstore-cart-card__top > div:first-child {
+	flex: 1;
+	min-width: 0;
+}
+
+.Gstore-cart-card__top a {
+	color: inherit;
+	text-decoration: none;
+	font-weight: 600;
+	font-size: 1.1rem;
+	display: block;
+}
+
+.Gstore-cart-card__top a:hover {
+	color: var(--gstore-cart-accent);
+}
+
+/* Botão remover */
+.Gstore-cart-card__remove {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 32px;
+	height: 32px;
+	min-width: 32px;
+	border-radius: var(--gstore-cart-radius);
+	border: 1px solid var(--gstore-cart-border);
+	color: var(--gstore-cart-text-muted);
+	font-size: 1.2rem;
+	line-height: 1;
+	transition: all 0.2s ease;
+	background: var(--gstore-cart-bg);
+	cursor: pointer;
+	text-decoration: none;
+}
+
+.Gstore-cart-card__remove:hover,
+.Gstore-cart-card__remove:focus {
+	color: #fff;
+	background: var(--gstore-cart-accent);
+	border-color: var(--gstore-cart-accent);
+	text-decoration: none;
+}
+
+/* Notice de backorder */
+.Gstore-cart-card__notice {
+	color: #d97706;
+	font-size: 0.9rem;
+	margin-top: 6px;
+}
+
+/* Detalhes do produto (preço, qty, subtotal) */
+.Gstore-cart-card__details {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+	gap: 16px;
+	background: #f9fafb;
+	border: 1px solid var(--gstore-cart-border);
+	border-radius: var(--gstore-cart-radius);
+	padding: 16px;
+}
+
+.Gstore-cart-card__label {
+	display: block;
+	font-size: 0.75rem;
+	text-transform: uppercase;
+	letter-spacing: 0.08em;
+	color: var(--gstore-cart-text-muted);
+	margin-bottom: 6px;
+	font-weight: 500;
+}
+
+/* ==========================================
+   CONTROLES DE QUANTIDADE
+   ========================================== */
+
+/* Container do seletor de quantidade */
+.Gstore-cart-card__quantity {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+}
+
+/* Wrapper original do WooCommerce (antes do JS enhancement) e wrapper criado pelo JS */
+.Gstore-cart-card__quantity .quantity,
+.Gstore-cart-card__quantity .Gstore-cart-card__quantity-controls {
+	display: inline-flex;
+	align-items: stretch;
+	border: 1.5px solid var(--gstore-cart-border);
+	border-radius: var(--gstore-cart-radius);
+	background: #ffffff;
+	overflow: hidden;
+	transition: all 0.2s ease;
+	height: 44px;
+	width: fit-content;
+}
+
+.Gstore-cart-card__quantity .quantity:focus-within,
+.Gstore-cart-card__quantity .Gstore-cart-card__quantity-controls:focus-within {
+	border-color: var(--gstore-cart-green);
+	box-shadow: 0 0 0 3px rgba(90, 137, 0, 0.1);
+}
+
+/* Input de quantidade - reset completo e estilização */
+.Gstore-cart-card__quantity .quantity .input-text,
+.Gstore-cart-card__quantity .quantity input.qty,
+.Gstore-cart-card__quantity .quantity input[type="number"],
+.Gstore-cart-card__quantity .Gstore-cart-card__quantity-controls .input-text,
+.Gstore-cart-card__quantity .Gstore-cart-card__quantity-controls input.qty,
+.Gstore-cart-card__quantity .Gstore-cart-card__quantity-controls input[type="number"],
+.Gstore-cart-card__quantity .Gstore-cart-card__quantity-controls input {
+	width: 56px !important;
+	min-width: 56px !important;
+	max-width: 56px !important;
+	text-align: center !important;
+	border: none !important;
+	outline: none !important;
+	font-weight: 600 !important;
+	font-size: 1rem !important;
+	background: #ffffff !important;
+	padding: 10px 4px !important;
+	color: var(--gstore-cart-text) !important;
+	-moz-appearance: textfield !important;
+	-webkit-appearance: none !important;
+	appearance: none !important;
+	box-shadow: none !important;
+	order: 0;
+}
+
+/* Remove setas do input number */
+.Gstore-cart-card__quantity .quantity input::-webkit-outer-spin-button,
+.Gstore-cart-card__quantity .quantity input::-webkit-inner-spin-button,
+.Gstore-cart-card__quantity .Gstore-cart-card__quantity-controls input::-webkit-outer-spin-button,
+.Gstore-cart-card__quantity .Gstore-cart-card__quantity-controls input::-webkit-inner-spin-button {
+	-webkit-appearance: none !important;
+	margin: 0 !important;
+	display: none !important;
+}
+
+/* Botões de incremento/decremento */
+.Gstore-cart-card__quantity .quantity-button,
+.Gstore-cart-card__quantity .Gstore-cart-card__quantity-controls .quantity-button {
+	display: inline-flex !important;
+	align-items: center !important;
+	justify-content: center !important;
+	width: 40px !important;
+	min-width: 40px !important;
+	height: 100% !important;
+	border: none !important;
+	background: #f3f4f6 !important;
+	color: var(--gstore-cart-text) !important;
+	font-size: 18px !important;
+	font-weight: 600 !important;
+	line-height: 1 !important;
+	cursor: pointer !important;
+	transition: all 0.2s ease !important;
+	user-select: none !important;
+	padding: 0 !important;
+	box-shadow: none !important;
+}
+
+.Gstore-cart-card__quantity .quantity-button:hover:not(:disabled),
+.Gstore-cart-card__quantity .Gstore-cart-card__quantity-controls .quantity-button:hover:not(:disabled) {
+	background: #e5e7eb !important;
+	color: var(--gstore-cart-green) !important;
+}
+
+.Gstore-cart-card__quantity .quantity-button:active:not(:disabled),
+.Gstore-cart-card__quantity .Gstore-cart-card__quantity-controls .quantity-button:active:not(:disabled) {
+	background: #d1d5db !important;
+	transform: scale(0.95);
+}
+
+.Gstore-cart-card__quantity .quantity-button:disabled,
+.Gstore-cart-card__quantity .Gstore-cart-card__quantity-controls .quantity-button:disabled {
+	opacity: 0.4;
+	cursor: not-allowed !important;
+}
+
+/* Botão minus à esquerda */
+.Gstore-cart-card__quantity .quantity-button--minus,
+.Gstore-cart-card__quantity .Gstore-cart-card__quantity-controls .quantity-button--minus {
+	border-right: 1px solid var(--gstore-cart-border) !important;
+	border-left: none !important;
+	order: -1 !important;
+}
+
+/* Botão plus à direita */
+.Gstore-cart-card__quantity .quantity-button--plus,
+.Gstore-cart-card__quantity .Gstore-cart-card__quantity-controls .quantity-button--plus {
+	border-left: 1px solid var(--gstore-cart-border) !important;
+	border-right: none !important;
+	order: 1 !important;
+}
+
+/* ==========================================
+   SIDEBAR (CUPOM, RESUMO, SUPORTE)
+   ========================================== */
+
+.Gstore-cart-sidebar {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+	position: sticky;
+	top: 24px;
+}
+
+/* Card de Cupom */
+.Gstore-cart-coupon .Gstore-cart-card__title h3 {
+	font-size: 1.1rem;
+	font-weight: 600;
+	margin: 0 0 8px 0;
+	color: var(--gstore-cart-text);
+}
+
+.Gstore-cart-coupon .Gstore-cart-card__title p {
+	font-size: 0.9rem;
+	color: var(--gstore-cart-text-muted);
+	margin: 0;
+}
+
+.Gstore-cart-coupon__label {
+	font-size: 0.85rem;
+	color: var(--gstore-cart-text-muted);
+	font-weight: 500;
+	display: block;
+	margin-top: 16px;
+	margin-bottom: 8px;
+}
+
+.Gstore-cart-coupon .input-text {
+	width: 100%;
+	display: block;
+	border: 1px solid var(--gstore-cart-border);
+	border-radius: var(--gstore-cart-radius);
+	padding: 12px 16px;
+	font-size: 1rem;
+	background: var(--gstore-cart-bg);
+	color: var(--gstore-cart-text);
+	box-sizing: border-box;
+}
+
+.Gstore-cart-coupon .input-text::placeholder {
+	color: var(--gstore-cart-text-muted);
+}
+
+.Gstore-cart-coupon .input-text:focus {
+	border-color: var(--gstore-cart-green);
+	outline: none;
+	box-shadow: 0 0 0 3px rgba(90, 137, 0, 0.1);
+}
+
+.Gstore-cart-coupon__controls {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+	margin-top: 8px;
+}
+
+/* Card de Resumo (Totais) */
+.Gstore-cart-summary-card .cart_totals {
+	width: 100%;
+	margin: 0;
+}
+
+.Gstore-cart-summary-card table {
+	width: 100%;
+	border-collapse: collapse;
+}
+
+.Gstore-cart-summary-card th,
+.Gstore-cart-summary-card td {
+	padding: 12px 0;
+	border-bottom: 1px solid var(--gstore-cart-border);
+	text-align: left;
+	font-size: 0.95rem;
+}
+
+.Gstore-cart-summary-card th {
+	font-weight: 500;
+	color: var(--gstore-cart-text-muted);
+}
+
+.Gstore-cart-summary-card td {
+	text-align: right;
+	font-weight: 600;
+}
+
+.Gstore-cart-summary-card .order-total th,
+.Gstore-cart-summary-card .order-total td {
+	border-bottom: none;
+	padding-top: 16px;
+}
+
+.Gstore-cart-summary-card .order-total strong {
+	font-size: 1.3rem;
+	color: var(--gstore-cart-green);
+}
+
+/* Botão de checkout */
+.Gstore-cart-summary-card .wc-proceed-to-checkout {
+	margin-top: 20px;
+}
+
+.Gstore-cart-summary-card .wc-proceed-to-checkout .checkout-button,
+.Gstore-cart-summary-card .wc-proceed-to-checkout .button {
+	display: block;
+	width: 100%;
+	background: var(--gstore-cart-green);
+	border: none;
+	border-radius: var(--gstore-cart-radius);
+	color: #fff;
+	font-weight: 700;
+	font-size: 1rem;
+	padding: 14px 24px;
+	text-transform: uppercase;
+	letter-spacing: 0.08em;
+	text-align: center;
+	text-decoration: none;
+	cursor: pointer;
+	transition: all 0.2s ease;
+}
+
+.Gstore-cart-summary-card .wc-proceed-to-checkout .checkout-button:hover,
+.Gstore-cart-summary-card .wc-proceed-to-checkout .button:hover {
+	background: var(--gstore-cart-green-hover);
+}
+
+/* Card de Suporte */
+.Gstore-cart-support-card {
+	background: linear-gradient(135deg, #ffffff 0%, #f9fbf2 100%);
+}
+
+.Gstore-cart-support-card h3 {
+	font-size: 1.1rem;
+	font-weight: 600;
+	margin: 8px 0;
+	color: var(--gstore-cart-text);
+}
+
+.Gstore-cart-support-card p {
+	font-size: 0.9rem;
+	color: var(--gstore-cart-text-muted);
+	margin: 0;
+	line-height: 1.5;
+}
+
+.Gstore-cart-support-card__link {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	margin-top: 16px;
+	font-weight: 700;
+	color: var(--gstore-cart-accent);
+	text-decoration: none;
+	font-size: 0.95rem;
+}
+
+.Gstore-cart-support-card__link:hover {
+	color: var(--gstore-cart-accent-hover);
+}
+
+.Gstore-cart-support-card__link .Gstore-icon {
+	width: 18px;
+	height: 18px;
+	fill: currentColor;
+}
+
+/* ==========================================
+   BOTÕES E AÇÕES
+   ========================================== */
+
+.Gstore-cart-btn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 8px;
+	border: none;
+	background: var(--gstore-cart-accent);
+	color: #fff;
+	padding: 12px 20px;
+	border-radius: var(--gstore-cart-radius);
+	font-weight: 600;
+	font-size: 0.9rem;
+	text-transform: uppercase;
+	letter-spacing: 0.08em;
+	cursor: pointer;
+	transition: all 0.2s ease;
+	text-decoration: none;
+	white-space: nowrap;
+}
+
+.Gstore-cart-btn:hover,
+.Gstore-cart-btn:focus {
+	background: var(--gstore-cart-accent-hover);
+	color: #fff;
+	transform: translateY(-1px);
+}
+
+.Gstore-cart-btn--ghost {
+	background: transparent;
+	color: var(--gstore-cart-text);
+	border: 1px solid var(--gstore-cart-border);
+}
+
+.Gstore-cart-btn--ghost:hover,
+.Gstore-cart-btn--ghost:focus {
+	background: var(--gstore-cart-bg);
+	border-color: var(--gstore-cart-accent);
+	color: var(--gstore-cart-accent);
+	transform: translateY(-1px);
+}
+
+.Gstore-cart-btn--link {
+	background: transparent;
+	color: var(--gstore-cart-text);
+	border: 1px solid var(--gstore-cart-border);
+}
+
+.Gstore-cart-btn--link:hover,
+.Gstore-cart-btn--link:focus {
+	border-color: var(--gstore-cart-accent);
+	color: var(--gstore-cart-accent);
+	background: var(--gstore-cart-bg);
+}
+
+.Gstore-cart-form__actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 16px;
+	align-items: center;
+	justify-content: space-between;
+}
+
+/* ==========================================
+   CROSS-SELLS
+   ========================================== */
+
+.Gstore-cart-cross-sells {
+	margin-top: 16px;
+}
+
+.Gstore-cart-cross-sells .cross-sells {
+	background: var(--gstore-cart-bg);
+	border: 1px solid var(--gstore-cart-border);
+	border-radius: var(--gstore-cart-radius);
+	padding: 24px;
+}
+
+.Gstore-cart-cross-sells .cross-sells > h2 {
+	font-size: 1.2rem;
+	font-weight: 600;
+	margin: 0 0 20px 0;
+	color: var(--gstore-cart-text);
+}
+
+.Gstore-cart-cross-sells ul.products {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+	gap: 16px;
+	list-style: none;
+	margin: 0;
+	padding: 0;
+}
+
+/* Card extra */
+.Gstore-cart-extra-card {
+	background: #fff7ea;
+}
+
+/* ==========================================
+   UTILITIES
+   ========================================== */
+
+.Gstore-sr-only {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	padding: 0;
+	margin: -1px;
+	overflow: hidden;
+	clip: rect(0, 0, 0, 0);
+	white-space: nowrap;
+	border: 0;
+}
+
+/* ==========================================
+   RESPONSIVE - TABLET (≤1024px)
+   ========================================== */
+
+@media (max-width: 1024px) {
+	.Gstore-cart-layout {
+		grid-template-columns: 1fr;
+	}
+	
+	.Gstore-cart-sidebar {
+		position: static;
+	}
+}
+
+/* ==========================================
+   RESPONSIVE - MOBILE (≤768px)
+   ========================================== */
+
+@media (max-width: 768px) {
+	.Gstore-cart-shell {
+		padding: 24px 0;
+	}
+	
+	.Gstore-cart-container {
+		padding-left: 16px;
+		padding-right: 16px;
+		gap: 24px;
+	}
+	
+	.Gstore-cart-header {
+		padding: 24px;
+	}
+	
+	.Gstore-cart-card.cart_item {
+		flex-direction: column;
+		padding: 16px;
+	}
+	
+	.Gstore-cart-card__media {
+		flex: none;
+		width: 100%;
+		max-width: 200px;
+		margin: 0 auto;
+	}
+	
+	.Gstore-cart-card__details {
+		grid-template-columns: 1fr 1fr;
+	}
+	
+	.Gstore-cart-form__actions {
+		flex-direction: column;
+		align-items: stretch;
+	}
+	
+	.Gstore-cart-btn {
+		width: 100%;
+		justify-content: center;
+	}
+}
+
+/* ==========================================
+   RESPONSIVE - MOBILE PEQUENO (≤480px)
+   ========================================== */
+
+@media (max-width: 480px) {
+	.Gstore-cart-shell {
+		padding: 16px 0;
+	}
+	
+	.Gstore-cart-container {
+		padding-left: 12px;
+		padding-right: 12px;
+	}
+	
+	.Gstore-cart-header {
+		padding: 20px;
+	}
+	
+	.Gstore-cart-header h1 {
+		font-size: 1.4rem;
+	}
+	
+	.Gstore-cart-card {
+		padding: 16px;
+	}
+	
+	.Gstore-cart-card__details {
+		grid-template-columns: 1fr;
+		gap: 12px;
+	}
+	
+	/* Botões de quantidade maiores no mobile */
+	.Gstore-cart-card__quantity .quantity-button,
+	.Gstore-cart-card__quantity .Gstore-cart-card__quantity-controls .quantity-button {
+		width: 44px !important;
+		min-width: 44px !important;
+		font-size: 20px !important;
+	}
+	
+	.Gstore-cart-card__quantity .quantity input,
+	.Gstore-cart-card__quantity .Gstore-cart-card__quantity-controls input {
+		width: 52px !important;
+		min-width: 52px !important;
+		max-width: 52px !important;
+		padding: 12px 4px !important;
+	}
+}

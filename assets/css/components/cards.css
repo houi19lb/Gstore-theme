@@ -1,0 +1,190 @@
+/**
+ * ==========================================
+ * GSTORE CARDS
+ * ==========================================
+ * Componentes de cards reutilizáveis
+ */
+
+/* ========================================
+   CARD BASE
+   ======================================== */
+
+.Gstore-card {
+	background-color: var(--gstore-color-bg-light);
+	border: 1px solid var(--gstore-color-border);
+	border-radius: var(--gstore-radius-base);
+	box-shadow: var(--gstore-shadow-sm);
+	transition: all var(--gstore-transition-base);
+	overflow: hidden;
+}
+
+.Gstore-card:hover {
+	box-shadow: var(--gstore-shadow-md);
+}
+
+/* ========================================
+   CARD COM IMAGEM
+   ======================================== */
+
+.Gstore-card__image {
+	width: 100%;
+	overflow: hidden;
+	background-color: var(--gstore-color-bg-muted);
+}
+
+.Gstore-card__image img {
+	width: 100%;
+	height: auto;
+	object-fit: cover;
+	transition: transform var(--gstore-transition-base);
+}
+
+.Gstore-card:hover .Gstore-card__image img {
+	transform: scale(1.05);
+}
+
+/* ========================================
+   CARD BODY
+   ======================================== */
+
+.Gstore-card__body {
+	padding: var(--gstore-spacing-4);
+}
+
+.Gstore-card__header {
+	margin-bottom: var(--gstore-spacing-3);
+}
+
+.Gstore-card__title {
+	font-size: var(--gstore-font-size-lg);
+	font-weight: var(--gstore-font-weight-bold);
+	color: var(--gstore-color-text-primary);
+	margin: 0;
+}
+
+.Gstore-card__title a {
+	color: inherit;
+	text-decoration: none;
+	transition: color var(--gstore-transition-fast);
+}
+
+.Gstore-card__title a:hover {
+	color: var(--gstore-color-accent);
+}
+
+.Gstore-card__content {
+	color: var(--gstore-color-text-secondary);
+	font-size: var(--gstore-font-size-base);
+	line-height: var(--gstore-line-height-relaxed);
+}
+
+.Gstore-card__footer {
+	padding-top: var(--gstore-spacing-4);
+	margin-top: var(--gstore-spacing-4);
+	border-top: 1px solid var(--gstore-color-border);
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--gstore-spacing-4);
+}
+
+/* ========================================
+   CARD VARIANTES
+   ======================================== */
+
+/* Card sem borda */
+.Gstore-card--no-border {
+	border: none;
+	box-shadow: none;
+}
+
+.Gstore-card--no-border:hover {
+	box-shadow: var(--gstore-shadow-sm);
+}
+
+/* Card com sombra maior */
+.Gstore-card--elevated {
+	box-shadow: var(--gstore-shadow-lg);
+}
+
+.Gstore-card--elevated:hover {
+	box-shadow: var(--gstore-shadow-xl);
+}
+
+/* Card interativo (clickable) */
+.Gstore-card--interactive {
+	cursor: pointer;
+}
+
+.Gstore-card--interactive:hover {
+	transform: translateY(-2px);
+}
+
+/* Card horizontal */
+.Gstore-card--horizontal {
+	display: flex;
+	flex-direction: row;
+}
+
+.Gstore-card--horizontal .Gstore-card__image {
+	width: 40%;
+	max-width: 200px;
+	flex-shrink: 0;
+}
+
+.Gstore-card--horizontal .Gstore-card__body {
+	flex: 1;
+	display: flex;
+	flex-direction: column;
+	justify-content: space-between;
+}
+
+@media (max-width: 640px) {
+	.Gstore-card--horizontal {
+		flex-direction: column;
+	}
+	
+	.Gstore-card--horizontal .Gstore-card__image {
+		width: 100%;
+		max-width: none;
+	}
+}
+
+/* ========================================
+   BADGES EM CARDS
+   ======================================== */
+
+.Gstore-card__badge {
+	position: absolute;
+	top: var(--gstore-spacing-4);
+	left: var(--gstore-spacing-4);
+	background-color: var(--gstore-color-brass);
+	color: #ffffff;
+	padding: var(--gstore-spacing-2) var(--gstore-spacing-3);
+	border-radius: var(--gstore-radius-base);
+	font-size: var(--gstore-font-size-xs);
+	font-weight: var(--gstore-font-weight-bold);
+	text-transform: uppercase;
+	letter-spacing: var(--gstore-letter-spacing-wide);
+	z-index: var(--gstore-z-base);
+	box-shadow: var(--gstore-shadow-sm);
+}
+
+/* ========================================
+   RESPONSIVIDADE
+   ======================================== */
+
+@media (max-width: 640px) {
+	.Gstore-card__body {
+		padding: var(--gstore-spacing-3);
+	}
+	
+	.Gstore-card__footer {
+		flex-direction: column;
+		align-items: stretch;
+	}
+}
+
+
+
+

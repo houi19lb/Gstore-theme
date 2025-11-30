@@ -1,0 +1,5809 @@
+/*
+Theme Name: CAC Armas Gstore
+Author: CAC Armas Team
+Description: Tema personalizado da CAC Armas otimizado para WooCommerce.
+Version: 1.0.6
+Text Domain: gstore
+*/
+
+/**
+ * ==========================================
+ * GSTORE THEME STYLESHEET
+ * ==========================================
+ * 
+ * NOTA: Este arquivo mantém estilos legados para compatibilidade.
+ * O novo sistema modular está em assets/css/gstore-main.css
+ * 
+ * Ordem de carregamento (via functions.php):
+ * 1. Sistema modular (gstore-main.css) - tokens, base, utilities, components
+ * 2. Este arquivo (style.css) - estilos legados e específicos
+ * 
+ * Para migrar estilos legados, mova para os módulos apropriados:
+ * - Design tokens -> assets/css/tokens.css
+ * - Componentes -> assets/css/components/
+ * - Layouts -> assets/css/layouts/
+ */
+
+/* =========================================
+ * ESTILOS LEGADOS
+ * =========================================
+ * Estes estilos serão migrados gradualmente para o sistema modular
+ */
+
+/* =========================================
+ * CORREÇÃO DE CONTRASTE - TÍTULOS EM FUNDOS BRANCOS
+ * =========================================
+ * Garante que todos os títulos em fundos brancos/claros
+ * tenham contraste adequado para legibilidade
+ */
+
+/* Regra geral para títulos em fundos claros */
+.Gstore-home-products .wp-block-heading,
+.Gstore-home-products h1,
+.Gstore-home-products h2,
+.Gstore-home-products h3,
+.Gstore-home-section__header .wp-block-heading,
+.Gstore-home-section__header h1,
+.Gstore-home-section__header h2,
+.Gstore-products-shell .wp-block-heading,
+main:not([class*="hero"]):not([class*="dark"]):not(.Gstore-header-shell) .wp-block-heading:not(.Gstore-header__logo-text *),
+section:not([class*="hero"]):not([class*="dark"]):not(.Gstore-header-shell):not(.Gstore-header):not(.Gstore-top-bar) .wp-block-heading {
+	color: var(--gstore-color-text-primary, #1a1a1a) !important;
+}
+
+/* Título específico mencionado pelo usuário */
+h2.wp-block-heading.has-text-align-center.has-x-large-font-size {
+	color: var(--gstore-color-text-primary, #1a1a1a) !important;
+}
+
+/* =========================================
+ * CAC Armas Tactical Product Page
+ * ========================================= */
+.armastore-product-shell {
+	background: #fafaf9;
+	padding: clamp(24px, 4vw, 64px) 0;
+}
+
+.armastore-product-shell__inner {
+	max-width: var(--gstore-container-max-width, 1280px);
+	margin: 0 auto;
+	padding: 0 var(--gstore-container-padding-inline, 20px);
+}
+
+.armastore-product {
+	background: transparent;
+}
+
+.armastore-product__breadcrumb {
+	margin-bottom: 24px;
+	font-size: 14px;
+	color: #7a7a7a;
+}
+
+.armastore-breadcrumb {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px;
+	color: inherit;
+}
+
+.armastore-breadcrumb a {
+	color: #5c6b5a;
+	text-decoration: none;
+	font-weight: 600;
+}
+
+.armastore-product__hero {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: clamp(32px, 5vw, 60px);
+	background: #ffffff;
+	border-radius: 8px;
+	padding: clamp(24px, 4vw, 40px);
+	box-shadow: 0 20px 60px rgba(17, 24, 39, 0.08);
+	border: 1px solid #e8e8e6;
+}
+
+.armastore-product__gallery {
+	position: sticky;
+	top: 32px;
+	align-self: flex-start;
+}
+
+.armastore-product__gallery .woocommerce-product-gallery {
+	border: 1px solid #dfe2df;
+	border-radius: 6px;
+	background: #fff;
+	padding: 16px;
+}
+
+.armastore-product__info {
+	display: flex;
+	flex-direction: column;
+	gap: 24px;
+}
+
+.armastore-product__eyebrow {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	text-transform: uppercase;
+	font-size: 12px;
+	letter-spacing: 0.14em;
+	color: #5c6b5a;
+	font-weight: 700;
+}
+
+.armastore-product__title {
+	font-size: clamp(30px, 4vw, 40px);
+	color: #1f1f1f;
+	margin: 0;
+}
+
+.armastore-product__excerpt {
+	color: #4a4a4a;
+	font-size: 16px;
+	line-height: 1.6;
+}
+
+.armastore-product__rating {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+}
+
+.armastore-product__rating .star-rating {
+	--rating-color: #FF8C5C;
+	color: var(--rating-color);
+}
+
+.armastore-product__rating-count {
+	border: none;
+	background: transparent;
+	color: #5c6b5a;
+	font-weight: 600;
+	cursor: pointer;
+	text-decoration: underline;
+}
+
+.armastore-product__price-card {
+	background: #fefefe;
+	border: 1px solid #e8e8e6;
+	border-radius: 8px;
+	padding: 20px;
+	box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4);
+}
+
+.armastore-product__price-top {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	margin-bottom: 8px;
+}
+
+.armastore-product__old-price {
+	color: #9ca3af;
+	text-decoration: line-through;
+	font-size: 16px;
+}
+
+.armastore-product__discount-badge {
+	background: #5c6b5a;
+	color: #fff;
+	padding: 4px 10px;
+	border-radius: 999px;
+	font-size: 14px;
+	font-weight: 700;
+}
+
+.armastore-product__price-current {
+	font-size: clamp(34px, 4vw, 44px);
+	color: #1f1f1f;
+	font-weight: 700;
+}
+
+.armastore-product__installments {
+	margin: 0;
+	margin-top: 8px;
+	color: #6b7280;
+	font-size: 14px;
+}
+
+.armastore-product__features {
+	background: #ffffff;
+	border: 1px solid #e8e8e6;
+	border-radius: 8px;
+	padding: 20px 24px;
+}
+
+.armastore-product__features h3 {
+	margin: 0 0 12px;
+	color: #1f1f1f;
+	font-size: 18px;
+}
+
+.armastore-product__features ul {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+}
+
+.armastore-product__features li {
+	display: flex;
+	gap: 12px;
+	align-items: flex-start;
+	color: #4a4a4a;
+}
+
+.armastore-product__features li i {
+	color: #5c6b5a;
+	font-size: 18px;
+	margin-top: 2px;
+}
+
+.armastore-product__features strong {
+	display: block;
+	color: #1f1f1f;
+}
+
+.armastore-product__cta {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+}
+
+.armastore-product__stock {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	color: #1f1f1f;
+	font-weight: 600;
+}
+
+.armastore-product__stock i {
+	color: #5c6b5a;
+	font-size: 10px;
+}
+
+.armastore-product__add-cart form.cart {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+}
+
+.armastore-product__add-cart .variations_form,
+.armastore-product__add-cart .variations {
+	width: 100%;
+}
+
+.armastore-quantity-controls {
+	display: inline-flex;
+	align-items: stretch;
+	border: 1px solid #d1d5db;
+	border-radius: 6px;
+	overflow: hidden;
+}
+
+.armastore-quantity-controls .qty {
+	width: 64px;
+	text-align: center;
+	border: none;
+	font-size: 16px;
+	font-weight: 600;
+}
+
+.armastore-quantity-button {
+	border: none;
+	background: #f5f5f4;
+	width: 48px;
+	font-size: 20px;
+	font-weight: 600;
+	color: #1f1f1f;
+	cursor: pointer;
+	transition: background 0.2s ease;
+}
+
+.armastore-quantity-button:hover {
+	background: #e8e8e6;
+}
+
+.armastore-product__add-cart .single_add_to_cart_button {
+	width: 100%;
+	padding: 16px;
+	border-radius: 6px;
+	background: var(--green);
+	border: none;
+	color: #fff;
+	text-transform: uppercase;
+	font-weight: 700;
+	letter-spacing: 0.08em;
+	box-shadow: none;
+	transition: background var(--gstore-transition-fast);
+}
+
+.armastore-product__add-cart .single_add_to_cart_button:hover {
+	background: var(--green-dark);
+}
+
+.armastore-product__buy-now {
+	display: inline-flex;
+	justify-content: center;
+	align-items: center;
+	padding: 16px;
+	border: 2px solid #5c6b5a;
+	color: #5c6b5a;
+	font-weight: 700;
+	text-transform: uppercase;
+	letter-spacing: 0.08em;
+	border-radius: 6px;
+	transition: all 0.2s ease;
+	text-decoration: none;
+}
+
+.armastore-product__buy-now:hover {
+	background: #5c6b5a;
+	color: #fff;
+}
+
+.armastore-product__trust {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+	gap: 12px;
+}
+
+.armastore-product__trust li {
+	border: 1px solid #e8e8e6;
+	border-radius: 6px;
+	padding: 12px;
+	background: #fefefe;
+	display: flex;
+	gap: 12px;
+	align-items: flex-start;
+}
+
+.armastore-product__trust i {
+	color: #FF8C5C;
+	font-size: 20px;
+}
+
+.armastore-product__meta .product_meta {
+	display: grid;
+	gap: 4px;
+	font-size: 13px;
+	color: #6b7280;
+}
+
+.armastore-product__tabs {
+	margin-top: clamp(32px, 6vw, 60px);
+	background: #ffffff;
+	border: 1px solid #e8e8e6;
+	border-radius: 8px;
+	padding: clamp(16px, 4vw, 32px);
+	box-shadow: 0 12px 40px rgba(15, 23, 42, 0.06);
+}
+
+.armastore-product__tab-buttons {
+	display: flex;
+	gap: 8px;
+	border-bottom: 1px solid #e5e7eb;
+	padding-bottom: 12px;
+	margin-bottom: 20px;
+}
+
+.armastore-product__tab-buttons button {
+	border: none;
+	background: transparent;
+	font-weight: 600;
+	padding: 12px 18px;
+	border-radius: 6px 6px 0 0;
+	color: #9ca3af;
+	cursor: pointer;
+	transition: color 0.2s ease, background 0.2s ease;
+}
+
+.armastore-product__tab-buttons button.is-active {
+	color: #1f1f1f;
+	background: #f5f5f4;
+}
+
+.armastore-product__tab-panel {
+	display: none;
+	color: #444;
+	line-height: 1.7;
+}
+
+.armastore-product__tab-panel.is-active {
+	display: block;
+}
+
+.armastore-product__spec-grid {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 16px;
+}
+
+.armastore-product__spec-item {
+	border-bottom: 1px solid #e8e8e6;
+	padding-bottom: 12px;
+	display: flex;
+	justify-content: space-between;
+	font-size: 15px;
+	color: #4a4a4a;
+}
+
+.armastore-product__spec-label {
+	font-weight: 600;
+	color: #1f1f1f;
+}
+
+.armastore-product__upsells {
+	margin-top: clamp(32px, 6vw, 60px);
+}
+
+.armastore-product__upsells .product {
+	background: #fff;
+	border-radius: 6px;
+	padding: 12px;
+	border: 1px solid #e8e8e6;
+}
+
+@media (max-width: 1024px) {
+	.armastore-product__hero {
+		grid-template-columns: 1fr;
+	}
+
+	.armastore-product__gallery {
+		position: relative;
+		top: 0;
+	}
+}
+
+@media (max-width: 640px) {
+	.armastore-product-shell {
+		padding: 16px 0 40px;
+	}
+
+	.armastore-product__hero {
+		padding: 20px;
+	}
+
+	.armastore-product__tab-buttons {
+		flex-direction: column;
+	}
+
+	.armastore-product__spec-grid {
+		grid-template-columns: 1fr;
+	}
+}
+
+/* Bridge block theme wrappers */
+.single-product .Gstore-single-product-layout {
+	margin: 0;
+	padding: 0;
+}
+
+.single-product .content-area.alignwide,
+.single-product .site-main {
+	max-width: none;
+	width: 100%;
+	margin: 0;
+	padding: 0;
+}
+
+/* =========================================
+ * Single Product Experience (Light Theme)
+ * ========================================= */
+.Gstore-single-product-shell {
+	background: #ffffff;
+	padding: clamp(24px, 4vw, 64px) 0;
+}
+
+:root {
+	--gstore-sticky-offset: 110px;
+}
+
+.Gstore-single-product-shell__inner {
+	max-width: var(--gstore-container-max-width, 1280px);
+	margin: 0 auto;
+	padding: 0 var(--gstore-container-padding-inline, 20px);
+}
+
+.Gstore-single-product__breadcrumb {
+	margin-bottom: 24px;
+	font-size: 14px;
+	color: #667085;
+}
+
+.Gstore-breadcrumb {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px;
+	color: inherit;
+}
+
+.Gstore-breadcrumb a {
+	color: #FF5C00;
+	text-decoration: none;
+	font-weight: 600;
+}
+
+.Gstore-single-product__entry {
+	display: flex;
+	flex-direction: column;
+	gap: 0;
+	background: transparent;
+	border: none;
+	border-radius: 0;
+	box-shadow: none;
+}
+
+.Gstore-single-product__section {
+	position: relative;
+	padding-block: clamp(24px, 5vw, 60px);
+	padding-inline: 0;
+}
+
+.Gstore-single-product__section::before {
+	content: '';
+	position: absolute;
+	inset: 0;
+	width: 100%;
+	background: inherit;
+	z-index: -1;
+}
+
+/* Classes hero legadas removidas na v2.1.0 */
+
+.Gstore-single-product__eyebrow {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	text-transform: uppercase;
+	font-size: 12px;
+	letter-spacing: 0.18em;
+	font-weight: 600;
+	color: #FF5C00;
+	margin-bottom: 12px;
+}
+
+.Gstore-single-product__title {
+	color: #1f2a37;
+	font-size: clamp(28px, 4vw, 42px);
+	margin: 0 0 12px;
+}
+
+
+.Gstore-single-product__main {
+	background: #ffffff;
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
+	gap: clamp(20px, 3.5vw, 40px);
+	padding-inline: clamp(16px, 4vw, 48px);
+}
+
+.Gstore-single-product__main>* {
+	margin: 0;
+}
+
+.Gstore-single-product__gallery {
+	position: relative;
+}
+
+.Gstore-single-product__gallery[data-gstore-sticky] {
+	align-self: start;
+}
+
+.Gstore-single-product__gallery[data-gstore-sticky] .woocommerce-product-gallery {
+	position: relative;
+}
+
+@media (min-width: 1024px) {
+	.Gstore-single-product__gallery[data-gstore-sticky] {
+		position: sticky;
+		top: var(--gstore-sticky-offset, 110px);
+	}
+}
+
+.Gstore-single-product__gallery .woocommerce-product-gallery,
+.Gstore-single-product__gallery .woocommerce-product-gallery__wrapper {
+	width: 100% !important;
+}
+
+.Gstore-single-product__gallery .woocommerce-product-gallery {
+	background: #fff;
+	border: 1px solid #e4e7ec;
+	border-radius: 4px;
+	padding: clamp(16px, 3vw, 28px);
+}
+
+/* Removido: Tag "Oferta" não é mais exibida na página de produto único */
+.single-product .onsale,
+.Gstore-single-product__gallery .onsale,
+body.single-product .onsale {
+	display: none !important;
+}
+
+.Gstore-single-product__summary {
+	display: flex;
+	flex-direction: column;
+	gap: 20px;
+}
+
+.Gstore-single-product__summary-card {
+	background: #ffffff;
+	border: 1px solid #e5e5e5;
+	border-radius: 4px;
+	padding: clamp(20px, 3vw, 32px);
+}
+
+.Gstore-single-product__price-block {
+	background: #ffffff;
+	border: 1px solid #f3e6d1;
+	border-radius: 4px;
+	padding: 18px;
+	margin-bottom: 20px;
+}
+
+.Gstore-single-product__price-meta {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	margin-bottom: 6px;
+}
+
+.Gstore-single-product__price-meta-old {
+	color: #98a2b3;
+	text-decoration: line-through;
+	font-size: 14px;
+}
+
+.Gstore-single-product__price-meta-badge {
+	background: #FF5C00;
+	color: #fff;
+	font-weight: 700;
+	font-size: 12px;
+	padding: 4px 10px;
+	border-radius: 999px;
+	text-transform: uppercase;
+	letter-spacing: 0.08em;
+}
+
+.Gstore-single-product__price-block .price {
+	font-size: clamp(30px, 3.5vw, 38px);
+	font-weight: 700;
+	color: #1a1a1a;
+}
+
+.Gstore-single-product__price-block .Gstore-payment-label {
+	background: #FF5C00;
+	color: #ffffff;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	padding: 6px 12px;
+	border-radius: 4px;
+	font-size: 11px;
+	letter-spacing: 0.14em;
+	margin-bottom: 10px;
+}
+
+.Gstore-single-product__installments-text {
+	margin: 8px 0 0;
+	font-size: 14px;
+	color: #475467;
+}
+
+.Gstore-single-product__add-to-cart form.cart {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+	margin-bottom: 18px;
+}
+
+.Gstore-single-product__add-to-cart .quantity .qty {
+	padding: 12px;
+	border-radius: 4px;
+	border: 1px solid #d0d5dd;
+	font-size: 16px;
+	background: #ffffff;
+	color: #1a1a1a;
+}
+
+.Gstore-single-product__add-to-cart .single_add_to_cart_button {
+	width: 100%;
+	padding: 14px;
+	font-size: 15px;
+	font-weight: 700;
+	text-transform: uppercase;
+	letter-spacing: 0.12em;
+	border-radius: 4px;
+	background: var(--green);
+	border: none;
+	color: #fff;
+	box-shadow: none;
+	transition: background var(--gstore-transition-fast);
+}
+
+.Gstore-single-product__add-to-cart .single_add_to_cart_button:hover {
+	background: var(--green-dark);
+}
+
+.Gstore-single-product__stock {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	font-weight: 600;
+	text-transform: uppercase;
+	letter-spacing: 0.08em;
+	color: #1e3a2f;
+}
+
+.Gstore-single-product__stock i {
+	color: #22c55e;
+	font-size: 10px;
+}
+
+.Gstore-single-product__buy-now {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	padding: 14px;
+	border-radius: 4px;
+	font-size: 14px;
+	text-transform: uppercase;
+	letter-spacing: 0.12em;
+	font-weight: 700;
+	border: 2px solid #1e3a2f;
+	color: #1e3a2f;
+	text-decoration: none;
+	transition: background 0.2s ease, color 0.2s ease;
+}
+
+.Gstore-single-product__buy-now:hover {
+	background: #1e3a2f;
+	color: #fff8ef;
+}
+
+.Gstore-single-product__add-to-cart .Gstore-quantity-controls {
+	display: flex;
+	align-items: stretch;
+	border: 1px solid #d0d5dd;
+	border-radius: 4px;
+	overflow: hidden;
+	width: 100%;
+	max-width: 240px;
+	background: #fff;
+	box-shadow: inset 0 0 0 1px rgba(230, 236, 245, 0.4);
+}
+
+.Gstore-single-product__add-to-cart .Gstore-quantity-controls .qty {
+	width: 100%;
+	text-align: center;
+	border: none;
+	font-weight: 600;
+	font-size: 16px;
+	-moz-appearance: textfield;
+	background: #ffffff;
+	color: #1a1a1a;
+}
+
+.Gstore-single-product__add-to-cart .Gstore-quantity-controls .qty::-webkit-outer-spin-button,
+.Gstore-single-product__add-to-cart .Gstore-quantity-controls .qty::-webkit-inner-spin-button {
+	-webkit-appearance: none;
+	margin: 0;
+}
+
+.Gstore-single-product__add-to-cart .Gstore-quantity-button {
+	border: none;
+	background: #f2f4f7;
+	width: 44px;
+	font-size: 18px;
+	font-weight: 700;
+	color: #4a2f1b;
+	cursor: pointer;
+	transition: background 0.2s ease;
+}
+
+.Gstore-single-product__add-to-cart .Gstore-quantity-button:hover {
+	background: #e4e7ec;
+}
+
+.Gstore-single-product__add-to-cart .Gstore-single-product__form-actions {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+}
+
+/* Botões sempre empilhados verticalmente */
+
+.Gstore-single-product__add-to-cart .Gstore-single-product__form-actions .single_add_to_cart_button,
+.Gstore-single-product__add-to-cart .Gstore-single-product__form-actions .Gstore-single-product__buy-now {
+	flex: 1 1 auto;
+	width: 100%;
+}
+
+.Gstore-single-product__benefits {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	color: #475467;
+	font-size: 14px;
+}
+
+.Gstore-single-product__benefits li {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+
+.Gstore-single-product__benefits i {
+	color: #FF8C5C;
+}
+
+.Gstore-single-product__meta .product_meta {
+	font-size: 13px;
+	display: grid;
+	gap: 6px;
+	color: #475467;
+}
+
+.Gstore-single-product__contact-card {
+	background: #ffffff;
+	border: 1px solid #e5e5e5;
+	border-radius: 4px;
+	padding: 20px;
+	color: #374151;
+}
+
+.Gstore-single-product__contact-card h3 {
+	margin: 0 0 16px;
+	font-size: 16px;
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	color: #1f2937;
+}
+
+.Gstore-single-product__contact-card ul {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+}
+
+.Gstore-single-product__contact-card li {
+	display: grid;
+	grid-template-columns: auto 1fr auto;
+	gap: 12px;
+	align-items: center;
+	padding: 8px 0;
+	border-bottom: 1px solid #e5e5e5;
+}
+
+.Gstore-single-product__contact-card li:last-child {
+	border-bottom: none;
+}
+
+.Gstore-single-product__contact-card a {
+	color: #1e3a2f;
+	font-weight: 600;
+	text-transform: uppercase;
+	font-size: 11px;
+	letter-spacing: 0.12em;
+}
+
+.Gstore-single-product__summary-extra {
+	margin-top: 12px;
+}
+
+.Gstore-single-product__details {
+	background: #ffffff;
+	padding-inline: clamp(16px, 4vw, 48px);
+}
+
+.Gstore-single-product__details>* {
+	margin: 0;
+}
+
+.Gstore-single-product__details-overview {
+	display: flex;
+	flex-direction: column;
+	gap: clamp(20px, 4vw, 32px);
+}
+
+.Gstore-single-product__details-highlight-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+	gap: 12px;
+}
+
+.Gstore-single-product__details-highlight {
+	display: flex;
+	gap: 12px;
+	align-items: flex-start;
+	background: #ffffff;
+	border: 1px solid #FFE5D4;
+	border-radius: 4px;
+	padding: 16px 18px;
+	box-shadow: none;
+}
+
+.Gstore-single-product__details-highlight-icon {
+	width: 42px;
+	height: 42px;
+	border-radius: 999px;
+	background: #FFE5D4;
+	color: #FF5C00;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-size: 16px;
+	flex-shrink: 0;
+}
+
+.Gstore-single-product__details-highlight-label {
+	display: block;
+	font-size: 13px;
+	font-weight: 600;
+	text-transform: uppercase;
+	letter-spacing: 0.12em;
+	color: #FF5C00;
+	margin-bottom: 4px;
+}
+
+.Gstore-single-product__details-highlight p {
+	margin: 0;
+	font-size: 14px;
+	color: #475467;
+	line-height: 1.5;
+}
+
+.Gstore-single-product__details-info-card {
+	background: #ffffff;
+	border: 1px solid #FFE5D4;
+	border-radius: 4px;
+	box-shadow: none;
+	overflow: hidden;
+}
+
+.Gstore-single-product__details-info-row {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+	padding: 0;
+}
+
+.Gstore-single-product__details-info-row.Gstore-review-card--collapsible {
+	padding: 0;
+	overflow: hidden;
+}
+
+.Gstore-single-product__details-info-row+.Gstore-single-product__details-info-row {
+	border-top: 1px solid rgba(255, 229, 212, 0.8);
+}
+
+.Gstore-single-product__details-info-meta {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+}
+
+/* Estilos para o toggle na seção de detalhes */
+.Gstore-single-product__details-info-toggle {
+	padding: 18px clamp(18px, 4vw, 28px);
+}
+
+.Gstore-single-product__details-info-toggle .Gstore-review-card__header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	width: 100%;
+	gap: 12px;
+}
+
+.Gstore-single-product__details-info-toggle .Gstore-review-card__header > div {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	flex: 1;
+}
+
+.Gstore-single-product__details-info-icon {
+	width: 40px;
+	height: 40px;
+	border-radius: 4px;
+	background: #FFE5D4;
+	color: #FF5C00;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-size: 16px;
+	flex-shrink: 0;
+}
+
+.Gstore-single-product__details-info-meta strong {
+	font-size: 15px;
+	color: #1a1a1a;
+	text-transform: none;
+	letter-spacing: normal;
+}
+
+.Gstore-single-product__details-info-content {
+	font-size: 14px;
+	color: #475467;
+	line-height: 1.6;
+}
+
+/* Estilos para conteúdo retrátil na seção de detalhes */
+.Gstore-single-product__details-info-row .Gstore-review-card__content {
+	padding: 0;
+	grid-template-rows: 0fr;
+	max-height: 0;
+	overflow: hidden;
+	transition: grid-template-rows 0.35s ease-out, max-height 0.35s ease-out;
+}
+
+.Gstore-single-product__details-info-row.is-expanded .Gstore-review-card__content {
+	grid-template-rows: 1fr;
+	max-height: 5000px;
+}
+
+.Gstore-single-product__details-info-row .Gstore-review-card__content-inner {
+	padding: 0 clamp(18px, 4vw, 28px);
+	padding-bottom: 0;
+	min-height: 0;
+	overflow: hidden;
+}
+
+.Gstore-single-product__details-info-row.is-expanded .Gstore-review-card__content-inner {
+	padding-bottom: clamp(18px, 4vw, 28px);
+}
+
+/* Ajustes para HTML dentro do conteúdo */
+.Gstore-single-product__details-info-content p {
+	margin: 0 0 12px;
+}
+
+.Gstore-single-product__details-info-content p:last-child {
+	margin-bottom: 0;
+}
+
+.Gstore-single-product__details-info-content ul,
+.Gstore-single-product__details-info-content ol {
+	margin: 0 0 12px;
+	padding-left: 20px;
+}
+
+.Gstore-single-product__details-info-content ul:last-child,
+.Gstore-single-product__details-info-content ol:last-child {
+	margin-bottom: 0;
+}
+
+.Gstore-single-product__details-list {
+	margin: 0;
+	padding-left: 18px;
+	list-style: disc;
+	list-style-position: outside;
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+}
+
+.Gstore-single-product__details-list li {
+	font-size: 14px;
+	color: #4b5563;
+}
+
+.Gstore-single-product__details-reviews {
+	margin-top: clamp(28px, 6vw, 56px);
+}
+
+.woocommerce-Reviews {
+	background: #ffffff;
+	border-radius: 4px;
+	border: 1px solid #FFE5D4;
+	box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+	padding: clamp(18px, 3vw, 26px);
+	margin-top: clamp(28px, 6vw, 56px);
+}
+
+.Gstore-review-layout {
+	display: grid;
+	gap: clamp(18px, 4vw, 32px);
+}
+
+@media (min-width: 960px) {}
+
+.Gstore-review-card {
+	background: transparent;
+	border: none;
+	box-shadow: none;
+	padding: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 18px;
+}
+
+.Gstore-review-card--unified {
+	gap: clamp(18px, 3vw, 26px);
+}
+
+.Gstore-review-body {
+	display: flex;
+	flex-direction: column;
+	gap: 14px;
+}
+
+.Gstore-review-separator {
+	height: 1px;
+	background: #FFE5D4;
+	margin: clamp(16px, 2.5vw, 24px) 0;
+	border: none;
+}
+
+.Gstore-review-form-section {
+	display: flex;
+	flex-direction: column;
+	gap: clamp(14px, 2vw, 22px);
+}
+
+.Gstore-review-form-section .Gstore-review-card__header {
+	gap: 8px;
+}
+
+.Gstore-review-form-section .Gstore-review-card__hint {
+	margin-top: 0;
+}
+
+.Gstore-review-form-section .Gstore-review-card__description {
+	margin: 0;
+}
+
+/* Estilos legados mantidos para compatibilidade */
+.Gstore-review-card--form {
+	position: sticky;
+	top: 28px;
+	align-self: flex-start;
+	gap: clamp(14px, 2vw, 22px);
+}
+
+.Gstore-review-card--form .Gstore-review-card__header {
+	gap: 8px;
+}
+
+.Gstore-review-card--form .Gstore-review-card__hint {
+	margin-top: 0;
+}
+
+.Gstore-review-card--form .Gstore-review-card__description {
+	margin: 0;
+}
+
+@media (max-width: 960px) {
+	.Gstore-review-card--form {
+		position: static;
+	}
+}
+
+/* =========================================
+ * Collapsible Review Form
+ * ========================================= */
+.Gstore-review-card--collapsible {
+	padding: 0;
+	overflow: hidden;
+}
+
+.Gstore-review-card__toggle {
+	display: flex;
+	width: 100%;
+	padding: clamp(16px, 2.5vw, 22px);
+	background: transparent;
+	border: none;
+	cursor: pointer;
+	text-align: left;
+	transition: background-color 0.2s ease;
+}
+
+.Gstore-review-card__toggle:hover {
+	background: rgba(244, 227, 195, 0.3);
+}
+
+.Gstore-review-card__toggle:focus-visible {
+	outline: 2px solid #FF8C5C;
+	outline-offset: -2px;
+}
+
+.Gstore-review-card__toggle .Gstore-review-card__header {
+	width: 100%;
+	flex-wrap: nowrap;
+	align-items: center;
+}
+
+.Gstore-review-card__toggle-icon {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	flex-shrink: 0;
+	width: 32px;
+	height: 32px;
+	border-radius: 50%;
+	background: #FFF5ED;
+	border: 1px solid #FFE5D4;
+	color: #FF5C00;
+	transition: transform 0.3s ease, background-color 0.2s ease;
+}
+
+.Gstore-review-card__toggle:hover .Gstore-review-card__toggle-icon {
+	background: #FFE5D4;
+}
+
+.Gstore-review-card--collapsible.is-expanded .Gstore-review-card__toggle-icon {
+	transform: rotate(180deg);
+}
+
+.Gstore-review-card__content {
+	display: grid;
+	grid-template-rows: 0fr;
+	transition: grid-template-rows 0.35s ease-out;
+	max-height: 0;
+	overflow: hidden;
+}
+
+.Gstore-review-card__content-inner {
+	overflow: hidden;
+	display: flex;
+	flex-direction: column;
+	gap: clamp(14px, 2vw, 18px);
+	padding: 0 clamp(16px, 2.5vw, 22px);
+	min-height: 0;
+}
+
+.Gstore-review-card--collapsible.is-expanded .Gstore-review-card__content {
+	grid-template-rows: 1fr;
+	max-height: none;
+}
+
+.Gstore-review-card--collapsible.is-expanded .Gstore-review-card__content-inner {
+	padding-bottom: clamp(16px, 2.5vw, 22px);
+}
+
+/* Content styling */
+.Gstore-review-card__content .Gstore-review-card__description {
+	margin: 0;
+	padding-top: 4px;
+}
+
+.Gstore-review-card__content .Gstore-review-form-wrapper {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+}
+
+.Gstore-review-card__content .woocommerce-verification-required {
+	margin: 0;
+	padding: 8px 0;
+}
+
+.Gstore-review-card__header {
+	display: flex;
+	justify-content: space-between;
+	align-items: flex-start;
+	gap: 16px;
+}
+
+.Gstore-review-card__header h3 {
+	margin: 0;
+	font-size: 18px;
+	color: #1a1a1a;
+	letter-spacing: 0.01em;
+}
+
+.Gstore-review-card__header p {
+	margin: 4px 0 0;
+	color: #666666;
+	font-size: 14px;
+}
+
+.Gstore-review-card__hint {
+	font-size: 13px;
+	color: #FF8C5C;
+	margin: 2px 0 0;
+}
+
+.Gstore-review-card__description {
+	margin: -2px 0 0;
+	font-size: 13px;
+	color: #666666;
+}
+
+.Gstore-review-chip {
+	border-radius: 4px;
+	padding: 4px 12px;
+	font-size: 11px;
+	text-transform: uppercase;
+	letter-spacing: 0.08em;
+	font-weight: 600;
+	border: 1px solid #FFE5D4;
+	background: #FFF5ED;
+	color: #FF5C00;
+}
+
+.Gstore-review-summary {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr);
+	gap: clamp(16px, 3vw, 24px);
+	align-items: center;
+	padding: clamp(12px, 2vw, 18px);
+	border: 1px solid #FFE5D4;
+	border-radius: 4px;
+	background: #ffffff;
+}
+
+@media (max-width: 640px) {
+	.Gstore-review-summary {
+		grid-template-columns: minmax(0, 1fr);
+	}
+}
+
+.Gstore-review-score {
+	text-align: center;
+	padding-right: clamp(12px, 2vw, 18px);
+	border-right: 1px solid #FFE5D4;
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+
+@media (max-width: 640px) {
+	.Gstore-review-score {
+		border-right: none;
+		border-bottom: 1px solid #FFE5D4;
+		padding-right: 0;
+		padding-bottom: 16px;
+	}
+}
+
+.Gstore-review-score__value {
+	display: flex;
+	align-items: baseline;
+	justify-content: center;
+	gap: 6px;
+}
+
+.Gstore-review-score__number {
+	font-size: 44px;
+	font-weight: 600;
+	color: #1a1a1a;
+}
+
+.Gstore-review-score__max {
+	font-size: 15px;
+	color: #FF8C5C;
+}
+
+.Gstore-review-score__meta {
+	font-size: 13px;
+	color: #666666;
+}
+
+.Gstore-review-stars {
+	display: inline-flex;
+	gap: 3px;
+	color: #FF8C5C;
+	font-size: 18px;
+}
+
+.Gstore-review-stars .star-rating,
+.Gstore-review-stars .star-rating::before,
+.Gstore-review-stars .star-rating span::before {
+	color: #FF8C5C;
+}
+
+.Gstore-review-stars .star-rating {
+	font-size: 18px;
+	margin: 0 auto;
+}
+
+.Gstore-review-distribution {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	font-size: 13px;
+	color: #666666;
+}
+
+.Gstore-review-distribution__row {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+}
+
+.Gstore-review-distribution__label {
+	width: 74px;
+	white-space: nowrap;
+	font-weight: 600;
+}
+
+.Gstore-review-distribution__bar {
+	flex: 1;
+	height: 8px;
+	border-radius: 4px;
+	background: #FFE5D4;
+	position: relative;
+	overflow: hidden;
+}
+
+.Gstore-review-distribution__bar-fill {
+	position: absolute;
+	inset: 0;
+	background: linear-gradient(90deg, #FF8C5C, #FF5C00);
+}
+
+.Gstore-review-distribution__count {
+	width: 30px;
+	text-align: right;
+	font-weight: 600;
+	color: #1a1a1a;
+}
+
+.Gstore-reviews-list {
+	display: flex;
+	flex-direction: column;
+	gap: 14px;
+	max-height: 360px;
+	overflow-y: auto;
+	padding-right: 4px;
+}
+
+.Gstore-review-item {
+	border: 1px solid #f2dec1;
+	border-radius: 4px;
+	background: #ffffff;
+	padding: 14px 16px;
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+	box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+}
+
+.Gstore-review-item--empty {
+	opacity: 0.65;
+	border-style: dashed;
+}
+
+.Gstore-review-item__header {
+	display: flex;
+	justify-content: space-between;
+	align-items: flex-start;
+	gap: 12px;
+}
+
+.Gstore-review-item__author {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+}
+
+.Gstore-review-item__author-name {
+	font-weight: 600;
+	font-size: 15px;
+	color: #1a1a1a;
+}
+
+.Gstore-review-item__meta {
+	font-size: 12px;
+	color: #666666;
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+}
+
+.Gstore-review-item__rating {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-end;
+	gap: 2px;
+	font-size: 12px;
+	color: #666666;
+}
+
+.Gstore-review-item__rating-text {
+	font-weight: 600;
+}
+
+.Gstore-review-item__body {
+	font-size: 14px;
+	color: #3c2615;
+	line-height: 1.55;
+}
+
+.Gstore-review-item__body p {
+	margin: 0;
+}
+
+.Gstore-review-pagination {
+	font-size: 13px;
+	color: #666666;
+	padding-top: 6px;
+}
+
+.Gstore-review-pagination .page-numbers {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 30px;
+	height: 30px;
+	margin-right: 4px;
+	border-radius: 4px;
+	border: 1px solid transparent;
+	color: inherit;
+	text-decoration: none;
+	font-weight: 500;
+}
+
+.Gstore-review-pagination .page-numbers.current {
+	border-color: #FF8C5C;
+	color: #1a1a1a;
+	background: #FFF5ED;
+}
+
+.Gstore-review-form-wrapper {
+	display: flex;
+	flex-direction: column;
+	gap: clamp(14px, 2vw, 22px);
+}
+
+.Gstore-review-form__group {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+
+.Gstore-review-form__label {
+	font-size: 13px;
+	font-weight: 600;
+	color: #1a1a1a;
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	text-transform: uppercase;
+	letter-spacing: 0.08em;
+}
+
+.Gstore-review-form__field,
+.Gstore-review-form__textarea {
+	width: 100%;
+	padding: 10px 12px;
+	border-radius: 4px;
+	border: 1px solid #FFE5D4;
+	background: #ffffff;
+	font-size: 14px;
+	color: #1a1a1a;
+	transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+}
+
+.Gstore-review-form__field:focus,
+.Gstore-review-form__textarea:focus {
+	outline: none;
+	border-color: #FF8C5C;
+	box-shadow: 0 0 0 1px rgba(255, 140, 92, 0.2);
+	background: #ffffff;
+}
+
+.Gstore-review-form__textarea {
+	min-height: 120px;
+	resize: vertical;
+}
+
+.Gstore-review-form__rating-hint {
+	font-size: 12px;
+	color: #FF8C5C;
+}
+
+.Gstore-review-form__group .stars {
+	margin: 4px 0 0;
+	display: flex;
+}
+
+.Gstore-review-form__group .stars span {
+	display: inline-flex;
+	gap: 6px;
+}
+
+.Gstore-review-form__group .stars a {
+	width: 34px;
+	height: 34px;
+	border-radius: 4px;
+	border: none;
+	background: transparent;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	font-size: 0;
+	transition: background 0.15s ease, transform 0.1s ease;
+}
+
+.Gstore-review-form__group .stars a::before {
+	content: '\2605';
+	font-size: 18px;
+	color: #FFB380;
+	transition: color 0.15s ease;
+}
+
+.Gstore-review-form__group .stars a:hover,
+.Gstore-review-form__group .stars a:focus {
+	background: #FFF5ED;
+	transform: translateY(-1px);
+}
+
+.Gstore-review-form__group .stars a:hover::before,
+.Gstore-review-form__group .stars a:focus::before,
+.Gstore-review-form__group .stars.selected a.active::before {
+	color: #FF8C5C;
+}
+
+.Gstore-review-form__group .stars.selected a:not(.active)::before {
+	color: #FFB380;
+}
+
+.Gstore-review-form__checkbox {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	font-size: 12px;
+	color: #666666;
+	margin: 4px 0 14px;
+}
+
+.Gstore-review-form__checkbox label {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	cursor: pointer;
+}
+
+.Gstore-review-form__checkbox input[type='checkbox'] {
+	width: 14px;
+	height: 14px;
+	accent-color: #FF8C5C;
+	flex-shrink: 0;
+	margin: 0;
+}
+
+.Gstore-review-form__submit {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	padding: 12px 20px;
+	border-radius: 4px;
+	border: 1px solid #4f6d3f;
+	background: #567745;
+	color: #ffffff;
+	font-size: 13px;
+	font-weight: 600;
+	text-transform: uppercase;
+	letter-spacing: 0.08em;
+	cursor: pointer;
+	transition: background 0.15s ease, box-shadow 0.15s ease, transform 0.05s ease;
+	box-shadow: 0 12px 25px rgba(86, 119, 69, 0.25);
+}
+
+.Gstore-review-form__submit:hover {
+	background: #4b6a3c;
+	box-shadow: 0 8px 18px rgba(41, 65, 32, 0.35);
+}
+
+.Gstore-review-form__submit:active {
+	transform: translateY(1px);
+}
+
+.Gstore-review-form__disclaimer {
+	margin: 12px 0 0;
+	font-size: 12px;
+	color: #666666;
+	border-top: 1px dashed #FFE5D4;
+	padding-top: 8px;
+}
+
+.Gstore-single-product__upsells {
+	background: #ffffff;
+	padding: clamp(32px, 5vw, 64px) 0;
+}
+
+.Gstore-single-product__upsells>* {
+	margin: 0 clamp(16px, 4vw, 48px);
+}
+
+.Gstore-single-product__upsells .related.products ul.products {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+	gap: 24px;
+	list-style: none;
+	padding: 0;
+	margin: 32px 0 0 0;
+}
+
+.Gstore-single-product__upsells .related.products ul.products::before,
+.Gstore-single-product__upsells .related.products ul.products::after {
+	content: none;
+	display: none;
+}
+
+.Gstore-single-product__upsells .related.products ul.products li.product {
+	margin: 0;
+	float: none;
+	width: auto;
+}
+
+.Gstore-single-product__upsells .products .product {
+	background: #ffffff;
+	border: 1px solid #e4e7ec;
+	border-radius: 4px;
+	padding: 16px;
+}
+
+.Gstore-single-product__upsells .related.products,
+.Gstore-single-product__upsells .upsells.products {
+	max-width: var(--gstore-container-max-width, 1280px);
+	margin: 0 auto;
+	width: 100%;
+	padding: 0 var(--gstore-container-padding-inline, 20px);
+	box-sizing: border-box;
+}
+
+@media (max-width: 1024px) {
+	.Gstore-single-product__hero {
+		grid-template-columns: 1fr;
+	}
+
+	.Gstore-single-product__main {
+		grid-template-columns: 1fr;
+	}
+
+	.Gstore-single-product__details-highlight-grid {
+		grid-template-columns: 1fr;
+	}
+}
+
+@media (max-width: 640px) {
+	.Gstore-single-product-shell {
+		overflow-x: hidden;
+		width: 100%;
+		max-width: 100vw;
+		box-sizing: border-box;
+	}
+
+	.Gstore-single-product-shell__inner {
+		padding: 0 16px;
+		overflow-x: hidden;
+		width: 100%;
+		max-width: 100%;
+		box-sizing: border-box;
+	}
+
+	.Gstore-single-product__section {
+		overflow-x: hidden;
+		width: 100%;
+		max-width: 100%;
+		box-sizing: border-box;
+	}
+
+	.Gstore-single-product__main {
+		padding-inline: 16px;
+		overflow-x: hidden;
+		width: 100%;
+		max-width: 100%;
+		box-sizing: border-box;
+	}
+
+	.Gstore-single-product__main > * {
+		max-width: 100%;
+		overflow-wrap: break-word;
+		word-wrap: break-word;
+		box-sizing: border-box;
+	}
+
+	.Gstore-single-product__main img,
+	.Gstore-single-product__main picture,
+	.Gstore-single-product__main video,
+	.Gstore-single-product__main iframe {
+		max-width: 100%;
+		height: auto;
+	}
+
+	.Gstore-single-product__main * {
+		max-width: 100%;
+		word-wrap: break-word;
+		overflow-wrap: break-word;
+	}
+
+	.Gstore-single-product__summary,
+	.Gstore-single-product__summary-card {
+		max-width: 100%;
+		overflow-x: hidden;
+		box-sizing: border-box;
+	}
+
+	.Gstore-single-product__gallery,
+	.Gstore-single-product__gallery * {
+		max-width: 100%;
+		box-sizing: border-box;
+	}
+
+	.Gstore-single-product__hero>*,
+	.Gstore-single-product__main>*,
+	.Gstore-single-product__details>*,
+	.Gstore-single-product__assurance>* {
+		margin: 0 0;
+	}
+
+	.Gstore-single-product__hero-card,
+	.Gstore-single-product__summary-card,
+	.Gstore-single-product__contact-card {
+		padding: 16px;
+	}
+
+	.Gstore-single-product__contact-card li {
+		grid-template-columns: auto 1fr;
+		grid-template-rows: auto auto;
+		row-gap: 4px;
+	}
+
+	.Gstore-single-product__contact-card a {
+		grid-column: 1 / -1;
+	}
+}
+
+/*
+Theme Name: Gstore
+Author: CAC Armas Team
+Description: Child theme Gstore para o Twenty Twenty-Five com foco em WooCommerce.
+Requires at least: 6.6
+Tested up to: 6.6
+Requires PHP: 8.1
+Version: 1.0.1
+Template: twentytwentyfive
+Text Domain: gstore
+*/
+
+@import url("../twentytwentyfive/style.css");
+
+/*
+ * Espaço reservado para estilos customizados do child theme.
+ * Adicione novas regras abaixo mantendo o prefixo .Gstore- conforme necessário.
+ */
+
+:root {
+	/* Cores */
+	--gstore-color-bg-dark: #0a0a0a;
+	--gstore-color-bg-darker: #1a1a1a;
+	--gstore-color-text-primary: #1a1a1a;
+	--gstore-color-text-secondary: #6b6b6b;
+	--gstore-color-accent: #5a8900;
+	--gstore-color-accent-hover: #4f7900;
+	--gstore-color-border: #2a2a2a;
+	--gstore-radius-base: 4px;
+	--gstore-container-max-width: 1280px;
+	--gstore-container-padding-inline: 20px;
+
+	/* Cores para Cards de Produtos */
+	--green: #2e9b3b;
+	--green-dark: #1f6e29;
+	--brass: #FF5C00;
+	--gray-bg: #f0f2f5;
+	--card-meta-bg: #f6f6f6;
+	--gray-border: #e6e6e6;
+	--text-main: #1a1a1a;
+	--text-muted: #6b6b6b;
+	--shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.06);
+	--shadow-md: 0 3px 10px rgba(0, 0, 0, 0.08);
+
+	/* Espaçamentos (8px base) */
+	--gstore-spacing-xs: 0.5rem;
+	--gstore-spacing-sm: 0.75rem;
+	--gstore-spacing-md: 1rem;
+	--gstore-spacing-lg: 1.5rem;
+	--gstore-spacing-xl: 2rem;
+
+	/* Tipografia */
+	--gstore-font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+	--gstore-font-size-sm: 0.875rem;
+	--gstore-font-size-base: 1rem;
+	--gstore-font-size-lg: 1.125rem;
+
+	/* Transições */
+	--gstore-transition-fast: 150ms ease-in-out;
+	--gstore-transition-base: 250ms ease-in-out;
+}
+
+* {
+	margin: 0;
+	padding: 0;
+	box-sizing: border-box;
+}
+
+body {
+	font-family: var(--gstore-font-family);
+	font-size: var(--gstore-font-size-base);
+	line-height: 1.5;
+	color: var(--text-main);
+	background-color: var(--gstore-color-text-primary);
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
+	overflow-x: hidden;
+}
+
+.wp-site-blocks {
+	background-color: var(--gstore-color-text-primary);
+}
+
+.wp-site-blocks>.wp-block-group:not(header):not(footer),
+.wp-site-blocks>main,
+main {
+	background-color: var(--gstore-color-text-primary);
+	color: var(--text-main);
+}
+
+.Gstore-header-shell,
+.Gstore-top-bar,
+.Gstore-header,
+.Gstore-nav-shell {
+	color: var(--gstore-color-text-primary);
+}
+
+/* Header accent palette aligns with footer accent */
+.Gstore-top-bar,
+.Gstore-header,
+.Gstore-nav-shell {
+	--gstore-color-accent: #FF5C00;
+	--gstore-color-accent-hover: #E65000;
+}
+
+/* ========================================
+   RESET DE PADDING GLOBAL DO WORDPRESS
+   ======================================== */
+/* O WordPress adiciona automaticamente padding via has-global-padding.
+   Resetamos nos wrappers principais para ter controle total. */
+.Gstore-top-bar.has-global-padding,
+.Gstore-header.has-global-padding,
+.Gstore-nav.has-global-padding,
+.Gstore-container.has-global-padding,
+.Gstore-header__content.has-global-padding,
+.Gstore-home-shell.has-global-padding,
+.Gstore-home-products.has-global-padding {
+	padding-left: 0 !important;
+	padding-right: 0 !important;
+}
+
+.Gstore-home-shell,
+.Gstore-home-shell.alignfull,
+.Gstore-home-shell.is-layout-constrained,
+.Gstore-home-products,
+.Gstore-home-products.alignfull,
+.Gstore-home-products.is-layout-constrained {
+	width: 100% !important;
+	max-width: none !important;
+}
+
+/* Remove espaçamentos automáticos entre blocos dentro da home */
+.Gstore-home-shell>* {
+	margin-block-start: 0 !important;
+	margin-block-end: 0 !important;
+}
+
+/* ========================================
+   HOME SECTIONS
+   ======================================== */
+.Gstore-home-section {
+	--gstore-home-section-padding-block: clamp(32px, 6vw, 96px);
+	--gstore-home-section-padding-inline: clamp(20px, 6vw, 64px);
+	width: 100%;
+	padding: var(--gstore-home-section-padding-block) var(--gstore-home-section-padding-inline);
+	position: relative;
+	background: #fffefd;
+}
+
+.Gstore-home-section.has-global-padding {
+	padding: var(--gstore-home-section-padding-block) var(--gstore-home-section-padding-inline) !important;
+}
+
+.Gstore-home-section+.Gstore-home-section {
+	margin-top: 0;
+}
+
+.Gstore-home-section__header {
+	text-align: center;
+	margin-bottom: clamp(32px, 5vw, 56px) !important;
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+	padding-left: var(--gstore-container-padding-inline, 20px);
+	padding-right: var(--gstore-container-padding-inline, 20px);
+}
+
+/* Força espaçamento entre header e grid mesmo com regras globais de reset */
+.Gstore-home-section .Gstore-home-section__header {
+	margin-block-end: clamp(32px, 5vw, 56px) !important;
+}
+
+/* Título alinhado à esquerda com linha separadora (estilo Mercado Livre) */
+.Gstore-home-section__header--left {
+	text-align: left;
+	position: relative;
+	padding-left: 0;
+	padding-right: 0;
+}
+
+.Gstore-home-section__header--left .Gstore-home-section__title-wrapper {
+	display: flex;
+	align-items: center;
+	gap: 16px;
+	width: 100%;
+}
+
+.Gstore-home-section__header--left .wp-block-heading {
+	margin: 0;
+	flex-shrink: 0;
+	white-space: nowrap;
+}
+
+.Gstore-home-section__header--left .Gstore-home-section__separator {
+	flex: 1;
+	height: 1px;
+	background: var(--gstore-color-border, #e5e5e5);
+	opacity: 0.3;
+	min-width: 0;
+	position: relative;
+	top: 0.25em; /* Ajuste ótico para alinhar com caracteres minúsculos */
+}
+
+.Gstore-home-section__eyebrow {
+	font-size: 0.85rem;
+	font-weight: 700;
+	text-transform: uppercase;
+	letter-spacing: 0.3em;
+	color: var(--gstore-color-accent);
+	margin: 0 auto;
+}
+
+.Gstore-home-section__description {
+	max-width: 640px;
+	margin: 0 auto;
+	color: var(--text-muted);
+}
+
+.Gstore-home-content {
+	background: #fff;
+	border-radius: var(--gstore-radius-base);
+	border: 1px solid var(--gray-border);
+	box-shadow: var(--shadow-sm);
+}
+
+/* ========================================
+   HOME HERO
+   ======================================== */
+.Gstore-home-hero,
+.Gstore-home-hero.has-global-padding {
+	padding: 0 !important;
+	background: transparent;
+	border: none;
+	box-shadow: none;
+}
+
+.Gstore-home-section.Gstore-home-hero.alignfull {
+	margin-left: 0;
+	margin-right: 0;
+	width: 100%;
+	max-width: none;
+}
+
+.Gstore-home-hero__content {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+}
+
+.Gstore-home-hero__eyebrow {
+	font-size: 0.9rem;
+	font-weight: 700;
+	color: var(--gstore-color-accent);
+	text-transform: uppercase;
+	letter-spacing: 0.2em;
+}
+
+.Gstore-home-hero__subtitle {
+	color: var(--text-muted);
+	font-size: 1.05rem;
+	max-width: 520px;
+}
+
+.Gstore-home-hero__actions .wp-block-button__link {
+	min-width: 180px;
+	font-weight: 700;
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+}
+
+.Gstore-home-hero__actions .is-style-outline .wp-block-button__link {
+	border: 1px solid var(--gstore-color-border);
+	color: var(--text-main);
+}
+
+.Gstore-home-hero__actions .is-style-outline .wp-block-button__link:hover {
+	border-color: var(--gstore-color-accent);
+	color: var(--gstore-color-accent);
+}
+
+.Gstore-home-hero__trust {
+	display: grid !important;
+	grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+	gap: 12px;
+	margin-top: 12px;
+}
+
+.Gstore-home-hero__trust-item {
+	background: var(--gray-bg);
+	border-radius: var(--gstore-radius-base);
+	border: 1px solid var(--gray-border);
+	padding: 14px 18px;
+	gap: 10px;
+	font-size: 0.95rem;
+	color: var(--text-main);
+}
+
+.Gstore-home-hero__trust-icon {
+	width: 32px;
+	height: 32px;
+	border-radius: 999px;
+	background: #fff;
+	border: 1px solid var(--gray-border);
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	color: var(--gstore-color-accent);
+}
+
+.Gstore-home-hero__trust-icon svg {
+	width: 18px;
+	height: 18px;
+	fill: currentColor;
+}
+
+.Gstore-home-hero__media {
+	position: relative;
+	width: 100%;
+}
+
+.Gstore-home-hero__media.alignfull {
+	margin-left: 0;
+	margin-right: 0;
+	width: 100%;
+	max-width: none;
+}
+
+/* ========================================
+   HOME BENEFITS STRIP
+   ======================================== */
+.Gstore-home-benefits {
+	padding: clamp(16px, 4vw, 40px) clamp(16px, 6vw, 48px);
+	background: #fffefd;
+}
+
+.Gstore-home-benefits__inner {
+	width: 100%;
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: clamp(12px, 3vw, 32px);
+	padding: clamp(14px, 3vw, 26px);
+	background: linear-gradient(90deg, var(--brass), #FF7A33);
+	border-radius: 4px;
+	color: #fff;
+	box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
+}
+
+.Gstore-home-benefits__item {
+	display: flex;
+	align-items: center;
+	gap: 14px;
+	flex: 1 1 220px;
+	min-width: 220px;
+}
+
+.Gstore-home-benefits__icon {
+	width: 48px;
+	height: 48px;
+	border-radius: 4px;
+	border: 1px solid rgba(255, 255, 255, 0.55);
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	background: rgba(255, 255, 255, 0.1);
+}
+
+.Gstore-home-benefits__icon svg,
+.Gstore-home-benefits__icon i {
+	width: 26px;
+	height: 26px;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	fill: currentColor;
+	color: #fff;
+	font-size: 26px;
+}
+
+.Gstore-home-benefits__content {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+}
+
+.Gstore-home-benefits__title {
+	margin: 0;
+	font-size: 1rem;
+	font-weight: 700;
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+}
+
+.Gstore-home-benefits__subtitle {
+	margin: 0;
+	font-size: 0.85rem;
+	color: rgba(255, 255, 255, 0.85);
+	text-transform: uppercase;
+	letter-spacing: 0.06em;
+}
+
+/* Carrossel mobile para benefícios */
+.Gstore-home-benefits__slider {
+	display: none;
+	position: relative;
+	width: 100%;
+	overflow: hidden;
+	padding: 20px clamp(14px, 3vw, 26px);
+	background: linear-gradient(90deg, var(--brass), #FF7A33);
+	border-radius: 4px;
+	color: #fff;
+	box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
+}
+
+.Gstore-home-benefits__slider-track {
+	display: flex;
+	transform: translate3d(0, 0, 0);
+	transition: transform 0.4s ease;
+	will-change: transform;
+}
+
+.Gstore-home-benefits__slider-slide {
+	min-width: 100%;
+	width: 100%;
+	flex-shrink: 0;
+	flex-basis: 100%;
+	max-width: 100%;
+	box-sizing: border-box;
+}
+
+.Gstore-home-benefits__slider-slide .Gstore-home-benefits__item {
+	width: 100%;
+	justify-content: center;
+	box-sizing: border-box;
+}
+
+.Gstore-home-benefits__slider-control {
+	position: absolute;
+	top: 50%;
+	transform: translateY(-50%);
+	background: rgba(255, 255, 255, 0.2);
+	color: #fff;
+	border: 1px solid rgba(255, 255, 255, 0.3);
+	width: 36px;
+	height: 36px;
+	border-radius: 999px;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	cursor: pointer;
+	transition: background 0.2s ease, border-color 0.2s ease;
+	z-index: 2;
+}
+
+.Gstore-home-benefits__slider-control svg,
+.Gstore-home-benefits__slider-control i {
+	width: 16px;
+	height: 16px;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	fill: currentColor;
+	font-size: 16px;
+}
+
+.Gstore-home-benefits__slider-control--prev {
+	left: 8px;
+}
+
+.Gstore-home-benefits__slider-control--next {
+	right: 8px;
+}
+
+.Gstore-home-benefits__slider-control:hover,
+.Gstore-home-benefits__slider-control:focus-visible {
+	background: rgba(255, 255, 255, 0.3);
+	border-color: rgba(255, 255, 255, 0.5);
+}
+
+.Gstore-home-benefits__slider-control:focus-visible {
+	outline: 2px solid rgba(255, 255, 255, 0.8);
+	outline-offset: 2px;
+}
+
+.Gstore-home-benefits__slider-dots {
+	position: absolute;
+	bottom: 12px;
+	left: 50%;
+	transform: translateX(-50%);
+	display: inline-flex;
+	gap: 8px;
+	background: rgba(0, 0, 0, 0.2);
+	padding: 6px 10px;
+	border-radius: 999px;
+	z-index: 2;
+}
+
+.Gstore-home-benefits__slider-dot {
+	width: 8px;
+	height: 8px;
+	border-radius: 999px;
+	background: rgba(255, 255, 255, 0.5);
+	border: none;
+	padding: 0;
+	cursor: pointer;
+	transition: transform 0.2s ease, background 0.2s ease;
+}
+
+.Gstore-home-benefits__slider-dot.is-active {
+	background: #fff;
+	transform: scale(1.3);
+}
+
+.Gstore-home-benefits__slider-dot:focus-visible {
+	outline: 2px solid rgba(255, 255, 255, 0.8);
+	outline-offset: 2px;
+}
+
+@media (max-width: 900px) {
+	.Gstore-home-benefits {
+		padding: 0;
+	}
+
+	.Gstore-home-benefits .Gstore-home-benefits__inner {
+		display: none !important;
+	}
+
+	.Gstore-home-benefits .Gstore-home-benefits__slider {
+		display: block !important;
+		border-radius: 0;
+		overflow: hidden;
+	}
+
+	.Gstore-home-benefits__slider-slide {
+		width: 100%;
+		flex: 0 0 100%;
+		max-width: 100%;
+	}
+
+	/* Remover setas e dots no mobile - usando seletor mais específico */
+	.Gstore-home-benefits .Gstore-home-benefits__slider .Gstore-home-benefits__slider-control,
+	.Gstore-home-benefits__slider .Gstore-home-benefits__slider-control,
+	.Gstore-home-benefits__slider-control.Gstore-home-benefits__slider-control--prev,
+	.Gstore-home-benefits__slider-control.Gstore-home-benefits__slider-control--next {
+		display: none !important;
+		visibility: hidden !important;
+		opacity: 0 !important;
+		pointer-events: none !important;
+	}
+
+	.Gstore-home-benefits .Gstore-home-benefits__slider-dots,
+	.Gstore-home-benefits__slider .Gstore-home-benefits__slider-dots {
+		display: none !important;
+	}
+
+	/* Diminuir tamanho da fonte no carrossel mobile */
+	.Gstore-home-benefits__slider .Gstore-home-benefits__title {
+		font-size: 0.9rem;
+	}
+
+	.Gstore-home-benefits__slider .Gstore-home-benefits__subtitle {
+		font-size: 0.75rem;
+	}
+
+	.Gstore-home-benefits__slider .Gstore-home-benefits__icon {
+		width: 42px;
+		height: 42px;
+	}
+
+	.Gstore-home-benefits__slider .Gstore-home-benefits__icon svg,
+	.Gstore-home-benefits__slider .Gstore-home-benefits__icon i {
+		width: 22px;
+		height: 22px;
+		font-size: 22px;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.Gstore-home-benefits__slider-track {
+		transition-duration: 0.001ms;
+	}
+
+	.Gstore-home-benefits__slider-control,
+	.Gstore-home-benefits__slider-dot {
+		transition: none;
+	}
+}
+
+.Gstore-hero-slider {
+	position: relative;
+	width: 100%;
+	border-radius: 0;
+	overflow: hidden;
+	background: #000;
+}
+
+.Gstore-hero-slider__track {
+	display: flex;
+	height: 100%;
+	transform: translate3d(0, 0, 0);
+	transition: transform 0.6s ease;
+	will-change: transform;
+}
+
+.Gstore-hero-slider__slide {
+	min-width: 100%;
+	height: 100%;
+}
+
+.Gstore-hero-slider__slide img {
+	display: block;
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+}
+
+.Gstore-hero-slider__control {
+	position: absolute;
+	top: 50%;
+	transform: translateY(-50%);
+	background: rgba(0, 0, 0, 0.55);
+	color: #fff;
+	border: none;
+	width: 44px;
+	height: 44px;
+	border-radius: 999px;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	cursor: pointer;
+	transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.Gstore-hero-slider__control svg,
+.Gstore-hero-slider__control i {
+	width: 20px;
+	height: 20px;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	fill: currentColor;
+	font-size: 20px;
+}
+
+.Gstore-hero-slider__control--prev {
+	left: 16px;
+}
+
+.Gstore-hero-slider__control--next {
+	right: 16px;
+}
+
+.Gstore-hero-slider__control:hover,
+.Gstore-hero-slider__control:focus-visible {
+	background: rgba(0, 0, 0, 0.75);
+}
+
+.Gstore-hero-slider__control:focus-visible {
+	outline: 2px solid var(--gstore-color-accent);
+	outline-offset: 2px;
+}
+
+.Gstore-hero-slider__dots {
+	position: absolute;
+	bottom: 16px;
+	left: 50%;
+	transform: translateX(-50%);
+	display: inline-flex;
+	gap: 10px;
+	background: rgba(0, 0, 0, 0.4);
+	padding: 6px 12px;
+	border-radius: 999px;
+}
+
+.Gstore-hero-slider__dot {
+	width: 10px;
+	height: 10px;
+	border-radius: 999px;
+	background: rgba(255, 255, 255, 0.45);
+	border: none;
+	padding: 0;
+	cursor: pointer;
+	transition: transform 0.2s ease, background 0.2s ease;
+}
+
+.Gstore-hero-slider__dot.is-active {
+	background: #fff;
+	transform: scale(1.2);
+}
+
+.Gstore-hero-slider__dot:focus-visible {
+	outline: 2px solid var(--gstore-color-accent);
+	outline-offset: 2px;
+}
+
+@media (max-width: 781px) {
+	.Gstore-hero-slider {
+		min-height: 260px;
+	}
+
+	.Gstore-hero-slider__control {
+		width: 36px;
+		height: 36px;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.Gstore-hero-slider__track {
+		transition-duration: 0.001ms;
+	}
+
+	.Gstore-hero-slider__control,
+	.Gstore-hero-slider__dot {
+		transition: none;
+	}
+}
+
+/* ========================================
+   HOME PRODUCTS
+   ======================================== */
+.Gstore-home-products {
+	background: var(--gray-bg);
+	border-bottom: 1px solid var(--gray-border);
+}
+
+.Gstore-home-products__filters .wp-block-button__link {
+	border-radius: var(--gstore-radius-base);
+	padding: 10px 20px;
+	text-transform: uppercase;
+	font-size: 0.85rem;
+	letter-spacing: 0.08em;
+}
+
+.Gstore-home-products__filters .is-style-outline .wp-block-button__link {
+	border: 1px solid var(--gray-border);
+	color: var(--text-main);
+}
+
+.Gstore-home-products__filters .is-style-outline .wp-block-button__link:hover {
+	border-color: var(--gstore-color-accent);
+	color: var(--gstore-color-accent);
+}
+
+/* Botões "Ver mais" nas seções de produtos - Verde para harmonizar com botões "Adicionar ao carrinho" */
+.Gstore-home-section .wp-block-button.is-style-primary .wp-block-button__link,
+.Gstore-home-products .wp-block-button.is-style-primary .wp-block-button__link {
+	background: var(--green) !important;
+	color: #fff !important;
+	border: none !important;
+	box-shadow: none !important;
+	transition: background var(--gstore-transition-fast) !important;
+}
+
+.Gstore-home-section .wp-block-button.is-style-primary .wp-block-button__link:hover,
+.Gstore-home-products .wp-block-button.is-style-primary .wp-block-button__link:hover {
+	background: var(--green-dark) !important;
+	transform: none;
+	box-shadow: none !important;
+}
+
+.Gstore-home-section .wp-block-button.is-style-primary .wp-block-button__link:active,
+.Gstore-home-products .wp-block-button.is-style-primary .wp-block-button__link:active {
+	transform: none !important;
+}
+
+/* ========================================
+   HOME BLOG
+   ======================================== */
+.Gstore-home-blog {
+	background: #fff;
+	border-radius: var(--gstore-radius-base);
+	border: 1px solid var(--gray-border);
+	box-shadow: var(--shadow-sm);
+}
+
+.Gstore-home-blog__query {
+	width: 100%;
+	display: flex;
+	flex-direction: column;
+	gap: 24px;
+	padding-left: var(--gstore-container-padding-inline, 20px);
+	padding-right: var(--gstore-container-padding-inline, 20px);
+}
+
+.Gstore-home-blog__card {
+	background: var(--gray-bg);
+	border-radius: var(--gstore-radius-base);
+	border: 1px solid var(--gray-border);
+	padding: 16px;
+	box-shadow: var(--shadow-sm);
+	min-height: 100%;
+}
+
+.Gstore-home-blog__image img {
+	border-radius: var(--gstore-radius-base);
+	object-fit: cover;
+}
+
+.Gstore-home-blog__content {
+	gap: 10px;
+	padding: 12px 4px 0;
+}
+
+.Gstore-home-blog__date {
+	font-size: 0.85rem;
+	color: var(--text-muted);
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+}
+
+.Gstore-home-blog__title {
+	font-size: 1.25rem;
+	font-weight: 700;
+	min-height: 56px;
+}
+
+.Gstore-home-blog__title a {
+	color: var(--text-main);
+	text-decoration: none;
+}
+
+.Gstore-home-blog__title a:hover {
+	color: var(--gstore-color-accent);
+}
+
+.Gstore-home-blog__excerpt {
+	color: var(--text-muted);
+	font-size: 0.95rem;
+}
+
+.Gstore-home-blog__pagination .wp-block-query-pagination-previous,
+.Gstore-home-blog__pagination .wp-block-query-pagination-next {
+	color: var(--gstore-color-accent);
+	text-transform: uppercase;
+	font-weight: 700;
+	letter-spacing: 0.08em;
+}
+
+@media (max-width: 960px) {
+	.Gstore-home-hero__actions .wp-block-button__link {
+		width: 100%;
+		text-align: center;
+	}
+
+	.Gstore-home-hero__metrics {
+		flex-direction: column;
+	}
+}
+
+/* Padding lateral para seções de produtos igual ao .Gstore-home-benefits em telas < 1400px */
+@media (max-width: 1400px) {
+	.Gstore-home-products,
+	.Gstore-products-shell {
+		padding-left: clamp(16px, 6vw, 48px) !important;
+		padding-right: clamp(16px, 6vw, 48px) !important;
+	}
+	
+	.Gstore-home-products .Gstore-home-section__header,
+	.Gstore-products-shell .Gstore-home-section__header {
+		padding-left: 0;
+		padding-right: 0;
+	}
+	
+	.Gstore-home-products .Gstore-products-grid,
+	.Gstore-products-shell .Gstore-products-grid {
+		padding-left: 0;
+		padding-right: 0;
+	}
+}
+
+@media (max-width: 768px) {
+	.Gstore-home-hero {
+		padding: 32px 20px;
+	}
+
+	.Gstore-home-section__header {
+		text-align: left;
+	}
+
+	.Gstore-home-blog__card {
+		padding: 18px;
+	}
+	
+	.Gstore-home-section__header--left .Gstore-home-section__title-wrapper {
+		gap: 12px;
+	}
+	
+	.Gstore-home-section__header--left .wp-block-heading {
+		font-size: clamp(1.25rem, 4vw, 1.5rem);
+	}
+}
+
+/* ========================================
+   FIX: REMOVE MARGEM SUPERIOR DO HEADER
+   ======================================== */
+/* Sobrescreve a regra global :root :where(.is-layout-constrained) > * 
+   que adiciona margin-block-start: 1.2rem */
+
+/* Remove margem do wrapper principal do header */
+.wp-block-group.alignfull.Gstore-header {
+	margin-block-start: 0 !important;
+	margin-block-end: 0 !important;
+}
+
+/* Remove margem de todos os blocos dentro do header */
+.Gstore-header .wp-block-group,
+.Gstore-header>.wp-block-group,
+.Gstore-header .wp-block-group.Gstore-header__content {
+	margin-block-start: 0 !important;
+	margin-block-end: 0 !important;
+}
+
+/* Garante que elementos dentro de layout constrained não tenham margem */
+.Gstore-header.is-layout-constrained>*,
+.Gstore-header .is-layout-constrained>*,
+.wp-block-group.Gstore-header>* {
+	margin-block-start: 0 !important;
+}
+
+/* FORÇA reset total de margens no header - sobrescreve WordPress */
+:root :where(.Gstore-header__content) > *,
+:root :where(.is-layout-constrained).Gstore-header__content > *,
+.Gstore-header__content.is-layout-constrained > :where(:not(.alignleft):not(.alignright):not(.alignfull)),
+.Gstore-header__content.wp-block-group-is-layout-constrained > * {
+	margin-block-start: 0 !important;
+	margin-block-end: 0 !important;
+	margin-top: 0 !important;
+	margin-bottom: 0 !important;
+}
+
+/* Reset margens do Gstore-container dentro do header */
+.Gstore-header .Gstore-container,
+.Gstore-header .Gstore-container.is-layout-constrained,
+.Gstore-header .Gstore-container.wp-block-group-is-layout-constrained,
+.Gstore-header .wp-block-group.Gstore-container {
+	margin: 0 auto !important;
+	margin-block-start: 0 !important;
+	margin-block-end: 0 !important;
+	padding-top: 0 !important;
+	padding-bottom: 0 !important;
+}
+
+/* Reset margens dos filhos do Gstore-container no header */
+.Gstore-header .Gstore-container > *,
+.Gstore-header .Gstore-container.is-layout-constrained > *,
+:root :where(.Gstore-header) :where(.is-layout-constrained) > * {
+	margin-block-start: 0 !important;
+	margin-block-end: 0 !important;
+}
+
+/* Remove margem da top-bar também */
+.wp-block-group.alignfull.Gstore-top-bar {
+	margin-block-start: 0 !important;
+	margin-block-end: 0 !important;
+}
+
+/* Remove margem do nav-shell */
+.wp-block-group.alignfull.Gstore-nav-shell {
+	margin-block-start: 0 !important;
+	margin-block-end: 0 !important;
+}
+
+/* Remove margem de elementos dentro do nav-shell */
+.Gstore-nav-shell.is-layout-constrained>*,
+.Gstore-nav-shell .is-layout-constrained>* {
+	margin-block-start: 0 !important;
+}
+
+/* ========================================
+   WOOCOMMERCE - PRODUCT CARDS (Modern Clean Design)
+   ======================================== */
+
+/* Product Cards Grid */
+.Gstore-products-shell {
+	width: 100%;
+	background: #ffffff;
+	padding: clamp(24px, 4vw, 64px) clamp(16px, 4vw, 48px);
+}
+
+.Gstore-products-shell .Gstore-products-grid {
+	width: 100%;
+	max-width: var(--gstore-container-max-width, 1280px);
+	margin: 0 auto;
+	padding-left: 0;
+	padding-right: 0;
+}
+
+.Gstore-products-grid ul.products,
+.Gstore-products-grid .wc-block-product-template,
+.Gstore-products-grid ul.wc-block-product-template {
+	display: grid !important;
+	grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+	gap: 24px !important;
+	list-style: none !important;
+	padding: 0 !important;
+	margin: 0 !important;
+	width: 100%;
+}
+
+/* Remove pseudo elements do clearfix padrão do WooCommerce */
+.Gstore-products-grid ul.products::before,
+.Gstore-products-grid ul.products::after {
+	content: none !important;
+	display: none !important;
+}
+
+/* ========================================
+   HOME PRODUCTS CAROUSEL SUPPORT
+   ======================================== */
+
+.Gstore-products-grid--has-carousel {
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	gap: var(--gstore-spacing-4, 16px);
+}
+
+.Gstore-products-carousel__viewport {
+	width: 100%;
+}
+
+/* Container de controles de navegação */
+.Gstore-products-carousel__controls {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	gap: var(--gstore-spacing-3, 12px);
+	padding: var(--gstore-spacing-2, 8px) 0;
+	width: 100%;
+}
+
+.Gstore-products-carousel__button {
+	position: relative;
+	width: 40px;
+	height: 40px;
+	border-radius: 999px;
+	border: 1px solid var(--gstore-color-border, #e0e0e0);
+	background: rgba(255, 255, 255, 0.95);
+	backdrop-filter: blur(8px);
+	color: var(--gstore-color-text-primary, #111);
+	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	cursor: pointer;
+	transition: all 0.2s ease;
+	flex-shrink: 0;
+}
+
+.Gstore-products-carousel__button:hover:not([disabled]) {
+	transform: scale(1.1);
+	background: rgba(255, 255, 255, 1);
+	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.Gstore-products-carousel__button:active:not([disabled]) {
+	transform: scale(0.95);
+}
+
+.Gstore-products-carousel__button[disabled] {
+	opacity: 0.3;
+	pointer-events: none;
+	cursor: not-allowed;
+}
+
+.Gstore-products-carousel__button--prev,
+.Gstore-products-carousel__button--next {
+	position: relative;
+	left: auto;
+	right: auto;
+}
+
+@media (min-width: 769px) {
+	.Gstore-products-carousel__controls {
+		display: none;
+	}
+}
+
+@media (max-width: 768px) {
+	.Gstore-home-section.Gstore-home-products {
+		width: 100%;
+		margin-left: 0;
+		margin-right: 0;
+		padding-left: 0;
+		padding-right: 0;
+	}
+
+	.Gstore-home-products .Gstore-home-section__header {
+		padding-left: clamp(var(--gstore-spacing-3, 12px), 4vw, var(--gstore-spacing-5, 20px));
+		padding-right: clamp(var(--gstore-spacing-3, 12px), 4vw, var(--gstore-spacing-5, 20px));
+	}
+
+	.Gstore-home-products .Gstore-products-grid {
+		padding-left: 0;
+		padding-right: 0;
+	}
+
+	.Gstore-products-grid--has-carousel {
+		padding-bottom: var(--gstore-spacing-6, 32px);
+	}
+
+	/* Full-bleed: escapa dos containers pai usando 100vw + margens negativas */
+	.Gstore-products-carousel__viewport {
+		width: 100vw;
+		position: relative;
+		left: 50%;
+		right: 50%;
+		margin-left: -50vw;
+		margin-right: -50vw;
+		overflow-x: auto;
+		scroll-snap-type: x mandatory;
+		-webkit-overflow-scrolling: touch;
+		padding-left: clamp(12px, 4vw, 20px);
+		padding-right: clamp(12px, 4vw, 20px);
+		scroll-padding-inline: calc((100vw - min(320px, 80vw)) / 2);
+		scrollbar-width: none;
+		box-sizing: border-box;
+	}
+
+	.Gstore-products-carousel__viewport::-webkit-scrollbar {
+		display: none;
+	}
+
+	.Gstore-products-carousel__viewport ul.products,
+	.Gstore-products-carousel__viewport ul.wc-block-product-template,
+	.Gstore-products-carousel__viewport .wc-block-product-template {
+		display: flex !important;
+		flex-wrap: nowrap;
+		gap: var(--gstore-spacing-4, 16px) !important;
+		width: max-content;
+		list-style: none;
+		margin: 0;
+		padding: 0;
+	}
+
+	.Gstore-products-carousel__viewport ul.products > li.product,
+	.Gstore-products-carousel__viewport ul.wc-block-product-template > li,
+	.Gstore-products-carousel__viewport .wc-block-product-template > .wc-block-product {
+		flex: 0 0 min(320px, 80vw);
+		scroll-snap-align: center;
+		scroll-snap-stop: always;
+	}
+
+	.Gstore-products-carousel__viewport .Gstore-product-card__inner,
+	.Gstore-products-carousel__viewport .wc-block-product {
+		height: 100%;
+	}
+}
+
+.Gstore-home-products .wp-block-shortcode {
+	width: 100%;
+}
+
+/* Product Card Base */
+.Gstore-product-card {
+	list-style: none !important;
+	margin: 0 !important;
+	padding: 0 !important;
+}
+
+.Gstore-product-card__inner {
+	position: relative;
+	background: #fff;
+	border-radius: 4px;
+	border: 1px solid var(--gray-border);
+	display: flex;
+	flex-direction: column;
+	overflow: hidden;
+	box-shadow: var(--shadow-sm);
+	transition: all 0.2s ease;
+	height: 100%;
+	color: var(--text-main);
+}
+
+.Gstore-product-card__inner:hover {
+	box-shadow: var(--shadow-md);
+	transform: translateY(-2px);
+}
+
+/* Discount Badge */
+.Gstore-product-card__badge {
+	position: absolute;
+	top: 16px;
+	left: 16px;
+	background: var(--brass);
+	color: #ffffff;
+	padding: 6px 10px;
+	border-radius: 4px;
+	font-size: 12px;
+	font-weight: 700;
+	z-index: 10;
+	text-transform: uppercase;
+	letter-spacing: 0.5px;
+	user-select: none;
+	box-shadow: var(--shadow-sm);
+}
+
+/* ÁREA SUPERIOR - Imagem + Badges */
+.Gstore-product-card__top {
+	padding: 24px;
+	background: #ffffff;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	min-height: 200px;
+	position: relative;
+	border-bottom: 2px solid #f0f0f0;
+}
+
+.Gstore-product-card__image {
+	width: 100%;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+}
+
+.Gstore-product-card__image-link {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 100%;
+	height: 100%;
+}
+
+.Gstore-product-card__image img {
+	width: 100%;
+	max-width: 200px;
+	border-radius: var(--gstore-radius-base);
+	object-fit: contain;
+}
+
+/* Favorite Button - Circular */
+.Gstore-product-card__favorite {
+	position: absolute;
+	top: 16px;
+	right: 16px;
+	width: 36px;
+	height: 36px;
+	border-radius: 50%;
+	border: 1.5px solid var(--gray-border);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background: #fff;
+	color: var(--text-muted);
+	cursor: pointer;
+	transition: transform 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+	box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+	z-index: 10;
+}
+
+.Gstore-product-card__favorite:hover {
+	border-color: #ff4757;
+	color: #ff4757;
+	transform: scale(1.1);
+}
+
+.Gstore-product-card__favorite-icon {
+	font-size: 18px;
+	color: currentColor;
+	transition: color var(--gstore-transition-fast);
+}
+
+.Gstore-product-card__favorite.is-favorited {
+	background: var(--gstore-color-accent);
+	border-color: var(--gstore-color-accent);
+	color: #ffffff;
+}
+
+/* Remove corner accent (não usado no novo design) */
+.Gstore-product-card__corner-accent {
+	display: none;
+}
+
+/* CORPO DO CARD - Hierarquia clara */
+.Gstore-product-card__body,
+.Gstore-product-card__content {
+	padding: 0;
+	flex: 1;
+	display: flex;
+	flex-direction: column;
+	gap: 0;
+}
+
+/* Bloco meta (rating + título) */
+.Gstore-product-card__meta {
+	background: var(--card-meta-bg);
+	padding: 10px 20px 10px 20px;
+	border-bottom: 1px solid var(--gray-border);
+	display: flex;
+	flex-direction: column;
+}
+
+/* Área de Meta (Avaliação + Título) - Fundo mais escuro */
+.Gstore-product-card__rating {
+	margin-bottom: 0;
+	background: transparent;
+	padding: 0;
+	border: 0;
+}
+
+.Gstore-product-card__stars {
+	display: flex;
+	align-items: center;
+	gap: 2px;
+	letter-spacing: 1px;
+}
+
+.Gstore-product-card__star {
+	color: #bfbfbf;
+	font-size: 14px;
+}
+
+.Gstore-product-card__star--filled {
+	color: #F0E68C;
+}
+
+.Gstore-product-card__rating-count {
+	color: var(--text-muted);
+	font-size: 11px;
+	margin-left: 6px;
+	font-weight: 500;
+}
+
+/* Título - Dentro da área de meta */
+.woocommerce ul.products li.Gstore-product-card .woocommerce-loop-category__title,
+.woocommerce ul.products li.Gstore-product-card .woocommerce-loop-product__title,
+.woocommerce ul.products li.Gstore-product-card h3 {
+	padding: 0;
+	margin: 0;
+}
+
+.Gstore-product-card__title {
+	font-size: 15px;
+	font-weight: 600;
+	line-height: 1.4;
+	max-height: 2.8em;
+	min-height: auto;
+	color: var(--text-main);
+	margin: 0;
+	padding: 0 0 18px 0;
+	background: transparent;
+	border: 0;
+	display: -webkit-box;
+	-webkit-line-clamp: 2;
+	line-clamp: 2;
+	-webkit-box-orient: vertical;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	word-break: break-word;
+}
+
+.Gstore-product-card__title a {
+	color: inherit;
+	text-decoration: none;
+	transition: color 0.2s ease;
+}
+
+.Gstore-product-card__title a:hover {
+	color: var(--green);
+}
+
+/* BLOCO DE PREÇO - Wrapper branco separado */
+.Gstore-product-card__price-section {
+	background: #fff;
+	padding: 16px 20px;
+	margin: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+}
+
+.Gstore-product-card__price-original {
+	font-size: 14px;
+	color: var(--text-muted);
+	text-decoration: line-through;
+	font-weight: 700;
+	min-height: 18px;
+}
+
+.Gstore-product-card__price-original--placeholder {
+	visibility: hidden;
+}
+
+.Gstore-product-card__price-row {
+	font-weight: 900;
+	color: var(--green);
+	font-size: 20px;
+	line-height: 1.2;
+}
+
+.Gstore-product-card__price-row .woocommerce-Price-amount {
+	font-size: inherit;
+	color: inherit;
+	font-weight: inherit;
+}
+
+.Gstore-product-card__price-details {
+	font-size: 13px;
+	color: var(--text-muted);
+	line-height: 1.4;
+	font-weight: 500;
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+}
+
+.Gstore-product-card__price-details-label {
+	font-weight: 600;
+	color: var(--text-main);
+}
+
+.Gstore-product-card__installments {
+	color: var(--text-muted);
+}
+
+/* RODAPÉ - Card Footer com fundo cinza */
+.Gstore-product-card__footer {
+	padding: 20px;
+	background: #fafafa;
+	border-top: 2px solid #f0f0f0;
+	margin-top: auto;
+}
+
+.Gstore-product-card__footer .button,
+.Gstore-product-card__footer .add_to_cart_button,
+.Gstore-product-card__footer .product_type_simple,
+.Gstore-product-card__footer .ajax_add_to_cart {
+	width: 100% !important;
+	padding: 10px 16px !important;
+	border-radius: 4px !important;
+	border: none !important;
+	background: var(--green) !important;
+	color: #fff !important;
+	font-size: clamp(12px, 2vw, 14px) !important;
+	font-weight: 700 !important;
+	cursor: pointer !important;
+	transition: all var(--gstore-transition-fast) !important;
+	box-shadow: 0 2px 6px rgba(46, 155, 59, 0.2) !important;
+	text-transform: uppercase !important;
+	letter-spacing: 0.5px !important;
+	text-align: center;
+	text-decoration: none !important;
+	display: block !important;
+	margin: 0 !important;
+}
+
+.Gstore-product-card__footer .button:hover,
+.Gstore-product-card__footer .add_to_cart_button:hover,
+.Gstore-product-card__footer .product_type_simple:hover {
+	background: var(--green-dark) !important;
+	transform: translateY(-1px);
+	box-shadow: 0 4px 10px rgba(46, 155, 59, 0.25) !important;
+}
+
+.Gstore-product-card__footer .button:active,
+.Gstore-product-card__footer .add_to_cart_button:active,
+.Gstore-product-card__footer .product_type_simple:active {
+	transform: translateY(0);
+}
+
+/* Remove bottom stripe (não usado no novo design) */
+.Gstore-product-card__stripe {
+	display: none;
+}
+
+/* Reset WooCommerce default styles */
+.Gstore-products-grid ul.products li.product,
+.Gstore-products-grid ul.products li.product {
+	margin: 0 !important;
+	padding: 0 !important;
+	width: auto !important;
+	float: none !important;
+}
+
+.Gstore-products-grid ul.products li.product .woocommerce-loop-category__title,
+.Gstore-products-grid ul.products li.product .woocommerce-loop-product__title,
+.Gstore-products-grid ul.products li.product h3 {
+	padding: 0 !important;
+	margin: 0 !important;
+}
+
+.Gstore-products-grid ul.products li.product a img {
+	width: auto !important;
+	margin: 0 !important;
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+
+	.Gstore-products-grid ul.products,
+	.Gstore-products-grid .wc-block-product-template,
+	.Gstore-products-grid ul.wc-block-product-template {
+		grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+	}
+}
+
+@media (max-width: 640px) {
+
+	.Gstore-products-grid ul.products,
+	.Gstore-products-grid .wc-block-product-template,
+	.Gstore-products-grid ul.wc-block-product-template {
+		grid-template-columns: 1fr !important;
+		gap: 16px !important;
+	}
+
+	.Gstore-product-card__image img {
+		max-width: 160px !important;
+	}
+
+	.Gstore-product-card__title {
+		font-size: 14px !important;
+	}
+
+	.Gstore-product-card__price-row {
+		font-size: 18px !important;
+	}
+}
+
+/* ========================================
+   WOOCOMMERCE BLOCKS - PRODUCT CARDS
+   ======================================== */
+
+/* Estilos para WooCommerce Blocks (Gutenberg Product Collection) */
+.Gstore-products-grid .wc-block-product-template,
+.Gstore-products-grid ul.wc-block-product-template {
+	display: grid !important;
+	grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+	gap: 24px !important;
+	list-style: none !important;
+	padding: 32px !important;
+	margin: 0 !important;
+	max-width: 1400px !important;
+	margin-left: auto !important;
+	margin-right: auto !important;
+}
+
+/* Cada item de produto (bloco) */
+.Gstore-products-grid .wc-block-product,
+.Gstore-products-grid li.wc-block-product {
+	background: #fff !important;
+	border-radius: 4px !important;
+	border: 1px solid var(--gray-border) !important;
+	display: flex !important;
+	flex-direction: column !important;
+	overflow: hidden !important;
+	box-shadow: var(--shadow-sm) !important;
+	transition: all 0.2s ease !important;
+	position: relative !important;
+	padding: 0 !important;
+	margin: 0 !important;
+	width: auto !important;
+}
+
+.Gstore-products-grid .wc-block-product:hover {
+	box-shadow: var(--shadow-md) !important;
+	transform: translateY(-2px) !important;
+}
+
+/* Container de imagem - Fundo branco com padding */
+.Gstore-products-grid .wc-block-product .wc-block-components-product-image,
+.Gstore-products-grid .wc-block-product .wp-block-woocommerce-product-image {
+	padding: 24px !important;
+	background: #ffffff !important;
+	display: flex !important;
+	justify-content: center !important;
+	align-items: center !important;
+	min-height: 200px !important;
+	position: relative !important;
+	border-bottom: 2px solid #f0f0f0 !important;
+	margin: 0 !important;
+}
+
+.Gstore-products-grid .wc-block-product .wc-block-components-product-image img,
+.Gstore-products-grid .wc-block-product .wp-block-woocommerce-product-image img {
+	width: 100% !important;
+	max-width: 200px !important;
+	border-radius: var(--gstore-radius-base) !important;
+	object-fit: contain !important;
+	height: auto !important;
+}
+
+/* Remove detalhe decorativo (não usado no novo design) */
+.Gstore-products-grid .wc-block-product .wc-block-components-product-image::before,
+.Gstore-products-grid .wc-block-product .wp-block-woocommerce-product-image::before {
+	display: none !important;
+}
+
+/* Estrelas de avaliação - Área de meta com fundo #f6f6f6 */
+.Gstore-products-grid .wc-block-product .wc-block-components-product-rating,
+.Gstore-products-grid .wc-block-product .wp-block-woocommerce-product-rating {
+	background: #f6f6f6 !important;
+	padding: 18px 20px 10px 20px !important;
+	margin: 0 !important;
+	text-align: left !important;
+	min-height: auto !important;
+	display: flex !important;
+	align-items: center !important;
+	border-bottom: none !important;
+}
+
+/* Garantir que estrelas sempre apareçam */
+.Gstore-products-grid .wc-block-product .wc-block-components-product-rating__stars,
+.Gstore-products-grid .wc-block-product .star-rating {
+	display: flex !important;
+	gap: 2px !important;
+	color: #bfbfbf !important;
+	letter-spacing: 1px !important;
+}
+
+.Gstore-products-grid .wc-block-product .wc-block-components-product-rating__stars::before,
+.Gstore-products-grid .wc-block-product .star-rating::before {
+	content: '★★★★★' !important;
+	color: #bfbfbf !important;
+	letter-spacing: 2px !important;
+	font-size: 14px !important;
+}
+
+/* Título do produto - Continua na área de meta */
+.Gstore-products-grid .wc-block-product .wp-block-post-title,
+.Gstore-products-grid .wc-block-product h2.wp-block-post-title {
+	font-size: 15px !important;
+	font-weight: 600 !important;
+	line-height: 1.4 !important;
+	min-height: auto !important;
+	color: var(--text-main) !important;
+	padding: 0 20px 18px 20px !important;
+	margin: 0 !important;
+	background: #f6f6f6 !important;
+	border-bottom: 1px solid var(--gray-border) !important;
+	display: -webkit-box !important;
+	-webkit-line-clamp: 2 !important;
+	line-clamp: 2 !important;
+	-webkit-box-orient: vertical !important;
+	overflow: hidden !important;
+	text-overflow: ellipsis !important;
+	text-align: left !important;
+}
+
+.Gstore-products-grid .wc-block-product .wp-block-post-title a {
+	color: var(--gstore-color-text-primary, #1a1a1a) !important;
+	text-decoration: none !important;
+	transition: color 0.2s ease !important;
+}
+
+.Gstore-products-grid .wc-block-product .wp-block-post-title a:hover {
+	color: var(--gstore-color-accent) !important;
+}
+
+/* Preço - Fundo branco */
+.Gstore-products-grid .wc-block-product .wp-block-woocommerce-product-price,
+.Gstore-products-grid .wc-block-product .wc-block-components-product-price {
+	background: #fff !important;
+	border: none !important;
+	border-radius: 0 !important;
+	padding: 16px 20px !important;
+	margin: 0 !important;
+	position: relative !important;
+	text-align: left !important;
+}
+
+/* Estilos do preço */
+.Gstore-products-grid .wc-block-product .wc-block-components-product-price .woocommerce-Price-amount,
+.Gstore-products-grid .wc-block-product .wp-block-woocommerce-product-price .woocommerce-Price-amount {
+	font-weight: 800 !important;
+	color: var(--gstore-color-accent) !important;
+	font-size: 20px !important;
+	display: block !important;
+	margin-bottom: 6px !important;
+}
+
+/* Texto de detalhes do preço */
+.Gstore-products-grid .wc-block-product .wc-block-components-product-price::after,
+.Gstore-products-grid .wc-block-product .wp-block-woocommerce-product-price::after {
+	content: attr(data-price-details) !important;
+	font-size: 13px !important;
+	color: var(--text-muted) !important;
+	line-height: 1.6 !important;
+	font-weight: 500 !important;
+	display: block !important;
+}
+
+/* Botão de compra - Wrapper com fundo cinza */
+.Gstore-products-grid .wc-block-product .wp-block-button,
+.Gstore-products-grid .wc-block-product .wp-block-woocommerce-product-button {
+	background: #fafafa !important;
+	border-top: 2px solid #f0f0f0 !important;
+	margin: 0 !important;
+	margin-top: auto !important;
+	padding: 20px !important;
+	width: 100% !important;
+	border-radius: 0 !important;
+}
+
+.Gstore-products-grid .wc-block-product .wp-block-button__link,
+.Gstore-products-grid .wc-block-product .wc-block-components-product-button__button,
+.Gstore-products-grid .wc-block-product button.wp-block-button__link {
+	width: 100% !important;
+	padding: 10px 16px !important;
+	border-radius: 4px !important;
+	border: none !important;
+	background: var(--gstore-color-accent) !important;
+	color: #fff !important;
+	font-size: clamp(12px, 2vw, 14px) !important;
+	font-weight: 700 !important;
+	cursor: pointer !important;
+	transition: background var(--gstore-transition-fast) !important;
+	box-shadow: none !important;
+	text-transform: none !important;
+	letter-spacing: normal !important;
+	text-align: center !important;
+	text-decoration: none !important;
+	display: block !important;
+	margin: 0 !important;
+}
+
+.Gstore-products-grid .wc-block-product .wp-block-button__link:hover,
+.Gstore-products-grid .wc-block-product .wc-block-components-product-button__button:hover {
+	background: var(--gstore-color-accent-hover) !important;
+}
+
+.Gstore-products-grid .wc-block-product .wp-block-button__link:active,
+.Gstore-products-grid .wc-block-product .wc-block-components-product-button__button:active {
+	transform: translateY(0) !important;
+}
+
+/* Remove faixa decorativa (não usada no novo design) */
+.Gstore-products-grid .wc-block-product::after {
+	display: none !important;
+}
+
+/* Remover espaçamentos extras dos blocos */
+.Gstore-products-grid .wc-block-product>* {
+	margin-left: 0 !important;
+	margin-right: 0 !important;
+}
+
+/* Forçar alinhamento à esquerda em todos os blocos internos */
+.Gstore-products-grid .wc-block-product .has-text-align-center,
+.Gstore-products-grid .wc-block-product [data-text-align="center"] {
+	text-align: left !important;
+}
+
+/* Ocultar duplicação de preços */
+.Gstore-products-grid .wc-block-product .wp-block-woocommerce-product-price .wc-block-components-product-price {
+	all: unset !important;
+	display: block !important;
+}
+
+/* Background da página */
+.Gstore-products-grid .wp-block-woocommerce-product-collection {
+	background: transparent !important;
+}
+
+/* Responsive para blocos */
+@media (max-width: 1024px) {
+
+	.Gstore-products-grid .wc-block-product-template,
+	.Gstore-products-grid ul.wc-block-product-template {
+		grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+	}
+}
+
+@media (max-width: 640px) {
+
+	.Gstore-products-grid .wc-block-product-template,
+	.Gstore-products-grid ul.wc-block-product-template {
+		grid-template-columns: 1fr !important;
+		gap: 16px !important;
+		padding: 20px 10px !important;
+	}
+}
+
+/* ========================================
+   PÁGINA DE ATENDIMENTO (Bronze Support)
+   ======================================== */
+
+.Gstore-support-shell,
+main.Gstore-support-shell,
+.wp-block-group.Gstore-support-shell {
+	/* Harmoniza com o accent usado no footer */
+	--gstore-color-accent: #FF5C00;
+	--gstore-color-accent-hover: #E65000;
+	background: #ffffff !important;
+	background-color: #ffffff !important;
+	color: var(--text-main);
+	padding: clamp(32px, 4vw, 72px) clamp(20px, 5vw, 48px);
+	position: relative;
+	overflow: hidden;
+}
+
+/* Remove padding duplicado do WordPress block theme */
+.Gstore-support-shell .wp-block-post-content,
+.Gstore-support-shell .is-layout-constrained,
+.Gstore-support-shell .wp-block-group.is-layout-constrained,
+main.Gstore-support-shell .wp-block-post-content,
+main.Gstore-support-shell .is-layout-constrained,
+main.Gstore-support-shell .wp-block-group.is-layout-constrained {
+	padding: 0 !important;
+	margin: 0 !important;
+}
+
+.Gstore-support-container {
+	max-width: var(--gstore-container-max-width, 1280px);
+	margin: 0 auto;
+	display: flex;
+	flex-direction: column;
+	gap: 40px;
+	padding: 0;
+}
+
+.Gstore-support-hero {
+	background: #ffffff;
+	border: 1px solid var(--gray-border);
+	border-radius: 4px;
+	padding: clamp(32px, 4vw, 48px);
+	box-shadow: none;
+}
+
+.Gstore-support-eyebrow {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	font-size: 0.9rem;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	color: var(--gstore-color-accent);
+	font-weight: 700;
+	margin-bottom: 12px;
+}
+
+.Gstore-support-hero h1 {
+	font-size: clamp(2rem, 4vw, 2.75rem);
+	color: var(--text-main);
+	margin-bottom: 12px;
+}
+
+.Gstore-support-subtitle {
+	font-size: 1.05rem;
+	color: var(--text-muted);
+	max-width: 850px;
+	line-height: 1.6;
+	margin-bottom: 24px;
+}
+
+.Gstore-support-highlight {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+	gap: 16px;
+}
+
+.Gstore-support-highlight__item {
+	display: flex;
+	align-items: flex-start;
+	gap: 14px;
+	padding: 16px 18px;
+	background: #fff;
+	border-radius: 4px;
+	border: 1px solid var(--gray-border);
+}
+
+.Gstore-support-highlight__item i {
+	font-size: 1.4rem;
+	color: var(--gstore-color-accent);
+}
+
+.Gstore-support-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+	gap: 24px;
+}
+
+.Gstore-support-card {
+	background: #ffffff;
+	border-radius: 4px;
+	border: 1px solid var(--gray-border);
+	padding: 28px;
+	box-shadow: none;
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+	transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+}
+
+.Gstore-support-card:hover {
+	transform: translateY(-6px);
+	border-color: var(--gstore-color-accent);
+	box-shadow: none;
+}
+
+.Gstore-support-card__icon {
+	width: 60px;
+	height: 60px;
+	border-radius: 4px;
+	background: var(--gstore-color-accent);
+	color: #fff;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	font-size: 1.7rem;
+	box-shadow: none;
+}
+
+.Gstore-support-card h2 {
+	font-size: 1.35rem;
+	color: var(--text-main);
+	margin-bottom: 4px;
+}
+
+.Gstore-support-card p {
+	color: var(--text-main);
+	line-height: 1.6;
+	font-size: 0.98rem;
+	margin: 0;
+}
+
+.Gstore-support-card__meta {
+	font-weight: 600;
+	color: var(--text-muted);
+}
+
+.Gstore-support-card__cta {
+	margin-top: auto;
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	font-weight: 700;
+	color: var(--gstore-color-accent);
+	text-decoration: none;
+	transition: color 0.2s ease, transform 0.2s ease;
+}
+
+.Gstore-support-card__cta:hover {
+	color: var(--gstore-color-accent-hover);
+	transform: translateX(4px);
+}
+
+.Gstore-support-contact {
+	background: #ffffff;
+	border-radius: 4px;
+	padding: clamp(28px, 4vw, 44px);
+	border: 1px solid var(--gray-border);
+	box-shadow: none;
+}
+
+.Gstore-support-contact__header h2 {
+	font-size: 1.8rem;
+	color: var(--text-main);
+	margin-bottom: 8px;
+	display: flex;
+	align-items: center;
+	gap: 12px;
+}
+
+.Gstore-support-contact__header p {
+	color: var(--text-muted);
+	max-width: 760px;
+	margin-bottom: 24px;
+	line-height: 1.6;
+}
+
+.Gstore-support-contact__list {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+	gap: 16px;
+}
+
+.Gstore-support-contact__item {
+	background: var(--gray-bg);
+	border: 1px solid var(--gray-border);
+	border-radius: 4px;
+	padding: 18px;
+	display: flex;
+	align-items: flex-start;
+	gap: 14px;
+}
+
+.Gstore-support-contact__item i {
+	font-size: 1.2rem;
+	color: var(--gstore-color-accent);
+	margin-top: 4px;
+}
+
+.Gstore-support-contact__item strong {
+	display: block;
+	font-size: 1rem;
+	color: var(--text-main);
+	margin-bottom: 4px;
+}
+
+.Gstore-support-contact__item span {
+	font-size: 0.95rem;
+	color: var(--text-muted);
+}
+
+.Gstore-support-faq {
+	background: #ffffff;
+	border-radius: 4px;
+	padding: clamp(28px, 4vw, 44px);
+	border: 1px solid var(--gray-border);
+	box-shadow: none;
+}
+
+.Gstore-support-faq__header h2 {
+	font-size: 1.8rem;
+	color: var(--text-main);
+	margin-bottom: 8px;
+	display: flex;
+	align-items: center;
+	gap: 10px;
+}
+
+.Gstore-support-faq__header p {
+	color: var(--text-muted);
+	margin-bottom: 20px;
+}
+
+.Gstore-support-faq__items {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+}
+
+.Gstore-support-faq__item {
+	background: var(--gray-bg);
+	border-radius: 4px;
+	border: 1px solid var(--gray-border);
+	padding: 0 20px;
+	box-shadow: none;
+}
+
+.Gstore-support-faq__item summary {
+	cursor: pointer;
+	font-weight: 600;
+	color: var(--text-main);
+	padding: 18px 0;
+	font-size: 1.05rem;
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	list-style: none;
+}
+
+.Gstore-support-faq__item summary::marker {
+	display: none;
+}
+
+.Gstore-support-faq__item summary::-webkit-details-marker {
+	display: none;
+}
+
+.Gstore-support-faq__item summary::after {
+	content: '\f107';
+	font-family: 'Font Awesome 6 Free';
+	font-weight: 900;
+	color: var(--gstore-color-accent);
+	transition: transform 0.2s ease;
+}
+
+.Gstore-support-faq__item[open] summary::after {
+	transform: rotate(180deg);
+}
+
+.Gstore-support-faq__item p {
+	padding-bottom: 18px;
+	color: var(--text-muted);
+	line-height: 1.6;
+}
+
+.Gstore-support-assurance {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+	gap: 20px;
+	padding: 24px;
+	background: #ffffff;
+	border-radius: 4px;
+	border: 1px solid var(--gray-border);
+	box-shadow: none;
+}
+
+.Gstore-support-assurance h3 {
+	font-size: 1.15rem;
+	color: var(--text-main);
+	margin-bottom: 6px;
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+
+.Gstore-support-assurance p {
+	color: var(--text-muted);
+	line-height: 1.5;
+	margin: 0;
+}
+
+.Gstore-support-assurance i {
+	color: var(--gstore-color-accent);
+}
+
+.Gstore-support-whatsapp {
+	position: fixed;
+	bottom: 32px;
+	right: 32px;
+	width: 64px;
+	height: 64px;
+	border-radius: var(--gstore-radius-base);
+	background: #25d366;
+	color: #fff;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-size: 2rem;
+	box-shadow: none;
+	transition: transform 0.2s ease, box-shadow 0.2s ease;
+	z-index: 30;
+}
+
+.Gstore-support-whatsapp:hover {
+	transform: scale(1.05);
+	box-shadow: none;
+}
+
+.Gstore-support-whatsapp i {
+	line-height: 1;
+}
+
+@media (max-width: 900px) {
+	.Gstore-support-shell {
+		padding: 24px 15px 80px !important;
+	}
+
+	/* Remove padding duplicado do WordPress block theme no mobile */
+	.Gstore-support-shell .wp-block-post-content,
+	.Gstore-support-shell .is-layout-constrained,
+	.Gstore-support-shell main .wp-block-post-content,
+	.Gstore-support-shell main .is-layout-constrained,
+	main.Gstore-support-shell .wp-block-post-content,
+	main.Gstore-support-shell .is-layout-constrained {
+		padding: 0 !important;
+		margin: 0 !important;
+	}
+
+	.Gstore-support-container {
+		padding: 0;
+	}
+
+	.Gstore-support-hero {
+		padding: 24px;
+	}
+
+	.Gstore-support-card {
+		padding: 24px;
+	}
+
+	.Gstore-support-contact,
+	.Gstore-support-faq {
+		padding: 24px;
+	}
+}
+
+@media (max-width: 640px) {
+	.Gstore-support-shell {
+		padding: 20px 12px 80px !important;
+	}
+
+	/* Remove padding duplicado do WordPress block theme no mobile pequeno */
+	.Gstore-support-shell .wp-block-post-content,
+	.Gstore-support-shell .is-layout-constrained,
+	.Gstore-support-shell .wp-block-group.is-layout-constrained,
+	main.Gstore-support-shell .wp-block-post-content,
+	main.Gstore-support-shell .is-layout-constrained,
+	main.Gstore-support-shell .wp-block-group.is-layout-constrained {
+		padding: 0 !important;
+		margin: 0 !important;
+	}
+
+	.Gstore-support-highlight__item {
+		flex-direction: column;
+	}
+
+	.Gstore-support-whatsapp {
+		bottom: 20px;
+		right: 20px;
+		width: 56px;
+		height: 56px;
+		font-size: 1.6rem;
+	}
+}
+
+/* ========================================
+   WOOCOMMERCE - CART PAGE
+   ======================================== 
+   NOTA: Estilos movidos para assets/css/cart.css
+   Carregado apenas em is_cart() via functions.php
+   ======================================== */
+
+/* ========================================
+   CONTAINER BASE
+   ======================================== */
+.Gstore-container {
+	width: 100%;
+	max-width: 1280px;
+	margin: 0 auto;
+}
+
+.Gstore-sr-only {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	padding: 0;
+	margin: -1px;
+	overflow: hidden;
+	clip: rect(0, 0, 0, 0);
+	white-space: nowrap;
+	border-width: 0;
+}
+
+:focus-visible {
+	outline: 2px solid var(--gstore-color-accent);
+	outline-offset: 2px;
+}
+
+.Gstore-icon {
+	width: 16px;
+	height: 16px;
+	fill: currentColor;
+}
+
+/* ========================================
+   TOP BAR
+   ======================================== */
+.Gstore-top-bar {
+	background-color: var(--gstore-color-bg-darker);
+	border-bottom: 1px solid var(--gstore-color-border);
+	font-size: var(--gstore-font-size-sm);
+	padding: var(--gstore-spacing-xs) 0;
+}
+
+.Gstore-top-bar .Gstore-container {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: space-between;
+	align-items: center;
+	gap: var(--gstore-spacing-sm);
+	padding: var(--gstore-spacing-xs) 20px 0;
+}
+
+.Gstore-top-bar__contacts {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--gstore-spacing-lg);
+}
+
+.Gstore-top-bar__actions {
+	display: flex;
+	gap: var(--gstore-spacing-md);
+}
+
+.Gstore-top-bar__link {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--gstore-spacing-xs);
+	color: var(--gstore-color-text-secondary);
+	text-decoration: none;
+	transition: color var(--gstore-transition-fast);
+}
+
+.Gstore-top-bar__link:hover,
+.Gstore-top-bar__link:focus {
+	color: var(--gstore-color-accent);
+	outline: none;
+}
+
+@media (max-width: 1399px) {
+	.Gstore-top-bar {
+		font-size: calc(var(--gstore-font-size-sm) - 0.0625rem);
+	}
+
+	.Gstore-top-bar__contacts {
+		gap: var(--gstore-spacing-md);
+	}
+
+	.Gstore-top-bar__actions {
+		gap: var(--gstore-spacing-sm);
+	}
+
+	.Gstore-top-bar__link {
+		gap: calc(var(--gstore-spacing-xs) - 0.125rem);
+	}
+}
+
+@media (max-width: 767px) {
+
+	.Gstore-top-bar__contacts span,
+	.Gstore-top-bar__actions span {
+		display: none;
+	}
+
+	.Gstore-top-bar__contacts {
+		gap: var(--gstore-spacing-md);
+	}
+}
+
+/* ========================================
+   HEADER PRINCIPAL
+   ======================================== */
+.Gstore-header {
+	background-color: var(--gstore-color-bg-dark);
+	padding: var(--gstore-spacing-md) 0;
+	border-bottom: 1px solid var(--gstore-color-border);
+	position: sticky;
+	top: 0;
+	z-index: 100;
+}
+
+.Gstore-header__content {
+	max-width: var(--gstore-container-max-width, 1280px);
+	margin: 0 auto;
+	margin-top: 0 !important;
+	margin-bottom: 0 !important;
+	margin-block-start: 0 !important;
+	margin-block-end: 0 !important;
+	padding: 0 var(--gstore-container-padding-inline, 20px);
+	padding-top: 0 !important;
+	padding-bottom: 0 !important;
+	display: grid;
+	grid-template-columns: auto 1fr auto;
+	grid-template-areas: "logo search actions";
+	align-items: center;
+	gap: var(--gstore-spacing-md);
+}
+
+@media (min-width: 768px) {
+	.Gstore-header__content {
+		padding: 0 var(--gstore-container-padding-inline, 20px);
+	}
+}
+
+@media (max-width: 1399px) {
+	.Gstore-header {
+		padding: calc(var(--gstore-spacing-md) * 0.75) 0;
+	}
+
+	.Gstore-header__content {
+		gap: calc(var(--gstore-spacing-md) * 0.75);
+	}
+
+	.Gstore-header__logo-text a {
+		font-size: 1.55rem !important;
+	}
+
+	.Gstore-header__search .wp-block-search__input {
+		font-size: 0.95rem !important;
+		padding: calc(var(--gstore-spacing-xs) * 1.3) var(--gstore-spacing-sm) !important;
+	}
+
+	.Gstore-header__search .wp-block-search__input::placeholder {
+		font-size: 0.95rem !important;
+	}
+
+	.Gstore-header__search .wp-block-search__button {
+		padding: calc(var(--gstore-spacing-xs) * 1.3) var(--gstore-spacing-sm) !important;
+	}
+
+	.Gstore-header__search .wp-block-search__button svg {
+		width: 18px;
+		height: 18px;
+	}
+
+	.Gstore-header__actions .Gstore-btn,
+	.Gstore-header__mini-cart .wc-block-mini-cart__button {
+		padding: var(--gstore-spacing-xs) var(--gstore-spacing-sm) !important;
+		font-size: 0.875rem !important;
+		min-height: 40px !important;
+	}
+
+	.Gstore-header__actions .Gstore-btn .Gstore-icon,
+	.Gstore-header__mini-cart .wc-block-mini-cart__icon {
+		width: 16px !important;
+		height: 16px !important;
+	}
+
+	.Gstore-header__mini-cart .wc-block-mini-cart__badge {
+		min-width: 18px !important;
+		height: 18px !important;
+		font-size: 0.7rem !important;
+	}
+
+	.Gstore-nav .wp-block-navigation__container,
+	.Gstore-nav .wp-block-page-list {
+		gap: var(--gstore-spacing-lg);
+	}
+
+	.Gstore-nav .wp-block-navigation-item__content,
+	.Gstore-nav .wp-block-pages-list__item__link {
+		font-size: 0.9rem;
+		padding: calc(var(--gstore-spacing-sm) + 2px) 0;
+	}
+}
+
+@media (max-width: 767px) {
+	/* Padding simétrico no header mobile */
+	.Gstore-header {
+		padding: var(--gstore-spacing-sm) 0 !important;
+	}
+	
+	/* Remove padding do container pai para evitar duplicação */
+	.Gstore-header .Gstore-container,
+	.Gstore-header .Gstore-container.is-layout-constrained {
+		padding-left: 0 !important;
+		padding-right: 0 !important;
+	}
+
+	/* FORÇA reset de margens do WordPress Block Theme no header content */
+	.Gstore-header__content,
+	.Gstore-header__content.is-layout-constrained,
+	.Gstore-header__content.wp-block-group-is-layout-constrained,
+	.wp-block-group.Gstore-header__content,
+	.wp-block-group.Gstore-header__content.is-layout-constrained,
+	.wp-block-group.Gstore-header__content.wp-block-group-is-layout-constrained {
+		grid-template-columns: auto 1fr auto;
+		grid-template-areas:
+			"toggle logo actions"
+			"search search search";
+		gap: var(--gstore-spacing-sm);
+		padding: 0 16px !important;
+		padding-top: 0 !important;
+		padding-bottom: 0 !important;
+		margin: 0 auto !important;
+		margin-top: 0 !important;
+		margin-bottom: 0 !important;
+		margin-block-start: 0 !important;
+		margin-block-end: 0 !important;
+	}
+	
+	/* Remove margens dos filhos dentro do header content */
+	.Gstore-header__content > *,
+	.Gstore-header__content.is-layout-constrained > *,
+	.Gstore-header__content.wp-block-group-is-layout-constrained > * {
+		margin-block-start: 0 !important;
+		margin-block-end: 0 !important;
+	}
+
+	.Gstore-header__logo-text {
+		justify-self: center;
+	}
+
+	/* Esconde o botão de atendimento no mobile */
+	.Gstore-header__actions .Gstore-btn--secondary {
+		display: none !important;
+	}
+}
+
+/* Logo (usando wp-block-site-title) */
+.Gstore-header__logo-text {
+	grid-area: logo;
+	margin: 0 !important;
+}
+
+.Gstore-header__logo-text a {
+	display: flex;
+	align-items: center;
+	text-decoration: none;
+	font-size: 1.75rem !important;
+	font-weight: 700 !important;
+	color: var(--gstore-color-text-light, #ffffff) !important;
+	text-transform: uppercase;
+	letter-spacing: 0.02em;
+}
+
+/* Garantir que o header tenha texto claro */
+.Gstore-header-shell .wp-block-heading,
+.Gstore-header-shell h1,
+.Gstore-header-shell h2,
+.Gstore-header-shell h3,
+.Gstore-header .wp-block-heading,
+.Gstore-header h1,
+.Gstore-header h2,
+.Gstore-header h3,
+.Gstore-header__logo-text,
+.Gstore-header__logo-text a,
+.Gstore-header__logo-text .wp-block-heading {
+	color: var(--gstore-color-text-light, #ffffff) !important;
+}
+
+/* Garantir que botões do header tenham texto claro */
+.Gstore-header .Gstore-btn,
+.Gstore-header .Gstore-btn--secondary,
+.Gstore-header .Gstore-btn span,
+.Gstore-header__actions .Gstore-btn,
+.Gstore-header__actions .Gstore-btn span {
+	color: var(--gstore-color-text-light, #ffffff) !important;
+}
+
+/* Garantir que navegação tenha texto claro */
+.Gstore-nav-shell,
+.Gstore-nav-shell *,
+.Gstore-nav,
+.Gstore-nav *,
+.Gstore-nav .wp-block-navigation-item__content,
+.Gstore-nav .wp-block-navigation-item__label,
+.Gstore-nav .wp-block-pages-list__item__link,
+.Gstore-nav span,
+.wp-block-navigation-item__label {
+	color: var(--gstore-color-text-light, #ffffff) !important;
+}
+
+/* Específico para labels de navegação no header */
+.Gstore-header-shell .wp-block-navigation-item__label,
+.Gstore-nav-shell .wp-block-navigation-item__label,
+.Gstore-nav .wp-block-navigation-item__label {
+	color: var(--gstore-color-text-light, #ffffff) !important;
+}
+
+.Gstore-header__logo-text a .Gstore-logo-highlight {
+	color: var(--gstore-color-accent);
+}
+
+@media (max-width: 767px) {
+	.Gstore-header__logo-text a {
+		font-size: 1.5rem !important;
+	}
+}
+
+/* Busca (usando wp-block-search) */
+.Gstore-header__search {
+	grid-area: search;
+	max-width: 600px !important;
+	width: 100% !important;
+	margin: 0 auto !important;
+}
+
+.Gstore-header__search .wp-block-search__inside-wrapper {
+	display: flex;
+	align-items: stretch;
+	width: 100%;
+	border: none;
+	border-radius: 0;
+	overflow: visible;
+	background-color: transparent;
+	gap: 0 !important;
+	margin: 0 !important;
+}
+
+.Gstore-header__search .wp-block-search__input {
+	flex: 1;
+	padding: var(--gstore-spacing-sm) var(--gstore-spacing-md) !important;
+	background-color: var(--gstore-color-bg-darker) !important;
+	border: 1px solid var(--gstore-color-border) !important;
+	border-right: none !important;
+	border-radius: 4px 0 0 4px !important;
+	color: var(--gstore-color-text-primary) !important;
+	font-size: var(--gstore-font-size-base) !important;
+	outline: none !important;
+	transition: border-color var(--gstore-transition-fast);
+	margin: 0 !important;
+}
+
+.Gstore-header__search .wp-block-search__input::placeholder {
+	color: var(--gstore-color-text-secondary);
+}
+
+.Gstore-header__search .wp-block-search__input:focus {
+	border-color: var(--gstore-color-accent) !important;
+}
+
+.Gstore-header__search .wp-block-search__button {
+	padding: var(--gstore-spacing-sm) var(--gstore-spacing-md) !important;
+	background-color: var(--gstore-color-accent) !important;
+	border: 1px solid var(--gstore-color-accent) !important;
+	border-left: 1px solid var(--gstore-color-accent) !important;
+	border-radius: 0 4px 4px 0 !important;
+	color: var(--gstore-color-bg-dark) !important;
+	cursor: pointer;
+	transition: all var(--gstore-transition-fast);
+	display: flex !important;
+	align-items: center;
+	justify-content: center;
+	min-width: auto !important;
+	margin: 0 !important;
+}
+
+.Gstore-header__search .wp-block-search__button:hover,
+.Gstore-header__search .wp-block-search__button:focus {
+	background-color: var(--gstore-color-accent-hover) !important;
+	outline: none;
+	transform: translateY(-1px);
+}
+
+.Gstore-header__search .wp-block-search__button svg {
+	width: 20px;
+	height: 20px;
+	fill: currentColor;
+}
+
+@media (max-width: 1399px) {
+	.Gstore-header {
+		padding: calc(var(--gstore-spacing-sm) + 0.25rem) 0;
+	}
+
+	.Gstore-header .Gstore-icon,
+	.Gstore-top-bar .Gstore-icon {
+		width: 14px;
+		height: 14px;
+	}
+
+	.Gstore-header__content {
+		gap: var(--gstore-spacing-sm);
+	}
+
+	.Gstore-header__logo-text a {
+		font-size: 1.5rem !important;
+	}
+
+	.Gstore-header__search .wp-block-search__input,
+	.Gstore-header__search .wp-block-search__button {
+		padding: var(--gstore-spacing-xs) var(--gstore-spacing-sm) !important;
+	}
+
+	.Gstore-header__search .wp-block-search__button svg {
+		width: 18px;
+		height: 18px;
+	}
+
+	.Gstore-header__actions {
+		gap: var(--gstore-spacing-xs) !important;
+	}
+
+	.Gstore-header__mini-cart .wc-block-mini-cart__badge {
+		min-width: 18px !important;
+		height: 18px !important;
+		padding: 0 4px !important;
+		font-size: 0.7rem !important;
+	}
+
+	.Gstore-header__menu-toggle span {
+		width: 22px;
+	}
+}
+
+/* Actions */
+.Gstore-header__actions {
+	grid-area: actions !important;
+	display: flex !important;
+	gap: var(--gstore-spacing-sm) !important;
+	align-items: center !important;
+}
+
+.Gstore-btn {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--gstore-spacing-xs);
+	padding: var(--gstore-spacing-sm) var(--gstore-spacing-md);
+	border-radius: 4px;
+	font-size: var(--gstore-font-size-sm);
+	font-weight: 500;
+	text-decoration: none;
+	border: none;
+	cursor: pointer;
+	transition: all var(--gstore-transition-fast);
+	white-space: nowrap;
+}
+
+.Gstore-btn--primary {
+	background-color: var(--gstore-color-accent);
+	color: var(--gstore-color-bg-dark);
+	position: relative;
+}
+
+.Gstore-btn--primary:hover,
+.Gstore-btn--primary:focus {
+	background-color: var(--gstore-color-accent-hover);
+	transform: translateY(-2px);
+}
+
+.Gstore-btn--secondary {
+	background-color: transparent;
+	color: var(--gstore-color-text-primary);
+	border: 1px solid var(--gstore-color-border);
+}
+
+.Gstore-btn--secondary:hover,
+.Gstore-btn--secondary:focus {
+	border-color: var(--gstore-color-accent);
+	color: var(--gstore-color-accent);
+}
+
+.Gstore-btn .Gstore-icon {
+	width: 18px;
+	height: 18px;
+	fill: currentColor;
+}
+
+.Gstore-cart-count {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-width: 20px;
+	height: 20px;
+	padding: 0 6px;
+	background-color: var(--gstore-color-bg-dark);
+	color: var(--gstore-color-accent);
+	border-radius: var(--gstore-radius-base);
+	font-size: 0.75rem;
+	font-weight: 700;
+}
+
+/* Mini-cart do WooCommerce */
+.Gstore-header__mini-cart .wc-block-mini-cart__button {
+	display: inline-flex !important;
+	align-items: center !important;
+	gap: var(--gstore-spacing-xs) !important;
+	padding: var(--gstore-spacing-sm) var(--gstore-spacing-md) !important;
+	border-radius: 4px !important;
+	background-color: var(--gstore-color-accent) !important;
+	color: var(--gstore-color-bg-dark) !important;
+	border: none !important;
+	font-size: var(--gstore-font-size-sm) !important;
+	font-weight: 500 !important;
+	cursor: pointer !important;
+	transition: all var(--gstore-transition-fast) !important;
+	white-space: nowrap !important;
+}
+
+.Gstore-header__mini-cart .wc-block-mini-cart__button:hover,
+.Gstore-header__mini-cart .wc-block-mini-cart__button:focus {
+	background-color: var(--gstore-color-accent-hover) !important;
+	transform: translateY(-2px);
+}
+
+.Gstore-header__mini-cart .wc-block-mini-cart__icon {
+	width: 18px !important;
+	height: 18px !important;
+	fill: currentColor !important;
+}
+
+.Gstore-header__mini-cart .wc-block-mini-cart__badge {
+	display: inline-flex !important;
+	align-items: center !important;
+	justify-content: center !important;
+	min-width: 20px !important;
+	height: 20px !important;
+	padding: 0 6px !important;
+	background-color: var(--gstore-color-bg-dark) !important;
+	color: var(--gstore-color-accent) !important;
+	border-radius: var(--gstore-radius-base) !important;
+	font-size: 0.75rem !important;
+	font-weight: 700 !important;
+}
+
+.Gstore-header__menu-toggle {
+	grid-area: toggle;
+	display: none;
+	flex-direction: column;
+	gap: 4px;
+	background: none;
+	border: none;
+	cursor: pointer;
+	padding: var(--gstore-spacing-xs);
+	outline: none;
+}
+
+.Gstore-header__menu-toggle:focus,
+.Gstore-header__menu-toggle:active,
+.Gstore-header__menu-toggle:focus-visible {
+	outline: none;
+	border: none;
+	box-shadow: none;
+}
+
+.Gstore-header__menu-toggle span {
+	display: block;
+	width: 24px;
+	height: 2px;
+	background-color: var(--gstore-color-brass, #FF5C00);
+	transition: all var(--gstore-transition-fast);
+}
+
+@media (max-width: 767px) {
+	.Gstore-header__menu-toggle {
+		display: flex;
+	}
+
+	/* Oculta texto dos botões em mobile, mas mantém badges */
+	.Gstore-btn span:not(.Gstore-cart-count),
+	.Gstore-btn span:not(.wc-block-mini-cart__badge) {
+		display: none;
+	}
+
+	/* Garante que os badges do carrinho fiquem visíveis */
+	.Gstore-header__mini-cart .wc-block-mini-cart__badge {
+		display: inline-flex !important;
+	}
+
+	/* Botão do carrinho com fundo brass no mobile */
+	.Gstore-header__mini-cart .wc-block-mini-cart__button {
+		background-color: var(--gstore-color-brass, #FF8C5C) !important;
+		border: none !important;
+		padding: var(--gstore-spacing-xs) var(--gstore-spacing-sm) !important;
+	}
+
+	/* Remove efeito hover/focus no mobile - mantém fundo brass sempre */
+	.Gstore-header__mini-cart .wc-block-mini-cart__button:hover,
+	.Gstore-header__mini-cart .wc-block-mini-cart__button:focus,
+	.Gstore-header__mini-cart .wc-block-mini-cart__button:active {
+		background-color: var(--gstore-color-brass, #FF8C5C) !important;
+		transform: none !important;
+	}
+
+	.Gstore-header__mini-cart .wc-block-mini-cart__icon {
+		fill: var(--gstore-color-bg-dark, #1a1a1a) !important;
+	}
+}
+
+/* ========================================
+   NAVIGATION MENU
+   ======================================== */
+.Gstore-nav-shell {
+	background-color: var(--gstore-color-bg-darker);
+	border-bottom: 1px solid var(--gstore-color-border);
+}
+
+.Gstore-nav {
+	width: 100%;
+	padding: 0 var(--gstore-spacing-md);
+}
+
+@media (min-width: 768px) {
+	.Gstore-nav {
+		padding: 0 var(--gstore-spacing-lg);
+	}
+}
+
+/* Reset padrão do WordPress navigation */
+.Gstore-nav .wp-block-navigation,
+.Gstore-nav.wp-block-navigation {
+	max-width: 100%;
+	margin: 0;
+	padding: 0;
+	background-color: transparent;
+	border: none;
+}
+
+/* Esconder ícone de conta duplicado do WooCommerce */
+.Gstore-nav .wp-block-woocommerce-customer-account,
+.wp-block-woocommerce-customer-account[data-block-name="woocommerce/customer-account"] {
+	display: none !important;
+}
+
+/* Lista de navegação */
+.Gstore-nav .wp-block-navigation__container,
+.Gstore-nav .wp-block-navigation-item,
+.Gstore-nav .wp-block-page-list,
+.Gstore-nav .wp-block-pages-list__item {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+}
+
+.Gstore-nav .wp-block-navigation__container,
+.Gstore-nav .wp-block-page-list {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	gap: var(--gstore-spacing-xl);
+	width: 100%;
+}
+
+/* Links de navegação */
+.Gstore-nav .wp-block-navigation-item__content,
+.Gstore-nav .wp-block-pages-list__item__link {
+	display: block;
+	padding: var(--gstore-spacing-md) 0;
+	color: var(--gstore-color-text-light, #ffffff) !important;
+	text-decoration: none;
+	font-size: var(--gstore-font-size-base);
+	font-weight: 500;
+	text-transform: uppercase;
+	letter-spacing: 0.5px;
+	position: relative;
+	transition: color var(--gstore-transition-fast);
+}
+
+/* Efeito de underline animado */
+.Gstore-nav .wp-block-navigation-item__content::after,
+.Gstore-nav .wp-block-pages-list__item__link::after {
+	content: '';
+	position: absolute;
+	bottom: 0;
+	left: 0;
+	width: 0;
+	height: 2px;
+	background-color: var(--gstore-color-accent);
+	transition: width var(--gstore-transition-base);
+}
+
+/* Hover e focus */
+.Gstore-nav .wp-block-navigation-item__content:hover,
+.Gstore-nav .wp-block-navigation-item__content:focus,
+.Gstore-nav .wp-block-pages-list__item__link:hover,
+.Gstore-nav .wp-block-pages-list__item__link:focus {
+	color: var(--gstore-color-accent-light, #ffffff) !important;
+	outline: none;
+}
+
+.Gstore-nav .wp-block-navigation-item__content:hover::after,
+.Gstore-nav .wp-block-navigation-item__content:focus::after,
+.Gstore-nav .wp-block-pages-list__item__link:hover::after,
+.Gstore-nav .wp-block-pages-list__item__link:focus::after {
+	width: 100%;
+}
+
+/* Link ativo */
+.Gstore-nav .current-menu-item .wp-block-navigation-item__content,
+.Gstore-nav .current-menu-item .wp-block-pages-list__item__link,
+.Gstore-nav .wp-block-navigation-item.current-menu-item>.wp-block-navigation-item__content {
+	color: var(--gstore-color-accent-light, #ffffff) !important;
+}
+
+.Gstore-nav .current-menu-item .wp-block-navigation-item__content::after,
+.Gstore-nav .current-menu-item .wp-block-pages-list__item__link::after,
+.Gstore-nav .wp-block-navigation-item.current-menu-item>.wp-block-navigation-item__content::after {
+	width: 100%;
+}
+
+/* Link de atendimento no menu mobile */
+.Gstore-nav__mobile-link {
+	display: none;
+}
+
+/* Mobile responsivo */
+@media (max-width: 767px) {
+
+	.Gstore-nav .wp-block-navigation__container,
+	.Gstore-nav .wp-block-page-list {
+		flex-direction: column;
+		gap: 0;
+		max-height: 0;
+		overflow: hidden;
+		transition: max-height var(--gstore-transition-base);
+	}
+
+	.Gstore-nav .wp-block-navigation__container.is-open,
+	.Gstore-nav .wp-block-page-list.is-open {
+		max-height: 500px;
+	}
+
+	.Gstore-nav .wp-block-navigation-item,
+	.Gstore-nav .wp-block-pages-list__item {
+		width: 100%;
+		text-align: center;
+	}
+
+	.Gstore-nav .wp-block-navigation-item__content,
+	.Gstore-nav .wp-block-pages-list__item__link {
+		width: 100%;
+		padding: var(--gstore-spacing-md);
+		border-bottom: 1px solid var(--gstore-color-border);
+	}
+
+	/* Link de atendimento visível no mobile apenas na home page */
+	.home .Gstore-nav__mobile-link {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		gap: var(--gstore-spacing-xs);
+		width: 100%;
+		padding: var(--gstore-spacing-md);
+		color: var(--gstore-color-text-light, #ffffff) !important;
+		text-decoration: none;
+		font-size: var(--gstore-font-size-base);
+		font-weight: 500;
+		border-top: 1px solid var(--gstore-color-border);
+		background: var(--gstore-color-bg-darker);
+		transition: background var(--gstore-transition-fast);
+	}
+
+	.Gstore-nav__mobile-link:hover,
+	.Gstore-nav__mobile-link:focus {
+		background: rgba(199, 169, 62, 0.15);
+		color: var(--gstore-color-brass, #FF8C5C) !important;
+	}
+
+	.Gstore-nav__mobile-link .Gstore-icon {
+		width: 18px;
+		height: 18px;
+		fill: currentColor;
+	}
+}
+
+/* ========================================
+   FOOTER CAC ARMAS
+   ======================================== */
+.armastore-footer {
+	background-color: #0f0f0f;
+	color: #ccc;
+	font-size: 14px;
+}
+
+/* Remove limitações do layout constrained apenas para newsletter-wrapper */
+.armastore-footer.is-layout-constrained,
+.armastore-footer.wp-block-group {
+	width: 100%;
+	max-width: none !important;
+}
+
+.armastore-footer.is-layout-constrained > .newsletter-wrapper {
+	width: 100%;
+	max-width: none !important;
+	margin-left: 0 !important;
+	margin-right: 0 !important;
+}
+
+/* Mantém o footer-container limitado a 1280px */
+.armastore-footer.is-layout-constrained > .footer-container {
+	max-width: var(--gstore-container-max-width, 1280px) !important;
+	margin-left: auto !important;
+	margin-right: auto !important;
+}
+
+.armastore-footer a {
+	color: #FF5C00;
+	text-decoration: none;
+}
+
+.armastore-footer a:hover {
+	text-decoration: underline;
+}
+
+/* Newsletter Wrapper - Seção separada com cinza mais claro, full width */
+.newsletter-wrapper {
+	background-color: #1e1e1e;
+	width: 100%;
+}
+
+.newsletter-container {
+	max-width: var(--gstore-container-max-width, 1280px);
+	margin: 0 auto;
+	padding: 30px var(--gstore-container-padding-inline, 20px);
+}
+
+.footer-container {
+	max-width: var(--gstore-container-max-width, 1280px);
+	margin: 0 auto;
+	padding: 40px var(--gstore-container-padding-inline, 20px) 20px;
+}
+
+.newsletter {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	color: #fff;
+	font-weight: bold;
+	font-size: 16px;
+}
+
+.newsletter span {
+	color: #FF5C00;
+}
+
+.newsletter form {
+	display: flex;
+	gap: 10px;
+}
+
+.newsletter input[type="text"],
+.newsletter input[type="email"] {
+	background: #111;
+	border: none;
+	border-radius: 4px;
+	padding: 8px 15px;
+	color: #fff;
+	width: 150px;
+}
+
+.newsletter button {
+	background: #FF5C00;
+	border-radius: 4px;
+	border: none;
+	padding: 8px 20px;
+	color: #111;
+	font-weight: bold;
+	cursor: pointer;
+	transition: background 0.3s ease;
+}
+
+.newsletter button:hover {
+	background: #E65000;
+}
+
+.footer-main {
+	display: flex;
+	gap: 40px;
+	color: #ccc;
+}
+
+.footer-column {
+	flex: 1;
+	border-right: 1px solid #222;
+	padding-right: 20px;
+}
+
+.footer-column:last-child {
+	border-right: none;
+}
+
+.footer-column h3 {
+	color: #FF5C00;
+	font-weight: bold;
+	margin-bottom: 15px;
+	font-size: 16px;
+}
+
+.footer-column p,
+.footer-column li {
+	font-size: 13px;
+	line-height: 1.5;
+}
+
+.footer-column ul {
+	list-style: none;
+	padding: 0;
+	margin: 0;
+}
+
+.footer-column ul li {
+	margin-bottom: 8px;
+}
+
+.footer-column ul li a {
+	color: #ccc;
+	font-weight: normal;
+}
+
+.footer-column ul li a:hover {
+	color: #FF5C00;
+}
+
+.footer-column .contact-item {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	margin-bottom: 10px;
+	font-size: 13px;
+}
+
+.footer-column .contact-item svg,
+.footer-column .contact-item i {
+	fill: #FF5C00;
+	color: #FF5C00;
+	width: 16px;
+	height: 16px;
+	flex-shrink: 0;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	font-size: 16px;
+}
+
+.social-icons {
+	display: flex;
+	gap: 10px;
+	margin-bottom: 15px;
+}
+
+.social-icons a {
+	display: inline-block;
+	background: #222;
+	border-radius: var(--gstore-radius-base);
+	padding: 8px;
+	color: #FF5C00;
+	font-size: 16px;
+	text-align: center;
+	width: 32px;
+	height: 32px;
+}
+
+.payment-security {
+	display: flex;
+	justify-content: space-between;
+	border-top: 1px solid #222;
+	padding-top: 20px;
+	margin-top: 30px;
+	font-size: 13px;
+	flex-wrap: wrap;
+	gap: 20px;
+}
+
+.payment-methods img,
+.security-badges img {
+	height: 24px;
+	margin-right: 8px;
+}
+
+.payment-methods {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	flex-wrap: wrap;
+}
+
+.security-badges {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	flex-wrap: wrap;
+}
+
+.payment-security .section-title {
+	font-weight: bold;
+	color: #FF5C00;
+	margin-bottom: 8px;
+}
+
+.payment-security .note {
+	font-style: italic;
+	font-size: 11px;
+	color: #666;
+	margin-top: 5px;
+}
+
+.footer-bottom {
+	text-align: center;
+	font-size: 11px;
+	color: #666;
+	margin-top: 30px;
+	line-height: 1.4;
+}
+
+.footer-bottom p {
+	margin-bottom: 8px;
+}
+
+.footer-bottom a {
+	color: #FF5C00;
+	font-weight: bold;
+}
+
+.footer-bottom a:hover {
+	text-decoration: underline;
+}
+
+/* Responsive Footer */
+@media (max-width: 1024px) {
+	.footer-main {
+		flex-wrap: wrap;
+		gap: 30px;
+	}
+
+	.footer-column {
+		flex: 1 1 45%;
+		border-right: none;
+		padding-right: 0;
+	}
+}
+
+@media (max-width: 768px) {
+	.newsletter-container {
+		padding: 20px var(--gstore-container-padding-inline, 15px);
+	}
+
+	.newsletter {
+		flex-direction: column;
+		align-items: flex-start;
+		gap: 15px;
+	}
+
+	.newsletter form {
+		width: 100%;
+		flex-direction: column;
+	}
+
+	.newsletter input[type="text"],
+	.newsletter input[type="email"] {
+		width: 100%;
+	}
+
+	.footer-main {
+		flex-direction: column;
+		gap: 30px;
+	}
+
+	.footer-column {
+		flex: 1 1 100%;
+		border-right: none;
+		padding-right: 0;
+		border-bottom: 1px solid #222;
+		padding-bottom: 20px;
+	}
+
+	.footer-column:last-child {
+		border-bottom: none;
+	}
+
+	.payment-security {
+		flex-direction: column;
+		gap: 20px;
+	}
+}
+
+/* =========================================
+ * CATALOG PAGE - Consistente com o site
+ * ========================================= */
+
+/* Shell principal do catálogo */
+.Gstore-catalog-shell {
+	width: 100%;
+	min-height: 100vh;
+	padding: clamp(24px, 4vw, 64px) clamp(16px, 4vw, 48px);
+}
+
+.Gstore-catalog-shell--light {
+	background: #ffffff !important;
+	background-color: #ffffff !important;
+	color: var(--text-main, #1a1a1a);
+}
+
+/* Garante fundo branco em toda a página do catálogo */
+body:has(.Gstore-catalog-shell--light),
+body:has(.Gstore-catalog-shell--light) .wp-site-blocks,
+body:has(.Gstore-catalog-shell--light) .wp-site-blocks > .wp-block-group,
+body:has(.Gstore-catalog-shell--light) main {
+	background: #ffffff !important;
+	background-color: #ffffff !important;
+}
+
+/* Container principal */
+.Gstore-catalog-container {
+	max-width: 1400px;
+	margin: 0 auto;
+}
+
+/* Header do catálogo */
+.Gstore-catalog-shell--light .Gstore-catalog-header {
+	width: 100%;
+	max-width: none;
+	margin-bottom: 32px;
+	padding-bottom: 20px;
+	border-bottom: 1px solid var(--gray-border, #e6e6e6);
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: 16px;
+}
+
+.Gstore-catalog-header__actions {
+	display: flex;
+	align-items: center;
+	gap: 16px;
+	flex-wrap: wrap;
+}
+
+/* Botão de toggle de filtros (mobile) */
+.Gstore-catalog-filters-toggle {
+	display: none; /* Oculto por padrão (desktop) */
+	align-items: center;
+	gap: 8px;
+	padding: 10px 16px;
+	background: var(--brass, #FF8C5C);
+	color: #ffffff;
+	border: none;
+	border-radius: var(--gstore-radius-base, 4px);
+	font-size: 14px;
+	font-weight: 600;
+	cursor: pointer;
+	transition: all 0.2s ease;
+	white-space: nowrap;
+}
+
+.Gstore-catalog-filters-toggle:hover {
+	background: #E65000;
+}
+
+.Gstore-catalog-filters-toggle.is-active {
+	background: #E65000;
+}
+
+.Gstore-catalog-filters-toggle .Gstore-icon {
+	width: 18px;
+	height: 18px;
+	flex-shrink: 0;
+}
+
+.Gstore-catalog-filters-toggle span {
+	font-size: 14px;
+}
+
+.Gstore-catalog-shell--light .Gstore-catalog-title,
+.Gstore-catalog-shell--light .wp-block-query-title.Gstore-catalog-title {
+	font-size: clamp(24px, 3vw, 32px);
+	font-weight: 700;
+	color: var(--text-main, #1a1a1a);
+	margin: 0;
+}
+
+/* Remove prefixo "Categoria:" do WooCommerce */
+.Gstore-catalog-shell--light .woocommerce-products-header__title {
+	font-size: clamp(24px, 3vw, 32px);
+	font-weight: 700;
+	color: var(--text-main, #1a1a1a);
+	margin: 0;
+}
+
+/* Oculta o título no mobile */
+@media (max-width: 1023px) {
+	.Gstore-catalog-shell--light .Gstore-catalog-title,
+	.Gstore-catalog-shell--light .wp-block-query-title.Gstore-catalog-title,
+	.Gstore-catalog-shell--light .woocommerce-products-header__title {
+		display: none;
+	}
+}
+
+/* Breadcrumb */
+.Gstore-breadcrumb {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	font-size: 13px;
+	color: var(--text-muted, #6b6b6b);
+}
+
+.Gstore-breadcrumb a {
+	color: var(--text-muted, #6b6b6b);
+	text-decoration: none;
+	transition: color 0.2s ease;
+}
+
+.Gstore-breadcrumb a:hover {
+	color: var(--brass, #FF8C5C);
+}
+
+.Gstore-breadcrumb__separator {
+	color: var(--gray-border, #e6e6e6);
+}
+
+.Gstore-breadcrumb__current {
+	color: var(--text-main, #1a1a1a);
+	font-weight: 500;
+}
+
+/* Layout do catálogo */
+.Gstore-catalog-layout {
+	gap: 32px !important;
+	align-items: flex-start;
+}
+
+/* =========================================
+ * SIDEBAR - Consistente com o site
+ * ========================================= */
+.Gstore-catalog-shell--light .Gstore-catalog-sidebar {
+	flex-basis: 260px !important;
+	flex-shrink: 0;
+	flex-grow: 0;
+}
+
+.Gstore-catalog-shell--light .Gstore-catalog-sidebar__inner {
+	background: #ffffff;
+	border: 1px solid var(--gray-border, #e6e6e6);
+	border-radius: var(--gstore-radius-base, 4px);
+	padding: 20px;
+	box-shadow: var(--shadow-sm, 0 1px 2px rgba(0, 0, 0, 0.06));
+	transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
+/* Overlay para mobile */
+.Gstore-catalog-filters-overlay {
+	display: none;
+	position: fixed;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	background: rgba(0, 0, 0, 0.5);
+	z-index: 9998;
+	opacity: 0;
+	transition: opacity 0.3s ease;
+}
+
+.Gstore-catalog-filters-overlay.is-active {
+	display: block;
+	opacity: 1;
+}
+
+.Gstore-catalog-shell--light .Gstore-catalog-sidebar__title {
+	font-size: 16px;
+	font-weight: 700;
+	color: var(--text-main, #1a1a1a);
+	margin: 0;
+}
+
+/* Wrapper do título (para mobile com botão de fechar) */
+.Gstore-catalog-sidebar__title-wrapper {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	gap: 12px;
+	margin-bottom: 16px;
+	padding-bottom: 12px;
+	border-bottom: 1px solid var(--gray-border, #e6e6e6);
+}
+
+.Gstore-catalog-sidebar__title-wrapper .Gstore-catalog-sidebar__title {
+	flex: 1;
+}
+
+.Gstore-catalog-filter-section {
+	padding: 16px 0;
+	border-bottom: 1px solid var(--gray-border, #e6e6e6);
+}
+
+.Gstore-catalog-filter-section:last-child {
+	border-bottom: none;
+	padding-bottom: 0;
+}
+
+.Gstore-catalog-shell--light .Gstore-catalog-sidebar__subtitle {
+	font-size: 12px;
+	font-weight: 600;
+	color: var(--text-muted, #6b6b6b);
+	margin-bottom: 12px;
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+}
+
+/* Search dentro do sidebar */
+.Gstore-catalog-shell--light .Gstore-catalog-search .wp-block-search__inside-wrapper {
+	display: flex;
+	gap: 0;
+	border: 1px solid var(--gray-border, #e6e6e6);
+	border-radius: var(--gstore-radius-base, 4px);
+	overflow: hidden;
+	background: var(--gray-bg, #f0f2f5);
+	transition: all 0.2s ease;
+}
+
+.Gstore-catalog-shell--light .Gstore-catalog-search .wp-block-search__inside-wrapper:focus-within {
+	border-color: var(--brass, #FF8C5C);
+	background: #ffffff;
+}
+
+.Gstore-catalog-shell--light .Gstore-catalog-search .wp-block-search__input {
+	border: none;
+	background: transparent;
+	padding: 10px 12px;
+	font-size: 14px;
+	color: var(--text-main, #1a1a1a);
+	flex: 1;
+}
+
+.Gstore-catalog-shell--light .Gstore-catalog-search .wp-block-search__input::placeholder {
+	color: var(--text-muted, #6b6b6b);
+}
+
+.Gstore-catalog-shell--light .Gstore-catalog-search .wp-block-search__button {
+	background: var(--brass, #FF8C5C);
+	color: #fff;
+	border: none;
+	padding: 10px 14px;
+	cursor: pointer;
+	transition: background 0.2s ease;
+}
+
+.Gstore-catalog-shell--light .Gstore-catalog-search .wp-block-search__button:hover {
+	background: #E65000;
+}
+
+/* Lista de categorias */
+.Gstore-catalog-shell--light .wc-block-product-categories-list,
+.Gstore-catalog-shell--light .product-categories {
+	list-style: none;
+	padding: 0;
+	margin: 0;
+}
+
+.Gstore-catalog-shell--light .wc-block-product-categories-list li,
+.Gstore-catalog-shell--light .product-categories li {
+	margin-bottom: 2px;
+}
+
+.Gstore-catalog-shell--light .wc-block-product-categories-list li a,
+.Gstore-catalog-shell--light .product-categories li a {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	padding: 8px 10px;
+	color: var(--text-main, #1a1a1a);
+	text-decoration: none;
+	border-radius: var(--gstore-radius-base, 4px);
+	transition: all 0.2s ease;
+	font-size: 14px;
+	flex-wrap: nowrap;
+	gap: 8px;
+}
+
+.Gstore-catalog-shell--light .wc-block-product-categories-list li a:hover,
+.Gstore-catalog-shell--light .product-categories li a:hover {
+	background: var(--gray-bg, #f0f2f5);
+	color: var(--brass, #FF8C5C);
+}
+
+/* Contador de categorias - força inline ao lado do nome */
+.Gstore-catalog-shell--light .wc-block-product-categories-list-item-count,
+.Gstore-catalog-shell--light .product-categories .count {
+	background: var(--gray-bg, #f0f2f5);
+	color: var(--text-muted, #6b6b6b);
+	padding: 2px 8px;
+	border-radius: 999px;
+	font-size: 11px;
+	font-weight: 600;
+	margin-left: auto;
+	flex-shrink: 0;
+	display: inline-flex;
+	align-items: center;
+}
+
+/* Garante que o nome da categoria e o count fiquem na mesma linha */
+.Gstore-catalog-shell--light .wc-block-product-categories-list li,
+.Gstore-catalog-shell--light .product-categories li {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+
+.Gstore-catalog-shell--light .wc-block-product-categories-list li > a,
+.Gstore-catalog-shell--light .product-categories li > a {
+	display: flex !important;
+	flex-direction: row !important;
+	align-items: center !important;
+	width: 100%;
+	flex: 1;
+}
+
+/* Widget de categorias padrão do WooCommerce */
+.Gstore-catalog-shell--light .widget_product_categories ul.product-categories li a {
+	display: flex !important;
+	flex-direction: row !important;
+	justify-content: space-between !important;
+	align-items: center !important;
+}
+
+.Gstore-catalog-shell--light .widget_product_categories ul.product-categories li .count {
+	order: 2;
+}
+
+/* Mantém o texto auxiliar do contador acessível e fora da tela */
+.Gstore-catalog-shell--light .wc-block-product-categories-list-item-count .screen-reader-text {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	padding: 0;
+	margin: -1px;
+	overflow: hidden;
+	clip: rect(0, 0, 0, 0);
+	border: 0;
+}
+
+/* Filtro de preço */
+.Gstore-catalog-shell--light .wc-block-price-filter__range-input-wrapper {
+	background: var(--gray-border, #e6e6e6);
+	height: 4px;
+	border-radius: 2px;
+	margin: 8px 0;
+}
+
+.Gstore-catalog-shell--light .wc-block-price-filter__range-input-progress {
+	background: var(--brass, #FF8C5C);
+	border-radius: 2px;
+}
+
+.Gstore-catalog-shell--light .wc-block-components-price-slider__range-input-wrapper .wc-block-components-price-slider__range-input::-webkit-slider-thumb {
+	background: #ffffff;
+	border: 2px solid var(--brass, #FF8C5C);
+	width: 16px;
+	height: 16px;
+	cursor: pointer;
+	box-shadow: var(--shadow-sm, 0 1px 2px rgba(0, 0, 0, 0.06));
+}
+
+.Gstore-catalog-shell--light .wc-block-price-filter__controls .wc-block-price-filter__amount {
+	font-size: 14px;
+	color: var(--text-main, #1a1a1a);
+	font-weight: 600;
+}
+
+/* =========================================
+ * CONTENT AREA - Consistente com o site
+ * ========================================= */
+.Gstore-catalog-shell--light .Gstore-catalog-content {
+	flex: 1;
+	min-width: 0;
+}
+
+/* Toolbar nativa do WooCommerce - estilizada */
+.Gstore-catalog-shell--light .woocommerce-notices-wrapper:empty {
+	display: none;
+}
+
+/* Container da toolbar do WooCommerce */
+.Gstore-catalog-shell--light .woocommerce-result-count,
+.Gstore-catalog-shell--light p.woocommerce-result-count {
+	font-size: 14px;
+	color: var(--text-muted, #6b6b6b);
+	margin: 0;
+	padding: 12px 0;
+}
+
+.Gstore-catalog-shell--light .woocommerce-ordering,
+.Gstore-catalog-shell--light form.woocommerce-ordering {
+	margin: 0;
+	padding: 12px 0;
+}
+
+.Gstore-catalog-shell--light .woocommerce-ordering select,
+.Gstore-catalog-shell--light form.woocommerce-ordering select {
+	padding: 8px 32px 8px 12px;
+	font-size: 14px;
+	color: var(--text-main, #1a1a1a);
+	background: #ffffff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236b6b6b' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E") no-repeat right 10px center;
+	border: 1px solid var(--gray-border, #e6e6e6);
+	border-radius: var(--gstore-radius-base, 4px);
+	cursor: pointer;
+	appearance: none;
+	-webkit-appearance: none;
+	transition: all 0.2s ease;
+	min-width: 180px;
+}
+
+.Gstore-catalog-shell--light .woocommerce-ordering select:hover,
+.Gstore-catalog-shell--light form.woocommerce-ordering select:hover {
+	border-color: var(--brass, #FF8C5C);
+}
+
+.Gstore-catalog-shell--light .woocommerce-ordering select:focus,
+.Gstore-catalog-shell--light form.woocommerce-ordering select:focus {
+	outline: none;
+	border-color: var(--brass, #FF8C5C);
+}
+
+/* Grid de produtos - usa o mesmo estilo que o resto do site */
+.Gstore-catalog-shell--light .Gstore-products-grid--light ul.products,
+.Gstore-catalog-shell--light .Gstore-products-grid--light .wc-block-product-template {
+	display: grid !important;
+	grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+	gap: 24px !important;
+}
+
+/* Os cards de produto herdam o estilo padrão do site - sem override */
+
+/* Badge de desconto */
+.Gstore-catalog-shell--light .onsale {
+	background: var(--brass, #FF8C5C) !important;
+	color: #ffffff !important;
+}
+
+/* Paginação */
+.Gstore-catalog-shell--light .woocommerce-pagination {
+	margin-top: 40px;
+	display: flex;
+	justify-content: center;
+}
+
+.Gstore-catalog-shell--light .woocommerce-pagination ul {
+	display: flex;
+	gap: 6px;
+	list-style: none;
+	padding: 0;
+	margin: 0;
+}
+
+.Gstore-catalog-shell--light .woocommerce-pagination ul li a,
+.Gstore-catalog-shell--light .woocommerce-pagination ul li span {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	min-width: 36px;
+	height: 36px;
+	padding: 0 10px;
+	font-size: 14px;
+	font-weight: 500;
+	color: var(--text-main, #1a1a1a);
+	background: #ffffff;
+	border: 1px solid var(--gray-border, #e6e6e6);
+	border-radius: var(--gstore-radius-base, 4px);
+	text-decoration: none;
+	transition: all 0.2s ease;
+}
+
+.Gstore-catalog-shell--light .woocommerce-pagination ul li a:hover {
+	background: var(--gray-bg, #f0f2f5);
+	border-color: var(--brass, #FF8C5C);
+}
+
+.Gstore-catalog-shell--light .woocommerce-pagination ul li span.current {
+	background: var(--brass, #FF8C5C);
+	color: #ffffff;
+	border-color: var(--brass, #FF8C5C);
+}
+
+/* =========================================
+ * RESPONSIVE - LIGHT THEME
+ * ========================================= */
+@media (max-width: 1200px) {
+	.Gstore-catalog-shell--light .Gstore-products-grid--light ul.products,
+	.Gstore-catalog-shell--light .Gstore-products-grid--light .wc-block-product-template {
+		grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+	}
+}
+
+@media (max-width: 1024px) {
+	.Gstore-catalog-shell--light .Gstore-catalog-layout {
+		flex-direction: column;
+	}
+
+	.Gstore-catalog-shell--light .Gstore-catalog-sidebar {
+		flex-basis: 100% !important;
+		width: 100%;
+		margin-bottom: 24px;
+	}
+
+	.Gstore-catalog-shell--light .Gstore-catalog-sidebar__inner {
+		position: static;
+	}
+
+	.Gstore-catalog-shell--light .Gstore-catalog-header {
+		width: 100%;
+		max-width: none;
+		flex-direction: column;
+		align-items: flex-start;
+	}
+
+	/* Mostra o botão de filtros no mobile */
+	.Gstore-catalog-filters-toggle {
+		display: flex;
+	}
+
+	/* Filtros retráteis no mobile */
+	.Gstore-catalog-shell--light .Gstore-catalog-sidebar__inner--collapsible {
+		position: fixed;
+		top: 0;
+		left: 0;
+		width: 85%;
+		max-width: 320px;
+		height: 100vh;
+		height: 100dvh; /* Suporte para mobile browsers */
+		z-index: 9999;
+		overflow-y: auto;
+		transform: translateX(-100%);
+		opacity: 0;
+		visibility: hidden;
+		border-radius: 0;
+		border-left: none;
+		border-top: none;
+		border-bottom: none;
+		box-shadow: 2px 0 8px rgba(0, 0, 0, 0.15);
+		margin: 0;
+		padding: 24px 20px;
+	}
+
+	.Gstore-catalog-shell--light .Gstore-catalog-sidebar__inner--collapsible.is-open {
+		transform: translateX(0);
+		opacity: 1;
+		visibility: visible;
+	}
+
+
+	.Gstore-catalog-sidebar__close {
+		display: none; /* Oculto no desktop */
+		align-items: center;
+		justify-content: center;
+		width: 32px;
+		height: 32px;
+		padding: 0;
+		background: transparent;
+		border: none;
+		border-radius: 4px;
+		cursor: pointer;
+		color: var(--text-main, #1a1a1a);
+		transition: background 0.2s ease;
+		flex-shrink: 0;
+	}
+
+	.Gstore-catalog-sidebar__close:hover {
+		background: var(--gray-bg, #f0f2f5);
+	}
+
+	.Gstore-catalog-sidebar__close .Gstore-icon {
+		width: 20px;
+		height: 20px;
+	}
+
+	/* Mostra o botão de fechar apenas no mobile */
+	@media (max-width: 1024px) {
+		.Gstore-catalog-sidebar__close {
+			display: flex;
+		}
+	}
+}
+
+@media (max-width: 768px) {
+	.Gstore-catalog-shell {
+		padding: 24px 16px;
+	}
+
+	.Gstore-catalog-shell--light .Gstore-products-grid--light ul.products,
+	.Gstore-catalog-shell--light .Gstore-products-grid--light .wc-block-product-template {
+		grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+		gap: 16px !important;
+	}
+
+	.Gstore-catalog-shell--light .woocommerce-result-count,
+	.Gstore-catalog-shell--light .woocommerce-ordering {
+		width: 100%;
+		text-align: center;
+	}
+
+	.Gstore-catalog-shell--light .woocommerce-ordering select {
+		width: 100%;
+	}
+
+	/* Ajustes no header para mobile */
+	.Gstore-catalog-header__actions {
+		width: 100%;
+		justify-content: space-between;
+		margin-top: 12px;
+	}
+
+	.Gstore-catalog-breadcrumb {
+		order: 2;
+	}
+
+	.Gstore-catalog-filters-toggle {
+		order: 1;
+	}
+}
+
+@media (max-width: 480px) {
+	.Gstore-catalog-shell--light .Gstore-products-grid--light ul.products,
+	.Gstore-catalog-shell--light .Gstore-products-grid--light .wc-block-product-template {
+		grid-template-columns: 1fr !important;
+	}
+}
