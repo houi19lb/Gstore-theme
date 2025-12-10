@@ -5,13 +5,17 @@
  * - Etapa 1: Dados Pessoais
  * - Etapa 2: Endereço de Entrega  
  * - Etapa 3: Pagamento
+ * 
+ * Quando o gateway Blu está selecionado, simplifica para pré-checkout:
+ * - Apenas email e telefone
+ * - Dados completos serão coletados no checkout da Blu
  */
 
 (function($) {
 	'use strict';
 
-	// Configuração das etapas
-	const STEPS = [
+	// Configuração padrão das etapas (3 etapas completas)
+	const STEPS_FULL = [
 		{
 			id: 'personal',
 			name: 'Dados Pessoais',
@@ -52,10 +56,108 @@
 		}
 	];
 
+	// Configuração simplificada para pré-checkout Blu (apenas email e telefone)
+	const STEPS_BLU_PRECHECKOUT = [
+		{
+			id: 'precheckout',
+			name: 'Dados Básicos',
+			icon: 'fa-envelope',
+			title: 'Pré-Checkout',
+			description: 'Informe seu email e telefone. Você será redirecionado para finalizar os dados e pagamento na Blu.',
+			fields: [
+				'billing_email',
+				'billing_phone'
+			]
+		},
+		{
+			id: 'payment',
+			name: 'Pagamento',
+			icon: 'fa-credit-card',
+			title: 'Gerar Link de Pagamento',
+			description: 'Clique no botão abaixo para gerar o link e ser redirecionado para o checkout seguro da Blu.',
+			fields: []
+		}
+	];
+
+	let STEPS = STEPS_FULL; // Inicializa com etapas completas
+
 	let currentStep = 0;
 	let $checkoutForm = null;
 	let $stepsContainer = null;
 	let initialized = false;
+
+	/**
+	 * Verifica se o gateway Blu está disponível ou selecionado
+	 */
+	function isBluGatewayAvailable() {
+		// Verifica se o gateway Blu existe na página
+		const $bluGateway = $('.payment_method_blu_checkout');
+		return $bluGateway.length > 0;
+	}
+
+	/**
+	 * Verifica se o gateway Pix está disponível
+	 */
+	function isPixGatewayAvailable() {
+		// Verifica se o gateway Pix existe na página
+		const $pixGateway = $('.payment_method_blu_pix');
+		return $pixGateway.length > 0;
+	}
+
+	/**
+	 * Verifica se o gateway Blu está atualmente selecionado
+	 */
+	function isBluGatewaySelected() {
+		const $bluRadio = $('input[name="payment_method"][value="blu_checkout"]:checked');
+		return $bluRadio.length > 0;
+	}
+
+	/**
+	 * Verifica se o gateway Pix está atualmente selecionado
+	 */
+	function isPixGatewaySelected() {
+		const $pixRadio = $('input[name="payment_method"][value="blu_pix"]:checked');
+		return $pixRadio.length > 0;
+	}
+
+	/**
+	 * Determina se deve usar o pré-checkout simplificado
+	 */
+	function shouldUseBluPrecheckout() {
+		// Se o gateway Blu está disponível, usa pré-checkout
+		// Isso permite que tanto Blu quanto Pix apareçam juntos na segunda etapa
+		if (!isBluGatewayAvailable()) {
+			return false;
+		}
+		
+		// Se Blu está selecionado, usa pré-checkout
+		if (isBluGatewaySelected()) {
+			return true;
+		}
+		
+		// Se Pix está selecionado e Blu está disponível, também usa pré-checkout
+		// (ambos podem aparecer juntos na segunda etapa)
+		if (isPixGatewaySelected() && isBluGatewayAvailable()) {
+			return true;
+		}
+		
+		// Se Blu está disponível (mesmo que não selecionado), usa pré-checkout
+		// Isso permite que o usuário veja e escolha entre Blu e Pix na segunda etapa
+		// Verifica se há outros métodos de pagamento além de Blu/Pix
+		const $allPaymentMethods = $('input[name="payment_method"]');
+		const hasOtherMethods = $allPaymentMethods.filter(function() {
+			const value = $(this).val();
+			return value !== 'blu_checkout' && value !== 'blu_pix';
+		}).length > 0;
+		
+		// Se não há outros métodos além de Blu/Pix, usa pré-checkout
+		// Se há outros métodos, só usa pré-checkout se Blu ou Pix estiverem selecionados
+		if (!hasOtherMethods) {
+			return true;
+		}
+		
+		return false;
+	}
 
 	/**
 	 * Inicializa o checkout de etapas
@@ -75,12 +177,19 @@
 			return;
 		}
 
+		// Define as etapas baseado no gateway selecionado
+		if (shouldUseBluPrecheckout()) {
+			STEPS = STEPS_BLU_PRECHECKOUT;
+		} else {
+			STEPS = STEPS_FULL;
+		}
+
 		buildStepsUI();
 		bindEvents();
 		loadCartSummary();
 		
 		initialized = true;
-		// console.log('Gstore Checkout Steps: Inicializado com sucesso');
+		// console.log('Gstore Checkout Steps: Inicializado com sucesso', STEPS.length, 'etapas');
 	}
 
 	/**
@@ -223,69 +332,294 @@
 	}
 
 	/**
+	 * Unifica métodos de pagamento Blu em um card único
+	 */
+	function unifyBluPaymentMethods() {
+		// Verifica se já existe o card unificado
+		const $existingUnified = $('.Gstore-blu-payment-unified');
+		if ($existingUnified.length) {
+			// Se já existe, apenas sincroniza a seleção
+			const $selected = $('input[name="payment_method"]:checked');
+			if ($selected.length) {
+				const selectedValue = $selected.val();
+				const $option = $existingUnified.find(`input[type="radio"][value="${selectedValue}"]`);
+				if ($option.length && !$option.is(':checked')) {
+					$option.prop('checked', true).trigger('change');
+				}
+			}
+			return;
+		}
+		
+		const $bluCheckout = $('.payment_method_blu_checkout').not('.Gstore-blu-payment-unified .payment_method_blu_checkout');
+		const $bluPix = $('.payment_method_blu_pix').not('.Gstore-blu-payment-unified .payment_method_blu_pix');
+		
+		// Se ambos os métodos Blu estão disponíveis, unifica em um card
+		if ($bluCheckout.length && $bluPix.length) {
+			// Esconde os elementos originais mas mantém no DOM para o WooCommerce
+			$bluCheckout.css({ position: 'absolute', left: '-9999px', opacity: 0, pointerEvents: 'none' });
+			$bluPix.css({ position: 'absolute', left: '-9999px', opacity: 0, pointerEvents: 'none' });
+			
+			// Cria card unificado
+			const $bluUnified = $('<li class="payment_method_blu_unified Gstore-blu-payment-unified"></li>');
+			
+			// Adiciona título unificado "Pagamento via Blu"
+			$bluUnified.append('<div class="Gstore-blu-payment-unified__title">Pagamento via Blu</div>');
+			
+			// Cria container para as opções
+			const $optionsContainer = $('<div class="Gstore-blu-payment-options"></div>');
+			
+			// Prepara opção Cartão - usa o radio original mas escondido
+			const $checkoutOption = $('<div class="Gstore-blu-payment-option"></div>');
+			const $checkoutRadio = $bluCheckout.find('input[type="radio"]').first();
+			const checkoutId = $checkoutRadio.attr('id') || 'payment_method_blu_checkout';
+			const checkoutChecked = $checkoutRadio.is(':checked');
+			
+			// Clona o radio para usar no card unificado, mantendo o original escondido
+			const $checkoutRadioClone = $checkoutRadio.clone();
+			$checkoutRadioClone.appendTo($checkoutOption);
+			$checkoutOption.append(`
+				<label for="${checkoutId}" class="Gstore-blu-payment-option__label">
+					<i class="fa-solid fa-credit-card"></i>
+					<span>Cartão (Link de Pagamento)</span>
+				</label>
+			`);
+			$optionsContainer.append($checkoutOption);
+			
+			// Sincroniza cliques no radio clone com o original
+			$checkoutRadioClone.on('change', function() {
+				if ($(this).is(':checked')) {
+					$checkoutRadio.prop('checked', true).trigger('change');
+					$pixRadio.prop('checked', false);
+				}
+			});
+			
+			// Prepara opção Pix - usa o radio original mas escondido
+			const $pixOption = $('<div class="Gstore-blu-payment-option"></div>');
+			const $pixRadio = $bluPix.find('input[type="radio"]').first();
+			const pixId = $pixRadio.attr('id') || 'payment_method_blu_pix';
+			const pixChecked = $pixRadio.is(':checked');
+			
+			// Clona o radio para usar no card unificado, mantendo o original escondido
+			const $pixRadioClone = $pixRadio.clone();
+			$pixRadioClone.appendTo($pixOption);
+			$pixOption.append(`
+				<label for="${pixId}" class="Gstore-blu-payment-option__label">
+					<i class="fa-solid fa-qrcode"></i>
+					<span>Pix</span>
+				</label>
+			`);
+			$optionsContainer.append($pixOption);
+			
+			// Sincroniza cliques no radio clone com o original
+			$pixRadioClone.on('change', function() {
+				if ($(this).is(':checked')) {
+					$pixRadio.prop('checked', true).trigger('change');
+					$checkoutRadio.prop('checked', false);
+				}
+			});
+			
+			$bluUnified.append($optionsContainer);
+			
+			// Move payment_box do método selecionado para dentro do card unificado
+			$bluUnified.append('<div class="Gstore-blu-payment-unified__content"></div>');
+			const $content = $bluUnified.find('.Gstore-blu-payment-unified__content');
+			
+			// Adiciona event listeners para mostrar/esconder conteúdo baseado na seleção
+			function updatePaymentContent(skipCheckoutUpdate) {
+				let selectedMethod = null;
+				
+				// Verifica qual radio original está selecionado
+				if ($checkoutRadio.is(':checked')) {
+					selectedMethod = 'blu_checkout';
+					$checkoutRadioClone.prop('checked', true);
+					$pixRadioClone.prop('checked', false);
+				} else if ($pixRadio.is(':checked')) {
+					selectedMethod = 'blu_pix';
+					$pixRadioClone.prop('checked', true);
+					$checkoutRadioClone.prop('checked', false);
+				}
+				
+				if (!selectedMethod) return;
+				
+				$content.empty();
+				
+				if (selectedMethod === 'blu_checkout') {
+					const $checkoutBox = $bluCheckout.find('.payment_box').clone();
+					$content.append($checkoutBox);
+				} else if (selectedMethod === 'blu_pix') {
+					const $pixBox = $bluPix.find('.payment_box').clone();
+					$content.append($pixBox);
+				}
+				
+				// Trigger update do WooCommerce apenas se não for para pular
+				if (!skipCheckoutUpdate) {
+					// Usa um pequeno delay para evitar loop infinito
+					setTimeout(function() {
+						$(document.body).trigger('update_checkout');
+					}, 50);
+				}
+			}
+			
+			// Sincroniza cliques no label com o radio original
+			$checkoutOption.find('label').on('click', function(e) {
+				e.preventDefault();
+				e.stopPropagation();
+				$checkoutRadio.prop('checked', true);
+				$checkoutRadioClone.prop('checked', true);
+				$pixRadio.prop('checked', false);
+				$pixRadioClone.prop('checked', false);
+				// Dispara evento de mudança no WooCommerce
+				$checkoutRadio.trigger('change');
+				updatePaymentContent();
+			});
+			
+			// Sincroniza cliques no label com o radio original
+			$pixOption.find('label').on('click', function(e) {
+				e.preventDefault();
+				e.stopPropagation();
+				$pixRadio.prop('checked', true);
+				$pixRadioClone.prop('checked', true);
+				$checkoutRadio.prop('checked', false);
+				$checkoutRadioClone.prop('checked', false);
+				// Dispara evento de mudança no WooCommerce
+				$pixRadio.trigger('change');
+				updatePaymentContent();
+			});
+			
+			// Sincroniza mudanças nos radios originais
+			$checkoutRadio.off('change.gstore-unify').on('change.gstore-unify', function() {
+				updatePaymentContent();
+			});
+			$pixRadio.off('change.gstore-unify').on('change.gstore-unify', function() {
+				updatePaymentContent();
+			});
+			
+			// Listener para quando o checkout é atualizado - mantém a seleção
+			$(document.body).on('updated_checkout.gstore-unify', function() {
+				setTimeout(function() {
+					// Restaura a seleção após o update
+					if ($pixRadio.is(':checked')) {
+						$pixRadioClone.prop('checked', true);
+						$checkoutRadioClone.prop('checked', false);
+						updatePaymentContent(true);
+					} else if ($checkoutRadio.is(':checked')) {
+						$checkoutRadioClone.prop('checked', true);
+						$pixRadioClone.prop('checked', false);
+						updatePaymentContent(true);
+					}
+				}, 100);
+			});
+			
+			// Mostra conteúdo inicial
+			setTimeout(function() {
+				if ($checkoutRadio.is(':checked') || $pixRadio.is(':checked')) {
+					updatePaymentContent();
+				} else {
+					// Seleciona o primeiro por padrão
+					$checkoutRadio.prop('checked', true).trigger('change');
+				}
+			}, 100);
+			
+			// Adiciona badges de confiança simplificados
+			$bluUnified.append(`
+				<div class="Gstore-blu-trust-badges-simple">
+					<span class="Gstore-blu-trust-badge-simple">
+						<i class="fa-solid fa-shield-halved"></i> Pagamento seguro
+					</span>
+				</div>
+			`);
+			
+			// Insere o card unificado na lista de métodos de pagamento
+			const $paymentMethods = $('#payment .payment_methods');
+			if ($paymentMethods.length) {
+				$paymentMethods.prepend($bluUnified);
+			} else {
+				const $paymentSection = $('#payment');
+				if ($paymentSection.length) {
+					const $newPaymentMethods = $('<ul class="payment_methods"></ul>');
+					$newPaymentMethods.append($bluUnified);
+					$paymentSection.prepend($newPaymentMethods);
+				}
+			}
+		}
+	}
+
+	/**
 	 * Organiza os campos nas etapas corretas
 	 */
 	function organizeFields() {
-		// Etapa 1: Dados Pessoais
-		const $personalStep = $('[data-step="personal"] .Gstore-checkout-step__fields');
-		STEPS[0].fields.forEach(fieldId => {
-			const $field = $(`#${fieldId}_field`);
-			if ($field.length) {
-				$personalStep.append($field.detach());
-			}
-		});
+		const isPrecheckout = STEPS.length === 2; // Pré-checkout Blu tem 2 etapas
 
-		// Etapa 2: Endereço
-		const $shippingStep = $('[data-step="shipping"] .Gstore-checkout-step__fields');
-		STEPS[1].fields.forEach(fieldId => {
-			const $field = $(`#${fieldId}_field`);
-			if ($field.length) {
-				$shippingStep.append($field.detach());
-			}
-		});
-
-		// Adiciona container de opções de envio na etapa 2
-		const $shippingMethods = $('#shipping_method, .woocommerce-shipping-methods').closest('tr, .woocommerce-shipping-totals');
-		if ($shippingMethods.length) {
-			$shippingStep.append(`
-				<div class="Gstore-checkout-section">
-					<h3 class="Gstore-checkout-section__title">
-						<i class="fa-solid fa-truck-fast"></i>
-						Opções de Envio
-					</h3>
-					<div class="Gstore-shipping-container"></div>
-				</div>
-			`);
+		// Organiza campos da primeira etapa (dados pessoais ou pré-checkout)
+		const $firstStep = $(`[data-step="${STEPS[0].id}"] .Gstore-checkout-step__fields`);
+		if ($firstStep.length) {
+			STEPS[0].fields.forEach(fieldId => {
+				const $field = $(`#${fieldId}_field`);
+				if ($field.length) {
+					$firstStep.append($field.detach());
+				}
+			});
 		}
 
-		// Etapa 3: Pagamento
+		// Se não for pré-checkout, organiza etapa de endereço
+		if (!isPrecheckout && STEPS.length > 1) {
+			const $shippingStep = $('[data-step="shipping"] .Gstore-checkout-step__fields');
+			if ($shippingStep.length && STEPS[1]) {
+				STEPS[1].fields.forEach(fieldId => {
+					const $field = $(`#${fieldId}_field`);
+					if ($field.length) {
+						$shippingStep.append($field.detach());
+					}
+				});
+
+				// Adiciona container de opções de envio na etapa 2
+				const $shippingMethods = $('#shipping_method, .woocommerce-shipping-methods').closest('tr, .woocommerce-shipping-totals');
+				if ($shippingMethods.length) {
+					$shippingStep.append(`
+						<div class="Gstore-checkout-section">
+							<h3 class="Gstore-checkout-section__title">
+								<i class="fa-solid fa-truck-fast"></i>
+								Opções de Envio
+							</h3>
+							<div class="Gstore-shipping-container"></div>
+						</div>
+					`);
+				}
+			}
+		}
+
+		// Etapa de pagamento (última etapa)
 		const $paymentStep = $('[data-step="payment"] .Gstore-checkout-step__payment-container');
 		
-		// 1. Adiciona resumo dos dados do cliente
-		$paymentStep.append(`
-			<div class="Gstore-checkout-review">
-				<div class="Gstore-checkout-review__section">
-					<div class="Gstore-checkout-review__header">
-						<i class="fa-solid fa-user"></i>
-						<span>Dados Pessoais</span>
-						<button type="button" class="Gstore-checkout-review__edit" data-goto-step="0">
-							<i class="fa-solid fa-pen"></i> Editar
-						</button>
+		// 1. Adiciona resumo dos dados do cliente (apenas se não for pré-checkout)
+		if (!isPrecheckout) {
+			$paymentStep.append(`
+				<div class="Gstore-checkout-review">
+					<div class="Gstore-checkout-review__section">
+						<div class="Gstore-checkout-review__header">
+							<i class="fa-solid fa-user"></i>
+							<span>Dados Pessoais</span>
+							<button type="button" class="Gstore-checkout-review__edit" data-goto-step="0">
+								<i class="fa-solid fa-pen"></i> Editar
+							</button>
+						</div>
+						<div class="Gstore-checkout-review__content" id="review-personal"></div>
 					</div>
-					<div class="Gstore-checkout-review__content" id="review-personal"></div>
-				</div>
-				<div class="Gstore-checkout-review__section">
-					<div class="Gstore-checkout-review__header">
-						<i class="fa-solid fa-location-dot"></i>
-						<span>Endereço de Entrega</span>
-						<button type="button" class="Gstore-checkout-review__edit" data-goto-step="1">
-							<i class="fa-solid fa-pen"></i> Editar
-						</button>
+					<div class="Gstore-checkout-review__section">
+						<div class="Gstore-checkout-review__header">
+							<i class="fa-solid fa-location-dot"></i>
+							<span>Endereço de Entrega</span>
+							<button type="button" class="Gstore-checkout-review__edit" data-goto-step="1">
+								<i class="fa-solid fa-pen"></i> Editar
+							</button>
+						</div>
+						<div class="Gstore-checkout-review__content" id="review-shipping"></div>
 					</div>
-					<div class="Gstore-checkout-review__content" id="review-shipping"></div>
 				</div>
-			</div>
-		`);
+			`);
+		} else {
+			// No pré-checkout, mensagem simplificada removida - informação será mostrada no card de pagamento
+		}
 
 		// DEBUG: Log para verificar se chegamos até aqui
 		// console.log('Gstore Steps: Organizando etapa de pagamento');
@@ -308,10 +642,48 @@
 			$('.Gstore-checkout-notes-container').append($additionalFields.detach());
 		}
 
-		// 3. Move seção de pagamento
+		// 3. Move seção de pagamento e reorganiza métodos Blu
 		const $paymentSection = $('#payment');
 		if ($paymentSection.length) {
 			$paymentStep.append($paymentSection.detach());
+			
+			// Chama função para unificar métodos Blu
+			setTimeout(function() {
+				unifyBluPaymentMethods();
+			}, 150);
+			
+			// Ajusta labels quando apenas um método está disponível
+			const $bluCheckout = $('.payment_method_blu_checkout').not('.Gstore-blu-payment-unified .payment_method_blu_checkout');
+			const $bluPix = $('.payment_method_blu_pix').not('.Gstore-blu-payment-unified .payment_method_blu_pix');
+			
+			if ($bluCheckout.length && !$bluPix.length) {
+				// Apenas checkout disponível - simplifica badges
+				// Apenas checkout disponível - simplifica badges
+				const $bluPaymentBox = $bluCheckout.find('.payment_box');
+				if ($bluPaymentBox.length) {
+					$bluPaymentBox.append(`
+						<div class="Gstore-blu-trust-badges-simple">
+							<span class="Gstore-blu-trust-badge-simple">
+								<i class="fa-solid fa-shield-halved"></i> Pagamento seguro
+							</span>
+						</div>
+					`);
+				}
+				// Garante que o label mostre o nome correto
+				const $checkoutLabel = $bluCheckout.find('label');
+				if ($checkoutLabel.length && !$checkoutLabel.find('i').length) {
+					const $radio = $checkoutLabel.find('input[type="radio"]').detach();
+					$checkoutLabel.empty().append($radio).append('<i class="fa-solid fa-credit-card"></i> Cartão (Link de Pagamento)');
+				}
+			} else if ($bluPix.length) {
+				// Apenas Pix disponível - garante que esteja visível e com estilo correto
+				$bluPix.show();
+				const $pixLabel = $bluPix.find('label');
+				if ($pixLabel.length && !$pixLabel.find('i').length) {
+					const $radio = $pixLabel.find('input[type="radio"]').detach();
+					$pixLabel.empty().append($radio).append('<i class="fa-solid fa-qrcode"></i> Pix');
+				}
+			}
 			
 			// Garante que o botão de finalizar pedido esteja visível
 			setTimeout(function() {
@@ -322,57 +694,15 @@
 						'visibility': 'visible',
 						'opacity': '1'
 					});
-					// console.log('Gstore Steps: Botão de finalizar pedido encontrado e exibido');
-				} else {
-					// console.warn('Gstore Steps: Botão #place_order não encontrado');
 				}
 			}, 100);
-		}
-
-		// 3.1 Melhora o card da Blu com badges de confiança
-		const $bluPaymentBox = $('.payment_method_blu_checkout .payment_box');
-		if ($bluPaymentBox.length) {
-			$bluPaymentBox.append(`
-				<div class="Gstore-blu-trust-badges">
-					<span class="Gstore-blu-trust-badge">
-						<i class="fa-solid fa-lock"></i> 256-bit SSL
-					</span>
-					<span class="Gstore-blu-trust-badge">
-						<i class="fa-solid fa-shield-halved"></i> Anti-fraude
-					</span>
-					<span class="Gstore-blu-trust-badge">
-						<i class="fa-solid fa-credit-card"></i> PCI DSS
-					</span>
-					<span class="Gstore-blu-trust-badge">
-						<i class="fa-solid fa-user-shield"></i> LGPD
-					</span>
-				</div>
-			`);
 		}
 
 		// Esconde seções vazias do WooCommerce
 		$('.woocommerce-billing-fields').hide();
 		$('.woocommerce-shipping-fields').hide();
 
-		// 4. Adiciona garantias após o pagamento
-		$paymentStep.append(`
-			<div class="Gstore-checkout-assurance">
-				<div class="Gstore-assurance-card">
-					<i class="fa-solid fa-headset"></i>
-					<div class="Gstore-assurance-card__text">
-						<strong>Atendimento Dedicado</strong>
-						<span>Equipe pronta para ajudar</span>
-					</div>
-				</div>
-				<div class="Gstore-assurance-card">
-					<i class="fa-solid fa-shield-halved"></i>
-					<div class="Gstore-assurance-card__text">
-						<strong>Compra Segura</strong>
-						<span>Pagamento criptografado</span>
-					</div>
-				</div>
-			</div>
-		`);
+		// 4. Garantias removidas para simplificar a interface
 	}
 
 	/**
@@ -457,9 +787,13 @@
 			}, 300);
 		}
 
-		// Atualiza resumo quando entrar na etapa de pagamento
-		if (index === 2) {
-			updateReviewData();
+		// Atualiza resumo quando entrar na última etapa (pagamento)
+		const lastStepIndex = STEPS.length - 1;
+		if (index === lastStepIndex) {
+			// Só atualiza resumo se não for pré-checkout (checkout completo tem 3 etapas)
+			if (STEPS.length === 3) {
+				updateReviewData();
+			}
 			
 			// Reinicializa os eventos do WooCommerce na etapa de pagamento
 			setTimeout(function() {
@@ -468,8 +802,18 @@
 				// Garante que o botão place_order esteja visível e clicável
 				const $placeOrderBtn = $('#place_order');
 				if ($placeOrderBtn.length) {
-					$placeOrderBtn.prop('disabled', false).show();
-					// console.log('Gstore Steps: Botão finalizar pedido habilitado na etapa 3');
+					$placeOrderBtn.prop('disabled', false)
+						.removeClass('disabled')
+						.show()
+						.css({
+							'display': 'inline-block',
+							'visibility': 'visible',
+							'opacity': '1',
+							'pointer-events': 'auto'
+						});
+					// console.log('Gstore Steps: Botão finalizar pedido habilitado na última etapa');
+				} else {
+					// console.warn('Gstore Steps: Botão #place_order não encontrado na última etapa');
 				}
 				
 				// Remove class 'processing' se existir (pode ter ficado de tentativa anterior)
@@ -521,7 +865,7 @@
 				}
 			}
 
-			// Validação de CPF
+			// Validação de CPF - só valida se for obrigatório ou se houver valor preenchido
 			if (fieldId === 'billing_cpf' && value) {
 				const cpf = value.replace(/\D/g, '');
 				if (cpf.length !== 11) {
@@ -530,15 +874,21 @@
 					if (!$firstError) $firstError = $input;
 				}
 			}
+			// Se CPF não é obrigatório e está vazio, não valida
+			// (não faz nada - já tratado acima com verificação de value)
 
-			// Validação de CEP
-			if (fieldId === 'billing_postcode' && value) {
-				const cep = value.replace(/\D/g, '');
-				if (cep.length !== 8) {
-					isValid = false;
-					$fieldWrapper.addClass('woocommerce-invalid');
-					if (!$firstError) $firstError = $input;
+			// Validação de CEP - só valida se for obrigatório ou se houver valor preenchido
+			if (fieldId === 'billing_postcode') {
+				// Só valida se houver valor preenchido (se estiver vazio e não for obrigatório, não valida)
+				if (value && value.trim() !== '') {
+					const cep = value.replace(/\D/g, '');
+					if (cep.length !== 8) {
+						isValid = false;
+						$fieldWrapper.addClass('woocommerce-invalid');
+						if (!$firstError) $firstError = $input;
+					}
 				}
+				// Se CEP não é obrigatório e está vazio, não valida (não faz nada)
 			}
 		});
 
@@ -825,19 +1175,22 @@
 
 		// Garante que o botão de finalizar pedido funcione corretamente
 		$(document).on('click', '#place_order', function(e) {
-			e.preventDefault();
 			// console.log('Gstore Steps: Botão "Finalizar Pedido" clicado');
 			
-			// Verifica se estamos na etapa de pagamento
-			if (currentStep !== 2) {
+			// Verifica se estamos na última etapa (pagamento)
+			// No checkout completo são 3 etapas (índice 2), no pré-checkout são 2 etapas (índice 1)
+			const lastStepIndex = STEPS.length - 1;
+			if (currentStep !== lastStepIndex) {
+				e.preventDefault();
 				// console.warn('Gstore Steps: Usuário não está na etapa de pagamento');
-				setActiveStep(2);
+				setActiveStep(lastStepIndex);
 				return false;
 			}
 			
 			// Valida se um método de pagamento foi selecionado
 			const $paymentMethod = $('input[name="payment_method"]:checked');
 			if (!$paymentMethod.length) {
+				e.preventDefault();
 				showNotice('Por favor, selecione um método de pagamento.', 'error');
 				// console.warn('Gstore Steps: Nenhum método de pagamento selecionado');
 				return false;
@@ -847,17 +1200,38 @@
 			
 			// Verifica se o formulário está em processamento
 			if ($checkoutForm.hasClass('processing')) {
+				e.preventDefault();
 				// console.log('Gstore Steps: Formulário já está processando, aguarde...');
 				return false;
 			}
 			
-			// Mostra o modal de carregamento
-			showProcessingModal();
+			// Verifica se estamos no pré-checkout (2 etapas)
+			const isPrecheckout = STEPS.length === 2;
 			
-			// console.log('Gstore Steps: Iniciando submit do checkout...');
-			
-			// Primeiro atualiza o checkout para garantir nonce válido, depois submete
-			refreshAndSubmit();
+			if (isPrecheckout) {
+				// No pré-checkout, precisamos fazer o submit via AJAX manualmente
+				e.preventDefault();
+				console.log('Gstore Steps: Pré-checkout detectado - executando submit manual via AJAX');
+				
+				// Mostra o modal de processamento
+				if (typeof showProcessingModal === 'function') {
+					showProcessingModal();
+				}
+				
+				// Chama submitCheckoutDirectly com um pequeno delay para garantir que o modal apareça
+				setTimeout(function() {
+					submitCheckoutDirectly();
+				}, 200);
+			} else {
+				// No checkout completo, permite que o WooCommerce faça o submit padrão
+				// Apenas mostra o modal de carregamento se existir
+				if (typeof showProcessingModal === 'function') {
+					showProcessingModal();
+				}
+				
+				// Não previne o comportamento padrão - deixa o WooCommerce fazer o submit
+				// console.log('Gstore Steps: Permitindo submit padrão do WooCommerce');
+			}
 		});
 
 		/**
@@ -963,17 +1337,17 @@
 		 * Submit direto do checkout via AJAX
 		 */
 		function submitCheckoutDirectly() {
-			// console.log('Gstore Steps: Executando submit direto do checkout');
+			console.log('Gstore Steps: [DEBUG] Executando submit direto do checkout');
 			
 			const $form = $('form.checkout');
 			if (!$form.length) {
-				// console.error('Gstore Steps: Formulário de checkout não encontrado');
+				console.error('Gstore Steps: [DEBUG] Formulário de checkout não encontrado');
 				return;
 			}
 
 			// Verifica se já está processando
 			if ($form.hasClass('processing')) {
-				// console.log('Gstore Steps: Já está processando');
+				console.log('Gstore Steps: [DEBUG] Já está processando');
 				return;
 			}
 
@@ -994,21 +1368,41 @@
 			// 	console.log('  -', $(this).attr('name') || $(this).attr('id'), '=', $(this).val() ? $(this).val().substring(0, 15) + '...' : 'vazio');
 			// });
 			
-			// Verifica campos obrigatórios
-			const requiredFields = ['billing_first_name', 'billing_last_name', 'billing_email', 'billing_phone', 
-			                        'billing_postcode', 'billing_address_1', 'billing_city', 'billing_state'];
+			// Verifica campos obrigatórios - diferente para pré-checkout vs checkout completo
+			const isPrecheckout = STEPS.length === 2;
+			let requiredFields;
+			
+			if (isPrecheckout) {
+				// No pré-checkout, apenas email e telefone são obrigatórios
+				requiredFields = ['billing_email', 'billing_phone'];
+				console.log('Gstore Steps: Pré-checkout detectado - validando apenas email e telefone');
+			} else {
+				// No checkout completo, todos os campos de endereço são obrigatórios
+				requiredFields = ['billing_first_name', 'billing_last_name', 'billing_email', 'billing_phone', 
+				                  'billing_postcode', 'billing_address_1', 'billing_city', 'billing_state'];
+			}
+			
 			let missingFields = [];
 			
 			requiredFields.forEach(function(field) {
 				const $field = $form.find('#' + field);
-				if ($field.length && (!$field.val() || $field.val().trim() === '')) {
-					missingFields.push(field);
+				// Verifica se o campo existe e se é obrigatório
+				if ($field.length) {
+					const $fieldWrapper = $field.closest('.form-row, .woocommerce-input-wrapper, #' + field + '_field');
+					const isFieldRequired = $fieldWrapper.hasClass('validate-required') || 
+					                        $field.prop('required') ||
+					                        $field.attr('aria-required') === 'true';
+					
+					// Só considera obrigatório se o campo realmente estiver marcado como obrigatório
+					if (isFieldRequired && (!$field.val() || $field.val().trim() === '')) {
+						missingFields.push(field);
+					}
 				}
 			});
 			
-			// if (missingFields.length > 0) {
-			// 	console.warn('Gstore Steps: Campos obrigatórios vazios:', missingFields);
-			// }
+			if (missingFields.length > 0) {
+				console.warn('Gstore Steps: Campos obrigatórios vazios:', missingFields);
+			}
 
 			$form.addClass('processing');
 
@@ -1024,12 +1418,29 @@
 			// IMPORTANTE: Coleta TODOS os campos da página manualmente
 			// Os campos foram movidos para fora do formulário pelo sistema de etapas
 			const formDataObj = {};
+			// isPrecheckout já foi declarado acima na linha 1142
+			
+			// Campos de endereço que não devem ser enviados vazios no pré-checkout
+			const addressFields = ['billing_postcode', 'billing_address_1', 'billing_number', 
+			                       'billing_address_2', 'billing_neighborhood', 'billing_city', 
+			                       'billing_state', 'billing_first_name', 'billing_last_name', 'billing_cpf'];
 			
 			// 1. Coleta campos de billing
 			$('[id^="billing_"]').each(function() {
 				const $input = $(this);
 				const name = $input.attr('name') || $input.attr('id');
-				if (name && $input.val()) {
+				if (!name) return;
+				
+				const value = $input.val() ? $input.val().trim() : '';
+				
+				// No pré-checkout, não envia campos de endereço vazios
+				if (isPrecheckout && addressFields.indexOf(name) !== -1 && !value) {
+					console.log('Gstore Steps: [DEBUG] Ignorando campo vazio no pré-checkout:', name);
+					return; // Não adiciona campos vazios de endereço no pré-checkout
+				}
+				
+				// Adiciona o campo se tiver valor ou se não for pré-checkout
+				if (value || !isPrecheckout) {
 					formDataObj[name] = $input.val();
 				}
 			});
@@ -1132,19 +1543,28 @@
 			$form.find('input, select, textarea').each(function() {
 				const $input = $(this);
 				const name = $input.attr('name');
-				if (name && !formDataObj[name]) {
-					if ($input.is(':checkbox')) {
-						if ($input.is(':checked')) {
-							formDataObj[name] = $input.val() || '1';
-						}
-					} else if ($input.is(':radio')) {
-						if ($input.is(':checked')) {
-							formDataObj[name] = $input.val();
-						}
-					} else {
-						const val = $input.val();
-						if (val) formDataObj[name] = val;
+				if (!name || formDataObj[name]) return; // Já foi coletado ou não tem nome
+				
+				// No pré-checkout, não adiciona campos de endereço vazios
+				if (isPrecheckout && addressFields.indexOf(name) !== -1) {
+					const val = $input.val() ? $input.val().trim() : '';
+					if (!val) {
+						console.log('Gstore Steps: [DEBUG] Ignorando campo vazio do formulário no pré-checkout:', name);
+						return; // Não adiciona campos vazios de endereço no pré-checkout
 					}
+				}
+				
+				if ($input.is(':checkbox')) {
+					if ($input.is(':checked')) {
+						formDataObj[name] = $input.val() || '1';
+					}
+				} else if ($input.is(':radio')) {
+					if ($input.is(':checked')) {
+						formDataObj[name] = $input.val();
+					}
+				} else {
+					const val = $input.val();
+					if (val) formDataObj[name] = val;
 				}
 			});
 			
@@ -1154,29 +1574,32 @@
 			// Converte para query string
 			let formData = $.param(formDataObj);
 			
-			// console.log('Gstore Steps: Enviando dados para:', wc_checkout_params.checkout_url);
-			// console.log('Gstore Steps: Campos coletados:', Object.keys(formDataObj).length);
-			// console.log('Gstore Steps: billing_first_name:', formDataObj['billing_first_name'] || 'FALTANDO');
-			// console.log('Gstore Steps: billing_email:', formDataObj['billing_email'] || 'FALTANDO');
-			// console.log('Gstore Steps: payment_method:', formDataObj['payment_method'] || 'FALTANDO');
-			// console.log('Gstore Steps: nonce:', formDataObj['woocommerce-process-checkout-nonce'] ? 'OK' : 'FALTANDO');
+			console.log('Gstore Steps: [DEBUG] Enviando dados para:', wc_checkout_params.checkout_url);
+			console.log('Gstore Steps: [DEBUG] Campos coletados:', Object.keys(formDataObj).length);
+			console.log('Gstore Steps: [DEBUG] billing_email:', formDataObj['billing_email'] || 'FALTANDO');
+			console.log('Gstore Steps: [DEBUG] billing_phone:', formDataObj['billing_phone'] || 'FALTANDO');
+			console.log('Gstore Steps: [DEBUG] payment_method:', formDataObj['payment_method'] || 'FALTANDO');
+			console.log('Gstore Steps: [DEBUG] nonce:', formDataObj['woocommerce-process-checkout-nonce'] ? 'OK' : 'FALTANDO');
 			
-			// Debug: lista todos os campos
-			// console.log('Gstore Steps: Todos os campos:', Object.keys(formDataObj));
+			// Debug: lista todos os campos coletados
+			console.log('Gstore Steps: [DEBUG] Todos os campos coletados:', Object.keys(formDataObj));
 
 			$.ajax({
 				type: 'POST',
 				url: wc_checkout_params.checkout_url,
 				data: formData,
 				dataType: 'json',
+				beforeSend: function() {
+					console.log('Gstore Steps: [DEBUG] Requisição AJAX sendo enviada...');
+				},
 				success: function(response) {
-					// console.log('Gstore Steps: Resposta recebida:', response);
+					console.log('Gstore Steps: [DEBUG] Resposta recebida:', response);
 					
 					// Atualiza para passo 3 (criando pedido)
 					updateProcessingStep(3);
 					
 					if (response.result === 'success') {
-						// console.log('Gstore Steps: Sucesso! Redirecionando para:', response.redirect);
+						console.log('Gstore Steps: [DEBUG] Sucesso! Redirecionando para:', response.redirect);
 						
 						// Mostra sucesso no modal
 						setTimeout(function() {
@@ -1188,9 +1611,9 @@
 							window.location.href = response.redirect;
 						}, 1500);
 					} else if (response.result === 'failure') {
-						// console.warn('Gstore Steps: Falha no checkout');
-						// console.warn('Gstore Steps: Refresh:', response.refresh);
-						// console.warn('Gstore Steps: Reload:', response.reload);
+						console.warn('Gstore Steps: [DEBUG] Falha no checkout');
+						console.warn('Gstore Steps: [DEBUG] Refresh:', response.refresh);
+						console.warn('Gstore Steps: [DEBUG] Reload:', response.reload);
 						
 						// Esconde o modal de processamento
 						hideProcessingModal();
@@ -1232,9 +1655,9 @@
 					}
 				},
 				error: function(xhr, status, error) {
-					// console.error('Gstore Steps: Erro no submit:', error);
-					// console.error('Gstore Steps: Status:', status);
-					// console.error('Gstore Steps: Response:', xhr.responseText);
+					console.error('Gstore Steps: [DEBUG] Erro no submit:', error);
+					console.error('Gstore Steps: [DEBUG] Status:', status);
+					console.error('Gstore Steps: [DEBUG] Response:', xhr.responseText);
 					
 					// Esconde o modal
 					hideProcessingModal();
@@ -1269,8 +1692,34 @@
 		setTimeout(init, 100);
 	});
 
+	// Variável para armazenar o método selecionado antes do update
+	let lastSelectedPaymentMethod = null;
+	
+	// Armazena a seleção antes do update
+	$(document.body).on('update_checkout', function() {
+		const $selected = $('input[name="payment_method"]:checked');
+		if ($selected.length) {
+			lastSelectedPaymentMethod = $selected.val();
+		}
+	});
+	
 	// Reinicializa quando o checkout é atualizado via AJAX
 	$(document.body).on('init_checkout updated_checkout', function() {
+		// Restaura a seleção após o update
+		if (lastSelectedPaymentMethod) {
+			setTimeout(function() {
+				const $radio = $(`input[name="payment_method"][value="${lastSelectedPaymentMethod}"]`);
+				if ($radio.length && !$radio.is(':checked')) {
+					$radio.prop('checked', true).trigger('change');
+				}
+			}, 50);
+		}
+		
+		// Re-aplica unificação dos métodos Blu após atualização
+		setTimeout(function() {
+			unifyBluPaymentMethods();
+		}, 200);
+		
 		if (!initialized) {
 			setTimeout(init, 100);
 		}
@@ -1284,6 +1733,24 @@
 	// Monitora quando o pagamento é processado
 	$(document.body).on('payment_method_selected', function() {
 		// console.log('Gstore Steps: Método de pagamento selecionado');
+		
+		// Se mudou para Blu ou Pix e está no checkout completo, recarregar com pré-checkout
+		if ((isBluGatewaySelected() || isPixGatewaySelected()) && STEPS.length === 3 && initialized && isBluGatewayAvailable()) {
+			// Recarrega o checkout com pré-checkout simplificado
+			$('.Gstore-checkout-steps').remove();
+			initialized = false;
+			STEPS = STEPS_BLU_PRECHECKOUT;
+			init();
+		}
+		// Se mudou para outro gateway (que não seja Blu nem Pix) e está no pré-checkout, recarregar com checkout completo
+		else if (!isBluGatewaySelected() && !isPixGatewaySelected() && STEPS.length === 2 && initialized) {
+			$('.Gstore-checkout-steps').remove();
+			initialized = false;
+			STEPS = STEPS_FULL;
+			init();
+		}
+		// Se mudou entre Blu e Pix dentro do pré-checkout, não precisa recarregar
+		// (ambos devem aparecer juntos na segunda etapa)
 	});
 
 	// Intercepta a resposta do checkout para garantir redirect
@@ -1305,6 +1772,60 @@
 				// console.log('Gstore Steps: Não foi possível parsear resposta (normal se não for JSON)');
 			}
 		}
+	});
+
+	// Garante que os estilos do card Blu sejam mantidos após atualizações do checkout
+	function ensureBluCardStyles() {
+		const $bluPaymentBox = $('.payment_method_blu_checkout .payment_box');
+		if ($bluPaymentBox.length) {
+			// Verifica se os badges já existem
+			if (!$bluPaymentBox.find('.Gstore-blu-trust-badges').length) {
+				$bluPaymentBox.append(`
+					<div class="Gstore-blu-trust-badges">
+						<span class="Gstore-blu-trust-badge">
+							<i class="fa-solid fa-lock"></i> 256-bit SSL
+						</span>
+						<span class="Gstore-blu-trust-badge">
+							<i class="fa-solid fa-shield-halved"></i> Anti-fraude
+						</span>
+						<span class="Gstore-blu-trust-badge">
+							<i class="fa-solid fa-credit-card"></i> PCI DSS
+						</span>
+						<span class="Gstore-blu-trust-badge">
+							<i class="fa-solid fa-user-shield"></i> LGPD
+						</span>
+					</div>
+				`);
+			}
+			
+			// Força a aplicação dos estilos adicionando uma classe se necessário
+			const $bluCard = $('.payment_method_blu_checkout');
+			if ($bluCard.length && !$bluCard.hasClass('gstore-blu-styled')) {
+				$bluCard.addClass('gstore-blu-styled');
+			}
+		}
+		
+		// Garante que o Pix esteja visível quando estiver ativo (especialmente no pré-checkout)
+		const $pixGateway = $('.payment_method_blu_pix');
+		if ($pixGateway.length && isBluGatewayAvailable()) {
+			$pixGateway.show();
+		}
+	}
+
+	// Listener para quando o checkout é atualizado pelo WooCommerce
+	$(document.body).on('updated_checkout', function() {
+		// Garante que os estilos do card Blu sejam mantidos
+		setTimeout(ensureBluCardStyles, 100);
+	});
+
+	// Também executa após o carregamento completo da página
+	$(document).ready(function() {
+		setTimeout(ensureBluCardStyles, 500);
+	});
+
+	// Executa quando os métodos de pagamento são carregados
+	$(document.body).on('payment_method_selected', function() {
+		setTimeout(ensureBluCardStyles, 100);
 	});
 
 })(jQuery);

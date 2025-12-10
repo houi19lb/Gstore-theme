@@ -3,8 +3,8 @@
  * 
  * Design System:
  * - Bordas: 4px
- * - Accent: #FF8C5C (accent para steppers/títulos)
- * - Verde: #5a8900 (botões de ação/continuar)
+ * - Accent: #b5a642 (cor principal de destaque - brass/dourado para steppers/títulos)
+ * - Accent Secondary: #5a8900 (verde para botões de ação/continuar)
  * - Background: #f5f5f2 (base do tema)
  * - Texto: #111111 (foreground)
  */
@@ -13,10 +13,10 @@
    VARIÁVEIS CSS
    =========================================== */
 :root {
-	--gstore-brass: #FF8C5C;
-	--gstore-brass-dark: #CC4A00;
-	--gstore-green: #5a8900;
-	--gstore-green-hover: #4b7600;
+	--gstore-brass: var(--gstore-color-accent, #b5a642);
+	--gstore-brass-dark: var(--gstore-color-accent-dark, #877c31);
+	--gstore-green: var(--gstore-color-accent-secondary, #5a8900);
+	--gstore-green-hover: var(--gstore-color-accent-secondary-hover, #4f7900);
 	--gstore-base: #f5f5f2;
 	--gstore-foreground: #111111;
 	--gstore-muted: #d7d7d2;
@@ -50,12 +50,12 @@
 }
 
 .Gstore-checkout-header__logo a {
-	font-size: 1.25rem;
-	font-weight: 700;
+	font-size: var(--gstore-font-size-xl);
+	font-weight: var(--gstore-font-weight-bold);
 	color: var(--gstore-foreground);
 	text-decoration: none;
 	text-transform: uppercase;
-	letter-spacing: 0.08em;
+	letter-spacing: var(--gstore-letter-spacing-wider);
 }
 
 .Gstore-checkout-header__secure {
@@ -63,18 +63,18 @@
 	align-items: center;
 	gap: 8px;
 	color: var(--gstore-green);
-	font-size: 0.85rem;
+	font-size: var(--gstore-font-size-sm);
 }
 
 .Gstore-checkout-header__secure i {
-	font-size: 1rem;
+	font-size: var(--gstore-font-size-base);
 }
 
 .Gstore-checkout-header__secure-text {
 	margin: 0;
-	font-weight: 600;
+	font-weight: var(--gstore-font-weight-semibold);
 	text-transform: uppercase;
-	letter-spacing: 0.05em;
+	letter-spacing: var(--gstore-letter-spacing-wide);
 }
 
 /* ===========================================
@@ -99,13 +99,13 @@
 
 .Gstore-checkout-footer__copyright {
 	margin: 0;
-	font-size: 0.8rem;
+	font-size: var(--gstore-font-size-08);
 	color: var(--gstore-text-muted);
 }
 
 .Gstore-checkout-footer__links {
 	margin: 0;
-	font-size: 0.75rem;
+	font-size: var(--gstore-font-size-xs);
 }
 
 .Gstore-checkout-footer__links a {
@@ -191,21 +191,21 @@ body.woocommerce-checkout .Gstore-checkout-steps-shell {
 	align-items: center;
 	justify-content: center;
 	color: #fff;
-	font-size: 1.1rem;
+	font-size: var(--gstore-font-size-11);
 }
 
 .Gstore-checkout-summary-top__text h2 {
 	margin: 0 0 2px;
-	font-size: 1rem;
-	font-weight: 700;
+	font-size: var(--gstore-font-size-base);
+	font-weight: var(--gstore-font-weight-bold);
 	color: var(--gstore-foreground);
 	text-transform: uppercase;
-	letter-spacing: 0.05em;
+	letter-spacing: var(--gstore-letter-spacing-wide);
 }
 
 .Gstore-checkout-summary-top__text p {
 	margin: 0;
-	font-size: 0.85rem;
+	font-size: var(--gstore-font-size-sm);
 	color: var(--gstore-text-muted);
 }
 
@@ -217,7 +217,7 @@ body.woocommerce-checkout .Gstore-checkout-steps-shell {
 }
 
 .Gstore-checkout-summary-top__total-amount {
-	font-size: 1.5rem;
+	font-size: var(--gstore-font-size-2xl);
 	font-weight: 800;
 	color: var(--gstore-foreground);
 }
@@ -234,8 +234,8 @@ body.woocommerce-checkout .Gstore-checkout-steps-shell {
 	border: 1px solid var(--gstore-muted);
 	border-radius: var(--gstore-border-radius);
 	padding: 8px 16px;
-	font-size: 0.8rem;
-	font-weight: 600;
+	font-size: var(--gstore-font-size-08);
+	font-weight: var(--gstore-font-weight-semibold);
 	color: var(--gstore-brass-dark);
 	cursor: pointer;
 	display: flex;
@@ -296,19 +296,19 @@ body.woocommerce-checkout .Gstore-checkout-steps-shell {
 
 .Gstore-summary-item__info h4 {
 	margin: 0 0 4px;
-	font-size: 0.9rem;
-	font-weight: 600;
+	font-size: var(--gstore-font-size-09);
+	font-weight: var(--gstore-font-weight-semibold);
 	color: var(--gstore-foreground);
 }
 
 .Gstore-summary-item__info span {
-	font-size: 0.8rem;
+	font-size: var(--gstore-font-size-08);
 	color: var(--gstore-text-muted);
 }
 
 .Gstore-summary-item__price {
-	font-size: 0.95rem;
-	font-weight: 700;
+	font-size: var(--gstore-font-size-095);
+	font-weight: var(--gstore-font-weight-bold);
 	color: var(--gstore-foreground);
 	text-align: right;
 }
@@ -325,7 +325,7 @@ body.woocommerce-checkout .Gstore-checkout-steps-shell {
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
-	font-size: 0.9rem;
+	font-size: var(--gstore-font-size-09);
 }
 
 .Gstore-summary-row span:first-child {
@@ -333,7 +333,7 @@ body.woocommerce-checkout .Gstore-checkout-steps-shell {
 }
 
 .Gstore-summary-row span:last-child {
-	font-weight: 600;
+	font-weight: var(--gstore-font-weight-semibold);
 	color: var(--gstore-foreground);
 }
 
@@ -344,14 +344,14 @@ body.woocommerce-checkout .Gstore-checkout-steps-shell {
 }
 
 .Gstore-summary-row--total span:first-child {
-	font-size: 0.95rem;
-	font-weight: 700;
+	font-size: var(--gstore-font-size-095);
+	font-weight: var(--gstore-font-weight-bold);
 	color: var(--gstore-foreground);
 	text-transform: uppercase;
 }
 
 .Gstore-summary-row--total span:last-child {
-	font-size: 1.25rem;
+	font-size: var(--gstore-font-size-xl);
 	font-weight: 800;
 }
 
@@ -388,8 +388,8 @@ body.woocommerce-checkout .Gstore-checkout-steps-shell {
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	font-size: 0.9rem;
-	font-weight: 700;
+	font-size: var(--gstore-font-size-09);
+	font-weight: var(--gstore-font-weight-bold);
 	transition: all 0.3s ease;
 	border: 2px solid var(--gstore-muted);
 	background: var(--gstore-card-bg);
@@ -397,8 +397,8 @@ body.woocommerce-checkout .Gstore-checkout-steps-shell {
 }
 
 .Gstore-checkout-stepper__label {
-	font-size: 0.85rem;
-	font-weight: 600;
+	font-size: var(--gstore-font-size-sm);
+	font-weight: var(--gstore-font-weight-semibold);
 	color: var(--gstore-text-muted);
 	transition: color 0.2s ease;
 }
@@ -475,6 +475,7 @@ body.woocommerce-checkout .Gstore-checkout-steps-shell {
 		opacity: 0;
 		transform: translateY(10px);
 	}
+
 	to {
 		opacity: 1;
 		transform: translateY(0);
@@ -492,28 +493,28 @@ body.woocommerce-checkout .Gstore-checkout-steps-shell {
 	display: flex;
 	align-items: center;
 	gap: 8px;
-	font-size: 0.7rem;
+	font-size: var(--gstore-font-size-xs);
 	text-transform: uppercase;
-	letter-spacing: 0.15em;
+	letter-spacing: var(--gstore-letter-spacing-15);
 	color: var(--gstore-brass);
-	font-weight: 600;
+	font-weight: var(--gstore-font-weight-semibold);
 	margin-bottom: 8px;
 }
 
 .Gstore-checkout-step__eyebrow i {
-	font-size: 0.8rem;
+	font-size: var(--gstore-font-size-08);
 }
 
 .Gstore-checkout-step__title {
 	margin: 0 0 8px;
-	font-size: clamp(1.3rem, 3vw, 1.75rem);
-	font-weight: 700;
+	font-size: clamp(var(--gstore-font-size-xl), calc(0.8vw + 1rem), var(--gstore-font-size-175));
+	font-weight: var(--gstore-font-weight-bold);
 	color: var(--gstore-foreground);
 }
 
 .Gstore-checkout-step__description {
 	margin: 0;
-	font-size: 0.95rem;
+	font-size: var(--gstore-font-size-095);
 	color: var(--gstore-text-muted);
 	max-width: 600px;
 }
@@ -532,7 +533,7 @@ body.woocommerce-checkout .Gstore-checkout-steps-shell {
 		grid-template-columns: repeat(2, 1fr);
 		gap: 16px 20px;
 	}
-	
+
 	.Gstore-checkout-step__fields .field-full {
 		grid-column: 1 / -1;
 	}
@@ -545,8 +546,8 @@ body.woocommerce-checkout .Gstore-checkout-steps-shell {
 }
 
 .Gstore-field label {
-	font-size: 0.85rem;
-	font-weight: 600;
+	font-size: var(--gstore-font-size-sm);
+	font-weight: var(--gstore-font-weight-semibold);
 	color: var(--gstore-foreground);
 }
 
@@ -560,7 +561,7 @@ body.woocommerce-checkout .Gstore-checkout-steps-shell {
 .Gstore-field textarea {
 	width: 100%;
 	padding: 14px 16px;
-	font-size: 0.95rem;
+	font-size: var(--gstore-font-size-095);
 	border: 1px solid var(--gstore-muted);
 	border-radius: var(--gstore-border-radius);
 	background: var(--gstore-card-bg);
@@ -586,7 +587,7 @@ body.woocommerce-checkout .Gstore-checkout-steps-shell {
 }
 
 .Gstore-field__error {
-	font-size: 0.8rem;
+	font-size: var(--gstore-font-size-08);
 	color: #dc2626;
 	display: none;
 }
@@ -610,10 +611,10 @@ body.woocommerce-checkout .Gstore-checkout-steps-shell {
 	display: flex;
 	align-items: center;
 	gap: 10px;
-	font-size: 0.8rem;
+	font-size: var(--gstore-font-size-08);
 	text-transform: uppercase;
-	letter-spacing: 0.1em;
-	font-weight: 700;
+	letter-spacing: var(--gstore-letter-spacing-10);
+	font-weight: var(--gstore-font-weight-bold);
 	color: var(--gstore-foreground);
 	margin-bottom: 20px;
 	padding-bottom: 12px;
@@ -622,7 +623,7 @@ body.woocommerce-checkout .Gstore-checkout-steps-shell {
 
 .Gstore-checkout-section__title i {
 	color: var(--gstore-brass);
-	font-size: 1rem;
+	font-size: var(--gstore-font-size-base);
 }
 
 /* ===========================================
@@ -667,19 +668,19 @@ body.woocommerce-checkout .Gstore-checkout-steps-shell {
 }
 
 .Gstore-shipping-option__name {
-	font-weight: 600;
+	font-weight: var(--gstore-font-weight-semibold);
 	color: var(--gstore-foreground);
 	margin-bottom: 2px;
 }
 
 .Gstore-shipping-option__time {
-	font-size: 0.85rem;
+	font-size: var(--gstore-font-size-sm);
 	color: var(--gstore-text-muted);
 }
 
 .Gstore-shipping-option__price {
-	font-size: 1rem;
-	font-weight: 700;
+	font-size: var(--gstore-font-size-base);
+	font-weight: var(--gstore-font-weight-bold);
 	color: var(--gstore-foreground);
 }
 
@@ -771,7 +772,7 @@ body.woocommerce-checkout .Gstore-checkout-steps-shell {
 	background: var(--gstore-base);
 	border-radius: var(--gstore-border-radius);
 	color: var(--gstore-brass);
-	font-size: 1.1rem;
+	font-size: var(--gstore-font-size-11);
 }
 
 .Gstore-payment-method__info {
@@ -779,13 +780,13 @@ body.woocommerce-checkout .Gstore-checkout-steps-shell {
 }
 
 .Gstore-payment-method__name {
-	font-weight: 600;
+	font-weight: var(--gstore-font-weight-semibold);
 	color: var(--gstore-foreground);
 	margin-bottom: 2px;
 }
 
 .Gstore-payment-method__description {
-	font-size: 0.85rem;
+	font-size: var(--gstore-font-size-sm);
 	color: var(--gstore-text-muted);
 }
 
@@ -820,10 +821,10 @@ body.woocommerce-checkout .Gstore-checkout-steps-shell {
 	justify-content: center;
 	gap: 10px;
 	padding: 14px 28px;
-	font-size: 0.9rem;
-	font-weight: 700;
+	font-size: var(--gstore-font-size-09);
+	font-weight: var(--gstore-font-weight-bold);
 	text-transform: uppercase;
-	letter-spacing: 0.06em;
+	letter-spacing: var(--gstore-letter-spacing-06);
 	border-radius: var(--gstore-border-radius);
 	cursor: pointer;
 	transition: all 0.2s ease;
@@ -863,7 +864,7 @@ body.woocommerce-checkout .Gstore-checkout-steps-shell {
 .Gstore-checkout-steps-shell .Gstore-btn--submit {
 	background: var(--gstore-green);
 	color: #fff;
-	font-size: 1rem;
+	font-size: var(--gstore-font-size-base);
 	padding: 18px 40px;
 	width: 100%;
 	box-shadow: none;
@@ -904,20 +905,20 @@ body.woocommerce-checkout .Gstore-checkout-steps-shell {
 }
 
 .Gstore-assurance-card i {
-	font-size: 1.25rem;
+	font-size: var(--gstore-font-size-xl);
 	color: var(--gstore-brass);
 }
 
 .Gstore-assurance-card__text strong {
 	display: block;
-	font-size: 0.8rem;
-	font-weight: 600;
+	font-size: var(--gstore-font-size-08);
+	font-weight: var(--gstore-font-weight-semibold);
 	color: var(--gstore-foreground);
 	margin-bottom: 2px;
 }
 
 .Gstore-assurance-card__text span {
-	font-size: 0.75rem;
+	font-size: var(--gstore-font-size-xs);
 	color: var(--gstore-text-muted);
 }
 
@@ -939,18 +940,18 @@ body.woocommerce-checkout .Gstore-checkout-steps-shell {
 	align-items: center;
 	justify-content: center;
 	color: #fff;
-	font-size: 2rem;
+	font-size: var(--gstore-font-size-2xl);
 }
 
 .Gstore-checkout-success h2 {
-	font-size: 1.75rem;
-	font-weight: 700;
+	font-size: var(--gstore-font-size-175);
+	font-weight: var(--gstore-font-weight-bold);
 	color: var(--gstore-foreground);
 	margin: 0 0 12px;
 }
 
 .Gstore-checkout-success p {
-	font-size: 1rem;
+	font-size: var(--gstore-font-size-base);
 	color: var(--gstore-text-muted);
 	max-width: 500px;
 	margin: 0 auto;
@@ -965,7 +966,7 @@ body.woocommerce-checkout .Gstore-checkout-steps-shell {
 		align-items: stretch;
 		gap: 20px;
 	}
-	
+
 	.Gstore-checkout-summary-top__info {
 		flex-direction: row;
 		align-items: center;
@@ -979,7 +980,7 @@ body.woocommerce-checkout .Gstore-checkout-steps-shell {
 	.Gstore-checkout-summary-top__text {
 		flex: 1;
 	}
-	
+
 	.Gstore-checkout-summary-top__actions {
 		width: 100%;
 		margin-left: 0;
@@ -990,11 +991,11 @@ body.woocommerce-checkout .Gstore-checkout-steps-shell {
 		border-top: none;
 		padding-top: 0;
 	}
-	
+
 	.Gstore-checkout-summary-top__actions-divider {
 		display: none;
 	}
-	
+
 	.Gstore-checkout-stepper {
 		flex-direction: row;
 		justify-content: space-between;
@@ -1004,18 +1005,18 @@ body.woocommerce-checkout .Gstore-checkout-steps-shell {
 		scrollbar-width: none;
 		-webkit-overflow-scrolling: touch;
 	}
-	
+
 	.Gstore-checkout-stepper::-webkit-scrollbar {
 		display: none;
 	}
-	
+
 	.Gstore-checkout-stepper__connector {
 		width: 32px;
 		height: 2px;
 		margin: 0 4px;
 		flex-shrink: 0;
 	}
-	
+
 	.Gstore-checkout-stepper__step {
 		flex-direction: column;
 		align-items: center;
@@ -1026,35 +1027,35 @@ body.woocommerce-checkout .Gstore-checkout-steps-shell {
 		background: transparent;
 		border-radius: 0;
 	}
-	
+
 	.Gstore-checkout-stepper__label {
 		text-align: center;
 		white-space: nowrap;
 	}
-	
+
 	.Gstore-checkout-step__actions {
 		flex-direction: column;
 	}
-	
+
 	.Gstore-checkout-steps-shell .Gstore-btn--back {
 		order: 1;
 		width: 100%;
 	}
-	
+
 	.Gstore-checkout-steps-shell .Gstore-btn--continue {
 		width: 100%;
 		padding: 18px 32px;
-		font-size: 1rem;
+		font-size: var(--gstore-font-size-base);
 	}
-	
+
 	.Gstore-checkout-assurance {
 		grid-template-columns: 1fr;
 	}
-	
+
 	.Gstore-summary-item {
 		grid-template-columns: 48px 1fr;
 	}
-	
+
 	.Gstore-summary-item__price {
 		grid-column: 2;
 		text-align: left;
@@ -1066,34 +1067,34 @@ body.woocommerce-checkout .Gstore-checkout-steps-shell {
 	.Gstore-checkout-steps-shell {
 		padding: 16px;
 	}
-	
+
 	.Gstore-checkout-step {
 		padding: 20px;
 	}
-	
+
 	.Gstore-checkout-stepper__label {
-		font-size: 0.8rem;
+		font-size: var(--gstore-font-size-08);
 	}
-	
+
 	.Gstore-checkout-stepper__number {
 		width: 36px;
 		height: 36px;
-		font-size: 0.85rem;
+		font-size: var(--gstore-font-size-sm);
 	}
-	
+
 	/* Header/Footer mobile */
 	.Gstore-checkout-header {
 		padding: 12px 16px;
 	}
-	
+
 	.Gstore-checkout-header__logo a {
-		font-size: 1rem;
+		font-size: var(--gstore-font-size-base);
 	}
-	
+
 	.Gstore-checkout-header__secure-text {
 		display: none;
 	}
-	
+
 	.Gstore-checkout-footer {
 		padding: 20px 16px;
 	}
@@ -1132,6 +1133,7 @@ body.woocommerce-checkout .Gstore-checkout-steps-shell {
 }
 
 @media (max-width: 640px) {
+
 	.Gstore-checkout-step .woocommerce-billing-fields__field-wrapper,
 	.Gstore-checkout-step .woocommerce-shipping-fields__field-wrapper {
 		grid-template-columns: 1fr;
@@ -1153,8 +1155,8 @@ body.woocommerce-checkout .Gstore-checkout-steps-shell {
 }
 
 .Gstore-checkout-step .form-row label {
-	font-size: 0.85rem;
-	font-weight: 600;
+	font-size: var(--gstore-font-size-sm);
+	font-weight: var(--gstore-font-weight-semibold);
 	color: var(--gstore-foreground);
 	margin-bottom: 6px;
 	display: block;
@@ -1164,7 +1166,7 @@ body.woocommerce-checkout .Gstore-checkout-steps-shell {
 .Gstore-checkout-step .form-row select {
 	width: 100%;
 	padding: 14px 16px;
-	font-size: 0.95rem;
+	font-size: var(--gstore-font-size-095);
 	border: 1px solid var(--gstore-muted);
 	border-radius: var(--gstore-border-radius);
 	background: var(--gstore-card-bg);
@@ -1181,9 +1183,9 @@ body.woocommerce-checkout .Gstore-checkout-steps-shell {
 }
 
 /* Esconde títulos padrão do WooCommerce nos steps */
-.Gstore-checkout-step .woocommerce-billing-fields > h3,
-.Gstore-checkout-step .woocommerce-shipping-fields > h3,
-.Gstore-checkout-step .woocommerce-additional-fields > h3,
+.Gstore-checkout-step .woocommerce-billing-fields>h3,
+.Gstore-checkout-step .woocommerce-shipping-fields>h3,
+.Gstore-checkout-step .woocommerce-additional-fields>h3,
 .Gstore-checkout-step #order_review_heading {
 	display: none !important;
 }
@@ -1224,8 +1226,8 @@ body.woocommerce-checkout .Gstore-checkout-steps-shell {
 	display: block;
 	padding: 12px 16px;
 	cursor: pointer;
-	font-weight: 600;
-	font-size: 0.95rem;
+	font-weight: var(--gstore-font-weight-semibold);
+	font-size: var(--gstore-font-size-095);
 	color: var(--gstore-foreground);
 	margin: 0;
 	background: transparent;
@@ -1242,7 +1244,7 @@ body.woocommerce-checkout .Gstore-checkout-steps-shell {
 	border-top: none;
 	margin: 0;
 	border-radius: 0 0 var(--gstore-border-radius) var(--gstore-border-radius);
-	font-size: 0.85rem;
+	font-size: var(--gstore-font-size-sm);
 	color: var(--gstore-text-muted);
 	line-height: 1.4;
 }
@@ -1274,7 +1276,7 @@ body.woocommerce-checkout .Gstore-checkout-steps-shell {
 	font-size: 1rem !important;
 	padding: 18px 40px !important;
 	text-transform: uppercase;
-	letter-spacing: 0.06em;
+	letter-spacing: var(--gstore-letter-spacing-06);
 	box-shadow: none !important;
 	cursor: pointer;
 	transition: all 0.2s ease !important;
@@ -1322,6 +1324,7 @@ body.woocommerce-checkout .Gstore-checkout-steps-shell {
 }
 
 @media (max-width: 640px) {
+
 	.Gstore-checkout-step__fields .form-row-first,
 	.Gstore-checkout-step__fields .form-row-last {
 		grid-column: 1;
@@ -1331,8 +1334,8 @@ body.woocommerce-checkout .Gstore-checkout-steps-shell {
 /* Labels dos campos */
 .Gstore-checkout-step__fields label {
 	display: block;
-	font-size: 0.85rem;
-	font-weight: 600;
+	font-size: var(--gstore-font-size-sm);
+	font-weight: var(--gstore-font-weight-semibold);
 	color: var(--gstore-foreground);
 	margin-bottom: 8px;
 }
@@ -1343,9 +1346,9 @@ body.woocommerce-checkout .Gstore-checkout-steps-shell {
 }
 
 .Gstore-checkout-step__fields label .optional {
-	font-weight: 400;
+	font-weight: var(--gstore-font-weight-normal);
 	color: var(--gstore-text-muted);
-	font-size: 0.8rem;
+	font-size: var(--gstore-font-size-08);
 }
 
 /* Inputs */
@@ -1354,7 +1357,7 @@ body.woocommerce-checkout .Gstore-checkout-steps-shell {
 .Gstore-checkout-step__fields textarea {
 	width: 100%;
 	padding: 14px 16px;
-	font-size: 0.95rem;
+	font-size: var(--gstore-font-size-095);
 	border: 1px solid var(--gstore-muted);
 	border-radius: var(--gstore-border-radius);
 	background: var(--gstore-card-bg);
@@ -1433,8 +1436,8 @@ body.woocommerce-checkout .Gstore-checkout-steps-shell {
 
 /* Label das observações */
 .Gstore-checkout-step .woocommerce-additional-fields label {
-	font-size: 0.85rem;
-	font-weight: 600;
+	font-size: var(--gstore-font-size-sm);
+	font-weight: var(--gstore-font-weight-semibold);
 	color: var(--gstore-foreground);
 	display: block;
 	margin-bottom: 8px;
@@ -1446,7 +1449,7 @@ body.woocommerce-checkout .Gstore-checkout-steps-shell {
 	border-radius: var(--gstore-border-radius) !important;
 	width: 100%;
 	padding: 14px 16px;
-	font-size: 0.95rem;
+	font-size: var(--gstore-font-size-095);
 	border: 1px solid var(--gstore-muted);
 	background: var(--gstore-card-bg);
 	color: var(--gstore-foreground);
@@ -1468,7 +1471,7 @@ body.woocommerce-checkout .Gstore-checkout-steps-shell {
 	padding: 16px 20px;
 	border-radius: var(--gstore-border-radius);
 	margin-bottom: 20px;
-	font-size: 0.95rem;
+	font-size: var(--gstore-font-size-095);
 	display: flex;
 	align-items: center;
 	gap: 12px;
@@ -1561,15 +1564,15 @@ body.woocommerce-checkout .Gstore-checkout-steps-shell {
 
 .Gstore-checkout-review__header i {
 	color: var(--gstore-brass);
-	font-size: 0.9rem;
+	font-size: var(--gstore-font-size-09);
 }
 
 .Gstore-checkout-review__header span {
 	flex: 1;
-	font-weight: 600;
-	font-size: 0.85rem;
+	font-weight: var(--gstore-font-weight-semibold);
+	font-size: var(--gstore-font-size-sm);
 	text-transform: uppercase;
-	letter-spacing: 0.05em;
+	letter-spacing: var(--gstore-letter-spacing-wide);
 	color: var(--gstore-foreground);
 }
 
@@ -1577,8 +1580,8 @@ body.woocommerce-checkout .Gstore-checkout-steps-shell {
 	background: transparent;
 	border: none;
 	color: var(--gstore-brass-dark);
-	font-size: 0.75rem;
-	font-weight: 600;
+	font-size: var(--gstore-font-size-xs);
+	font-weight: var(--gstore-font-weight-semibold);
 	cursor: pointer;
 	display: flex;
 	align-items: center;
@@ -1594,7 +1597,7 @@ body.woocommerce-checkout .Gstore-checkout-steps-shell {
 }
 
 .Gstore-checkout-review__content {
-	font-size: 0.9rem;
+	font-size: var(--gstore-font-size-09);
 	color: var(--gstore-foreground);
 	line-height: 1.5;
 }
@@ -1675,20 +1678,20 @@ body.woocommerce-checkout .Gstore-checkout-steps-shell {
 	background: #ffffff !important;
 	border-radius: 50% !important;
 	transition: all 0.2s ease;
-	box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
 }
 
-.Gstore-toggle input:checked ~ .Gstore-toggle__slider {
+.Gstore-toggle input:checked~.Gstore-toggle__slider {
 	background: var(--gstore-green) !important;
 }
 
-.Gstore-toggle input:checked ~ .Gstore-toggle__slider::after {
+.Gstore-toggle input:checked~.Gstore-toggle__slider::after {
 	left: 18px !important;
 }
 
 .Gstore-toggle__label {
-	font-size: 0.9rem;
-	font-weight: 500;
+	font-size: var(--gstore-font-size-09);
+	font-weight: var(--gstore-font-weight-medium);
 	color: var(--gstore-foreground);
 	flex: 1;
 	display: flex;
@@ -1699,7 +1702,7 @@ body.woocommerce-checkout .Gstore-checkout-steps-shell {
 .Gstore-toggle__label::before {
 	content: '\f249';
 	font-family: 'Font Awesome 6 Free';
-	font-weight: 400;
+	font-weight: var(--gstore-font-weight-normal);
 	color: var(--gstore-brass);
 }
 
@@ -1710,42 +1713,30 @@ body.woocommerce-checkout .Gstore-checkout-steps-shell {
 }
 
 /* ===========================================
-   CARD DE PAGAMENTO BLU - TEMA AZUL PREMIUM
+   CARD DE PAGAMENTO BLU - TEMA SIMPLIFICADO
    =========================================== */
 :root {
 	--blu-primary: #1a56db;
 	--blu-primary-dark: #1e40af;
-	--blu-primary-light: #dbeafe;
+	--blu-primary-light: #f0f4ff;
 	--blu-accent: #3b82f6;
-	--blu-gradient: linear-gradient(135deg, #1a56db 0%, #1e40af 50%, #1e3a8a 100%);
-	--blu-gradient-light: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+	--blu-border: rgba(26, 86, 219, 0.2);
 }
 
 .Gstore-checkout-step #payment .payment_methods li.payment_method_blu_checkout {
-	border: 1px solid rgba(26, 86, 219, 0.15);
+	border: 1px solid var(--blu-border);
 	background: #fff;
 	position: relative;
-	overflow: hidden;
 	box-shadow: none;
 }
 
-/* Borda gradiente simulada */
-.Gstore-checkout-step #payment .payment_methods li.payment_method_blu_checkout::before {
-	content: '';
-	position: absolute;
-	inset: -2px;
-	background: var(--blu-gradient);
-	border-radius: calc(var(--gstore-border-radius) + 2px);
-	z-index: -1;
-}
-
-/* Header do card com gradiente */
+/* Header do card simplificado */
 .Gstore-checkout-step #payment .payment_methods li.payment_method_blu_checkout label {
-	padding: 20px;
-	font-weight: 700;
-	color: #fff;
-	font-size: 1rem;
-	background: var(--blu-gradient);
+	padding: 16px 20px;
+	font-weight: var(--gstore-font-weight-semibold);
+	color: var(--gstore-foreground);
+	font-size: var(--gstore-font-size-095);
+	background: var(--blu-primary-light);
 	border-radius: var(--gstore-border-radius) var(--gstore-border-radius) 0 0;
 	display: flex;
 	align-items: center;
@@ -1753,29 +1744,23 @@ body.woocommerce-checkout .Gstore-checkout-steps-shell {
 	position: relative;
 }
 
-/* Ícone do Blu */
+/* Ícone do método de pagamento */
 .Gstore-checkout-step #payment .payment_methods li.payment_method_blu_checkout label::before {
-	content: '\f3ed';
+	content: '\f09d';
 	font-family: 'Font Awesome 6 Free';
 	font-weight: 900;
-	font-size: 1.4rem;
-	background: rgba(255,255,255,0.2);
-	width: 44px;
-	height: 44px;
+	font-size: var(--gstore-font-size-12);
+	color: var(--blu-primary);
+	width: 32px;
+	height: 32px;
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	border-radius: 10px;
 }
 
-/* Badge de verificado */
+/* Remove badge de verificado */
 .Gstore-checkout-step #payment .payment_methods li.payment_method_blu_checkout label::after {
-	content: '\f058';
-	font-family: 'Font Awesome 6 Free';
-	font-weight: 900;
-	margin-left: auto;
-	font-size: 1.2rem;
-	opacity: 0.9;
+	display: none;
 }
 
 .Gstore-checkout-step #payment .payment_methods li.payment_method_blu_checkout .payment_box {
@@ -1786,59 +1771,333 @@ body.woocommerce-checkout .Gstore-checkout-steps-shell {
 }
 
 .Gstore-checkout-step #payment .payment_methods li.payment_method_blu_checkout .payment_box p {
-	color: var(--gstore-foreground);
-	font-size: 0.9rem;
-	margin: 0 0 16px;
-	line-height: 1.6;
-	padding-left: 32px;
-	position: relative;
+	color: var(--gstore-text-muted);
+	font-size: var(--gstore-font-size-sm);
+	margin: 0 0 12px;
+	line-height: 1.5;
+	padding-left: 0;
 }
 
 .Gstore-checkout-step #payment .payment_methods li.payment_method_blu_checkout .payment_box p::before {
-	content: '\f3c5';
-	font-family: 'Font Awesome 6 Free';
-	font-weight: 900;
-	position: absolute;
-	left: 0;
-	top: 0;
-	color: var(--blu-accent);
-	font-size: 1.1rem;
+	display: none;
 }
 
-/* Badges de confiança dentro do card Blu */
-.Gstore-blu-trust-badges {
+/* Badges de confiança simplificados */
+.Gstore-blu-trust-badges-simple {
 	display: flex;
 	flex-wrap: wrap;
 	gap: 8px;
-	padding-top: 16px;
-	border-top: 1px dashed rgba(26, 86, 219, 0.2);
+	padding-top: 12px;
+	margin-top: 12px;
+	border-top: 1px solid var(--gstore-muted);
 }
 
-.Gstore-blu-trust-badge {
-	display: flex;
+.Gstore-blu-trust-badge-simple {
+	display: inline-flex;
 	align-items: center;
 	gap: 6px;
-	font-size: 0.75rem;
-	font-weight: 600;
-	color: var(--blu-primary-dark);
+	font-size: var(--gstore-font-size-xs);
+	font-weight: var(--gstore-font-weight-medium);
+	color: var(--gstore-text-muted);
+}
+
+.Gstore-blu-trust-badge-simple i {
+	color: var(--blu-primary);
+	font-size: var(--gstore-font-size-sm);
+}
+
+/* ===========================================
+   CARD UNIFICADO DE PAGAMENTO BLU
+   =========================================== */
+.payment_method_blu_unified.Gstore-blu-payment-unified {
+	border: 1px solid var(--blu-border);
+	border-radius: var(--gstore-border-radius);
+	background: #fff;
+	margin-bottom: 16px;
+	overflow: hidden;
+	list-style: none;
+	padding: 0;
+}
+
+.Gstore-blu-payment-unified__title {
+	padding: 16px 20px;
+	font-weight: var(--gstore-font-weight-semibold);
+	font-size: var(--gstore-font-size-base);
+	color: var(--gstore-foreground);
 	background: var(--blu-primary-light);
-	padding: 8px 12px;
-	border-radius: 20px;
+	border-bottom: 1px solid var(--blu-border);
+	display: flex;
+	align-items: center;
+	gap: 10px;
+}
+
+.Gstore-blu-payment-unified__title::before {
+	content: '\f3ed';
+	font-family: 'Font Awesome 6 Free';
+	font-weight: 900;
+	font-size: var(--gstore-font-size-11);
+	color: var(--blu-primary);
+}
+
+/* Container de opções */
+.Gstore-blu-payment-options {
+	display: flex;
+	flex-direction: column;
+	gap: 0;
+}
+
+/* Opção individual */
+.Gstore-blu-payment-option {
+	position: relative;
+	border-bottom: 1px solid var(--gstore-muted);
+	transition: background-color 0.2s ease;
+}
+
+.Gstore-blu-payment-option:last-child {
+	border-bottom: none;
+}
+
+.Gstore-blu-payment-option:hover {
+	background: rgba(26, 86, 219, 0.02);
+}
+
+.Gstore-blu-payment-option input[type="radio"] {
+	position: absolute;
+	opacity: 0;
+	pointer-events: none;
+}
+
+.Gstore-blu-payment-option__label {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	padding: 16px 20px;
+	cursor: pointer;
+	margin: 0;
+	font-weight: var(--gstore-font-weight-medium);
+	font-size: var(--gstore-font-size-095);
+	color: var(--gstore-foreground);
 	transition: all 0.2s ease;
 }
 
-.Gstore-blu-trust-badge:hover {
+.Gstore-blu-payment-option__label i {
+	font-size: var(--gstore-font-size-12);
+	color: var(--blu-primary);
+	width: 24px;
+	text-align: center;
+	flex-shrink: 0;
+	margin-left: 32px;
+}
+
+.Gstore-blu-payment-option__label span {
+	flex: 1;
+}
+
+/* Estado selecionado */
+.Gstore-blu-payment-option input[type="radio"]:checked+.Gstore-blu-payment-option__label {
+	background: var(--blu-primary-light);
+	font-weight: var(--gstore-font-weight-semibold);
+	color: var(--blu-primary-dark);
+}
+
+.Gstore-blu-payment-option input[type="radio"]:checked+.Gstore-blu-payment-option__label i {
+	color: var(--blu-primary-dark);
+}
+
+/* Indicador visual de seleção (radio customizado) */
+.Gstore-blu-payment-option__label {
+	position: relative;
+	padding-left: 48px;
+}
+
+.Gstore-blu-payment-option__label::before {
+	content: '';
+	position: absolute;
+	left: 20px;
+	top: 50%;
+	transform: translateY(-50%);
+	width: 20px;
+	height: 20px;
+	border: 2px solid var(--gstore-muted);
+	border-radius: 50%;
+	transition: all 0.2s ease;
+	flex-shrink: 0;
+}
+
+.Gstore-blu-payment-option input[type="radio"]:checked+.Gstore-blu-payment-option__label::before {
+	border-color: var(--blu-primary);
 	background: var(--blu-primary);
-	color: #fff;
+	background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='white'%3E%3Cpath d='M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z'/%3E%3C/svg%3E");
+	background-size: 12px;
+	background-position: center;
+	background-repeat: no-repeat;
 }
 
-.Gstore-blu-trust-badge:hover i {
-	color: #fff;
+.Gstore-blu-payment-option__label::after {
+	display: none;
 }
 
-.Gstore-blu-trust-badge i {
-	color: var(--blu-accent);
-	font-size: 0.85rem;
+/* Conteúdo do método selecionado */
+.Gstore-blu-payment-unified__content {
+	padding: 16px 20px;
+	border-top: 1px solid var(--gstore-muted);
+	background: #fff;
+}
+
+.Gstore-blu-payment-unified__content .payment_box {
+	border: none;
+	padding: 0;
+	background: transparent;
+}
+
+.Gstore-blu-payment-unified__content .payment_box p {
+	color: var(--gstore-text-muted);
+	font-size: var(--gstore-font-size-sm);
+	margin: 0 0 8px;
+	line-height: 1.5;
+}
+
+/* Badges simplificados */
+.Gstore-blu-payment-unified .Gstore-blu-trust-badges-simple {
+	margin: 0 20px 16px;
+	padding-top: 12px;
+	border-top: 1px solid var(--gstore-muted);
+}
+
+/* Estilos para Pix quando aparece sozinho ou no wrapper */
+.payment_method_blu_pix {
+	border: 1px solid var(--blu-border);
+	background: #fff;
+	border-radius: var(--gstore-border-radius);
+	margin-bottom: 16px;
+}
+
+.payment_method_blu_pix label {
+	padding: 16px 20px;
+	font-weight: var(--gstore-font-weight-semibold);
+	color: var(--gstore-foreground);
+	font-size: var(--gstore-font-size-095);
+	background: var(--blu-primary-light);
+	border-radius: var(--gstore-border-radius) var(--gstore-border-radius) 0 0;
+	display: flex;
+	align-items: center;
+	gap: 12px;
+}
+
+.payment_method_blu_pix label::before {
+	content: '\f029';
+	font-family: 'Font Awesome 6 Free';
+	font-weight: 900;
+	font-size: var(--gstore-font-size-12);
+	color: var(--blu-primary);
+	width: 32px;
+	height: 32px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.payment_method_blu_pix .payment_box {
+	background: #fff;
+	border-top: none;
+	padding: 16px 20px;
+	border-radius: 0 0 var(--gstore-border-radius) var(--gstore-border-radius);
+}
+
+.payment_method_blu_pix .payment_box p {
+	color: var(--gstore-text-muted);
+	font-size: var(--gstore-font-size-sm);
+	margin: 0 0 12px;
+	line-height: 1.5;
+}
+
+/* ===========================================
+   CARD DE PAGAMENTO BLU - ESTILOS GENÉRICOS
+   (Funcionam mesmo fora do contexto .Gstore-checkout-step)
+   =========================================== */
+
+/* Estilos genéricos para o card Blu em qualquer contexto */
+.payment_methods li.payment_method_blu_checkout,
+#payment .payment_methods li.payment_method_blu_checkout,
+.woocommerce-checkout .payment_methods li.payment_method_blu_checkout,
+.payment_method_blu_checkout.gstore-blu-styled {
+	border: 1px solid var(--blu-border) !important;
+	background: #fff !important;
+	position: relative;
+	box-shadow: none;
+}
+
+/* Header do card simplificado - genérico */
+.payment_methods li.payment_method_blu_checkout label,
+#payment .payment_methods li.payment_method_blu_checkout label,
+.woocommerce-checkout .payment_methods li.payment_method_blu_checkout label,
+.payment_method_blu_checkout.gstore-blu-styled label {
+	padding: 16px 20px !important;
+	font-weight: 600 !important;
+	color: var(--gstore-foreground, #1f2937) !important;
+	font-size: 0.95rem !important;
+	background: var(--blu-primary-light) !important;
+	border-radius: var(--gstore-border-radius, 8px) var(--gstore-border-radius, 8px) 0 0 !important;
+	display: flex !important;
+	align-items: center !important;
+	gap: 12px;
+	position: relative;
+}
+
+/* Ícone do método - genérico */
+.payment_methods li.payment_method_blu_checkout label::before,
+#payment .payment_methods li.payment_method_blu_checkout label::before,
+.woocommerce-checkout .payment_methods li.payment_method_blu_checkout label::before,
+.payment_method_blu_checkout.gstore-blu-styled label::before {
+	content: '\f09d';
+	font-family: 'Font Awesome 6 Free';
+	font-weight: 900;
+	font-size: var(--gstore-font-size-12);
+	color: var(--blu-primary);
+	width: 32px;
+	height: 32px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+/* Remove badge de verificado - genérico */
+.payment_methods li.payment_method_blu_checkout label::after,
+#payment .payment_methods li.payment_method_blu_checkout label::after,
+.woocommerce-checkout .payment_methods li.payment_method_blu_checkout label::after,
+.payment_method_blu_checkout.gstore-blu-styled label::after {
+	display: none !important;
+}
+
+/* Payment box - genérico */
+.payment_methods li.payment_method_blu_checkout .payment_box,
+#payment .payment_methods li.payment_method_blu_checkout .payment_box,
+.woocommerce-checkout .payment_methods li.payment_method_blu_checkout .payment_box,
+.payment_method_blu_checkout.gstore-blu-styled .payment_box {
+	background: #fff !important;
+	border-top: none !important;
+	padding: 16px 20px !important;
+	border-radius: 0 0 var(--gstore-border-radius, 8px) var(--gstore-border-radius, 8px) !important;
+}
+
+/* Parágrafo dentro do payment box - genérico */
+.payment_methods li.payment_method_blu_checkout .payment_box p,
+#payment .payment_methods li.payment_method_blu_checkout .payment_box p,
+.woocommerce-checkout .payment_methods li.payment_method_blu_checkout .payment_box p,
+.payment_method_blu_checkout.gstore-blu-styled .payment_box p {
+	color: var(--gstore-text-muted, #6b7280) !important;
+	font-size: var(--gstore-font-size-sm) !important;
+	margin: 0 0 12px !important;
+	line-height: 1.5 !important;
+	padding-left: 0 !important;
+}
+
+/* Remove ícone de localização - genérico */
+.payment_methods li.payment_method_blu_checkout .payment_box p::before,
+#payment .payment_methods li.payment_method_blu_checkout .payment_box p::before,
+.woocommerce-checkout .payment_methods li.payment_method_blu_checkout .payment_box p::before,
+.payment_method_blu_checkout.gstore-blu-styled .payment_box p::before {
+	display: none !important;
 }
 
 /* ===========================================
@@ -1908,7 +2167,7 @@ body.woocommerce-checkout .Gstore-checkout-steps-shell {
 
 /* Ícone de sucesso */
 .Gstore-success-icon {
-	font-size: 64px;
+	font-size: var(--gstore-font-size-64);
 	color: var(--gstore-green, #5a8900);
 	animation: gstore-success-pop 0.4s ease;
 }
@@ -1918,9 +2177,11 @@ body.woocommerce-checkout .Gstore-checkout-steps-shell {
 		transform: scale(0);
 		opacity: 0;
 	}
+
 	50% {
 		transform: scale(1.2);
 	}
+
 	100% {
 		transform: scale(1);
 		opacity: 1;
@@ -1929,14 +2190,14 @@ body.woocommerce-checkout .Gstore-checkout-steps-shell {
 
 .Gstore-processing-modal__text h3 {
 	margin: 0 0 8px 0;
-	font-size: 1.5rem;
-	font-weight: 700;
+	font-size: var(--gstore-font-size-2xl);
+	font-weight: var(--gstore-font-weight-bold);
 	color: #111827;
 }
 
 .Gstore-processing-modal__text p {
 	margin: 0;
-	font-size: 0.95rem;
+	font-size: var(--gstore-font-size-095);
 	color: #6b7280;
 }
 
@@ -1956,13 +2217,13 @@ body.woocommerce-checkout .Gstore-checkout-steps-shell {
 	padding: 12px 16px;
 	background: #f9fafb;
 	border-radius: 4px;
-	font-size: 0.9rem;
+	font-size: var(--gstore-font-size-09);
 	color: #9ca3af;
 	transition: all 0.3s ease;
 }
 
 .Gstore-processing-step i {
-	font-size: 1.1rem;
+	font-size: var(--gstore-font-size-11);
 	width: 20px;
 	text-align: center;
 }
@@ -1990,18 +2251,37 @@ body.woocommerce-checkout .Gstore-checkout-steps-shell {
 	.Gstore-processing-modal__content {
 		padding: 32px 24px;
 	}
-	
+
 	.Gstore-processing-modal__text h3 {
-		font-size: 1.25rem;
+		font-size: var(--gstore-font-size-xl);
 	}
-	
+
 	.Gstore-spinner {
 		width: 48px;
 		height: 48px;
 	}
-	
+
 	.Gstore-success-icon {
-		font-size: 48px;
+		font-size: var(--gstore-font-size-5xl);
 	}
 }
 
+/* ===========================================
+   PRÉ-CHECKOUT BLU - MENSAGEM INFORMATIVA
+   (Removida para simplificar - informação agora no card de pagamento)
+   =========================================== */
+
+/* Responsividade para telas menores que 1400px */
+@media (max-width: 1400px) {
+	.Gstore-checkout-step__title {
+		font-size: var(--gstore-font-size-2xl);
+	}
+
+	.Gstore-checkout-header__logo a {
+		font-size: var(--gstore-font-size-11);
+	}
+
+	.Gstore-checkout-summary-top__total-amount {
+		font-size: var(--gstore-font-size-13);
+	}
+}

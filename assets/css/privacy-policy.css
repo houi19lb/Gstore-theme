@@ -1,5 +1,5 @@
 .woocommerce-privacy-policy-text p {
-    font-size: 12px;
+    font-size: var(--gstore-font-size-xs);
     color: #9ca3af;
     margin-bottom: 0;
 }

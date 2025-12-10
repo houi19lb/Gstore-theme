@@ -162,6 +162,25 @@ A refatoração foi feita de forma **não destrutiva**:
 3. Consolidar estilos duplicados
 4. Remover código legado após migração completa
 
+### Melhorias Futuras / TODOs
+
+#### Botão de Checkout - Correção de Tokens
+**Localização**: `assets/css/checkout.css` (linhas ~1262-1280) e `style.css` (final do arquivo)
+
+**Problema**: O CSS do botão checkout (`#add_payment_method .wc-proceed-to-checkout a.checkout-button`, etc.) está usando `!important` e múltiplos seletores para sobrescrever estilos do WooCommerce que aplicam `font-size: 1.25em` diretamente.
+
+**Status Atual**: ✅ Funcionando com workaround usando `!important` e alta especificidade
+
+**Melhoria Necessária**:
+- Investigar origem do CSS do WooCommerce que aplica `font-size: 1.25em` inline ou via plugin
+- Encontrar forma mais elegante de sobrescrever sem usar `!important`
+- Possivelmente criar um filtro WordPress para modificar o CSS do WooCommerce na origem
+- Considerar criar um componente `.Gstore-checkout-button` padronizado para substituir o botão nativo do WooCommerce
+
+**Arquivos Afetados**:
+- `assets/css/checkout.css`
+- `style.css`
+
 ## 📝 Convenções de Nomenclatura
 
 ### BEM (Block Element Modifier)

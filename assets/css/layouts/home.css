@@ -107,7 +107,7 @@
 }
 
 .Gstore-home-benefits__inner {
-	display: flex;
+	display: none;
 	flex-wrap: wrap;
 	justify-content: space-between;
 	align-items: center;
@@ -126,7 +126,7 @@
 }
 
 .Gstore-home-benefits__icon {
-	font-size: 26px;
+	font-size: var(--gstore-font-size-2xl);
 	color: var(--gstore-color-accent-light);
 	flex-shrink: 0;
 }
@@ -160,7 +160,6 @@
 
 .Gstore-home-products {
 	background: var(--gstore-color-bg-muted);
-	border-bottom: 1px solid var(--gstore-color-border);
 	padding: clamp(var(--gstore-spacing-8), 4vw, var(--gstore-spacing-16)) 0;
 }
 
@@ -247,6 +246,13 @@
 	font-weight: var(--gstore-font-weight-bold);
 }
 
+/* Desktop Pequeno e Desktop - Ajustar clamp para valores menores */
+@media (min-width: 1024px) {
+	.Gstore-home-section__header--left .wp-block-heading {
+		font-size: clamp(var(--gstore-font-size-lg), 2vw, var(--gstore-font-size-2xl)) !important;
+	}
+}
+
 .Gstore-home-section__header--left .Gstore-home-section__separator {
 	flex: 1;
 	height: 1px;
@@ -327,6 +333,16 @@
 	.Gstore-products-carousel__controls {
 		display: none;
 	}
+	
+	/* Garantir que o botão "Ver mais" apareça no desktop */
+	.Gstore-view-more-button--mobile-hidden {
+		display: flex !important;
+	}
+	
+	/* Remover slide do botão no desktop se existir */
+	.Gstore-view-more-slide {
+		display: none !important;
+	}
 }
 
 @media (max-width: 768px) {
@@ -336,11 +352,6 @@
 		margin-right: 0;
 		padding-left: 0;
 		padding-right: 0;
-	}
-
-	.Gstore-home-products .Gstore-home-section__header {
-		padding-left: clamp(var(--gstore-spacing-3), 4vw, var(--gstore-spacing-5));
-		padding-right: clamp(var(--gstore-spacing-3), 4vw, var(--gstore-spacing-5));
 	}
 
 	.Gstore-home-products .Gstore-products-grid {
@@ -397,6 +408,51 @@
 	.Gstore-products-carousel__viewport .Gstore-product-card__inner,
 	.Gstore-products-carousel__viewport .wc-block-product {
 		height: 100%;
+	}
+	
+	/* Esconder botão "Ver mais" original no mobile */
+	.Gstore-view-more-button--mobile-hidden {
+		display: none !important;
+	}
+	
+	/* Estilizar o slide do botão "Ver mais" */
+	.Gstore-view-more-slide {
+		flex: 0 0 min(320px, 80vw);
+		scroll-snap-align: center;
+		scroll-snap-stop: always;
+		list-style: none;
+		margin: 0;
+		padding: 0;
+	}
+	
+	.Gstore-view-more-slide__inner {
+		height: 100%;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		/* Altura mínima similar aos cards de produto */
+		min-height: 450px;
+		padding: var(--gstore-spacing-6);
+	}
+	
+	.Gstore-view-more-slide__wrapper {
+		width: 100%;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		/* Remover height: 100% para que o wrapper tenha apenas a altura do botão */
+	}
+	
+	.Gstore-view-more-slide__button {
+		width: 100%;
+		max-width: 280px;
+		padding: var(--gstore-spacing-4) var(--gstore-spacing-6);
+		font-size: var(--gstore-font-size-base);
+		font-weight: var(--gstore-font-weight-semibold);
+		text-align: center;
+		border-radius: var(--gstore-radius-base);
+		transition: all var(--gstore-transition-fast);
+		white-space: nowrap;
 	}
 }
 

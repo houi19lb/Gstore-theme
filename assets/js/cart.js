@@ -51,6 +51,12 @@
 		plusBtn.textContent = '+';
 		plusBtn.setAttribute('tabindex', '0');
 
+		// Cria aviso de última unidade
+		const lastUnitWarning = document.createElement('span');
+		lastUnitWarning.className = 'gstore-last-unit-warning';
+		lastUnitWarning.textContent = 'Última unidade';
+		lastUnitWarning.style.display = 'none';
+
 		// Move o input para o wrapper de controles
 		controlsWrapper.appendChild(minusBtn);
 		controlsWrapper.appendChild(input);
@@ -58,6 +64,9 @@
 
 		// Substitui o wrapper original pelo novo
 		quantityWrapper.replaceWith(controlsWrapper);
+
+		// Adiciona o aviso após o wrapper de controles
+		controlsWrapper.parentNode.insertBefore(lastUnitWarning, controlsWrapper.nextSibling);
 
 		// Função para obter valores min/max
 		const getMin = () => {
@@ -80,14 +89,26 @@
 			return isNaN(value) ? getMin() : value;
 		};
 
-		// Função para atualizar botões (disabled/enabled)
+		// Função para atualizar botões (disabled/enabled) e aviso
 		const updateButtons = () => {
 			const current = getCurrentValue();
 			const min = getMin();
 			const max = getMax();
 
-			minusBtn.disabled = current <= min;
-			plusBtn.disabled = current >= max;
+			// Quando há apenas 1 unidade (max < 2), esconde todo o seletor
+			if (max < 2) {
+				controlsWrapper.style.display = 'none';
+				lastUnitWarning.style.display = 'inline-block';
+			} else {
+				// Mostra o seletor quando há mais de 1 unidade
+				controlsWrapper.style.display = 'inline-flex';
+				lastUnitWarning.style.display = 'none';
+
+				// Esconde o botão - quando necessário
+				minusBtn.style.display = 'inline-flex';
+				minusBtn.disabled = current <= min;
+				plusBtn.disabled = current >= max;
+			}
 		};
 
 		// Função para atualizar o carrinho automaticamente
@@ -280,6 +301,16 @@
 		observer.observe(input, {
 			attributes: true,
 			attributeFilter: ['value', 'min', 'max', 'step', 'disabled'],
+		});
+
+		// Observa mudanças no atributo max para atualizar visibilidade do botão -
+		const maxObserver = new MutationObserver(() => {
+			updateButtons();
+		});
+
+		maxObserver.observe(input, {
+			attributes: true,
+			attributeFilter: ['max'],
 		});
 	}
 

@@ -94,18 +94,9 @@ class Gstore_Blu_Payment_Gateway extends WC_Payment_Gateway {
 		$this->title                  = $this->get_option( 'title', __( 'Pagamento via Link Blu', 'gstore' ) );
 		$this->description            = $this->get_option( 'description', __( 'Você será redirecionado para finalizar o pagamento de forma segura.', 'gstore' ) );
 		
-		// Prioriza configurações do admin, usa constantes como fallback
+		// Configurações do admin apenas
 		$this->api_token = $this->get_option( 'api_token', '' );
-		if ( empty( $this->api_token ) && defined( 'BLU_API_TOKEN' ) ) {
-			$this->api_token = BLU_API_TOKEN;
-		}
-
-		$this->environment = $this->get_option( 'environment', '' );
-		if ( empty( $this->environment ) && defined( 'BLU_API_SANDBOX' ) ) {
-			$this->environment = BLU_API_SANDBOX ? 'homolog' : 'production';
-		} elseif ( empty( $this->environment ) ) {
-			$this->environment = 'homolog';
-		}
+		$this->environment = $this->get_option( 'environment', 'homolog' );
 
 		$this->max_installments       = (int) $this->get_option( 'max_installments', 12 );
 		$this->fixed_installments     = (int) $this->get_option( 'fixed_installments', 0 );
@@ -148,24 +139,19 @@ class Gstore_Blu_Payment_Gateway extends WC_Payment_Gateway {
 			'api_token'              => array(
 				'title'       => __( 'Token da Blu', 'gstore' ),
 				'type'        => 'password',
-				'description' => defined( 'BLU_API_TOKEN' ) 
-					? __( 'Configurado via wp-config.php (BLU_API_TOKEN).', 'gstore' ) 
-					: __( 'Token informado pelo seu Executivo Blu. Informe sem o prefixo “Bearer”.', 'gstore' ),
+				'description' => __( 'Token informado pelo seu Executivo Blu. Informe sem o prefixo "Bearer".', 'gstore' ),
 				'default'     => '',
-				'custom_attributes' => defined( 'BLU_API_TOKEN' ) ? array( 'readonly' => 'readonly', 'disabled' => 'disabled' ) : array(),
+				'required'    => true,
 			),
 			'environment'            => array(
 				'title'       => __( 'Ambiente', 'gstore' ),
 				'type'        => 'select',
-				'description' => defined( 'BLU_API_SANDBOX' )
-					? __( 'Configurado via wp-config.php (BLU_API_SANDBOX).', 'gstore' )
-					: __( 'Escolha se as requisições serão enviadas para Homologação ou Produção.', 'gstore' ),
+				'description' => __( 'Escolha se as requisições serão enviadas para Homologação ou Produção.', 'gstore' ),
 				'options'     => array(
 					'homolog'    => __( 'Homologação (api-hlg.blu.com.br)', 'gstore' ),
 					'production' => __( 'Produção (api.blu.com.br)', 'gstore' ),
 				),
 				'default'     => 'homolog',
-				'custom_attributes' => defined( 'BLU_API_SANDBOX' ) ? array( 'disabled' => 'disabled' ) : array(),
 			),
 			'max_installments'       => array(
 				'title'       => __( 'Parcelas máximas', 'gstore' ),
@@ -253,6 +239,12 @@ class Gstore_Blu_Payment_Gateway extends WC_Payment_Gateway {
 		}
 
 		$this->store_link_metadata( $order, $response );
+
+		// Verifica se é pré-checkout (dados incompletos)
+		$is_precheckout = empty( $order->get_billing_address_1() ) && empty( $order->get_billing_city() );
+		if ( $is_precheckout ) {
+			$order->add_order_note( __( 'Pré-checkout: Dados completos serão coletados no checkout da Blu.', 'gstore' ) );
+		}
 
 		// Reduz estoque
 		wc_reduce_stock_levels( $order_id );
@@ -469,9 +461,13 @@ class Gstore_Blu_Payment_Gateway extends WC_Payment_Gateway {
 			$phone = substr( $phone, 2 );
 		}
 
+		// Verifica se o pedido tem dados mínimos (pré-checkout)
+		$is_precheckout = empty( $order->get_billing_address_1() ) && empty( $order->get_billing_city() );
+
+		// Payload mínimo: apenas valor é obrigatório (mínimo R$ 10,00 = 1000 centavos)
 		$payload = array(
 			'amount'              => $this->format_amount( $order->get_total() ),
-			'email_notification'  => $order->get_billing_email(),
+			'email_notification'  => $order->get_billing_email() ?: null,
 			'phone_notification'  => ( strlen( $phone ) >= 10 ) ? $phone : null,
 			'description'         => sprintf(
 				/* translators: %s: order number */
@@ -479,12 +475,26 @@ class Gstore_Blu_Payment_Gateway extends WC_Payment_Gateway {
 				$order->get_order_number(),
 				get_bloginfo( 'name' )
 			),
-			'document_type'       => $document['type'],
-			'customer_name'       => $order->get_formatted_billing_full_name(),
-			'customer_cnpj'       => 'CNPJ' === $document['type'] ? $document['value'] : null,
-			'customer_cpf'        => 'CPF' === $document['type'] ? $document['value'] : null,
 			'issuer_rate_forwarding' => $this->issuer_rate_forwarding ? true : null,
 		);
+
+		// Adiciona dados adicionais apenas se disponíveis (não for pré-checkout)
+		if ( ! $is_precheckout ) {
+			$payload['document_type'] = $document['type'];
+			
+			$customer_name = $order->get_formatted_billing_full_name();
+			if ( ! empty( $customer_name ) ) {
+				$payload['customer_name'] = $customer_name;
+			}
+			
+			if ( 'CNPJ' === $document['type'] && ! empty( $document['value'] ) ) {
+				$payload['customer_cnpj'] = $document['value'];
+			}
+			
+			if ( 'CPF' === $document['type'] && ! empty( $document['value'] ) ) {
+				$payload['customer_cpf'] = $document['value'];
+			}
+		}
 
 		if ( $this->fixed_installments > 0 ) {
 			$payload['fixed_installment_number'] = (string) min( 12, $this->fixed_installments );
@@ -735,14 +745,7 @@ class Gstore_Blu_Payment_Gateway extends WC_Payment_Gateway {
 	 */
 	public static function get_configured_api_token() {
 		$settings = (array) get_option( 'woocommerce_' . self::GATEWAY_ID . '_settings', array() );
-		$token = isset( $settings['api_token'] ) ? $settings['api_token'] : '';
-		
-		// Usa constante apenas como fallback
-		if ( empty( $token ) && defined( 'BLU_API_TOKEN' ) ) {
-			$token = BLU_API_TOKEN;
-		}
-		
-		return $token;
+		return isset( $settings['api_token'] ) ? $settings['api_token'] : '';
 	}
 }
 
@@ -908,6 +911,114 @@ function gstore_blu_handle_webhook_request( WP_REST_Request $request ) {
 }
 
 /**
+ * Mapeia dados do last_payment_link_intent para campos do pedido WooCommerce.
+ *
+ * @param WC_Order $order              Pedido.
+ * @param array    $payment_intent     Dados do last_payment_link_intent do webhook.
+ * @return void
+ */
+function gstore_blu_map_payment_intent_to_order( WC_Order $order, array $payment_intent ) {
+	if ( empty( $payment_intent ) ) {
+		return;
+	}
+
+	// Nome completo
+	if ( ! empty( $payment_intent['name'] ) ) {
+		$name_parts = explode( ' ', trim( $payment_intent['name'] ), 2 );
+		$first_name = isset( $name_parts[0] ) ? sanitize_text_field( $name_parts[0] ) : '';
+		$last_name  = isset( $name_parts[1] ) ? sanitize_text_field( $name_parts[1] ) : '';
+		
+		if ( ! empty( $first_name ) ) {
+			$order->set_billing_first_name( $first_name );
+		}
+		if ( ! empty( $last_name ) ) {
+			$order->set_billing_last_name( $last_name );
+		}
+	}
+
+	// Email
+	if ( ! empty( $payment_intent['email'] ) && is_email( $payment_intent['email'] ) ) {
+		$order->set_billing_email( sanitize_email( $payment_intent['email'] ) );
+	}
+
+	// Telefone
+	if ( ! empty( $payment_intent['phone'] ) ) {
+		$phone = preg_replace( '/\D+/', '', $payment_intent['phone'] );
+		if ( ! empty( $phone ) ) {
+			$order->set_billing_phone( $phone );
+		}
+	}
+
+	// CPF/CNPJ
+	if ( ! empty( $payment_intent['cpf_cnpj'] ) ) {
+		$cpf_cnpj = preg_replace( '/\D+/', '', $payment_intent['cpf_cnpj'] );
+		if ( ! empty( $cpf_cnpj ) ) {
+			// Determina se é CPF (11 dígitos) ou CNPJ (14 dígitos)
+			if ( strlen( $cpf_cnpj ) === 11 ) {
+				$order->update_meta_data( 'billing_cpf', $cpf_cnpj );
+				$order->update_meta_data( '_billing_cpf', $cpf_cnpj );
+			} elseif ( strlen( $cpf_cnpj ) === 14 ) {
+				$order->update_meta_data( 'billing_cnpj', $cpf_cnpj );
+				$order->update_meta_data( '_billing_cnpj', $cpf_cnpj );
+			}
+		}
+	}
+
+	// Data de nascimento
+	if ( ! empty( $payment_intent['birth_date'] ) ) {
+		$order->update_meta_data( 'billing_birth_date', sanitize_text_field( $payment_intent['birth_date'] ) );
+	}
+
+	// Endereço
+	if ( ! empty( $payment_intent['address'] ) && is_array( $payment_intent['address'] ) ) {
+		$address = $payment_intent['address'];
+
+		// CEP
+		if ( ! empty( $address['cep'] ) ) {
+			$cep = preg_replace( '/\D+/', '', $address['cep'] );
+			if ( ! empty( $cep ) ) {
+				$order->set_billing_postcode( $cep );
+			}
+		}
+
+		// Rua
+		if ( ! empty( $address['street'] ) ) {
+			$order->set_billing_address_1( sanitize_text_field( $address['street'] ) );
+		}
+
+		// Número
+		if ( ! empty( $address['number'] ) ) {
+			$order->update_meta_data( 'billing_number', sanitize_text_field( $address['number'] ) );
+			$order->update_meta_data( '_billing_number', sanitize_text_field( $address['number'] ) );
+		}
+
+		// Complemento
+		if ( ! empty( $address['complement'] ) ) {
+			$order->set_billing_address_2( sanitize_text_field( $address['complement'] ) );
+		}
+
+		// Bairro
+		if ( ! empty( $address['district'] ) ) {
+			$order->update_meta_data( 'billing_neighborhood', sanitize_text_field( $address['district'] ) );
+			$order->update_meta_data( '_billing_neighborhood', sanitize_text_field( $address['district'] ) );
+		}
+
+		// Cidade
+		if ( ! empty( $address['city'] ) ) {
+			$order->set_billing_city( sanitize_text_field( $address['city'] ) );
+		}
+
+		// Estado
+		if ( ! empty( $address['state'] ) ) {
+			$state = strtoupper( substr( sanitize_text_field( $address['state'] ), 0, 2 ) );
+			$order->set_billing_state( $state );
+		}
+	}
+
+	$order->save();
+}
+
+/**
  * Aplica status no pedido com base na resposta Blu.
  *
  * @param WC_Order $order      Pedido.
@@ -939,6 +1050,15 @@ function gstore_blu_apply_status_from_response( WC_Order $order, array $payload,
 		case 'paid':
 		case 'success':
 		case 'confirmed':
+			// Extrai e atualiza dados completos do pagador se disponível
+			if ( ! empty( $payload['last_payment_link_intent'] ) && is_array( $payload['last_payment_link_intent'] ) ) {
+				gstore_blu_map_payment_intent_to_order( $order, $payload['last_payment_link_intent'] );
+				
+				$order->add_order_note(
+					__( 'Dados do cliente atualizados com informações coletadas no checkout da Blu.', 'gstore' )
+				);
+			}
+
 			if ( ! $order->is_paid() ) {
 				$order->payment_complete();
 				$order->add_order_note(
@@ -1033,4 +1153,80 @@ function gstore_blu_admin_order_panel( $order ) {
 	<?php
 }
 add_action( 'woocommerce_admin_order_data_after_order_details', 'gstore_blu_admin_order_panel' );
+
+/**
+ * Agenda cron job para verificar links pendentes quando webhook não estiver configurado.
+ */
+function gstore_blu_schedule_status_check() {
+	if ( ! wp_next_scheduled( 'gstore_blu_check_pending_links' ) ) {
+		wp_schedule_event( time(), 'hourly', 'gstore_blu_check_pending_links' );
+	}
+}
+add_action( 'wp', 'gstore_blu_schedule_status_check' );
+
+/**
+ * Verifica links pendentes e atualiza status (fallback quando webhook não estiver configurado).
+ */
+function gstore_blu_check_pending_links() {
+	// Só executa se o webhook não estiver configurado
+	$webhook_secret = Gstore_Blu_Payment_Gateway::get_configured_webhook_secret();
+	if ( ! empty( $webhook_secret ) ) {
+		// Webhook está configurado, não precisa do cron
+		return;
+	}
+
+	$gateway = gstore_blu_get_gateway_instance();
+	if ( ! $gateway ) {
+		return;
+	}
+
+	// Busca pedidos pendentes com link Blu
+	$pending_orders = wc_get_orders(
+		array(
+			'limit'      => 50,
+			'status'     => 'pending',
+			'meta_key'   => Gstore_Blu_Payment_Gateway::META_LINK_ID,
+			'meta_compare' => 'EXISTS',
+			'date_query' => array(
+				array(
+					'after' => '24 hours ago',
+				),
+			),
+		)
+	);
+
+	if ( empty( $pending_orders ) ) {
+		return;
+	}
+
+	foreach ( $pending_orders as $order ) {
+		$link_id = $order->get_meta( Gstore_Blu_Payment_Gateway::META_LINK_ID );
+		
+		if ( empty( $link_id ) ) {
+			continue;
+		}
+
+		// Consulta status na Blu
+		$response = $gateway->consult_payment_link( $link_id );
+		
+		if ( is_wp_error( $response ) ) {
+			continue;
+		}
+
+		// Atualiza pedido com resposta
+		gstore_blu_apply_status_from_response( $order, $response, false );
+	}
+}
+add_action( 'gstore_blu_check_pending_links', 'gstore_blu_check_pending_links' );
+
+/**
+ * Limpa o cron quando necessário.
+ * Nota: Em um tema, não há hook de desativação automático.
+ */
+function gstore_blu_cleanup_cron() {
+	$timestamp = wp_next_scheduled( 'gstore_blu_check_pending_links' );
+	if ( $timestamp ) {
+		wp_unschedule_event( $timestamp, 'gstore_blu_check_pending_links' );
+	}
+}
 

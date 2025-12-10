@@ -1,0 +1,562 @@
+/**
+ * Estilos para pagamento via Pix Blu
+ *
+ * @package Gstore
+ */
+
+/* ===========================================
+   TOKENS DO PIX BOX
+   =========================================== */
+
+:root {
+	--pix-bg-page: var(--gstore-color-bg-base);
+	--pix-card-bg: var(--gstore-color-white);
+	--pix-card-border: var(--gstore-color-border);
+	--pix-primary: var(--gstore-color-accent-secondary);
+	--pix-primary-dark: var(--gstore-color-accent-dark);
+	--pix-text: var(--gstore-color-text-primary);
+	--pix-muted: var(--gstore-color-text-muted);
+	--pix-radius-lg: var(--gstore-radius-base);
+	--pix-radius-md: var(--gstore-radius-base);
+	--pix-shadow-soft: var(--gstore-shadow-md);
+}
+
+/* ===========================================
+   CONTAINER PRINCIPAL PIX BOX
+   =========================================== */
+
+.pix-box {
+	background: var(--pix-card-bg);
+	border: 1px solid var(--pix-card-border);
+	border-radius: var(--pix-radius-lg);
+	padding: 24px;
+	box-shadow: none;
+	max-width: 100%;
+	margin: 24px auto;
+	font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+	color: var(--pix-text);
+}
+
+/* Compatibilidade com classe antiga */
+.Gstore-pix-instructions {
+	background: var(--pix-card-bg);
+	border: 1px solid var(--pix-card-border);
+	border-radius: var(--pix-radius-lg);
+	padding: 24px;
+	box-shadow: none;
+	max-width: 100%;
+	margin: 24px auto;
+	font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+	color: var(--pix-text);
+}
+
+/* ===========================================
+   CABEÇALHO PIX BOX
+   =========================================== */
+
+.pix-box__header {
+	display: flex;
+	justify-content: space-between;
+	gap: 16px;
+	align-items: flex-start;
+	margin-bottom: 20px;
+}
+
+.pix-box__title {
+	font-size: var(--gstore-font-size-xl);
+	font-weight: var(--gstore-font-weight-semibold);
+	margin: 0 0 4px;
+	color: var(--pix-text);
+}
+
+.pix-box__subtitle {
+	margin: 0;
+	font-size: var(--gstore-font-size-sm);
+	color: var(--pix-muted);
+}
+
+.pix-box__status {
+	font-size: var(--gstore-font-size-xs);
+	font-weight: var(--gstore-font-weight-semibold);
+	padding: 6px 10px;
+	border-radius: 999px;
+	text-transform: uppercase;
+	letter-spacing: var(--gstore-letter-spacing-04);
+	white-space: nowrap;
+}
+
+.pix-box--pending .pix-box__status {
+	background: #fff6e5;
+	color: #a86100;
+}
+
+.pix-box--processed .pix-box__status {
+	background: var(--gstore-color-success-bg);
+	color: var(--gstore-color-success-text);
+}
+
+.pix-box--expired .pix-box__status {
+	background: var(--gstore-color-error-10);
+	color: var(--gstore-color-error);
+}
+
+/* Compatibilidade com classe antiga */
+.Gstore-pix-instructions h3 {
+	font-size: var(--gstore-font-size-xl);
+	font-weight: var(--gstore-font-weight-semibold);
+	margin: 0 0 4px;
+	color: var(--pix-text);
+}
+
+.Gstore-pix-instructions>p {
+	margin: 0 0 20px;
+	font-size: var(--gstore-font-size-sm);
+	color: var(--pix-muted);
+}
+
+/* ===========================================
+   LAYOUT PRINCIPAL (GRID) PIX BOX
+   =========================================== */
+
+.pix-box__content {
+	display: grid;
+	grid-template-columns: minmax(0, 1.2fr) minmax(0, 1.3fr);
+	gap: 24px;
+}
+
+@media (max-width: 768px) {
+	.pix-box__content {
+		grid-template-columns: 1fr;
+	}
+}
+
+/* Compatibilidade */
+.Gstore-pix-content-grid {
+	display: grid;
+	grid-template-columns: minmax(0, 1.2fr) minmax(0, 1.3fr);
+	gap: 24px;
+}
+
+@media (max-width: 768px) {
+	.Gstore-pix-content-grid {
+		grid-template-columns: 1fr;
+	}
+}
+
+/* ===========================================
+   QR CODE PIX BOX
+   =========================================== */
+
+.pix-box__qr {
+	background: var(--pix-bg-page);
+	border-radius: var(--pix-radius-md);
+	padding: 18px;
+	text-align: center;
+	border: 1px dashed var(--pix-card-border);
+}
+
+.pix-box__qr img {
+	max-width: 260px;
+	width: 100%;
+	display: block;
+	margin: 0 auto 12px;
+}
+
+.pix-box__expires {
+	margin: 0;
+	font-size: var(--gstore-font-size-sm);
+	color: var(--pix-muted);
+}
+
+.pix-box__expires strong {
+	color: var(--pix-text);
+}
+
+/* Compatibilidade */
+.Gstore-pix-qr-code {
+	background: var(--pix-bg-page);
+	border-radius: var(--pix-radius-md);
+	padding: 18px;
+	text-align: center;
+	border: 1px dashed var(--pix-card-border);
+}
+
+.Gstore-pix-qr-code img {
+	max-width: 260px;
+	width: 100%;
+	height: auto;
+	display: block;
+	margin: 0 auto 12px;
+}
+
+/* ===========================================
+   DETALHES PIX BOX
+   =========================================== */
+
+.pix-box__details {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+}
+
+.pix-box__amount {
+	display: flex;
+	justify-content: space-between;
+	align-items: baseline;
+	padding: 10px 14px;
+	background: #fff9f2;
+	border-radius: var(--pix-radius-md);
+	border: 1px solid rgba(255, 122, 0, 0.18);
+	font-size: var(--gstore-font-size-sm);
+}
+
+.pix-box__amount span {
+	color: var(--pix-muted);
+}
+
+.pix-box__amount strong {
+	font-size: var(--gstore-font-size-lg);
+	font-weight: var(--gstore-font-weight-bold);
+	color: var(--pix-text);
+}
+
+.pix-box__label {
+	font-size: var(--gstore-font-size-sm);
+	font-weight: var(--gstore-font-weight-semibold);
+	text-transform: uppercase;
+	letter-spacing: var(--gstore-letter-spacing-06);
+	color: var(--pix-muted);
+	display: block;
+	margin-bottom: 0;
+}
+
+.pix-box__code-group {
+	display: flex;
+	gap: 10px;
+	align-items: stretch;
+}
+
+.pix-box__code {
+	flex: 1;
+	min-height: 96px;
+	max-height: 140px;
+	padding: 10px 12px;
+	font-size: var(--gstore-font-size-sm);
+	line-height: 1.4;
+	border-radius: var(--pix-radius-md);
+	border: 1px solid var(--pix-card-border);
+	background: var(--gstore-color-bg-base);
+	resize: none;
+	overflow: auto;
+	color: var(--pix-text);
+	font-family: 'Courier New', monospace;
+	word-break: break-all;
+	overflow-wrap: break-word;
+}
+
+.pix-box__code:focus {
+	outline: 2px solid var(--gstore-color-accent-secondary-20);
+	outline-offset: 1px;
+	border-color: var(--pix-primary);
+}
+
+.pix-box__meta {
+	margin: 0;
+	font-size: var(--gstore-font-size-xs);
+	color: var(--pix-text);
+}
+
+.pix-box__meta--muted {
+	color: var(--pix-muted);
+}
+
+/* Compatibilidade */
+.Gstore-pix-emv {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+}
+
+.Gstore-pix-emv label {
+	font-size: var(--gstore-font-size-sm);
+	font-weight: var(--gstore-font-weight-semibold);
+	text-transform: uppercase;
+	letter-spacing: var(--gstore-letter-spacing-06);
+	color: var(--pix-muted);
+	display: block;
+	margin-bottom: 0;
+}
+
+.Gstore-pix-emv-wrapper {
+	display: flex;
+	gap: 10px;
+	align-items: stretch;
+}
+
+.Gstore-pix-emv-code {
+	flex: 1;
+	min-height: 96px;
+	max-height: 140px;
+	padding: 10px 12px;
+	font-size: var(--gstore-font-size-sm);
+	font-family: 'Courier New', monospace;
+	line-height: 1.4;
+	border-radius: var(--pix-radius-md);
+	border: 1px solid var(--pix-card-border);
+	background: var(--gstore-color-bg-base);
+	color: var(--pix-text);
+	resize: none;
+	overflow: auto;
+	word-break: break-all;
+	overflow-wrap: break-word;
+}
+
+.Gstore-pix-emv-code:focus {
+	outline: 2px solid var(--gstore-color-accent-secondary-20);
+	outline-offset: 1px;
+	border-color: var(--pix-primary);
+}
+
+/* ===========================================
+   BOTÃO COPIAR PIX BOX
+   =========================================== */
+
+.pix-box__copy {
+	align-self: stretch;
+	border: none;
+	border-radius: var(--pix-radius-md);
+	padding: 0 16px;
+	font-size: var(--gstore-font-size-sm);
+	font-weight: var(--gstore-font-weight-semibold);
+	cursor: pointer;
+	background: var(--pix-primary);
+	color: var(--gstore-color-white);
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	transition: transform 0.05s ease, box-shadow 0.1s ease, filter 0.1s ease;
+	box-shadow: none;
+	white-space: nowrap;
+}
+
+.pix-box__copy:hover {
+	filter: brightness(1.05);
+}
+
+.pix-box__copy:active {
+	transform: translateY(1px);
+	box-shadow: none;
+}
+
+/* Compatibilidade */
+.Gstore-pix-copy-btn {
+	align-self: stretch;
+	border: none;
+	border-radius: var(--pix-radius-md);
+	padding: 0 16px;
+	min-width: 100px;
+	font-size: var(--gstore-font-size-sm);
+	font-weight: var(--gstore-font-weight-semibold);
+	cursor: pointer;
+	background: var(--pix-primary);
+	color: var(--gstore-color-white);
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	transition: transform 0.05s ease, box-shadow 0.1s ease, filter 0.1s ease;
+	box-shadow: none;
+	white-space: nowrap;
+	height: auto;
+}
+
+.Gstore-pix-copy-btn:hover {
+	filter: brightness(1.05);
+	transform: translateY(-1px);
+}
+
+.Gstore-pix-copy-btn:active {
+	transform: translateY(1px);
+	box-shadow: none;
+}
+
+.Gstore-pix-copy-btn.copied {
+	background: var(--gstore-color-success);
+}
+
+.Gstore-pix-copy-btn.copied::after {
+	content: ' ✓';
+	margin-left: 4px;
+}
+
+/* ===========================================
+   RESPONSIVIDADE PIX BOX
+   =========================================== */
+
+@media (max-width: 768px) {
+	.pix-box__content {
+		grid-template-columns: 1fr;
+	}
+
+	.pix-box__code-group {
+		flex-direction: column;
+	}
+
+	.pix-box__copy {
+		width: 100%;
+		padding: 12px 20px;
+	}
+
+	.pix-box__qr {
+		padding: 16px;
+	}
+
+	.pix-box__qr img {
+		max-width: 220px;
+	}
+
+	.pix-box {
+		padding: 20px;
+		margin: 16px auto;
+	}
+}
+
+/* Compatibilidade */
+.Gstore-pix-info {
+	list-style: none;
+	padding: 0;
+	margin: 16px 0 0 0;
+	border-top: 1px solid var(--pix-card-border);
+	padding-top: 16px;
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+}
+
+.Gstore-pix-info li {
+	padding: 0;
+	font-size: var(--gstore-font-size-xs);
+	color: var(--pix-muted);
+}
+
+.Gstore-pix-info li strong {
+	color: var(--pix-text);
+	font-weight: var(--gstore-font-weight-semibold);
+}
+
+
+/* ===========================================
+   ESTADOS ESPECIAIS
+   =========================================== */
+
+/* Status Badge */
+.Gstore-pix-status {
+	display: inline-flex;
+	font-size: var(--gstore-font-size-xs);
+	font-weight: var(--gstore-font-weight-semibold);
+	padding: 6px 10px;
+	border-radius: 999px;
+	text-transform: uppercase;
+	letter-spacing: var(--gstore-letter-spacing-04);
+	white-space: nowrap;
+	margin-left: auto;
+}
+
+.Gstore-pix-instructions.pix-pending .Gstore-pix-status,
+.Gstore-pix-status--pending {
+	background: #fff6e5;
+	color: #a86100;
+}
+
+.Gstore-pix-instructions.pix-paid .Gstore-pix-status,
+.Gstore-pix-status--processed,
+.Gstore-pix-status--paid {
+	background: var(--gstore-color-success-bg);
+	color: var(--gstore-color-success-text);
+}
+
+.Gstore-pix-instructions.pix-expired .Gstore-pix-status,
+.Gstore-pix-status--expired {
+	background: var(--gstore-color-error-10);
+	color: var(--gstore-color-error);
+}
+
+/* Estilos de estado no container */
+.Gstore-pix-instructions.pix-paid {
+	border-color: var(--gstore-color-success-border);
+}
+
+.Gstore-pix-instructions.pix-expired {
+	border-color: var(--gstore-color-error);
+	opacity: 0.7;
+}
+
+/* Header com título e status */
+.Gstore-pix-header {
+	display: flex;
+	justify-content: space-between;
+	gap: 16px;
+	align-items: flex-start;
+	margin-bottom: 20px;
+}
+
+.Gstore-pix-header h3 {
+	margin: 0 0 4px;
+}
+
+.Gstore-pix-header p {
+	margin: 0;
+}
+
+/* Validade */
+.Gstore-pix-expires {
+	margin: 12px 0 0 0;
+	font-size: var(--gstore-font-size-sm);
+	color: var(--pix-muted);
+}
+
+.Gstore-pix-expires strong {
+	color: var(--pix-text);
+}
+
+/* Valor total */
+.Gstore-pix-amount {
+	display: flex;
+	justify-content: space-between;
+	align-items: baseline;
+	padding: 10px 14px;
+	background: #fff9f2;
+	border-radius: var(--pix-radius-md);
+	border: 1px solid rgba(255, 122, 0, 0.18);
+	font-size: var(--gstore-font-size-sm);
+	margin-bottom: 12px;
+}
+
+.Gstore-pix-amount span {
+	color: var(--pix-muted);
+}
+
+.Gstore-pix-amount strong {
+	font-size: var(--gstore-font-size-lg);
+	font-weight: var(--gstore-font-weight-bold);
+	color: var(--pix-text);
+}
+
+/* ===========================================
+   ANIMAÇÕES
+   =========================================== */
+
+@keyframes pix-pulse {
+
+	0%,
+	100% {
+		opacity: 1;
+	}
+
+	50% {
+		opacity: 0.7;
+	}
+}
+
+.Gstore-pix-instructions.pix-pending .Gstore-pix-qr-code {
+	animation: pix-pulse 2s ease-in-out infinite;
+}

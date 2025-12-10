@@ -7,17 +7,10 @@
 - Os dados retornados (`link_url`, `smart_checkout_url`, `id`, `expiration_date`) ficam armazenados nos metadados do pedido (`_gstore_blu_*`).
 
 ### Configuração
-1. **Recomendado (Portabilidade):**
-   Adicione ao seu `wp-config.php`:
-   ```php
-   define( 'BLU_API_TOKEN', 'seu_token_aqui' );
-   define( 'BLU_API_SANDBOX', true ); // true = Homologação, false = Produção
-   ```
-   *Isso desativará os campos no painel admin.*
-
-2. **Via Painel (Alternativo):**
+1. **Via Painel Admin:**
    - WordPress › WooCommerce › Pagamentos › `Pagamento via Link Blu`.
-   - Informe o Token e selecione o Ambiente.
+   - Informe o Token da Blu e selecione o Ambiente (Homologação ou Produção).
+   - Configure outras opções como parcelas máximas, webhook, etc.
 
 3. **Webhook:**
    - Crie o endpoint na Blu: `https://SEU_SITE/wp-json/gstore-blu/v1/webhook`.

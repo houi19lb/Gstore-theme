@@ -27,13 +27,17 @@
 	--gstore-color-text-accent: #5c6b5a;
 	
 	/* Acentos e Estados */
-	--gstore-color-accent: #FF5C00;
-	--gstore-color-accent-hover: #E65000;
-	--gstore-color-accent-dark: #CC4A00;
-	--gstore-color-accent-light: #FF7A33;
-	--gstore-color-brass: #FF5C00;
+	--gstore-color-accent: #b5a642;
+	--gstore-color-accent-hover: #9f923a;
+	--gstore-color-accent-dark: #877c31;
+	--gstore-color-accent-light: #c7b648;
+	--gstore-color-accent-secondary: #5a8900;
+	--gstore-color-accent-secondary-hover: #4f7900;
+	--gstore-color-accent-secondary-dark: #567745;
+	--gstore-color-accent-secondary-darker: #4f6d3f;
+	--gstore-color-accent-secondary-darkest: #4b6a3c;
 	--gstore-color-success: #2e9b3b;
-	--gstore-color-warning: #FF8C5C;
+	--gstore-color-warning: var(--gstore-color-accent);
 	--gstore-color-error: #ff4757;
 	
 	/* Bordas */
@@ -41,9 +45,64 @@
 	--gstore-color-border-dark: #2a2a2a;
 	--gstore-color-border-light: #e8e8e6;
 	--gstore-color-border-accent: #dfe2df;
+	--gstore-color-border-accent-light: #f0e6b8;
+	--gstore-color-border-accent-warm: #f2dec1;
 	
 	/* Ratings e Avaliações */
-	--gstore-color-rating: #FF8C5C;
+	--gstore-color-rating: #c9b88c;
+	--gstore-color-rating-light: #FFB380;
+	
+	/* Cores com Transparência */
+	--gstore-color-white: #ffffff;
+	--gstore-color-black: #000000;
+	--gstore-color-white-10: rgba(255, 255, 255, 0.1);
+	--gstore-color-white-20: rgba(255, 255, 255, 0.2);
+	--gstore-color-white-60: rgba(255, 255, 255, 0.6);
+	--gstore-color-white-80: rgba(255, 255, 255, 0.8);
+	--gstore-color-black-60: rgba(0, 0, 0, 0.6);
+	--gstore-color-black-08: rgba(0, 0, 0, 0.08);
+	--gstore-color-black-20: rgba(0, 0, 0, 0.2);
+	--gstore-color-accent-10: rgba(181, 166, 66, 0.10);
+	--gstore-color-accent-12: rgba(181, 166, 66, 0.12);
+	--gstore-color-accent-15: rgba(181, 166, 66, 0.15);
+	--gstore-color-accent-20: rgba(181, 166, 66, 0.20);
+	--gstore-color-accent-08: rgba(181, 166, 66, 0.08);
+	--gstore-color-accent-80: rgba(240, 230, 184, 0.8);
+	--gstore-color-accent-secondary-10: rgba(90, 137, 0, 0.1);
+	--gstore-color-accent-secondary-12: rgba(90, 137, 0, 0.12);
+	--gstore-color-accent-secondary-15: rgba(90, 137, 0, 0.15);
+	--gstore-color-accent-secondary-20: rgba(90, 137, 0, 0.2);
+	--gstore-color-error-08: rgba(255, 71, 87, 0.08);
+	--gstore-color-error-10: rgba(255, 71, 87, 0.1);
+	
+	/* Cores de Estados Específicos */
+	--gstore-color-info-bg: #eef2ff;
+	--gstore-color-info-border: #c7d2fe;
+	--gstore-color-info-text: #312e81;
+	--gstore-color-error-bg: #fef2f2;
+	--gstore-color-error-border: #fecaca;
+	--gstore-color-error-text: #991b1b;
+	--gstore-color-success-bg: #ecfdf5;
+	--gstore-color-success-border: #a7f3d0;
+	--gstore-color-success-text: #065f46;
+	
+	/* Cores de Texto Específicas */
+	--gstore-color-text-dark: #0f172a;
+	--gstore-color-text-gray-700: #111827;
+	--gstore-color-text-gray-600: #475569;
+	--gstore-color-text-gray-600-alt: #475467;
+	--gstore-color-text-gray-500: #6b7280;
+	--gstore-color-text-gray-500-alt: #4b5563;
+	--gstore-color-text-slate-400: #94a3b8;
+	--gstore-color-text-secondary-alt: #666666;
+	--gstore-color-text-body-dark: #3c2615;
+	
+	/* Cores de Fundo Específicas */
+	--gstore-color-bg-slate-50: #f8fafc;
+	--gstore-color-bg-gray-50: #f9fafb;
+	--gstore-color-bg-gray-100: #f5f6f8;
+	--gstore-color-bg-accent-light: #faf7ed;
+	--gstore-color-bg-accent-warm: rgba(240, 230, 184, 0.3);
 	
 	/* ========================================
 	   TIPOGRAFIA
@@ -52,6 +111,7 @@
 	/* Família de Fontes */
 	--gstore-font-family-base: "Inter", "Helvetica Neue", Helvetica, Arial, sans-serif;
 	--gstore-font-family-system: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, sans-serif;
+	--gstore-font-family: var(--gstore-font-family-system); /* Alias para compatibilidade */
 	
 	/* Tamanhos de Fonte */
 	--gstore-font-size-xs: 0.75rem;    /* 12px */
@@ -63,6 +123,18 @@
 	--gstore-font-size-3xl: 1.875rem;  /* 30px */
 	--gstore-font-size-4xl: 2.25rem;   /* 36px */
 	--gstore-font-size-5xl: 3rem;      /* 48px */
+	
+	/* Tamanhos intermediários (para casos específicos) */
+	--gstore-font-size-64: 4rem;       /* 64px - usado em ícones grandes */
+	
+	/* Tamanhos intermediários adicionais (para compatibilidade) */
+	--gstore-font-size-08: 0.8rem;     /* 12.8px - usado frequentemente */
+	--gstore-font-size-09: 0.9rem;     /* 14.4px - usado frequentemente */
+	--gstore-font-size-095: 0.95rem;   /* 15.2px - usado frequentemente */
+	--gstore-font-size-11: 1.1rem;     /* 17.6px - usado frequentemente */
+	--gstore-font-size-12: 1.2rem;     /* 19.2px - usado frequentemente */
+	--gstore-font-size-13: 1.3rem;     /* 20.8px - usado frequentemente */
+	--gstore-font-size-175: 1.75rem;   /* 28px - usado em alguns títulos */
 	
 	/* Pesos de Fonte */
 	--gstore-font-weight-normal: 400;
@@ -82,6 +154,15 @@
 	--gstore-letter-spacing-wide: 0.05em;
 	--gstore-letter-spacing-wider: 0.08em;
 	--gstore-letter-spacing-widest: 0.14em;
+	
+	/* Espaçamento de letras intermediários (para compatibilidade) */
+	--gstore-letter-spacing-02: 0.02em;   /* usado em logos */
+	--gstore-letter-spacing-04: 0.04em;   /* usado em textos */
+	--gstore-letter-spacing-06: 0.06em;   /* usado em títulos */
+	--gstore-letter-spacing-10: 0.1em;    /* usado em títulos */
+	--gstore-letter-spacing-15: 0.15em;   /* usado em textos especiais */
+	--gstore-letter-spacing-20: 0.2em;    /* usado em textos especiais */
+	--gstore-letter-spacing-30: 0.3em;    /* usado em textos especiais */
 	
 	/* ========================================
 	   ESPAÇAMENTOS
@@ -177,12 +258,81 @@
 }
 
 /* ========================================
+   TIPOGRAFIA RESPONSIVA - DESKTOP
+   ======================================== */
+
+/**
+ * Reduz tamanhos de fonte em desktop pequeno (lg) e desktop (xl)
+ * para melhor legibilidade e aproveitamento de espaço
+ */
+
+/* Desktop Pequeno (lg: 1024px) - Redução adicional de ~8-10% */
+@media (min-width: 1024px) {
+	:root {
+		--gstore-font-size-xs: 0.625rem;    /* 10px (era 11px) */
+		--gstore-font-size-sm: 0.75rem;     /* 12px (era 13px) */
+		--gstore-font-size-base: 0.875rem; /* 14px (era 15px) */
+		--gstore-font-size-lg: 0.9375rem;  /* 15px (era 16px) */
+		--gstore-font-size-xl: 1rem;        /* 16px (era 18px) */
+		--gstore-font-size-2xl: 1.25rem;    /* 20px (era 22px) */
+		--gstore-font-size-3xl: 1.5rem;     /* 24px (era 27px) */
+		--gstore-font-size-4xl: 1.875rem;   /* 30px (era 32px) */
+		--gstore-font-size-5xl: 2.5rem;     /* 40px (era 44px) */
+		--gstore-font-size-64: 3rem;        /* 48px (era 56px) */
+		
+		/* Tamanhos intermediários responsivos */
+		--gstore-font-size-08: 0.6875rem;   /* 11px */
+		--gstore-font-size-09: 0.8125rem;   /* 13px */
+		--gstore-font-size-095: 0.875rem;   /* 14px */
+		--gstore-font-size-11: 0.9375rem;   /* 15px */
+		--gstore-font-size-12: 1rem;        /* 16px */
+		--gstore-font-size-13: 1.0625rem;   /* 17px */
+		--gstore-font-size-175: 1.5rem;     /* 24px */
+		
+		/* Sobrescrever variáveis do WordPress/Gutenberg se existirem */
+		--wp--preset--font-size--x-large: var(--gstore-font-size-4xl);
+		--wp--preset--font-size--large: var(--gstore-font-size-2xl);
+		--wp--preset--font-size--medium: var(--gstore-font-size-xl);
+	}
+}
+
+/* Desktop (xl: 1280px) - Mantém os mesmos valores reduzidos */
+@media (min-width: 1280px) {
+	:root {
+		--gstore-font-size-xs: 0.625rem;    /* 10px (era 11px) */
+		--gstore-font-size-sm: 0.75rem;     /* 12px (era 13px) */
+		--gstore-font-size-base: 0.875rem; /* 14px (era 15px) */
+		--gstore-font-size-lg: 0.9375rem;  /* 15px (era 16px) */
+		--gstore-font-size-xl: 1rem;        /* 16px (era 18px) */
+		--gstore-font-size-2xl: 1.25rem;    /* 20px (era 22px) */
+		--gstore-font-size-3xl: 1.5rem;     /* 24px (era 27px) */
+		--gstore-font-size-4xl: 1.875rem;   /* 30px (era 32px) */
+		--gstore-font-size-5xl: 2.5rem;     /* 40px (era 44px) */
+		--gstore-font-size-64: 3rem;        /* 48px (era 56px) */
+		
+		/* Tamanhos intermediários responsivos */
+		--gstore-font-size-08: 0.6875rem;   /* 11px */
+		--gstore-font-size-09: 0.8125rem;   /* 13px */
+		--gstore-font-size-095: 0.875rem;   /* 14px */
+		--gstore-font-size-11: 0.9375rem;   /* 15px */
+		--gstore-font-size-12: 1rem;        /* 16px */
+		--gstore-font-size-13: 1.0625rem;   /* 17px */
+		--gstore-font-size-175: 1.5rem;     /* 24px */
+		
+		/* Sobrescrever variáveis do WordPress/Gutenberg se existirem */
+		--wp--preset--font-size--x-large: var(--gstore-font-size-4xl);
+		--wp--preset--font-size--large: var(--gstore-font-size-2xl);
+		--wp--preset--font-size--medium: var(--gstore-font-size-xl);
+	}
+}
+
+/* ========================================
    CORES LEGADAS (Compatibilidade)
    ======================================== */
 
 :root {
-	--green: var(--gstore-color-accent-light);
-	--green-dark: var(--gstore-color-accent-dark);
+	--green: var(--gstore-color-accent-secondary);
+	--green-dark: #1f6e29;
 	--gray-bg: var(--gstore-color-bg-muted);
 	--card-meta-bg: var(--gstore-color-bg-card-meta);
 	--gray-border: var(--gstore-color-border);

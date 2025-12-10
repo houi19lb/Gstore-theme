@@ -449,7 +449,7 @@ $guarantee_badges  = gstore_get_guarantee_badges();
 				</div>
 
 				<div class="Gstore-single-product__summary">
-					<div class="Gstore-single-product__summary-card">
+					<div class="Gstore-single-product__summary-card <?php echo $is_in_stock ? 'is-in-stock' : 'is-on-order'; ?>">
 						<p class="Gstore-single-product__eyebrow">
 							<i class="fa-solid fa-shield-halved" aria-hidden="true"></i>
 							<?php echo esc_html( $category_label ); ?>
@@ -486,9 +486,20 @@ $guarantee_badges  = gstore_get_guarantee_badges();
 
 						<!-- Add to Cart -->
 						<div class="Gstore-single-product__add-to-cart">
-							<div class="Gstore-single-product__stock">
-								<i class="fa-solid fa-circle" aria-hidden="true"></i>
-								<?php echo esc_html( $stock_label ); ?>
+							<div class="Gstore-single-product__stock-badge <?php echo $is_in_stock ? 'is-in-stock' : 'is-on-order'; ?>">
+								<div class="Gstore-single-product__stock-badge-icon">
+									<i class="fa-solid <?php echo $is_in_stock ? 'fa-circle-check' : 'fa-clock'; ?>" aria-hidden="true"></i>
+								</div>
+								<div class="Gstore-single-product__stock-badge-content">
+									<span class="Gstore-single-product__stock-badge-label">
+										<?php echo $is_in_stock ? esc_html__( 'Disponível', 'gstore' ) : esc_html__( 'Sob encomenda', 'gstore' ); ?>
+									</span>
+									<?php if ( ! $is_in_stock ) : ?>
+										<span class="Gstore-single-product__stock-badge-note">
+											<?php esc_html_e( 'Confirme prazos com nosso time', 'gstore' ); ?>
+										</span>
+									<?php endif; ?>
+								</div>
 							</div>
 
 							<?php

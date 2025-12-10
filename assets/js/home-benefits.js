@@ -209,8 +209,8 @@
 	}
 
 	function init() {
-		// Só inicializa o slider se estiver em mobile
-		if (window.innerWidth > 600) {
+		// Só inicializa o slider no mobile (max-width: 900px)
+		if (window.innerWidth > 900) {
 			return;
 		}
 
@@ -219,12 +219,17 @@
 			return;
 		}
 
-		sliders.forEach(initSlider);
+		sliders.forEach(function (slider) {
+			if (!slider.hasAttribute('data-initialized')) {
+				slider.setAttribute('data-initialized', 'true');
+				initSlider(slider);
+			}
+		});
 	}
 
 	function handleResize() {
-		// Reinicializa se mudar de mobile para desktop ou vice-versa
-		if (window.innerWidth <= 600) {
+		// Reinicializa se mudar de desktop para mobile ou vice-versa
+		if (window.innerWidth <= 900) {
 			const sliders = document.querySelectorAll(SLIDER_SELECTOR);
 			sliders.forEach(function (slider) {
 				if (!slider.hasAttribute('data-initialized')) {

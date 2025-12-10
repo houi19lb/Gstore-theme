@@ -177,3 +177,29 @@ section:not([class*="hero"]):not([class*="dark"]):not(.Gstore-header-shell):not(
 	}
 }
 
+/* Desktop Pequeno e Desktop - Forçar tamanhos reduzidos */
+@media (min-width: 1024px) {
+	/* Override para títulos grandes - força uso das variáveis reduzidas */
+	/* Sobrescreve qualquer regra do WordPress/Gutenberg */
+	.wp-block-heading.has-x-large-font-size,
+	h2.wp-block-heading.has-x-large-font-size,
+	h1.wp-block-heading.has-x-large-font-size,
+	h2.has-x-large-font-size,
+	h1.has-x-large-font-size,
+	.has-x-large-font-size,
+	.Gstore-home-section__header .wp-block-heading.has-x-large-font-size,
+	.Gstore-home-products .wp-block-heading.has-x-large-font-size {
+		font-size: var(--gstore-font-size-4xl) !important;
+	}
+	
+	.wp-block-heading.has-large-font-size,
+	h3.wp-block-heading.has-large-font-size,
+	h3.has-large-font-size {
+		font-size: var(--gstore-font-size-2xl) !important;
+	}
+	
+	.wp-block-heading.has-medium-font-size {
+		font-size: var(--gstore-font-size-xl) !important;
+	}
+}
+

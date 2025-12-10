@@ -1,0 +1,486 @@
+/**
+ * ==========================================
+ * GSTORE - PÁGINA: COMO COMPRAR ARMA
+ * ==========================================
+ * Estilos específicos para a página de passos para compra de arma
+ */
+
+/* ========================================
+   CONTAINER PRINCIPAL
+   ======================================== */
+
+/* Aumenta especificidade para sobrescrever estilos globais */
+.wp-site-blocks > .wp-block-group.Gstore-buy-steps-shell,
+.wp-site-blocks > main.Gstore-buy-steps-shell,
+main.Gstore-buy-steps-shell,
+.wp-site-blocks > .wp-block-group.alignfull.Gstore-buy-steps-shell {
+	background-color: var(--gstore-color-bg-light) !important;
+	color: var(--gstore-color-text-primary) !important;
+	min-height: 100vh;
+}
+
+.Gstore-buy-steps-container {
+	max-width: var(--gstore-container-max-width);
+	margin: 0 auto;
+	padding: clamp(var(--gstore-spacing-8), 4vw, var(--gstore-spacing-16)) 
+	         var(--gstore-container-padding-inline);
+}
+
+/* ========================================
+   STEPS FLOW SECTION
+   ======================================== */
+
+:root {
+	--steps-bg: var(--gstore-color-bg-light);
+	--steps-border: var(--gstore-color-border-light);
+	--steps-border-strong: var(--gstore-color-text-primary);
+	--steps-primary: var(--gstore-color-accent);
+	--steps-text-main: var(--gstore-color-text-primary);
+	--steps-text-muted: var(--gstore-color-text-secondary);
+	--steps-radius: var(--gstore-radius-base);
+}
+
+/* Container geral */
+.steps-flow {
+	width: 100%;
+	margin: 0 0 var(--gstore-spacing-12) 0;
+	padding: 0;
+	font-family: var(--gstore-font-family-base);
+	color: var(--steps-text-main);
+}
+
+/* Cabeçalho */
+.steps-flow__header {
+	text-align: center;
+	margin-bottom: var(--gstore-spacing-8);
+}
+
+.steps-flow__eyebrow {
+	font-size: var(--gstore-font-size-xs);
+	letter-spacing: var(--gstore-letter-spacing-widest);
+	text-transform: uppercase;
+	color: var(--steps-primary);
+	margin: 0 0 var(--gstore-spacing-2) 0;
+	font-weight: var(--gstore-font-weight-bold);
+}
+
+.steps-flow__title-main {
+	font-size: clamp(var(--gstore-font-size-2xl), 4vw, var(--gstore-font-size-4xl));
+	line-height: var(--gstore-line-height-tight);
+	margin: 0 0 var(--gstore-spacing-2) 0;
+	font-weight: var(--gstore-font-weight-bold);
+	color: var(--gstore-color-text-primary);
+}
+
+.steps-flow__subtitle {
+	margin: 0;
+	font-size: var(--gstore-font-size-sm);
+	color: var(--gstore-color-text-secondary);
+	line-height: var(--gstore-line-height-normal);
+}
+
+/* Aviso inicial */
+.steps-flow__notice {
+	display: flex;
+	align-items: flex-start;
+	gap: var(--gstore-spacing-3);
+	padding: var(--gstore-spacing-4) var(--gstore-spacing-5);
+	border-radius: var(--gstore-radius-base);
+	background: var(--gstore-color-error-bg);
+	border: 1px solid var(--gstore-color-error-border);
+	margin-bottom: var(--gstore-spacing-8);
+}
+
+.steps-flow__notice-icon {
+	width: 26px;
+	height: 26px;
+	flex-shrink: 0;
+	border-radius: var(--gstore-radius-full);
+	background: var(--gstore-color-error);
+	color: var(--gstore-color-white);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-weight: var(--gstore-font-weight-bold);
+	font-size: var(--gstore-font-size-sm);
+}
+
+.steps-flow__notice-title {
+	margin: 0 0 var(--gstore-spacing-1) 0;
+	font-size: var(--gstore-font-size-sm);
+	font-weight: var(--gstore-font-weight-semibold);
+	color: var(--gstore-color-error-text);
+}
+
+.steps-flow__notice-text {
+	margin: 0;
+	font-size: var(--gstore-font-size-sm);
+	color: var(--gstore-color-error-text);
+	line-height: var(--gstore-line-height-normal);
+}
+
+/* Lista / linha do tempo */
+.steps-flow__list {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	position: relative;
+}
+
+/* Linha vertical da timeline */
+.steps-flow__list::before {
+	content: "";
+	position: absolute;
+	left: 23px; /* alinhado ao centro dos marcadores */
+	top: 0;
+	bottom: 0;
+	width: 2px;
+	background: linear-gradient(
+		to bottom,
+		rgba(0, 0, 0, 0),
+		var(--steps-primary),
+		rgba(0, 0, 0, 0)
+	);
+	opacity: 0.6;
+}
+
+/* Cada passo */
+.steps-flow__item {
+	display: grid;
+	grid-template-columns: 46px minmax(0, 1fr);
+	align-items: flex-start;
+	gap: var(--gstore-spacing-4);
+	position: relative;
+	padding: var(--gstore-spacing-3) 0;
+}
+
+.steps-flow__item:last-child {
+	padding-bottom: 0;
+}
+
+/* Marcador numérico */
+.steps-flow__marker {
+	position: relative;
+	z-index: 1;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.steps-flow__marker-number {
+	width: 32px;
+	height: 32px;
+	border-radius: var(--gstore-radius-full);
+	background: var(--steps-primary);
+	border: none;
+	color: var(--gstore-color-text-primary);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-size: var(--gstore-font-size-sm);
+	font-weight: var(--gstore-font-weight-bold);
+}
+
+/* Card do passo */
+.steps-flow__card {
+	background: var(--gstore-color-bg-light);
+	border-radius: var(--gstore-radius-base);
+	border: 1px solid var(--gstore-color-border-light);
+	padding: var(--gstore-spacing-4) var(--gstore-spacing-5);
+}
+
+.steps-flow__card-title {
+	margin: 0 0 var(--gstore-spacing-2) 0;
+	font-size: var(--gstore-font-size-base);
+	font-weight: var(--gstore-font-weight-semibold);
+	color: var(--gstore-color-text-primary);
+}
+
+.steps-flow__card-text {
+	margin: 0 0 var(--gstore-spacing-1) 0;
+	font-size: var(--gstore-font-size-sm);
+	line-height: var(--gstore-line-height-normal);
+	color: var(--gstore-color-text-secondary);
+}
+
+.steps-flow__card-text:last-child {
+	margin-bottom: 0;
+}
+
+/* Primeiro e último passo com um pouco mais de respiro */
+.steps-flow__item:first-child {
+	padding-top: var(--gstore-spacing-1);
+}
+
+.steps-flow__item:last-child {
+	padding-bottom: var(--gstore-spacing-1);
+}
+
+/* Destaque para passo atual */
+.steps-flow__item.is-current .steps-flow__marker-number {
+	background: var(--steps-primary);
+	color: var(--gstore-color-text-primary);
+	border-color: var(--steps-primary);
+}
+
+.steps-flow__item.is-current .steps-flow__card {
+	border-color: var(--gstore-color-border-light);
+	background: var(--gstore-color-bg-light);
+}
+
+/* ========================================
+   OBSERVATION SECTION
+   ======================================== */
+
+.Gstore-buy-steps-observation {
+	width: 100%;
+	margin-bottom: var(--gstore-spacing-12);
+}
+
+.Gstore-buy-steps-observation__content {
+	width: 100%;
+	background-color: var(--gstore-color-info-bg);
+	border: 1px solid var(--gstore-color-info-border);
+	border-radius: var(--gstore-radius-base);
+	padding: var(--gstore-spacing-5);
+	display: flex;
+	align-items: flex-start;
+	gap: var(--gstore-spacing-4);
+}
+
+.Gstore-buy-steps-observation__content i {
+	font-size: var(--gstore-font-size-xl);
+	color: var(--gstore-color-info-text);
+	flex-shrink: 0;
+	margin-top: var(--gstore-spacing-1);
+}
+
+.Gstore-buy-steps-observation__content p {
+	margin: 0;
+	font-size: var(--gstore-font-size-base);
+	color: var(--gstore-color-info-text);
+	line-height: var(--gstore-line-height-relaxed);
+}
+
+.Gstore-buy-steps-observation__content strong {
+	font-weight: var(--gstore-font-weight-bold);
+}
+
+/* ========================================
+   FAQ SECTION
+   ======================================== */
+
+.Gstore-buy-steps-faq {
+	width: 100%;
+	background: var(--gstore-color-bg-light);
+	border-radius: var(--gstore-radius-base);
+	padding: clamp(var(--gstore-spacing-8), 4vw, var(--gstore-spacing-12));
+	border: 1px solid var(--gstore-color-border-light);
+	box-shadow: none;
+	margin-bottom: var(--gstore-spacing-12);
+}
+
+.Gstore-buy-steps-faq__header {
+	margin-bottom: var(--gstore-spacing-6);
+}
+
+.Gstore-buy-steps-faq__header h2 {
+	font-size: clamp(var(--gstore-font-size-2xl), 4vw, var(--gstore-font-size-3xl));
+	color: var(--gstore-color-text-primary);
+	margin-bottom: var(--gstore-spacing-2);
+	display: flex;
+	align-items: center;
+	gap: var(--gstore-spacing-3);
+	font-weight: var(--gstore-font-weight-bold);
+}
+
+.Gstore-buy-steps-faq__header h2 i {
+	color: var(--gstore-color-accent);
+}
+
+.Gstore-buy-steps-faq__header p {
+	color: var(--gstore-color-text-secondary);
+	margin-bottom: 0;
+	font-size: var(--gstore-font-size-base);
+	line-height: var(--gstore-line-height-relaxed);
+}
+
+.Gstore-buy-steps-faq__items {
+	display: flex;
+	flex-direction: column;
+	gap: var(--gstore-spacing-3);
+}
+
+.Gstore-buy-steps-faq__item {
+	width: 100%;
+	background: var(--gstore-color-bg-muted);
+	border-radius: var(--gstore-radius-base);
+	border: 1px solid var(--gstore-color-border-light);
+	padding: 0 var(--gstore-spacing-6);
+	box-shadow: none;
+	outline: none;
+}
+
+.Gstore-buy-steps-faq__item:focus,
+.Gstore-buy-steps-faq__item:focus-within {
+	outline: none;
+	box-shadow: none;
+}
+
+.Gstore-buy-steps-faq__item[open] {
+	outline: none;
+	border: 1px solid var(--gstore-color-border-light);
+}
+
+.Gstore-buy-steps-faq__item summary {
+	cursor: pointer;
+	font-weight: var(--gstore-font-weight-semibold);
+	color: var(--gstore-color-text-primary);
+	padding: var(--gstore-spacing-5) 0;
+	font-size: var(--gstore-font-size-lg);
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	list-style: none;
+	outline: none;
+	border: none;
+	line-height: var(--gstore-line-height-normal);
+}
+
+.Gstore-buy-steps-faq__item summary:focus,
+.Gstore-buy-steps-faq__item summary:focus-visible {
+	outline: none;
+	border: none;
+	box-shadow: none;
+}
+
+.Gstore-buy-steps-faq__item[open] summary {
+	outline: none;
+	border: none;
+}
+
+.Gstore-buy-steps-faq__item summary::marker {
+	display: none;
+}
+
+.Gstore-buy-steps-faq__item summary::-webkit-details-marker {
+	display: none;
+}
+
+.Gstore-buy-steps-faq__item summary::after {
+	content: '\f107';
+	font-family: 'Font Awesome 6 Free';
+	font-weight: 900;
+	color: var(--gstore-color-accent);
+	transition: transform 0.2s ease;
+}
+
+.Gstore-buy-steps-faq__item[open] summary::after {
+	transform: rotate(180deg);
+}
+
+.Gstore-buy-steps-faq__item p {
+	padding-bottom: var(--gstore-spacing-5);
+	color: var(--gstore-color-text-secondary);
+	line-height: var(--gstore-line-height-relaxed);
+	font-size: var(--gstore-font-size-base);
+}
+
+/* ========================================
+   CTA SECTION
+   ======================================== */
+
+.Gstore-buy-steps-cta {
+	width: 100%;
+	background: transparent;
+	border: 1px solid var(--gstore-color-border-light);
+	border-radius: var(--gstore-radius-base);
+	padding: var(--gstore-spacing-10);
+	text-align: center;
+	color: var(--gstore-color-text-primary);
+	margin-bottom: var(--gstore-spacing-8);
+}
+
+.Gstore-buy-steps-cta__content h3 {
+	font-size: var(--gstore-font-size-2xl);
+	font-weight: var(--gstore-font-weight-bold);
+	margin: 0 0 var(--gstore-spacing-3) 0;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: var(--gstore-spacing-3);
+}
+
+.Gstore-buy-steps-cta__content p {
+	font-size: var(--gstore-font-size-lg);
+	margin: 0 0 var(--gstore-spacing-6) 0;
+	color: var(--gstore-color-text-secondary);
+}
+
+.Gstore-buy-steps-cta__content .Gstore-btn {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--gstore-spacing-2);
+	background-color: var(--gstore-color-accent);
+	color: var(--gstore-color-text-primary);
+	border-color: var(--gstore-color-accent);
+}
+
+.Gstore-buy-steps-cta__content .Gstore-btn:hover {
+	background-color: var(--gstore-color-accent-dark);
+	border-color: var(--gstore-color-accent-dark);
+}
+
+/* ========================================
+   RESPONSIVE
+   ======================================== */
+
+@media (max-width: 768px) {
+	.Gstore-buy-steps-container {
+		padding: var(--gstore-spacing-6) var(--gstore-container-padding-inline-mobile);
+	}
+
+	.steps-flow {
+		margin-top: 0;
+	}
+
+	.steps-flow__title-main {
+		font-size: var(--gstore-font-size-2xl);
+	}
+
+	.steps-flow__notice {
+		padding: var(--gstore-spacing-3);
+	}
+
+	.steps-flow__item {
+		grid-template-columns: 40px minmax(0, 1fr);
+		gap: var(--gstore-spacing-3);
+	}
+
+	.steps-flow__list::before {
+		left: 20px;
+	}
+
+	.Gstore-buy-steps-observation__content {
+		flex-direction: column;
+		text-align: center;
+	}
+
+	.Gstore-buy-steps-faq {
+		padding: var(--gstore-spacing-6);
+	}
+
+	.Gstore-buy-steps-faq__header h2 {
+		flex-direction: column;
+		gap: var(--gstore-spacing-2);
+	}
+
+	.Gstore-buy-steps-cta {
+		padding: var(--gstore-spacing-6);
+	}
+
+	.Gstore-buy-steps-cta__content h3 {
+		flex-direction: column;
+		gap: var(--gstore-spacing-2);
+	}
+}

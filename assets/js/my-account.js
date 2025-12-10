@@ -316,7 +316,7 @@
 			function updateCounter() {
 				const remaining = maxLength - textarea.value.length;
 				counter.textContent = `${textarea.value.length}/${maxLength}`;
-				counter.style.color = remaining < 20 ? 'var(--gstore-color-warning, #FF8C5C)' : 'var(--gstore-color-text-secondary, #6b6b6b)';
+				counter.style.color = remaining < 20 ? 'var(--gstore-color-warning, #b5a642)' : 'var(--gstore-color-text-secondary, #6b6b6b)';
 			}
 		});
 	}

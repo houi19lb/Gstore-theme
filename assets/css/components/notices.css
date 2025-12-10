@@ -1,0 +1,192 @@
+/**
+ * ==========================================
+ * GSTORE NOTICES & MODALS
+ * ==========================================
+ * Estilização moderna para notificações do WooCommerce
+ * e modais do sistema.
+ */
+
+/* Container de notificações */
+.woocommerce-notices-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 24px;
+    width: 100%;
+}
+
+/* Base para todas as mensagens */
+.woocommerce-message,
+.woocommerce-error,
+.woocommerce-info {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 16px 24px;
+    background: var(--gstore-color-bg-light);
+    border: 1px solid var(--gstore-color-border);
+    border-left-width: 4px;
+    border-radius: var(--gstore-radius-md);
+    box-shadow: var(--gstore-shadow-sm);
+    color: var(--gstore-color-text-primary);
+    font-size: var(--gstore-font-size-sm);
+    line-height: 1.5;
+    position: relative;
+    overflow: hidden;
+    animation: slideIn 0.3s ease-out forwards;
+    list-style: none;
+    margin: 0 !important;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+/* Remover ícones padrão do WooCommerce (pseudo-elementos) */
+.woocommerce-message::before,
+.woocommerce-error::before,
+.woocommerce-info::before {
+    display: none !important;
+}
+
+/* Adicionar ícones via FontAwesome (classes auxiliares) */
+/* Como não podemos alterar o HTML facilmente, usamos pseudo-elementos com content do FontAwesome */
+
+/* Sucesso */
+.woocommerce-message {
+    border-left-color: var(--gstore-color-success);
+}
+
+.woocommerce-message::after {
+    content: "\f058";
+    /* fa-circle-check */
+    font-family: "Font Awesome 6 Free";
+    font-weight: 900;
+    color: var(--gstore-color-success);
+    font-size: var(--gstore-font-size-xl);
+    position: absolute;
+    left: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+/* Erro */
+.woocommerce-error {
+    border-left-color: var(--gstore-color-error);
+}
+
+.woocommerce-error::after {
+    content: "\f06a";
+    /* fa-circle-exclamation */
+    font-family: "Font Awesome 6 Free";
+    font-weight: 900;
+    color: var(--gstore-color-error);
+    font-size: var(--gstore-font-size-xl);
+    position: absolute;
+    left: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+/* Info */
+.woocommerce-info {
+    border-left-color: var(--gstore-color-accent);
+}
+
+.woocommerce-info::after {
+    content: "\f05a";
+    /* fa-circle-info */
+    font-family: "Font Awesome 6 Free";
+    font-weight: 900;
+    color: var(--gstore-color-accent);
+    font-size: var(--gstore-font-size-xl);
+    position: absolute;
+    left: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+/* Ajuste de padding para acomodar o ícone absoluto */
+.woocommerce-message,
+.woocommerce-error,
+.woocommerce-info {
+    padding-left: 56px;
+}
+
+/* Botões dentro das mensagens (ex: "Ver carrinho") */
+.woocommerce-message .button,
+.woocommerce-error .button,
+.woocommerce-info .button {
+    float: right;
+    background: transparent;
+    color: var(--gstore-color-text-primary);
+    border: 1px solid var(--gstore-color-border);
+    padding: 6px 16px;
+    border-radius: var(--gstore-radius-sm);
+    font-weight: var(--gstore-font-weight-semibold);
+    font-size: var(--gstore-font-size-sm);
+    transition: all 0.2s ease;
+    margin-left: auto;
+    order: 2;
+    /* Garante que fique à direita no flex */
+}
+
+.woocommerce-message .button:hover,
+.woocommerce-error .button:hover,
+.woocommerce-info .button:hover {
+    background: var(--gstore-color-bg-muted);
+    border-color: var(--gstore-color-text-primary);
+    color: var(--gstore-color-text-primary);
+}
+
+/* Ajuste para listas de erros */
+.woocommerce-error {
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+.woocommerce-error li {
+    width: 100%;
+}
+
+/* Animação */
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Responsivo */
+@media (max-width: 640px) {
+
+    .woocommerce-message,
+    .woocommerce-error,
+    .woocommerce-info {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+        padding: 16px;
+        padding-left: 48px;
+        /* Mantém espaço para ícone */
+    }
+
+    .woocommerce-message::after,
+    .woocommerce-error::after,
+    .woocommerce-info::after {
+        top: 24px;
+        /* Alinha com a primeira linha de texto */
+    }
+
+    .woocommerce-message .button,
+    .woocommerce-error .button,
+    .woocommerce-info .button {
+        width: 100%;
+        text-align: center;
+        margin-top: 8px;
+        float: none;
+    }
+}
