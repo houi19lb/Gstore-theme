@@ -525,3 +525,6 @@ Se nenhuma das soluções acima funcionar:
 
 **Nota**: Este documento deve ser atualizado sempre que novas alterações forem feitas no código do mini-cart fix.
 
+
+
+

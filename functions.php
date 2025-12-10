@@ -3002,17 +3002,32 @@ function gstore_banner_youtube_shortcode() {
 	
 	$banner_url = wp_get_attachment_url( $banner_id );
 	$banner_alt = esc_attr( get_option( 'gstore_banner_youtube_alt', 'Conheça o conteúdo da CAC Armas no YouTube' ) );
+	$banner_link = esc_url( get_option( 'gstore_banner_youtube_link', '' ) );
 	
 	if ( empty( $banner_url ) ) {
 		return '';
 	}
 	
-	$html = sprintf(
-		'<figure class="wp-block-image alignfull Gstore-home-transition">
-			<img src="%s" alt="%s" />
-		</figure>',
+	$img_tag = sprintf(
+		'<img src="%s" alt="%s" />',
 		esc_url( $banner_url ),
 		$banner_alt
+	);
+	
+	// Se houver link configurado, envolve a imagem em um link
+	if ( ! empty( $banner_link ) ) {
+		$img_tag = sprintf(
+			'<a href="%s" target="_blank" rel="noopener noreferrer">%s</a>',
+			$banner_link,
+			$img_tag
+		);
+	}
+	
+	$html = sprintf(
+		'<figure class="wp-block-image alignfull Gstore-home-transition">
+			%s
+		</figure>',
+		$img_tag
 	);
 	
 	// Remove <br> tags dentro do figure
@@ -3098,6 +3113,11 @@ function gstore_register_theme_settings() {
 		'type' => 'string',
 		'sanitize_callback' => 'sanitize_text_field',
 		'default' => 'Conheça o conteúdo da CAC Armas no YouTube',
+	) );
+	register_setting( 'gstore_settings', 'gstore_banner_youtube_link', array(
+		'type' => 'string',
+		'sanitize_callback' => 'esc_url_raw',
+		'default' => '',
 	) );
 	
 	// Logo do Site
@@ -3192,6 +3212,15 @@ function gstore_render_settings_page() {
 					</th>
 					<td>
 						<?php gstore_render_media_selector( 'gstore_banner_youtube_id', 'gstore_banner_youtube_alt', get_option( 'gstore_banner_youtube_id', 0 ), get_option( 'gstore_banner_youtube_alt', 'Conheça o conteúdo da CAC Armas no YouTube' ) ); ?>
+					</td>
+				</tr>
+				<tr>
+					<th scope="row">
+						<label for="gstore_banner_youtube_link"><?php _e( 'Link do Banner', 'gstore' ); ?></label>
+					</th>
+					<td>
+						<input type="url" id="gstore_banner_youtube_link" name="gstore_banner_youtube_link" value="<?php echo esc_attr( get_option( 'gstore_banner_youtube_link', '' ) ); ?>" class="regular-text" placeholder="https://..." />
+						<p class="description"><?php _e( 'URL para onde o banner deve redirecionar quando clicado. Deixe em branco se não quiser que o banner seja clicável.', 'gstore' ); ?></p>
 					</td>
 				</tr>
 			</table>
@@ -3691,8 +3720,37 @@ function gstore_process_image_placeholders( $content ) {
 	}
 	
 	// Banner YouTube (não precisa de srcset, não é LCP)
-	$banner_youtube_url = $banner_youtube_id > 0 ? wp_get_attachment_url( $banner_youtube_id ) : '';
-	$content = str_replace( '{{gstore_banner_youtube}}', $banner_youtube_url, $content );
+	if ( $banner_youtube_id > 0 ) {
+		$banner_youtube_url = wp_get_attachment_url( $banner_youtube_id );
+		$banner_youtube_alt = esc_attr( get_option( 'gstore_banner_youtube_alt', 'Conheça o conteúdo da CAC Armas no YouTube' ) );
+		$banner_youtube_link = esc_url( get_option( 'gstore_banner_youtube_link', '' ) );
+		
+		$img_tag = sprintf(
+			'<img src="%s" alt="%s" />',
+			esc_url( $banner_youtube_url ),
+			$banner_youtube_alt
+		);
+		
+		// Se houver link configurado, envolve a imagem em um link
+		if ( ! empty( $banner_youtube_link ) ) {
+			$img_tag = sprintf(
+				'<a href="%s" target="_blank" rel="noopener noreferrer">%s</a>',
+				$banner_youtube_link,
+				$img_tag
+			);
+		}
+		
+		// Substitui a tag img completa que contém o placeholder
+		$pattern = '/<img\s+[^>]*src=["\']\{\{gstore_banner_youtube\}\}["\'][^>]*>/is';
+		$content = preg_replace( $pattern, $img_tag, $content );
+		
+		// Fallback: substitui apenas URL se tag não foi encontrada (para compatibilidade)
+		if ( strpos( $content, '{{gstore_banner_youtube}}' ) !== false ) {
+			$content = str_replace( '{{gstore_banner_youtube}}', $banner_youtube_url, $content );
+		}
+	} else {
+		$content = str_replace( '{{gstore_banner_youtube}}', '', $content );
+	}
 	
 	// Placeholders para textos alternativos (para uso em outros contextos)
 	$content = str_replace( '{{gstore_hero_slide_1_alt}}', esc_attr( get_option( 'gstore_hero_slide_1_alt', 'Campanha Excedente Black Week CAC Armas' ) ), $content );

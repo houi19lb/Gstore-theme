@@ -181,3 +181,6 @@ const urlWithTimestamp = apiUrl + (apiUrl.indexOf('?') === -1 ? '?' : '&') + '_t
 - Os delays foram aumentados para lidar com latência maior em produção
 - Headers anti-cache foram melhorados para evitar problemas de cache/CDN
 
+
+
+

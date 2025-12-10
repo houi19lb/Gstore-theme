@@ -352,6 +352,19 @@
 		margin-right: 0;
 		padding-left: 0;
 		padding-right: 0;
+		padding-bottom: 24px !important;
+	}
+	
+	.Gstore-home-products,
+	.Gstore-products-shell {
+		padding-bottom: 24px !important;
+	}
+
+	.Gstore-home-products .Gstore-home-section__header,
+	.Gstore-home-section__header,
+	.Gstore-home-section__header--left {
+		padding-left: 0 !important;
+		padding-right: 0 !important;
 	}
 
 	.Gstore-home-products .Gstore-products-grid {
