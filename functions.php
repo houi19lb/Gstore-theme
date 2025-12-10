@@ -812,8 +812,8 @@ function gstore_enqueue_scripts() {
 		$is_catalog_page = false;
 		if ( function_exists( 'is_page' ) ) {
 			// Páginas estáticas de catálogo
-			$catalog_pages = array( 'catalogo', 'loja', 'ofertas' );
-			$catalog_templates = array( 'page-catalogo', 'page-loja', 'page-ofertas' );
+			$catalog_pages = array( 'catalogo', 'ofertas' );
+			$catalog_templates = array( 'page-catalogo', 'page-ofertas' );
 			
 			$is_catalog_page = is_page( $catalog_pages );
 			
@@ -851,6 +851,15 @@ function gstore_enqueue_scripts() {
 			get_theme_file_uri( 'assets/js/mini-cart-fix.js' ),
 			array( 'jquery', 'wc-settings', 'wp-data' ),
 			'2.0.0',
+			true
+		);
+
+		// Script para gerenciar avisos do WooCommerce (slide-in e auto-dismiss)
+		wp_enqueue_script(
+			'gstore-notices',
+			get_theme_file_uri( 'assets/js/notices.js' ),
+			array(),
+			wp_get_theme()->get( 'Version' ),
 			true
 		);
 
@@ -1603,6 +1612,42 @@ function gstore_cart_body_class( $classes ) {
 	return $classes;
 }
 add_filter( 'body_class', 'gstore_cart_body_class' );
+
+/**
+ * Garante que a mensagem de carrinho vazio seja sempre exibida quando o carrinho estiver vazio.
+ */
+function gstore_ensure_empty_cart_message() {
+	if ( ! function_exists( 'is_cart' ) || ! is_cart() ) {
+		return;
+	}
+
+	if ( ! class_exists( 'WooCommerce' ) || ! WC()->cart ) {
+		return;
+	}
+
+	// Se o carrinho estiver vazio, garante que a mensagem seja exibida
+	if ( WC()->cart->is_empty() ) {
+		// Remove qualquer filtro que possa estar escondendo a mensagem
+		add_filter( 'woocommerce_cart_is_empty', '__return_true', 999 );
+		
+		// Garante que os avisos sejam exibidos
+		if ( function_exists( 'woocommerce_output_all_notices' ) ) {
+			// A mensagem de carrinho vazio já é exibida pelo WooCommerce automaticamente
+			// Mas garantimos que ela não seja escondida
+			add_filter( 'woocommerce_output_all_notices', function( $output ) {
+				if ( WC()->cart->is_empty() ) {
+					// Se não houver mensagem de carrinho vazio, adiciona uma
+					if ( false === strpos( $output, 'cart-empty' ) ) {
+						$empty_message = '<p class="cart-empty woocommerce-info">' . esc_html__( 'Seu carrinho está vazio.', 'woocommerce' ) . '</p>';
+						return $empty_message . $output;
+					}
+				}
+				return $output;
+			}, 5 );
+		}
+	}
+}
+add_action( 'wp', 'gstore_ensure_empty_cart_message', 5 );
 
 /**
  * Gera script de debug para analisar estrutura HTML do carrinho.
@@ -2604,6 +2649,61 @@ function gstore_disable_account_page_cache() {
 	}
 }
 add_action( 'template_redirect', 'gstore_disable_account_page_cache', 0 );
+
+/**
+ * Redireciona a página "Loja" para "Catálogo".
+ * 
+ * Redireciona qualquer acesso à página /loja para /catalogo,
+ * incluindo a página de arquivo do WooCommerce.
+ */
+function gstore_redirect_loja_to_catalogo() {
+	// Verifica se é a página "loja" pelo slug
+	if ( is_page( 'loja' ) ) {
+		$catalogo_url = home_url( '/catalogo' );
+		wp_safe_redirect( $catalogo_url, 301 );
+		exit;
+	}
+	
+	// Verifica se é a página de shop do WooCommerce configurada como "loja"
+	if ( function_exists( 'is_shop' ) && is_shop() ) {
+		$shop_page_id = wc_get_page_id( 'shop' );
+		if ( $shop_page_id ) {
+			$shop_page = get_post( $shop_page_id );
+			if ( $shop_page && 'loja' === $shop_page->post_name ) {
+				$catalogo_url = home_url( '/catalogo' );
+				wp_safe_redirect( $catalogo_url, 301 );
+				exit;
+			}
+		}
+	}
+}
+add_action( 'template_redirect', 'gstore_redirect_loja_to_catalogo', 1 );
+
+/**
+ * Altera a URL do botão "Return to shop" para apontar para o catálogo.
+ * 
+ * @param string $url URL original do botão.
+ * @return string URL do catálogo.
+ */
+function gstore_return_to_shop_url( $url ) {
+	$catalogo_page = get_page_by_path( 'catalogo' );
+	if ( $catalogo_page ) {
+		return get_permalink( $catalogo_page->ID );
+	}
+	return home_url( '/catalogo' );
+}
+add_filter( 'woocommerce_return_to_shop_redirect', 'gstore_return_to_shop_url' );
+
+/**
+ * Altera o texto do botão "Return to shop" para "Retornar para o catálogo".
+ * 
+ * @param string $text Texto original do botão.
+ * @return string Novo texto.
+ */
+function gstore_return_to_shop_text( $text ) {
+	return __( 'Retornar para o catálogo', 'gstore' );
+}
+add_filter( 'woocommerce_return_to_shop_text', 'gstore_return_to_shop_text' );
 
 /**
  * Exibe uma mensagem amigável quando o nonce do formulário expira.
@@ -4021,8 +4121,9 @@ function gstore_get_required_pages() {
 			'slug'        => 'loja',
 			'template'    => 'page-loja',
 			'content'     => '',
-			'description' => 'Página principal da loja WooCommerce com layout de catálogo.',
+			'description' => 'Página principal da loja WooCommerce com layout de catálogo. (REDIRECIONADA PARA CATÁLOGO)',
 			'wc_option'   => 'woocommerce_shop_page_id',
+			'redirect_to' => 'catalogo',
 		),
 		'ofertas' => array(
 			'title'       => 'Ofertas',
@@ -6503,6 +6604,22 @@ add_action( 'wp_head', function() {
 		display: flex !important;
 		justify-content: center !important;
 		max-width: none !important;
+	}
+	
+	/* Espaçamento para entry-content quando carrinho está vazio */
+	body.woocommerce-cart .entry-content:has(.cart-empty),
+	body.woocommerce-cart .wp-block-post-content:has(.cart-empty),
+	body.woocommerce-cart .entry-content:has(.return-to-shop),
+	body.woocommerce-cart .wp-block-post-content:has(.return-to-shop) {
+		padding: 48px 20px !important;
+		margin: 0 auto !important;
+		max-width: 1280px !important;
+		box-sizing: border-box !important;
+		display: flex !important;
+		flex-direction: column !important;
+		align-items: center !important;
+		justify-content: center !important;
+		min-height: 400px !important;
 	}
 	
 	/* Reset is-layout-constrained - NÃO afeta o container */

@@ -190,3 +190,85 @@
         float: none;
     }
 }
+
+/* ==========================================
+   WOOCOMMERCE BLOCKS NOTICES
+   ==========================================
+   Estilização para avisos do WooCommerce Blocks
+   com animações de slide-in e auto-dismiss
+ */
+
+/* Base para avisos do WooCommerce Blocks */
+.wc-block-components-notice-banner {
+    position: relative;
+    z-index: 1100;
+    transition: all 0.3s ease-out;
+    opacity: 0;
+    transform: translateY(-100px);
+    pointer-events: none;
+}
+
+/* Estado inicial - escondido */
+.wc-block-components-notice-banner:not(.gstore-notice-animated) {
+    opacity: 0;
+    transform: translateY(-100px);
+}
+
+/* Animação de entrada - slide-in */
+.wc-block-components-notice-banner.gstore-notice-animated.gstore-notice-slide-in {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0) !important;
+    pointer-events: auto;
+}
+
+/* Animação de saída - slide-out */
+.wc-block-components-notice-banner.gstore-notice-animated.gstore-notice-slide-out {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-100px) !important;
+    pointer-events: none;
+}
+
+/* Estilos base para avisos posicionados */
+.wc-block-components-notice-banner.gstore-notice-animated {
+    border-radius: 8px;
+    padding: 14px 18px;
+    font-size: var(--gstore-font-size-sm, 0.875rem);
+    line-height: 1.5;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    cursor: pointer;
+}
+
+/* Tipos de aviso */
+.wc-block-components-notice-banner.is-success {
+    background: var(--gstore-color-success-bg, #d4edda);
+    border: 1px solid var(--gstore-color-success-border, #c3e6cb);
+    color: var(--gstore-color-success-text, #155724);
+}
+
+.wc-block-components-notice-banner.is-error {
+    background: var(--gstore-color-error-bg, #f8d7da);
+    border: 1px solid var(--gstore-color-error-border, #f5c6cb);
+    color: var(--gstore-color-error-text, #721c24);
+}
+
+.wc-block-components-notice-banner.is-info {
+    background: var(--gstore-color-info-bg, #d1ecf1);
+    border: 1px solid var(--gstore-color-info-border, #bee5eb);
+    color: var(--gstore-color-info-text, #0c5460);
+}
+
+/* Hover - pausa o auto-dismiss */
+.wc-block-components-notice-banner.gstore-notice-animated:hover {
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+    transform: translateX(-50%) translateY(0) scale(1.02) !important;
+}
+
+/* Responsivo */
+@media (max-width: 640px) {
+    .wc-block-components-notice-banner.gstore-notice-animated {
+        max-width: calc(100% - 16px);
+        width: calc(100% - 16px);
+        font-size: var(--gstore-font-size-xs, 0.75rem);
+        padding: 12px 16px;
+    }
+}

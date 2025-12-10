@@ -5759,6 +5759,8 @@ main.Gstore-support-shell .wp-block-group.is-layout-constrained {
 	width: 100%;
 	min-height: 100vh;
 	padding: clamp(24px, 4vw, 64px) clamp(16px, 4vw, 48px);
+	position: relative;
+	z-index: 1;
 }
 
 .Gstore-catalog-shell--light {
@@ -5794,6 +5796,8 @@ body:has(.Gstore-catalog-shell--light) main {
 	align-items: center;
 	flex-wrap: wrap;
 	gap: 16px;
+	position: relative;
+	z-index: 1;
 }
 
 .Gstore-catalog-header__actions {
@@ -6388,6 +6392,36 @@ body:has(.Gstore-catalog-shell--light) main {
 
 	.Gstore-catalog-filters-toggle {
 		order: 1;
+	}
+
+	/* Remove completamente o espaçamento superior do layout do catálogo no mobile */
+	/* O separador do header já fornece o espaçamento visual necessário */
+	.Gstore-catalog-layout {
+		margin-top: 0 !important;
+		padding-top: 0 !important;
+	}
+
+	.Gstore-catalog-layout.is-layout-flex,
+	.Gstore-catalog-layout.wp-container-core-columns-is-layout-08c01c1c,
+	.Gstore-catalog-layout[style*="blockGap"] {
+		--wp--style--block-gap: 0 !important;
+		gap: 0px !important;
+		margin-top: 0 !important;
+		padding-top: 0 !important;
+	}
+
+	/* Remove espaçamento do primeiro elemento filho no mobile */
+	.Gstore-catalog-layout > *:first-child {
+		margin-top: 0 !important;
+		padding-top: 0 !important;
+	}
+
+	/* Remove qualquer espaçamento adicional que possa vir do WordPress */
+	.Gstore-catalog-header + .Gstore-catalog-layout,
+	.Gstore-catalog-header ~ .Gstore-catalog-layout,
+	.alignwide.Gstore-catalog-layout {
+		margin-top: 0 !important;
+		padding-top: 0 !important;
 	}
 }
 

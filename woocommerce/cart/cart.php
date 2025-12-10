@@ -11,8 +11,9 @@ defined( 'ABSPATH' ) || exit;
 do_action( 'woocommerce_before_cart' );
 
 $cart_url     = wc_get_cart_url();
-$shop_url     = wc_get_page_permalink( 'shop' );
-$shop_url     = $shop_url ? $shop_url : home_url( '/' );
+// Redireciona para catálogo ao invés de loja
+$catalogo_page = get_page_by_path( 'catalogo' );
+$shop_url     = $catalogo_page ? get_permalink( $catalogo_page->ID ) : ( wc_get_page_permalink( 'shop' ) ?: home_url( '/catalogo' ) );
 $att_page     = get_page_by_path( 'atendimento' );
 $att_page_id  = $att_page instanceof WP_Post ? $att_page->ID : 0;
 $att_link     = $att_page_id ? get_permalink( $att_page_id ) : $shop_url;

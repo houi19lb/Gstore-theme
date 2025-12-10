@@ -905,10 +905,30 @@ body.gstore-cart-template main:has(.cart-empty) {
 	min-height: 400px;
 }
 
+/* Espaçamento para entry-content quando carrinho está vazio */
+body.woocommerce-cart .entry-content:has(.cart-empty),
+body.gstore-cart-template .entry-content:has(.cart-empty),
+body.woocommerce-cart .wp-block-post-content:has(.cart-empty),
+body.gstore-cart-template .wp-block-post-content:has(.cart-empty) {
+	padding: 48px var(--gstore-cart-padding-inline) !important;
+	margin: 0 auto;
+	max-width: var(--gstore-cart-container-width);
+	box-sizing: border-box;
+}
+
+/* Garante que a mensagem de carrinho vazio seja sempre visível */
+body.woocommerce-cart .cart-empty.woocommerce-info,
+body.gstore-cart-template .cart-empty.woocommerce-info {
+	display: block !important;
+	visibility: visible !important;
+	opacity: 1 !important;
+}
+
 /* Botão "Return to shop" quando carrinho está vazio */
 body.woocommerce-cart .return-to-shop,
 body.gstore-cart-template .return-to-shop {
-	margin-top: 24px;
+	margin-top: 32px;
+	margin-bottom: 24px;
 }
 
 body.woocommerce-cart .return-to-shop .button,
