@@ -458,6 +458,175 @@ function gstore_fix_back_forward_cache() {
 add_action( 'wp_footer', 'gstore_fix_back_forward_cache', 1 );
 
 /**
+ * Remove preload automático do WordPress para o style.css do tema filho.
+ * 
+ * O WordPress 5.8+ adiciona automaticamente um preload para o stylesheet do tema,
+ * mas isso pode causar avisos no console se o CSS não for usado imediatamente.
+ * Como o CSS está sendo enfileirado corretamente, o preload não é necessário.
+ */
+function gstore_remove_automatic_stylesheet_preload( $hints, $relation_type ) {
+	// Remove apenas preload do stylesheet do tema filho
+	if ( 'preload' === $relation_type ) {
+		$stylesheet_uri = get_stylesheet_uri();
+		foreach ( $hints as $key => $hint ) {
+			if ( isset( $hint['href'] ) && $hint['href'] === $stylesheet_uri ) {
+				unset( $hints[ $key ] );
+			}
+		}
+	}
+	return $hints;
+}
+add_filter( 'wp_resource_hints', 'gstore_remove_automatic_stylesheet_preload', 10, 2 );
+
+/**
+ * Previne conflitos de múltiplas instâncias do React e problemas de acessibilidade.
+ * 
+ * 1. O erro "Failed to execute 'removeChild'" geralmente ocorre quando há
+ *    múltiplas instâncias do React ou conflitos entre React e outras bibliotecas.
+ * 
+ * 2. O problema de aria-hidden ocorre quando o WooCommerce define aria-hidden="true"
+ *    no wp-site-blocks enquanto o botão do mini-cart ainda tem foco.
+ */
+function gstore_prevent_react_conflicts() {
+	?>
+	<script id="gstore-react-conflict-fix">
+	(function() {
+		'use strict';
+		
+		// Previne erros de removeChild do React de forma segura
+		// Apenas intercepta chamadas que falhariam
+		var originalRemoveChild = Node.prototype.removeChild;
+		Node.prototype.removeChild = function(child) {
+			// Verifica se child é válido
+			if (!child) {
+				return child;
+			}
+			
+			try {
+				// Verifica se o nó ainda está no DOM e se é realmente filho
+				if (this.contains && this.contains(child)) {
+					// Verifica se o nó ainda tem um parent (pode ter sido removido por outro processo)
+					if (child.parentNode === this) {
+						return originalRemoveChild.call(this, child);
+					} else if (child.parentNode) {
+						// O nó tem um parent diferente, não é filho deste nó
+						// Retorna sem erro
+						return child;
+					} else {
+						// O nó não tem parent, já foi removido
+						// Retorna sem erro
+						return child;
+					}
+				}
+				// Se não for filho, retorna o nó sem erro
+				return child;
+			} catch (e) {
+				// Se houver erro, apenas retorna o nó sem lançar exceção
+				// Isso previne que o erro quebre a renderização do React
+				if (window.location.hostname.includes('localhost') || window.location.hostname.includes('127.0.0.1')) {
+					console.warn('[Gstore] Erro ao remover nó (prevenido):', e.message);
+				}
+				return child;
+			}
+		};
+		
+		// Corrige problema de aria-hidden no mini-cart
+		// Quando o drawer do mini-cart é aberto, o WooCommerce define aria-hidden="true"
+		// no wp-site-blocks, mas o botão do mini-cart ainda pode ter foco
+		function fixMiniCartAriaHidden() {
+			var wpSiteBlocks = document.querySelector('.wp-site-blocks');
+			var miniCartButton = document.querySelector('.wc-block-mini-cart__button');
+			var miniCartDrawer = document.querySelector('.wc-block-mini-cart__drawer');
+			
+			if (!wpSiteBlocks || !miniCartButton || !miniCartDrawer) {
+				return;
+			}
+			
+			// Intercepta quando o WooCommerce tenta definir aria-hidden="true"
+			// Verifica se há elementos focáveis antes de aplicar
+			var originalSetAttribute = Element.prototype.setAttribute;
+			Element.prototype.setAttribute = function(name, value) {
+				// Se está tentando definir aria-hidden="true" no wp-site-blocks
+				if (name === 'aria-hidden' && value === 'true' && this === wpSiteBlocks) {
+					var activeElement = document.activeElement;
+					
+					// Verifica se há um elemento focável dentro do wp-site-blocks
+					// que não está dentro do drawer do mini-cart
+					var focusableElements = wpSiteBlocks.querySelectorAll(
+						'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+					);
+					
+					var hasFocusedElement = false;
+					for (var i = 0; i < focusableElements.length; i++) {
+						var el = focusableElements[i];
+						// Ignora elementos dentro do drawer (eles devem estar hidden)
+						if (!el.closest('.wc-block-mini-cart__drawer')) {
+							if (el === activeElement || el.contains(activeElement)) {
+								hasFocusedElement = true;
+								break;
+							}
+						}
+					}
+					
+					// Se há um elemento focável, não aplica aria-hidden no wp-site-blocks
+					// Aplica apenas no conteúdo principal (não no header)
+					if (hasFocusedElement) {
+						var mainContent = document.querySelector('main:not(.Gstore-header)');
+						if (mainContent && !mainContent.closest('.wc-block-mini-cart__drawer')) {
+							mainContent.setAttribute('aria-hidden', 'true');
+						}
+						// Não aplica no wp-site-blocks
+						return;
+					}
+				}
+				
+				// Para outros casos, usa o comportamento padrão
+				return originalSetAttribute.call(this, name, value);
+			};
+			
+			// Observa mudanças no drawer do mini-cart para limpar aria-hidden quando fechar
+			var drawerObserver = new MutationObserver(function(mutations) {
+				mutations.forEach(function(mutation) {
+					if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
+						var isDrawerOpen = miniCartDrawer.classList.contains('is-open');
+						
+						// Quando o drawer fecha, remove aria-hidden do conteúdo principal
+						if (!isDrawerOpen) {
+							var mainContent = document.querySelector('main[aria-hidden="true"]');
+							if (mainContent) {
+								mainContent.removeAttribute('aria-hidden');
+							}
+							// Também remove do wp-site-blocks se estiver definido
+							if (wpSiteBlocks.getAttribute('aria-hidden') === 'true') {
+								wpSiteBlocks.removeAttribute('aria-hidden');
+							}
+						}
+					}
+				});
+			});
+			
+			drawerObserver.observe(miniCartDrawer, {
+				attributes: true,
+				attributeFilter: ['class']
+			});
+		}
+		
+		// Inicializa quando o DOM estiver pronto
+		if (document.readyState === 'loading') {
+			document.addEventListener('DOMContentLoaded', fixMiniCartAriaHidden);
+		} else {
+			fixMiniCartAriaHidden();
+		}
+		
+		// Também tenta após um pequeno delay para garantir que o WooCommerce carregou
+		setTimeout(fixMiniCartAriaHidden, 1000);
+	})();
+	</script>
+	<?php
+}
+add_action( 'wp_head', 'gstore_prevent_react_conflicts', 999 );
+
+/**
  * Enfileira estilos do tema pai e do child theme.
  * 
  * Nova estrutura modular:
@@ -675,13 +844,25 @@ function gstore_enqueue_scripts() {
 			);
 		}
 
-		// Script para corrigir sincronização do Mini Cart Block
+		// Script para sincronização do Mini Cart Block (versão simplificada)
+		// Dependências: wc-settings (fornece storeApiNonce), wp-data (fornece wp.data store)
 		wp_enqueue_script(
 			'gstore-mini-cart-fix',
 			get_theme_file_uri( 'assets/js/mini-cart-fix.js' ),
-			array( 'jquery' ),
-			wp_get_theme()->get( 'Version' ),
+			array( 'jquery', 'wc-settings', 'wp-data' ),
+			'2.0.0',
 			true
+		);
+
+		// Localizar nonce e configurações como fallback para o mini-cart fix
+		wp_localize_script(
+			'gstore-mini-cart-fix',
+			'gstoreMiniCart',
+			array(
+				'storeApiNonce' => wp_create_nonce( 'wc_store_api' ),
+				'cartEndpoint'  => rest_url( 'wc/store/v1/cart' ),
+				'debug'         => defined( 'WP_DEBUG' ) && WP_DEBUG,
+			)
 		);
 	}
 
@@ -743,7 +924,9 @@ add_action( 'init', 'gstore_ensure_ajax_add_to_cart_enabled', 5 );
  * Melhora os fragmentos do carrinho para incluir mais elementos do mini-cart.
  * 
  * Adiciona fragmentos adicionais para garantir que o mini-cart seja atualizado
- * corretamente após adicionar produtos ao carrinho.
+ * corretamente após adicionar OU remover produtos do carrinho.
+ * 
+ * IMPORTANTE: Este filtro é chamado tanto em added_to_cart quanto em removed_from_cart.
  */
 function gstore_enhance_cart_fragments( $fragments ) {
 	if ( ! class_exists( 'WooCommerce' ) ) {
@@ -782,6 +965,60 @@ function gstore_enhance_cart_fragments( $fragments ) {
 add_filter( 'woocommerce_add_to_cart_fragments', 'gstore_enhance_cart_fragments', 20 );
 
 /**
+ * Garante que os fragmentos sejam atualizados também na remoção de produtos.
+ * 
+ * O WooCommerce usa o mesmo filtro para adição e remoção, mas esta função
+ * garante que os eventos sejam disparados corretamente e que os fragmentos
+ * sejam sempre retornados, especialmente em ambientes de produção com cache.
+ */
+function gstore_ensure_removal_fragments() {
+	if ( ! class_exists( 'WooCommerce' ) ) {
+		return;
+	}
+
+	// Hook específico para garantir fragmentos após remoção
+	add_action( 'woocommerce_cart_item_removed', function( $cart_item_key, $cart ) {
+		// Força atualização dos fragmentos após remoção
+		// O WooCommerce já faz isso automaticamente, mas garantimos que funcione
+		// Em produção, pode haver problemas de timing ou cache
+		do_action( 'gstore_cart_item_removed', $cart_item_key, $cart );
+	}, 10, 2 );
+
+	// Garante que fragmentos sejam sempre retornados mesmo se o filtro padrão falhar
+	add_filter( 'woocommerce_add_to_cart_fragments', function( $fragments ) {
+		// Verifica se estamos em uma requisição de remoção
+		// O WooCommerce não diferencia claramente, então sempre garantimos fragmentos atualizados
+		if ( ! class_exists( 'WooCommerce' ) || ! WC()->cart ) {
+			return $fragments;
+		}
+
+		// Força atualização dos fragmentos do mini-cart mesmo se não foram incluídos
+		$cart_count = WC()->cart->get_cart_contents_count();
+		
+		// Garante que o fragmento do badge sempre existe e está atualizado
+		ob_start();
+		?>
+		<span class="wc-block-mini-cart__badge">
+			<?php echo esc_html( $cart_count ); ?>
+		</span>
+		<?php
+		$fragments['.wc-block-mini-cart__badge'] = ob_get_clean();
+
+		// Garante que o fragmento customizado sempre existe e está atualizado
+		ob_start();
+		?>
+		<span class="Gstore-cart-count" aria-label="<?php echo esc_attr( sprintf( _n( '%d item no carrinho', '%d itens no carrinho', $cart_count, 'gstore' ), $cart_count ) ); ?>">
+			<?php echo esc_html( $cart_count ); ?>
+		</span>
+		<?php
+		$fragments['.Gstore-cart-count'] = ob_get_clean();
+
+		return $fragments;
+	}, 30 ); // Prioridade alta para garantir que seja executado após outros filtros
+}
+add_action( 'init', 'gstore_ensure_removal_fragments', 15 );
+
+/**
  * Garante que os eventos WooCommerce sejam disparados corretamente.
  * 
  * Adiciona suporte adicional para garantir que o evento added_to_cart
@@ -797,6 +1034,94 @@ function gstore_ensure_cart_events() {
 	add_filter( 'woocommerce_add_to_cart_redirect', '__return_false' );
 }
 add_action( 'init', 'gstore_ensure_cart_events', 10 );
+
+/**
+ * Adiciona headers HTTP para evitar cache em requisições AJAX do carrinho.
+ * 
+ * Isso é crítico em ambientes de produção onde cache pode causar
+ * problemas de sincronização entre o carrinho e o mini-cart.
+ */
+function gstore_prevent_cart_ajax_cache() {
+	// Só adiciona headers em requisições AJAX relacionadas ao carrinho
+	if ( ! wp_doing_ajax() && ! isset( $_REQUEST['wc-ajax'] ) ) {
+		return;
+	}
+
+	$action = isset( $_REQUEST['action'] ) ? $_REQUEST['action'] : '';
+	$wc_ajax = isset( $_REQUEST['wc-ajax'] ) ? $_REQUEST['wc-ajax'] : '';
+	$is_cart_action = (
+		strpos( $action, 'cart' ) !== false ||
+		strpos( $action, 'woocommerce' ) !== false ||
+		strpos( $wc_ajax, 'cart' ) !== false ||
+		strpos( $wc_ajax, 'remove' ) !== false ||
+		strpos( $wc_ajax, 'update' ) !== false ||
+		isset( $_REQUEST['wc-ajax'] )
+	);
+
+	if ( $is_cart_action && ! headers_sent() ) {
+		// Headers para evitar cache em requisições AJAX do carrinho
+		// Crítico em produção com CDN/cache
+		header( 'Cache-Control: no-cache, no-store, must-revalidate, max-age=0, private' );
+		header( 'Pragma: no-cache' );
+		header( 'Expires: 0' );
+		header( 'X-Accel-Buffering: no' ); // Nginx buffering
+		header( 'Vary: Cookie' ); // Garante que cache varia por cookie/sessão
+		
+		// Garante que sessões sejam mantidas
+		// Força o uso de cookies para sessões
+		ini_set( 'session.use_cookies', '1' );
+		ini_set( 'session.use_only_cookies', '1' );
+		
+		// Adiciona header para evitar cache em proxies/CDN
+		header( 'X-Cache-Control: no-cache' );
+	}
+}
+add_action( 'wp_ajax_woocommerce_add_to_cart', 'gstore_prevent_cart_ajax_cache', 1 );
+add_action( 'wp_ajax_nopriv_woocommerce_add_to_cart', 'gstore_prevent_cart_ajax_cache', 1 );
+add_action( 'wp_ajax_woocommerce_remove_from_cart', 'gstore_prevent_cart_ajax_cache', 1 );
+add_action( 'wp_ajax_nopriv_woocommerce_remove_from_cart', 'gstore_prevent_cart_ajax_cache', 1 );
+add_action( 'wp_ajax_woocommerce_update_cart', 'gstore_prevent_cart_ajax_cache', 1 );
+add_action( 'wp_ajax_nopriv_woocommerce_update_cart', 'gstore_prevent_cart_ajax_cache', 1 );
+add_action( 'wc_ajax_add_to_cart', 'gstore_prevent_cart_ajax_cache', 1 );
+add_action( 'wc_ajax_remove_from_cart', 'gstore_prevent_cart_ajax_cache', 1 );
+add_action( 'wc_ajax_update_cart', 'gstore_prevent_cart_ajax_cache', 1 );
+
+/**
+ * Garante que fragmentos sejam sempre retornados após remoção de item.
+ * 
+ * Hook específico para wc_ajax_remove_from_cart para garantir que fragmentos
+ * sejam sempre incluídos na resposta, mesmo em ambientes com cache ou problemas de timing.
+ */
+function gstore_force_fragments_on_removal() {
+	if ( ! class_exists( 'WooCommerce' ) || ! WC()->cart ) {
+		return;
+	}
+
+	// Força atualização dos fragmentos após processar remoção
+	add_filter( 'woocommerce_add_to_cart_fragments', function( $fragments ) {
+		$cart_count = WC()->cart->get_cart_contents_count();
+		
+		// Sempre garante que os fragmentos críticos existam
+		ob_start();
+		?>
+		<span class="wc-block-mini-cart__badge">
+			<?php echo esc_html( $cart_count ); ?>
+		</span>
+		<?php
+		$fragments['.wc-block-mini-cart__badge'] = ob_get_clean();
+
+		ob_start();
+		?>
+		<span class="Gstore-cart-count" aria-label="<?php echo esc_attr( sprintf( _n( '%d item no carrinho', '%d itens no carrinho', $cart_count, 'gstore' ), $cart_count ) ); ?>">
+			<?php echo esc_html( $cart_count ); ?>
+		</span>
+		<?php
+		$fragments['.Gstore-cart-count'] = ob_get_clean();
+
+		return $fragments;
+	}, 999 ); // Prioridade muito alta para garantir execução
+}
+add_action( 'wc_ajax_remove_from_cart', 'gstore_force_fragments_on_removal', 5 );
 
 /**
  * Remove o breadcrumb padrão do WooCommerce.
