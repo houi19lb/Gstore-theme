@@ -4821,6 +4821,12 @@ main.Gstore-support-shell .wp-block-group.is-layout-constrained {
 	margin: 0 !important;
 }
 
+/* Logo com imagem (wp-block-site-logo) */
+.Gstore-header__logo.wp-block-site-logo {
+	grid-area: logo;
+	margin: 0 !important;
+}
+
 .Gstore-header__logo-text a {
 	display: flex;
 	align-items: center;

@@ -1650,6 +1650,34 @@ function gstore_ensure_empty_cart_message() {
 add_action( 'wp', 'gstore_ensure_empty_cart_message', 5 );
 
 /**
+ * Remove o wrapper de notices quando não há notices para exibir.
+ * Evita espaços vazios na página quando não há mensagens.
+ *
+ * @param string $output HTML dos notices.
+ * @return string
+ */
+function gstore_hide_empty_notices_wrapper( $output ) {
+	// Se o output estiver vazio ou contiver apenas o wrapper vazio, retorna string vazia
+	if ( empty( trim( $output ) ) ) {
+		return '';
+	}
+
+	// Remove o wrapper se não contiver nenhum notice real
+	// Verifica se há mensagens, erros ou informações
+	if ( 
+		false === strpos( $output, 'woocommerce-message' ) &&
+		false === strpos( $output, 'woocommerce-error' ) &&
+		false === strpos( $output, 'woocommerce-info' ) &&
+		false === strpos( $output, 'wc-block-components-notice' )
+	) {
+		return '';
+	}
+
+	return $output;
+}
+add_filter( 'woocommerce_output_all_notices', 'gstore_hide_empty_notices_wrapper', 999 );
+
+/**
  * Gera script de debug para analisar estrutura HTML do carrinho.
  */
 function gstore_get_cart_debug_script() {
@@ -2815,6 +2843,18 @@ function gstore_get_image_url( $attachment_id, $size = 'full' ) {
 		return '';
 	}
 
+	// Valida se o attachment existe
+	$attachment = get_post( $attachment_id );
+	if ( ! $attachment || 'attachment' !== $attachment->post_type ) {
+		return '';
+	}
+
+	// Valida se é uma imagem
+	$mime_type = get_post_mime_type( $attachment_id );
+	if ( ! $mime_type || strpos( $mime_type, 'image/' ) !== 0 ) {
+		return '';
+	}
+
 	// Para banners (tamanho 'full'), garante que sempre use a imagem original
 	if ( 'full' === $size ) {
 		$image_url = wp_get_attachment_image_url( $attachment_id, 'full' );
@@ -3603,6 +3643,11 @@ function gstore_custom_site_logo_block( $block_content, $block ) {
 		return $block_content;
 	}
 	
+	// Evita processamento duplicado - se já contém a marca de logo customizada
+	if ( strpos( $block_content, 'data-gstore-logo="1"' ) !== false ) {
+		return $block_content;
+	}
+	
 	// Obtém a logo configurada
 	$logo_id = gstore_get_logo_id();
 	
@@ -3610,12 +3655,13 @@ function gstore_custom_site_logo_block( $block_content, $block ) {
 		$logo_url = gstore_get_image_url( $logo_id, 'full' );
 		$logo_alt = get_option( 'gstore_logo_alt', 'Logo CAC Armas' );
 		
-		if ( $logo_url ) {
+		// Valida se a URL é válida
+		if ( $logo_url && filter_var( $logo_url, FILTER_VALIDATE_URL ) ) {
 			// Substitui o conteúdo do bloco pela logo configurada
 			$home_url = esc_url( home_url( '/' ) );
 			$site_name = esc_attr( get_bloginfo( 'name' ) );
 			$logo_html = sprintf(
-				'<div class="wp-block-site-logo Gstore-header__logo"><a href="%s" rel="home" aria-label="%s"><img src="%s" alt="%s" style="max-height: 36px; max-width: 180px; width: auto; height: auto;" /></a></div>',
+				'<div class="wp-block-site-logo Gstore-header__logo" data-gstore-logo="1" style="grid-area: logo;"><a href="%s" rel="home" aria-label="%s"><img src="%s" alt="%s" style="max-height: 36px; max-width: 180px; width: auto; height: auto;" loading="eager" /></a></div>',
 				$home_url,
 				$site_name,
 				esc_url( $logo_url ),
@@ -3631,12 +3677,39 @@ function gstore_custom_site_logo_block( $block_content, $block ) {
 add_filter( 'render_block', 'gstore_custom_site_logo_block', 10, 2 );
 
 /**
+ * Filtro para garantir que o logo do tema tenha prioridade sobre o Customizer.
+ * 
+ * Quando há uma logo configurada no tema, desabilita o site logo do Customizer.
+ */
+add_filter( 'theme_mod_custom_logo', 'gstore_override_customizer_logo', 10, 1 );
+function gstore_override_customizer_logo( $logo_id ) {
+	$theme_logo_id = gstore_get_logo_id();
+	
+	// Se há uma logo configurada no tema, usa ela ao invés do Customizer
+	if ( $theme_logo_id > 0 ) {
+		return $theme_logo_id;
+	}
+	
+	return $logo_id;
+}
+
+/**
  * Substitui o link de texto da logo pela imagem configurada no header HTML.
  * 
  * @param string $content Conteúdo do template part.
  * @return string
  */
 function gstore_replace_header_logo_html( $content ) {
+	// Evita processamento duplicado - se já contém a marca de logo customizada
+	if ( strpos( $content, 'data-gstore-logo="1"' ) !== false ) {
+		return $content;
+	}
+	
+	// Evita processar se já contém uma imagem de logo
+	if ( preg_match( '/<a[^>]*class="[^"]*Gstore-header__logo[^"]*"[^>]*>.*?<img[^>]*>/is', $content ) ) {
+		return $content;
+	}
+	
 	// Obtém a logo configurada
 	$logo_id = gstore_get_logo_id();
 	
@@ -3647,43 +3720,56 @@ function gstore_replace_header_logo_html( $content ) {
 	$logo_url = gstore_get_image_url( $logo_id, 'full' );
 	$logo_alt = get_option( 'gstore_logo_alt', 'Logo CAC Armas' );
 	
-	if ( ! $logo_url ) {
+	// Valida se a URL é válida
+	if ( ! $logo_url || ! filter_var( $logo_url, FILTER_VALIDATE_URL ) ) {
 		return $content;
 	}
 	
 	$home_url = esc_url( home_url( '/' ) );
 	$site_name = esc_attr( get_bloginfo( 'name' ) );
 	
-	// HTML da logo com imagem
+	// HTML da logo com imagem (para substituição via regex)
 	$logo_html = sprintf(
-		'<a href="%s" class="Gstore-header__logo" rel="home" aria-label="%s"><img src="%s" alt="%s" style="max-height: 36px; max-width: 180px; width: auto; height: auto;" /></a>',
+		'<div class="wp-block-site-logo Gstore-header__logo" data-gstore-logo="1" style="grid-area: logo;"><a href="%s" rel="home" aria-label="%s"><img src="%s" alt="%s" style="max-height: 36px; max-width: 180px; width: auto; height: auto;" loading="eager" /></a></div>',
 		$home_url,
 		$site_name,
 		esc_url( $logo_url ),
 		esc_attr( $logo_alt )
 	);
 	
-	// Padrão 1: Link com classe Gstore-header__logo
-	// Captura: <a href="/" class="Gstore-header__logo">ARMA<span class="Gstore-logo-highlight">STORE</span></a>
-	$pattern1 = '/<a\s+[^>]*class="[^"]*Gstore-header__logo[^"]*"[^>]*>.*?<\/a>/is';
-	$content = preg_replace( $pattern1, $logo_html, $content );
+	// Padrão 1: Substitui apenas o bloco site-logo renderizado pelo WordPress
+	// Captura: <div class="wp-block-site-logo...">...</div> (bloco completo)
+	$pattern1 = '/<div\s+[^>]*class="[^"]*wp-block-site-logo[^"]*"[^>]*>.*?<\/div>/is';
+	$replacement1 = '<div class="wp-block-site-logo Gstore-header__logo" data-gstore-logo="1" style="grid-area: logo;"><a href="' . $home_url . '" rel="home" aria-label="' . $site_name . '"><img src="' . esc_url( $logo_url ) . '" alt="' . esc_attr( $logo_alt ) . '" style="max-height: 36px; max-width: 180px; width: auto; height: auto;" loading="eager" /></a></div>';
+	$content = preg_replace( $pattern1, $replacement1, $content, 1 );
 	
-	// Padrão 2: Link com rel="home" que contém "CAC ARMAS" ou "CACARMAS" (sem classe específica)
-	// Captura: <a href="..." rel="home">CAC ARMAS</a>
-	$pattern2 = '/<a\s+[^>]*rel=["\']home["\'][^>]*>.*?ARMA.*?STORE.*?<\/a>/is';
-	$content = preg_replace( $pattern2, $logo_html, $content );
-	
-	// Padrão 3: Link com rel="home" que aponta para a home (mais genérico)
-	// Só substitui se estiver dentro do header para evitar substituir outros links
-	if ( strpos( $content, 'Gstore-header' ) !== false || strpos( $content, 'Gstore-header__logo' ) !== false ) {
-		$pattern3 = '/<a\s+[^>]*href=["\']([^"\']*\/|' . preg_quote( $home_url, '/' ) . ')[^"\']*["\'][^>]*rel=["\']home["\'][^>]*>CAC\s*ARMAS<\/a>/is';
-		$content = preg_replace( $pattern3, $logo_html, $content );
+	// Padrão 2: Link com classe Gstore-header__logo (mas sem imagem) - apenas dentro do header content
+	// Captura: <a href="/" class="Gstore-header__logo">TEXTO</a> (sem img dentro)
+	// Limita a busca apenas dentro do Gstore-header__content para evitar capturar elementos errados
+	if ( preg_match( '/(<div[^>]*class="[^"]*Gstore-header__content[^"]*"[^>]*>)(.*?)(<\/div>)/is', $content, $header_content_match ) ) {
+		$header_content = $header_content_match[2];
+		// Padrão que captura o link completo incluindo elementos filhos (span, etc)
+		$pattern2 = '/<a\s+[^>]*class="[^"]*Gstore-header__logo[^"]*"[^>]*>(?!.*?<img)(?:[^<]|<(?!\/a>))*?<\/a>/is';
+		$header_content_new = preg_replace( $pattern2, $logo_html, $header_content, 1 );
+		if ( $header_content_new !== $header_content ) {
+			$content = str_replace( $header_content_match[0], $header_content_match[1] . $header_content_new . $header_content_match[3], $content );
+		}
+	} else {
+		// Padrão 2b: Se não encontrar Gstore-header__content, procura diretamente no header
+		// Captura: <a href="/" class="Gstore-header__logo">ARMA<span>STORE</span></a> (sem img dentro)
+		// Apenas dentro de elementos com classe Gstore-header para evitar substituir outros links
+		if ( strpos( $content, 'Gstore-header' ) !== false ) {
+			// Padrão que captura o link completo incluindo elementos filhos (span, etc)
+			$pattern2b = '/<a\s+[^>]*class="[^"]*Gstore-header__logo[^"]*"[^>]*>(?!.*?<img)(?:[^<]|<(?!\/a>))*?<\/a>/is';
+			$content = preg_replace( $pattern2b, $logo_html, $content, 1 );
+		}
 	}
 	
 	return $content;
 }
+// Remove o filtro de render_block para evitar conflito com gstore_custom_site_logo_block
+// Mantém apenas nos outros filtros
 add_filter( 'render_block_core/template-part', 'gstore_replace_header_logo_html', 10, 1 );
-add_filter( 'render_block', 'gstore_replace_header_logo_html', 20, 1 );
 add_filter( 'the_content', 'gstore_replace_header_logo_html', 5 );
 
 /**

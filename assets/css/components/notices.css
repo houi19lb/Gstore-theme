@@ -15,6 +15,12 @@
     width: 100%;
 }
 
+/* Esconder wrapper quando vazio (sem notices) */
+.woocommerce-notices-wrapper:empty {
+    display: none;
+    margin-bottom: 0;
+}
+
 /* Base para todas as mensagens */
 .woocommerce-message,
 .woocommerce-error,
