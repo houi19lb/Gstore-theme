@@ -1,8 +1,128 @@
 <!-- wp:template-part {"slug":"header","area":"header"} /-->
 
-<!-- wp:group {"tagName":"main","layout":{"type":"constrained"}} -->
-<main class="wp-block-group">
-	<!-- wp:post-content {"layout":{"type":"constrained"}} /-->
+<!-- wp:group {"tagName":"main","align":"full","className":"Gstore-blog-single-shell","layout":{"type":"constrained"}} -->
+<main class="wp-block-group alignfull Gstore-blog-single-shell">
+	<!-- wp:html -->
+	<article class="Gstore-blog-single-container" itemscope itemtype="https://schema.org/BlogPosting">
+		<!-- Breadcrumb -->
+		<nav class="Gstore-blog-single-breadcrumb" aria-label="Navegação estrutural">
+			<div class="Gstore-breadcrumb">
+				<a href="/" class="Gstore-breadcrumb__home">Início</a>
+				<span class="Gstore-breadcrumb__separator" aria-hidden="true">/</span>
+				<a href="/blog" class="Gstore-breadcrumb__blog">Blog</a>
+				<span class="Gstore-breadcrumb__separator" aria-hidden="true">/</span>
+				<span class="Gstore-breadcrumb__current" itemprop="headline"></span>
+			</div>
+		</nav>
+
+		<header class="Gstore-blog-single-header">
+			<p class="Gstore-blog-single-eyebrow"><i class="fa-solid fa-newspaper" aria-hidden="true"></i> Blog CAC Armas</p>
+	<!-- /wp:html -->
+			<!-- wp:post-title {"level":1,"className":"Gstore-blog-single-title"} /-->
+			
+			<!-- wp:html -->
+			<div class="Gstore-blog-single-meta">
+				<div class="Gstore-blog-single-meta__primary">
+					<!-- wp:post-date {"format":"d/m/Y","className":"Gstore-blog-single-date"} /-->
+					<span class="Gstore-blog-single-meta__separator" aria-hidden="true">•</span>
+					<span class="Gstore-blog-single-meta__reading-time">
+						<i class="fa-solid fa-clock" aria-hidden="true"></i>
+						<span class="Gstore-blog-single-meta__reading-time-text">X min de leitura</span>
+					</span>
+				</div>
+				<div class="Gstore-blog-single-meta__secondary">
+					<!-- wp:post-terms {"term":"category","className":"Gstore-blog-single-categories"} /-->
+					<!-- wp:post-terms {"term":"post_tag","className":"Gstore-blog-single-tags"} /-->
+				</div>
+			</div>
+			<!-- /wp:html -->
+	<!-- wp:html -->
+		</header>
+	<!-- /wp:html -->
+
+		<!-- wp:post-featured-image {"height":"400px","className":"Gstore-blog-single-image"} /-->
+
+		<!-- wp:group {"className":"Gstore-blog-single-content","layout":{"type":"constrained","contentSize":"780px"}} -->
+		<div class="wp-block-group Gstore-blog-single-content">
+			<!-- wp:post-content {"layout":{"type":"constrained"}} /-->
+		</div>
+		<!-- /wp:group -->
+
+		<!-- wp:html -->
+		<!-- Compartilhamento Social -->
+		<div class="Gstore-blog-single-share">
+			<p class="Gstore-blog-single-share__label">Compartilhar:</p>
+			<div class="Gstore-blog-single-share__buttons">
+				<a href="#" class="Gstore-blog-single-share__button Gstore-blog-single-share__button--facebook" 
+				   aria-label="Compartilhar no Facebook" 
+				   data-share="facebook"
+				   target="_blank" 
+				   rel="noopener noreferrer">
+					<i class="fa-brands fa-facebook-f" aria-hidden="true"></i>
+					<span>Facebook</span>
+				</a>
+				<a href="#" class="Gstore-blog-single-share__button Gstore-blog-single-share__button--twitter" 
+				   aria-label="Compartilhar no Twitter" 
+				   data-share="twitter"
+				   target="_blank" 
+				   rel="noopener noreferrer">
+					<i class="fa-brands fa-x-twitter" aria-hidden="true"></i>
+					<span>Twitter</span>
+				</a>
+				<a href="#" class="Gstore-blog-single-share__button Gstore-blog-single-share__button--whatsapp" 
+				   aria-label="Compartilhar no WhatsApp" 
+				   data-share="whatsapp"
+				   target="_blank" 
+				   rel="noopener noreferrer">
+					<i class="fa-brands fa-whatsapp" aria-hidden="true"></i>
+					<span>WhatsApp</span>
+				</a>
+				<a href="#" class="Gstore-blog-single-share__button Gstore-blog-single-share__button--linkedin" 
+				   aria-label="Compartilhar no LinkedIn" 
+				   data-share="linkedin"
+				   target="_blank" 
+				   rel="noopener noreferrer">
+					<i class="fa-brands fa-linkedin-in" aria-hidden="true"></i>
+					<span>LinkedIn</span>
+				</a>
+				<button class="Gstore-blog-single-share__button Gstore-blog-single-share__button--copy" 
+				   aria-label="Copiar link do artigo" 
+				   data-share="copy">
+					<i class="fa-solid fa-link" aria-hidden="true"></i>
+					<span>Copiar link</span>
+				</button>
+			</div>
+		</div>
+
+		<!-- Navegação entre posts -->
+		<nav class="Gstore-blog-single-navigation" aria-label="Navegação entre artigos">
+			<!-- wp:post-navigation-link {"type":"previous","label":"Artigo anterior","showTitle":true,"linkLabel":true,"arrow":"arrow"} /-->
+			<!-- wp:post-navigation-link {"type":"next","label":"Próximo artigo","showTitle":true,"linkLabel":true,"arrow":"arrow"} /-->
+		</nav>
+
+		<!-- Posts Relacionados -->
+		<section class="Gstore-blog-single-related">
+			<h2 class="Gstore-blog-single-related__title">Artigos relacionados</h2>
+			<!-- wp:query {"queryId":2,"query":{"perPage":3,"pages":0,"offset":0,"postType":"post","order":"desc","orderBy":"date","author":"","search":"","exclude":[],"sticky":"","inherit":false},"displayLayout":{"type":"flex","columns":3},"className":"Gstore-blog-single-related__query"} -->
+			<div class="wp-block-query Gstore-blog-single-related__query">
+				<!-- wp:post-template {"layout":{"type":"grid","columnCount":3},"className":"Gstore-blog-single-related__grid"} -->
+				<!-- wp:group {"className":"Gstore-blog-single-related__card","layout":{"type":"flex","orientation":"vertical","justifyContent":"space-between"}} -->
+				<article class="wp-block-group Gstore-blog-single-related__card">
+					<!-- wp:post-featured-image {"isLink":true,"height":"200px","className":"Gstore-blog-single-related__image"} /-->
+					<div class="wp-block-group Gstore-blog-single-related__content">
+						<!-- wp:post-date {"format":"d/m/Y","className":"Gstore-blog-single-related__date"} /-->
+						<!-- wp:post-title {"isLink":true,"level":3,"className":"Gstore-blog-single-related__title-card"} /-->
+						<!-- wp:post-excerpt {"moreText":"Ler mais","excerptLength":20,"className":"Gstore-blog-single-related__excerpt"} /-->
+					</div>
+				</article>
+				<!-- /wp:group -->
+				<!-- /wp:post-template -->
+			</div>
+			<!-- /wp:query -->
+		</section>
+	<!-- /wp:html -->
+	</article>
+	<!-- /wp:html -->
 </main>
 <!-- /wp:group -->
 

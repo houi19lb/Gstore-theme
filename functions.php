@@ -766,6 +766,17 @@ function gstore_enqueue_scripts() {
 		);
 	}
 
+	// Script para posts únicos do blog
+	if ( is_single() && get_post_type() === 'post' ) {
+		wp_enqueue_script(
+			'gstore-blog-single',
+			get_theme_file_uri( 'assets/js/blog-single.js' ),
+			array(),
+			wp_get_theme()->get( 'Version' ),
+			true
+		);
+	}
+
 	// Script dos cards de produto
 	if ( class_exists( 'WooCommerce' ) ) {
 		wp_enqueue_script(
@@ -2460,7 +2471,7 @@ function gstore_blu_register_payment_method_type( Automattic\WooCommerce\Blocks\
 					'GSTORE BLU: AbstractPaymentMethodType class not available. WooCommerce Blocks may not be installed or version incompatible.',
 					array( 'source' => 'gstore-blu-blocks' )
 				);
-			} elseif ( function_exists( 'error_log' ) ) {
+			} elseif ( defined( 'WP_DEBUG' ) && WP_DEBUG && function_exists( 'error_log' ) ) {
 				error_log( 'GSTORE BLU: AbstractPaymentMethodType class not available. WooCommerce Blocks may not be installed or version incompatible.' );
 			}
 		}
@@ -2546,10 +2557,22 @@ add_filter( 'woocommerce_checkout_fields', 'gstore_add_cpf_field', 20 );
 add_filter( 'woocommerce_billing_fields', 'gstore_add_cpf_field', 20 );
 
 function gstore_save_cpf_field( $order_id ) {
+    // Verifica nonce do checkout (segurança)
+    if ( ! isset( $_POST['woocommerce-process-checkout-nonce'] ) || 
+         ! wp_verify_nonce( $_POST['woocommerce-process-checkout-nonce'], 'woocommerce-process_checkout' ) ) {
+        return;
+    }
+
     if ( ! empty( $_POST['billing_cpf'] ) ) {
-        $cpf = preg_replace( '/[^0-9]/', '', $_POST['billing_cpf'] );
-        update_post_meta( $order_id, 'billing_cpf', $cpf );
-        update_post_meta( $order_id, '_billing_cpf', $cpf );
+        // Sanitiza o campo antes de processar
+        $cpf = sanitize_text_field( $_POST['billing_cpf'] );
+        // Remove tudo que não é número
+        $cpf = preg_replace( '/[^0-9]/', '', $cpf );
+        // Salva apenas se tiver conteúdo válido
+        if ( ! empty( $cpf ) ) {
+            update_post_meta( $order_id, 'billing_cpf', $cpf );
+            update_post_meta( $order_id, '_billing_cpf', $cpf );
+        }
     }
 }
 add_action( 'woocommerce_checkout_update_order_meta', 'gstore_save_cpf_field' );
@@ -4259,6 +4282,14 @@ function gstore_get_required_pages() {
 			'description' => 'Página com informações sobre o processo de compra de armas.',
 			'wc_option'   => null,
 		),
+		'blog' => array(
+			'title'       => 'Blog',
+			'slug'        => 'blog',
+			'template'    => 'page-blog',
+			'content'     => '',
+			'description' => 'Página do blog com artigos e notícias.',
+			'wc_option'   => null,
+		),
 		'politica-de-privacidade' => array(
 			'title'       => 'Política de Privacidade',
 			'slug'        => 'politica-de-privacidade',
@@ -4279,9 +4310,9 @@ function gstore_get_required_pages() {
 		'blog' => array(
 			'title'       => 'Blog',
 			'slug'        => 'blog',
-			'template'    => '',
+			'template'    => 'page-blog',
 			'content'     => '',
-			'description' => 'Página que exibe os posts do blog.',
+			'description' => 'Página do blog com artigos e notícias.',
 			'set_as'      => 'posts_page',
 		),
 	);
@@ -5356,6 +5387,10 @@ function gstore_create_page( $page_key, $force = false ) {
 		} elseif ( 'posts_page' === $page_config['set_as'] ) {
 			update_option( 'show_on_front', 'page' );
 			update_option( 'page_for_posts', $page_id );
+			// Força o uso do template page-blog.html para a página de posts
+			if ( ! empty( $page_config['template'] ) ) {
+				update_post_meta( $page_id, '_wp_page_template', $page_config['template'] );
+			}
 		}
 	}
 	
@@ -5366,6 +5401,102 @@ function gstore_create_page( $page_key, $force = false ) {
 		'action'  => 'created',
 	);
 }
+
+/**
+ * Força o uso do template page-blog.html quando for a página de posts do blog.
+ * 
+ * Quando uma página é definida como "posts_page", o WordPress usa templates de arquivo
+ * (home.html, archive.html) ao invés de templates de página. Este filtro corrige isso.
+ * 
+ * IMPORTANTE: Em Block Themes, não devemos retornar o caminho do arquivo HTML diretamente
+ * via template_include, pois isso impede o processamento dos blocos. Em vez disso, usamos
+ * o filtro block_template_loader para forçar o template correto.
+ * 
+ * @param string $template Template atual.
+ * @return string Template a ser usado.
+ */
+function gstore_force_blog_page_template( $template ) {
+	// Verifica se é a página de posts ou se está acessando /blog
+	if ( is_home() && ! is_front_page() ) {
+		$blog_page_id = get_option( 'page_for_posts' );
+		
+		if ( $blog_page_id ) {
+			$blog_page = get_post( $blog_page_id );
+			
+			// Verifica se a página do blog tem o template page-blog
+			if ( $blog_page && 'blog' === $blog_page->post_name ) {
+				$page_template = get_page_template_slug( $blog_page_id );
+				
+				// Se o template for page-blog, força o uso dele
+				if ( 'page-blog' === $page_template || 'page-blog.html' === $page_template ) {
+					// Em Block Themes, não retornamos o caminho do arquivo diretamente
+					// porque isso impede o processamento dos blocos. Em vez disso, deixamos
+					// o WordPress usar o sistema de Block Templates nativo.
+					// O template será carregado automaticamente pelo WordPress se existir.
+					// Não retornamos nada aqui - deixamos o WordPress usar o sistema nativo
+				}
+			}
+		}
+	}
+	
+	// Também verifica se está acessando diretamente a página /blog
+	if ( is_page( 'blog' ) ) {
+		$blog_page = get_page_by_path( 'blog' );
+		
+		if ( $blog_page ) {
+			$page_template = get_page_template_slug( $blog_page->ID );
+			
+			// Se o template for page-blog, força o uso dele
+			if ( 'page-blog' === $page_template || 'page-blog.html' === $page_template ) {
+				// Em Block Themes, não retornamos o caminho do arquivo diretamente
+				// porque isso impede o processamento dos blocos. Em vez disso, deixamos
+				// o WordPress usar o sistema de Block Templates nativo.
+				// Não retornamos nada aqui - deixamos o WordPress usar o sistema nativo
+			}
+		}
+	}
+	
+	return $template;
+}
+add_filter( 'template_include', 'gstore_force_blog_page_template', 99 );
+
+/**
+ * Força o uso do template page-blog.html via Block Template API quando for a página de posts.
+ * 
+ * Este filtro funciona em conjunto com gstore_force_blog_page_template para garantir
+ * que o WordPress use o template correto e processe os blocos adequadamente.
+ * 
+ * @param WP_Block_Template|null $template Template atual.
+ * @return WP_Block_Template|null Template a ser usado.
+ */
+function gstore_force_blog_block_template( $template ) {
+	// Verifica se é a página de posts
+	if ( is_home() && ! is_front_page() ) {
+		$blog_page_id = get_option( 'page_for_posts' );
+		
+		if ( $blog_page_id ) {
+			$blog_page = get_post( $blog_page_id );
+			
+			if ( $blog_page && 'blog' === $blog_page->post_name ) {
+				$page_template = get_page_template_slug( $blog_page_id );
+				
+				// Se o template for page-blog, força o uso dele via Block Template API
+				if ( 'page-blog' === $page_template || 'page-blog.html' === $page_template ) {
+					if ( function_exists( 'get_block_template' ) ) {
+						$block_template = get_block_template( get_stylesheet() . '//page-blog', 'wp_template' );
+						
+						if ( $block_template ) {
+							return $block_template;
+						}
+					}
+				}
+			}
+		}
+	}
+	
+	return $template;
+}
+add_filter( 'block_template_loader', 'gstore_force_blog_block_template', 10, 1 );
 
 /**
  * Cria todas as páginas do tema.
@@ -5870,6 +6001,116 @@ function gstore_flush_permalink_rules() {
 }
 
 /**
+ * Reseta o template customizado do blog para usar o arquivo do tema.
+ */
+function gstore_reset_blog_template() {
+	global $wpdb;
+	
+	
+	$deleted_count = 0;
+	$errors = array();
+	
+	// Busca todos os templates relacionados ao blog no banco de dados
+	// Usa query direta para garantir que encontre todos, independente de status ou meta
+	$template_ids = array();
+	
+	// Busca por page-blog
+	$found = $wpdb->get_col( $wpdb->prepare(
+		"SELECT ID FROM {$wpdb->posts} 
+		WHERE post_type = 'wp_template' 
+		AND post_name = %s 
+		AND post_status != 'trash'",
+		'page-blog'
+	) );
+	$template_ids = array_merge( $template_ids, $found );
+	
+	// Busca por archive (pode ser usado se a página Blog está configurada como página de posts)
+	$found = $wpdb->get_col( $wpdb->prepare(
+		"SELECT ID FROM {$wpdb->posts} 
+		WHERE post_type = 'wp_template' 
+		AND post_name = %s 
+		AND post_status != 'trash'",
+		'archive'
+	) );
+	$template_ids = array_merge( $template_ids, $found );
+	
+	// Busca por qualquer template que contenha 'blog' no nome ou título
+	$found = $wpdb->get_col( $wpdb->prepare(
+		"SELECT ID FROM {$wpdb->posts} 
+		WHERE post_type = 'wp_template' 
+		AND (post_name LIKE %s OR post_title LIKE %s)
+		AND post_status != 'trash'",
+		'%blog%',
+		'%Blog%'
+	) );
+	$template_ids = array_merge( $template_ids, $found );
+	
+	// Remove duplicatas
+	$template_ids = array_unique( $template_ids );
+	
+	foreach ( $template_ids as $template_id ) {
+		// Verifica se o post ainda existe
+		$template_post = get_post( $template_id );
+		
+		if ( ! $template_post || $template_post->post_type !== 'wp_template' ) {
+			continue;
+		}
+		
+		// Deleta o template (qualquer wp_template salvo no banco é uma customização)
+		$deleted = wp_delete_post( $template_id, true );
+		
+		if ( $deleted && ! is_wp_error( $deleted ) ) {
+			$deleted_count++;
+		} else {
+			$error_msg = is_wp_error( $deleted ) ? $deleted->get_error_message() : __( 'Erro desconhecido', 'gstore' );
+			$errors[] = sprintf( __( 'Template ID %d: %s', 'gstore' ), $template_id, $error_msg );
+		}
+	}
+	
+	// Limpa cache de templates e posts
+	wp_cache_flush();
+	clean_post_cache( 0 );
+	
+	// Força o WordPress a recarregar os templates
+	if ( function_exists( 'wp_get_theme' ) ) {
+		$theme = wp_get_theme();
+		delete_transient( 'wp_get_theme' );
+	}
+	
+	if ( $deleted_count > 0 ) {
+		$message = sprintf(
+			_n(
+				'%d template customizado removido com sucesso! A página do blog agora usará o template do tema. Recarregue a página do blog para ver as mudanças.',
+				'%d templates customizados removidos com sucesso! A página do blog agora usará o template do tema. Recarregue a página do blog para ver as mudanças.',
+				$deleted_count,
+				'gstore'
+			),
+			$deleted_count
+		);
+		
+		if ( ! empty( $errors ) ) {
+			$message .= ' ' . __( 'Avisos:', 'gstore' ) . ' ' . implode( ', ', $errors );
+		}
+		
+		return array(
+			'success' => true,
+			'message' => $message,
+		);
+	} else {
+		$message = __( 'Nenhum template customizado encontrado no banco de dados. A página do blog já está usando o template do tema. Se o problema persistir, pode ser cache do navegador.', 'gstore' );
+		
+		if ( ! empty( $errors ) ) {
+			$message .= ' ' . __( 'Avisos:', 'gstore' ) . ' ' . implode( ', ', $errors );
+		}
+		
+		return array(
+			'success' => true,
+			'message' => $message,
+		);
+	}
+}
+
+/**
  * Processa ações AJAX do setup.
  */
 function gstore_ajax_setup_action() {
@@ -5927,6 +6168,9 @@ function gstore_ajax_setup_action() {
 			'frontend_url' => $frontend_url,
 			'message'      => __( 'Script de diagnóstico gerado! Cole no console do navegador em produção.', 'gstore' ),
 		) );
+	} elseif ( 'reset_blog_template' === $action_type ) {
+		$result = gstore_reset_blog_template();
+		wp_send_json( $result );
 	} else {
 		wp_send_json_error( array( 'message' => __( 'Ação inválida.', 'gstore' ) ) );
 	}
@@ -6088,6 +6332,15 @@ function gstore_render_setup_page() {
 					<button type="button" class="button gstore-utility-action" data-action="flush_permalinks" data-loading-text="<?php esc_attr_e( 'Regravando links...', 'gstore' ); ?>">
 						<span class="dashicons dashicons-admin-settings"></span>
 						<?php _e( 'Regravar links', 'gstore' ); ?>
+					</button>
+				</div>
+
+				<div class="gstore-setup-card">
+					<h4><?php _e( 'Resetar template do Blog', 'gstore' ); ?></h4>
+					<p><?php _e( 'Remove customizações do template do blog salvas no banco de dados, fazendo a página usar o template do tema novamente. Útil quando header/footer não aparecem.', 'gstore' ); ?></p>
+					<button type="button" class="button button-secondary gstore-utility-action" data-action="reset_blog_template" data-loading-text="<?php esc_attr_e( 'Resetando template...', 'gstore' ); ?>">
+						<span class="dashicons dashicons-update-alt"></span>
+						<?php _e( 'Resetar template do Blog', 'gstore' ); ?>
 					</button>
 				</div>
 			</div>

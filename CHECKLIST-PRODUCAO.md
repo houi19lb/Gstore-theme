@@ -5,60 +5,57 @@ Este documento lista todos os itens que precisam ser corrigidos/removidos antes 
 ## 🔴 CRÍTICO - Segurança
 
 ### 1. Remover arquivo de diagnóstico
-- [ ] **Remover** `diagnostic-blu-checkout.php` - Expõe informações sensíveis do sistema
+- [x] **Remover** `diagnostic-blu-checkout.php` - Expõe informações sensíveis do sistema
 - **Localização:** `themes/gstore/diagnostic-blu-checkout.php`
 - **Motivo:** Script de diagnóstico que pode expor dados sensíveis do WordPress e WooCommerce
+- **Status:** ✅ Arquivo não encontrado (já foi removido ou nunca existiu)
 
 ### 2. Remover arquivos de debug/backup
-- [ ] **Remover** `inc/class-gstore-blu-payment-gateway.php.broken`
-- [ ] **Remover** `inc/class-gstore-blu-payment-gateway.php.corrupted-20251120140158`
-- [ ] **Remover** `inc/class-gstore-blu-payment-gateway-CLEAN.php` (se não estiver em uso)
-- [ ] **Remover** `inc/class-gstore-blu-payment-gateway-full-backup.php` (se não estiver em uso)
-- [ ] **Remover** `inc/debug_blocks_class.txt`
-- [ ] **Remover** `inc/debug_blocks.txt`
-- [ ] **Remover** `inc/debug_blu.txt`
-- [ ] **Remover** `inc/debug_flow.txt`
-- [ ] **Remover** `inc/debug_gateways.txt`
+- [x] **Remover** `inc/class-gstore-blu-payment-gateway.php.broken`
+- [x] **Remover** `inc/class-gstore-blu-payment-gateway.php.corrupted-20251120140158`
+- [x] **Remover** `inc/class-gstore-blu-payment-gateway-CLEAN.php` (se não estiver em uso)
+- [x] **Remover** `inc/class-gstore-blu-payment-gateway-full-backup.php` (se não estiver em uso)
+- [x] **Remover** `inc/debug_blocks_class.txt`
+- [x] **Remover** `inc/debug_blocks.txt`
+- [x] **Remover** `inc/debug_blu.txt`
+- [x] **Remover** `inc/debug_flow.txt`
+- [x] **Remover** `inc/debug_gateways.txt`
 - **Motivo:** Arquivos de debug e backup não devem estar em produção
+- **Status:** ✅ Todos os arquivos não foram encontrados (já foram removidos)
 
 ### 3. Sanitização de dados
-- [ ] **Corrigir** `functions.php` linha 1050-1051 - Função `gstore_save_cpf_field()`
-  - Atualmente usa `$_POST['billing_cpf']` sem sanitização adequada
-  - Deve usar `sanitize_text_field()` ou `sanitize_textarea_field()`
-  - Exemplo:
-  ```php
-  if ( ! empty( $_POST['billing_cpf'] ) ) {
-      $cpf = sanitize_text_field( $_POST['billing_cpf'] );
-      $cpf = preg_replace( '/[^0-9]/', '', $cpf );
-      update_post_meta( $order_id, 'billing_cpf', $cpf );
-      update_post_meta( $order_id, '_billing_cpf', $cpf );
-  }
-  ```
+- [x] **Corrigir** `functions.php` linha 2559-2577 - Função `gstore_save_cpf_field()`
+  - ✅ Já usa `sanitize_text_field()` corretamente (linha 2568)
+  - ✅ Remove caracteres não numéricos com `preg_replace()` (linha 2570)
+  - ✅ Valida se o CPF não está vazio antes de salvar (linha 2572)
+  - **Status:** ✅ Implementação correta e segura
 
 ### 4. Verificação de nonce
-- [ ] **Adicionar** verificação de nonce na função `gstore_save_cpf_field()`
-  - O WooCommerce já verifica nonce no checkout, mas é boa prática verificar novamente
-  - Adicionar: `check_ajax_referer()` ou verificação manual de nonce do checkout
+- [x] **Adicionar** verificação de nonce na função `gstore_save_cpf_field()`
+  - ✅ Verificação de nonce já implementada (linhas 2561-2564)
+  - ✅ Usa `wp_verify_nonce()` com o nonce correto do checkout
+  - **Status:** ✅ Implementação correta e segura
 
 ## 🟡 IMPORTANTE - Limpeza de Código
 
 ### 5. Remover logs de console do JavaScript
-- [ ] **Remover/Comentar** todos os `console.log()` em:
-  - `assets/js/checkout-steps.js` - **Múltiplos console.log** (linhas 69, 83, 291, 325, 472, 829, 846, 850, 857, 958, 966, 976, 985-992, 1073, 1085, 1095, 1105-1109, 1157-1165, 1173, 1179, 1203, 1250-1253, 1258, 1262, 1286, 1293, 1297, 1301, 1305)
-  - `assets/js/checkout-cleanup.js` - linha 31
-- **Solução:** Remover completamente ou criar função wrapper que só executa se `WP_DEBUG` estiver ativo
+- [x] **Remover/Comentar** todos os `console.log()` em:
+  - `assets/js/checkout-steps.js` - ✅ Todos os `console.log()` já estão comentados
+  - `assets/js/checkout-cleanup.js` - ✅ `console.log()` já está comentado (linha 31)
+  - `assets/js/mini-cart-fix.js` - ✅ Usa função `debugLog()` condicional baseada em `CONFIG.debug`
+- **Status:** ✅ Todos os logs de console estão adequadamente protegidos ou comentados
 
 ### 6. Limpar logs de debug do PHP
-- [ ] **Remover/Ajustar** logs em `functions.php`:
-  - Linha 968: `error_log()` incondicional
-  - Linha 1010: `error_log()` incondicional
-  - Linhas 992-997: Já está condicional com `WP_DEBUG`, mas revisar se está correto
-- **Solução:** Manter apenas logs condicionais baseados em `WP_DEBUG`
+- [x] **Remover/Ajustar** logs em `functions.php`:
+  - ✅ Linha 2475: `error_log()` está condicional com `WP_DEBUG` (dentro de `if ( defined( 'WP_DEBUG' ) && WP_DEBUG )`)
+  - ✅ Linha 2519: `error_log()` está condicional com `WP_DEBUG` (dentro de `if ( defined( 'WP_DEBUG' ) && WP_DEBUG )`)
+  - ✅ Todas as chamadas de log estão condicionais ou usam `wc_get_logger()` quando disponível
+- **Status:** ✅ Todos os logs estão condicionais baseados em `WP_DEBUG`
 
 ### 7. Atualizar URLs de exemplo
-- [ ] **Atualizar** `style.css` linhas 3-5:
-  - `Theme URI: https://cacarmas.example` → URL real
-  - `Author URI: https://cacarmas.example` → URL real
+- [x] **Atualizar** `style.css` linhas 3-5:
+  - ✅ Não há URLs de exemplo no `style.css` (arquivo não contém `Theme URI` ou `Author URI`)
+  - **Status:** ✅ Não há necessidade de atualização
 
 ## 🟢 RECOMENDADO - Boas Práticas
 
@@ -117,14 +114,14 @@ Este documento lista todos os itens que precisam ser corrigidos/removidos antes 
 ## 📝 Resumo por Prioridade
 
 ### 🔴 Urgente (Antes de enviar para produção)
-1. Remover `diagnostic-blu-checkout.php`
-2. Remover todos os arquivos `.broken`, `.corrupted`, `.txt` de debug
-3. Corrigir sanitização em `gstore_save_cpf_field()`
+1. ✅ Remover `diagnostic-blu-checkout.php` - **CONCLUÍDO**
+2. ✅ Remover todos os arquivos `.broken`, `.corrupted`, `.txt` de debug - **CONCLUÍDO**
+3. ✅ Corrigir sanitização em `gstore_save_cpf_field()` - **CONCLUÍDO**
 
 ### 🟡 Importante (Recomendado antes de produção)
-4. Remover/comentar `console.log()` do JavaScript
-5. Limpar logs de debug do PHP
-6. Atualizar URLs de exemplo no `style.css`
+4. ✅ Remover/comentar `console.log()` do JavaScript - **CONCLUÍDO**
+5. ✅ Limpar logs de debug do PHP - **CONCLUÍDO**
+6. ✅ Atualizar URLs de exemplo no `style.css` - **CONCLUÍDO** (não há URLs de exemplo)
 
 ### 🟢 Opcional (Melhorias)
 7. Criar `readme.txt`
@@ -144,7 +141,8 @@ Este documento lista todos os itens que precisam ser corrigidos/removidos antes 
 ---
 
 **Última atualização:** 2025-01-27
-**Versão do tema:** 1.0.0
+**Versão do tema:** 1.2
+**Status:** ✅ Todas as tarefas críticas (🔴) e importantes (🟡) foram concluídas
 
 
 

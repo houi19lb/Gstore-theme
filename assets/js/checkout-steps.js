@@ -1211,7 +1211,7 @@
 			if (isPrecheckout) {
 				// No pré-checkout, precisamos fazer o submit via AJAX manualmente
 				e.preventDefault();
-				console.log('Gstore Steps: Pré-checkout detectado - executando submit manual via AJAX');
+				// console.log('Gstore Steps: Pré-checkout detectado - executando submit manual via AJAX');
 				
 				// Mostra o modal de processamento
 				if (typeof showProcessingModal === 'function') {
@@ -1337,7 +1337,7 @@
 		 * Submit direto do checkout via AJAX
 		 */
 		function submitCheckoutDirectly() {
-			console.log('Gstore Steps: [DEBUG] Executando submit direto do checkout');
+			// console.log('Gstore Steps: [DEBUG] Executando submit direto do checkout');
 			
 			const $form = $('form.checkout');
 			if (!$form.length) {
@@ -1347,7 +1347,7 @@
 
 			// Verifica se já está processando
 			if ($form.hasClass('processing')) {
-				console.log('Gstore Steps: [DEBUG] Já está processando');
+				// console.log('Gstore Steps: [DEBUG] Já está processando');
 				return;
 			}
 
@@ -1375,7 +1375,7 @@
 			if (isPrecheckout) {
 				// No pré-checkout, apenas email e telefone são obrigatórios
 				requiredFields = ['billing_email', 'billing_phone'];
-				console.log('Gstore Steps: Pré-checkout detectado - validando apenas email e telefone');
+				// console.log('Gstore Steps: Pré-checkout detectado - validando apenas email e telefone');
 			} else {
 				// No checkout completo, todos os campos de endereço são obrigatórios
 				requiredFields = ['billing_first_name', 'billing_last_name', 'billing_email', 'billing_phone', 
@@ -1435,7 +1435,7 @@
 				
 				// No pré-checkout, não envia campos de endereço vazios
 				if (isPrecheckout && addressFields.indexOf(name) !== -1 && !value) {
-					console.log('Gstore Steps: [DEBUG] Ignorando campo vazio no pré-checkout:', name);
+					// console.log('Gstore Steps: [DEBUG] Ignorando campo vazio no pré-checkout:', name);
 					return; // Não adiciona campos vazios de endereço no pré-checkout
 				}
 				
@@ -1549,7 +1549,7 @@
 				if (isPrecheckout && addressFields.indexOf(name) !== -1) {
 					const val = $input.val() ? $input.val().trim() : '';
 					if (!val) {
-						console.log('Gstore Steps: [DEBUG] Ignorando campo vazio do formulário no pré-checkout:', name);
+						// console.log('Gstore Steps: [DEBUG] Ignorando campo vazio do formulário no pré-checkout:', name);
 						return; // Não adiciona campos vazios de endereço no pré-checkout
 					}
 				}
@@ -1574,15 +1574,15 @@
 			// Converte para query string
 			let formData = $.param(formDataObj);
 			
-			console.log('Gstore Steps: [DEBUG] Enviando dados para:', wc_checkout_params.checkout_url);
-			console.log('Gstore Steps: [DEBUG] Campos coletados:', Object.keys(formDataObj).length);
-			console.log('Gstore Steps: [DEBUG] billing_email:', formDataObj['billing_email'] || 'FALTANDO');
-			console.log('Gstore Steps: [DEBUG] billing_phone:', formDataObj['billing_phone'] || 'FALTANDO');
-			console.log('Gstore Steps: [DEBUG] payment_method:', formDataObj['payment_method'] || 'FALTANDO');
-			console.log('Gstore Steps: [DEBUG] nonce:', formDataObj['woocommerce-process-checkout-nonce'] ? 'OK' : 'FALTANDO');
+			// console.log('Gstore Steps: [DEBUG] Enviando dados para:', wc_checkout_params.checkout_url);
+			// console.log('Gstore Steps: [DEBUG] Campos coletados:', Object.keys(formDataObj).length);
+			// console.log('Gstore Steps: [DEBUG] billing_email:', formDataObj['billing_email'] || 'FALTANDO');
+			// console.log('Gstore Steps: [DEBUG] billing_phone:', formDataObj['billing_phone'] || 'FALTANDO');
+			// console.log('Gstore Steps: [DEBUG] payment_method:', formDataObj['payment_method'] || 'FALTANDO');
+			// console.log('Gstore Steps: [DEBUG] nonce:', formDataObj['woocommerce-process-checkout-nonce'] ? 'OK' : 'FALTANDO');
 			
 			// Debug: lista todos os campos coletados
-			console.log('Gstore Steps: [DEBUG] Todos os campos coletados:', Object.keys(formDataObj));
+			// console.log('Gstore Steps: [DEBUG] Todos os campos coletados:', Object.keys(formDataObj));
 
 			$.ajax({
 				type: 'POST',
@@ -1590,16 +1590,16 @@
 				data: formData,
 				dataType: 'json',
 				beforeSend: function() {
-					console.log('Gstore Steps: [DEBUG] Requisição AJAX sendo enviada...');
+					// console.log('Gstore Steps: [DEBUG] Requisição AJAX sendo enviada...');
 				},
 				success: function(response) {
-					console.log('Gstore Steps: [DEBUG] Resposta recebida:', response);
+					// console.log('Gstore Steps: [DEBUG] Resposta recebida:', response);
 					
 					// Atualiza para passo 3 (criando pedido)
 					updateProcessingStep(3);
 					
 					if (response.result === 'success') {
-						console.log('Gstore Steps: [DEBUG] Sucesso! Redirecionando para:', response.redirect);
+						// console.log('Gstore Steps: [DEBUG] Sucesso! Redirecionando para:', response.redirect);
 						
 						// Mostra sucesso no modal
 						setTimeout(function() {
