@@ -22,6 +22,7 @@ class GStore_Optimizer_Admin {
 		add_action( 'admin_menu', array( $this, 'add_admin_menu' ) );
 		add_action( 'admin_init', array( $this, 'register_settings' ) );
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_admin_scripts' ) );
+		add_action( 'admin_post_gstore_reset_templates', array( $this, 'handle_reset_templates' ) );
 	}
 
 	/**
@@ -132,6 +133,14 @@ class GStore_Optimizer_Admin {
 			'gstore_optimizer_advanced',
 			__( 'Configurações Avançadas', 'gstore-optimizer' ),
 			array( $this, 'render_advanced_section' ),
+			'gstore-optimizer'
+		);
+
+		// Seção: Ferramentas de Manutenção
+		add_settings_section(
+			'gstore_optimizer_tools',
+			__( 'Ferramentas de Manutenção', 'gstore-optimizer' ),
+			array( $this, 'render_tools_section' ),
 			'gstore-optimizer'
 		);
 
@@ -283,6 +292,39 @@ class GStore_Optimizer_Admin {
 	}
 
 	/**
+	 * Renderiza seção de ferramentas
+	 */
+	public function render_tools_section() {
+		echo '<p>' . esc_html__( 'Ferramentas úteis para manutenção e resolução de problemas do tema.', 'gstore-optimizer' ) . '</p>';
+		
+		// Botão para resetar templates customizados
+		$reset_url = wp_nonce_url(
+			admin_url( 'admin-post.php?action=gstore_reset_templates' ),
+			'gstore_reset_templates',
+			'gstore_reset_nonce'
+		);
+		?>
+		<div class="gstore-tools-section">
+			<h3><?php esc_html_e( 'Resetar Templates Customizados', 'gstore-optimizer' ); ?></h3>
+			<p>
+				<?php esc_html_e( 'Remove templates customizados salvos no banco de dados que podem estar sobrescrevendo os arquivos do tema. Isso força o WordPress a usar os templates do tema novamente.', 'gstore-optimizer' ); ?>
+			</p>
+			<p>
+				<strong><?php esc_html_e( 'Atenção:', 'gstore-optimizer' ); ?></strong>
+				<?php esc_html_e( 'Esta ação não pode ser desfeita. Todos os templates customizados serão removidos permanentemente.', 'gstore-optimizer' ); ?>
+			</p>
+			<p>
+				<a href="<?php echo esc_url( $reset_url ); ?>" 
+				   class="button button-secondary" 
+				   onclick="return confirm('<?php echo esc_js( __( 'Tem certeza que deseja resetar todos os templates customizados? Esta ação não pode ser desfeita.', 'gstore-optimizer' ) ); ?>');">
+					<?php esc_html_e( 'Resetar Templates Customizados', 'gstore-optimizer' ); ?>
+				</a>
+			</p>
+		</div>
+		<?php
+	}
+
+	/**
 	 * Renderiza campo de Qualidade WebP
 	 */
 	public function render_webp_quality_field() {
@@ -380,6 +422,57 @@ class GStore_Optimizer_Admin {
 			);
 		}
 
+		// Verifica se templates foram resetados
+		if ( isset( $_GET['templates_reset'] ) && 'yes' === $_GET['templates_reset'] ) {
+			$deleted_count = isset( $_GET['deleted_count'] ) ? absint( $_GET['deleted_count'] ) : 0;
+			$errors_count = isset( $_GET['errors'] ) ? absint( $_GET['errors'] ) : 0;
+
+			if ( $deleted_count > 0 ) {
+				add_settings_error(
+					'gstore_optimizer_messages',
+					'gstore_optimizer_templates_reset',
+					sprintf(
+						/* translators: %d: Number of templates deleted */
+						_n(
+							'%d template customizado foi removido com sucesso!',
+							'%d templates customizados foram removidos com sucesso!',
+							$deleted_count,
+							'gstore-optimizer'
+						),
+						$deleted_count
+					),
+					'success'
+				);
+			}
+
+			if ( $errors_count > 0 ) {
+				add_settings_error(
+					'gstore_optimizer_messages',
+					'gstore_optimizer_templates_errors',
+					sprintf(
+						/* translators: %d: Number of errors */
+						_n(
+							'Ocorreu %d erro ao processar os templates.',
+							'Ocorreram %d erros ao processar os templates.',
+							$errors_count,
+							'gstore-optimizer'
+						),
+						$errors_count
+					),
+					'error'
+				);
+			}
+
+			if ( 0 === $deleted_count && 0 === $errors_count ) {
+				add_settings_error(
+					'gstore_optimizer_messages',
+					'gstore_optimizer_templates_no_custom',
+					__( 'Nenhum template customizado foi encontrado para remover.', 'gstore-optimizer' ),
+					'info'
+				);
+			}
+		}
+
 		settings_errors( 'gstore_optimizer_messages' );
 
 		// Estatísticas
@@ -471,6 +564,25 @@ class GStore_Optimizer_Admin {
 			.gstore-optimizer-status h2 {
 				margin-top: 0;
 			}
+			.gstore-tools-section {
+				background: #fff;
+				border: 1px solid #c3c4c7;
+				border-left-width: 4px;
+				border-left-color: #d63638;
+				box-shadow: 0 1px 1px rgba(0,0,0,.04);
+				padding: 15px 20px;
+				margin: 20px 0;
+			}
+			.gstore-tools-section h3 {
+				margin-top: 0;
+				color: #1d2327;
+			}
+			.gstore-tools-section p {
+				margin: 10px 0;
+			}
+			.gstore-tools-section .button {
+				margin-top: 10px;
+			}
 		</style>
 		<?php
 	}
@@ -517,6 +629,128 @@ class GStore_Optimizer_Admin {
 			return;
 		}
 		// Scripts adicionais podem ser adicionados aqui se necessário
+	}
+
+	/**
+	 * Processa requisição para resetar templates customizados
+	 */
+	public function handle_reset_templates() {
+		// Verifica permissões
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_die( esc_html__( 'Você não tem permissão para executar esta ação.', 'gstore-optimizer' ) );
+		}
+
+		// Verifica nonce
+		if ( ! isset( $_GET['gstore_reset_nonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_GET['gstore_reset_nonce'] ) ), 'gstore_reset_templates' ) ) {
+			wp_die( esc_html__( 'Falha na verificação de segurança.', 'gstore-optimizer' ) );
+		}
+
+		// Lista de templates que devem ser resetados
+		$templates_to_reset = array(
+			'page-blog',
+			'page-atendimento',
+			'page-carrinho',
+			'page-checkout',
+			'page-home',
+			'page-loja',
+			'page-ofertas',
+			'page-catalogo',
+			'page-como-comprar-arma',
+		);
+
+		$deleted_count = 0;
+		$errors = array();
+
+		foreach ( $templates_to_reset as $template_slug ) {
+			// Busca templates customizados no banco de dados
+			// Templates customizados têm o formato: {theme}//{template-slug}
+			$theme = wp_get_theme()->get_stylesheet();
+			$template_id = $theme . '//' . $template_slug;
+
+			// Usa WP_Query para buscar templates customizados
+			$query = new WP_Query( array(
+				'post_type'      => 'wp_template',
+				'post_status'    => array( 'publish', 'auto-draft', 'draft' ),
+				'posts_per_page' => -1,
+				'name'           => $template_slug,
+				'meta_query'     => array(
+					array(
+						'key'   => '_wp_template_file',
+						'value' => $template_slug,
+					),
+				),
+			) );
+
+			if ( $query->have_posts() ) {
+				foreach ( $query->posts as $template_post ) {
+					// Verifica se é uma customização
+					$is_custom = get_post_meta( $template_post->ID, '_wp_is_custom', true );
+					$template_file = get_post_meta( $template_post->ID, '_wp_template_file', true );
+
+					// Deleta apenas se for customizado (salvo no banco) ou se não corresponder ao arquivo do tema
+					if ( $is_custom || ( $template_file === $template_slug && ! $this->template_file_exists( $template_file ) ) ) {
+						$result = wp_delete_post( $template_post->ID, true );
+						if ( $result ) {
+							$deleted_count++;
+						} else {
+							$errors[] = sprintf(
+								/* translators: %s: Template slug */
+								__( 'Erro ao deletar template: %s', 'gstore-optimizer' ),
+								$template_slug
+							);
+						}
+					}
+				}
+			}
+
+			// Também tenta deletar usando a API de templates do WordPress (se disponível)
+			if ( function_exists( 'wp_delete_post_revision' ) ) {
+				// Busca por slug completo
+				$full_template = get_block_template( $template_id, 'wp_template' );
+				if ( $full_template && $full_template->wp_id ) {
+					$result = wp_delete_post( $full_template->wp_id, true );
+					if ( $result ) {
+						$deleted_count++;
+					}
+				}
+			}
+		}
+
+		// Limpa cache de templates
+		if ( function_exists( 'wp_cache_flush_group' ) ) {
+			wp_cache_flush_group( 'themes' );
+		}
+
+		// Redireciona com mensagem de sucesso/erro
+		$redirect_url = add_query_arg(
+			array(
+				'page'              => 'gstore-optimizer',
+				'templates_reset'   => 'yes',
+				'deleted_count'     => $deleted_count,
+				'errors'            => count( $errors ),
+			),
+			admin_url( 'options-general.php' )
+		);
+
+		wp_safe_redirect( $redirect_url );
+		exit;
+	}
+
+	/**
+	 * Verifica se um arquivo de template existe no tema
+	 *
+	 * @param string $template_file Nome do arquivo de template
+	 * @return bool
+	 */
+	private function template_file_exists( $template_file ) {
+		if ( empty( $template_file ) ) {
+			return false;
+		}
+
+		$theme = wp_get_theme();
+		$template_path = get_template_directory() . '/templates/' . $template_file . '.html';
+
+		return file_exists( $template_path );
 	}
 }
 

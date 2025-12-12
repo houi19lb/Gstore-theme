@@ -523,14 +523,13 @@ body.woocommerce-checkout .Gstore-checkout-steps-shell {
    FORMULÁRIO - CAMPOS
    =========================================== */
 .Gstore-checkout-step__fields {
-	display: grid;
-	grid-template-columns: 1fr;
+	display: flex;
+	flex-direction: column;
 	gap: 16px;
 }
 
 @media (min-width: 640px) {
 	.Gstore-checkout-step__fields {
-		grid-template-columns: repeat(2, 1fr);
 		gap: 16px 20px;
 	}
 
@@ -1294,14 +1293,14 @@ body.woocommerce-checkout .Gstore-checkout-steps-shell {
 
 /* Grid de campos */
 .Gstore-checkout-step__fields {
-	display: grid;
-	grid-template-columns: repeat(2, 1fr);
+	display: flex;
+	flex-direction: column;
 	gap: 16px 20px;
 }
 
 @media (max-width: 640px) {
 	.Gstore-checkout-step__fields {
-		grid-template-columns: 1fr;
+		gap: 16px;
 	}
 }
 

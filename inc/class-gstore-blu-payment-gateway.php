@@ -465,16 +465,21 @@ class Gstore_Blu_Payment_Gateway extends WC_Payment_Gateway {
 		$is_precheckout = empty( $order->get_billing_address_1() ) && empty( $order->get_billing_city() );
 
 		// Payload mínimo: apenas valor é obrigatório (mínimo R$ 10,00 = 1000 centavos)
+		$description = sprintf(
+			/* translators: %s: order number */
+			__( 'Pedido #%s - %s', 'gstore' ),
+			$order->get_order_number(),
+			get_bloginfo( 'name' )
+		);
+		
+		// Trunca description para máximo de 25 caracteres (limite da API Blu)
+		$description = mb_substr( $description, 0, 25 );
+
 		$payload = array(
 			'amount'              => $this->format_amount( $order->get_total() ),
 			'email_notification'  => $order->get_billing_email() ?: null,
 			'phone_notification'  => ( strlen( $phone ) >= 10 ) ? $phone : null,
-			'description'         => sprintf(
-				/* translators: %s: order number */
-				__( 'Pedido #%s - %s', 'gstore' ),
-				$order->get_order_number(),
-				get_bloginfo( 'name' )
-			),
+			'description'         => $description,
 			'issuer_rate_forwarding' => $this->issuer_rate_forwarding ? true : null,
 		);
 

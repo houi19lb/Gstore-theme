@@ -2390,6 +2390,11 @@ if ( class_exists( 'WooCommerce' ) && class_exists( 'WC_Payment_Gateway' ) ) {
 require_once get_theme_file_path( 'inc/blu-filter.php' );
 
 /**
+ * Gerenciador de informações da loja (JSON centralizado).
+ */
+require_once get_theme_file_path( 'inc/class-gstore-store-info.php' );
+
+/**
  * Endpoint AJAX para buscar dados do Pix.
  */
 function gstore_get_pix_data_ajax() {
@@ -3390,6 +3395,92 @@ function gstore_render_settings_page() {
 			
 			<?php submit_button( __( 'Salvar Configurações', 'gstore' ) ); ?>
 		</form>
+		
+		<hr style="margin: 40px 0;" />
+		
+		<h2 class="title"><?php _e( 'Informações da Loja (JSON)', 'gstore' ); ?></h2>
+		<p class="description">
+			<?php _e( 'Gerencie as informações centralizadas da loja (nome, contatos, footer, etc). Útil para migrar configurações entre lojas.', 'gstore' ); ?>
+		</p>
+		
+		<div class="gstore-store-info-actions" style="display: flex; gap: 20px; margin: 20px 0; flex-wrap: wrap;">
+			<!-- Exportar -->
+			<div class="gstore-export-card" style="background: #fff; border: 1px solid #c3c4c7; border-radius: 4px; padding: 20px; flex: 1; min-width: 280px;">
+				<h3 style="margin-top: 0;"><?php _e( 'Exportar Configurações', 'gstore' ); ?></h3>
+				<p><?php _e( 'Baixe um arquivo JSON com todas as informações da loja para backup ou migração.', 'gstore' ); ?></p>
+				<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+					<input type="hidden" name="action" value="gstore_export_store_info" />
+					<?php wp_nonce_field( 'gstore_export_store_info', 'gstore_export_nonce' ); ?>
+					<button type="submit" class="button button-primary">
+						<span class="dashicons dashicons-download" style="margin-right: 5px; vertical-align: middle;"></span>
+						<?php _e( 'Exportar JSON', 'gstore' ); ?>
+					</button>
+				</form>
+			</div>
+			
+			<!-- Importar -->
+			<div class="gstore-import-card" style="background: #fff; border: 1px solid #c3c4c7; border-radius: 4px; padding: 20px; flex: 1; min-width: 280px;">
+				<h3 style="margin-top: 0;"><?php _e( 'Importar Configurações', 'gstore' ); ?></h3>
+				<p><?php _e( 'Carregue um arquivo JSON previamente exportado para atualizar as informações da loja.', 'gstore' ); ?></p>
+				<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" enctype="multipart/form-data">
+					<input type="hidden" name="action" value="gstore_import_store_info" />
+					<?php wp_nonce_field( 'gstore_import_store_info', 'gstore_import_nonce' ); ?>
+					<input type="file" name="store_info_file" accept=".json" required style="margin-bottom: 10px; display: block;" />
+					<button type="submit" class="button button-secondary">
+						<span class="dashicons dashicons-upload" style="margin-right: 5px; vertical-align: middle;"></span>
+						<?php _e( 'Importar JSON', 'gstore' ); ?>
+					</button>
+				</form>
+			</div>
+		</div>
+		
+		<!-- Preview dos dados atuais -->
+		<div class="gstore-current-info" style="margin-top: 30px;">
+			<h3><?php _e( 'Dados Atuais da Loja', 'gstore' ); ?></h3>
+			<p class="description"><?php _e( 'Pré-visualização das informações configuradas no arquivo JSON.', 'gstore' ); ?></p>
+			
+			<?php
+			$store_info = gstore_store_info();
+			$data = $store_info->get_all();
+			?>
+			
+			<table class="widefat" style="max-width: 800px; margin-top: 15px;">
+				<tbody>
+					<tr>
+						<th style="width: 200px;"><?php _e( 'Nome da Loja', 'gstore' ); ?></th>
+						<td><?php echo esc_html( $data['store']['name'] ?? '' ); ?></td>
+					</tr>
+					<tr>
+						<th><?php _e( 'CNPJ', 'gstore' ); ?></th>
+						<td><?php echo esc_html( $data['store']['cnpj'] ?? '' ); ?></td>
+					</tr>
+					<tr>
+						<th><?php _e( 'WhatsApp', 'gstore' ); ?></th>
+						<td><?php echo esc_html( $data['contact']['whatsapp_display'] ?? '' ); ?></td>
+					</tr>
+					<tr>
+						<th><?php _e( 'Instagram', 'gstore' ); ?></th>
+						<td>@<?php echo esc_html( $data['social']['instagram'] ?? '' ); ?></td>
+					</tr>
+					<tr>
+						<th><?php _e( 'Endereço', 'gstore' ); ?></th>
+						<td><?php echo esc_html( gstore_get_address( 'short' ) ); ?></td>
+					</tr>
+					<tr>
+						<th><?php _e( 'Horário de Funcionamento', 'gstore' ); ?></th>
+						<td><?php echo esc_html( $data['business_hours']['full_text'] ?? '' ); ?></td>
+					</tr>
+				</tbody>
+			</table>
+			
+			<p style="margin-top: 15px;">
+				<a href="<?php echo esc_url( admin_url( 'theme-editor.php?file=store-info.json&theme=' . get_stylesheet() ) ); ?>" class="button button-link" target="_blank">
+					<span class="dashicons dashicons-edit" style="margin-right: 5px; vertical-align: middle;"></span>
+					<?php _e( 'Editar JSON diretamente', 'gstore' ); ?>
+				</a>
+				<span class="description" style="margin-left: 10px;"><?php _e( '(Cuidado: edição manual pode quebrar a estrutura)', 'gstore' ); ?></span>
+			</p>
+		</div>
 	</div>
 	
 	<style>
@@ -3700,6 +3791,63 @@ function gstore_custom_site_logo_block( $block_content, $block ) {
 add_filter( 'render_block', 'gstore_custom_site_logo_block', 10, 2 );
 
 /**
+ * Filtro para modificar o bloco site-logo no footer para usar a logo configurada.
+ * 
+ * @param string $block_content Conteúdo do bloco.
+ * @param array  $block         Dados do bloco.
+ * @return string
+ */
+function gstore_custom_footer_logo_block( $block_content, $block ) {
+	// Verifica se é o bloco site-logo
+	if ( empty( $block['blockName'] ) || 'core/site-logo' !== $block['blockName'] ) {
+		return $block_content;
+	}
+	
+	// Verifica se está no footer (pela classe footer-logo)
+	$is_in_footer = false;
+	if ( isset( $block['attrs']['className'] ) && strpos( $block['attrs']['className'], 'footer-logo' ) !== false ) {
+		$is_in_footer = true;
+	}
+	
+	// Se não está no footer, não modifica
+	if ( ! $is_in_footer ) {
+		return $block_content;
+	}
+	
+	// Evita processamento duplicado - se já contém a marca de logo customizada
+	if ( strpos( $block_content, 'data-gstore-footer-logo="1"' ) !== false ) {
+		return $block_content;
+	}
+	
+	// Obtém a logo configurada
+	$logo_id = gstore_get_logo_id();
+	
+	if ( $logo_id > 0 ) {
+		$logo_url = gstore_get_image_url( $logo_id, 'full' );
+		$logo_alt = get_option( 'gstore_logo_alt', 'Logo CAC Armas' );
+		
+		// Valida se a URL é válida
+		if ( $logo_url && filter_var( $logo_url, FILTER_VALIDATE_URL ) ) {
+			// Substitui o conteúdo do bloco pela logo configurada
+			$home_url = esc_url( home_url( '/' ) );
+			$site_name = esc_attr( get_bloginfo( 'name' ) );
+			$logo_html = sprintf(
+				'<div class="wp-block-site-logo footer-logo" data-gstore-footer-logo="1"><a href="%s" rel="home" aria-label="%s"><img src="%s" alt="%s" style="max-height: 50px; max-width: 200px; width: auto; height: auto;" loading="lazy" /></a></div>',
+				$home_url,
+				$site_name,
+				esc_url( $logo_url ),
+				esc_attr( $logo_alt )
+			);
+			
+			return $logo_html;
+		}
+	}
+	
+	return $block_content;
+}
+add_filter( 'render_block', 'gstore_custom_footer_logo_block', 10, 2 );
+
+/**
  * Filtro para garantir que o logo do tema tenha prioridade sobre o Customizer.
  * 
  * Quando há uma logo configurada no tema, desabilita o site logo do Customizer.
@@ -3794,6 +3942,83 @@ function gstore_replace_header_logo_html( $content ) {
 // Mantém apenas nos outros filtros
 add_filter( 'render_block_core/template-part', 'gstore_replace_header_logo_html', 10, 1 );
 add_filter( 'the_content', 'gstore_replace_header_logo_html', 5 );
+
+/**
+ * Substitui o texto da logo pela imagem configurada no footer HTML.
+ * 
+ * @param string $content Conteúdo do template part.
+ * @return string
+ */
+function gstore_replace_footer_logo_html( $content ) {
+	// Verifica se é o footer (pela classe armastore-footer)
+	if ( strpos( $content, 'armastore-footer' ) === false ) {
+		return $content;
+	}
+	
+	// Evita processamento duplicado - se já contém a marca de logo customizada
+	if ( strpos( $content, 'data-gstore-footer-logo="1"' ) !== false ) {
+		return $content;
+	}
+	
+	// Obtém a logo configurada
+	$logo_id = gstore_get_logo_id();
+	
+	if ( $logo_id <= 0 ) {
+		return $content;
+	}
+	
+	$logo_url = gstore_get_image_url( $logo_id, 'full' );
+	$logo_alt = get_option( 'gstore_logo_alt', 'Logo CAC Armas' );
+	
+	// Valida se a URL é válida
+	if ( ! $logo_url || ! filter_var( $logo_url, FILTER_VALIDATE_URL ) ) {
+		return $content;
+	}
+	
+	$home_url = esc_url( home_url( '/' ) );
+	$site_name = esc_attr( get_bloginfo( 'name' ) );
+	
+	// HTML da logo com imagem para o footer
+	$logo_html = sprintf(
+		'<div class="wp-block-site-logo footer-logo" data-gstore-footer-logo="1"><a href="%s" rel="home" aria-label="%s"><img src="%s" alt="%s" style="max-height: 50px; max-width: 200px; width: auto; height: auto;" loading="lazy" /></a></div>',
+		$home_url,
+		$site_name,
+		esc_url( $logo_url ),
+		esc_attr( $logo_alt )
+	);
+	
+	// Padrão 1: Substitui o bloco site-logo renderizado pelo WordPress no footer
+	// Procura especificamente dentro do primeiro footer-column (onde está a logo)
+	// Usa uma regex mais específica para capturar apenas o primeiro footer-column dentro do footer-main
+	if ( preg_match( '/(<div[^>]*class="[^"]*footer-main[^"]*"[^>]*>)(.*?)(<\/div>)/is', $content, $footer_main_match ) ) {
+		$footer_main_content = $footer_main_match[2];
+		
+		// Captura o primeiro footer-column
+		if ( preg_match( '/(<div[^>]*class="[^"]*footer-column[^"]*"[^>]*>)(.*?)(<\/div>)/is', $footer_main_content, $footer_column_match ) ) {
+			$footer_column_content = $footer_column_match[2];
+			
+			// Substitui o bloco site-logo se existir
+			$pattern1 = '/<div\s+[^>]*class="[^"]*wp-block-site-logo[^"]*footer-logo[^"]*"[^>]*>.*?<\/div>/is';
+			$footer_column_content_new = preg_replace( $pattern1, $logo_html, $footer_column_content, 1 );
+			
+			// Se não encontrou o bloco site-logo, tenta substituir um h3 com texto "CAC" no início
+			if ( $footer_column_content_new === $footer_column_content ) {
+				$pattern2 = '/<h3[^>]*>CAC\s*<span[^>]*>.*?<\/span><\/h3>/is';
+				$footer_column_content_new = preg_replace( $pattern2, $logo_html, $footer_column_content, 1 );
+			}
+			
+			// Se houve substituição, atualiza o conteúdo
+			if ( $footer_column_content_new !== $footer_column_content ) {
+				$footer_main_content_new = str_replace( $footer_column_match[0], $footer_column_match[1] . $footer_column_content_new . $footer_column_match[3], $footer_main_content );
+				$content = str_replace( $footer_main_match[0], $footer_main_match[1] . $footer_main_content_new . $footer_main_match[3], $content );
+			}
+		}
+	}
+	
+	return $content;
+}
+add_filter( 'render_block_core/template-part', 'gstore_replace_footer_logo_html', 10, 1 );
+add_filter( 'the_content', 'gstore_replace_footer_logo_html', 5 );
 
 /**
  * Gera tag de imagem otimizada para hero com srcset e priorização.
@@ -4123,7 +4348,12 @@ function gstore_process_final_output( $buffer ) {
 		return $buffer;
 	}
 	
-	// Processa placeholders no output final
+	// Processa placeholders de informações da loja (store-info.json)
+	if ( function_exists( 'gstore_process_store_info_placeholders' ) ) {
+		$buffer = gstore_process_store_info_placeholders( $buffer );
+	}
+	
+	// Processa placeholders de imagens no output final
 	$buffer = gstore_process_image_placeholders( $buffer );
 	
 	// Substitui a logo no header se configurada
@@ -7072,3 +7302,608 @@ add_action( 'wp_footer', function() {
 	</script>
 	<?php
 }, 9999 );
+
+// ============================================
+// FUNÇÕES HELPER PARA INFORMAÇÕES DA LOJA
+// ============================================
+
+/**
+ * Obtém o nome da loja.
+ *
+ * @param string $format 'name' (CAC ARMAS), 'display' (CAC Armas), ou 'highlight' (ARMAS).
+ * @return string
+ */
+function gstore_get_store_name( $format = 'name' ) {
+	$store_info = gstore_store_info();
+	
+	switch ( $format ) {
+		case 'display':
+			return $store_info->get_value( 'store.display_name', 'CAC Armas' );
+		case 'highlight':
+			return $store_info->get_value( 'store.name_highlight', 'ARMAS' );
+		default:
+			return $store_info->get_value( 'store.name', 'CAC ARMAS' );
+	}
+}
+
+/**
+ * Obtém o CNPJ da loja.
+ *
+ * @return string
+ */
+function gstore_get_cnpj() {
+	return gstore_store_info()->get_value( 'store.cnpj', '' );
+}
+
+/**
+ * Obtém o número do WhatsApp.
+ *
+ * @param string $format 'raw' (556296635633) ou 'display' (+55 62 9663-5633).
+ * @return string
+ */
+function gstore_get_whatsapp( $format = 'raw' ) {
+	$store_info = gstore_store_info();
+	
+	if ( 'display' === $format ) {
+		return $store_info->get_value( 'contact.whatsapp_display', '+55 62 9663-5633' );
+	}
+	
+	return $store_info->get_value( 'contact.whatsapp', '556296635633' );
+}
+
+/**
+ * Gera link do WhatsApp com mensagem opcional.
+ *
+ * @param string $message Mensagem pré-preenchida (opcional).
+ * @return string URL do WhatsApp.
+ */
+function gstore_get_whatsapp_link( $message = '' ) {
+	$whatsapp = gstore_get_whatsapp( 'raw' );
+	$url = 'https://wa.me/' . $whatsapp;
+	
+	if ( ! empty( $message ) ) {
+		$url .= '?text=' . rawurlencode( $message );
+	}
+	
+	return $url;
+}
+
+/**
+ * Obtém o telefone da loja.
+ *
+ * @param string $format 'raw' ou 'display'.
+ * @return string
+ */
+function gstore_get_phone( $format = 'display' ) {
+	$store_info = gstore_store_info();
+	
+	if ( 'raw' === $format ) {
+		return $store_info->get_value( 'contact.phone_raw', '' );
+	}
+	
+	return $store_info->get_value( 'contact.phone', '' );
+}
+
+/**
+ * Obtém informações de uma rede social.
+ *
+ * @param string $network Nome da rede (instagram, facebook, youtube, telegram_group).
+ * @return string Username/ID da rede social.
+ */
+function gstore_get_social( $network ) {
+	return gstore_store_info()->get_value( 'social.' . $network, '' );
+}
+
+/**
+ * Gera link para rede social.
+ *
+ * @param string $network Nome da rede (instagram, facebook, youtube, telegram).
+ * @return string URL completa da rede social.
+ */
+function gstore_get_social_link( $network ) {
+	$username = gstore_get_social( $network );
+	
+	if ( empty( $username ) ) {
+		return '';
+	}
+	
+	switch ( $network ) {
+		case 'instagram':
+		case 'instagram_alt':
+			return 'https://www.instagram.com/' . $username . '/';
+		case 'facebook':
+			return 'https://www.facebook.com/profile.php?id=' . $username;
+		case 'youtube':
+			return 'https://www.youtube.com/' . $username;
+		case 'telegram':
+		case 'telegram_group':
+			return 'https://t.me/' . $username;
+		case 'twitter':
+			return 'https://twitter.com/' . $username;
+		case 'tiktok':
+			return 'https://www.tiktok.com/@' . $username;
+		default:
+			return '';
+	}
+}
+
+/**
+ * Obtém o endereço formatado.
+ *
+ * @param string $format 'full', 'street', 'city_state', ou 'short'.
+ * @return string
+ */
+function gstore_get_address( $format = 'full' ) {
+	$store_info = gstore_store_info();
+	$address = $store_info->get_value( 'address' );
+	
+	if ( ! is_array( $address ) ) {
+		return '';
+	}
+	
+	switch ( $format ) {
+		case 'street':
+			return $address['street'] ?? '';
+		case 'city_state':
+			return sprintf( '%s - %s', $address['city'] ?? '', $address['state'] ?? '' );
+		case 'short':
+			return sprintf(
+				'%s - %s - CEP: %s - %s - %s',
+				$address['street'] ?? '',
+				$address['neighborhood'] ?? '',
+				$address['zipcode'] ?? '',
+				$address['city'] ?? '',
+				$address['state'] ?? ''
+			);
+		case 'full':
+		default:
+			return sprintf(
+				"%s - %s\nCEP: %s - %s - %s",
+				$address['street'] ?? '',
+				$address['neighborhood'] ?? '',
+				$address['zipcode'] ?? '',
+				$address['city'] ?? '',
+				$address['state'] ?? ''
+			);
+	}
+}
+
+/**
+ * Obtém URL do Google Maps.
+ *
+ * @return string
+ */
+function gstore_get_maps_url() {
+	return gstore_store_info()->get_value( 'address.maps_url', '' );
+}
+
+/**
+ * Obtém horário de funcionamento.
+ *
+ * @param string $format 'full', 'weekdays', 'saturday', ou 'support'.
+ * @return string
+ */
+function gstore_get_business_hours( $format = 'full' ) {
+	$store_info = gstore_store_info();
+	
+	switch ( $format ) {
+		case 'weekdays':
+			return $store_info->get_value( 'business_hours.weekdays', '' );
+		case 'saturday':
+			return $store_info->get_value( 'business_hours.saturday', '' );
+		case 'support':
+			return $store_info->get_value( 'business_hours.support_hours', '' );
+		case 'full':
+		default:
+			return $store_info->get_value( 'business_hours.full_text', '' );
+	}
+}
+
+/**
+ * Obtém informações do footer.
+ *
+ * @param string $key Chave específica (about_paragraphs, newsletter, etc).
+ * @return mixed
+ */
+function gstore_get_footer_info( $key = '' ) {
+	$store_info = gstore_store_info();
+	
+	if ( empty( $key ) ) {
+		return $store_info->get_value( 'footer' );
+	}
+	
+	return $store_info->get_value( 'footer.' . $key );
+}
+
+/**
+ * Obtém o texto de copyright com ano atual.
+ *
+ * @return string
+ */
+function gstore_get_copyright() {
+	$template = gstore_store_info()->get_value( 'footer.copyright_text', 'Copyright © {year} {store_name}. Todos os direitos reservados.' );
+	
+	$replacements = array(
+		'{year}'       => date( 'Y' ),
+		'{store_name}' => gstore_get_store_name(),
+	);
+	
+	return str_replace( array_keys( $replacements ), array_values( $replacements ), $template );
+}
+
+/**
+ * Obtém meta informações do site.
+ *
+ * @param string $key 'description', 'keywords', ou 'og_image'.
+ * @return string
+ */
+function gstore_get_meta( $key ) {
+	return gstore_store_info()->get_value( 'meta.' . $key, '' );
+}
+
+/**
+ * Obtém cor de branding.
+ *
+ * @param string $key 'accent_color', 'primary_color'.
+ * @return string
+ */
+function gstore_get_brand_color( $key ) {
+	return gstore_store_info()->get_value( 'branding.' . $key, '' );
+}
+
+/**
+ * Obtém o ano de fundação da loja.
+ *
+ * @return string
+ */
+function gstore_get_founded_year() {
+	return gstore_store_info()->get_value( 'store.founded_year', '' );
+}
+
+// ============================================
+// HANDLERS DE EXPORTAÇÃO/IMPORTAÇÃO
+// ============================================
+
+/**
+ * Handler para exportar informações da loja como JSON.
+ */
+function gstore_handle_export_store_info() {
+	// Verifica permissões
+	if ( ! current_user_can( 'manage_options' ) ) {
+		wp_die( __( 'Você não tem permissão para realizar esta ação.', 'gstore' ) );
+	}
+	
+	// Verifica nonce
+	if ( ! isset( $_POST['gstore_export_nonce'] ) || ! wp_verify_nonce( $_POST['gstore_export_nonce'], 'gstore_export_store_info' ) ) {
+		wp_die( __( 'Verificação de segurança falhou.', 'gstore' ) );
+	}
+	
+	$store_info = gstore_store_info();
+	$json_content = $store_info->export_json();
+	
+	// Define headers para download
+	$filename = 'store-info-' . sanitize_file_name( gstore_get_store_name() ) . '-' . date( 'Y-m-d' ) . '.json';
+	
+	header( 'Content-Type: application/json; charset=utf-8' );
+	header( 'Content-Disposition: attachment; filename="' . $filename . '"' );
+	header( 'Content-Length: ' . strlen( $json_content ) );
+	header( 'Cache-Control: no-cache, no-store, must-revalidate' );
+	header( 'Pragma: no-cache' );
+	header( 'Expires: 0' );
+	
+	echo $json_content;
+	exit;
+}
+add_action( 'admin_post_gstore_export_store_info', 'gstore_handle_export_store_info' );
+
+/**
+ * Handler para importar informações da loja de um arquivo JSON.
+ */
+function gstore_handle_import_store_info() {
+	// Verifica permissões
+	if ( ! current_user_can( 'manage_options' ) ) {
+		wp_die( __( 'Você não tem permissão para realizar esta ação.', 'gstore' ) );
+	}
+	
+	// Verifica nonce
+	if ( ! isset( $_POST['gstore_import_nonce'] ) || ! wp_verify_nonce( $_POST['gstore_import_nonce'], 'gstore_import_store_info' ) ) {
+		wp_die( __( 'Verificação de segurança falhou.', 'gstore' ) );
+	}
+	
+	// Verifica se arquivo foi enviado
+	if ( ! isset( $_FILES['store_info_file'] ) || $_FILES['store_info_file']['error'] !== UPLOAD_ERR_OK ) {
+		$error_message = __( 'Erro ao enviar o arquivo.', 'gstore' );
+		
+		if ( isset( $_FILES['store_info_file']['error'] ) ) {
+			switch ( $_FILES['store_info_file']['error'] ) {
+				case UPLOAD_ERR_INI_SIZE:
+				case UPLOAD_ERR_FORM_SIZE:
+					$error_message = __( 'O arquivo é muito grande.', 'gstore' );
+					break;
+				case UPLOAD_ERR_NO_FILE:
+					$error_message = __( 'Nenhum arquivo foi selecionado.', 'gstore' );
+					break;
+			}
+		}
+		
+		wp_redirect( add_query_arg( array(
+			'page'    => 'gstore-settings',
+			'message' => 'import_error',
+			'error'   => urlencode( $error_message ),
+		), admin_url( 'themes.php' ) ) );
+		exit;
+	}
+	
+	// Lê o conteúdo do arquivo primeiro (validação por conteúdo, não apenas extensão)
+	$json_content = file_get_contents( $_FILES['store_info_file']['tmp_name'] );
+	
+	if ( empty( $json_content ) ) {
+		wp_redirect( add_query_arg( array(
+			'page'    => 'gstore-settings',
+			'message' => 'import_error',
+			'error'   => urlencode( __( 'O arquivo está vazio.', 'gstore' ) ),
+		), admin_url( 'themes.php' ) ) );
+		exit;
+	}
+	
+	// Remove BOM (Byte Order Mark) se presente
+	$json_content = preg_replace( '/^\xEF\xBB\xBF/', '', $json_content );
+	
+	// Remove espaços em branco no início e fim
+	$json_content = trim( $json_content );
+	
+	// Valida o JSON antes de importar
+	$json_data = json_decode( $json_content, true );
+	
+	if ( json_last_error() !== JSON_ERROR_NONE ) {
+		// Mensagem de erro específica do JSON
+		$json_error_messages = array(
+			JSON_ERROR_DEPTH          => __( 'Profundidade máxima da pilha excedida.', 'gstore' ),
+			JSON_ERROR_STATE_MISMATCH => __( 'JSON inválido ou malformado.', 'gstore' ),
+			JSON_ERROR_CTRL_CHAR      => __( 'Caractere de controle encontrado, possivelmente codificado incorretamente.', 'gstore' ),
+			JSON_ERROR_SYNTAX         => __( 'Erro de sintaxe JSON. Verifique vírgulas, chaves e aspas.', 'gstore' ),
+			JSON_ERROR_UTF8           => __( 'Caracteres UTF-8 malformados, possivelmente codificação incorreta.', 'gstore' ),
+		);
+		
+		$error_message = isset( $json_error_messages[ json_last_error() ] ) 
+			? $json_error_messages[ json_last_error() ] 
+			: __( 'Erro desconhecido ao processar JSON.', 'gstore' );
+		
+		$error_message .= ' ' . sprintf( __( 'Detalhes: %s', 'gstore' ), json_last_error_msg() );
+		
+		wp_redirect( add_query_arg( array(
+			'page'    => 'gstore-settings',
+			'message' => 'import_error',
+			'error'   => urlencode( $error_message ),
+		), admin_url( 'themes.php' ) ) );
+		exit;
+	}
+	
+	// Tenta importar (passa o array já decodificado para evitar decodificar duas vezes)
+	$store_info = gstore_store_info();
+	
+	// Debug: verifica se o JSON foi decodificado corretamente
+	if ( ! is_array( $json_data ) ) {
+		wp_redirect( add_query_arg( array(
+			'page'    => 'gstore-settings',
+			'message' => 'import_error',
+			'error'   => urlencode( sprintf( 
+				__( 'Erro: JSON decodificado não é um array. Tipo: %s', 'gstore' ), 
+				gettype( $json_data ) 
+			) ),
+		), admin_url( 'themes.php' ) ) );
+		exit;
+	}
+	
+	$result = $store_info->import_json( $json_data );
+	
+	if ( is_wp_error( $result ) ) {
+		$error_message = $result->get_error_message();
+		
+		// Adiciona informações de debug se for erro de estrutura
+		if ( $result->get_error_code() === 'invalid_structure' ) {
+			$secoes_encontradas = array_keys( $json_data );
+			$error_message .= ' | Seções no JSON: ' . implode( ', ', $secoes_encontradas );
+		}
+		
+		wp_redirect( add_query_arg( array(
+			'page'    => 'gstore-settings',
+			'message' => 'import_error',
+			'error'   => urlencode( $error_message ),
+		), admin_url( 'themes.php' ) ) );
+		exit;
+	}
+	
+	// Sucesso
+	wp_redirect( add_query_arg( array(
+		'page'    => 'gstore-settings',
+		'message' => 'import_success',
+	), admin_url( 'themes.php' ) ) );
+	exit;
+}
+add_action( 'admin_post_gstore_import_store_info', 'gstore_handle_import_store_info' );
+
+/**
+ * Exibe mensagens de sucesso/erro para importação.
+ */
+function gstore_store_info_admin_notices() {
+	$screen = get_current_screen();
+	
+	if ( ! $screen || $screen->id !== 'appearance_page_gstore-settings' ) {
+		return;
+	}
+	
+	if ( isset( $_GET['message'] ) ) {
+		if ( $_GET['message'] === 'import_success' ) {
+			?>
+			<div class="notice notice-success is-dismissible">
+				<p><?php _e( 'Informações da loja importadas com sucesso!', 'gstore' ); ?></p>
+			</div>
+			<?php
+		} elseif ( $_GET['message'] === 'import_error' && isset( $_GET['error'] ) ) {
+			$error_message = urldecode( $_GET['error'] );
+			?>
+			<div class="notice notice-error is-dismissible">
+				<p><strong><?php _e( 'Erro ao importar JSON:', 'gstore' ); ?></strong></p>
+				<p><?php echo esc_html( $error_message ); ?></p>
+				<p style="margin-top: 10px;">
+					<strong><?php _e( 'Dicas:', 'gstore' ); ?></strong>
+					<ul style="margin-left: 20px; margin-top: 5px;">
+						<li><?php _e( 'Verifique se o arquivo é um JSON válido (use um validador online se necessário)', 'gstore' ); ?></li>
+						<li><?php _e( 'Certifique-se de que todas as seções obrigatórias estão presentes', 'gstore' ); ?></li>
+						<li><?php _e( 'Verifique vírgulas, chaves { } e colchetes [ ]', 'gstore' ); ?></li>
+						<li><?php _e( 'Certifique-se de que todas as strings estão entre aspas duplas', 'gstore' ); ?></li>
+					</ul>
+				</p>
+			</div>
+			<?php
+		}
+	}
+}
+add_action( 'admin_notices', 'gstore_store_info_admin_notices' );
+
+// ============================================
+// PROCESSAMENTO DE PLACEHOLDERS NOS TEMPLATES
+// ============================================
+
+/**
+ * Processa placeholders de informações da loja no conteúdo.
+ *
+ * Substitui placeholders como {{store_name}}, {{whatsapp_link}}, etc.
+ *
+ * @param string $content Conteúdo a processar.
+ * @return string Conteúdo processado.
+ */
+function gstore_process_store_info_placeholders( $content ) {
+	if ( empty( $content ) || strpos( $content, '{{' ) === false ) {
+		return $content;
+	}
+	
+	// Lista de placeholders e seus valores
+	$placeholders = array(
+		// Store
+		'{{store_name}}'          => gstore_get_store_name(),
+		'{{store_display_name}}'  => gstore_get_store_name( 'display' ),
+		'{{store_name_highlight}}' => gstore_get_store_name( 'highlight' ),
+		'{{cnpj}}'                => gstore_get_cnpj(),
+		'{{founded_year}}'        => gstore_get_founded_year(),
+		
+		// Contact
+		'{{phone}}'               => gstore_get_phone(),
+		'{{phone_raw}}'           => gstore_get_phone( 'raw' ),
+		'{{whatsapp}}'            => gstore_get_whatsapp(),
+		'{{whatsapp_display}}'    => gstore_get_whatsapp( 'display' ),
+		'{{whatsapp_link}}'       => gstore_get_whatsapp_link(),
+		'{{whatsapp_link_hello}}' => gstore_get_whatsapp_link( 'Olá ' . gstore_get_store_name( 'display' ) . '!' ),
+		
+		// Social
+		'{{instagram}}'           => gstore_get_social( 'instagram' ),
+		'{{instagram_link}}'      => gstore_get_social_link( 'instagram' ),
+		'{{facebook_link}}'       => gstore_get_social_link( 'facebook' ),
+		'{{youtube_link}}'        => gstore_get_social_link( 'youtube' ),
+		'{{telegram}}'            => gstore_get_social( 'telegram_group' ),
+		'{{telegram_link}}'       => gstore_get_social_link( 'telegram_group' ),
+		
+		// Address
+		'{{address_street}}'      => gstore_get_address( 'street' ),
+		'{{address_full}}'        => gstore_get_address( 'full' ),
+		'{{address_short}}'       => gstore_get_address( 'short' ),
+		'{{address_city_state}}'  => gstore_get_address( 'city_state' ),
+		'{{maps_url}}'            => gstore_get_maps_url(),
+		
+		// Business hours
+		'{{business_hours}}'      => gstore_get_business_hours(),
+		'{{support_hours}}'       => gstore_get_business_hours( 'support' ),
+		
+		// Footer
+		'{{copyright}}'           => gstore_get_copyright(),
+		
+		// Meta
+		'{{meta_description}}'    => gstore_get_meta( 'description' ),
+		
+		// Branding
+		'{{accent_color}}'        => gstore_get_brand_color( 'accent_color' ),
+		
+		// Dynamic
+		'{{year}}'                => date( 'Y' ),
+	);
+	
+	// Processa parágrafos do footer (array)
+	$footer_paragraphs = gstore_get_footer_info( 'about_paragraphs' );
+	if ( is_array( $footer_paragraphs ) ) {
+		foreach ( $footer_paragraphs as $index => $paragraph ) {
+			$placeholders['{{footer_paragraph_' . ( $index + 1 ) . '}}'] = $paragraph;
+		}
+	}
+	
+	// Substitui os placeholders
+	$content = str_replace( array_keys( $placeholders ), array_values( $placeholders ), $content );
+	
+	return $content;
+}
+
+/**
+ * Adiciona o processamento de placeholders ao output buffer existente.
+ *
+ * Este filtro é aplicado ao output final da página.
+ *
+ * @param string $content Conteúdo HTML.
+ * @return string Conteúdo processado.
+ */
+function gstore_add_store_info_to_output_processing( $content ) {
+	return gstore_process_store_info_placeholders( $content );
+}
+add_filter( 'gstore_process_final_output', 'gstore_add_store_info_to_output_processing', 5 );
+
+/**
+ * Processa placeholders em blocos HTML.
+ */
+add_filter( 'render_block_core/html', function( $block_content, $block ) {
+	if ( ! empty( $block_content ) ) {
+		$block_content = gstore_process_store_info_placeholders( $block_content );
+	}
+	return $block_content;
+}, 15, 2 );
+
+/**
+ * Processa placeholders em template parts.
+ */
+add_filter( 'render_block_core/template-part', function( $block_content, $block ) {
+	if ( ! empty( $block_content ) ) {
+		$block_content = gstore_process_store_info_placeholders( $block_content );
+	}
+	return $block_content;
+}, 15, 2 );
+
+// ============================================
+// MIGRAÇÃO E INICIALIZAÇÃO AUTOMÁTICA
+// ============================================
+
+/**
+ * Inicializa o arquivo JSON com dados padrão se não existir.
+ *
+ * Executado automaticamente na primeira visita ao admin.
+ */
+function gstore_maybe_init_store_info_json() {
+	// Só executa no admin e se o usuário tiver permissões
+	if ( ! is_admin() || ! current_user_can( 'manage_options' ) ) {
+		return;
+	}
+	
+	// Verifica se já foi inicializado
+	$initialized = get_option( 'gstore_store_info_initialized', false );
+	if ( $initialized ) {
+		return;
+	}
+	
+	$store_info = gstore_store_info();
+	
+	// Se o arquivo JSON não existe, cria com valores padrão
+	if ( ! $store_info->json_exists() ) {
+		$store_info->create_default_json();
+	}
+	
+	// Marca como inicializado
+	update_option( 'gstore_store_info_initialized', true );
+}
+add_action( 'admin_init', 'gstore_maybe_init_store_info_json' );

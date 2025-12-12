@@ -1,0 +1,110 @@
+{
+    "store": {
+        "name": "ARMA STORE",
+        "display_name": "Arma Store",
+        "name_highlight": "STORE",
+        "founded_year": "2010",
+        "cnpj": "47.391.723/0001-22",
+        "slogan": "Loja física, virtual e clube de tiro."
+    },
+    "contact": {
+        "phone": "+55 51 3586-5049",
+        "phone_raw": "555135865049",
+        "whatsapp": "5551995988661",
+        "whatsapp_display": "+55 51 99598-8661",
+        "telegram": "armastoreoficial",
+        "email": "vendas@armastore.com.br"
+    },
+    "address": {
+        "street": "Rua Caçador, 214",
+        "neighborhood": "Rio Branco",
+        "city": "Novo Hamburgo",
+        "state": "RS",
+        "zipcode": "93336-170",
+        "country": "Brasil",
+        "maps_url": "https://www.google.com/maps/place/R.+Ca%C3%A7ador,+214+-+Rio+Branco,+Novo+Hamburgo+-+RS,+93336-170"
+    },
+    "social": {
+        "instagram": "armastoreoficial",
+        "instagram_alt": "",
+        "facebook": "armastoreoficial",
+        "youtube": "armastore",
+        "telegram_group": "armastoreoficial",
+        "twitter": "",
+        "tiktok": ""
+    },
+    "business_hours": {
+        "weekdays": "Segunda a Sexta-feira das 15:00 às 21:00",
+        "saturday": "Sábados das 9h às 16h",
+        "sunday": "",
+        "full_text": "Segunda a Sexta-feira das 15:00 às 21:00, e aos sábados das 9h às 16h",
+        "support_hours": "Seg-Sex, 15h às 21h"
+    },
+    "footer": {
+        "about_title": "ARMA STORE",
+        "about_paragraphs": [
+            "Em um mercado tão competitivo, é imprescindível a qualidade no atendimento, produtos e serviços oferecidos para agilizar e contribuir com o seu crescimento e sucesso no seu esporte, atividade de lazer ou trabalho.",
+            "Atuando desde 2010 contamos com atendimento diferenciado, oferecendo serviços de consultoria, vendas e serviços de reparo e manutenção.",
+            "Por isso a Arma Store vem atuando no mercado, procurando sempre oferecer serviços e soluções que atendam às necessidades dos nossos clientes.",
+            "Dentre as várias linhas de atuação, destacamos nossa especialização em vendas de produtos para a prática de Airsoft, Carabinas de Pressão, Armas de Fogo e Artigos Militares."
+        ],
+        "newsletter": {
+            "title": "CADASTRE-SE E RECEBA",
+            "subtitle": "NOVIDADES E OFERTAS EXCLUSIVAS"
+        },
+        "menu_links": {
+            "duvidas": [
+                {
+                    "label": "Dúvidas",
+                    "url": "/atendimento/"
+                },
+                {
+                    "label": "Formas de pagamento",
+                    "url": "/atendimento/"
+                },
+                {
+                    "label": "Entrega",
+                    "url": "/atendimento/"
+                },
+                {
+                    "label": "Troca e devolução",
+                    "url": "/atendimento/"
+                },
+                {
+                    "label": "Política de privacidade",
+                    "url": "#"
+                },
+                {
+                    "label": "Fale conosco",
+                    "url": "/atendimento/"
+                }
+            ],
+            "institucional": [
+                {
+                    "label": "Institucional",
+                    "url": "#"
+                },
+                {
+                    "label": "A empresa",
+                    "url": "#"
+                },
+                {
+                    "label": "Localização",
+                    "url": ""
+                }
+            ]
+        },
+        "copyright_text": "Copyright © {year} {store_name}. Todos os direitos reservados."
+    },
+    "meta": {
+        "description": "Loja especializada em armas, munições, carabinas, airsoft, clube de tiro e artigos militares em Novo Hamburgo/RS.",
+        "keywords": "armas, munições, airsoft, carabinas, clube de tiro, artigos militares, tiro esportivo",
+        "og_image": ""
+    },
+    "branding": {
+        "accent_color": "#b5a642",
+        "primary_color": "#0a0a0a",
+        "logo_alt": "Logo Arma Store"
+    }
+}
+

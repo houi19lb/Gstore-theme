@@ -5,7 +5,7 @@
 	<!-- wp:html -->
 	<div class="Gstore-support-container">
 		<section class="Gstore-support-hero">
-			<p class="Gstore-support-eyebrow"><i class="fa-solid fa-headset" aria-hidden="true"></i> Central de Atendimento CAC Armas</p>
+			<p class="Gstore-support-eyebrow"><i class="fa-solid fa-headset" aria-hidden="true"></i> Central de Atendimento {{store_display_name}}</p>
 			<h1>Fale com a gente do jeito que preferir</h1>
 			<p class="Gstore-support-subtitle">Nossa equipe responde em horário comercial com atendimento humano, direto e transparente. Escolha um canal abaixo para tirar dúvidas, acompanhar pedidos ou solicitar suporte.</p>
 		</section>
@@ -15,8 +15,8 @@
 				<div class="Gstore-support-card__icon" aria-hidden="true"><i class="fa-brands fa-whatsapp"></i></div>
 				<h2>WhatsApp</h2>
 				<p>Atendimento personalizado em tempo real para dúvidas, indicações e acompanhamento de pedidos.</p>
-				<p class="Gstore-support-card__meta"><strong>Horário:</strong> Seg-Sex, 9h às 18h</p>
-				<a class="Gstore-support-card__cta" href="https://wa.me/556296635633?text=Ol%C3%A1%20CAC%20Armas!" target="_blank" rel="noopener">Falar por WhatsApp <i class="fa-solid fa-arrow-right-long" aria-hidden="true"></i></a>
+				<p class="Gstore-support-card__meta"><strong>Horário:</strong> {{support_hours}}</p>
+				<a class="Gstore-support-card__cta" href="{{whatsapp_link_hello}}" target="_blank" rel="noopener">Falar por WhatsApp <i class="fa-solid fa-arrow-right-long" aria-hidden="true"></i></a>
 			</article>
 
 			<article class="Gstore-support-card">
@@ -24,15 +24,15 @@
 				<h2>Telegram</h2>
 				<p>Grupo da comunidade para interação, novidades e suporte entre membros.</p>
 				<p class="Gstore-support-card__meta"><strong>Disponível:</strong> 24h por dia</p>
-				<a class="Gstore-support-card__cta" href="https://t.me/grupocacarmas" target="_blank" rel="noopener">Entrar no grupo <i class="fa-solid fa-arrow-right-long" aria-hidden="true"></i></a>
+				<a class="Gstore-support-card__cta" href="{{telegram_link}}" target="_blank" rel="noopener">Entrar no grupo <i class="fa-solid fa-arrow-right-long" aria-hidden="true"></i></a>
 			</article>
 
 			<article class="Gstore-support-card">
 				<div class="Gstore-support-card__icon" aria-hidden="true"><i class="fa-brands fa-instagram"></i></div>
 				<h2>Instagram</h2>
 				<p>Siga-nos no Instagram para acompanhar novidades, lançamentos e promoções exclusivas.</p>
-				<p class="Gstore-support-card__meta"><strong>Perfil:</strong> @grupocacarmas</p>
-				<a class="Gstore-support-card__cta" href="https://www.instagram.com/grupocacarmas/" target="_blank" rel="noopener">Seguir no Instagram <i class="fa-solid fa-arrow-right-long" aria-hidden="true"></i></a>
+				<p class="Gstore-support-card__meta"><strong>Perfil:</strong> @{{instagram}}</p>
+				<a class="Gstore-support-card__cta" href="{{instagram_link}}" target="_blank" rel="noopener">Seguir no Instagram <i class="fa-solid fa-arrow-right-long" aria-hidden="true"></i></a>
 			</article>
 
 			<article class="Gstore-support-card">
@@ -85,7 +85,7 @@
 				</details>
 				<details class="Gstore-support-faq__item">
 					<summary>Os produtos têm garantia?</summary>
-					<p>Todos os produtos possuem garantia do fabricante e assistência da CAC Armas. O prazo varia por categoria e está descrito na página do item.</p>
+					<p>Todos os produtos possuem garantia do fabricante e assistência da {{store_display_name}}. O prazo varia por categoria e está descrito na página do item.</p>
 				</details>
 			</div>
 		</section>
@@ -110,12 +110,9 @@
 <!-- /wp:group -->
 
 <!-- wp:html -->
-<a class="Gstore-support-whatsapp" href="https://wa.me/556296635633?text=Preciso%20de%20ajuda%20com%20um%20pedido" target="_blank" rel="noopener" aria-label="Abrir atendimento no WhatsApp">
+<a class="Gstore-support-whatsapp" href="{{whatsapp_link_hello}}" target="_blank" rel="noopener" aria-label="Abrir atendimento no WhatsApp">
 	<i class="fa-brands fa-whatsapp" aria-hidden="true"></i>
 </a>
 <!-- /wp:html -->
 
 <!-- wp:template-part {"slug":"footer","area":"footer"} /-->
-
-
-

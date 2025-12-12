@@ -6998,6 +6998,29 @@ main.Gstore-blog-single-shell .wp-block-group.is-layout-constrained:not(.Gstore-
 	font-size: var(--gstore-font-size-base);
 }
 
+/* Logo no footer */
+.footer-column .footer-logo,
+.footer-column .wp-block-site-logo.footer-logo {
+	margin-bottom: 15px;
+	display: block;
+}
+
+.footer-column .footer-logo a,
+.footer-column .wp-block-site-logo.footer-logo a {
+	display: inline-block;
+	text-decoration: none;
+}
+
+.footer-column .footer-logo img,
+.footer-column .wp-block-site-logo.footer-logo img {
+	max-height: 50px;
+	max-width: 200px;
+	width: auto;
+	height: auto;
+	display: block;
+	object-fit: contain;
+}
+
 .footer-column p,
 .footer-column li {
 	font-size: var(--gstore-font-size-sm);

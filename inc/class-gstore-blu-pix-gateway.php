@@ -161,8 +161,11 @@ class Gstore_Blu_Pix_Gateway extends WC_Payment_Gateway {
 			'description_external'   => array(
 				'title'       => __( 'Descrição externa', 'gstore' ),
 				'type'        => 'text',
-				'description' => __( 'Descrição exibida para o cliente no momento do pagamento. Se vazio, será gerada automaticamente.', 'gstore' ),
+				'description' => __( 'Descrição exibida para o cliente no momento do pagamento. Máximo de 25 caracteres. Se vazio, será gerada automaticamente (truncada se necessário).', 'gstore' ),
 				'default'     => '',
+				'custom_attributes' => array(
+					'maxlength' => 25,
+				),
 			),
 			'description_internal'   => array(
 				'title'       => __( 'Descrição interna', 'gstore' ),
@@ -465,6 +468,9 @@ class Gstore_Blu_Pix_Gateway extends WC_Payment_Gateway {
 				$order->get_order_number(),
 				get_bloginfo( 'name' )
 			);
+
+		// Trunca description para máximo de 25 caracteres (limite da API Blu)
+		$description = mb_substr( $description, 0, 25 );
 
 		$description_internal = ! empty( $this->description_internal )
 			? $this->description_internal

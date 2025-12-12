@@ -14,7 +14,57 @@
 (function($) {
 	'use strict';
 
-	// Configuração padrão das etapas (3 etapas completas)
+	// Configuração com escolha de método de pagamento primeiro (para PIX)
+	const STEPS_WITH_PAYMENT_CHOICE = [
+		{
+			id: 'payment-method',
+			name: 'Pagamento',
+			icon: 'fa-credit-card',
+			title: 'Escolha o Método de Pagamento',
+			description: 'Selecione como deseja pagar seu pedido.',
+			fields: []
+		},
+		{
+			id: 'personal',
+			name: 'Dados Pessoais',
+			icon: 'fa-user',
+			title: 'Seus Dados',
+			description: 'Informe seus dados pessoais para identificação do pedido.',
+			fields: [
+				'billing_first_name',
+				'billing_last_name', 
+				'billing_cpf',
+				'billing_email',
+				'billing_phone'
+			]
+		},
+		{
+			id: 'shipping',
+			name: 'Entrega',
+			icon: 'fa-truck',
+			title: 'Endereço de Entrega',
+			description: 'Preencha o endereço onde deseja receber sua compra.',
+			fields: [
+				'billing_postcode',
+				'billing_address_1',
+				'billing_number',
+				'billing_address_2',
+				'billing_neighborhood',
+				'billing_city',
+				'billing_state'
+			]
+		},
+		{
+			id: 'payment',
+			name: 'Finalizar',
+			icon: 'fa-check',
+			title: 'Finalizar Pedido',
+			description: 'Revise seus dados e finalize seu pedido.',
+			fields: []
+		}
+	];
+
+	// Configuração padrão das etapas (3 etapas completas) - usado quando não há Blu/Pix
 	const STEPS_FULL = [
 		{
 			id: 'personal',
@@ -59,6 +109,14 @@
 	// Configuração simplificada para pré-checkout Blu (apenas email e telefone)
 	const STEPS_BLU_PRECHECKOUT = [
 		{
+			id: 'payment-method',
+			name: 'Pagamento',
+			icon: 'fa-credit-card',
+			title: 'Escolha o Método de Pagamento',
+			description: 'Selecione como deseja pagar seu pedido.',
+			fields: []
+		},
+		{
 			id: 'precheckout',
 			name: 'Dados Básicos',
 			icon: 'fa-envelope',
@@ -71,8 +129,8 @@
 		},
 		{
 			id: 'payment',
-			name: 'Pagamento',
-			icon: 'fa-credit-card',
+			name: 'Finalizar',
+			icon: 'fa-check',
 			title: 'Gerar Link de Pagamento',
 			description: 'Clique no botão abaixo para gerar o link e ser redirecionado para o checkout seguro da Blu.',
 			fields: []
@@ -122,41 +180,47 @@
 
 	/**
 	 * Determina se deve usar o pré-checkout simplificado
+	 * Agora só usa pré-checkout quando Cartão (blu_checkout) está selecionado
+	 * Quando PIX está selecionado, usa checkout completo
 	 */
 	function shouldUseBluPrecheckout() {
-		// Se o gateway Blu está disponível, usa pré-checkout
-		// Isso permite que tanto Blu quanto Pix apareçam juntos na segunda etapa
+		// Se o gateway Blu não está disponível, não usa pré-checkout
 		if (!isBluGatewayAvailable()) {
 			return false;
 		}
 		
-		// Se Blu está selecionado, usa pré-checkout
+		// Se Cartão (blu_checkout) está selecionado, usa pré-checkout
 		if (isBluGatewaySelected()) {
 			return true;
 		}
 		
-		// Se Pix está selecionado e Blu está disponível, também usa pré-checkout
-		// (ambos podem aparecer juntos na segunda etapa)
-		if (isPixGatewaySelected() && isBluGatewayAvailable()) {
-			return true;
+		// Se PIX está selecionado, NÃO usa pré-checkout (coleta tudo no site)
+		if (isPixGatewaySelected()) {
+			return false;
 		}
 		
-		// Se Blu está disponível (mesmo que não selecionado), usa pré-checkout
-		// Isso permite que o usuário veja e escolha entre Blu e Pix na segunda etapa
-		// Verifica se há outros métodos de pagamento além de Blu/Pix
+		// Se nenhum método foi selecionado ainda, verifica se há outros métodos além de Blu/Pix
 		const $allPaymentMethods = $('input[name="payment_method"]');
 		const hasOtherMethods = $allPaymentMethods.filter(function() {
 			const value = $(this).val();
 			return value !== 'blu_checkout' && value !== 'blu_pix';
 		}).length > 0;
 		
-		// Se não há outros métodos além de Blu/Pix, usa pré-checkout
-		// Se há outros métodos, só usa pré-checkout se Blu ou Pix estiverem selecionados
+		// Se não há outros métodos além de Blu/Pix, usa pré-checkout por padrão
+		// (o usuário escolherá na primeira etapa)
 		if (!hasOtherMethods) {
 			return true;
 		}
 		
 		return false;
+	}
+
+	/**
+	 * Verifica se deve mostrar a etapa de escolha de método de pagamento primeiro
+	 */
+	function shouldShowPaymentMethodFirst() {
+		// Mostra escolha de método primeiro se Blu ou Pix estão disponíveis
+		return isBluGatewayAvailable() || isPixGatewayAvailable();
 	}
 
 	/**
@@ -177,10 +241,18 @@
 			return;
 		}
 
-		// Define as etapas baseado no gateway selecionado
-		if (shouldUseBluPrecheckout()) {
-			STEPS = STEPS_BLU_PRECHECKOUT;
+		// Define as etapas baseado no gateway disponível e selecionado
+		if (shouldShowPaymentMethodFirst()) {
+			// Se há Blu/Pix disponível, mostra escolha de método primeiro
+			if (shouldUseBluPrecheckout()) {
+				// Cartão selecionado ou nenhum selecionado (padrão) - usa pré-checkout
+				STEPS = STEPS_BLU_PRECHECKOUT;
+			} else {
+				// PIX selecionado - usa checkout completo com escolha de método primeiro
+				STEPS = STEPS_WITH_PAYMENT_CHOICE;
+			}
 		} else {
+			// Sem Blu/Pix - usa checkout padrão
 			STEPS = STEPS_FULL;
 		}
 
@@ -548,31 +620,51 @@
 	 * Organiza os campos nas etapas corretas
 	 */
 	function organizeFields() {
-		const isPrecheckout = STEPS.length === 2; // Pré-checkout Blu tem 2 etapas
+		const isPrecheckout = STEPS.length === 3 && STEPS[0].id === 'payment-method' && STEPS[1].id === 'precheckout';
+		const hasPaymentMethodStep = STEPS[0].id === 'payment-method';
+		
+		// Se a primeira etapa é escolha de método de pagamento, move métodos de pagamento para lá
+		if (hasPaymentMethodStep) {
+			const $paymentMethodStep = $(`[data-step="payment-method"] .Gstore-checkout-step__fields`);
+			if ($paymentMethodStep.length) {
+				// Move seção de pagamento para a primeira etapa
+				const $paymentSection = $('#payment');
+				if ($paymentSection.length) {
+					$paymentMethodStep.append($paymentSection.detach());
+					
+					// Chama função para unificar métodos Blu
+					setTimeout(function() {
+						unifyBluPaymentMethods();
+					}, 150);
+				}
+			}
+		}
 
-		// Organiza campos da primeira etapa (dados pessoais ou pré-checkout)
-		const $firstStep = $(`[data-step="${STEPS[0].id}"] .Gstore-checkout-step__fields`);
-		if ($firstStep.length) {
-			STEPS[0].fields.forEach(fieldId => {
+		// Organiza campos da primeira etapa de dados (pode ser dados pessoais ou pré-checkout)
+		const firstDataStepIndex = hasPaymentMethodStep ? 1 : 0;
+		const $firstDataStep = $(`[data-step="${STEPS[firstDataStepIndex].id}"] .Gstore-checkout-step__fields`);
+		if ($firstDataStep.length) {
+			STEPS[firstDataStepIndex].fields.forEach(fieldId => {
 				const $field = $(`#${fieldId}_field`);
 				if ($field.length) {
-					$firstStep.append($field.detach());
+					$firstDataStep.append($field.detach());
 				}
 			});
 		}
 
 		// Se não for pré-checkout, organiza etapa de endereço
-		if (!isPrecheckout && STEPS.length > 1) {
+		if (!isPrecheckout && STEPS.length > (hasPaymentMethodStep ? 2 : 1)) {
+			const shippingStepIndex = hasPaymentMethodStep ? 2 : 1;
 			const $shippingStep = $('[data-step="shipping"] .Gstore-checkout-step__fields');
-			if ($shippingStep.length && STEPS[1]) {
-				STEPS[1].fields.forEach(fieldId => {
+			if ($shippingStep.length && STEPS[shippingStepIndex] && STEPS[shippingStepIndex].id === 'shipping') {
+				STEPS[shippingStepIndex].fields.forEach(fieldId => {
 					const $field = $(`#${fieldId}_field`);
 					if ($field.length) {
 						$shippingStep.append($field.detach());
 					}
 				});
 
-				// Adiciona container de opções de envio na etapa 2
+				// Adiciona container de opções de envio
 				const $shippingMethods = $('#shipping_method, .woocommerce-shipping-methods').closest('tr, .woocommerce-shipping-totals');
 				if ($shippingMethods.length) {
 					$shippingStep.append(`
@@ -588,11 +680,24 @@
 			}
 		}
 
-		// Etapa de pagamento (última etapa)
+		// Etapa de pagamento/finalização (última etapa)
 		const $paymentStep = $('[data-step="payment"] .Gstore-checkout-step__payment-container');
 		
+		// Se não tem etapa de escolha de método primeiro, move métodos de pagamento para a última etapa
+		if (!hasPaymentMethodStep) {
+			const $paymentSection = $('#payment');
+			if ($paymentSection.length) {
+				$paymentStep.append($paymentSection.detach());
+				
+				// Chama função para unificar métodos Blu
+				setTimeout(function() {
+					unifyBluPaymentMethods();
+				}, 150);
+			}
+		}
+		
 		// 1. Adiciona resumo dos dados do cliente (apenas se não for pré-checkout)
-		if (!isPrecheckout) {
+		if (!isPrecheckout && !hasPaymentMethodStep) {
 			$paymentStep.append(`
 				<div class="Gstore-checkout-review">
 					<div class="Gstore-checkout-review__section">
@@ -617,12 +722,33 @@
 					</div>
 				</div>
 			`);
-		} else {
-			// No pré-checkout, mensagem simplificada removida - informação será mostrada no card de pagamento
+		} else if (!isPrecheckout && hasPaymentMethodStep) {
+			// Com escolha de método primeiro, ajusta índices do resumo
+			$paymentStep.append(`
+				<div class="Gstore-checkout-review">
+					<div class="Gstore-checkout-review__section">
+						<div class="Gstore-checkout-review__header">
+							<i class="fa-solid fa-user"></i>
+							<span>Dados Pessoais</span>
+							<button type="button" class="Gstore-checkout-review__edit" data-goto-step="1">
+								<i class="fa-solid fa-pen"></i> Editar
+							</button>
+						</div>
+						<div class="Gstore-checkout-review__content" id="review-personal"></div>
+					</div>
+					<div class="Gstore-checkout-review__section">
+						<div class="Gstore-checkout-review__header">
+							<i class="fa-solid fa-location-dot"></i>
+							<span>Endereço de Entrega</span>
+							<button type="button" class="Gstore-checkout-review__edit" data-goto-step="2">
+								<i class="fa-solid fa-pen"></i> Editar
+							</button>
+						</div>
+						<div class="Gstore-checkout-review__content" id="review-shipping"></div>
+					</div>
+				</div>
+			`);
 		}
-
-		// DEBUG: Log para verificar se chegamos até aqui
-		// console.log('Gstore Steps: Organizando etapa de pagamento');
 
 		// 2. Adiciona toggle para observações
 		$paymentStep.append(`
@@ -642,16 +768,8 @@
 			$('.Gstore-checkout-notes-container').append($additionalFields.detach());
 		}
 
-		// 3. Move seção de pagamento e reorganiza métodos Blu
-		const $paymentSection = $('#payment');
-		if ($paymentSection.length) {
-			$paymentStep.append($paymentSection.detach());
-			
-			// Chama função para unificar métodos Blu
-			setTimeout(function() {
-				unifyBluPaymentMethods();
-			}, 150);
-			
+		// 3. Reorganiza métodos Blu se não foi movido para primeira etapa
+		if (!hasPaymentMethodStep) {
 			// Ajusta labels quando apenas um método está disponível
 			const $bluCheckout = $('.payment_method_blu_checkout').not('.Gstore-blu-payment-unified .payment_method_blu_checkout');
 			const $bluPix = $('.payment_method_blu_pix').not('.Gstore-blu-payment-unified .payment_method_blu_pix');
@@ -790,8 +908,10 @@
 		// Atualiza resumo quando entrar na última etapa (pagamento)
 		const lastStepIndex = STEPS.length - 1;
 		if (index === lastStepIndex) {
-			// Só atualiza resumo se não for pré-checkout (checkout completo tem 3 etapas)
-			if (STEPS.length === 3) {
+			// Atualiza resumo se não for pré-checkout
+			const isPrecheckout = STEPS.length === 3 && STEPS[0].id === 'payment-method' && STEPS[1].id === 'precheckout';
+			const isFullCheckout = STEPS.length === 4 && STEPS[0].id === 'payment-method';
+			if (!isPrecheckout && (STEPS.length === 3 || isFullCheckout)) {
 				updateReviewData();
 			}
 			
@@ -832,6 +952,16 @@
 		const step = STEPS[currentStep];
 		let isValid = true;
 		let $firstError = null;
+
+		// Se a etapa é escolha de método de pagamento, valida se um método foi selecionado
+		if (step.id === 'payment-method') {
+			const $paymentMethod = $('input[name="payment_method"]:checked');
+			if (!$paymentMethod.length) {
+				showNotice('Por favor, selecione um método de pagamento.', 'error');
+				return false;
+			}
+			return true;
+		}
 
 		step.fields.forEach(fieldId => {
 			const $fieldWrapper = $(`#${fieldId}_field`);
@@ -933,6 +1063,31 @@
 	function nextStep() {
 		if (!validateCurrentStep()) {
 			return;
+		}
+
+		// Se está na etapa de escolha de método de pagamento, verifica se precisa recarregar as etapas
+		if (STEPS[currentStep] && STEPS[currentStep].id === 'payment-method') {
+			const shouldUsePrecheckout = shouldUseBluPrecheckout();
+			const currentUsesPrecheckout = STEPS.length === 3 && STEPS[1].id === 'precheckout';
+			
+			// Se a seleção mudou o tipo de checkout, recarrega
+			if (shouldUsePrecheckout !== currentUsesPrecheckout) {
+				$('.Gstore-checkout-steps').remove();
+				initialized = false;
+				
+				if (shouldUsePrecheckout) {
+					STEPS = STEPS_BLU_PRECHECKOUT;
+				} else {
+					STEPS = STEPS_WITH_PAYMENT_CHOICE;
+				}
+				
+				init();
+				// Vai para a próxima etapa após recarregar
+				setTimeout(function() {
+					setActiveStep(1);
+				}, 100);
+				return;
+			}
 		}
 
 		if (currentStep < STEPS.length - 1) {
@@ -1205,8 +1360,8 @@
 				return false;
 			}
 			
-			// Verifica se estamos no pré-checkout (2 etapas)
-			const isPrecheckout = STEPS.length === 2;
+			// Verifica se estamos no pré-checkout
+			const isPrecheckout = STEPS.length === 3 && STEPS[0] && STEPS[0].id === 'payment-method' && STEPS[1] && STEPS[1].id === 'precheckout';
 			
 			if (isPrecheckout) {
 				// No pré-checkout, precisamos fazer o submit via AJAX manualmente
@@ -1369,7 +1524,7 @@
 			// });
 			
 			// Verifica campos obrigatórios - diferente para pré-checkout vs checkout completo
-			const isPrecheckout = STEPS.length === 2;
+			const isPrecheckout = STEPS.length === 3 && STEPS[0] && STEPS[0].id === 'payment-method' && STEPS[1] && STEPS[1].id === 'precheckout';
 			let requiredFields;
 			
 			if (isPrecheckout) {
@@ -1734,23 +1889,43 @@
 	$(document.body).on('payment_method_selected', function() {
 		// console.log('Gstore Steps: Método de pagamento selecionado');
 		
-		// Se mudou para Blu ou Pix e está no checkout completo, recarregar com pré-checkout
-		if ((isBluGatewaySelected() || isPixGatewaySelected()) && STEPS.length === 3 && initialized && isBluGatewayAvailable()) {
-			// Recarrega o checkout com pré-checkout simplificado
+		// Só recarrega se já estiver inicializado e se há Blu/Pix disponível
+		if (!initialized || (!isBluGatewayAvailable() && !isPixGatewayAvailable())) {
+			return;
+		}
+		
+		// Se está na etapa de escolha de método de pagamento, recarrega as etapas baseado na seleção
+		if (STEPS[0] && STEPS[0].id === 'payment-method') {
+			const shouldUsePrecheckout = shouldUseBluPrecheckout();
+			const currentUsesPrecheckout = STEPS.length === 3 && STEPS[1].id === 'precheckout';
+			
+			// Se mudou de PIX para Cartão (ou vice-versa), recarrega
+			if (shouldUsePrecheckout !== currentUsesPrecheckout) {
+				$('.Gstore-checkout-steps').remove();
+				initialized = false;
+				
+				if (shouldUsePrecheckout) {
+					STEPS = STEPS_BLU_PRECHECKOUT;
+				} else {
+					STEPS = STEPS_WITH_PAYMENT_CHOICE;
+				}
+				
+				init();
+			}
+		}
+		// Se não tem etapa de escolha de método primeiro, mas deveria ter
+		else if (shouldShowPaymentMethodFirst() && (!STEPS[0] || STEPS[0].id !== 'payment-method')) {
 			$('.Gstore-checkout-steps').remove();
 			initialized = false;
-			STEPS = STEPS_BLU_PRECHECKOUT;
+			
+			if (shouldUseBluPrecheckout()) {
+				STEPS = STEPS_BLU_PRECHECKOUT;
+			} else {
+				STEPS = STEPS_WITH_PAYMENT_CHOICE;
+			}
+			
 			init();
 		}
-		// Se mudou para outro gateway (que não seja Blu nem Pix) e está no pré-checkout, recarregar com checkout completo
-		else if (!isBluGatewaySelected() && !isPixGatewaySelected() && STEPS.length === 2 && initialized) {
-			$('.Gstore-checkout-steps').remove();
-			initialized = false;
-			STEPS = STEPS_FULL;
-			init();
-		}
-		// Se mudou entre Blu e Pix dentro do pré-checkout, não precisa recarregar
-		// (ambos devem aparecer juntos na segunda etapa)
 	});
 
 	// Intercepta a resposta do checkout para garantir redirect
