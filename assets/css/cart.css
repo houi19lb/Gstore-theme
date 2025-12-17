@@ -39,6 +39,11 @@
    - --wp--style--root--padding-*
 */
 
+/* Regra genérica para divs usando var(--brass) */
+div {
+	color: var(--brass);
+}
+
 /* Remove padding do body quando está na página do carrinho */
 body.woocommerce-cart,
 body.gstore-cart-template {
@@ -103,6 +108,22 @@ body:has(.Gstore-cart-shell) .is-layout-constrained>*:not(.Gstore-cart-container
 	max-width: none;
 	margin-left: 0;
 	margin-right: 0;
+}
+
+/* ==========================================
+   ELEMENTO .WOOCOMMERCE - LAYOUT FLEX
+   ========================================== */
+
+body.woocommerce-cart .entry-content .woocommerce,
+body.gstore-cart-template .entry-content .woocommerce,
+body.woocommerce-cart .wp-block-post-content .woocommerce,
+body.gstore-cart-template .wp-block-post-content .woocommerce {
+	display: flex;
+	flex-direction: column;
+	justify-content: flex-start;
+	align-items: center;
+	padding-top: 24px;
+	padding-bottom: 24px;
 }
 
 /* ==========================================
@@ -206,7 +227,7 @@ div.woocommerce section.Gstore-cart-shell div.Gstore-cart-container {
 	text-transform: uppercase;
 	letter-spacing: var(--gstore-letter-spacing-20);
 	font-weight: var(--gstore-font-weight-bold);
-	color: var(--gstore-cart-accent);
+	color: var(--brass);
 	margin: 0;
 }
 
@@ -788,7 +809,7 @@ div.woocommerce section.Gstore-cart-shell div.Gstore-cart-container {
 	justify-content: center;
 	gap: 8px;
 	border: none;
-	background: var(--gstore-cart-accent);
+	background-color: var(--brass);
 	color: #fff;
 	padding: 12px 20px;
 	border-radius: var(--gstore-cart-radius);

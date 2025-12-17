@@ -97,9 +97,9 @@ main.woocommerce-checkout {
 
 .Gstore-checkout-shell .wc-block-components-main {
 	--gstore-checkout-form-gap: clamp(24px, 3vw, 36px);
-	background: #ffffff;
-	border: 1px solid #d1d5db;
-	border-radius: 6px;
+	background: var(--gstore-color-white);
+	border: 1px solid var(--gstore-color-border-card);
+	border-radius: var(--gstore-radius-md);
 	padding: var(--gstore-checkout-form-gap);
 	box-shadow: none;
 	display: flex;
@@ -121,7 +121,7 @@ main.woocommerce-checkout {
 .Gstore-checkout-shell .wc-block-components-checkout-step {
 	padding-bottom: 32px;
 	margin-bottom: 32px;
-	border-bottom: 1px solid #e5e7eb;
+	border-bottom: 1px solid var(--gstore-color-border-divider);
 	border-radius: 0;
 	background: transparent;
 }
@@ -138,7 +138,7 @@ main.woocommerce-checkout {
 	gap: 16px;
 	margin-bottom: 24px;
 	padding-bottom: 12px;
-	border-bottom: 1px solid #e5e7eb;
+	border-bottom: 1px solid var(--gstore-color-border-divider);
 }
 
 .Gstore-checkout-shell .wc-block-components-checkout-step__title {
@@ -151,42 +151,6 @@ main.woocommerce-checkout {
 	position: relative;
 	padding-left: 0;
 }
-
-/* Ícones brass nas seções - REMOVIDO A PEDIDO DO USUÁRIO (Ícone repetindo) */
-/*
-.Gstore-checkout-shell .wc-block-components-checkout-step__title::before {
-	content: '';
-	position: absolute;
-	left: 0;
-	top: 50%;
-	transform: translateY(-50%);
-	width: 20px;
-	height: 20px;
-	background-color: var(--gstore-color-rating, #c9b88c);
-	mask-size: contain;
-	mask-repeat: no-repeat;
-	mask-position: center;
-	-webkit-mask-size: contain;
-	-webkit-mask-repeat: no-repeat;
-	-webkit-mask-position: center;
-}
-
-.Gstore-checkout-shell .wc-block-components-checkout-step:first-of-type .wc-block-components-checkout-step__title::before {
-	mask-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>');
-	-webkit-mask-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>');
-}
-
-.Gstore-checkout-shell .wc-block-components-checkout-step:nth-of-type(2) .wc-block-components-checkout-step__title::before {
-	mask-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>');
-	-webkit-mask-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>');
-}
-
-.Gstore-checkout-shell .wc-block-components-checkout-step:nth-of-type(3) .wc-block-components-checkout-step__title::before,
-.Gstore-checkout-shell .wc-block-components-checkout-step:last-of-type .wc-block-components-checkout-step__title::before {
-	mask-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg>');
-	-webkit-mask-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg>');
-}
-*/
 
 /* Grid layout para campos relacionados - Gestalt Proximidade */
 .Gstore-checkout-shell .wc-block-components-checkout-step__content {
@@ -233,18 +197,19 @@ main.woocommerce-checkout {
 	margin-top: 24px;
 }
 
+/* Base input styles for checkout */
 .Gstore-checkout-shell .wc-block-components-text-input input,
 .Gstore-checkout-shell .wc-block-components-country-input select,
 .Gstore-checkout-shell .wc-block-components-state-input select,
 .Gstore-checkout-shell .wc-block-components-phone-input input,
 .Gstore-checkout-shell .wc-block-components-textarea textarea {
 	width: 100%;
-	border: 1px solid #cbd5f5;
-	border-radius: 4px;
+	border: 1px solid var(--gstore-color-border-input);
+	border-radius: var(--gstore-radius-base);
 	padding: 12px 14px;
 	font-size: var(--gstore-font-size-095);
 	color: var(--gstore-color-text-gray-700);
-	background: #ffffff;
+	background: var(--gstore-color-white);
 	box-shadow: inset 0 1px 2px var(--gstore-color-black-08);
 	transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
@@ -255,14 +220,14 @@ main.woocommerce-checkout {
 .Gstore-checkout-shell .wc-block-components-phone-input input:focus,
 .Gstore-checkout-shell .wc-block-components-textarea textarea:focus {
 	border-color: var(--gstore-color-accent);
-	box-shadow: 0 0 0 3px var(--gstore-color-accent-20);
+	box-shadow: none;
 	outline: none;
 }
 
 .Gstore-checkout-shell .wc-block-components-radio-control__option,
 .Gstore-checkout-shell .wc-block-components-checkbox {
-	border: 1px solid #e5e7eb;
-	border-radius: 4px;
+	border: 1px solid var(--gstore-color-border-divider);
+	border-radius: var(--gstore-radius-base);
 	padding: 16px 18px;
 	background: var(--gstore-color-white);
 	margin-bottom: 12px;
@@ -294,9 +259,9 @@ main.woocommerce-checkout {
 }
 
 .Gstore-order-summary-card {
-	background: #ffffff;
-	border: 1px solid #d1d5db;
-	border-radius: 6px;
+	background: var(--gstore-color-white);
+	border: 1px solid var(--gstore-color-border-card);
+	border-radius: var(--gstore-radius-md);
 	box-shadow: none;
 	display: flex;
 	flex-direction: column;
@@ -304,7 +269,7 @@ main.woocommerce-checkout {
 
 .Gstore-order-summary-card__header {
 	padding: 24px;
-	border-bottom: 1px solid #e5e7eb;
+	border-bottom: 1px solid var(--gstore-color-border-divider);
 	display: flex;
 	flex-direction: column;
 	gap: 16px;
@@ -333,9 +298,9 @@ main.woocommerce-checkout {
 
 .Gstore-order-summary-card__total {
 	padding: 16px;
-	background: #f9fafb;
-	border: 1px solid #e5e7eb;
-	border-radius: 4px;
+	background: var(--gstore-color-bg-gray-50);
+	border: 1px solid var(--gstore-color-border-divider);
+	border-radius: var(--gstore-radius-base);
 	display: flex;
 	flex-direction: column;
 	gap: 4px;
@@ -375,9 +340,9 @@ main.woocommerce-checkout {
 
 .Gstore-checkout-shell .wc-block-components-order-summary-item {
 	padding: 12px;
-	border: 1px solid #e5e7eb;
-	border-radius: 4px;
-	background: #f9fafb;
+	border: 1px solid var(--gstore-color-border-divider);
+	border-radius: var(--gstore-radius-base);
+	background: var(--gstore-color-bg-gray-50);
 	display: grid;
 	grid-template-columns: 52px 1fr auto;
 	gap: 12px;
@@ -411,7 +376,7 @@ main.woocommerce-checkout {
 
 .Gstore-checkout-shell .wc-block-components-totals-item {
 	padding: 10px 0;
-	border-bottom: 1px solid #f3f4f6;
+	border-bottom: 1px solid var(--gstore-color-border-subtle);
 }
 
 .Gstore-checkout-shell .wc-block-components-totals-item:last-child {
@@ -432,7 +397,7 @@ main.woocommerce-checkout {
 
 .Gstore-checkout-shell .wc-block-components-totals-item--order-total {
 	padding-top: 16px;
-	border-top: 2px solid #e5e7eb;
+	border-top: 2px solid var(--gstore-color-border-divider);
 	margin-top: 8px;
 }
 
@@ -461,9 +426,9 @@ main.woocommerce-checkout {
 	display: flex;
 	gap: 10px;
 	padding: 12px;
-	background: #f9fafb;
-	border: 1px solid #e5e7eb;
-	border-radius: 4px;
+	background: var(--gstore-color-bg-gray-50);
+	border: 1px solid var(--gstore-color-border-divider);
+	border-radius: var(--gstore-radius-base);
 }
 
 .Gstore-order-summary-card__assurance-card i {
@@ -631,9 +596,9 @@ main.woocommerce-checkout {
 
 /* Main Form Column (Left) */
 .Gstore-checkout-shell .wc-block-components-main {
-	background: #ffffff;
-	border: 1px solid #d1d5db;
-	border-radius: 6px;
+	background: var(--gstore-color-white);
+	border: 1px solid var(--gstore-color-border-card);
+	border-radius: var(--gstore-radius-md);
 	padding: clamp(24px, 3vw, 36px);
 	box-shadow: none !important;
 	display: flex;
@@ -656,19 +621,19 @@ main.woocommerce-checkout {
 	width: 100% !important;
 }
 
-/* Input Fields (Blocks) */
+/* Input Fields (Blocks) - Uses base styles from .Gstore-checkout-shell above */
 .wc-block-components-text-input input,
 .wc-block-components-combobox-control input,
 .wc-block-components-textarea textarea,
 .wc-block-components-select-control select {
-	border: 1px solid #cbd5f5 !important;
-	border-radius: 4px !important;
+	border: 1px solid var(--gstore-color-border-input) !important;
+	border-radius: var(--gstore-radius-base) !important;
 	padding: 12px 14px !important;
 	font-size: var(--gstore-font-size-095) !important;
-	color: #111827 !important;
+	color: var(--gstore-color-text-gray-700) !important;
 	background: var(--gstore-color-white) !important;
 	box-shadow: none !important;
-	transition: border-color 0.2s ease, box-shadow 0.2s ease !important;
+	transition: border-color 0.2s ease !important;
 	min-height: 48px;
 }
 
@@ -694,7 +659,7 @@ main.woocommerce-checkout {
 .wc-block-components-checkout-step__heading {
 	margin-bottom: 24px;
 	padding-bottom: 16px;
-	border-bottom: 1px solid #e5e7eb;
+	border-bottom: 1px solid var(--gstore-color-border-divider);
 }
 
 .wc-block-components-checkout-step__title {
@@ -731,9 +696,9 @@ main.woocommerce-checkout {
 
 /* Order Summary in Sidebar */
 .wc-block-components-order-summary {
-	background: #ffffff;
-	border: 1px solid #d1d5db;
-	border-radius: 6px;
+	background: var(--gstore-color-white);
+	border: 1px solid var(--gstore-color-border-card);
+	border-radius: var(--gstore-radius-md);
 	padding: 24px;
 	box-shadow: none !important;
 	width: 100% !important;
@@ -754,7 +719,7 @@ main.woocommerce-checkout {
 
 /* Coupon Section */
 .wc-block-components-totals-coupon {
-	border-top: 1px solid #e5e7eb;
+	border-top: 1px solid var(--gstore-color-border-divider);
 	padding-top: 24px;
 	margin-top: 16px;
 	margin-bottom: 16px;
@@ -763,7 +728,7 @@ main.woocommerce-checkout {
 /* Totals Items */
 .wc-block-components-totals-item {
 	padding: 12px 0;
-	border-bottom: 1px solid #f3f4f6;
+	border-bottom: 1px solid var(--gstore-color-border-subtle);
 	font-size: var(--gstore-font-size-095);
 	display: flex;
 	justify-content: space-between;
@@ -776,7 +741,7 @@ main.woocommerce-checkout {
 
 /* Order Total (Footer Item) */
 .wc-block-components-totals-footer-item {
-	border-top: 2px solid #e5e7eb;
+	border-top: 2px solid var(--gstore-color-border-divider);
 	margin-top: 16px;
 	padding-top: 24px;
 	padding-bottom: 0;
@@ -851,9 +816,9 @@ form.checkout.woocommerce-checkout {
 	width: 100% !important;
 	float: none !important;
 	clear: none !important;
-	background: #ffffff;
-	border: 1px solid #d1d5db;
-	border-radius: 6px;
+	background: var(--gstore-color-white);
+	border: 1px solid var(--gstore-color-border-card);
+	border-radius: var(--gstore-radius-md);
 	padding: 24px;
 	height: fit-content;
 	position: sticky;
@@ -881,9 +846,9 @@ form.checkout.woocommerce-checkout {
 
 /* Styling for the billing fields container */
 .woocommerce-billing-fields {
-	background: #ffffff;
-	border: 1px solid #d1d5db;
-	border-radius: 6px;
+	background: var(--gstore-color-white);
+	border: 1px solid var(--gstore-color-border-card);
+	border-radius: var(--gstore-radius-md);
 	padding: clamp(24px, 3vw, 36px);
 }
 
@@ -906,45 +871,8 @@ form.checkout.woocommerce-checkout {
 	padding-left: 0;
 	margin-bottom: 24px;
 	padding-bottom: 12px;
-	border-bottom: 1px solid #e5e7eb;
+	border-bottom: 1px solid var(--gstore-color-border-divider);
 }
-
-/* Ícones brass nas seções - Gestalt Similaridade - REMOVIDO (Ícones duplicados/repetidos) */
-/*
-.woocommerce-billing-fields h3::before,
-.woocommerce-shipping-fields h3::before,
-.woocommerce-additional-fields h3::before {
-	content: '';
-	position: absolute;
-	left: 0;
-	top: 50%;
-	transform: translateY(-50%);
-	width: 20px;
-	height: 20px;
-	background-color: var(--gstore-color-rating, #c9b88c);
-	mask-size: contain;
-	mask-repeat: no-repeat;
-	mask-position: center;
-	-webkit-mask-size: contain;
-	-webkit-mask-repeat: no-repeat;
-	-webkit-mask-position: center;
-}
-
-.woocommerce-billing-fields h3::before {
-	mask-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>');
-	-webkit-mask-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>');
-}
-
-.woocommerce-shipping-fields h3::before {
-	mask-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>');
-	-webkit-mask-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>');
-}
-
-.woocommerce-additional-fields h3::before {
-	mask-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>');
-	-webkit-mask-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>');
-}
-*/
 
 /* Grid layout para campos relacionados - Gestalt Proximidade */
 .woocommerce-billing-fields .woocommerce-billing-fields__field-wrapper,
@@ -1010,26 +938,13 @@ form.checkout.woocommerce-checkout {
 	margin-top: 24px;
 	margin-bottom: 12px;
 	padding-bottom: 10px;
-	border-bottom: 1px solid #e5e7eb;
+	border-bottom: 1px solid var(--gstore-color-border-divider);
 	width: 100%;
 }
 
 /* Primeiro título não precisa de margem superior */
 .gstore-checkout-section-title:first-of-type {
 	margin-top: 0;
-}
-
-/* Ordenação dos Títulos */
-.gstore-title-personal {
-	order: -10;
-}
-
-.gstore-title-contact {
-	order: 90;
-}
-
-.gstore-title-address {
-	order: 190;
 }
 
 /* Ordenação dos Títulos */
@@ -1121,7 +1036,7 @@ form.checkout.woocommerce-checkout {
 
 .woocommerce-shipping-fields,
 .woocommerce-additional-fields {
-	border-top: 1px solid #e5e7eb;
+	border-top: 1px solid var(--gstore-color-border-divider);
 	padding-top: 32px;
 }
 
@@ -1136,14 +1051,14 @@ form.checkout.woocommerce-checkout {
 .woocommerce-checkout select {
 	width: 100% !important;
 	box-sizing: border-box !important;
-	border: 1px solid #cbd5f5 !important;
-	border-radius: 4px !important;
+	border: 1px solid var(--gstore-color-border-input) !important;
+	border-radius: var(--gstore-radius-base) !important;
 	padding: 12px 14px !important;
 	font-size: var(--gstore-font-size-095) !important;
-	color: #111827 !important;
+	color: var(--gstore-color-text-gray-700) !important;
 	background: var(--gstore-color-white) !important;
 	box-shadow: none !important;
-	transition: border-color 0.2s ease, box-shadow 0.2s ease !important;
+	transition: border-color 0.2s ease !important;
 	min-height: 48px;
 }
 
@@ -1162,6 +1077,11 @@ form.checkout.woocommerce-checkout {
 	display: block;
 }
 
+/* Oculta o texto "(opcional)" nos labels dos campos */
+.woocommerce-checkout label .optional {
+	display: none !important;
+}
+
 /* Payment section styling - NÃO afetar order review */
 .woocommerce-checkout #payment {
 	background: transparent;
@@ -1176,9 +1096,9 @@ form.checkout.woocommerce-checkout {
 }
 
 .woocommerce-checkout #payment ul.payment_methods li {
-	background: #ffffff;
-	border: 1px solid #e5e7eb;
-	border-radius: 4px;
+	background: var(--gstore-color-white);
+	border: 1px solid var(--gstore-color-border-divider);
+	border-radius: var(--gstore-radius-base);
 	padding: 0;
 	margin-bottom: 0;
 	overflow: hidden;

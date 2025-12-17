@@ -1281,6 +1281,35 @@ function gstore_add_payment_info_to_price( $html, $block_content, $block ) {
 add_filter( 'render_block_woocommerce/product-price', 'gstore_add_payment_info_to_price', 10, 3 );
 
 /**
+ * Filtra produtos na home page para exibir apenas produtos em estoque.
+ * Aplica tanto para queries principais quanto para shortcodes.
+ *
+ * @param array $query_args Argumentos da query do WooCommerce.
+ * @return array
+ */
+function gstore_filter_home_products_by_stock( $query_args ) {
+	// Apenas na home page
+	if ( ! is_front_page() ) {
+		return $query_args;
+	}
+
+	// Força apenas produtos em estoque
+	if ( ! isset( $query_args['meta_query'] ) || ! is_array( $query_args['meta_query'] ) ) {
+		$query_args['meta_query'] = array();
+	}
+
+	// Adiciona filtro de estoque (mesmo que já tenha sido especificado no shortcode)
+	$query_args['meta_query'][] = array(
+		'key'     => '_stock_status',
+		'value'   => 'instock',
+		'compare' => '=',
+	);
+
+	return $query_args;
+}
+add_filter( 'woocommerce_shortcode_products_query', 'gstore_filter_home_products_by_stock', 10, 1 );
+
+/**
  * Remove a formatação automática de parágrafos do WordPress.
  */
 function gstore_disable_wpautop() {
@@ -2231,15 +2260,41 @@ function gstore_customize_checkout_fields( $fields ) {
 
     // Verificar se o gateway Blu está disponível
     $blu_gateway_available = false;
+    $payment_gateways = array();
     if ( class_exists( 'WooCommerce' ) && function_exists( 'WC' ) ) {
         $payment_gateways = WC()->payment_gateways()->payment_gateways();
         if ( isset( $payment_gateways['blu_checkout'] ) && $payment_gateways['blu_checkout']->is_available() ) {
             $blu_gateway_available = true;
         }
     }
+    
+    // #region agent log
+    $selected_payment_method = '';
+    if ( class_exists( 'WooCommerce' ) && function_exists( 'WC' ) && WC()->session ) {
+        $selected_payment_method = WC()->session->get( 'chosen_payment_method', '' );
+    }
+    if ( empty( $selected_payment_method ) && isset( $_POST['payment_method'] ) ) {
+        $selected_payment_method = sanitize_text_field( $_POST['payment_method'] );
+    }
+    error_log( json_encode( array(
+        'id' => 'log_' . time() . '_' . uniqid(),
+        'timestamp' => time() * 1000,
+        'location' => 'functions.php:2227',
+        'message' => 'gstore_customize_checkout_fields called',
+        'data' => array(
+            'selected_payment_method' => $selected_payment_method,
+            'blu_checkout_available' => isset( $payment_gateways['blu_checkout'] ) ? 'yes' : 'no',
+            'blu_pix_available' => isset( $payment_gateways['blu_pix'] ) ? 'yes' : 'no'
+        ),
+        'sessionId' => 'debug-session',
+        'runId' => 'run1',
+        'hypothesisId' => 'A'
+    ) ) );
+    // #endregion
 
     // Se gateway Blu está disponível, torna campos de endereço opcionais para pré-checkout
-    if ( $blu_gateway_available ) {
+    // MAS: Se o método selecionado for blu_pix, mantém campos obrigatórios (checkout completo)
+    if ( $blu_gateway_available && $selected_payment_method !== 'blu_pix' ) {
         // Campos de endereço tornam-se opcionais
         $address_fields = array(
             'billing_postcode',
@@ -2270,6 +2325,64 @@ function gstore_customize_checkout_fields( $fields ) {
 
         // Mantém apenas email e telefone como obrigatórios no pré-checkout
         // (WooCommerce já define email como obrigatório por padrão)
+        
+        // #region agent log
+        error_log( json_encode( array(
+            'id' => 'log_' . time() . '_' . uniqid(),
+            'timestamp' => time() * 1000,
+            'location' => 'functions.php:2273',
+            'message' => 'Fields made optional for pre-checkout',
+            'data' => array(
+                'selected_payment_method' => $selected_payment_method,
+                'fields_made_optional' => array( 'billing_postcode', 'billing_address_1', 'billing_first_name', 'billing_last_name', 'billing_cpf' )
+            ),
+            'sessionId' => 'debug-session',
+            'runId' => 'run1',
+            'hypothesisId' => 'A'
+        ) ) );
+        // #endregion
+    } else if ( $selected_payment_method === 'blu_pix' ) {
+        // Para PIX, todos os campos principais são obrigatórios
+        // Apenas o complemento (billing_address_2) permanece opcional
+        
+        // Campos obrigatórios para PIX
+        $required_fields = array(
+            'billing_first_name',    // Nome
+            'billing_last_name',     // Sobrenome
+            'billing_cpf',           // CPF
+            'billing_phone',         // Telefone
+            'billing_address_1',     // Endereço
+            'billing_city',          // Cidade
+            'billing_state',         // Estado
+            'billing_postcode',      // CEP
+        );
+
+        foreach ( $required_fields as $field_key ) {
+            if ( isset( $fields['billing'][ $field_key ] ) ) {
+                $fields['billing'][ $field_key ]['required'] = true;
+            }
+        }
+
+        // Garantir que o complemento (billing_address_2) permanece opcional
+        if ( isset( $fields['billing']['billing_address_2'] ) ) {
+            $fields['billing']['billing_address_2']['required'] = false;
+        }
+
+        // #region agent log
+        error_log( json_encode( array(
+            'id' => 'log_' . time() . '_' . uniqid(),
+            'timestamp' => time() * 1000,
+            'location' => 'functions.php:2344',
+            'message' => 'Pix selected - fields set as required',
+            'data' => array(
+                'selected_payment_method' => $selected_payment_method,
+                'required_fields' => $required_fields
+            ),
+            'sessionId' => 'debug-session',
+            'runId' => 'run1',
+            'hypothesisId' => 'A'
+        ) ) );
+        // #endregion
     }
 
     // Reordenar CEP para o topo da seção de endereço (prioridade 45, logo após CPF que é 35)

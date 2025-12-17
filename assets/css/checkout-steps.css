@@ -10,11 +10,21 @@
  */
 
 /* ===========================================
+   ESCONDE ELEMENTOS DO WOOCOMMERCE NAS ETAPAS
+   =========================================== */
+/* Esconde o botão de finalizar na primeira etapa (só mostra na última) */
+[data-step="payment-method"] .place-order,
+[data-step="payment-method"] #place_order,
+[data-step="payment-method"] .woocommerce-privacy-policy-text {
+	display: none !important;
+}
+
+/* ===========================================
    VARIÁVEIS CSS
    =========================================== */
 :root {
-	--gstore-brass: var(--gstore-color-accent, #b5a642);
-	--gstore-brass-dark: var(--gstore-color-accent-dark, #877c31);
+	--gstore-brass: var(--gstore-color-accent, #ff5c00);
+	--gstore-brass-dark: var(--gstore-color-accent-dark, #bf4500);
 	--gstore-green: var(--gstore-color-accent-secondary, #5a8900);
 	--gstore-green-hover: var(--gstore-color-accent-secondary-hover, #4f7900);
 	--gstore-base: #f5f5f2;
@@ -555,6 +565,10 @@ body.woocommerce-checkout .Gstore-checkout-steps-shell {
 	margin-left: 2px;
 }
 
+.Gstore-field label .optional {
+	display: none !important;
+}
+
 .Gstore-field input,
 .Gstore-field select,
 .Gstore-field textarea {
@@ -689,8 +703,8 @@ body.woocommerce-checkout .Gstore-checkout-steps-shell {
 
 /* Container de pagamento usa flexbox para reordenar elementos - APENAS quando ativo */
 .Gstore-checkout-step[data-step="payment"].is-active {
-	display: flex;
-	flex-direction: column;
+	display: flex !important;
+	flex-direction: column !important;
 }
 
 .Gstore-checkout-step[data-step="payment"] .Gstore-checkout-step__header {
@@ -698,6 +712,8 @@ body.woocommerce-checkout .Gstore-checkout-steps-shell {
 }
 
 .Gstore-checkout-step[data-step="payment"] .Gstore-checkout-step__fields {
+	display: flex;
+	flex-direction: column;
 	order: 2;
 }
 
@@ -880,6 +896,51 @@ body.woocommerce-checkout .Gstore-checkout-steps-shell {
 	cursor: not-allowed;
 	transform: none !important;
 	box-shadow: none !important;
+}
+
+/* ===========================================
+   CONTAINER DE FINALIZAÇÃO
+   =========================================== */
+.Gstore-finalize-container {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 16px;
+	padding: 32px 24px;
+	text-align: center;
+}
+
+.Gstore-finalize-container .Gstore-btn--submit {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 10px;
+	max-width: 320px;
+	font-size: var(--gstore-font-size-lg);
+	padding: 18px 48px;
+	border-radius: var(--gstore-border-radius);
+	transition: all 0.2s ease;
+}
+
+.Gstore-finalize-container .Gstore-btn--submit i {
+	font-size: var(--gstore-font-size-base);
+}
+
+.Gstore-finalize-privacy {
+	font-size: var(--gstore-font-size-xs);
+	color: var(--gstore-text-muted);
+	max-width: 320px;
+	line-height: 1.5;
+	margin: 0;
+}
+
+.Gstore-finalize-privacy a {
+	color: var(--gstore-brass);
+	text-decoration: underline;
+}
+
+.Gstore-finalize-privacy a:hover {
+	color: var(--gstore-brass-hover);
 }
 
 /* ===========================================
@@ -1124,6 +1185,7 @@ body.woocommerce-checkout .Gstore-checkout-steps-shell {
 	margin: 0;
 }
 
+/* Grid layout for billing/shipping fields - responsive */
 .Gstore-checkout-step .woocommerce-billing-fields__field-wrapper,
 .Gstore-checkout-step .woocommerce-shipping-fields__field-wrapper {
 	display: grid;
@@ -1132,7 +1194,6 @@ body.woocommerce-checkout .Gstore-checkout-steps-shell {
 }
 
 @media (max-width: 640px) {
-
 	.Gstore-checkout-step .woocommerce-billing-fields__field-wrapper,
 	.Gstore-checkout-step .woocommerce-shipping-fields__field-wrapper {
 		grid-template-columns: 1fr;
@@ -1159,26 +1220,6 @@ body.woocommerce-checkout .Gstore-checkout-steps-shell {
 	color: var(--gstore-foreground);
 	margin-bottom: 6px;
 	display: block;
-}
-
-.Gstore-checkout-step .form-row input.input-text,
-.Gstore-checkout-step .form-row select {
-	width: 100%;
-	padding: 14px 16px;
-	font-size: var(--gstore-font-size-095);
-	border: 1px solid var(--gstore-muted);
-	border-radius: var(--gstore-border-radius);
-	background: var(--gstore-card-bg);
-	color: var(--gstore-foreground);
-	transition: border-color 0.2s ease, box-shadow 0.2s ease;
-	min-height: 48px;
-}
-
-.Gstore-checkout-step .form-row input.input-text:focus,
-.Gstore-checkout-step .form-row select:focus {
-	outline: none;
-	border-color: var(--gstore-brass);
-	box-shadow: none;
 }
 
 /* Esconde títulos padrão do WooCommerce nos steps */
@@ -1260,9 +1301,11 @@ body.woocommerce-checkout .Gstore-checkout-steps-shell {
 }
 
 /* Botão de finalizar pedido */
-.Gstore-checkout-step #payment .place-order {
+.Gstore-checkout-step[data-step="payment"] #payment .place-order {
 	margin-top: 16px;
 	padding: 0;
+	display: block !important;
+	order: 6;
 }
 
 .Gstore-checkout-step #payment #place_order {
@@ -1345,23 +1388,21 @@ body.woocommerce-checkout .Gstore-checkout-steps-shell {
 }
 
 .Gstore-checkout-step__fields label .optional {
-	font-weight: var(--gstore-font-weight-normal);
-	color: var(--gstore-text-muted);
-	font-size: var(--gstore-font-size-08);
+	display: none !important;
 }
 
-/* Inputs */
+/* Inputs - base styles, using CSS variables for consistency */
 .Gstore-checkout-step__fields .input-text,
 .Gstore-checkout-step__fields select,
 .Gstore-checkout-step__fields textarea {
 	width: 100%;
 	padding: 14px 16px;
 	font-size: var(--gstore-font-size-095);
-	border: 1px solid var(--gstore-muted);
+	border: 1px solid var(--gstore-color-border-input, var(--gstore-muted));
 	border-radius: var(--gstore-border-radius);
 	background: var(--gstore-card-bg);
 	color: var(--gstore-foreground);
-	transition: border-color 0.2s ease, box-shadow 0.2s ease;
+	transition: border-color 0.2s ease;
 	min-height: 48px;
 }
 
@@ -1376,7 +1417,7 @@ body.woocommerce-checkout .Gstore-checkout-steps-shell {
 /* Campo inválido */
 .Gstore-checkout-step__fields .woocommerce-invalid .input-text,
 .Gstore-checkout-step__fields .woocommerce-invalid select {
-	border-color: #dc2626;
+	border-color: var(--gstore-color-error, #dc2626);
 }
 
 .Gstore-checkout-step__fields .woocommerce-invalid .input-text:focus,
@@ -1403,6 +1444,63 @@ body.woocommerce-checkout .Gstore-checkout-steps-shell {
 
 .Gstore-checkout-step__fields .select2-container--default .select2-selection--single .select2-selection__arrow {
 	height: 46px;
+}
+
+/* Select2 Dropdown - corrige fundo escuro */
+.select2-dropdown {
+	background: var(--gstore-card-bg) !important;
+	border: 1px solid var(--gstore-muted) !important;
+	border-radius: var(--gstore-border-radius) !important;
+	box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06) !important;
+}
+
+/* Select2 Search - container do campo de busca */
+.select2-search {
+	padding: 8px !important;
+	background: var(--gstore-card-bg) !important;
+	border-bottom: 1px solid var(--gstore-muted) !important;
+}
+
+/* Select2 Search Field - campo de busca */
+.select2-search__field {
+	width: 100% !important;
+	padding: 8px 12px !important;
+	font-size: var(--gstore-font-size-095) !important;
+	border: 1px solid var(--gstore-muted) !important;
+	border-radius: var(--gstore-border-radius) !important;
+	background: var(--gstore-card-bg) !important;
+	color: var(--gstore-foreground) !important;
+	outline: none !important;
+}
+
+.select2-search__field:focus {
+	border-color: var(--gstore-brass) !important;
+	box-shadow: none !important;
+}
+
+.select2-search__field::placeholder {
+	color: var(--gstore-text-muted) !important;
+}
+
+/* Select2 Results - lista de resultados */
+.select2-results {
+	background: var(--gstore-card-bg) !important;
+}
+
+.select2-results__option {
+	padding: 10px 16px !important;
+	color: var(--gstore-foreground) !important;
+	background: var(--gstore-card-bg) !important;
+}
+
+.select2-results__option--highlighted {
+	background: rgba(201, 184, 140, 0.1) !important;
+	color: var(--gstore-foreground) !important;
+}
+
+.select2-results__option[aria-selected="true"] {
+	background: rgba(90, 137, 0, 0.1) !important;
+	color: var(--gstore-foreground) !important;
 }
 
 /* Seções dentro das etapas */
@@ -1722,29 +1820,48 @@ body.woocommerce-checkout .Gstore-checkout-steps-shell {
 	--blu-border: rgba(26, 86, 219, 0.2);
 }
 
-.Gstore-checkout-step #payment .payment_methods li.payment_method_blu_checkout {
-	border: 1px solid var(--blu-border);
-	background: #fff;
+/* Esconde métodos Blu originais quando o card unificado existe */
+.payment_methods:has(.Gstore-blu-payment-unified) > .payment_method_blu_checkout:not(.Gstore-blu-payment-unified),
+.payment_methods:has(.Gstore-blu-payment-unified) > .payment_method_blu_pix:not(.Gstore-blu-payment-unified) {
+	position: absolute !important;
+	left: -9999px !important;
+	opacity: 0 !important;
+	pointer-events: none !important;
+	visibility: hidden !important;
+}
+
+/* Fallback para browsers sem :has() - esconde via classe */
+.payment_method_blu_checkout.gstore-hidden-for-unified,
+.payment_method_blu_pix.gstore-hidden-for-unified {
+	position: absolute !important;
+	left: -9999px !important;
+	opacity: 0 !important;
+	pointer-events: none !important;
+	visibility: hidden !important;
+}
+
+/* Base styles for Blu checkout method - consolidated selector */
+.payment_method_blu_checkout {
+	border: 1px solid var(--blu-border) !important;
+	background: var(--gstore-color-white) !important;
 	position: relative;
 	box-shadow: none;
 }
 
-/* Header do card simplificado */
-.Gstore-checkout-step #payment .payment_methods li.payment_method_blu_checkout label {
-	padding: 16px 20px;
-	font-weight: var(--gstore-font-weight-semibold);
-	color: var(--gstore-foreground);
-	font-size: var(--gstore-font-size-095);
-	background: var(--blu-primary-light);
-	border-radius: var(--gstore-border-radius) var(--gstore-border-radius) 0 0;
-	display: flex;
-	align-items: center;
+.payment_method_blu_checkout label {
+	padding: 16px 20px !important;
+	font-weight: var(--gstore-font-weight-semibold) !important;
+	color: var(--gstore-foreground) !important;
+	font-size: var(--gstore-font-size-095) !important;
+	background: var(--blu-primary-light) !important;
+	border-radius: var(--gstore-border-radius) var(--gstore-border-radius) 0 0 !important;
+	display: flex !important;
+	align-items: center !important;
 	gap: 12px;
 	position: relative;
 }
 
-/* Ícone do método de pagamento */
-.Gstore-checkout-step #payment .payment_methods li.payment_method_blu_checkout label::before {
+.payment_method_blu_checkout label::before {
 	content: '\f09d';
 	font-family: 'Font Awesome 6 Free';
 	font-weight: 900;
@@ -1757,28 +1874,27 @@ body.woocommerce-checkout .Gstore-checkout-steps-shell {
 	justify-content: center;
 }
 
-/* Remove badge de verificado */
-.Gstore-checkout-step #payment .payment_methods li.payment_method_blu_checkout label::after {
-	display: none;
+.payment_method_blu_checkout label::after {
+	display: none !important;
 }
 
-.Gstore-checkout-step #payment .payment_methods li.payment_method_blu_checkout .payment_box {
-	background: #fff;
-	border-top: none;
-	padding: 20px;
-	border-radius: 0 0 var(--gstore-border-radius) var(--gstore-border-radius);
+.payment_method_blu_checkout .payment_box {
+	background: var(--gstore-color-white) !important;
+	border-top: none !important;
+	padding: 16px 20px !important;
+	border-radius: 0 0 var(--gstore-border-radius) var(--gstore-border-radius) !important;
 }
 
-.Gstore-checkout-step #payment .payment_methods li.payment_method_blu_checkout .payment_box p {
-	color: var(--gstore-text-muted);
-	font-size: var(--gstore-font-size-sm);
-	margin: 0 0 12px;
-	line-height: 1.5;
-	padding-left: 0;
+.payment_method_blu_checkout .payment_box p {
+	color: var(--gstore-text-muted) !important;
+	font-size: var(--gstore-font-size-sm) !important;
+	margin: 0 0 12px !important;
+	line-height: 1.5 !important;
+	padding-left: 0 !important;
 }
 
-.Gstore-checkout-step #payment .payment_methods li.payment_method_blu_checkout .payment_box p::before {
-	display: none;
+.payment_method_blu_checkout .payment_box p::before {
+	display: none !important;
 }
 
 /* Badges de confiança simplificados */
@@ -1786,9 +1902,7 @@ body.woocommerce-checkout .Gstore-checkout-steps-shell {
 	display: flex;
 	flex-wrap: wrap;
 	gap: 8px;
-	padding-top: 12px;
 	margin-top: 12px;
-	border-top: 1px solid var(--gstore-muted);
 }
 
 .Gstore-blu-trust-badge-simple {
@@ -1811,7 +1925,7 @@ body.woocommerce-checkout .Gstore-checkout-steps-shell {
 .payment_method_blu_unified.Gstore-blu-payment-unified {
 	border: 1px solid var(--blu-border);
 	border-radius: var(--gstore-border-radius);
-	background: #fff;
+	background: var(--gstore-color-white);
 	margin-bottom: 16px;
 	overflow: hidden;
 	list-style: none;
@@ -1938,9 +2052,9 @@ body.woocommerce-checkout .Gstore-checkout-steps-shell {
 
 /* Conteúdo do método selecionado */
 .Gstore-blu-payment-unified__content {
-	padding: 16px 20px;
+	padding: 12px 20px;
 	border-top: 1px solid var(--gstore-muted);
-	background: #fff;
+	background: var(--gstore-color-white);
 }
 
 .Gstore-blu-payment-unified__content .payment_box {
@@ -1959,14 +2073,12 @@ body.woocommerce-checkout .Gstore-checkout-steps-shell {
 /* Badges simplificados */
 .Gstore-blu-payment-unified .Gstore-blu-trust-badges-simple {
 	margin: 0 20px 16px;
-	padding-top: 12px;
-	border-top: 1px solid var(--gstore-muted);
 }
 
-/* Estilos para Pix quando aparece sozinho ou no wrapper */
+/* Base styles for Pix payment method */
 .payment_method_blu_pix {
 	border: 1px solid var(--blu-border);
-	background: #fff;
+	background: var(--gstore-color-white);
 	border-radius: var(--gstore-border-radius);
 	margin-bottom: 16px;
 }
@@ -1997,7 +2109,7 @@ body.woocommerce-checkout .Gstore-checkout-steps-shell {
 }
 
 .payment_method_blu_pix .payment_box {
-	background: #fff;
+	background: var(--gstore-color-white);
 	border-top: none;
 	padding: 16px 20px;
 	border-radius: 0 0 var(--gstore-border-radius) var(--gstore-border-radius);
@@ -2010,94 +2122,7 @@ body.woocommerce-checkout .Gstore-checkout-steps-shell {
 	line-height: 1.5;
 }
 
-/* ===========================================
-   CARD DE PAGAMENTO BLU - ESTILOS GENÉRICOS
-   (Funcionam mesmo fora do contexto .Gstore-checkout-step)
-   =========================================== */
-
-/* Estilos genéricos para o card Blu em qualquer contexto */
-.payment_methods li.payment_method_blu_checkout,
-#payment .payment_methods li.payment_method_blu_checkout,
-.woocommerce-checkout .payment_methods li.payment_method_blu_checkout,
-.payment_method_blu_checkout.gstore-blu-styled {
-	border: 1px solid var(--blu-border) !important;
-	background: #fff !important;
-	position: relative;
-	box-shadow: none;
-}
-
-/* Header do card simplificado - genérico */
-.payment_methods li.payment_method_blu_checkout label,
-#payment .payment_methods li.payment_method_blu_checkout label,
-.woocommerce-checkout .payment_methods li.payment_method_blu_checkout label,
-.payment_method_blu_checkout.gstore-blu-styled label {
-	padding: 16px 20px !important;
-	font-weight: 600 !important;
-	color: var(--gstore-foreground, #1f2937) !important;
-	font-size: 0.95rem !important;
-	background: var(--blu-primary-light) !important;
-	border-radius: var(--gstore-border-radius, 8px) var(--gstore-border-radius, 8px) 0 0 !important;
-	display: flex !important;
-	align-items: center !important;
-	gap: 12px;
-	position: relative;
-}
-
-/* Ícone do método - genérico */
-.payment_methods li.payment_method_blu_checkout label::before,
-#payment .payment_methods li.payment_method_blu_checkout label::before,
-.woocommerce-checkout .payment_methods li.payment_method_blu_checkout label::before,
-.payment_method_blu_checkout.gstore-blu-styled label::before {
-	content: '\f09d';
-	font-family: 'Font Awesome 6 Free';
-	font-weight: 900;
-	font-size: var(--gstore-font-size-12);
-	color: var(--blu-primary);
-	width: 32px;
-	height: 32px;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-}
-
-/* Remove badge de verificado - genérico */
-.payment_methods li.payment_method_blu_checkout label::after,
-#payment .payment_methods li.payment_method_blu_checkout label::after,
-.woocommerce-checkout .payment_methods li.payment_method_blu_checkout label::after,
-.payment_method_blu_checkout.gstore-blu-styled label::after {
-	display: none !important;
-}
-
-/* Payment box - genérico */
-.payment_methods li.payment_method_blu_checkout .payment_box,
-#payment .payment_methods li.payment_method_blu_checkout .payment_box,
-.woocommerce-checkout .payment_methods li.payment_method_blu_checkout .payment_box,
-.payment_method_blu_checkout.gstore-blu-styled .payment_box {
-	background: #fff !important;
-	border-top: none !important;
-	padding: 16px 20px !important;
-	border-radius: 0 0 var(--gstore-border-radius, 8px) var(--gstore-border-radius, 8px) !important;
-}
-
-/* Parágrafo dentro do payment box - genérico */
-.payment_methods li.payment_method_blu_checkout .payment_box p,
-#payment .payment_methods li.payment_method_blu_checkout .payment_box p,
-.woocommerce-checkout .payment_methods li.payment_method_blu_checkout .payment_box p,
-.payment_method_blu_checkout.gstore-blu-styled .payment_box p {
-	color: var(--gstore-text-muted, #6b7280) !important;
-	font-size: var(--gstore-font-size-sm) !important;
-	margin: 0 0 12px !important;
-	line-height: 1.5 !important;
-	padding-left: 0 !important;
-}
-
-/* Remove ícone de localização - genérico */
-.payment_methods li.payment_method_blu_checkout .payment_box p::before,
-#payment .payment_methods li.payment_method_blu_checkout .payment_box p::before,
-.woocommerce-checkout .payment_methods li.payment_method_blu_checkout .payment_box p::before,
-.payment_method_blu_checkout.gstore-blu-styled .payment_box p::before {
-	display: none !important;
-}
+/* Generic Blu checkout styles consolidated above - no need to repeat */
 
 /* ===========================================
    MODAL DE PROCESSAMENTO
@@ -2137,6 +2162,35 @@ body.woocommerce-checkout .Gstore-checkout-steps-shell {
 	box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
 	transform: scale(0.9) translateY(20px);
 	transition: transform 0.3s ease;
+}
+
+.Gstore-processing-modal__close {
+	position: absolute;
+	top: 16px;
+	right: 16px;
+	background: transparent;
+	border: none;
+	color: #6b7280;
+	cursor: pointer;
+	padding: 8px;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	transition: color 0.2s ease, background-color 0.2s ease;
+	border-radius: 4px;
+	z-index: 1;
+}
+
+.Gstore-processing-modal__close:hover,
+.Gstore-processing-modal__close:focus {
+	color: #111827;
+	background-color: #f5f5f5;
+	outline: none;
+}
+
+.Gstore-processing-modal__close svg {
+	width: 20px;
+	height: 20px;
 }
 
 .Gstore-processing-modal.is-visible .Gstore-processing-modal__content {
@@ -2251,6 +2305,11 @@ body.woocommerce-checkout .Gstore-checkout-steps-shell {
 		padding: 32px 24px;
 	}
 
+	.Gstore-processing-modal__close {
+		top: 12px;
+		right: 12px;
+	}
+
 	.Gstore-processing-modal__text h3 {
 		font-size: var(--gstore-font-size-xl);
 	}
@@ -2264,11 +2323,6 @@ body.woocommerce-checkout .Gstore-checkout-steps-shell {
 		font-size: var(--gstore-font-size-5xl);
 	}
 }
-
-/* ===========================================
-   PRÉ-CHECKOUT BLU - MENSAGEM INFORMATIVA
-   (Removida para simplificar - informação agora no card de pagamento)
-   =========================================== */
 
 /* Responsividade para telas menores que 1400px */
 @media (max-width: 1400px) {

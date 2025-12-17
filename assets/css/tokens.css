@@ -27,10 +27,11 @@
 	--gstore-color-text-accent: #5c6b5a;
 	
 	/* Acentos e Estados */
-	--gstore-color-accent: #b5a642;
-	--gstore-color-accent-hover: #9f923a;
-	--gstore-color-accent-dark: #877c31;
-	--gstore-color-accent-light: #c7b648;
+	--gstore-color-accent: #ff5c00;
+	--gstore-color-accent-hover: #e05000;
+	--gstore-color-accent-dark: #bf4500;
+	--gstore-color-accent-light: #ff6500;
+	--brass: var(--gstore-color-accent);
 	--gstore-color-accent-secondary: #5a8900;
 	--gstore-color-accent-secondary-hover: #4f7900;
 	--gstore-color-accent-secondary-dark: #567745;
@@ -48,6 +49,12 @@
 	--gstore-color-border-accent-light: #f0e6b8;
 	--gstore-color-border-accent-warm: #f2dec1;
 	
+	/* Bordas de Checkout (consolidadas) */
+	--gstore-color-border-input: #cbd5f5;
+	--gstore-color-border-card: #d1d5db;
+	--gstore-color-border-divider: #e5e7eb;
+	--gstore-color-border-subtle: #f3f4f6;
+	
 	/* Ratings e Avaliações */
 	--gstore-color-rating: #c9b88c;
 	--gstore-color-rating-light: #FFB380;
@@ -62,11 +69,11 @@
 	--gstore-color-black-60: rgba(0, 0, 0, 0.6);
 	--gstore-color-black-08: rgba(0, 0, 0, 0.08);
 	--gstore-color-black-20: rgba(0, 0, 0, 0.2);
-	--gstore-color-accent-10: rgba(181, 166, 66, 0.10);
-	--gstore-color-accent-12: rgba(181, 166, 66, 0.12);
-	--gstore-color-accent-15: rgba(181, 166, 66, 0.15);
-	--gstore-color-accent-20: rgba(181, 166, 66, 0.20);
-	--gstore-color-accent-08: rgba(181, 166, 66, 0.08);
+	--gstore-color-accent-10: rgba(255, 92, 0, 0.10);
+	--gstore-color-accent-12: rgba(255, 92, 0, 0.12);
+	--gstore-color-accent-15: rgba(255, 92, 0, 0.15);
+	--gstore-color-accent-20: rgba(255, 92, 0, 0.20);
+	--gstore-color-accent-08: rgba(255, 92, 0, 0.08);
 	--gstore-color-accent-80: rgba(240, 230, 184, 0.8);
 	--gstore-color-accent-secondary-10: rgba(90, 137, 0, 0.1);
 	--gstore-color-accent-secondary-12: rgba(90, 137, 0, 0.12);

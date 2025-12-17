@@ -130,7 +130,9 @@ do_action( 'woocommerce_before_customer_login_form' ); ?>
 	<div class="gstore-modal__overlay"></div>
 	<div class="gstore-modal__content">
 		<button class="gstore-modal__close" aria-label="<?php esc_attr_e( 'Fechar modal', 'gstore' ); ?>">
-			<i class="fa-solid fa-xmark" aria-hidden="true"></i>
+			<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+				<path d="M18 6L6 18M6 6l12 12"/>
+			</svg>
 		</button>
 		<div class="gstore-modal__body">
 			<h2 id="gstore-modal-title" class="gstore-modal__title"><?php esc_html_e( 'Sobre o cadastro', 'gstore' ); ?></h2>
