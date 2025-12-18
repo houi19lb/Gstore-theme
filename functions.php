@@ -56,6 +56,69 @@ function gstore_after_setup_theme() {
 add_action( 'after_setup_theme', 'gstore_after_setup_theme' );
 
 /**
+ * Desativa o crop das imagens de produto do WooCommerce.
+ * Garante que as miniaturas mantenham a proporção original.
+ */
+
+// 1. Forçar configuração de crop no WooCommerce (banco de dados)
+function gstore_set_woocommerce_image_settings() {
+	// Desativa crop para thumbnails (usa 'uncropped' que significa sem corte)
+	if ( get_option( 'woocommerce_thumbnail_cropping' ) !== 'uncropped' ) {
+		update_option( 'woocommerce_thumbnail_cropping', 'uncropped' );
+	}
+}
+add_action( 'after_setup_theme', 'gstore_set_woocommerce_image_settings', 20 );
+
+// 2. Filtro para woocommerce_thumbnail (loop de produtos)
+function gstore_thumbnail_size( $size ) {
+	return array(
+		'width'  => 300,
+		'height' => 9999,
+		'crop'   => false,
+	);
+}
+add_filter( 'woocommerce_get_image_size_thumbnail', 'gstore_thumbnail_size' );
+
+// 3. Filtro para woocommerce_gallery_thumbnail (galeria de produto)
+function gstore_gallery_thumbnail_size( $size ) {
+	return array(
+		'width'  => 100,
+		'height' => 9999,
+		'crop'   => false,
+	);
+}
+add_filter( 'woocommerce_get_image_size_gallery_thumbnail', 'gstore_gallery_thumbnail_size' );
+
+// 4. Filtro para woocommerce_single (imagem principal do produto)
+function gstore_single_size( $size ) {
+	return array(
+		'width'  => 600,
+		'height' => 9999,
+		'crop'   => false,
+	);
+}
+add_filter( 'woocommerce_get_image_size_single', 'gstore_single_size' );
+
+// 5. Atualizar opções do banco de dados (executa apenas uma vez para garantir robustez)
+function gstore_force_woocommerce_image_options() {
+	// Executa apenas uma vez (ou quando necessário)
+	if ( get_option( 'gstore_image_options_set' ) === 'yes' ) {
+		return;
+	}
+	
+	// Opção principal de crop
+	update_option( 'woocommerce_thumbnail_cropping', 'uncropped' );
+	
+	// Opções de tamanho (formato antigo, ainda respeitado)
+	update_option( 'woocommerce_thumbnail_image_width', 300 );
+	update_option( 'woocommerce_single_image_width', 600 );
+	
+	// Marca como configurado
+	update_option( 'gstore_image_options_set', 'yes' );
+}
+add_action( 'init', 'gstore_force_woocommerce_image_options' );
+
+/**
  * Adiciona resource hints (preconnect, dns-prefetch) para melhorar performance.
  * 
  * Adiciona preconnect para CDNs e recursos externos para reduzir latência
@@ -712,6 +775,14 @@ function gstore_enqueue_styles() {
 		array( 'gstore-main' ),
 		$theme_version
 	);
+
+	// CSS do Toast de Adicionar ao Carrinho
+	wp_enqueue_style(
+		'gstore-add-to-cart-toast-css',
+		get_theme_file_uri( 'assets/css/components/add-to-cart-toast.css' ),
+		array( 'gstore-main' ),
+		$theme_version
+	);
 }
 add_action( 'wp_enqueue_scripts', 'gstore_enqueue_styles' );
 
@@ -870,6 +941,15 @@ function gstore_enqueue_scripts() {
 			'gstore-notices',
 			get_theme_file_uri( 'assets/js/notices.js' ),
 			array(),
+			wp_get_theme()->get( 'Version' ),
+			true
+		);
+
+		// Toast de Adicionar ao Carrinho (substitui link "Ver carrinho" por modal)
+		wp_enqueue_script(
+			'gstore-add-to-cart-toast',
+			get_theme_file_uri( 'assets/js/add-to-cart-toast.js' ),
+			array( 'jquery' ),
 			wp_get_theme()->get( 'Version' ),
 			true
 		);
@@ -1900,7 +1980,9 @@ function gstore_render_cart_debug_overlay() {
 	">
 		<div style="background: #c9a43a; color: #000; padding: 12px 16px; font-weight: bold; display: flex; justify-content: space-between; align-items: center;">
 			<span>🛒 Debug do Carrinho</span>
-			<button onclick="this.closest('#gstore-cart-debug-overlay').remove()" style="background: none; border: none; font-size: 20px; cursor: pointer; color: #000;">&times;</button>
+			<button onclick="this.closest('#gstore-cart-debug-overlay').remove()" style="background: none; border: none; cursor: pointer; color: #000; display: flex; align-items: center; justify-content: center; padding: 4px;">
+				<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12"/></svg>
+			</button>
 		</div>
 		<div id="gstore-debug-content" style="padding: 16px; max-height: calc(80vh - 50px); overflow-y: auto;">
 			<p style="margin: 0;">Carregando...</p>
@@ -3361,28 +3443,55 @@ add_action( 'admin_menu', 'gstore_add_theme_settings_page' );
  * Registra as opções do tema.
  */
 function gstore_register_theme_settings() {
-	// Hero Slider
-	register_setting( 'gstore_settings', 'gstore_hero_slide_1_id', array(
+	// Hero Slider - Configurações de quantidade
+	register_setting( 'gstore_settings', 'gstore_hero_slides_desktop_count', array(
 		'type' => 'integer',
 		'sanitize_callback' => 'absint',
-		'default' => 0,
+		'default' => 2,
 	) );
-	register_setting( 'gstore_settings', 'gstore_hero_slide_1_alt', array(
-		'type' => 'string',
-		'sanitize_callback' => 'sanitize_text_field',
-		'default' => '',
+	register_setting( 'gstore_settings', 'gstore_hero_slides_mobile_count', array(
+		'type' => 'integer',
+		'sanitize_callback' => 'absint',
+		'default' => 2,
 	) );
 	
-	register_setting( 'gstore_settings', 'gstore_hero_slide_2_id', array(
-		'type' => 'integer',
-		'sanitize_callback' => 'absint',
-		'default' => 0,
-	) );
-	register_setting( 'gstore_settings', 'gstore_hero_slide_2_alt', array(
-		'type' => 'string',
-		'sanitize_callback' => 'sanitize_text_field',
-		'default' => '',
-	) );
+	// Hero Slider - Slides Desktop (até 10)
+	for ( $i = 1; $i <= 10; $i++ ) {
+		register_setting( 'gstore_settings', "gstore_hero_desktop_slide_{$i}_id", array(
+			'type' => 'integer',
+			'sanitize_callback' => 'absint',
+			'default' => 0,
+		) );
+		register_setting( 'gstore_settings', "gstore_hero_desktop_slide_{$i}_alt", array(
+			'type' => 'string',
+			'sanitize_callback' => 'sanitize_text_field',
+			'default' => '',
+		) );
+		register_setting( 'gstore_settings', "gstore_hero_desktop_slide_{$i}_link", array(
+			'type' => 'string',
+			'sanitize_callback' => 'esc_url_raw',
+			'default' => '',
+		) );
+	}
+	
+	// Hero Slider - Slides Mobile (até 10)
+	for ( $i = 1; $i <= 10; $i++ ) {
+		register_setting( 'gstore_settings', "gstore_hero_mobile_slide_{$i}_id", array(
+			'type' => 'integer',
+			'sanitize_callback' => 'absint',
+			'default' => 0,
+		) );
+		register_setting( 'gstore_settings', "gstore_hero_mobile_slide_{$i}_alt", array(
+			'type' => 'string',
+			'sanitize_callback' => 'sanitize_text_field',
+			'default' => '',
+		) );
+		register_setting( 'gstore_settings', "gstore_hero_mobile_slide_{$i}_link", array(
+			'type' => 'string',
+			'sanitize_callback' => 'esc_url_raw',
+			'default' => '',
+		) );
+	}
 	
 	// Banner YouTube
 	register_setting( 'gstore_settings', 'gstore_banner_youtube_id', array(
@@ -3462,26 +3571,152 @@ function gstore_render_settings_page() {
 			</table>
 			
 			<h2 class="title"><?php _e( 'Hero Slider - Slides da Página Inicial', 'gstore' ); ?></h2>
-			<p class="description"><?php _e( 'Configure as imagens do slider principal da página inicial.', 'gstore' ); ?></p>
+			<p class="description"><?php _e( 'Configure as imagens do slider principal da página inicial. Os slides de Desktop e Mobile são configurados separadamente para otimização de performance e experiência do usuário.', 'gstore' ); ?></p>
 			
-			<table class="form-table" role="presentation">
-				<tr>
-					<th scope="row">
-						<label for="gstore_hero_slide_1_id"><?php _e( 'Slide 1', 'gstore' ); ?></label>
-					</th>
-					<td>
-						<?php gstore_render_media_selector( 'gstore_hero_slide_1_id', 'gstore_hero_slide_1_alt', get_option( 'gstore_hero_slide_1_id', 0 ), get_option( 'gstore_hero_slide_1_alt', '' ) ); ?>
-					</td>
-				</tr>
-				<tr>
-					<th scope="row">
-						<label for="gstore_hero_slide_2_id"><?php _e( 'Slide 2', 'gstore' ); ?></label>
-					</th>
-					<td>
-						<?php gstore_render_media_selector( 'gstore_hero_slide_2_id', 'gstore_hero_slide_2_alt', get_option( 'gstore_hero_slide_2_id', 0 ), get_option( 'gstore_hero_slide_2_alt', '' ) ); ?>
-					</td>
-				</tr>
-			</table>
+			<!-- Configuração de Quantidade de Slides -->
+			<div class="gstore-slider-config" style="display: flex; gap: 30px; margin: 20px 0; flex-wrap: wrap;">
+				<div style="flex: 1; min-width: 200px;">
+					<label for="gstore_hero_slides_desktop_count" style="display: block; font-weight: 600; margin-bottom: 8px;">
+						<span class="dashicons dashicons-desktop" style="vertical-align: middle;"></span>
+						<?php _e( 'Quantidade de Slides Desktop', 'gstore' ); ?>
+					</label>
+					<select id="gstore_hero_slides_desktop_count" name="gstore_hero_slides_desktop_count" class="regular-text">
+						<?php $desktop_count = absint( get_option( 'gstore_hero_slides_desktop_count', 2 ) ); ?>
+						<?php for ( $i = 1; $i <= 10; $i++ ) : ?>
+							<option value="<?php echo $i; ?>" <?php selected( $desktop_count, $i ); ?>>
+								<?php echo $i; ?> <?php echo $i === 1 ? 'slide' : 'slides'; ?>
+							</option>
+						<?php endfor; ?>
+					</select>
+				</div>
+				<div style="flex: 1; min-width: 200px;">
+					<label for="gstore_hero_slides_mobile_count" style="display: block; font-weight: 600; margin-bottom: 8px;">
+						<span class="dashicons dashicons-smartphone" style="vertical-align: middle;"></span>
+						<?php _e( 'Quantidade de Slides Mobile', 'gstore' ); ?>
+					</label>
+					<select id="gstore_hero_slides_mobile_count" name="gstore_hero_slides_mobile_count" class="regular-text">
+						<?php $mobile_count = absint( get_option( 'gstore_hero_slides_mobile_count', 2 ) ); ?>
+						<?php for ( $i = 1; $i <= 10; $i++ ) : ?>
+							<option value="<?php echo $i; ?>" <?php selected( $mobile_count, $i ); ?>>
+								<?php echo $i; ?> <?php echo $i === 1 ? 'slide' : 'slides'; ?>
+							</option>
+						<?php endfor; ?>
+					</select>
+				</div>
+			</div>
+			
+			<!-- Tabs para Desktop/Mobile -->
+			<div class="gstore-slider-tabs" style="margin-top: 30px;">
+				<nav class="nav-tab-wrapper">
+					<a href="#gstore-desktop-slides" class="nav-tab nav-tab-active" data-tab="desktop">
+						<span class="dashicons dashicons-desktop" style="vertical-align: middle;"></span>
+						<?php _e( 'Slides Desktop', 'gstore' ); ?>
+					</a>
+					<a href="#gstore-mobile-slides" class="nav-tab" data-tab="mobile">
+						<span class="dashicons dashicons-smartphone" style="vertical-align: middle;"></span>
+						<?php _e( 'Slides Mobile', 'gstore' ); ?>
+					</a>
+				</nav>
+				
+				<!-- Desktop Slides -->
+				<div id="gstore-desktop-slides" class="gstore-tab-content" style="background: #fff; border: 1px solid #c3c4c7; border-top: none; padding: 20px;">
+					<p class="description" style="margin-top: 0;">
+						<span class="dashicons dashicons-info" style="color: #2271b1;"></span>
+						<?php _e( 'Imagens recomendadas: 1920x600px ou proporção similar para desktop.', 'gstore' ); ?>
+					</p>
+					<table class="form-table" role="presentation">
+						<?php for ( $i = 1; $i <= 10; $i++ ) : 
+							$slide_id = get_option( "gstore_hero_desktop_slide_{$i}_id", 0 );
+							$slide_alt = get_option( "gstore_hero_desktop_slide_{$i}_alt", '' );
+							$slide_link = get_option( "gstore_hero_desktop_slide_{$i}_link", '' );
+							$is_visible = $i <= $desktop_count;
+						?>
+							<tr class="gstore-desktop-slide-row" data-slide="<?php echo $i; ?>" style="<?php echo ! $is_visible ? 'display: none;' : ''; ?>">
+								<th scope="row">
+									<label for="gstore_hero_desktop_slide_<?php echo $i; ?>_id">
+										<?php printf( __( 'Slide %d', 'gstore' ), $i ); ?>
+									</label>
+								</th>
+								<td>
+									<?php gstore_render_media_selector_with_link( 
+										"gstore_hero_desktop_slide_{$i}_id", 
+										"gstore_hero_desktop_slide_{$i}_alt",
+										"gstore_hero_desktop_slide_{$i}_link",
+										$slide_id, 
+										$slide_alt,
+										$slide_link
+									); ?>
+								</td>
+							</tr>
+						<?php endfor; ?>
+					</table>
+				</div>
+				
+				<!-- Mobile Slides -->
+				<div id="gstore-mobile-slides" class="gstore-tab-content" style="background: #fff; border: 1px solid #c3c4c7; border-top: none; padding: 20px; display: none;">
+					<p class="description" style="margin-top: 0;">
+						<span class="dashicons dashicons-info" style="color: #2271b1;"></span>
+						<?php _e( 'Imagens recomendadas: 768x900px ou proporção vertical para mobile.', 'gstore' ); ?>
+					</p>
+					<table class="form-table" role="presentation">
+						<?php for ( $i = 1; $i <= 10; $i++ ) : 
+							$slide_id = get_option( "gstore_hero_mobile_slide_{$i}_id", 0 );
+							$slide_alt = get_option( "gstore_hero_mobile_slide_{$i}_alt", '' );
+							$slide_link = get_option( "gstore_hero_mobile_slide_{$i}_link", '' );
+							$is_visible = $i <= $mobile_count;
+						?>
+							<tr class="gstore-mobile-slide-row" data-slide="<?php echo $i; ?>" style="<?php echo ! $is_visible ? 'display: none;' : ''; ?>">
+								<th scope="row">
+									<label for="gstore_hero_mobile_slide_<?php echo $i; ?>_id">
+										<?php printf( __( 'Slide %d', 'gstore' ), $i ); ?>
+									</label>
+								</th>
+								<td>
+									<?php gstore_render_media_selector_with_link( 
+										"gstore_hero_mobile_slide_{$i}_id", 
+										"gstore_hero_mobile_slide_{$i}_alt",
+										"gstore_hero_mobile_slide_{$i}_link",
+										$slide_id, 
+										$slide_alt,
+										$slide_link
+									); ?>
+								</td>
+							</tr>
+						<?php endfor; ?>
+					</table>
+				</div>
+			</div>
+			
+			<script>
+			jQuery(document).ready(function($) {
+				// Tabs Desktop/Mobile
+				$('.gstore-slider-tabs .nav-tab').on('click', function(e) {
+					e.preventDefault();
+					var tab = $(this).data('tab');
+					$('.gstore-slider-tabs .nav-tab').removeClass('nav-tab-active');
+					$(this).addClass('nav-tab-active');
+					$('.gstore-tab-content').hide();
+					$('#gstore-' + tab + '-slides').show();
+				});
+				
+				// Mostra/esconde slides baseado na quantidade selecionada
+				$('#gstore_hero_slides_desktop_count').on('change', function() {
+					var count = parseInt($(this).val());
+					$('.gstore-desktop-slide-row').each(function() {
+						var slideNum = parseInt($(this).data('slide'));
+						$(this).toggle(slideNum <= count);
+					});
+				});
+				
+				$('#gstore_hero_slides_mobile_count').on('change', function() {
+					var count = parseInt($(this).val());
+					$('.gstore-mobile-slide-row').each(function() {
+						var slideNum = parseInt($(this).data('slide'));
+						$(this).toggle(slideNum <= count);
+					});
+				});
+			});
+			</script>
 			
 			<h2 class="title"><?php _e( 'Banners', 'gstore' ); ?></h2>
 			<p class="description"><?php _e( 'Configure os banners exibidos no site.', 'gstore' ); ?></p>
@@ -3778,6 +4013,59 @@ function gstore_render_media_selector( $input_id, $alt_input_id, $current_id = 0
 }
 
 /**
+ * Renderiza o seletor de mídia com campo de link.
+ */
+function gstore_render_media_selector_with_link( $input_id, $alt_input_id, $link_input_id, $current_id = 0, $current_alt = '', $current_link = '' ) {
+	$preview_id = $input_id . '_preview';
+	$has_image = $current_id > 0;
+	?>
+	<div class="gstore-media-selector">
+		<div id="<?php echo esc_attr( $preview_id ); ?>" class="gstore-media-preview" data-input-id="<?php echo esc_attr( $input_id ); ?>">
+			<?php if ( $has_image ) : ?>
+				<?php
+				$image_url = wp_get_attachment_image_url( $current_id, 'thumbnail' );
+				if ( $image_url ) :
+					?>
+					<img src="<?php echo esc_url( $image_url ); ?>" alt="<?php echo esc_attr( $current_alt ); ?>" />
+				<?php else : ?>
+					<span style="color: #999;">Imagem não encontrada</span>
+				<?php endif; ?>
+			<?php else : ?>
+				<span style="color: #999;">Nenhuma imagem selecionada</span>
+			<?php endif; ?>
+		</div>
+		<div class="gstore-media-controls">
+			<input type="hidden" id="<?php echo esc_attr( $input_id ); ?>" name="<?php echo esc_attr( $input_id ); ?>" value="<?php echo esc_attr( $current_id ); ?>" />
+			<button type="button" class="button gstore-select-media" data-input-id="<?php echo esc_attr( $input_id ); ?>" data-preview-id="<?php echo esc_attr( $preview_id ); ?>">
+				<?php _e( 'Selecionar Imagem', 'gstore' ); ?>
+			</button>
+			<button type="button" class="button gstore-remove-media" data-input-id="<?php echo esc_attr( $input_id ); ?>" data-preview-id="<?php echo esc_attr( $preview_id ); ?>" style="<?php echo $has_image ? '' : 'display: none;'; ?>">
+				<?php _e( 'Remover', 'gstore' ); ?>
+			</button>
+			<p class="description">
+				<?php _e( 'ID da imagem:', 'gstore' ); ?> <strong><?php echo esc_html( $current_id ? $current_id : 'Nenhuma' ); ?></strong>
+			</p>
+			
+			<div class="gstore-alt-field">
+				<label for="<?php echo esc_attr( $alt_input_id ); ?>">
+					<?php _e( 'Texto Alternativo (Alt)', 'gstore' ); ?>
+				</label>
+				<input type="text" id="<?php echo esc_attr( $alt_input_id ); ?>" name="<?php echo esc_attr( $alt_input_id ); ?>" value="<?php echo esc_attr( $current_alt ); ?>" class="regular-text" />
+			</div>
+			
+			<div class="gstore-link-field" style="margin-top: 10px;">
+				<label for="<?php echo esc_attr( $link_input_id ); ?>">
+					<?php _e( 'Link do Slide (opcional)', 'gstore' ); ?>
+				</label>
+				<input type="url" id="<?php echo esc_attr( $link_input_id ); ?>" name="<?php echo esc_attr( $link_input_id ); ?>" value="<?php echo esc_attr( $current_link ); ?>" class="regular-text" placeholder="https://..." />
+				<p class="description"><?php _e( 'URL para onde o slide deve redirecionar quando clicado.', 'gstore' ); ?></p>
+			</div>
+		</div>
+	</div>
+	<?php
+}
+
+/**
  * AJAX: Retorna dados de uma imagem.
  */
 function gstore_ajax_get_image_data() {
@@ -3830,12 +4118,174 @@ add_action( 'admin_enqueue_scripts', 'gstore_enqueue_settings_assets' );
 /**
  * Funções helper para obter IDs configurados.
  */
+/**
+ * Funções para o Hero Slider com suporte a Desktop/Mobile.
+ */
+
+/**
+ * Obtém a quantidade de slides configurada.
+ *
+ * @param string $device 'desktop' ou 'mobile'.
+ * @return int Quantidade de slides.
+ */
+function gstore_get_hero_slides_count( $device = 'desktop' ) {
+	$option_name = 'gstore_hero_slides_' . $device . '_count';
+	return absint( get_option( $option_name, 2 ) );
+}
+
+/**
+ * Obtém dados de um slide específico.
+ *
+ * @param string $device 'desktop' ou 'mobile'.
+ * @param int    $index  Índice do slide (1-10).
+ * @return array Array com 'id', 'alt', 'link', 'url'.
+ */
+function gstore_get_hero_slide( $device, $index ) {
+	$prefix = "gstore_hero_{$device}_slide_{$index}";
+	$slide_id = absint( get_option( "{$prefix}_id", 0 ) );
+	
+	$data = array(
+		'id'   => $slide_id,
+		'alt'  => get_option( "{$prefix}_alt", '' ),
+		'link' => get_option( "{$prefix}_link", '' ),
+		'url'  => '',
+	);
+	
+	if ( $slide_id > 0 ) {
+		$data['url'] = wp_get_attachment_url( $slide_id );
+	}
+	
+	return $data;
+}
+
+/**
+ * Obtém todos os slides configurados para um dispositivo.
+ *
+ * @param string $device 'desktop' ou 'mobile'.
+ * @return array Array de slides.
+ */
+function gstore_get_hero_slides( $device = 'desktop' ) {
+	$count = gstore_get_hero_slides_count( $device );
+	$slides = array();
+	
+	for ( $i = 1; $i <= $count; $i++ ) {
+		$slide = gstore_get_hero_slide( $device, $i );
+		if ( $slide['id'] > 0 ) {
+			$slides[] = $slide;
+		}
+	}
+	
+	return $slides;
+}
+
+/**
+ * Gera o HTML do Hero Slider com suporte a Desktop/Mobile.
+ *
+ * @return string HTML do slider.
+ */
+function gstore_render_hero_slider() {
+	$desktop_slides = gstore_get_hero_slides( 'desktop' );
+	$mobile_slides = gstore_get_hero_slides( 'mobile' );
+	
+	// Se não houver slides, retorna vazio
+	if ( empty( $desktop_slides ) && empty( $mobile_slides ) ) {
+		return '';
+	}
+	
+	ob_start();
+	?>
+	<div class="Gstore-hero-slider" data-gstore-hero-slider>
+		<!-- Desktop Slides -->
+		<div class="Gstore-hero-slider__track Gstore-hero-slider__track--desktop" data-gstore-hero-track>
+			<?php 
+			$is_first = true;
+			foreach ( $desktop_slides as $slide ) : 
+				$img_tag = gstore_get_hero_image_tag( $slide['id'], $slide['alt'], $is_first );
+			?>
+				<figure class="Gstore-hero-slider__slide" data-gstore-hero-slide>
+					<?php if ( ! empty( $slide['link'] ) ) : ?>
+						<a href="<?php echo esc_url( $slide['link'] ); ?>">
+							<?php echo $img_tag; ?>
+						</a>
+					<?php else : ?>
+						<?php echo $img_tag; ?>
+					<?php endif; ?>
+				</figure>
+			<?php 
+				$is_first = false;
+			endforeach; 
+			?>
+		</div>
+		
+		<!-- Mobile Slides -->
+		<div class="Gstore-hero-slider__track Gstore-hero-slider__track--mobile" data-gstore-hero-track-mobile>
+			<?php 
+			$is_first = true;
+			foreach ( $mobile_slides as $slide ) : 
+				$img_tag = gstore_get_hero_image_tag( $slide['id'], $slide['alt'], $is_first );
+			?>
+				<figure class="Gstore-hero-slider__slide" data-gstore-hero-slide-mobile>
+					<?php if ( ! empty( $slide['link'] ) ) : ?>
+						<a href="<?php echo esc_url( $slide['link'] ); ?>">
+							<?php echo $img_tag; ?>
+						</a>
+					<?php else : ?>
+						<?php echo $img_tag; ?>
+					<?php endif; ?>
+				</figure>
+			<?php 
+				$is_first = false;
+			endforeach; 
+			?>
+		</div>
+		
+		<?php if ( count( $desktop_slides ) > 1 || count( $mobile_slides ) > 1 ) : ?>
+			<button class="Gstore-hero-slider__control Gstore-hero-slider__control--prev" type="button" aria-label="Slide anterior" data-gstore-hero-prev>
+				<span aria-hidden="true">
+					<i class="fa-solid fa-chevron-left"></i>
+				</span>
+			</button>
+			
+			<button class="Gstore-hero-slider__control Gstore-hero-slider__control--next" type="button" aria-label="Próximo slide" data-gstore-hero-next>
+				<span aria-hidden="true">
+					<i class="fa-solid fa-chevron-right"></i>
+				</span>
+			</button>
+			
+			<!-- Desktop Dots -->
+			<?php if ( count( $desktop_slides ) > 1 ) : ?>
+				<div class="Gstore-hero-slider__dots Gstore-hero-slider__dots--desktop" role="tablist">
+					<?php for ( $i = 0; $i < count( $desktop_slides ); $i++ ) : ?>
+						<button class="Gstore-hero-slider__dot <?php echo $i === 0 ? 'is-active' : ''; ?>" type="button" role="tab" aria-label="Mostrar slide <?php echo $i + 1; ?>" aria-selected="<?php echo $i === 0 ? 'true' : 'false'; ?>" data-gstore-hero-dot="<?php echo $i; ?>"></button>
+					<?php endfor; ?>
+				</div>
+			<?php endif; ?>
+			
+			<!-- Mobile Dots -->
+			<?php if ( count( $mobile_slides ) > 1 ) : ?>
+				<div class="Gstore-hero-slider__dots Gstore-hero-slider__dots--mobile" role="tablist">
+					<?php for ( $i = 0; $i < count( $mobile_slides ); $i++ ) : ?>
+						<button class="Gstore-hero-slider__dot <?php echo $i === 0 ? 'is-active' : ''; ?>" type="button" role="tab" aria-label="Mostrar slide <?php echo $i + 1; ?>" aria-selected="<?php echo $i === 0 ? 'true' : 'false'; ?>" data-gstore-hero-dot-mobile="<?php echo $i; ?>"></button>
+					<?php endfor; ?>
+				</div>
+			<?php endif; ?>
+		<?php endif; ?>
+	</div>
+	<?php
+	return ob_get_clean();
+}
+
+// Funções de compatibilidade com o sistema antigo (deprecated)
 function gstore_get_hero_slide_1_id() {
-	return absint( get_option( 'gstore_hero_slide_1_id', 0 ) );
+	// Tenta obter do novo sistema primeiro
+	$slide = gstore_get_hero_slide( 'desktop', 1 );
+	return $slide['id'];
 }
 
 function gstore_get_hero_slide_2_id() {
-	return absint( get_option( 'gstore_hero_slide_2_id', 0 ) );
+	// Tenta obter do novo sistema primeiro
+	$slide = gstore_get_hero_slide( 'desktop', 2 );
+	return $slide['id'];
 }
 
 function gstore_get_banner_youtube_id() {
@@ -4225,7 +4675,13 @@ function gstore_process_image_placeholders( $content ) {
 		return $content;
 	}
 	
-	// Placeholders especiais que usam configurações do tema
+	// NOVO SISTEMA: Hero Slider dinâmico com Desktop/Mobile
+	if ( strpos( $content, '{{gstore_hero_slider}}' ) !== false ) {
+		$slider_html = gstore_render_hero_slider();
+		$content = str_replace( '{{gstore_hero_slider}}', $slider_html, $content );
+	}
+	
+	// Placeholders especiais que usam configurações do tema (SISTEMA LEGADO - mantido para compatibilidade)
 	// {{gstore_hero_slide_1}}, {{gstore_hero_slide_2}}, {{gstore_banner_youtube}}
 	$hero_slide_1_id = gstore_get_hero_slide_1_id();
 	$hero_slide_2_id = gstore_get_hero_slide_2_id();
@@ -5555,13 +6011,6 @@ function gstore_update_accent_tokens_in_file( $accent_color ) {
 			$content
 		);
 		
-		// Atualiza --brass no :root (com fallback)
-		$content = preg_replace(
-			'/(--brass):\s*var\(--gstore-color-accent,\s*[^)]+\);/',
-			'$1: var(--gstore-color-accent, ' . $tokens['accent'] . ');',
-			$content
-		);
-		
 		// Atualiza todos os fallbacks de accent no arquivo
 		$content = preg_replace(
 			'/var\(--gstore-color-accent,\s*#[0-9a-fA-F]{6}\)/',
@@ -6106,9 +6555,13 @@ function gstore_frontend_diagnostics_panel() {
 				border: none;
 				color: #f0f0f1;
 				cursor: pointer;
-				font-size: 18px;
-				padding: 0;
-			">&times;</button>
+				padding: 4px;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+			">
+				<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12"/></svg>
+			</button>
 		</div>
 		
 		<div style="padding: 16px;">
@@ -7908,6 +8361,8 @@ function gstore_process_store_info_placeholders( $content ) {
 		'{{whatsapp_display}}'    => gstore_get_whatsapp( 'display' ),
 		'{{whatsapp_link}}'       => gstore_get_whatsapp_link(),
 		'{{whatsapp_link_hello}}' => gstore_get_whatsapp_link( 'Olá ' . gstore_get_store_name( 'display' ) . '!' ),
+		'{{whatsapp_link_rastreio}}' => gstore_get_whatsapp_link( 'Olá ' . gstore_get_store_name( 'display' ) . '! Gostaria de rastrear meu pedido.' ),
+		'{{whatsapp_link_troca}}' => gstore_get_whatsapp_link( 'Olá ' . gstore_get_store_name( 'display' ) . '! Gostaria de solicitar uma troca ou devolução.' ),
 		
 		// Social
 		'{{instagram}}'           => gstore_get_social( 'instagram' ),
@@ -8020,3 +8475,491 @@ function gstore_maybe_init_store_info_json() {
 	update_option( 'gstore_store_info_initialized', true );
 }
 add_action( 'admin_init', 'gstore_maybe_init_store_info_json' );
+
+// ============================================
+// MODAL DE VERIFICAÇÃO DE IDADE (+18)
+// ============================================
+
+/**
+ * Exibe o modal de verificação de idade no frontend.
+ * 
+ * O modal aparece na primeira visita do usuário e guarda
+ * a confirmação no localStorage por 30 dias.
+ */
+function gstore_age_verification_modal() {
+	// Não exibe no admin
+	if ( is_admin() ) {
+		return;
+	}
+	?>
+	<!-- Modal de Verificação de Idade -->
+	<div id="gstore-age-modal" class="gstore-age-modal" aria-hidden="true" role="dialog" aria-labelledby="gstore-age-title" aria-describedby="gstore-age-desc">
+		<div class="gstore-age-modal__overlay"></div>
+		<div class="gstore-age-modal__content">
+			<button class="gstore-age-modal__close" aria-label="<?php esc_attr_e( 'Fechar modal', 'gstore' ); ?>">
+				<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+					<path d="M18 6L6 18M6 6l12 12"/>
+				</svg>
+			</button>
+			<div class="gstore-age-modal__icon">
+				<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+					<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+					<path d="M12 8v4"/>
+					<path d="M12 16h.01"/>
+				</svg>
+			</div>
+			<h2 id="gstore-age-title" class="gstore-age-modal__title">Verificação de Idade</h2>
+			<p id="gstore-age-desc" class="gstore-age-modal__text">
+				Este site contém produtos destinados exclusivamente para maiores de 18 anos.
+			</p>
+			<p class="gstore-age-modal__question">Você tem 18 anos ou mais?</p>
+			<div class="gstore-age-modal__actions">
+				<button type="button" id="gstore-age-confirm" class="gstore-age-modal__btn gstore-age-modal__btn--confirm">
+					<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+						<polyline points="20 6 9 17 4 12"/>
+					</svg>
+					Sim, tenho 18+
+				</button>
+				<button type="button" id="gstore-age-deny" class="gstore-age-modal__btn gstore-age-modal__btn--deny">
+					<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+						<line x1="18" y1="6" x2="6" y2="18"/>
+						<line x1="6" y1="6" x2="18" y2="18"/>
+					</svg>
+					Não, sou menor
+				</button>
+			</div>
+			<p class="gstore-age-modal__disclaimer">
+				Ao confirmar, você declara estar ciente de que é proibida a venda de produtos para menores de 18 anos.
+			</p>
+		</div>
+	</div>
+
+	<style id="gstore-age-modal-styles">
+		/* Modal de Verificação de Idade */
+		.gstore-age-modal {
+			position: fixed;
+			top: 0;
+			left: 0;
+			right: 0;
+			bottom: 0;
+			z-index: 999999;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			opacity: 0;
+			visibility: hidden;
+			pointer-events: none;
+			transition: opacity 0.4s ease, visibility 0.4s ease;
+		}
+		
+		.gstore-age-modal[aria-hidden="false"] {
+			opacity: 1;
+			visibility: visible;
+			pointer-events: auto;
+		}
+		
+		.gstore-age-modal__overlay {
+			position: absolute;
+			top: 0;
+			left: 0;
+			right: 0;
+			bottom: 0;
+			background: linear-gradient(135deg, rgba(0, 0, 0, 0.92) 0%, rgba(20, 20, 30, 0.95) 100%);
+			backdrop-filter: blur(8px);
+			-webkit-backdrop-filter: blur(8px);
+		}
+		
+		.gstore-age-modal__content {
+			position: relative;
+			background: linear-gradient(180deg, #1a1a1a 0%, #0d0d0d 100%);
+			border: 1px solid rgba(255, 255, 255, 0.1);
+			border-radius: 20px;
+			box-shadow: 
+				0 25px 50px -12px rgba(0, 0, 0, 0.8),
+				0 0 0 1px rgba(255, 255, 255, 0.05),
+				inset 0 1px 0 0 rgba(255, 255, 255, 0.1);
+			max-width: 440px;
+			width: 90%;
+			padding: 48px 40px;
+			text-align: center;
+			transform: scale(0.9) translateY(20px);
+			opacity: 0;
+			transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.4s ease;
+			z-index: 1000000;
+		}
+		
+		.gstore-age-modal[aria-hidden="false"] .gstore-age-modal__content {
+			transform: scale(1) translateY(0);
+			opacity: 1;
+		}
+		
+		.gstore-age-modal__close {
+			position: absolute;
+			top: 16px;
+			right: 16px;
+			background: transparent;
+			border: none;
+			color: rgba(255, 255, 255, 0.6);
+			cursor: pointer;
+			padding: 8px;
+			display: inline-flex;
+			align-items: center;
+			justify-content: center;
+			transition: color 0.2s ease, background-color 0.2s ease;
+			border-radius: 4px;
+			z-index: 1;
+		}
+		
+		.gstore-age-modal__close:hover,
+		.gstore-age-modal__close:focus {
+			color: rgba(255, 255, 255, 1);
+			background-color: rgba(255, 255, 255, 0.1);
+			outline: none;
+		}
+		
+		.gstore-age-modal__close svg {
+			width: 20px;
+			height: 20px;
+		}
+		
+		.gstore-age-modal__icon {
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			width: 88px;
+			height: 88px;
+			margin: 0 auto 24px;
+			background: linear-gradient(135deg, rgba(220, 38, 38, 0.2) 0%, rgba(239, 68, 68, 0.1) 100%);
+			border-radius: 50%;
+			color: #ef4444;
+			animation: gstore-age-pulse 2s ease-in-out infinite;
+		}
+		
+		@keyframes gstore-age-pulse {
+			0%, 100% {
+				box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.3);
+			}
+			50% {
+				box-shadow: 0 0 0 15px rgba(239, 68, 68, 0);
+			}
+		}
+		
+		.gstore-age-modal__title {
+			margin: 0 0 12px;
+			font-size: 28px;
+			font-weight: 700;
+			color: #ffffff;
+			letter-spacing: -0.02em;
+			line-height: 1.2;
+		}
+		
+		.gstore-age-modal__text {
+			margin: 0 0 8px;
+			font-size: 15px;
+			line-height: 1.6;
+			color: rgba(255, 255, 255, 0.7);
+		}
+		
+		.gstore-age-modal__question {
+			margin: 24px 0;
+			font-size: 18px;
+			font-weight: 600;
+			color: #ffffff;
+		}
+		
+		.gstore-age-modal__actions {
+			display: flex;
+			flex-direction: column;
+			gap: 12px;
+			margin-bottom: 24px;
+		}
+		
+		.gstore-age-modal__btn {
+			display: inline-flex;
+			align-items: center;
+			justify-content: center;
+			gap: 10px;
+			padding: 16px 32px;
+			font-size: 16px;
+			font-weight: 600;
+			border: none;
+			border-radius: 12px;
+			cursor: pointer;
+			transition: all 0.2s ease;
+			text-transform: none;
+			letter-spacing: 0;
+		}
+		
+		.gstore-age-modal__btn--confirm {
+			background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+			color: #ffffff;
+			box-shadow: 0 4px 14px 0 rgba(34, 197, 94, 0.4);
+		}
+		
+		.gstore-age-modal__btn--confirm:hover {
+			background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
+			transform: translateY(-2px);
+			box-shadow: 0 6px 20px 0 rgba(34, 197, 94, 0.5);
+		}
+		
+		.gstore-age-modal__btn--confirm:active {
+			transform: translateY(0);
+		}
+		
+		.gstore-age-modal__btn--deny {
+			background: rgba(255, 255, 255, 0.05);
+			color: rgba(255, 255, 255, 0.7);
+			border: 1px solid rgba(255, 255, 255, 0.1);
+		}
+		
+		.gstore-age-modal__btn--deny:hover {
+			background: rgba(239, 68, 68, 0.1);
+			color: #ef4444;
+			border-color: rgba(239, 68, 68, 0.3);
+		}
+		
+		.gstore-age-modal__disclaimer {
+			margin: 0;
+			font-size: 12px;
+			line-height: 1.5;
+			color: rgba(255, 255, 255, 0.4);
+		}
+		
+		/* Tela de bloqueio para menores */
+		.gstore-age-modal--blocked .gstore-age-modal__content {
+			padding: 60px 40px;
+		}
+		
+		.gstore-age-modal__blocked-icon {
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			width: 100px;
+			height: 100px;
+			margin: 0 auto 28px;
+			background: linear-gradient(135deg, rgba(239, 68, 68, 0.2) 0%, rgba(220, 38, 38, 0.1) 100%);
+			border-radius: 50%;
+			color: #ef4444;
+		}
+		
+		.gstore-age-modal__blocked-title {
+			margin: 0 0 16px;
+			font-size: 24px;
+			font-weight: 700;
+			color: #ffffff;
+		}
+		
+		.gstore-age-modal__blocked-text {
+			margin: 0;
+			font-size: 15px;
+			line-height: 1.7;
+			color: rgba(255, 255, 255, 0.6);
+		}
+		
+		/* Responsividade */
+		@media (max-width: 480px) {
+			.gstore-age-modal__content {
+				width: 94%;
+				padding: 36px 24px;
+				border-radius: 16px;
+			}
+			
+			.gstore-age-modal__icon {
+				width: 72px;
+				height: 72px;
+				margin-bottom: 20px;
+			}
+			
+			.gstore-age-modal__icon svg {
+				width: 48px;
+				height: 48px;
+			}
+			
+			.gstore-age-modal__title {
+				font-size: 22px;
+			}
+			
+			.gstore-age-modal__text {
+				font-size: 14px;
+			}
+			
+			.gstore-age-modal__question {
+				font-size: 16px;
+				margin: 20px 0;
+			}
+			
+			.gstore-age-modal__btn {
+				padding: 14px 24px;
+				font-size: 15px;
+			}
+			
+			.gstore-age-modal--blocked .gstore-age-modal__content {
+				padding: 40px 24px;
+			}
+			
+			.gstore-age-modal__close {
+				top: 12px;
+				right: 12px;
+			}
+		}
+		
+		/* Animação de entrada */
+		@keyframes gstore-age-fadeIn {
+			from {
+				opacity: 0;
+			}
+			to {
+				opacity: 1;
+			}
+		}
+		
+		/* Previne scroll do body quando modal está aberto */
+		body.gstore-age-modal-open {
+			overflow: hidden;
+		}
+	</style>
+
+	<script id="gstore-age-modal-script">
+	(function() {
+		'use strict';
+		
+		var STORAGE_KEY = 'gstore_age_verified';
+		var STORAGE_DURATION = 30 * 24 * 60 * 60 * 1000; // 30 dias em ms
+		
+		function isVerified() {
+			try {
+				var stored = localStorage.getItem(STORAGE_KEY);
+				if (!stored) return false;
+				
+				var data = JSON.parse(stored);
+				var now = new Date().getTime();
+				
+				// Verifica se ainda está válido
+				if (data.verified && data.expires > now) {
+					return true;
+				}
+				
+				// Expirou, remove
+				localStorage.removeItem(STORAGE_KEY);
+				return false;
+			} catch (e) {
+				return false;
+			}
+		}
+		
+		function setVerified() {
+			try {
+				var data = {
+					verified: true,
+					expires: new Date().getTime() + STORAGE_DURATION
+				};
+				localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+			} catch (e) {
+				// localStorage não disponível
+			}
+		}
+		
+		function showModal() {
+			var modal = document.getElementById('gstore-age-modal');
+			if (modal) {
+				document.body.classList.add('gstore-age-modal-open');
+				modal.setAttribute('aria-hidden', 'false');
+			}
+		}
+		
+		function hideModal() {
+			var modal = document.getElementById('gstore-age-modal');
+			if (modal) {
+				document.body.classList.remove('gstore-age-modal-open');
+				modal.setAttribute('aria-hidden', 'true');
+			}
+		}
+		
+		function showBlockedScreen() {
+			var modal = document.getElementById('gstore-age-modal');
+			if (!modal) return;
+			
+			modal.classList.add('gstore-age-modal--blocked');
+			var content = modal.querySelector('.gstore-age-modal__content');
+			
+			if (content) {
+				content.innerHTML = 
+					'<div class="gstore-age-modal__blocked-icon">' +
+						'<svg xmlns="http://www.w3.org/2000/svg" width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">' +
+							'<circle cx="12" cy="12" r="10"/>' +
+							'<line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/>' +
+						'</svg>' +
+					'</div>' +
+					'<h2 class="gstore-age-modal__blocked-title">Acesso Restrito</h2>' +
+					'<p class="gstore-age-modal__blocked-text">' +
+						'Desculpe, este site é destinado apenas para maiores de 18 anos.<br><br>' +
+						'Você será redirecionado para o Google em alguns segundos...' +
+					'</p>';
+			}
+			
+			// Redireciona após 5 segundos
+			setTimeout(function() {
+				window.location.href = 'https://www.google.com';
+			}, 5000);
+		}
+		
+		function init() {
+			// Se já verificado, não mostra o modal
+			if (isVerified()) {
+				var modal = document.getElementById('gstore-age-modal');
+				if (modal) {
+					modal.remove();
+				}
+				return;
+			}
+			
+			// Mostra o modal
+			showModal();
+			
+			// Event listeners
+			var confirmBtn = document.getElementById('gstore-age-confirm');
+			var denyBtn = document.getElementById('gstore-age-deny');
+			var closeBtn = modal.querySelector('.gstore-age-modal__close');
+			
+			if (closeBtn) {
+				closeBtn.addEventListener('click', function() {
+					// Ao fechar sem responder, redireciona para fora do site
+					window.location.href = 'https://www.google.com';
+				});
+			}
+			
+			if (confirmBtn) {
+				confirmBtn.addEventListener('click', function() {
+					setVerified();
+					hideModal();
+					
+					// Remove o modal após a animação
+					setTimeout(function() {
+						var modal = document.getElementById('gstore-age-modal');
+						if (modal) modal.remove();
+					}, 500);
+				});
+			}
+			
+			if (denyBtn) {
+				denyBtn.addEventListener('click', function() {
+					showBlockedScreen();
+				});
+			}
+		}
+		
+		// Inicializa quando o DOM estiver pronto
+		if (document.readyState === 'loading') {
+			document.addEventListener('DOMContentLoaded', init);
+		} else {
+			init();
+		}
+	})();
+	</script>
+	<?php
+}
+add_action( 'wp_footer', 'gstore_age_verification_modal', 999 );
+
+// Inicializa classe de administração (regeneração de thumbnails)
+require_once get_template_directory() . '/inc/class-gstore-admin.php';
+new Gstore_Admin();

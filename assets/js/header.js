@@ -113,26 +113,43 @@
 	}
 
 	/**
-	 * Gerencia o menu toggle para mobile
+	 * Gerencia o menu drawer para mobile
 	 */
 	function setupMenuToggle() {
 		var menuToggle = document.querySelector('.Gstore-header__menu-toggle');
-		var navContainer = document.querySelector('.Gstore-nav .wp-block-navigation__container') ||
-			document.querySelector('.Gstore-nav-shell .wp-block-navigation__container');
-		var navInner = document.querySelector('.Gstore-nav__inner');
+		var drawer = document.querySelector('.Gstore-mobile-drawer');
+		var drawerOverlay = document.querySelector('.Gstore-mobile-drawer__overlay');
+		var drawerClose = document.querySelector('.Gstore-mobile-drawer__close');
+		var drawerContent = document.querySelector('.Gstore-mobile-drawer__content');
 		
-		if (!menuToggle || !navContainer) {
+		if (!menuToggle || !drawer) {
 			return;
 		}
 
+		// Salva a posição de scroll atual antes de abrir
+		var scrollPosition = 0;
+
 		function setMenuState(isOpen) {
-			navContainer.classList.toggle('is-open', isOpen);
-			menuToggle.classList.toggle('is-active', isOpen);
-			menuToggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
-			menuToggle.setAttribute('aria-label', isOpen ? 'Fechar menu' : 'Abrir menu');
-			// Adiciona classe no container interno para controlar visibilidade da pesquisa
-			if (navInner) {
-				navInner.classList.toggle('is-open', isOpen);
+			if (isOpen) {
+				drawer.classList.add('is-open');
+				menuToggle.classList.add('is-active');
+				menuToggle.setAttribute('aria-expanded', 'true');
+				menuToggle.setAttribute('aria-label', 'Fechar menu');
+				
+				// Prevenir scroll do body
+				scrollPosition = window.pageYOffset || document.documentElement.scrollTop;
+				document.body.classList.add('drawer-open');
+				document.body.style.top = '-' + scrollPosition + 'px';
+			} else {
+				drawer.classList.remove('is-open');
+				menuToggle.classList.remove('is-active');
+				menuToggle.setAttribute('aria-expanded', 'false');
+				menuToggle.setAttribute('aria-label', 'Abrir menu');
+				
+				// Restaurar scroll do body
+				document.body.classList.remove('drawer-open');
+				document.body.style.top = '';
+				window.scrollTo(0, scrollPosition);
 			}
 		}
 
@@ -140,38 +157,59 @@
 			setMenuState(false);
 		}
 
-		// Toggle menu ao clicar no botão
+		function openMenu() {
+			setMenuState(true);
+		}
+
+		// Toggle menu ao clicar no botão hamburger
 		menuToggle.addEventListener('click', function (e) {
 			e.stopPropagation();
-			var isOpen = navContainer.classList.contains('is-open');
-			setMenuState(!isOpen);
-		});
-
-		// Fechar menu ao clicar fora
-		document.addEventListener('click', function (e) {
-			var clickInsideNav = navContainer.contains(e.target);
-			var clickOnToggle = e.target.closest('.Gstore-header__menu-toggle');
-
-			if (!clickInsideNav && !clickOnToggle) {
+			var isOpen = drawer.classList.contains('is-open');
+			if (isOpen) {
 				closeMenu();
+			} else {
+				openMenu();
 			}
 		});
 
-		// Fechar menu ao clicar em um link
-		navContainer.querySelectorAll('a').forEach(function(link) {
-			link.addEventListener('click', closeMenu);
-		});
+		// Fechar menu ao clicar no botão de fechar
+		if (drawerClose) {
+			drawerClose.addEventListener('click', function (e) {
+				e.stopPropagation();
+				closeMenu();
+			});
+		}
+
+		// Fechar menu ao clicar no overlay
+		if (drawerOverlay) {
+			drawerOverlay.addEventListener('click', function (e) {
+				e.stopPropagation();
+				closeMenu();
+			});
+		}
+
+		// Fechar menu ao clicar em um link dentro do drawer
+		// Usa event delegation para funcionar com links adicionados dinamicamente
+		if (drawerContent) {
+			drawerContent.addEventListener('click', function(e) {
+				var link = e.target.closest('a');
+				if (link && !link.hasAttribute('target') || link.getAttribute('target') !== '_blank') {
+					// Pequeno delay para permitir navegação antes de fechar
+					setTimeout(closeMenu, 100);
+				}
+			});
+		}
 
 		// Fechar menu ao pressionar ESC
 		document.addEventListener('keydown', function (e) {
-			if (e.key === 'Escape' && navContainer.classList.contains('is-open')) {
+			if (e.key === 'Escape' && drawer.classList.contains('is-open')) {
 				closeMenu();
 			}
 		});
 
 		// Fechar menu ao redimensionar para desktop
 		window.addEventListener('resize', function () {
-			if (window.innerWidth > 767 && navContainer.classList.contains('is-open')) {
+			if (window.innerWidth > 767 && drawer.classList.contains('is-open')) {
 				closeMenu();
 			}
 		});
@@ -305,5 +343,69 @@
 		document.addEventListener('DOMContentLoaded', init);
 	} else {
 		init();
+	}
+
+	// Criar drawer dinamicamente se não existir (fallback para quando WordPress não renderiza o template)
+	setTimeout(function() {
+		var drawerEl = document.querySelector('.Gstore-mobile-drawer');
+		if (!drawerEl && window.innerWidth <= 767) {
+			createDrawerIfMissing();
+		}
+	}, 1000);
+	
+	/**
+	 * Cria o drawer dinamicamente se ele não existir no DOM
+	 */
+	function createDrawerIfMissing() {
+		var drawer = document.querySelector('.Gstore-mobile-drawer');
+		if (drawer) {
+			return; // Já existe
+		}
+		
+		// Criar drawer dinamicamente
+		var drawerHTML = '<div class="Gstore-mobile-drawer">' +
+			'<div class="Gstore-mobile-drawer__overlay"></div>' +
+			'<div class="Gstore-mobile-drawer__content">' +
+				'<div class="Gstore-mobile-drawer__header">' +
+					'<button class="Gstore-mobile-drawer__close" aria-label="Fechar menu">' +
+						'<svg class="Gstore-icon" viewBox="0 0 24 24" fill="currentColor">' +
+							'<path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>' +
+						'</svg>' +
+					'</button>' +
+				'</div>' +
+				'<div class="Gstore-mobile-drawer__search"></div>' +
+				'<div class="Gstore-mobile-drawer__nav"></div>' +
+				'<div class="Gstore-mobile-drawer__footer">' +
+					'<a href="/atendimento" class="Gstore-nav__mobile-link">' +
+						'<svg class="Gstore-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M12 1c-4.97 0-9 4.03-9 9v7c0 1.66 1.34 3 3 3h3v-8H5v-2c0-3.87 3.13-7 7-7s7 3.13 7 7v2h-4v8h3c1.66 0 3-1.34 3-3v-7c0-4.97-4.03-9-9-9z"/></svg>' +
+						'<span>Atendimento</span>' +
+					'</a>' +
+				'</div>' +
+			'</div>' +
+		'</div>';
+		
+		document.body.insertAdjacentHTML('beforeend', drawerHTML);
+		
+		// Copiar navegação existente para o drawer
+		var existingNav = document.querySelector('.Gstore-nav .wp-block-navigation__container') ||
+			document.querySelector('.Gstore-nav__menu .wp-block-navigation__container');
+		var drawerNav = document.querySelector('.Gstore-mobile-drawer__nav');
+		
+		if (existingNav && drawerNav) {
+			var navClone = existingNav.cloneNode(true);
+			navClone.classList.add('Gstore-nav--mobile');
+			drawerNav.appendChild(navClone);
+		}
+		
+		// Copiar pesquisa se existir
+		var existingSearch = document.querySelector('.Gstore-header__search');
+		var drawerSearch = document.querySelector('.Gstore-mobile-drawer__search');
+		if (existingSearch && drawerSearch) {
+			var searchClone = existingSearch.cloneNode(true);
+			drawerSearch.appendChild(searchClone);
+		}
+		
+		// Re-executar setupMenuToggle para conectar o drawer criado
+		setupMenuToggle();
 	}
 })();

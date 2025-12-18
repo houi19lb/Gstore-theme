@@ -110,11 +110,51 @@
     transform: translateY(-50%);
 }
 
-/* Ajuste de padding para acomodar o ícone absoluto */
+/* Ajuste de padding para acomodar o ícone absoluto e botão de fechar */
 .woocommerce-message,
 .woocommerce-error,
 .woocommerce-info {
     padding-left: 56px;
+    padding-right: 48px;
+}
+
+/* Botão de fechar para notices clássicos */
+.woocommerce-message .gstore-notice-close,
+.woocommerce-error .gstore-notice-close,
+.woocommerce-info .gstore-notice-close {
+    position: absolute;
+    top: 50%;
+    right: 16px;
+    transform: translateY(-50%);
+    background: transparent;
+    border: none;
+    color: var(--gstore-color-text-secondary, #666);
+    cursor: pointer;
+    padding: 4px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0.6;
+    transition: opacity 0.2s ease, background-color 0.2s ease;
+    border-radius: 4px;
+    line-height: 1;
+}
+
+.woocommerce-message .gstore-notice-close:hover,
+.woocommerce-error .gstore-notice-close:hover,
+.woocommerce-info .gstore-notice-close:hover,
+.woocommerce-message .gstore-notice-close:focus,
+.woocommerce-error .gstore-notice-close:focus,
+.woocommerce-info .gstore-notice-close:focus {
+    opacity: 1;
+    background-color: rgba(0, 0, 0, 0.08);
+    outline: none;
+}
+
+.woocommerce-message .gstore-notice-close svg,
+.woocommerce-error .gstore-notice-close svg,
+.woocommerce-info .gstore-notice-close svg {
+    display: block;
 }
 
 /* Botões dentro das mensagens (ex: "Ver carrinho") */
@@ -177,7 +217,8 @@
         gap: 12px;
         padding: 16px;
         padding-left: 48px;
-        /* Mantém espaço para ícone */
+        padding-right: 40px;
+        /* Mantém espaço para ícone e botão fechar */
     }
 
     .woocommerce-message::after,
@@ -194,6 +235,14 @@
         text-align: center;
         margin-top: 8px;
         float: none;
+    }
+
+    .woocommerce-message .gstore-notice-close,
+    .woocommerce-error .gstore-notice-close,
+    .woocommerce-info .gstore-notice-close {
+        top: 16px;
+        right: 12px;
+        transform: none;
     }
 }
 
@@ -237,11 +286,43 @@
 /* Estilos base para avisos posicionados */
 .wc-block-components-notice-banner.gstore-notice-animated {
     border-radius: 8px;
-    padding: 14px 18px;
+    padding: 14px 48px 14px 18px;
     font-size: var(--gstore-font-size-sm, 0.875rem);
     line-height: 1.5;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     cursor: pointer;
+    position: relative;
+}
+
+/* Botão de fechar com SVG */
+.gstore-notice-close {
+    position: absolute;
+    top: 50%;
+    right: 12px;
+    transform: translateY(-50%);
+    background: transparent;
+    border: none;
+    color: currentColor;
+    cursor: pointer;
+    padding: 4px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0.6;
+    transition: opacity 0.2s ease, background-color 0.2s ease;
+    border-radius: 4px;
+    line-height: 1;
+}
+
+.gstore-notice-close:hover,
+.gstore-notice-close:focus {
+    opacity: 1;
+    background-color: rgba(0, 0, 0, 0.1);
+    outline: none;
+}
+
+.gstore-notice-close svg {
+    display: block;
 }
 
 /* Tipos de aviso */
@@ -275,6 +356,10 @@
         max-width: calc(100% - 16px);
         width: calc(100% - 16px);
         font-size: var(--gstore-font-size-xs, 0.75rem);
-        padding: 12px 16px;
+        padding: 12px 40px 12px 16px;
+    }
+
+    .wc-block-components-notice-banner .gstore-notice-close {
+        right: 8px;
     }
 }

@@ -679,10 +679,13 @@ h2.wp-block-heading.has-text-align-center.has-x-large-font-size {
 }
 
 .Gstore-single-product__gallery .woocommerce-product-gallery__image img {
-	width: 100%;
+	width: auto;
+	max-width: 100%;
 	height: auto;
+	max-height: 500px;
 	display: block;
 	object-fit: contain;
+	margin: 0 auto;
 }
 
 /* Garantir que o FlexSlider use direção horizontal - FORÇAR */
@@ -761,11 +764,28 @@ h2.wp-block-heading.has-text-align-center.has-x-large-font-size {
 
 .Gstore-single-product__gallery .flex-control-nav li,
 .Gstore-single-product__gallery .flex-control-thumbs li {
-	margin: 0 !important;
+	margin: 0 auto !important;
 	padding: 0 !important;
-	display: inline-block !important;
+	display: flex !important;
+	justify-content: flex-end;
+	align-items: center;
+	flex-wrap: wrap;
 	width: calc(25% - 6px) !important;
 	flex: 0 0 calc(25% - 6px) !important;
+	max-height: 120px !important;
+	overflow: hidden;
+}
+
+/* Estilos para imagens dos thumbnails */
+.Gstore-single-product__gallery .flex-control-nav li img,
+.Gstore-single-product__gallery .flex-control-thumbs li img {
+	width: fit-content !important;
+	height: fit-content !important;
+	max-height: 120px !important;
+	object-fit: contain;
+	display: block;
+	margin-left: auto;
+	margin-right: auto;
 }
 
 /* Garantir que as transições sejam horizontais */
@@ -1197,6 +1217,66 @@ body.single-product .onsale {
 	display: none !important;
 }
 
+/* Botão "Leia antes de comprar" */
+.Gstore-single-product__read-before-buy {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	padding: 14px 18px;
+	margin-bottom: 20px;
+	background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+	border: 1.5px solid #f59e0b;
+	border-radius: var(--gstore-radius-base, 8px);
+	text-decoration: none;
+	transition: all 0.2s ease;
+	color: #92400e;
+}
+
+.Gstore-single-product__read-before-buy:hover {
+	background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+	border-color: #d97706;
+	transform: translateY(-1px);
+	box-shadow: 0 4px 12px rgba(245, 158, 11, 0.2);
+}
+
+.Gstore-single-product__read-before-buy>i:first-child {
+	font-size: 20px;
+	color: #f59e0b;
+	flex-shrink: 0;
+}
+
+.Gstore-single-product__read-before-buy span {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+	flex: 1;
+}
+
+.Gstore-single-product__read-before-buy strong {
+	font-size: var(--gstore-font-size-base, 15px);
+	font-weight: 600;
+	color: #92400e;
+}
+
+.Gstore-single-product__read-before-buy small {
+	font-size: var(--gstore-font-size-sm, 13px);
+	color: #b45309;
+	font-weight: 400;
+}
+
+.Gstore-single-product__read-before-buy>i:last-child {
+	font-size: 14px;
+	color: #f59e0b;
+	flex-shrink: 0;
+	opacity: 0.7;
+	transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+.Gstore-single-product__read-before-buy:hover>i:last-child {
+	transform: translateX(4px);
+	opacity: 1;
+}
+
 .Gstore-single-product__benefits {
 	list-style: none;
 	margin: 0 0 24px;
@@ -1341,9 +1421,9 @@ body.single-product .onsale {
 	width: 42px;
 	height: 42px;
 	border-radius: var(--gstore-radius-full);
-	background-color: var(--brass);
+	background-color: var(--gstore-color-accent);
 	background: unset;
-	color: var(--brass);
+	color: var(--gstore-color-accent);
 	display: flex;
 	align-items: center;
 	justify-content: center;
@@ -1352,7 +1432,7 @@ body.single-product .onsale {
 }
 
 .Gstore-single-product__details-highlight-icon i.fa-solid {
-	color: var(--brass);
+	color: var(--gstore-color-accent);
 }
 
 .Gstore-single-product__details-highlight-label {
@@ -1365,7 +1445,7 @@ body.single-product .onsale {
 	margin-bottom: 4px;
 }
 
-.Gstore-single-product__details-highlight > div {
+.Gstore-single-product__details-highlight>div {
 	color: var(--gray-border);
 }
 
@@ -2161,13 +2241,13 @@ body.single-product .onsale {
 .Gstore-single-product__upsells .products .product {
 	background: var(--gstore-color-bg-light);
 }
-	border: 1px solid #e4e7ec;
-	border-radius: 4px;
-	padding: 16px;
+
+border: 1px solid #e4e7ec;
+border-radius: 4px;
+padding: 16px;
 }
 
-.woocommerce div.product .related.products {
-}
+.woocommerce div.product .related.products {}
 
 .Gstore-single-product__upsells .related.products,
 .Gstore-single-product__upsells .upsells.products {
@@ -2290,6 +2370,24 @@ body.single-product .onsale {
 		gap: 8px;
 	}
 
+	.Gstore-single-product__read-before-buy {
+		padding: 12px 14px;
+		gap: 10px;
+		margin-bottom: 16px;
+	}
+
+	.Gstore-single-product__read-before-buy>i:first-child {
+		font-size: 18px;
+	}
+
+	.Gstore-single-product__read-before-buy strong {
+		font-size: 14px;
+	}
+
+	.Gstore-single-product__read-before-buy small {
+		font-size: 12px;
+	}
+
 	.Gstore-single-product__meta {
 		padding-top: 16px;
 	}
@@ -2340,7 +2438,6 @@ Text Domain: gstore
 	/* Cores para Cards de Produtos */
 	--green: #2e9b3b;
 	--green-dark: #1f6e29;
-	--brass: var(--gstore-color-accent, #ff5c00);
 	--gray-bg: #f0f2f5;
 	--card-meta-bg: #f6f6f6;
 	--gray-border: #e6e6e6;
@@ -2921,6 +3018,24 @@ main:not(.Gstore-blog-shell):not(.Gstore-blog-single-shell) {
 	will-change: transform;
 }
 
+/* Desktop/Mobile Tracks - exibe apenas o track correto para cada viewport */
+.Gstore-hero-slider__track--desktop {
+	display: flex;
+}
+
+.Gstore-hero-slider__track--mobile {
+	display: none;
+}
+
+/* Dots Desktop/Mobile - exibe apenas os dots corretos para cada viewport */
+.Gstore-hero-slider__dots--desktop {
+	display: inline-flex;
+}
+
+.Gstore-hero-slider__dots--mobile {
+	display: none;
+}
+
 .Gstore-hero-slider__slide {
 	min-width: 100%;
 	height: 100%;
@@ -3020,6 +3135,24 @@ main:not(.Gstore-blog-shell):not(.Gstore-blog-single-shell) {
 	.Gstore-hero-slider__control {
 		width: 36px;
 		height: 36px;
+	}
+
+	/* Mobile: alterna para track mobile */
+	.Gstore-hero-slider__track--desktop {
+		display: none;
+	}
+
+	.Gstore-hero-slider__track--mobile {
+		display: flex;
+	}
+
+	/* Mobile: alterna para dots mobile */
+	.Gstore-hero-slider__dots--desktop {
+		display: none;
+	}
+
+	.Gstore-hero-slider__dots--mobile {
+		display: inline-flex;
 	}
 }
 
@@ -3404,7 +3537,7 @@ main:not(.Gstore-blog-shell):not(.Gstore-blog-single-shell) {
 		padding-right: 0;
 		padding-bottom: 24px !important;
 	}
-	
+
 	.Gstore-home-products,
 	.Gstore-products-shell {
 		padding-bottom: 24px !important;
@@ -3855,11 +3988,11 @@ main:not(.Gstore-blog-shell):not(.Gstore-blog-single-shell) {
 	.Gstore-product-card__title {
 		font-size: var(--gstore-font-size-base) !important;
 	}
-	
+
 	.Gstore-product-card__price-row {
 		font-size: var(--gstore-font-size-xl) !important;
 	}
-	
+
 	.Gstore-product-card__price-details {
 		font-size: var(--gstore-font-size-sm) !important;
 	}
@@ -5501,8 +5634,8 @@ main.Gstore-blog-single-shell .wp-block-group.is-layout-constrained:not(.Gstore-
 	margin: 0;
 }
 
-.Gstore-blog-single-content > *:first-child,
-.wp-block-group.Gstore-blog-single-content > *:first-child {
+.Gstore-blog-single-content>*:first-child,
+.wp-block-group.Gstore-blog-single-content>*:first-child {
 	margin-top: 0;
 }
 
@@ -6264,6 +6397,11 @@ main.Gstore-blog-single-shell .wp-block-group.is-layout-constrained:not(.Gstore-
 }
 
 /* Logo com imagem (wp-block-site-logo) */
+.wp-block-site-logo {
+	padding-bottom: 12px;
+	margin-bottom: 0px;
+}
+
 .Gstore-header__logo.wp-block-site-logo {
 	grid-area: logo;
 	margin: 0 !important;
@@ -6747,100 +6885,9 @@ main.Gstore-blog-single-shell .wp-block-group.is-layout-constrained:not(.Gstore-
 
 /* Mobile responsivo */
 @media (max-width: 767px) {
-
-	.Gstore-nav .wp-block-navigation__container,
-	.Gstore-nav .wp-block-page-list {
-		flex-direction: column;
-		gap: 0;
-		max-height: 0;
-		overflow: hidden;
-		transition: max-height var(--gstore-transition-base);
-	}
-
-	.Gstore-nav .wp-block-navigation__container.is-open,
-	.Gstore-nav .wp-block-page-list.is-open {
-		max-height: 600px;
-	}
-
-	/* Pesquisa no menu mobile */
-	.Gstore-nav__mobile-search {
+	/* Esconde navegação desktop no mobile - drawer é usado ao invés */
+	.Gstore-nav-shell {
 		display: none;
-		padding: var(--gstore-spacing-md);
-		border-bottom: 1px solid var(--gstore-color-border);
-		background: var(--gstore-color-bg-darker);
-	}
-
-	/* Mostrar pesquisa quando o menu estiver aberto */
-	.Gstore-nav__inner.is-open .Gstore-nav__mobile-search {
-		display: block;
-	}
-
-	.Gstore-nav__mobile-search .Gstore-nav__search {
-		width: 100%;
-		max-width: 100%;
-	}
-
-	.Gstore-nav__mobile-search .wp-block-search__inside-wrapper {
-		display: flex;
-		align-items: stretch;
-		width: 100%;
-		border: none;
-		border-radius: 0;
-		overflow: visible;
-		background-color: transparent;
-		gap: 0 !important;
-		margin: 0 !important;
-	}
-
-	.Gstore-nav__mobile-search .wp-block-search__input {
-		flex: 1;
-		padding: var(--gstore-spacing-sm) var(--gstore-spacing-md) !important;
-		background-color: var(--gstore-color-bg-dark) !important;
-		border: 1px solid var(--gstore-color-border) !important;
-		border-right: none !important;
-		border-radius: 4px 0 0 4px !important;
-		color: var(--gstore-color-text-light) !important;
-		font-size: 0.875rem !important;
-		outline: none !important;
-		transition: border-color var(--gstore-transition-fast);
-		margin: 0 !important;
-	}
-
-	.Gstore-nav__mobile-search .wp-block-search__input::placeholder {
-		color: var(--gstore-color-text-secondary);
-	}
-
-	.Gstore-nav__mobile-search .wp-block-search__input:focus {
-		border-color: var(--gstore-color-accent) !important;
-	}
-
-	.Gstore-nav__mobile-search .wp-block-search__button {
-		padding: var(--gstore-spacing-sm) var(--gstore-spacing-md) !important;
-		background-color: var(--gstore-color-accent) !important;
-		border: 1px solid var(--gstore-color-accent) !important;
-		border-left: 1px solid var(--gstore-color-accent) !important;
-		border-radius: 0 4px 4px 0 !important;
-		color: var(--gstore-color-bg-dark) !important;
-		cursor: pointer;
-		transition: all var(--gstore-transition-fast);
-		display: flex !important;
-		align-items: center;
-		justify-content: center;
-		min-width: auto !important;
-		margin: 0 !important;
-	}
-
-	.Gstore-nav__mobile-search .wp-block-search__button:hover,
-	.Gstore-nav__mobile-search .wp-block-search__button:focus {
-		background-color: var(--gstore-color-accent-hover) !important;
-		outline: none;
-		transform: translateY(-1px);
-	}
-
-	.Gstore-nav__mobile-search .wp-block-search__button svg {
-		width: 20px;
-		height: 20px;
-		fill: currentColor;
 	}
 
 	.Gstore-nav .wp-block-navigation-item,
@@ -6996,6 +7043,7 @@ main.Gstore-blog-single-shell .wp-block-group.is-layout-constrained:not(.Gstore-
 	flex: 1;
 	border-right: 1px solid #222;
 	padding-right: 20px;
+	color: var(--card-meta-bg);
 }
 
 .footer-column:last-child {
@@ -8003,14 +8051,14 @@ body:has(.Gstore-catalog-shell--light) main {
 	}
 
 	/* Remove espaçamento do primeiro elemento filho no mobile */
-	.Gstore-catalog-layout > *:first-child {
+	.Gstore-catalog-layout>*:first-child {
 		margin-top: 0 !important;
 		padding-top: 0 !important;
 	}
 
 	/* Remove qualquer espaçamento adicional que possa vir do WordPress */
-	.Gstore-catalog-header + .Gstore-catalog-layout,
-	.Gstore-catalog-header ~ .Gstore-catalog-layout,
+	.Gstore-catalog-header+.Gstore-catalog-layout,
+	.Gstore-catalog-header~.Gstore-catalog-layout,
 	.alignwide.Gstore-catalog-layout {
 		margin-top: 0 !important;
 		padding-top: 0 !important;

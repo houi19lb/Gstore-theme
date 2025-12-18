@@ -170,8 +170,11 @@ class Gstore_Blu_Pix_Gateway extends WC_Payment_Gateway {
 			'description_internal'   => array(
 				'title'       => __( 'Descrição interna', 'gstore' ),
 				'type'        => 'text',
-				'description' => __( 'Descrição interna para controle. Se vazio, será gerada automaticamente.', 'gstore' ),
+				'description' => __( 'Descrição interna para controle. Máximo de 12 caracteres. Se vazio, será gerada automaticamente (truncada se necessário).', 'gstore' ),
 				'default'     => '',
+				'custom_attributes' => array(
+					'maxlength' => 12,
+				),
 			),
 			'webhook_secret'         => array(
 				'title'       => __( 'Token do webhook', 'gstore' ),
@@ -479,6 +482,9 @@ class Gstore_Blu_Pix_Gateway extends WC_Payment_Gateway {
 				__( 'Pedido #%s', 'gstore' ),
 				$order->get_order_number()
 			);
+
+		// Trunca description_internal para máximo de 12 caracteres (limite da API Blu)
+		$description_internal = mb_substr( $description_internal, 0, 12 );
 
 		$payload = array(
 			'expires_at'          => $expires_at,

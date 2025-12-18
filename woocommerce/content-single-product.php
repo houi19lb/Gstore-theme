@@ -537,6 +537,16 @@ $guarantee_badges  = gstore_get_guarantee_badges();
 							?>
 						</div>
 
+						<!-- Link para página "Como Comprar Arma" -->
+						<a href="<?php echo esc_url( home_url( '/como-comprar-arma/' ) ); ?>" class="Gstore-single-product__read-before-buy">
+							<i class="fa-solid fa-book-open" aria-hidden="true"></i>
+							<span>
+								<strong><?php esc_html_e( 'Leia antes de comprar', 'gstore' ); ?></strong>
+								<small><?php esc_html_e( 'Veja como funciona o processo passo a passo', 'gstore' ); ?></small>
+							</span>
+							<i class="fa-solid fa-arrow-right" aria-hidden="true"></i>
+						</a>
+
 						<!-- Benefícios -->
 						<?php if ( ! empty( $benefit_items ) ) : ?>
 							<ul class="Gstore-single-product__benefits">

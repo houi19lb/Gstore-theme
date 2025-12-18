@@ -3,6 +3,12 @@
  * Clareia o drawer do carrinho e garante contraste consistente.
  */
 
+/* Override do badge/contador do mini-cart (sobrescreve cor hardcoded do bloco WooCommerce) */
+.wc-block-mini-cart__badge,
+.wp-block-woocommerce-mini-cart .wc-block-mini-cart__badge {
+	background-color: var(--gstore-color-accent, #b5a642) !important;
+}
+
 body .wc-block-components-drawer__screen-overlay {
 	background-color: rgba(10, 10, 10, 0.2) !important;
 	backdrop-filter: blur(2px);

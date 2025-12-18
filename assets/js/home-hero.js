@@ -2,59 +2,125 @@
 
 (function () {
 	const SLIDER_SELECTOR = '[data-gstore-hero-slider]';
-	const TRACK_SELECTOR = '[data-gstore-hero-track]';
-	const SLIDE_SELECTOR = '[data-gstore-hero-slide]';
-	const DOT_SELECTOR = '[data-gstore-hero-dot]';
-	const PREV_SELECTOR = '[data-gstore-hero-prev]';
-	const NEXT_SELECTOR = '[data-gstore-hero-next]';
 	const AUTOPLAY_DELAY = 6500;
+	const MOBILE_BREAKPOINT = 781;
 
+	/**
+	 * Inicializa um slider individual com suporte a Desktop/Mobile separados.
+	 */
 	function initSlider(slider) {
-		const track = slider.querySelector(TRACK_SELECTOR);
-		const slides = Array.from(slider.querySelectorAll(SLIDE_SELECTOR));
-		const dots = Array.from(slider.querySelectorAll(DOT_SELECTOR));
-		const prevButton = slider.querySelector(PREV_SELECTOR);
-		const nextButton = slider.querySelector(NEXT_SELECTOR);
+		// Elementos Desktop
+		const desktopTrack = slider.querySelector('[data-gstore-hero-track]');
+		const desktopSlides = Array.from(slider.querySelectorAll('[data-gstore-hero-slide]'));
+		const desktopDots = Array.from(slider.querySelectorAll('[data-gstore-hero-dot]'));
+		
+		// Elementos Mobile
+		const mobileTrack = slider.querySelector('[data-gstore-hero-track-mobile]');
+		const mobileSlides = Array.from(slider.querySelectorAll('[data-gstore-hero-slide-mobile]'));
+		const mobileDots = Array.from(slider.querySelectorAll('[data-gstore-hero-dot-mobile]'));
+		
+		// Controles compartilhados
+		const prevButton = slider.querySelector('[data-gstore-hero-prev]');
+		const nextButton = slider.querySelector('[data-gstore-hero-next]');
 
-		if (!track || slides.length === 0) {
-			return;
+		// Estado
+		let desktopIndex = 0;
+		let mobileIndex = 0;
+		let autoplayId = null;
+		
+		const prefersReducedMotion = window.matchMedia && 
+			window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+		/**
+		 * Verifica se está em viewport mobile.
+		 */
+		function isMobile() {
+			return window.innerWidth <= MOBILE_BREAKPOINT;
 		}
 
-		let currentIndex = 0;
-		const prefersReducedMotion =
-			window.matchMedia &&
-			window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-		const canAutoplay = !prefersReducedMotion && slides.length > 1;
-		let autoplayId = null;
+		/**
+		 * Obtém os elementos do slider atual (desktop ou mobile).
+		 */
+		function getCurrentSliderElements() {
+			if (isMobile()) {
+				return {
+					track: mobileTrack,
+					slides: mobileSlides,
+					dots: mobileDots,
+					getCurrentIndex: function() { return mobileIndex; },
+					setCurrentIndex: function(val) { mobileIndex = val; }
+				};
+			}
+			return {
+				track: desktopTrack,
+				slides: desktopSlides,
+				dots: desktopDots,
+				getCurrentIndex: function() { return desktopIndex; },
+				setCurrentIndex: function(val) { desktopIndex = val; }
+			};
+		}
 
+		/**
+		 * Verifica se pode fazer autoplay.
+		 */
+		function canAutoplay() {
+			const elements = getCurrentSliderElements();
+			return !prefersReducedMotion && elements.slides.length > 1;
+		}
+
+		/**
+		 * Atualiza os dots do slider atual.
+		 */
 		function updateDots(index) {
-			if (!dots.length) {
+			const elements = getCurrentSliderElements();
+			if (!elements.dots.length) {
 				return;
 			}
 
-			dots.forEach(function (dot, dotIndex) {
+			elements.dots.forEach(function (dot, dotIndex) {
 				const isActive = dotIndex === index;
 				dot.classList.toggle('is-active', isActive);
 				dot.setAttribute('aria-selected', String(isActive));
 			});
 		}
 
+		/**
+		 * Vai para um slide específico.
+		 */
 		function goTo(index) {
-			const total = slides.length;
-			currentIndex = (index + total) % total;
-			const offset = currentIndex * 100;
-			track.style.transform = 'translate3d(-' + offset + '%, 0, 0)';
-			updateDots(currentIndex);
+			const elements = getCurrentSliderElements();
+			if (!elements.track || elements.slides.length === 0) {
+				return;
+			}
+
+			const total = elements.slides.length;
+			const newIndex = (index + total) % total;
+			elements.setCurrentIndex(newIndex);
+			
+			const offset = newIndex * 100;
+			elements.track.style.transform = 'translate3d(-' + offset + '%, 0, 0)';
+			updateDots(newIndex);
 		}
 
+		/**
+		 * Próximo slide.
+		 */
 		function nextSlide() {
-			goTo(currentIndex + 1);
+			const elements = getCurrentSliderElements();
+			goTo(elements.getCurrentIndex() + 1);
 		}
 
+		/**
+		 * Slide anterior.
+		 */
 		function prevSlide() {
-			goTo(currentIndex - 1);
+			const elements = getCurrentSliderElements();
+			goTo(elements.getCurrentIndex() - 1);
 		}
 
+		/**
+		 * Para o autoplay.
+		 */
 		function stopAutoplay() {
 			if (autoplayId) {
 				window.clearInterval(autoplayId);
@@ -62,8 +128,11 @@
 			}
 		}
 
+		/**
+		 * Inicia o autoplay.
+		 */
 		function startAutoplay() {
-			if (!canAutoplay) {
+			if (!canAutoplay()) {
 				return;
 			}
 
@@ -71,10 +140,34 @@
 			autoplayId = window.setInterval(nextSlide, AUTOPLAY_DELAY);
 		}
 
+		/**
+		 * Reseta o slider ao mudar de viewport.
+		 */
+		function handleResize() {
+			stopAutoplay();
+			
+			// Reseta posição para o slide atual de cada viewport
+			if (desktopTrack && desktopSlides.length > 0) {
+				const offset = desktopIndex * 100;
+				desktopTrack.style.transform = 'translate3d(-' + offset + '%, 0, 0)';
+			}
+			
+			if (mobileTrack && mobileSlides.length > 0) {
+				const offset = mobileIndex * 100;
+				mobileTrack.style.transform = 'translate3d(-' + offset + '%, 0, 0)';
+			}
+			
+			// Atualiza dots do viewport atual
+			updateDots(getCurrentSliderElements().getCurrentIndex());
+			
+			startAutoplay();
+		}
+
+		// Event listeners para controles
 		if (prevButton) {
 			prevButton.addEventListener('click', function () {
 				prevSlide();
-				if (canAutoplay) {
+				if (canAutoplay()) {
 					stopAutoplay();
 					startAutoplay();
 				}
@@ -84,36 +177,68 @@
 		if (nextButton) {
 			nextButton.addEventListener('click', function () {
 				nextSlide();
-				if (canAutoplay) {
+				if (canAutoplay()) {
 					stopAutoplay();
 					startAutoplay();
 				}
 			});
 		}
 
-		if (dots.length) {
-			dots.forEach(function (dot, index) {
+		// Event listeners para dots Desktop
+		if (desktopDots.length) {
+			desktopDots.forEach(function (dot, index) {
 				dot.addEventListener('click', function () {
-					goTo(index);
-					if (canAutoplay) {
-						stopAutoplay();
-						startAutoplay();
+					if (!isMobile()) {
+						desktopIndex = index;
+						goTo(index);
+						if (canAutoplay()) {
+							stopAutoplay();
+							startAutoplay();
+						}
 					}
 				});
 			});
 		}
 
-		if (canAutoplay) {
+		// Event listeners para dots Mobile
+		if (mobileDots.length) {
+			mobileDots.forEach(function (dot, index) {
+				dot.addEventListener('click', function () {
+					if (isMobile()) {
+						mobileIndex = index;
+						goTo(index);
+						if (canAutoplay()) {
+							stopAutoplay();
+							startAutoplay();
+						}
+					}
+				});
+			});
+		}
+
+		// Pausa autoplay ao interagir
+		if (!prefersReducedMotion) {
 			slider.addEventListener('mouseenter', stopAutoplay);
 			slider.addEventListener('mouseleave', startAutoplay);
 			slider.addEventListener('focusin', stopAutoplay);
 			slider.addEventListener('focusout', startAutoplay);
 		}
 
-		updateDots(currentIndex);
+		// Atualiza ao redimensionar
+		let resizeTimeout;
+		window.addEventListener('resize', function() {
+			clearTimeout(resizeTimeout);
+			resizeTimeout = setTimeout(handleResize, 150);
+		});
+
+		// Inicialização
+		updateDots(getCurrentSliderElements().getCurrentIndex());
 		startAutoplay();
 	}
 
+	/**
+	 * Inicializa todos os sliders na página.
+	 */
 	function init() {
 		const sliders = document.querySelectorAll(SLIDER_SELECTOR);
 		if (!sliders.length) {
@@ -129,6 +254,3 @@
 		init();
 	}
 })();
-
-
-

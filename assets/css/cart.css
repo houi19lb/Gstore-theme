@@ -19,7 +19,7 @@
 	--gstore-cart-container-width: 1280px;
 	--gstore-cart-padding-inline: 20px;
 	--gstore-cart-bg: #ffffff;
-	--gstore-cart-accent: #b5a642;
+	--gstore-cart-accent: var(--gstore-color-accent, #b5a642);
 	--gstore-cart-accent-hover: #9d8a35;
 	--gstore-cart-text: #1a1a1a;
 	--gstore-cart-text-muted: #6b7280;
@@ -39,9 +39,9 @@
    - --wp--style--root--padding-*
 */
 
-/* Regra genérica para divs usando var(--brass) */
+/* Regra genérica para divs usando var(--gstore-color-accent) */
 div {
-	color: var(--brass);
+	color: var(--gstore-color-accent);
 }
 
 /* Remove padding do body quando está na página do carrinho */
@@ -227,7 +227,7 @@ div.woocommerce section.Gstore-cart-shell div.Gstore-cart-container {
 	text-transform: uppercase;
 	letter-spacing: var(--gstore-letter-spacing-20);
 	font-weight: var(--gstore-font-weight-bold);
-	color: var(--brass);
+	color: var(--gstore-color-accent);
 	margin: 0;
 }
 
@@ -809,7 +809,7 @@ div.woocommerce section.Gstore-cart-shell div.Gstore-cart-container {
 	justify-content: center;
 	gap: 8px;
 	border: none;
-	background-color: var(--brass);
+	background-color: var(--gstore-color-accent);
 	color: #fff;
 	padding: 12px 20px;
 	border-radius: var(--gstore-cart-radius);

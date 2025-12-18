@@ -14,7 +14,8 @@
 		autoDismissDelay: 5000, // 5 segundos
 		animationDuration: 300, // 300ms para animações
 		headerSelector: '.Gstore-header-shell',
-		noticeSelector: '.wc-block-components-notice-banner'
+		noticeSelector: '.wc-block-components-notice-banner',
+		classicNoticeSelector: '.woocommerce-message, .woocommerce-error, .woocommerce-info'
 	};
 
 	/**
@@ -26,6 +27,24 @@
 			return 0;
 		}
 		return header.offsetHeight || 0;
+	}
+
+	/**
+	 * Cria o botão de fechar com SVG
+	 */
+	function createCloseButton(notice) {
+		const closeBtn = document.createElement('button');
+		closeBtn.className = 'gstore-notice-close';
+		closeBtn.setAttribute('aria-label', 'Fechar aviso');
+		closeBtn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12"/></svg>';
+		
+		closeBtn.addEventListener('click', function(e) {
+			e.preventDefault();
+			e.stopPropagation();
+			dismissNotice(notice);
+		});
+		
+		return closeBtn;
 	}
 
 	/**
@@ -42,6 +61,10 @@
 
 		// Adiciona classe para animação
 		notice.classList.add('gstore-notice-animated');
+
+		// Adiciona botão de fechar com SVG
+		const closeBtn = createCloseButton(notice);
+		notice.appendChild(closeBtn);
 
 		// Calcula posição do topo (abaixo do header)
 		const headerHeight = getHeaderHeight();
@@ -112,11 +135,54 @@
 	}
 
 	/**
+	 * Adiciona botão de fechar aos notices clássicos do WooCommerce
+	 */
+	function setupClassicNotice(notice) {
+		// Evita processar o mesmo aviso duas vezes
+		if (notice.dataset.gstoreNoticeProcessed === 'true') {
+			return;
+		}
+
+		// Marca como processado
+		notice.dataset.gstoreNoticeProcessed = 'true';
+
+		// Adiciona botão de fechar com SVG
+		const closeBtn = document.createElement('button');
+		closeBtn.className = 'gstore-notice-close';
+		closeBtn.setAttribute('aria-label', 'Fechar aviso');
+		closeBtn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12"/></svg>';
+		
+		closeBtn.addEventListener('click', function(e) {
+			e.preventDefault();
+			e.stopPropagation();
+			
+			// Animação de saída
+			notice.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+			notice.style.opacity = '0';
+			notice.style.transform = 'translateY(-10px)';
+			
+			// Remove após a animação
+			setTimeout(function() {
+				if (notice.parentNode) {
+					notice.remove();
+				}
+			}, CONFIG.animationDuration);
+		});
+		
+		notice.appendChild(closeBtn);
+	}
+
+	/**
 	 * Processa todos os avisos existentes na página
 	 */
 	function processExistingNotices() {
+		// Notices do WooCommerce Blocks
 		const notices = document.querySelectorAll(CONFIG.noticeSelector);
 		notices.forEach(setupNotice);
+		
+		// Notices clássicos do WooCommerce
+		const classicNotices = document.querySelectorAll(CONFIG.classicNoticeSelector);
+		classicNotices.forEach(setupClassicNotice);
 	}
 
 	/**
@@ -129,14 +195,22 @@
 				mutation.addedNodes.forEach(function(node) {
 					// Verifica se o nó adicionado é um aviso
 					if (node.nodeType === 1) { // Element node
+						// Notices do WooCommerce Blocks
 						if (node.matches && node.matches(CONFIG.noticeSelector)) {
 							setupNotice(node);
 						}
+						// Notices clássicos do WooCommerce
+						if (node.matches && node.matches(CONFIG.classicNoticeSelector)) {
+							setupClassicNotice(node);
+						}
 						// Verifica também avisos dentro do nó adicionado
-						const nestedNotices = node.querySelectorAll 
-							? node.querySelectorAll(CONFIG.noticeSelector)
-							: [];
-						nestedNotices.forEach(setupNotice);
+						if (node.querySelectorAll) {
+							const nestedNotices = node.querySelectorAll(CONFIG.noticeSelector);
+							nestedNotices.forEach(setupNotice);
+							
+							const nestedClassicNotices = node.querySelectorAll(CONFIG.classicNoticeSelector);
+							nestedClassicNotices.forEach(setupClassicNotice);
+						}
 					}
 				});
 			});

@@ -271,11 +271,27 @@ body:has(.Gstore-header-shell) {
 	width: 100%;
 	height: 2px;
 	background-color: var(--gstore-color-accent, #ff5c00);
-	transition: all 0.2s ease;
+	transition: all 0.3s ease;
 }
 
 .Gstore-header__menu-toggle:focus {
 	outline: none;
+}
+
+/* Animação do botão hamburger para X quando ativo */
+@media (max-width: 767px) {
+	.Gstore-header__menu-toggle.is-active span:nth-child(1) {
+		transform: rotate(45deg) translate(7px, 7px);
+	}
+
+	.Gstore-header__menu-toggle.is-active span:nth-child(2) {
+		opacity: 0;
+		transform: translateX(-10px);
+	}
+
+	.Gstore-header__menu-toggle.is-active span:nth-child(3) {
+		transform: rotate(-45deg) translate(7px, -7px);
+	}
 }
 
 /* Mini Cart */
@@ -409,42 +425,138 @@ body:has(.Gstore-header-shell) {
 		padding: 6px 10px !important;
 	}
 	
-	/* Navegação mobile */
-	.Gstore-nav__inner {
-		padding: 0;
-	}
-	
-	.Gstore-nav .wp-block-navigation__container {
-		flex-direction: column;
-		gap: 0;
-		max-height: 0;
-		overflow: hidden;
-		transition: max-height 0.3s ease;
-	}
-	
-	.Gstore-nav .wp-block-navigation__container.is-open {
-		max-height: 500px;
-	}
-
-	/* Pesquisa no menu mobile */
-	.Gstore-nav__mobile-search {
+	/* Navegação mobile - esconde navegação desktop no mobile */
+	.Gstore-nav-shell {
 		display: none;
-		padding: 14px 16px;
-		border-bottom: 1px solid var(--gstore-color-white-10);
-		background: var(--gstore-color-bg-darker);
 	}
 
-	/* Mostrar pesquisa quando o menu estiver aberto */
-	.Gstore-nav__inner.is-open .Gstore-nav__mobile-search {
+	
+	.Gstore-nav__mobile-link .Gstore-icon {
+		width: 18px;
+		height: 18px;
+		fill: currentColor;
+	}
+}
+
+/* ========================================
+   MOBILE DRAWER MENU
+   ======================================== */
+
+/* Drawer Container - Escondido por padrão */
+.Gstore-mobile-drawer {
+	display: none;
+}
+
+@media (max-width: 767px) {
+	/* Mostra drawer apenas no mobile */
+	.Gstore-mobile-drawer {
 		display: block;
+		position: fixed;
+		top: 0;
+		left: 0;
+		width: 100%;
+		height: 100vh;
+		z-index: var(--gstore-z-overlay, 300);
+		pointer-events: none;
 	}
 
-	.Gstore-nav__mobile-search .Gstore-nav__search {
+	/* Overlay/Backdrop */
+	.Gstore-mobile-drawer__overlay {
+		position: absolute;
+		top: 0;
+		left: 0;
+		width: 100%;
+		height: 100%;
+		background-color: rgba(0, 0, 0, 0.5);
+		backdrop-filter: blur(2px);
+		opacity: 0;
+		transition: opacity var(--gstore-transition-base, 250ms ease-in-out);
+		pointer-events: none;
+	}
+
+	/* Drawer Content */
+	.Gstore-mobile-drawer__content {
+		position: absolute;
+		top: 0;
+		left: 0;
+		width: 320px;
+		max-width: 85vw;
+		height: 100%;
+		background-color: var(--gstore-color-bg-darker, #1a1a1a);
+		box-shadow: 2px 0 10px rgba(0, 0, 0, 0.3);
+		transform: translateX(-100%);
+		transition: transform var(--gstore-transition-base, 250ms ease-in-out);
+		display: flex;
+		flex-direction: column;
+		overflow-y: auto;
+		overflow-x: hidden;
+		z-index: 301;
+		pointer-events: auto;
+	}
+
+	/* Drawer aberto */
+	.Gstore-mobile-drawer.is-open {
+		pointer-events: auto;
+	}
+
+	.Gstore-mobile-drawer.is-open .Gstore-mobile-drawer__overlay {
+		opacity: 1;
+		pointer-events: auto;
+	}
+
+	.Gstore-mobile-drawer.is-open .Gstore-mobile-drawer__content {
+		transform: translateX(0);
+	}
+
+	/* Drawer Header */
+	.Gstore-mobile-drawer__header {
+		display: flex;
+		align-items: center;
+		justify-content: flex-end;
+		padding: 16px;
+		border-bottom: 1px solid var(--gstore-color-white-10, rgba(255, 255, 255, 0.1));
+		flex-shrink: 0;
+	}
+
+	.Gstore-mobile-drawer__close {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		width: 40px;
+		height: 40px;
+		background: none;
+		border: none;
+		cursor: pointer;
+		color: var(--gstore-color-text-light, #fff);
+		padding: 0;
+		transition: color var(--gstore-transition-fast, 150ms ease);
+	}
+
+	.Gstore-mobile-drawer__close:hover,
+	.Gstore-mobile-drawer__close:focus {
+		color: var(--gstore-color-accent, #ff5c00);
+		outline: none;
+	}
+
+	.Gstore-mobile-drawer__close .Gstore-icon {
+		width: 24px;
+		height: 24px;
+		fill: currentColor;
+	}
+
+	/* Drawer Search */
+	.Gstore-mobile-drawer__search {
+		padding: 16px;
+		border-bottom: 1px solid var(--gstore-color-white-10, rgba(255, 255, 255, 0.1));
+		flex-shrink: 0;
+	}
+
+	.Gstore-mobile-drawer__search .Gstore-nav__search {
 		width: 100%;
 		max-width: 100%;
 	}
 
-	.Gstore-nav__mobile-search .wp-block-search__inside-wrapper {
+	.Gstore-mobile-drawer__search .wp-block-search__inside-wrapper {
 		display: flex;
 		align-items: stretch;
 		width: 100%;
@@ -456,37 +568,37 @@ body:has(.Gstore-header-shell) {
 		margin: 0 !important;
 	}
 
-	.Gstore-nav__mobile-search .wp-block-search__input {
+	.Gstore-mobile-drawer__search .wp-block-search__input {
 		flex: 1;
 		padding: 10px 14px !important;
-		background-color: var(--gstore-color-bg-dark) !important;
-		border: 1px solid var(--gstore-color-border) !important;
+		background-color: var(--gstore-color-bg-dark, #0a0a0a) !important;
+		border: 1px solid var(--gstore-color-border, rgba(255, 255, 255, 0.2)) !important;
 		border-right: none !important;
 		border-radius: 4px 0 0 4px !important;
-		color: var(--gstore-color-text-light) !important;
+		color: var(--gstore-color-text-light, #fff) !important;
 		font-size: 0.875rem !important;
 		outline: none !important;
-		transition: border-color var(--gstore-transition-fast);
+		transition: border-color var(--gstore-transition-fast, 150ms ease);
 		margin: 0 !important;
 	}
 
-	.Gstore-nav__mobile-search .wp-block-search__input::placeholder {
-		color: var(--gstore-color-text-secondary);
+	.Gstore-mobile-drawer__search .wp-block-search__input::placeholder {
+		color: var(--gstore-color-text-secondary, rgba(255, 255, 255, 0.6));
 	}
 
-	.Gstore-nav__mobile-search .wp-block-search__input:focus {
-		border-color: var(--gstore-color-accent) !important;
+	.Gstore-mobile-drawer__search .wp-block-search__input:focus {
+		border-color: var(--gstore-color-accent, #ff5c00) !important;
 	}
 
-	.Gstore-nav__mobile-search .wp-block-search__button {
+	.Gstore-mobile-drawer__search .wp-block-search__button {
 		padding: 10px 14px !important;
-		background-color: var(--gstore-color-accent) !important;
-		border: 1px solid var(--gstore-color-accent) !important;
-		border-left: 1px solid var(--gstore-color-accent) !important;
+		background-color: var(--gstore-color-accent, #ff5c00) !important;
+		border: 1px solid var(--gstore-color-accent, #ff5c00) !important;
+		border-left: 1px solid var(--gstore-color-accent, #ff5c00) !important;
 		border-radius: 0 4px 4px 0 !important;
-		color: var(--gstore-color-bg-dark) !important;
+		color: var(--gstore-color-bg-dark, #0a0a0a) !important;
 		cursor: pointer;
-		transition: all var(--gstore-transition-fast);
+		transition: all var(--gstore-transition-fast, 150ms ease);
 		display: flex !important;
 		align-items: center;
 		justify-content: center;
@@ -494,33 +606,70 @@ body:has(.Gstore-header-shell) {
 		margin: 0 !important;
 	}
 
-	.Gstore-nav__mobile-search .wp-block-search__button:hover,
-	.Gstore-nav__mobile-search .wp-block-search__button:focus {
-		background-color: var(--gstore-color-accent-hover) !important;
+	.Gstore-mobile-drawer__search .wp-block-search__button:hover,
+	.Gstore-mobile-drawer__search .wp-block-search__button:focus {
+		background-color: var(--gstore-color-accent-hover, #ff6500) !important;
 		outline: none;
 		transform: translateY(-1px);
 	}
 
-	.Gstore-nav__mobile-search .wp-block-search__button svg {
+	.Gstore-mobile-drawer__search .wp-block-search__button svg {
 		width: 20px;
 		height: 20px;
 		fill: currentColor;
 	}
-	
-	.Gstore-nav .wp-block-navigation-item {
-		width: 100%;
-		text-align: center;
+
+	/* Drawer Navigation */
+	.Gstore-mobile-drawer__nav {
+		flex: 1;
+		overflow-y: auto;
+		overflow-x: hidden;
 	}
-	
-	.Gstore-nav .wp-block-navigation-item__content {
+
+	.Gstore-mobile-drawer__nav .Gstore-nav {
+		width: 100%;
+	}
+
+	.Gstore-mobile-drawer__nav .Gstore-nav .wp-block-navigation__container,
+	.Gstore-mobile-drawer__nav .Gstore-nav--mobile .wp-block-navigation__container {
+		flex-direction: column;
+		gap: 0;
+		width: 100%;
+	}
+
+	.Gstore-mobile-drawer__nav .wp-block-navigation-item {
+		width: 100%;
+	}
+
+	.Gstore-mobile-drawer__nav .wp-block-navigation-item__content {
 		display: block;
 		width: 100%;
 		padding: 14px 16px;
-		border-bottom: 1px solid var(--gstore-color-white-10);
+		border-bottom: 1px solid var(--gstore-color-white-10, rgba(255, 255, 255, 0.1));
+		color: var(--gstore-color-text-light, #fff) !important;
+		text-decoration: none;
+		font-size: var(--gstore-font-size-sm, 0.875rem);
+		transition: background-color var(--gstore-transition-fast, 150ms ease);
 	}
-	
-	/* Link de atendimento no menu mobile */
-	.Gstore-nav__mobile-link {
+
+	.Gstore-mobile-drawer__nav .wp-block-navigation-item__content:hover,
+	.Gstore-mobile-drawer__nav .wp-block-navigation-item__content:focus {
+		background-color: var(--gstore-color-bg-dark, #0a0a0a);
+		color: var(--gstore-color-accent, #ff5c00) !important;
+		outline: none;
+	}
+
+	.Gstore-mobile-drawer__nav .wp-block-navigation-item__content::after {
+		display: none;
+	}
+
+	/* Drawer Footer */
+	.Gstore-mobile-drawer__footer {
+		flex-shrink: 0;
+		border-top: 1px solid var(--gstore-color-white-10, rgba(255, 255, 255, 0.1));
+	}
+
+	.Gstore-mobile-drawer__footer .Gstore-nav__mobile-link {
 		display: flex;
 		align-items: center;
 		justify-content: center;
@@ -528,14 +677,27 @@ body:has(.Gstore-header-shell) {
 		padding: 14px 16px;
 		color: var(--gstore-color-text-light, #fff) !important;
 		text-decoration: none;
-		background: var(--gstore-color-accent-10);
-		border-top: 1px solid var(--gstore-color-white-10);
+		background: var(--gstore-color-accent-10, rgba(255, 92, 0, 0.1));
+		transition: background-color var(--gstore-transition-fast, 150ms ease);
 	}
-	
-	.Gstore-nav__mobile-link .Gstore-icon {
+
+	.Gstore-mobile-drawer__footer .Gstore-nav__mobile-link:hover,
+	.Gstore-mobile-drawer__footer .Gstore-nav__mobile-link:focus {
+		background: var(--gstore-color-accent-20, rgba(255, 92, 0, 0.2));
+		outline: none;
+	}
+
+	.Gstore-mobile-drawer__footer .Gstore-nav__mobile-link .Gstore-icon {
 		width: 18px;
 		height: 18px;
 		fill: currentColor;
+	}
+
+	/* Prevenir scroll do body quando drawer está aberto */
+	body.drawer-open {
+		overflow: hidden;
+		position: fixed;
+		width: 100%;
 	}
 }
 
