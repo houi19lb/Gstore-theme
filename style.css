@@ -2,7 +2,7 @@
 Theme Name: CAC Armas Gstore
 Author: CAC Armas Team
 Description: Tema personalizado da CAC Armas otimizado para WooCommerce.
-Version: 1.3
+Version: 1.4.1
 Text Domain: gstore
 */
 
@@ -4955,6 +4955,10 @@ main.Gstore-blog-shell .wp-block-group.is-layout-constrained {
 	gap: 24px;
 }
 
+.Gstore-blog-query li.wp-block-post {
+	width: 100% !important;
+}
+
 .Gstore-blog-card {
 	background: #ffffff;
 	border-radius: 4px;
@@ -5612,6 +5616,7 @@ main.Gstore-blog-single-shell .wp-block-group.is-layout-constrained:not(.Gstore-
 
 .Gstore-blog-single-image {
 	width: 100%;
+	height: 100%;
 	border-radius: 4px;
 	overflow: hidden;
 	margin: 0;
@@ -5619,9 +5624,12 @@ main.Gstore-blog-single-shell .wp-block-group.is-layout-constrained:not(.Gstore-
 
 .Gstore-blog-single-image img {
 	width: 100%;
-	height: auto;
+	height: 100%;
 	display: block;
 	border-radius: 4px;
+	object-fit: cover;
+	padding-left: 0;
+	padding-right: 0;
 }
 
 .Gstore-blog-single-content,
@@ -5737,7 +5745,7 @@ main.Gstore-blog-single-shell .wp-block-group.is-layout-constrained:not(.Gstore-
 	}
 
 	.Gstore-blog-single-image {
-		margin: 0 -12px;
+		margin: 0;
 		border-radius: 0;
 	}
 
@@ -6398,7 +6406,7 @@ main.Gstore-blog-single-shell .wp-block-group.is-layout-constrained:not(.Gstore-
 
 /* Logo com imagem (wp-block-site-logo) */
 .wp-block-site-logo {
-	padding-bottom: 12px;
+	padding-bottom: 0px;
 	margin-bottom: 0px;
 }
 

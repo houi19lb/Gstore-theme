@@ -2318,6 +2318,53 @@ function gstore_enqueue_checkout_assets() {
             true
         );
     }
+
+	// Calculador de Frete - Página de Produto Único e Checkout
+	if ( ( function_exists( 'is_product' ) && is_product() ) || ( function_exists( 'is_checkout' ) && is_checkout() ) ) {
+		// CSS do calculador
+		wp_enqueue_style(
+			'gstore-shipping-calculator',
+			get_theme_file_uri( 'assets/css/shipping-calculator.css' ),
+			array( 'gstore-style' ),
+			$theme_version
+		);
+
+		// JavaScript do calculador
+		wp_enqueue_script(
+			'gstore-shipping-calculator',
+			get_theme_file_uri( 'assets/js/shipping-calculator.js' ),
+			array( 'jquery' ),
+			$theme_version,
+			true
+		);
+
+		// Localiza script do calculador
+		global $product;
+		$product_id = 0;
+		if ( is_product() && $product ) {
+			$product_id = $product->get_id();
+		}
+
+		wp_localize_script(
+			'gstore-shipping-calculator',
+			'gstoreShippingCalculator',
+			array(
+				'ajaxUrl'    => admin_url( 'admin-ajax.php' ),
+				'nonce'      => wp_create_nonce( 'gstore_shipping_calculator' ),
+				'productId'  => $product_id,
+				'i18n'       => array(
+					'calculate'        => __( 'Calcular frete', 'gstore' ),
+					'calculating'      => __( 'Calculando...', 'gstore' ),
+					'invalidCep'       => __( 'CEP inválido. Por favor, informe um CEP válido com 8 dígitos.', 'gstore' ),
+					'error'            => __( 'Erro ao calcular frete. Tente novamente.', 'gstore' ),
+					'frete'            => __( 'Frete', 'gstore' ),
+					'region'           => __( 'Região', 'gstore' ),
+					'estimatedDelivery' => __( 'Prazo estimado', 'gstore' ),
+					'days'             => __( 'dias úteis', 'gstore' ),
+				),
+			)
+		);
+	}
 }
 add_action( 'wp_enqueue_scripts', 'gstore_enqueue_checkout_assets', 40 );
 
@@ -2349,30 +2396,6 @@ function gstore_customize_checkout_fields( $fields ) {
             $blu_gateway_available = true;
         }
     }
-    
-    // #region agent log
-    $selected_payment_method = '';
-    if ( class_exists( 'WooCommerce' ) && function_exists( 'WC' ) && WC()->session ) {
-        $selected_payment_method = WC()->session->get( 'chosen_payment_method', '' );
-    }
-    if ( empty( $selected_payment_method ) && isset( $_POST['payment_method'] ) ) {
-        $selected_payment_method = sanitize_text_field( $_POST['payment_method'] );
-    }
-    error_log( json_encode( array(
-        'id' => 'log_' . time() . '_' . uniqid(),
-        'timestamp' => time() * 1000,
-        'location' => 'functions.php:2227',
-        'message' => 'gstore_customize_checkout_fields called',
-        'data' => array(
-            'selected_payment_method' => $selected_payment_method,
-            'blu_checkout_available' => isset( $payment_gateways['blu_checkout'] ) ? 'yes' : 'no',
-            'blu_pix_available' => isset( $payment_gateways['blu_pix'] ) ? 'yes' : 'no'
-        ),
-        'sessionId' => 'debug-session',
-        'runId' => 'run1',
-        'hypothesisId' => 'A'
-    ) ) );
-    // #endregion
 
     // Se gateway Blu está disponível, torna campos de endereço opcionais para pré-checkout
     // MAS: Se o método selecionado for blu_pix, mantém campos obrigatórios (checkout completo)
@@ -2407,22 +2430,6 @@ function gstore_customize_checkout_fields( $fields ) {
 
         // Mantém apenas email e telefone como obrigatórios no pré-checkout
         // (WooCommerce já define email como obrigatório por padrão)
-        
-        // #region agent log
-        error_log( json_encode( array(
-            'id' => 'log_' . time() . '_' . uniqid(),
-            'timestamp' => time() * 1000,
-            'location' => 'functions.php:2273',
-            'message' => 'Fields made optional for pre-checkout',
-            'data' => array(
-                'selected_payment_method' => $selected_payment_method,
-                'fields_made_optional' => array( 'billing_postcode', 'billing_address_1', 'billing_first_name', 'billing_last_name', 'billing_cpf' )
-            ),
-            'sessionId' => 'debug-session',
-            'runId' => 'run1',
-            'hypothesisId' => 'A'
-        ) ) );
-        // #endregion
     } else if ( $selected_payment_method === 'blu_pix' ) {
         // Para PIX, todos os campos principais são obrigatórios
         // Apenas o complemento (billing_address_2) permanece opcional
@@ -2449,22 +2456,6 @@ function gstore_customize_checkout_fields( $fields ) {
         if ( isset( $fields['billing']['billing_address_2'] ) ) {
             $fields['billing']['billing_address_2']['required'] = false;
         }
-
-        // #region agent log
-        error_log( json_encode( array(
-            'id' => 'log_' . time() . '_' . uniqid(),
-            'timestamp' => time() * 1000,
-            'location' => 'functions.php:2344',
-            'message' => 'Pix selected - fields set as required',
-            'data' => array(
-                'selected_payment_method' => $selected_payment_method,
-                'required_fields' => $required_fields
-            ),
-            'sessionId' => 'debug-session',
-            'runId' => 'run1',
-            'hypothesisId' => 'A'
-        ) ) );
-        // #endregion
     }
 
     // Reordenar CEP para o topo da seção de endereço (prioridade 45, logo após CPF que é 35)
@@ -2575,9 +2566,48 @@ if ( class_exists( 'WooCommerce' ) && class_exists( 'WC_Payment_Gateway' ) ) {
 	// Carrega gateway Pix apenas se o arquivo existir
 	$pix_gateway_file = get_theme_file_path( 'inc/class-gstore-blu-pix-gateway.php' );
 	if ( file_exists( $pix_gateway_file ) ) {
+		// Força invalidação do OPcache para garantir código atualizado
+		if ( function_exists( 'opcache_invalidate' ) ) {
+			@opcache_invalidate( $pix_gateway_file, true );
+		}
 		require_once $pix_gateway_file;
 	}
 }
+
+/**
+ * Correção temporária: Corrige o status do Pix via JavaScript.
+ * O status 'processed' significa apenas que a cobrança foi criada, não que foi paga.
+ * Apenas 'paid' deve mostrar "Pagamento aprovado".
+ */
+add_action( 'wp_footer', function() {
+	if ( ! is_wc_endpoint_url( 'order-received' ) && ! is_wc_endpoint_url( 'view-order' ) ) {
+		return;
+	}
+	?>
+	<script>
+	(function() {
+		// Corrige o status do Pix - apenas 'paid' deve mostrar como aprovado
+		var statusMeta = document.querySelector('.pix-box__meta--muted');
+		var statusBadge = document.querySelector('.pix-box__status');
+		var pixBox = document.querySelector('.pix-box');
+		
+		if (statusMeta && statusBadge && pixBox) {
+			var statusText = statusMeta.textContent || '';
+			var match = statusText.match(/Status:\s*(\w+)/i);
+			if (match) {
+				var realStatus = match[1].toLowerCase();
+				// Apenas 'paid' é pagamento aprovado
+				if (realStatus !== 'paid') {
+					statusBadge.textContent = 'AGUARDANDO PAGAMENTO';
+					pixBox.classList.remove('pix-box--processed');
+					pixBox.classList.add('pix-box--pending');
+				}
+			}
+		}
+	})();
+	</script>
+	<?php
+}, 999 );
 
 /**
  * Filtro para deixar apenas a Blu como gateway (Opcional/Solicitado).
@@ -2588,6 +2618,346 @@ require_once get_theme_file_path( 'inc/blu-filter.php' );
  * Gerenciador de informações da loja (JSON centralizado).
  */
 require_once get_theme_file_path( 'inc/class-gstore-store-info.php' );
+
+/**
+ * Método de envio customizado Gstore.
+ */
+if ( class_exists( 'WooCommerce' ) && class_exists( 'WC_Shipping_Method' ) ) {
+	require_once get_theme_file_path( 'inc/class-gstore-shipping-method.php' );
+	require_once get_theme_file_path( 'inc/class-gstore-shipping-admin.php' );
+
+	/**
+	 * Registra o método de envio customizado.
+	 *
+	 * @param array $methods Métodos de envio.
+	 * @return array
+	 */
+	function gstore_add_shipping_method( $methods ) {
+		$methods['gstore_custom_shipping'] = 'Gstore_Shipping_Method';
+		return $methods;
+	}
+	add_filter( 'woocommerce_shipping_methods', 'gstore_add_shipping_method' );
+
+	/**
+	 * Inicializa a classe admin de configuração de frete.
+	 */
+	function gstore_init_shipping_admin() {
+		if ( class_exists( 'Gstore_Shipping_Admin' ) ) {
+			new Gstore_Shipping_Admin();
+		}
+	}
+	add_action( 'init', 'gstore_init_shipping_admin' );
+
+	/**
+	 * Injeta o frete customizado Gstore nas taxas de envio do pacote.
+	 * Isso garante que o frete apareça mesmo sem zona de envio configurada.
+	 *
+	 * @param array $rates Taxas de envio disponíveis.
+	 * @param array $package Pacote de produtos.
+	 * @return array Taxas de envio modificadas.
+	 */
+	function gstore_inject_shipping_rate( $rates, $package ) {
+		// Verifica se já existe uma taxa do Gstore
+		foreach ( $rates as $rate ) {
+			if ( strpos( $rate->get_method_id(), 'gstore_custom_shipping' ) !== false ) {
+				return $rates; // Já existe, não precisa injetar
+			}
+		}
+
+		// Obtém o CEP do pacote de destino
+		$postcode = '';
+		$state    = '';
+		
+		if ( isset( $package['destination']['postcode'] ) ) {
+			$postcode = preg_replace( '/[^0-9]/', '', $package['destination']['postcode'] );
+		}
+		if ( isset( $package['destination']['state'] ) ) {
+			$state = strtoupper( $package['destination']['state'] );
+		}
+
+		// Se não tem CEP nem estado, não calcula
+		if ( empty( $postcode ) && empty( $state ) ) {
+			return $rates;
+		}
+
+		// Verifica se há produtos no pacote
+		if ( empty( $package['contents'] ) ) {
+			return $rates;
+		}
+
+		// Instancia o método de envio
+		$shipping_method = new Gstore_Shipping_Method();
+
+		// Calcula o peso tático
+		$total_weight = $shipping_method->calculate_tactical_weight_public( $package['contents'] );
+
+		if ( $total_weight <= 0 ) {
+			return $rates;
+		}
+
+		// Identifica a região
+		$region = gstore_get_shipping_region( $state, $postcode );
+
+		// Obtém o custo do frete
+		$shipping_cost = $shipping_method->get_shipping_cost_public( $total_weight, $region );
+
+		if ( $shipping_cost === false ) {
+			return $rates;
+		}
+
+		// Cria a taxa de envio
+		$rate = new WC_Shipping_Rate(
+			'gstore_custom_shipping',
+			__( 'Frete Gstore', 'gstore' ),
+			$shipping_cost,
+			array(),
+			'gstore_custom_shipping'
+		);
+
+		// Adiciona metadados úteis
+		$rate->add_meta_data( 'region', $region );
+		$rate->add_meta_data( 'weight', $total_weight );
+
+		// Adiciona a taxa ao início do array
+		$rates = array( 'gstore_custom_shipping' => $rate ) + $rates;
+
+		return $rates;
+	}
+	add_filter( 'woocommerce_package_rates', 'gstore_inject_shipping_rate', 10, 2 );
+
+	/**
+	 * Força o WooCommerce a recalcular o frete quando o CEP muda.
+	 * Limpa o cache de shipping quando necessário.
+	 *
+	 * @param string $post_data Dados do formulário de checkout.
+	 */
+	function gstore_clear_shipping_cache_on_cep_change( $post_data ) {
+		if ( ! function_exists( 'WC' ) || ! WC()->session || ! WC()->cart ) {
+			return;
+		}
+
+		// Parse dos dados do formulário
+		$posted = array();
+		if ( ! empty( $post_data ) ) {
+			parse_str( $post_data, $posted );
+		}
+
+		// Obtém o CEP do POST
+		$postcode = '';
+		if ( isset( $posted['billing_postcode'] ) ) {
+			$postcode = preg_replace( '/[^0-9]/', '', $posted['billing_postcode'] );
+		}
+
+		// Se tem CEP válido, atualiza a sessão
+		if ( strlen( $postcode ) === 8 ) {
+			// Identifica o estado
+			$state = gstore_get_state_from_postcode( $postcode );
+			
+			// Atualiza o cliente
+			if ( WC()->customer ) {
+				WC()->customer->set_billing_postcode( $postcode );
+				WC()->customer->set_shipping_postcode( $postcode );
+				WC()->customer->set_billing_country( 'BR' );
+				WC()->customer->set_shipping_country( 'BR' );
+				
+				if ( ! empty( $state ) ) {
+					WC()->customer->set_billing_state( $state );
+					WC()->customer->set_shipping_state( $state );
+				}
+				
+				WC()->customer->set_calculated_shipping( true );
+			}
+			
+			// Define o método de envio como selecionado
+			WC()->session->set( 'chosen_shipping_methods', array( 'gstore_custom_shipping' ) );
+		}
+
+		// Limpa cache de shipping rates para forçar recálculo
+		$packages = WC()->cart->get_shipping_packages();
+		foreach ( $packages as $key => $package ) {
+			WC()->session->set( 'shipping_for_package_' . $key, false );
+		}
+	}
+	add_action( 'woocommerce_checkout_update_order_review', 'gstore_clear_shipping_cache_on_cep_change' );
+
+	/**
+	 * Seleciona automaticamente o método de envio Gstore quando disponível.
+	 * Isso garante que o frete seja incluído no total do pedido.
+	 *
+	 * @param string $default Método padrão.
+	 * @param array  $rates Taxas disponíveis.
+	 * @param string $chosen_method Método escolhido atual.
+	 * @return string Método selecionado.
+	 */
+	function gstore_auto_select_shipping_method( $default, $rates, $chosen_method ) {
+		// Se já tem um método escolhido que existe nas rates, mantém
+		if ( ! empty( $chosen_method ) && isset( $rates[ $chosen_method ] ) ) {
+			return $chosen_method;
+		}
+
+		// Se o método Gstore está disponível, seleciona automaticamente
+		if ( isset( $rates['gstore_custom_shipping'] ) ) {
+			return 'gstore_custom_shipping';
+		}
+
+		return $default;
+	}
+	add_filter( 'woocommerce_shipping_chosen_method', 'gstore_auto_select_shipping_method', 10, 3 );
+
+	/**
+	 * Garante que o método de envio Gstore seja pré-selecionado na sessão.
+	 * Executado após o cálculo do shipping.
+	 */
+	function gstore_ensure_shipping_method_selected() {
+		if ( ! function_exists( 'WC' ) || ! WC()->session || ! WC()->cart ) {
+			return;
+		}
+
+		$chosen_methods = WC()->session->get( 'chosen_shipping_methods', array() );
+		
+		// Se não tem método escolhido ou está vazio
+		if ( empty( $chosen_methods ) || empty( $chosen_methods[0] ) ) {
+			// Obtém as taxas de shipping disponíveis
+			$packages = WC()->shipping()->get_packages();
+			
+			if ( ! empty( $packages ) ) {
+				foreach ( $packages as $i => $package ) {
+					if ( isset( $package['rates']['gstore_custom_shipping'] ) ) {
+						$chosen_methods[ $i ] = 'gstore_custom_shipping';
+					}
+				}
+				
+				if ( ! empty( $chosen_methods ) ) {
+					WC()->session->set( 'chosen_shipping_methods', $chosen_methods );
+				}
+			}
+		}
+	}
+	add_action( 'woocommerce_after_calculate_totals', 'gstore_ensure_shipping_method_selected', 20 );
+
+	/**
+	 * Adiciona o frete Gstore diretamente como taxa no carrinho.
+	 * Isso contorna a necessidade de zonas de envio configuradas.
+	 *
+	 * @param WC_Cart $cart Instância do carrinho.
+	 */
+	function gstore_add_shipping_as_fee( $cart ) {
+		if ( is_admin() && ! defined( 'DOING_AJAX' ) ) {
+			return;
+		}
+
+		// Evita adicionar múltiplas vezes
+		if ( did_action( 'woocommerce_cart_calculate_fees' ) > 1 ) {
+			return;
+		}
+
+		// Obtém o CEP da sessão do cliente
+		if ( ! WC()->customer ) {
+			return;
+		}
+
+		$postcode = WC()->customer->get_shipping_postcode();
+		if ( empty( $postcode ) ) {
+			$postcode = WC()->customer->get_billing_postcode();
+		}
+
+		// Limpa o CEP
+		$postcode = preg_replace( '/[^0-9]/', '', $postcode );
+
+		// Só calcula se tem CEP válido
+		if ( strlen( $postcode ) !== 8 ) {
+			return;
+		}
+
+		// Verifica se já existe uma taxa de frete Gstore
+		$fees = $cart->get_fees();
+		foreach ( $fees as $fee ) {
+			if ( $fee->id === 'gstore-shipping-fee' ) {
+				return; // Já existe
+			}
+		}
+
+		// Identifica a região
+		$region = gstore_get_shipping_region( '', $postcode );
+
+		// Calcula o peso tático
+		$shipping_method = new Gstore_Shipping_Method();
+		$cart_contents = $cart->get_cart();
+		
+		if ( empty( $cart_contents ) ) {
+			return;
+		}
+
+		$total_weight = $shipping_method->calculate_tactical_weight_public( $cart_contents );
+
+		if ( $total_weight <= 0 ) {
+			return;
+		}
+
+		// Obtém o custo do frete
+		$shipping_cost = $shipping_method->get_shipping_cost_public( $total_weight, $region );
+
+		if ( $shipping_cost === false || $shipping_cost <= 0 ) {
+			return;
+		}
+
+		// Adiciona o frete como taxa
+		$cart->add_fee( __( 'Frete', 'gstore' ), $shipping_cost, false );
+	}
+	add_action( 'woocommerce_cart_calculate_fees', 'gstore_add_shipping_as_fee', 20 );
+}
+
+/**
+ * Identifica a região de envio baseado no estado ou CEP.
+ *
+ * @param string $state Estado (UF) ou vazio.
+ * @param string $postcode CEP ou vazio.
+ * @return string Região: 'sul', 'resto_brasil', 'rio_janeiro'.
+ */
+function gstore_get_shipping_region( $state = '', $postcode = '' ) {
+	// Limpa o estado
+	$state = strtoupper( trim( $state ) );
+
+	// Se tem estado, identifica diretamente
+	if ( ! empty( $state ) ) {
+		// Rio de Janeiro
+		if ( $state === 'RJ' ) {
+			return 'rio_janeiro';
+		}
+
+		// Região Sul
+		if ( in_array( $state, array( 'RS', 'SC', 'PR' ), true ) ) {
+			return 'sul';
+		}
+
+		// Demais estados
+		return 'resto_brasil';
+	}
+
+	// Se não tem estado, tenta identificar pelo CEP
+	if ( ! empty( $postcode ) ) {
+		$postcode = preg_replace( '/[^0-9]/', '', $postcode );
+		$first_digits = substr( $postcode, 0, 2 );
+
+		// CEPs do Rio de Janeiro (20xxx-xxx a 23xxx-xxx)
+		if ( $first_digits >= '20' && $first_digits <= '23' ) {
+			return 'rio_janeiro';
+		}
+
+		// CEPs do Sul
+		// RS: 90xxx-xxx a 96xxx-xxx
+		// SC: 88xxx-xxx a 89xxx-xxx
+		// PR: 80xxx-xxx a 83xxx-xxx
+		if ( ( $first_digits >= '90' && $first_digits <= '96' ) ||
+			 ( $first_digits >= '88' && $first_digits <= '89' ) ||
+			 ( $first_digits >= '80' && $first_digits <= '83' ) ) {
+			return 'sul';
+		}
+	}
+
+	// Padrão: resto do Brasil
+	return 'resto_brasil';
+}
 
 /**
  * Endpoint AJAX para buscar dados do Pix.
@@ -2655,6 +3025,244 @@ function gstore_get_pix_data_ajax() {
 }
 add_action( 'wp_ajax_gstore_get_pix_data', 'gstore_get_pix_data_ajax' );
 add_action( 'wp_ajax_nopriv_gstore_get_pix_data', 'gstore_get_pix_data_ajax' );
+
+/**
+ * Obtém o estado (UF) a partir do CEP.
+ *
+ * @param string $postcode CEP (apenas números).
+ * @return string Estado (UF) ou vazio se não identificado.
+ */
+function gstore_get_state_from_postcode( $postcode ) {
+	$postcode = preg_replace( '/[^0-9]/', '', $postcode );
+	if ( strlen( $postcode ) < 2 ) {
+		return '';
+	}
+
+	$first_digit = substr( $postcode, 0, 1 );
+	$first_two   = substr( $postcode, 0, 2 );
+
+	// Mapeamento de CEP para Estado
+	// Referência: https://www.correios.com.br/
+	$cep_ranges = array(
+		// São Paulo
+		array( 'start' => '01', 'end' => '19', 'state' => 'SP' ),
+		// Rio de Janeiro
+		array( 'start' => '20', 'end' => '28', 'state' => 'RJ' ),
+		// Espírito Santo
+		array( 'start' => '29', 'end' => '29', 'state' => 'ES' ),
+		// Minas Gerais
+		array( 'start' => '30', 'end' => '39', 'state' => 'MG' ),
+		// Bahia
+		array( 'start' => '40', 'end' => '48', 'state' => 'BA' ),
+		// Sergipe
+		array( 'start' => '49', 'end' => '49', 'state' => 'SE' ),
+		// Pernambuco
+		array( 'start' => '50', 'end' => '56', 'state' => 'PE' ),
+		// Alagoas
+		array( 'start' => '57', 'end' => '57', 'state' => 'AL' ),
+		// Paraíba
+		array( 'start' => '58', 'end' => '58', 'state' => 'PB' ),
+		// Rio Grande do Norte
+		array( 'start' => '59', 'end' => '59', 'state' => 'RN' ),
+		// Ceará
+		array( 'start' => '60', 'end' => '63', 'state' => 'CE' ),
+		// Piauí
+		array( 'start' => '64', 'end' => '64', 'state' => 'PI' ),
+		// Maranhão
+		array( 'start' => '65', 'end' => '65', 'state' => 'MA' ),
+		// Pará
+		array( 'start' => '66', 'end' => '68', 'state' => 'PA' ),
+		// Amapá (68900-68999)
+		// Amazonas
+		array( 'start' => '69', 'end' => '69', 'state' => 'AM' ),
+		// Goiás e Tocantins
+		array( 'start' => '70', 'end' => '72', 'state' => 'DF' ), // Distrito Federal (70000-72799)
+		array( 'start' => '73', 'end' => '76', 'state' => 'GO' ), // Goiás
+		array( 'start' => '77', 'end' => '77', 'state' => 'TO' ), // Tocantins
+		// Mato Grosso
+		array( 'start' => '78', 'end' => '78', 'state' => 'MT' ),
+		// Mato Grosso do Sul
+		array( 'start' => '79', 'end' => '79', 'state' => 'MS' ),
+		// Paraná
+		array( 'start' => '80', 'end' => '87', 'state' => 'PR' ),
+		// Santa Catarina
+		array( 'start' => '88', 'end' => '89', 'state' => 'SC' ),
+		// Rio Grande do Sul
+		array( 'start' => '90', 'end' => '99', 'state' => 'RS' ),
+	);
+
+	foreach ( $cep_ranges as $range ) {
+		if ( $first_two >= $range['start'] && $first_two <= $range['end'] ) {
+			// Tratamento especial para Amapá (68900-68999)
+			if ( $first_two === '68' && substr( $postcode, 0, 3 ) >= '689' ) {
+				return 'AP';
+			}
+			// Tratamento especial para Acre (69900-69999)
+			if ( $first_two === '69' && substr( $postcode, 0, 3 ) >= '699' ) {
+				return 'AC';
+			}
+			// Tratamento especial para Roraima (69300-69389)
+			if ( $first_two === '69' && substr( $postcode, 0, 3 ) >= '693' && substr( $postcode, 0, 3 ) <= '693' ) {
+				return 'RR';
+			}
+			// Tratamento especial para Rondônia (76800-76999)
+			if ( $first_two === '76' && substr( $postcode, 0, 3 ) >= '768' ) {
+				return 'RO';
+			}
+			return $range['state'];
+		}
+	}
+
+	return '';
+}
+
+/**
+ * Endpoint AJAX para calcular frete.
+ */
+function gstore_calculate_shipping_ajax() {
+	check_ajax_referer( 'gstore_shipping_calculator', 'nonce' );
+
+	$postcode = isset( $_POST['postcode'] ) ? sanitize_text_field( $_POST['postcode'] ) : '';
+	$product_id = isset( $_POST['product_id'] ) ? intval( $_POST['product_id'] ) : 0;
+	$quantity = isset( $_POST['quantity'] ) ? intval( $_POST['quantity'] ) : 1;
+
+	// Limpa o CEP
+	$postcode = preg_replace( '/[^0-9]/', '', $postcode );
+
+	if ( empty( $postcode ) || strlen( $postcode ) !== 8 ) {
+		wp_send_json_error( array( 'message' => __( 'CEP inválido. Por favor, informe um CEP válido com 8 dígitos.', 'gstore' ) ) );
+		return;
+	}
+
+	// Identifica a região e o estado
+	$region = gstore_get_shipping_region( '', $postcode );
+	$state  = gstore_get_state_from_postcode( $postcode );
+
+	// Labels das regiões
+	$region_labels = array(
+		'sul'          => __( 'Região Sul', 'gstore' ),
+		'resto_brasil' => __( 'Resto do Brasil', 'gstore' ),
+		'rio_janeiro'  => __( 'Rio de Janeiro', 'gstore' ),
+	);
+
+	$region_label = isset( $region_labels[ $region ] ) ? $region_labels[ $region ] : $region;
+
+	// Calcula o peso
+	$total_weight = 0;
+
+	$shipping_method = new Gstore_Shipping_Method();
+
+	if ( $product_id > 0 ) {
+		// Cálculo para produto único
+		$product = wc_get_product( $product_id );
+		if ( ! $product ) {
+			wp_send_json_error( array( 'message' => __( 'Produto não encontrado.', 'gstore' ) ) );
+			return;
+		}
+
+		// Verifica se é arma
+		$is_weapon = $shipping_method->is_weapon_product( $product );
+
+		if ( $is_weapon ) {
+			$total_weight = 100 * $quantity;
+		} else {
+			$product_weight = $product->get_weight();
+			if ( $product_weight ) {
+				$total_weight = floatval( $product_weight ) * $quantity;
+			}
+		}
+	} else {
+		// Cálculo para carrinho (checkout)
+		if ( ! function_exists( 'WC' ) || ! WC()->cart ) {
+			wp_send_json_error( array( 'message' => __( 'Carrinho não disponível.', 'gstore' ) ) );
+			return;
+		}
+
+		$cart_contents = WC()->cart->get_cart();
+		if ( empty( $cart_contents ) ) {
+			wp_send_json_error( array( 'message' => __( 'Carrinho vazio.', 'gstore' ) ) );
+			return;
+		}
+
+		$total_weight = $shipping_method->calculate_tactical_weight_public( $cart_contents );
+	}
+
+	if ( $total_weight <= 0 ) {
+		wp_send_json_error( array( 'message' => __( 'Não foi possível calcular o peso dos produtos.', 'gstore' ) ) );
+		return;
+	}
+
+	// Obtém o custo do frete
+	$shipping_cost = $shipping_method->get_shipping_cost_public( $total_weight, $region );
+
+	if ( $shipping_cost === false ) {
+		wp_send_json_error( array( 'message' => __( 'Não foi possível calcular o frete para esta região. Entre em contato conosco.', 'gstore' ) ) );
+		return;
+	}
+
+	// ===== SINCRONIZA CEP COM SESSÃO DO WOOCOMMERCE =====
+	// Isso permite que o WooCommerce calcule o frete oficialmente
+	if ( function_exists( 'WC' ) && WC()->customer ) {
+		// Salva o CEP na sessão do cliente
+		WC()->customer->set_billing_postcode( $postcode );
+		WC()->customer->set_shipping_postcode( $postcode );
+		
+		// Salva o estado identificado
+		if ( ! empty( $state ) ) {
+			WC()->customer->set_billing_state( $state );
+			WC()->customer->set_shipping_state( $state );
+		}
+		
+		// Define o país como Brasil
+		WC()->customer->set_billing_country( 'BR' );
+		WC()->customer->set_shipping_country( 'BR' );
+		
+		// Marca que o frete foi calculado
+		WC()->customer->set_calculated_shipping( true );
+		
+		// Salva as alterações na sessão
+		WC()->customer->save();
+	}
+	
+	// ===== DEFINE O MÉTODO DE ENVIO COMO SELECIONADO =====
+	// Isso é ESSENCIAL para que o frete seja incluído no total
+	if ( function_exists( 'WC' ) && WC()->session ) {
+		// Define o método de envio Gstore como o escolhido
+		WC()->session->set( 'chosen_shipping_methods', array( 'gstore_custom_shipping' ) );
+	}
+	
+	// Força o recálculo do frete e totais do carrinho
+	if ( function_exists( 'WC' ) && WC()->cart ) {
+		// Limpa cache de shipping rates
+		WC()->session->set( 'shipping_for_package_0', false );
+		
+		// Recalcula shipping e totais
+		WC()->cart->calculate_shipping();
+		WC()->cart->calculate_totals();
+	}
+
+	// Estima prazo de entrega (dias úteis)
+	$estimated_days = 7; // Padrão
+	if ( $region === 'rio_janeiro' ) {
+		$estimated_days = 5;
+	} elseif ( $region === 'sul' ) {
+		$estimated_days = 6;
+	}
+
+	wp_send_json_success(
+		array(
+			'cost'           => floatval( $shipping_cost ),
+			'cost_formatted' => wc_price( $shipping_cost ),
+			'region'          => $region,
+			'region_label'    => $region_label,
+			'estimated_days'  => $estimated_days,
+			'weight'          => $total_weight,
+			'state'           => $state,
+		)
+	);
+}
+add_action( 'wp_ajax_gstore_calculate_shipping', 'gstore_calculate_shipping_ajax' );
+add_action( 'wp_ajax_nopriv_gstore_calculate_shipping', 'gstore_calculate_shipping_ajax' );
 
 /**
  * Registra o suporte a Blocos para o Gateway Blu.
@@ -2802,6 +3410,21 @@ function gstore_get_cart_summary_ajax() {
 		wp_send_json_error( array( 'message' => 'Carrinho não encontrado.' ) );
 	}
 
+	// Força o recálculo do shipping e totais para garantir valores atualizados
+	if ( WC()->customer && WC()->customer->get_shipping_postcode() ) {
+		// Garante que o método de envio está selecionado
+		if ( WC()->session ) {
+			$chosen_methods = WC()->session->get( 'chosen_shipping_methods', array() );
+			if ( empty( $chosen_methods ) || empty( $chosen_methods[0] ) ) {
+				WC()->session->set( 'chosen_shipping_methods', array( 'gstore_custom_shipping' ) );
+			}
+		}
+		
+		// Recalcula tudo
+		$cart->calculate_shipping();
+		$cart->calculate_totals();
+	}
+
 	$items = array();
 	foreach ( $cart->get_cart() as $cart_item_key => $cart_item ) {
 		$product = $cart_item['data'];
@@ -2816,13 +3439,26 @@ function gstore_get_cart_summary_ajax() {
 
 	$totals = $cart->get_totals();
 
+	// Verifica se há frete nas fees (taxa de frete Gstore)
+	$shipping_fee = null;
+	$fees = $cart->get_fees();
+	foreach ( $fees as $fee ) {
+		if ( stripos( $fee->name, 'frete' ) !== false || $fee->id === 'gstore-shipping-fee' ) {
+			$shipping_fee = $fee->total;
+			break;
+		}
+	}
+
+	// Usa shipping_total se disponível, senão usa a fee de frete
+	$shipping_value = $totals['shipping_total'] > 0 ? $totals['shipping_total'] : $shipping_fee;
+
 	$response = array(
 		'items_count' => $cart->get_cart_contents_count(),
 		'items'       => $items,
 		'total'       => wc_price( $totals['total'] ),
 		'totals'      => array(
 			'subtotal' => wc_price( $totals['subtotal'] ),
-			'shipping' => $totals['shipping_total'] > 0 ? wc_price( $totals['shipping_total'] ) : null,
+			'shipping' => $shipping_value > 0 ? wc_price( $shipping_value ) : null,
 			'discount' => $totals['discount_total'] > 0 ? wc_price( $totals['discount_total'] ) : null,
 		),
 	);
@@ -8917,9 +9553,10 @@ function gstore_age_verification_modal() {
 			showModal();
 			
 			// Event listeners
+			var modal = document.getElementById('gstore-age-modal');
 			var confirmBtn = document.getElementById('gstore-age-confirm');
 			var denyBtn = document.getElementById('gstore-age-deny');
-			var closeBtn = modal.querySelector('.gstore-age-modal__close');
+			var closeBtn = modal ? modal.querySelector('.gstore-age-modal__close') : null;
 			
 			if (closeBtn) {
 				closeBtn.addEventListener('click', function() {

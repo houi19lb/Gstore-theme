@@ -345,6 +345,9 @@
 	--text-main: var(--gstore-color-text-primary);
 	--text-muted: var(--gstore-color-text-secondary);
 	--rating-color: var(--gstore-color-rating);
+	
+	/* WooCommerce Compatibility */
+	--wc-content-bg: var(--gstore-color-bg-light);
 }
 
 

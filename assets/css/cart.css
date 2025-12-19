@@ -408,24 +408,17 @@ div.woocommerce section.Gstore-cart-shell div.Gstore-cart-container {
 		transform 0.15s ease;
 }
 
-/* Ícone SVG centralizado via mask - Geometria perfeita */
-.Gstore-cart-card__remove::before {
-	content: '';
+/* Estiliza o SVG inline do botão remover */
+.Gstore-cart-card__remove svg {
 	position: absolute;
 	top: 50%;
 	left: 50%;
 	transform: translate(-50%, -50%);
 	width: 14px;
 	height: 14px;
-	background-color: currentColor;
-	-webkit-mask-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>');
-	mask-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>');
-	-webkit-mask-repeat: no-repeat;
-	mask-repeat: no-repeat;
-	-webkit-mask-position: center;
-	mask-position: center;
-	-webkit-mask-size: contain;
-	mask-size: contain;
+	stroke: currentColor;
+	stroke-width: 2.5;
+	flex-shrink: 0;
 }
 
 /* Estados interativos: highlight apenas no hover/focus */

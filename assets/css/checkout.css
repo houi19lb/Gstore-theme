@@ -1006,24 +1006,24 @@ form.checkout.woocommerce-checkout {
 	order: 200;
 }
 
+#billing_postcode_field {
+	order: 46;
+}
+
 #billing_address_1_field {
-	order: 201;
+	order: 50;
 }
 
 #billing_address_2_field {
-	order: 202;
+	order: 51;
 }
 
 #billing_city_field {
-	order: 203;
+	order: 52;
 }
 
 #billing_state_field {
-	order: 204;
-}
-
-#billing_postcode_field {
-	order: 205;
+	order: 53;
 }
 
 /* Espaçamento hierárquico - Gestalt Continuidade */

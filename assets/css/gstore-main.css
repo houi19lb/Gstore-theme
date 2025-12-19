@@ -48,6 +48,7 @@
    ======================================== */
 @import url('./layouts/header.css');
 @import url('./layouts/home.css');
+@import url('./layouts/blog-single.css');
 @import url('./my-account.css');
 
 /* ========================================

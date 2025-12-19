@@ -27,10 +27,11 @@
 			name: 'Dados Básicos',
 			icon: 'fa-envelope',
 			title: 'Seus Dados',
-			description: 'Informe seu email e telefone para contato.',
+			description: 'Informe seu email, telefone e CEP para calcular o frete.',
 			fields: [
 				'billing_email',
-				'billing_phone'
+				'billing_phone',
+				'billing_postcode'
 			]
 		},
 		{
@@ -48,6 +49,8 @@
 	let $stepsContainer = null;
 	let initialized = false;
 	let isUpdatingPayment = false; // Flag para evitar loops ao atualizar pagamento
+	let calculatedShipping = null; // Armazena o frete calculado
+	let isCalculatingShipping = false; // Flag para evitar múltiplos cálculos simultâneos
 
 	/**
 	 * Inicializa o checkout de etapas
@@ -336,16 +339,16 @@
 				}
 			}
 			
-			// Handler para cliques nos labels de pagamento (sem disparar update_checkout)
-			function selectPaymentMethod(selectedMethod) {
-				const $livePixRadio = $('input[name="payment_method"][value="blu_pix"]');
-				const $liveCheckoutRadio = $('input[name="payment_method"][value="blu_checkout"]');
-				
-				const isCheckout = selectedMethod === 'blu_checkout';
-				
-				// Atualiza os radios originais
-				$liveCheckoutRadio.prop('checked', isCheckout);
-				$livePixRadio.prop('checked', !isCheckout);
+		// Handler para cliques nos labels de pagamento (sem disparar update_checkout)
+		function selectPaymentMethod(selectedMethod) {
+			const $livePixRadio = $('input[name="payment_method"][value="blu_pix"]');
+			const $liveCheckoutRadio = $('input[name="payment_method"][value="blu_checkout"]');
+			
+			const isCheckout = selectedMethod === 'blu_checkout';
+			
+			// Atualiza os radios originais
+			$liveCheckoutRadio.prop('checked', isCheckout);
+			$livePixRadio.prop('checked', !isCheckout);
 				
 				// Atualiza os clones visuais
 				if ($checkoutRadioClone) $checkoutRadioClone.prop('checked', isCheckout);
@@ -370,24 +373,24 @@
 				selectPaymentMethod('blu_checkout');
 			});
 			
-			$pixOption.find('label').on('click', function(e) {
-				e.preventDefault();
-				e.stopPropagation();
-				selectPaymentMethod('blu_pix');
-			});
+		$pixOption.find('label').on('click', function(e) {
+			e.preventDefault();
+			e.stopPropagation();
+			selectPaymentMethod('blu_pix');
+		});
 			
-			// Sincroniza quando WooCommerce atualiza o checkout (ex: cupom aplicado)
-			$(document.body).on('updated_checkout.gstore-unify', function() {
-				// Re-esconde os elementos originais que podem ter sido recriados
-				$('.payment_method_blu_checkout').not('.Gstore-blu-payment-unified .payment_method_blu_checkout').addClass('gstore-hidden-for-unified');
-				$('.payment_method_blu_pix').not('.Gstore-blu-payment-unified .payment_method_blu_pix').addClass('gstore-hidden-for-unified');
-				
-				// Sincroniza a seleção visual com o estado atual dos radios
-				setTimeout(function() {
-					const $livePixRadio = $('input[name="payment_method"][value="blu_pix"]');
-					const $liveCheckoutRadio = $('input[name="payment_method"][value="blu_checkout"]');
-					const isPixSelected = $livePixRadio.filter(':checked').length > 0;
-					const isCheckoutSelected = $liveCheckoutRadio.filter(':checked').length > 0;
+		// Sincroniza quando WooCommerce atualiza o checkout (ex: cupom aplicado)
+		$(document.body).on('updated_checkout.gstore-unify', function() {
+			// Re-esconde os elementos originais que podem ter sido recriados
+			$('.payment_method_blu_checkout').not('.Gstore-blu-payment-unified .payment_method_blu_checkout').addClass('gstore-hidden-for-unified');
+			$('.payment_method_blu_pix').not('.Gstore-blu-payment-unified .payment_method_blu_pix').addClass('gstore-hidden-for-unified');
+			
+			// Sincroniza a seleção visual com o estado atual dos radios
+			setTimeout(function() {
+				const $livePixRadio = $('input[name="payment_method"][value="blu_pix"]');
+				const $liveCheckoutRadio = $('input[name="payment_method"][value="blu_checkout"]');
+				const isPixSelected = $livePixRadio.filter(':checked').length > 0;
+				const isCheckoutSelected = $liveCheckoutRadio.filter(':checked').length > 0;
 					
 					if (isPixSelected || isCheckoutSelected) {
 						if ($checkoutRadioClone) $checkoutRadioClone.prop('checked', isCheckoutSelected);
@@ -406,20 +409,20 @@
 				}, 50);
 			});
 			
-			// Mostra conteúdo inicial
-			setTimeout(function() {
-				const isPixSelected = $pixRadio.is(':checked');
-				const isCheckoutSelected = $checkoutRadio.is(':checked');
-				
-				if (!isPixSelected && !isCheckoutSelected) {
-					$checkoutRadio.prop('checked', true);
-				}
-				
-				const finalSelection = $pixRadio.is(':checked');
-				if ($pixRadioClone) $pixRadioClone.prop('checked', finalSelection);
-				if ($checkoutRadioClone) $checkoutRadioClone.prop('checked', !finalSelection);
-				updatePaymentContent();
-			}, 100);
+		// Mostra conteúdo inicial
+		setTimeout(function() {
+			const isPixSelected = $pixRadio.is(':checked');
+			const isCheckoutSelected = $checkoutRadio.is(':checked');
+			
+			if (!isPixSelected && !isCheckoutSelected) {
+				$checkoutRadio.prop('checked', true);
+			}
+			
+			const finalSelection = $pixRadio.is(':checked');
+			if ($pixRadioClone) $pixRadioClone.prop('checked', finalSelection);
+			if ($checkoutRadioClone) $checkoutRadioClone.prop('checked', !finalSelection);
+			updatePaymentContent();
+		}, 100);
 			
 			// Adiciona badges de confiança simplificados
 			$bluUnified.append(`
@@ -493,18 +496,33 @@
 			const $stepDescription = $('[data-step="contact"] .Gstore-checkout-step__description');
 			$stepDescription.text('Preencha seus dados completos para finalizar o pedido via Pix.');
 		} else {
-			// CARTÃO selecionado: Esconde os campos de billing adicionais
+			// CARTÃO selecionado: Mostra apenas email, telefone e CEP
 			PIX_BILLING_FIELDS.forEach(fieldId => {
-				// Esconde em qualquer lugar que esteja
 				const $field = $(`#${fieldId}_field`);
 				if ($field.length) {
-					$field.hide();
+					// Mostra apenas CEP, esconde os demais
+					if (fieldId === 'billing_postcode') {
+						$field.show();
+					} else {
+						$field.hide();
+					}
 				}
 			});
 			
+			// Garante que CEP está visível na etapa de contato
+			const $contactStep = $('[data-step="contact"] .Gstore-checkout-step__fields');
+			const $postcodeField = $('#billing_postcode_field');
+			if ($postcodeField.length && $contactStep.length) {
+				// Move CEP para a etapa de contato se não estiver lá
+				if (!$contactStep.find('#billing_postcode_field').length) {
+					$contactStep.append($postcodeField.detach());
+				}
+				$postcodeField.show();
+			}
+			
 			// Atualiza descrição da etapa
 			const $stepDescription = $('[data-step="contact"] .Gstore-checkout-step__description');
-			$stepDescription.text('Informe seu email e telefone para contato.');
+			$stepDescription.text('Informe seu email, telefone e CEP para calcular o frete.');
 		}
 	}
 
@@ -556,6 +574,179 @@
 		$('.woocommerce-additional-fields').hide();
 		$('.woocommerce-billing-fields').hide();
 		$('.woocommerce-shipping-fields').hide();
+	}
+
+	/**
+	 * Calcula o frete baseado no CEP informado
+	 */
+	function calculateShipping(postcode) {
+		// Limpa CEP (remove caracteres não numéricos)
+		const cleanCep = postcode.replace(/\D/g, '');
+		
+		// Valida CEP (deve ter 8 dígitos)
+		if (cleanCep.length !== 8) {
+			hideShippingResult();
+			return;
+		}
+
+		// Evita múltiplos cálculos simultâneos
+		if (isCalculatingShipping) {
+			return;
+		}
+
+		isCalculatingShipping = true;
+		showShippingLoading();
+
+		// Prepara dados para AJAX
+		const ajaxUrl = typeof gstoreShippingCalculator !== 'undefined' && gstoreShippingCalculator.ajaxUrl
+			? gstoreShippingCalculator.ajaxUrl
+			: (typeof wc_checkout_params !== 'undefined' ? wc_checkout_params.ajax_url : '/wp-admin/admin-ajax.php');
+		
+		const nonce = typeof gstoreShippingCalculator !== 'undefined' && gstoreShippingCalculator.nonce
+			? gstoreShippingCalculator.nonce
+			: '';
+		
+		const data = {
+			action: 'gstore_calculate_shipping',
+			nonce: nonce,
+			postcode: cleanCep
+		};
+
+		$.ajax({
+			url: ajaxUrl,
+			type: 'POST',
+			data: data,
+			dataType: 'json',
+			success: function(response) {
+				isCalculatingShipping = false;
+				
+				if (response.success && response.data) {
+					calculatedShipping = response.data;
+					showShippingResult(response.data);
+					updateSummaryWithShipping(response.data);
+				} else {
+					const message = response.data && response.data.message 
+						? response.data.message 
+						: 'Erro ao calcular frete. Tente novamente.';
+					showShippingError(message);
+					calculatedShipping = null;
+				}
+			},
+			error: function() {
+				isCalculatingShipping = false;
+				showShippingError('Erro ao calcular frete. Tente novamente.');
+				calculatedShipping = null;
+			}
+		});
+	}
+
+	/**
+	 * Mostra loading do cálculo de frete
+	 */
+	function showShippingLoading() {
+		const $postcodeField = $('#billing_postcode_field');
+		let $shippingResult = $postcodeField.next('.Gstore-shipping-result');
+		
+		if (!$shippingResult.length) {
+			$shippingResult = $('<div class="Gstore-shipping-result"></div>');
+			$postcodeField.after($shippingResult);
+		}
+		
+		$shippingResult.html(`
+			<div class="Gstore-shipping-result__loading">
+				<i class="fa-solid fa-spinner fa-spin"></i>
+				<span>Calculando frete...</span>
+			</div>
+		`).addClass('is-visible');
+	}
+
+	/**
+	 * Mostra resultado do frete calculado
+	 */
+	function showShippingResult(data) {
+		const $postcodeField = $('#billing_postcode_field');
+		let $shippingResult = $postcodeField.next('.Gstore-shipping-result');
+		
+		if (!$shippingResult.length) {
+			$shippingResult = $('<div class="Gstore-shipping-result"></div>');
+			$postcodeField.after($shippingResult);
+		}
+		
+		$shippingResult.html(`
+			<div class="Gstore-shipping-result__content">
+				<div class="Gstore-shipping-result__row">
+					<i class="fa-solid fa-truck"></i>
+					<span class="Gstore-shipping-result__label">Frete:</span>
+					<strong class="Gstore-shipping-result__value">${data.cost_formatted}</strong>
+				</div>
+				<div class="Gstore-shipping-result__row">
+					<i class="fa-solid fa-map-marker-alt"></i>
+					<span class="Gstore-shipping-result__label">Região:</span>
+					<span class="Gstore-shipping-result__value">${data.region_label}</span>
+				</div>
+				<div class="Gstore-shipping-result__row">
+					<i class="fa-solid fa-calendar-days"></i>
+					<span class="Gstore-shipping-result__label">Prazo:</span>
+					<span class="Gstore-shipping-result__value">${data.estimated_days} dias úteis</span>
+				</div>
+			</div>
+		`).removeClass('has-error').addClass('is-visible');
+	}
+
+	/**
+	 * Mostra erro no cálculo de frete
+	 */
+	function showShippingError(message) {
+		const $postcodeField = $('#billing_postcode_field');
+		let $shippingResult = $postcodeField.next('.Gstore-shipping-result');
+		
+		if (!$shippingResult.length) {
+			$shippingResult = $('<div class="Gstore-shipping-result"></div>');
+			$postcodeField.after($shippingResult);
+		}
+		
+		$shippingResult.html(`
+			<div class="Gstore-shipping-result__error">
+				<i class="fa-solid fa-exclamation-circle"></i>
+				<span>${message}</span>
+			</div>
+		`).removeClass('is-visible').addClass('has-error');
+	}
+
+	/**
+	 * Esconde resultado do frete
+	 */
+	function hideShippingResult() {
+		$('.Gstore-shipping-result').removeClass('is-visible has-error').html('');
+	}
+
+	/**
+	 * Atualiza resumo com valor do frete
+	 */
+	function updateSummaryWithShipping(shippingData) {
+		// Atualiza o endereço no WooCommerce para que ele calcule o frete oficialmente
+		const $postcodeField = $('#billing_postcode');
+		const $checkoutForm = $('form.checkout');
+		
+		if ($postcodeField.length && $postcodeField.val()) {
+			// Garante que o campo de método de envio existe no formulário
+			let $shippingMethodField = $checkoutForm.find('input[name="shipping_method[0]"]');
+			if (!$shippingMethodField.length) {
+				// Cria campo hidden para o método de envio
+				$checkoutForm.append('<input type="hidden" name="shipping_method[0]" value="gstore_custom_shipping" />');
+			} else {
+				$shippingMethodField.val('gstore_custom_shipping');
+			}
+			
+			// Dispara evento para atualizar checkout do WooCommerce
+			// Isso fará com que o WooCommerce calcule o frete oficialmente
+			$(document.body).trigger('update_checkout');
+		}
+		
+		// Atualiza o resumo do topo após um delay maior para o WooCommerce processar
+		setTimeout(function() {
+			loadCartSummary();
+		}, 1000);
 	}
 
 	/**
@@ -746,9 +937,21 @@
 						isValid = false;
 						$fieldWrapper.addClass('woocommerce-invalid');
 						if (!$firstError) $firstError = $input;
+					} else {
+						// CEP válido, verifica se frete foi calculado
+						if (!calculatedShipping) {
+							isValid = false;
+							$fieldWrapper.addClass('woocommerce-invalid');
+							if (!$firstError) $firstError = $input;
+							showNotice('Por favor, aguarde o cálculo do frete ou verifique se o CEP está correto.', 'error');
+						}
 					}
+				} else if (isRequired) {
+					// CEP é obrigatório mas está vazio
+					isValid = false;
+					$fieldWrapper.addClass('woocommerce-invalid woocommerce-invalid-required-field');
+					if (!$firstError) $firstError = $input;
 				}
-				// Se CEP não é obrigatório e está vazio, não valida (não faz nada)
 			}
 		});
 
@@ -756,8 +959,12 @@
 		if ($firstError) {
 			$firstError.focus();
 			
-			// Mostra mensagem de erro
-			showNotice('Por favor, preencha todos os campos obrigatórios corretamente.', 'error');
+			// Mostra mensagem de erro apenas se não foi mostrada anteriormente
+			if (isValid || !calculatedShipping) {
+				// Mensagem já foi mostrada na validação do CEP
+			} else {
+				showNotice('Por favor, preencha todos os campos obrigatórios corretamente.', 'error');
+			}
 		}
 
 		return isValid;
@@ -1014,7 +1221,7 @@
 			$(this).val(value);
 		});
 
-		// Máscara para CEP
+		// Máscara para CEP e cálculo automático de frete
 		$(document).on('input', '#billing_postcode', function() {
 			let value = $(this).val().replace(/\D/g, '');
 			if (value.length > 8) value = value.slice(0, 8);
@@ -1024,6 +1231,26 @@
 			}
 			
 			$(this).val(value);
+			
+			// Limpa resultado anterior quando CEP muda
+			if (value.replace(/\D/g, '').length < 8) {
+				hideShippingResult();
+				calculatedShipping = null;
+			}
+		});
+
+		// Calcula frete quando CEP perde o foco e está completo
+		$(document).on('blur', '#billing_postcode', function() {
+			const cep = $(this).val().replace(/\D/g, '');
+			if (cep.length === 8) {
+				// Aguarda um pouco para garantir que a máscara foi aplicada
+				setTimeout(function() {
+					calculateShipping($('#billing_postcode').val());
+				}, 300);
+			} else {
+				hideShippingResult();
+				calculatedShipping = null;
+			}
 		});
 
 		// Máscara para telefone

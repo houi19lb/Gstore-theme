@@ -1,0 +1,194 @@
+/**
+ * Calculador de Frete Gstore
+ */
+
+.gstore-shipping-calculator {
+	margin: 1.5rem 0;
+	padding: 1.5rem;
+	background: var(--wp--preset--color--base, #ffffff);
+	border: 1px solid var(--wp--preset--color--contrast-2, #e0e0e0);
+	border-radius: 4px;
+}
+
+.gstore-shipping-calculator__title {
+	margin: 0 0 1rem 0;
+	font-size: 1.125rem;
+	font-weight: 600;
+	color: var(--wp--preset--color--contrast, #1a1a1a);
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+}
+
+.gstore-shipping-calculator__title i {
+	color: var(--wp--preset--color--accent, #0073aa);
+}
+
+.gstore-shipping-calculator__form {
+	display: flex;
+	gap: 0.75rem;
+	margin-bottom: 1rem;
+}
+
+.gstore-shipping-calculator__cep {
+	flex: 1;
+	padding: 0.75rem 1rem;
+	background: #ffffff;
+	color: var(--gstore-color-text-primary);
+	border: 1px solid var(--gray-border);
+	border-radius: 4px;
+	font-size: 1rem;
+	transition: border-color 0.2s ease;
+}
+
+.gstore-shipping-calculator__cep:focus {
+	outline: none;
+	border-color: var(--wp--preset--color--accent, #0073aa);
+	box-shadow: 0 0 0 3px rgba(0, 115, 170, 0.1);
+}
+
+.gstore-shipping-calculator__button {
+	padding: 0.75rem 1.5rem;
+	background: var(--wp--preset--color--accent, #0073aa);
+	color: var(--wp--preset--color--base, #ffffff);
+	border: none;
+	border-radius: 4px;
+	font-size: 1rem;
+	font-weight: 600;
+	cursor: pointer;
+	transition: background-color 0.2s ease, transform 0.1s ease;
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	white-space: nowrap;
+}
+
+.gstore-shipping-calculator__button:hover:not(:disabled) {
+	background: var(--wp--preset--color--accent-hover, #005a87);
+	transform: translateY(-1px);
+}
+
+.gstore-shipping-calculator__button:active:not(:disabled) {
+	transform: translateY(0);
+}
+
+.gstore-shipping-calculator__button:disabled {
+	opacity: 0.6;
+	cursor: not-allowed;
+}
+
+.gstore-shipping-calculator__result {
+	margin-top: 1rem;
+	padding: 1rem;
+	background: var(--wp--preset--color--contrast-3, #f5f5f5);
+	border-radius: 4px;
+	display: none;
+}
+
+.gstore-shipping-calculator__result.is-visible {
+	display: block;
+	animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+	from {
+		opacity: 0;
+		transform: translateY(-5px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
+.gstore-shipping-calculator__result-content {
+	display: flex;
+	flex-direction: column;
+	gap: 0.75rem;
+}
+
+.gstore-shipping-calculator__result-row {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	padding: 0.5rem 0;
+	border-bottom: 1px solid var(--wp--preset--color--contrast-2, #e0e0e0);
+}
+
+.gstore-shipping-calculator__result-row:last-child {
+	border-bottom: none;
+}
+
+.gstore-shipping-calculator__result-label {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	color: var(--wp--preset--color--contrast, #1a1a1a);
+	font-size: 0.9375rem;
+}
+
+.gstore-shipping-calculator__result-label i {
+	color: var(--wp--preset--color--accent, #0073aa);
+	width: 1.25rem;
+}
+
+.gstore-shipping-calculator__result-value {
+	color: var(--wp--preset--color--contrast, #1a1a1a);
+	font-size: 0.9375rem;
+	font-weight: 600;
+}
+
+.gstore-shipping-calculator__error {
+	margin-top: 1rem;
+	padding: 0.75rem 1rem;
+	background: #fee;
+	border: 1px solid #fcc;
+	border-radius: 4px;
+	color: #c33;
+	font-size: 0.875rem;
+	display: none;
+	animation: fadeIn 0.3s ease;
+}
+
+.gstore-shipping-calculator__error.is-visible {
+	display: block;
+}
+
+.gstore-shipping-calculator__error i {
+	margin-right: 0.5rem;
+}
+
+/* Versão no checkout */
+.gstore-shipping-calculator--checkout {
+	margin-bottom: 2rem;
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+	.gstore-shipping-calculator__form {
+		flex-direction: column;
+	}
+
+	.gstore-shipping-calculator__button {
+		width: 100%;
+		justify-content: center;
+	}
+
+	.gstore-shipping-calculator__result-row {
+		flex-direction: column;
+		align-items: flex-start;
+		gap: 0.25rem;
+	}
+}
+
+/* Integração com página de produto único */
+.Gstore-single-product__summary-card .gstore-shipping-calculator {
+	margin-top: 1.5rem;
+	border: 1px solid var(--wp--preset--color--contrast-2, #e0e0e0);
+}
+
+/* Integração com checkout */
+.woocommerce-checkout .gstore-shipping-calculator {
+	grid-column: 1 / -1;
+}
+

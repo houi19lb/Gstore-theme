@@ -2338,3 +2338,87 @@ body.woocommerce-checkout .Gstore-checkout-steps-shell {
 		font-size: var(--gstore-font-size-13);
 	}
 }
+
+/* ===========================================
+   RESULTADO DO CÁLCULO DE FRETE
+   =========================================== */
+.Gstore-shipping-result {
+	margin-top: 12px;
+	padding: 16px;
+	background: var(--gstore-base);
+	border: 1px solid var(--gstore-muted);
+	border-radius: var(--gstore-border-radius);
+	display: none;
+}
+
+.Gstore-shipping-result.is-visible {
+	display: block;
+	animation: fadeIn 0.3s ease;
+}
+
+.Gstore-shipping-result.has-error {
+	display: block;
+	background: #fef2f2;
+	border-color: #fecaca;
+}
+
+.Gstore-shipping-result__loading {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	color: var(--gstore-text-muted);
+	font-size: var(--gstore-font-size-sm);
+}
+
+.Gstore-shipping-result__loading i {
+	color: var(--gstore-green);
+	font-size: var(--gstore-font-size-base);
+}
+
+.Gstore-shipping-result__content {
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+}
+
+.Gstore-shipping-result__row {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	font-size: var(--gstore-font-size-sm);
+}
+
+.Gstore-shipping-result__row i {
+	color: var(--gstore-green);
+	font-size: var(--gstore-font-size-base);
+	width: 20px;
+	text-align: center;
+}
+
+.Gstore-shipping-result__label {
+	color: var(--gstore-text-muted);
+	font-weight: var(--gstore-font-weight-medium);
+}
+
+.Gstore-shipping-result__value {
+	color: var(--gstore-foreground);
+	font-weight: var(--gstore-font-weight-semibold);
+}
+
+.Gstore-shipping-result__row:first-child .Gstore-shipping-result__value {
+	font-size: var(--gstore-font-size-base);
+	color: var(--gstore-green);
+}
+
+.Gstore-shipping-result__error {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	color: #991b1b;
+	font-size: var(--gstore-font-size-sm);
+}
+
+.Gstore-shipping-result__error i {
+	color: #dc2626;
+	font-size: var(--gstore-font-size-base);
+}

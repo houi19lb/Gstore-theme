@@ -1,0 +1,30 @@
+{
+	"regions": {
+		"sul": {
+			"only_ammunition": 200,
+			"one_weapon": 330,
+			"combo_one_weapon": 530,
+			"two_weapons": 660,
+			"combo_two_weapons": 860
+		},
+		"resto_brasil": {
+			"only_ammunition": 250,
+			"one_weapon": 370,
+			"combo_one_weapon": 620,
+			"two_weapons": 740,
+			"combo_two_weapons": 990
+		},
+		"rio_janeiro": {
+			"only_ammunition": 350,
+			"one_weapon": 450,
+			"combo_one_weapon": 800,
+			"two_weapons": 900,
+			"combo_two_weapons": 1250
+		}
+	}
+}
+
+
+
+
+

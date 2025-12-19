@@ -537,6 +537,29 @@ $guarantee_badges  = gstore_get_guarantee_badges();
 							?>
 						</div>
 
+						<!-- Calculador de Frete -->
+						<div class="gstore-shipping-calculator">
+							<h3 class="gstore-shipping-calculator__title">
+								<i class="fa-solid fa-calculator" aria-hidden="true"></i>
+								<?php esc_html_e( 'Calcular Frete', 'gstore' ); ?>
+							</h3>
+							<div class="gstore-shipping-calculator__form">
+								<input 
+									type="text" 
+									class="gstore-shipping-calculator__cep" 
+									placeholder="<?php esc_attr_e( '00000-000', 'gstore' ); ?>"
+									maxlength="9"
+									aria-label="<?php esc_attr_e( 'CEP para cálculo de frete', 'gstore' ); ?>"
+								/>
+								<button type="button" class="gstore-shipping-calculator__button">
+									<i class="fa-solid fa-truck" aria-hidden="true"></i>
+									<?php esc_html_e( 'Calcular frete', 'gstore' ); ?>
+								</button>
+							</div>
+							<div class="gstore-shipping-calculator__result" role="region" aria-live="polite"></div>
+							<div class="gstore-shipping-calculator__error" role="alert"></div>
+						</div>
+
 						<!-- Link para página "Como Comprar Arma" -->
 						<a href="<?php echo esc_url( home_url( '/como-comprar-arma/' ) ); ?>" class="Gstore-single-product__read-before-buy">
 							<i class="fa-solid fa-book-open" aria-hidden="true"></i>

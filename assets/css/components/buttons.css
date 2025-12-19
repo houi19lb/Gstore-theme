@@ -39,6 +39,11 @@
 	pointer-events: none;
 }
 
+/* Links estilizados como botão */
+a.Gstore-btn {
+	color: var(--card-meta-bg);
+}
+
 /* ========================================
    VARIAÇÕES DE ESTILO
    ======================================== */

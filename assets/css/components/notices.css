@@ -155,6 +155,8 @@
 .woocommerce-error .gstore-notice-close svg,
 .woocommerce-info .gstore-notice-close svg {
     display: block;
+    width: 18px;
+    height: 18px;
 }
 
 /* Botões dentro das mensagens (ex: "Ver carrinho") */
@@ -323,6 +325,8 @@
 
 .gstore-notice-close svg {
     display: block;
+    width: 18px;
+    height: 18px;
 }
 
 /* Tipos de aviso */

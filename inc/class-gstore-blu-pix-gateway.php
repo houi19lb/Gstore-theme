@@ -103,6 +103,8 @@ class Gstore_Blu_Pix_Gateway extends WC_Payment_Gateway {
 		add_action( 'woocommerce_thankyou_' . $this->id, array( $this, 'render_thankyou_instructions' ) );
 		add_action( 'woocommerce_view_order', array( $this, 'render_account_order_instructions' ) );
 		add_action( 'woocommerce_email_before_order_table', array( $this, 'email_instructions' ), 10, 4 );
+		// Hook adicional para blocos do WooCommerce (página de confirmação de pedido via blocos)
+		add_action( 'woocommerce_order_details_after_order_table', array( $this, 'render_blocks_order_confirmation' ) );
 	}
 
 	/**
@@ -275,6 +277,20 @@ class Gstore_Blu_Pix_Gateway extends WC_Payment_Gateway {
 		$order = wc_get_order( $order_id );
 
 		if ( ! $order || $order->get_payment_method() !== $this->id ) {
+			return;
+		}
+
+		$this->output_pix_instructions( $order );
+	}
+
+	/**
+	 * Mostra instruções na página de confirmação de pedido via Blocos WooCommerce.
+	 *
+	 * @param WC_Order $order Pedido.
+	 * @return void
+	 */
+	public function render_blocks_order_confirmation( $order ) {
+		if ( ! $order instanceof WC_Order || $order->get_payment_method() !== $this->id ) {
 			return;
 		}
 
@@ -534,6 +550,15 @@ class Gstore_Blu_Pix_Gateway extends WC_Payment_Gateway {
 	 * @return void
 	 */
 	protected function output_pix_instructions( WC_Order $order ) {
+		// Evita duplicação - só renderiza uma vez por pedido por request
+		static $rendered_orders = array();
+		$order_id = $order->get_id();
+
+		if ( in_array( $order_id, $rendered_orders, true ) ) {
+			return;
+		}
+		$rendered_orders[] = $order_id;
+
 		$transaction_token = $order->get_meta( self::META_TRANSACTION_TOKEN );
 		$qr_code_base64    = $order->get_meta( self::META_QR_CODE_BASE64 );
 		$emv               = $order->get_meta( self::META_EMV );
@@ -581,16 +606,17 @@ class Gstore_Blu_Pix_Gateway extends WC_Payment_Gateway {
 		} elseif ( $status ) {
 			$status_lower = strtolower( $status );
 			/**
-			 * 'processed' na Blu muitas vezes significa apenas que o pedido de Pix foi processado,
-			 * mas usamos como 'Aprovado' se não houver status de erro no pedido WC.
+			 * Apenas 'paid' indica pagamento confirmado na Blu.
+			 * Outros status como 'processed' ou 'success' indicam apenas criação da cobrança.
 			 */
-			if ( in_array( $status_lower, array( 'success', 'paid', 'processed' ), true ) ) {
+			if ( 'paid' === $status_lower ) {
 				$status_class = 'pix-box--processed';
 				$status_text  = __( 'Pagamento aprovado', 'gstore' );
 			} elseif ( 'expired' === $status_lower ) {
 				$status_class = 'pix-box--expired';
 				$status_text  = __( 'Pix expirado', 'gstore' );
 			}
+			// Se status for 'processed' ou outro, mantém o padrão "Aguardando pagamento"
 		}
 
 		// Formata valor total
