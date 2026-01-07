@@ -51,7 +51,7 @@ class Gstore_Theme_Git_Updater {
 	 * Construtor.
 	 */
 	public function __construct() {
-		$this->repo_url   = defined( 'GSTORE_THEME_GIT_REPO' ) ? GSTORE_THEME_GIT_REPO : 'https://github.com/houi19lb/GSTORE.git';
+		$this->repo_url   = defined( 'GSTORE_THEME_GIT_REPO' ) ? GSTORE_THEME_GIT_REPO : 'https://github.com/houi19lb/Gstore-theme.git';
 		$this->branch     = defined( 'GSTORE_THEME_GIT_BRANCH' ) ? GSTORE_THEME_GIT_BRANCH : 'main';
 		$this->stylesheet = get_stylesheet();
 

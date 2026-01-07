@@ -19,6 +19,9 @@ vendor/
 GSTORE.zip
 GSTORE/
 
+# Large exports (keep out of repo)
+woocommerce-products-categorias-pai-filho_COMMA(out).csv
+
 # API Visualizer (keep dist in repo; ignore deps)
 api-visualizer/node_modules/
 
