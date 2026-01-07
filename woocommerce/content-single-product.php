@@ -76,7 +76,7 @@ if ( ! function_exists( 'gstore_get_hero_meta_cards' ) ) :
 				'icon'       => 'fa-circle-check',
 				'label'      => __( 'Disponibilidade', 'gstore' ),
 				'text'       => $stock_label,
-				'allow_html' => false,
+				'allow_html' => true,
 			),
 			array(
 				'icon'       => 'fa-credit-card',
@@ -339,9 +339,29 @@ $full_description  = apply_filters( 'the_content', $product->get_description() )
 $review_count      = (int) $product->get_review_count();
 $is_in_stock       = $product->is_in_stock();
 
-$stock_label = $is_in_stock
-	? __( 'Disponível para envio imediato', 'gstore' )
-	: __( 'Sob encomenda — confirme prazos com nosso time', 'gstore' );
+// Disponibilidade (seleção do admin via plugin GSTORE).
+$product_id = (int) $product->get_id();
+
+// Chave correta: _gstore_availability (com underline no começo).
+$slug_disponibilidade = $product_id ? (string) get_post_meta( $product_id, '_gstore_availability', true ) : '';
+
+// Converte o slug interno para o texto exibido ao cliente.
+$nomes_disponibilidade = array(
+	'ready'     => __( 'Pronta entrega', 'gstore' ),
+	'pre-order' => __( 'Pré-venda', 'gstore' ),
+	'on-demand' => __( 'Encomenda', 'gstore' ),
+);
+
+// Se não houver valor salvo (ou for inválido), usa "Pronta entrega" como padrão.
+$texto_disponibilidade = isset( $nomes_disponibilidade[ $slug_disponibilidade ] )
+	? $nomes_disponibilidade[ $slug_disponibilidade ]
+	: __( 'Pronta entrega', 'gstore' );
+
+// Mantém um wrapper para facilitar estilização sem quebrar o layout.
+$stock_label = sprintf(
+	'<span class="disponibilidade-texto">%s</span>',
+	esc_html( $texto_disponibilidade )
+);
 
 // Preços e parcelamento.
 $regular_price    = (float) $product->get_regular_price();
