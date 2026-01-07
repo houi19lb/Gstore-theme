@@ -51,6 +51,36 @@
 	let isUpdatingPayment = false; // Flag para evitar loops ao atualizar pagamento
 	let calculatedShipping = null; // Armazena o frete calculado
 	let isCalculatingShipping = false; // Flag para evitar múltiplos cálculos simultâneos
+	let lastCalculatedShippingCep = ''; // CEP (somente dígitos) do último frete calculado com sucesso
+	let lastRequestedShippingCep = ''; // CEP (somente dígitos) da última requisição de frete disparada
+	let lastCartSummaryData = null;
+	let installmentQuotes = null;
+	let isLoadingInstallmentQuotes = false;
+	let lastInstallmentQuotesSignature = '';
+
+	/**
+	 * Garante cálculo/validação do frete quando o CEP já está preenchido (sem precisar clicar/sair do campo).
+	 * Útil para sessão/autofill e para quando a etapa "Dados" fica ativa.
+	 */
+	function ensureShippingAutofilled() {
+		const $postcodeInput = $('#billing_postcode');
+		if (!$postcodeInput.length) return;
+
+		const raw = String($postcodeInput.val() || '');
+		const cleanCep = raw.replace(/\D/g, '');
+
+		// Só tenta calcular se CEP estiver completo
+		if (cleanCep.length !== 8) return;
+
+		// Se já temos frete calculado para o mesmo CEP, não precisa recalcular
+		if (calculatedShipping && lastCalculatedShippingCep === cleanCep) return;
+
+		// Evita disparar várias requisições iguais
+		if (isCalculatingShipping && lastRequestedShippingCep === cleanCep) return;
+
+		// Dispara cálculo (sem exigir blur/click)
+		calculateShipping(raw);
+	}
 
 	/**
 	 * Inicializa o checkout de etapas
@@ -72,6 +102,8 @@
 		buildStepsUI();
 		bindEvents();
 		loadCartSummary();
+		// Se o CEP já veio preenchido (sessão/autofill), calcula o frete imediatamente
+		setTimeout(ensureShippingAutofilled, 0);
 		
 		initialized = true;
 	}
@@ -210,7 +242,7 @@
 				</div>
 				<div class="Gstore-checkout-step__fields"></div>
 				${actionsHtml}
-				${isLast ? '<div class="Gstore-checkout-step__payment-container"></div>' : ''}
+				${isLast ? '<div class="Gstore-checkout-step__payment-container"><div class="Gstore-checkout-step__order-review-slot"></div><div class="Gstore-blu-installments-slot"></div></div>' : ''}
 			</div>
 		`;
 	}
@@ -365,6 +397,12 @@
 					const $box = $('.payment_method_blu_pix.gstore-hidden-for-unified .payment_box').first().clone();
 					$content.append($box);
 				}
+
+				// Esconde/mostra parcelamento imediatamente (PIX não tem parcelamento)
+				$('.Gstore-blu-installments').toggle(isCheckout);
+
+				// Atualiza totais/sessão do WooCommerce
+				$(document.body).trigger('update_checkout');
 			}
 			
 			$checkoutOption.find('label').on('click', function(e) {
@@ -397,6 +435,9 @@
 						if ($pixRadioClone) $pixRadioClone.prop('checked', isPixSelected);
 						toggleBillingFieldsForPaymentMethod(isPixSelected);
 						
+						// Esconde/mostra parcelamento (PIX não tem parcelamento)
+						$('.Gstore-blu-installments').toggle(isCheckoutSelected);
+						
 						$content.empty();
 						if (isCheckoutSelected) {
 							const $box = $('.payment_method_blu_checkout.gstore-hidden-for-unified .payment_box').first().clone();
@@ -421,6 +462,10 @@
 			const finalSelection = $pixRadio.is(':checked');
 			if ($pixRadioClone) $pixRadioClone.prop('checked', finalSelection);
 			if ($checkoutRadioClone) $checkoutRadioClone.prop('checked', !finalSelection);
+			
+			// Esconde/mostra parcelamento na inicialização (PIX não tem parcelamento)
+			$('.Gstore-blu-installments').toggle(!finalSelection);
+			
 			updatePaymentContent();
 		}, 100);
 			
@@ -446,6 +491,123 @@
 				}
 			}
 		}
+	}
+
+	/**
+	 * Move/ativa o seletor de parcelas da Blu (renderizado no PHP) dentro do card unificado
+	 * e sincroniza com o método selecionado.
+	 */
+	function ensureBluInstallmentsUI() {
+		const $installments = $('.Gstore-blu-installments').first();
+		if (!$installments.length) return;
+
+		// Move para dentro da Etapa 3 (Finalizar)
+		const $slot = $('.Gstore-blu-installments-slot').first();
+		if ($slot.length && !$slot.find('.Gstore-blu-installments').length) {
+			$slot.append($installments.detach());
+		}
+
+		const allow = $installments.data('allow') === 1 || $installments.data('allow') === '1';
+		const $liveCheckoutRadio = $('input[name="payment_method"][value="blu_checkout"]');
+		const isCheckoutSelected = $liveCheckoutRadio.filter(':checked').length > 0;
+
+		// Só faz sentido mostrar quando cartão estiver selecionado
+		$installments.toggle(allow && isCheckoutSelected);
+
+		const $hidden = $('#gstore_blu_installments');
+		const $select = $('#gstore_blu_installments_select');
+
+		if (allow && $hidden.length && $select.length) {
+			// Sincroniza select <- hidden
+			if ($hidden.val() && $select.val() !== $hidden.val()) {
+				$select.val($hidden.val());
+			}
+
+			// Bind 1x
+			if (!$select.data('gstore-bound')) {
+				$select.data('gstore-bound', true);
+				$select.on('change', function() {
+					const val = $(this).val() || '1';
+					$hidden.val(val);
+					$(document.body).trigger('update_checkout');
+				});
+			}
+		}
+
+		// Atualiza labels das opções (Nx de R$ ...) quando disponível
+		applyInstallmentQuotesToSelect();
+
+		// Busca tabela de parcelas quando necessário
+		maybeFetchInstallmentQuotes();
+
+		// Atualiza preview com o último resumo disponível
+		if (lastCartSummaryData && lastCartSummaryData.installments) {
+			updateInstallmentsPreview(lastCartSummaryData);
+		}
+	}
+
+	function maybeFetchInstallmentQuotes() {
+		const $installments = $('.Gstore-blu-installments').first();
+		if (!$installments.length) return;
+
+		const allow = $installments.data('allow') === 1 || $installments.data('allow') === '1';
+		if (!allow) return;
+
+		// Só faz sentido para blu_checkout
+		if (!lastCartSummaryData || lastCartSummaryData.payment_method !== 'blu_checkout') return;
+
+		const max = parseInt($installments.data('max'), 10) || 1;
+		const selected = (lastCartSummaryData.installments && lastCartSummaryData.installments.selected)
+			? String(lastCartSummaryData.installments.selected)
+			: $('#gstore_blu_installments').val() || '1';
+
+		// Assinatura simples para evitar spam de requests
+		const signature = `${max}|${selected}|${lastCartSummaryData.total || ''}`;
+		if (signature === lastInstallmentQuotesSignature) return;
+		if (isLoadingInstallmentQuotes) return;
+		lastInstallmentQuotesSignature = signature;
+
+		const ajaxUrl = (typeof wc_checkout_params !== 'undefined' && wc_checkout_params.ajax_url)
+			? wc_checkout_params.ajax_url
+			: '/wp-admin/admin-ajax.php';
+
+		isLoadingInstallmentQuotes = true;
+		$.ajax({
+			url: ajaxUrl,
+			type: 'POST',
+			dataType: 'json',
+			data: {
+				action: 'gstore_blu_get_installment_quotes',
+				max: max
+			},
+			success: function(res) {
+				isLoadingInstallmentQuotes = false;
+				if (res && res.success && res.data && res.data.quotes) {
+					installmentQuotes = res.data.quotes;
+					applyInstallmentQuotesToSelect();
+				}
+			},
+			error: function() {
+				isLoadingInstallmentQuotes = false;
+			}
+		});
+	}
+
+	function applyInstallmentQuotesToSelect() {
+		const $select = $('#gstore_blu_installments_select');
+		if (!$select.length) return;
+		if (!installmentQuotes) return;
+
+		$select.find('option').each(function() {
+			const $opt = $(this);
+			const val = String($opt.attr('value') || '');
+			if (!val || !installmentQuotes[val]) return;
+
+			const q = installmentQuotes[val];
+			// Exibe apenas "Nx de R$ ..." (com valor correto para aquele N)
+			const perText = q.per_installment_text || q.per_installment || '';
+			$opt.text(`${q.installments}x de ${perText}`);
+		});
 	}
 
 	// Campos de billing completos (usados quando Pix é selecionado)
@@ -549,6 +711,14 @@
 				const $field = $(`#${fieldId}_field`);
 				if ($field.length) {
 					$contactStep.append($field.detach());
+					
+					// Se for o campo de CEP, move também o resultado do frete se existir
+					if (fieldId === 'billing_postcode') {
+						const $shippingResult = $('.Gstore-shipping-result');
+						if ($shippingResult.length) {
+							$contactStep.append($shippingResult.detach());
+						}
+					}
 				}
 			});
 		}
@@ -568,6 +738,24 @@
 					</p>
 				</div>
 			`);
+		}
+
+		// Etapa 3: Move o resumo do pedido (order review) para dentro do container principal da última etapa
+		const $orderReviewSlot = $('[data-step="payment"] .Gstore-checkout-step__order-review-slot');
+		const $orderReview = $('#order_review');
+		if ($orderReviewSlot.length && $orderReview.length) {
+			// Header do card (não depende do heading padrão do Woo, que é escondido nos steps)
+			if (!$orderReviewSlot.find('.Gstore-order-review-header').length) {
+				$orderReviewSlot.prepend(`
+					<div class="Gstore-order-review-header">
+						<div class="Gstore-order-review-header__title">Resumo do pedido</div>
+					</div>
+				`);
+			}
+			// Evita duplicar se o WooCommerce re-renderizar e o elemento já estiver no slot
+			if (!$orderReviewSlot.find('#order_review').length) {
+				$orderReviewSlot.append($orderReview.detach());
+			}
 		}
 
 		// Esconde seções do WooCommerce não utilizadas
@@ -594,6 +782,7 @@
 			return;
 		}
 
+		lastRequestedShippingCep = cleanCep;
 		isCalculatingShipping = true;
 		showShippingLoading();
 
@@ -622,6 +811,7 @@
 				
 				if (response.success && response.data) {
 					calculatedShipping = response.data;
+					lastCalculatedShippingCep = cleanCep;
 					showShippingResult(response.data);
 					updateSummaryWithShipping(response.data);
 				} else {
@@ -630,12 +820,14 @@
 						: 'Erro ao calcular frete. Tente novamente.';
 					showShippingError(message);
 					calculatedShipping = null;
+					lastCalculatedShippingCep = '';
 				}
 			},
 			error: function() {
 				isCalculatingShipping = false;
 				showShippingError('Erro ao calcular frete. Tente novamente.');
 				calculatedShipping = null;
+				lastCalculatedShippingCep = '';
 			}
 		});
 	}
@@ -645,9 +837,21 @@
 	 */
 	function showShippingLoading() {
 		const $postcodeField = $('#billing_postcode_field');
-		let $shippingResult = $postcodeField.next('.Gstore-shipping-result');
-		
-		if (!$shippingResult.length) {
+		if (!$postcodeField.length) return;
+
+		// Remove qualquer resultado duplicado que possa ter ficado órfão
+		const $existingResults = $('.Gstore-shipping-result');
+		let $shippingResult;
+
+		if ($existingResults.length > 0) {
+			// Se existem resultados, usa o primeiro e remove os outros
+			$shippingResult = $($existingResults[0]);
+			if ($existingResults.length > 1) {
+				$existingResults.slice(1).remove();
+			}
+			// Garante que ele esteja após o campo de CEP (pode ter sido movido)
+			$postcodeField.after($shippingResult);
+		} else {
 			$shippingResult = $('<div class="Gstore-shipping-result"></div>');
 			$postcodeField.after($shippingResult);
 		}
@@ -665,10 +869,16 @@
 	 */
 	function showShippingResult(data) {
 		const $postcodeField = $('#billing_postcode_field');
-		let $shippingResult = $postcodeField.next('.Gstore-shipping-result');
+		if (!$postcodeField.length) return;
+
+		// Busca por um resultado existente
+		let $shippingResult = $('.Gstore-shipping-result').first();
 		
 		if (!$shippingResult.length) {
 			$shippingResult = $('<div class="Gstore-shipping-result"></div>');
+			$postcodeField.after($shippingResult);
+		} else {
+			// Garante que ele esteja após o campo de CEP
 			$postcodeField.after($shippingResult);
 		}
 		
@@ -698,10 +908,16 @@
 	 */
 	function showShippingError(message) {
 		const $postcodeField = $('#billing_postcode_field');
-		let $shippingResult = $postcodeField.next('.Gstore-shipping-result');
+		if (!$postcodeField.length) return;
+
+		// Busca por um resultado existente
+		let $shippingResult = $('.Gstore-shipping-result').first();
 		
 		if (!$shippingResult.length) {
 			$shippingResult = $('<div class="Gstore-shipping-result"></div>');
+			$postcodeField.after($shippingResult);
+		} else {
+			// Garante que ele esteja após o campo de CEP
 			$postcodeField.after($shippingResult);
 		}
 		
@@ -860,6 +1076,11 @@
 				// Remove class 'processing' se existir (pode ter ficado de tentativa anterior)
 				$checkoutForm.removeClass('processing');
 			}, 200);
+		}
+
+		// Ao entrar na etapa de dados, verifica/calcule o frete automaticamente se o CEP já estiver preenchido
+		if (STEPS[index] && STEPS[index].id === 'contact') {
+			setTimeout(ensureShippingAutofilled, 0);
 		}
 
 		// Trigger evento para outros scripts
@@ -1043,6 +1264,8 @@
 	 * Renderiza o resumo do carrinho
 	 */
 	function renderSummary(data) {
+		lastCartSummaryData = data;
+
 		// Atualiza contagem de itens
 		$('.Gstore-summary-items-count').text(
 			`${data.items_count} ${data.items_count === 1 ? 'item' : 'itens'} no carrinho`
@@ -1077,6 +1300,16 @@
 			</div>
 		`;
 
+		// Método de pagamento selecionado (Pix, Cartão, etc.)
+		if (data.payment_method_title) {
+			totalsHtml += `
+				<div class="Gstore-summary-row">
+					<span>Pagamento</span>
+					<span>${data.payment_method_title}</span>
+				</div>
+			`;
+		}
+
 		if (data.totals.shipping) {
 			totalsHtml += `
 				<div class="Gstore-summary-row">
@@ -1095,6 +1328,19 @@
 			`;
 		}
 
+		// Taxas extras (ex: taxa de parcelamento)
+		if (data.totals.fees && Array.isArray(data.totals.fees)) {
+			data.totals.fees.forEach(fee => {
+				if (!fee || !fee.label || !fee.total) return;
+				totalsHtml += `
+					<div class="Gstore-summary-row">
+						<span>${fee.label}</span>
+						<span>${fee.total}</span>
+					</div>
+				`;
+			});
+		}
+
 		totalsHtml += `
 			<div class="Gstore-summary-row Gstore-summary-row--total">
 				<span>Total</span>
@@ -1102,7 +1348,50 @@
 			</div>
 		`;
 
+		// Informação de parcelamento (apenas informativa)
+		if (data.payment_method === 'blu_checkout' && data.installments && data.installments.selected && parseInt(data.installments.selected, 10) > 1) {
+			totalsHtml += `
+				<div class="Gstore-summary-row Gstore-summary-row--installments">
+					<span>${data.installments.selected}x de</span>
+					<span>${data.installments.per_installment}</span>
+				</div>
+			`;
+		}
+
 		$('.Gstore-checkout-summary-top__totals').html(totalsHtml);
+
+		updateInstallmentsPreview(data);
+		setTimeout(maybeFetchInstallmentQuotes, 0);
+	}
+
+	function updateInstallmentsPreview(data) {
+		const $preview = $('.Gstore-blu-installments__preview');
+		if (!$preview.length) return;
+
+		if (!data || !data.installments || !data.installments.selected) {
+			$preview.text('');
+			return;
+		}
+
+		if (data.payment_method !== 'blu_checkout') {
+			$preview.html('');
+			return;
+		}
+
+		const selected = parseInt(data.installments.selected, 10) || 1;
+		if (selected <= 1) {
+			$preview.html('');
+			return;
+		}
+
+		// Detecta se existe “Taxa de parcelamento” na resposta
+		let hasFee = false;
+		if (data.totals && data.totals.fees && Array.isArray(data.totals.fees)) {
+			hasFee = data.totals.fees.some(f => f && f.label && String(f.label).toLowerCase().indexOf('taxa') !== -1);
+		}
+
+		const suffix = hasFee ? ' (valores já com taxa — a taxa pode variar conforme as parcelas)' : '';
+		$preview.html(`${selected}x de <strong>${data.installments.per_installment}</strong> — total <strong>${data.total}</strong>${suffix}`);
 	}
 
 	/**
@@ -1123,6 +1412,35 @@
 		const total = $orderReview.find('.order-total .amount').html();
 		if (total) {
 			$('.Gstore-checkout-summary-top__total-amount').html(total);
+		}
+
+		// Pagamento (fallback): tenta ler o label do método selecionado
+		let paymentTitle = '';
+		const $checked = $('input[name="payment_method"]:checked');
+		if ($checked.length) {
+			// Woo padrão: label dentro do <li> do método
+			paymentTitle = $checked.closest('li').find('label').first().text().trim();
+			// Layout unificado Blu pode ter label customizado
+			if (!paymentTitle) {
+				paymentTitle = $checked.closest('.Gstore-blu-payment-option').find('span').first().text().trim();
+			}
+		}
+		if (paymentTitle) {
+			const $totals = $('.Gstore-checkout-summary-top__totals');
+			if ($totals.length) {
+				// Evita duplicar se o resumo já tiver a linha
+				const hasRow = $totals.find('.Gstore-summary-row').filter(function() {
+					return $(this).find('span').first().text().trim() === 'Pagamento';
+				}).length > 0;
+				if (!hasRow) {
+					$totals.prepend(`
+						<div class="Gstore-summary-row">
+							<span>Pagamento</span>
+							<span>${paymentTitle}</span>
+						</div>
+					`);
+				}
+			}
 		}
 	}
 
@@ -1173,6 +1491,9 @@
 		// Atualiza resumo quando checkout é atualizado
 		$(document.body).on('updated_checkout', function() {
 			loadCartSummary();
+			// O WooCommerce pode re-renderizar fragments; garante que o DOM continue dentro das etapas
+			setTimeout(organizeFields, 0);
+			setTimeout(ensureBluInstallmentsUI, 0);
 			
 			// Garante que o botão "Finalizar pedido" esteja visível apenas na última etapa
 			const lastStepIndex = STEPS.length - 1;
@@ -1513,14 +1834,19 @@
 					}
 				});
 			}
+
+			// Fallback preferencial: nonce específico para process_checkout exposto pelo tema
+			if (!nonceValue && window.gstoreCheckout && window.gstoreCheckout.processCheckoutNonce) {
+				nonceValue = window.gstoreCheckout.processCheckoutNonce;
+			}
 			
-			// Último fallback: variável global do WooCommerce
+			// Último fallback: nonce de update_order_review (não é o ideal para process_checkout)
 			if (!nonceValue && typeof wc_checkout_params !== 'undefined') {
 				if (wc_checkout_params.update_order_review_nonce) {
 					nonceValue = wc_checkout_params.update_order_review_nonce;
 				}
 			}
-			
+
 			if (nonceValue) {
 				formDataObj['woocommerce-process-checkout-nonce'] = nonceValue;
 				formDataObj['_wpnonce'] = nonceValue;
@@ -1579,7 +1905,14 @@
 					
 					if (response.result === 'success') {
 						setTimeout(function() { showProcessingSuccess(); }, 500);
-						setTimeout(function() { window.location.href = response.redirect; }, 1500);
+						if (isBluCheckoutSelected()) {
+							setTimeout(function() {
+								hideProcessingModal();
+								openBluCheckoutModal(response.redirect);
+							}, 900);
+						} else {
+							setTimeout(function() { window.location.href = response.redirect; }, 1500);
+						}
 					} else if (response.result === 'failure') {
 						hideProcessingModal();
 						$form.removeClass('processing').unblock();
@@ -1616,6 +1949,98 @@
 			});
 		}
 
+	}
+
+	/**
+	 * === MODAL: Checkout Blu (Link Externo) ===
+	 * Mantém o usuário na página e abre o checkout da Blu em um iframe quando possível.
+	 * Se o embed for bloqueado (X-Frame-Options/CSP), o botão "Abrir em nova aba" funciona como fallback.
+	 */
+	function isBluCheckoutSelected() {
+		const selected = $('input[name="payment_method"]:checked').val();
+		return selected === 'blu_checkout';
+	}
+
+	function ensureBluCheckoutModal() {
+		if ($('#gstore-blu-checkout-modal').length) return;
+
+		$('body').append(`
+			<div id="gstore-blu-checkout-modal" class="Gstore-blu-checkout-modal" aria-hidden="true">
+				<div class="Gstore-blu-checkout-modal__backdrop" data-action="close"></div>
+				<div class="Gstore-blu-checkout-modal__content" role="dialog" aria-modal="true" aria-label="Checkout Blu">
+					<button type="button" class="Gstore-blu-checkout-modal__close" data-action="close" aria-label="Fechar">
+						<i class="fa-solid fa-xmark" aria-hidden="true"></i>
+					</button>
+					<div class="Gstore-blu-checkout-modal__header">
+						<div class="Gstore-blu-checkout-modal__title">
+							Finalize seu pagamento na Blu
+						</div>
+						<div class="Gstore-blu-checkout-modal__actions">
+							<a class="Gstore-btn Gstore-btn--submit Gstore-blu-checkout-modal__open" href="#" target="_blank" rel="noopener noreferrer">
+								Abrir em nova aba
+							</a>
+						</div>
+					</div>
+					<div class="Gstore-blu-checkout-modal__hint" aria-live="polite">
+						Se o checkout não carregar aqui, use “Abrir em nova aba”.
+					</div>
+					<div class="Gstore-blu-checkout-modal__frame-wrap">
+						<iframe class="Gstore-blu-checkout-modal__frame" title="Checkout Blu" loading="eager" referrerpolicy="no-referrer-when-downgrade" allow="payment; clipboard-write" allowpaymentrequest></iframe>
+					</div>
+				</div>
+			</div>
+		`);
+
+		// Fechar ao clicar no backdrop ou no botão
+		$(document).on('click', '#gstore-blu-checkout-modal [data-action="close"]', function() {
+			closeBluCheckoutModal();
+		});
+
+		// Fechar com ESC
+		$(document).on('keydown', function(e) {
+			if (e.key === 'Escape') {
+				const $modal = $('#gstore-blu-checkout-modal');
+				if ($modal.length && $modal.hasClass('is-visible')) {
+					closeBluCheckoutModal();
+				}
+			}
+		});
+	}
+
+	function openBluCheckoutModal(url) {
+		if (!url) return;
+		ensureBluCheckoutModal();
+
+		const $modal = $('#gstore-blu-checkout-modal');
+		const $iframe = $modal.find('.Gstore-blu-checkout-modal__frame');
+		const $open = $modal.find('.Gstore-blu-checkout-modal__open');
+
+		$open.attr('href', url);
+
+		// Reset para evitar manter estado antigo
+		$iframe.attr('src', 'about:blank');
+		setTimeout(function() {
+			$iframe.attr('src', url);
+		}, 50);
+
+		$modal.addClass('is-visible').attr('aria-hidden', 'false');
+		$('body').addClass('gstore-blu-checkout-modal-open');
+
+		// Foco inicial no botão de abrir em nova aba
+		setTimeout(function() {
+			$open.trigger('focus');
+		}, 50);
+	}
+
+	function closeBluCheckoutModal() {
+		const $modal = $('#gstore-blu-checkout-modal');
+		if (!$modal.length) return;
+
+		$modal.removeClass('is-visible').attr('aria-hidden', 'true');
+		$('body').removeClass('gstore-blu-checkout-modal-open');
+
+		// Limpa o iframe para parar carregamentos/sons
+		$modal.find('.Gstore-blu-checkout-modal__frame').attr('src', 'about:blank');
 	}
 
 	// Inicializa quando o DOM estiver pronto
@@ -1669,7 +2094,11 @@
 			try {
 				const response = JSON.parse(xhr.responseText);
 				if (response.result === 'success' && response.redirect) {
-					window.location.href = response.redirect;
+					if (isBluCheckoutSelected()) {
+						openBluCheckoutModal(response.redirect);
+					} else {
+						window.location.href = response.redirect;
+					}
 				}
 			} catch (e) {
 				// Não é JSON - normal para outras respostas

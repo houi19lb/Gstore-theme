@@ -1,0 +1,24 @@
+# Cursor / IDE
+.cursor/
+.vscode/
+
+# OS / misc
+.DS_Store
+Thumbs.db
+*.log
+
+# Dependencies / build artifacts
+node_modules/
+vendor/
+
+# Local env files
+.env
+.env.*
+
+# Local backups / bundles
+GSTORE.zip
+GSTORE/
+
+# API Visualizer (keep dist in repo; ignore deps)
+api-visualizer/node_modules/
+

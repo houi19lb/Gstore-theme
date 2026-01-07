@@ -376,8 +376,9 @@ $regular_price    = (float) $product->get_regular_price();
 $current_price    = (float) $product->get_price();
 $has_discount     = $product->is_on_sale() && $regular_price > 0;
 $discount_percent = $has_discount ? round( ( ( $regular_price - $current_price ) / $regular_price ) * 100 ) : 0;
-$installments     = (int) apply_filters( 'armastore_single_product_installments', 12, $product );
-$installment_amt  = ( $current_price > 0 && $installments ) ? $current_price / $installments : 0;
+$installments     = (int) apply_filters( 'armastore_single_product_installments', 21, $product );
+// Calcula parcela COM JUROS (taxa Blu: 2.99% a.m.)
+$installment_amt  = ( $current_price > 0 && $installments ) ? gstore_calculate_installment_with_interest( $current_price, $installments ) : 0;
 
 $formatted_installment = $installment_amt > 0
 	? sprintf(

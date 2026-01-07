@@ -2,7 +2,7 @@
 Theme Name: CAC Armas Gstore
 Author: CAC Armas Team
 Description: Tema personalizado da CAC Armas otimizado para WooCommerce.
-Version: 1.4.1
+Version: 1.4.2
 Text Domain: gstore
 */
 
@@ -2410,7 +2410,7 @@ Description: Child theme Gstore para o Twenty Twenty-Five com foco em WooCommerc
 Requires at least: 6.6
 Tested up to: 6.6
 Requires PHP: 8.1
-Version: 1.0.1
+Version: 1.4.2
 Template: twentytwentyfive
 Text Domain: gstore
 */
@@ -7630,6 +7630,159 @@ body:has(.Gstore-catalog-shell--light) main {
 
 /* Mantém o texto auxiliar do contador acessível e fora da tela */
 .Gstore-catalog-shell--light .wc-block-product-categories-list-item-count .screen-reader-text {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	padding: 0;
+	margin: -1px;
+	overflow: hidden;
+	clip: rect(0, 0, 0, 0);
+	border: 0;
+}
+
+/* =========================================
+ * ÁRVORE DE CATEGORIAS - Visualização Hierárquica
+ * ========================================= */
+
+/* Container principal da lista de categorias */
+.Gstore-catalog-shell--light .wc-block-product-categories-list,
+.Gstore-catalog-shell--light .product-categories {
+	position: relative;
+}
+
+/* Item de categoria com filhos */
+.Gstore-catalog-shell--light .wc-block-product-categories-list li.has-children,
+.Gstore-catalog-shell--light .product-categories li.has-children {
+	position: relative;
+}
+
+/* Link da categoria - ajuste para acomodar botão toggle */
+.Gstore-catalog-shell--light .wc-block-product-categories-list li.has-children > a,
+.Gstore-catalog-shell--light .product-categories li.has-children > a {
+	padding-left: 32px;
+}
+
+/* Botão toggle para expandir/colapsar */
+.Gstore-catalog-shell--light .wc-block-product-categories-list .category-toggle,
+.Gstore-catalog-shell--light .product-categories .category-toggle {
+	position: absolute;
+	left: 8px;
+	top: 50%;
+	transform: translateY(-50%);
+	width: 20px;
+	height: 20px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background: transparent;
+	border: none;
+	cursor: pointer;
+	padding: 0;
+	margin: 0;
+	z-index: 1;
+	transition: transform 0.2s ease;
+	color: var(--text-muted, #6b6b6b);
+}
+
+.Gstore-catalog-shell--light .wc-block-product-categories-list .category-toggle:hover,
+.Gstore-catalog-shell--light .product-categories .category-toggle:hover {
+	color: var(--gstore-color-accent, #ff5c00);
+}
+
+/* Ícone SVG do toggle */
+.Gstore-catalog-shell--light .category-toggle svg {
+	width: 14px;
+	height: 14px;
+	stroke: currentColor;
+	fill: none;
+	stroke-width: 2;
+	transition: transform 0.2s ease;
+}
+
+/* Estado expandido - rotaciona o ícone */
+.Gstore-catalog-shell--light .wc-block-product-categories-list li.has-children.is-expanded .category-toggle svg,
+.Gstore-catalog-shell--light .product-categories li.has-children.is-expanded .category-toggle svg {
+	transform: rotate(90deg);
+}
+
+/* Subcategorias (ul.children) - inicialmente ocultas */
+.Gstore-catalog-shell--light .wc-block-product-categories-list li ul.children,
+.Gstore-catalog-shell--light .product-categories li ul.children {
+	list-style: none;
+	padding: 0;
+	margin: 0;
+	margin-top: 4px;
+	max-height: 0;
+	overflow: hidden;
+	opacity: 0;
+	transition: max-height 0.3s ease, opacity 0.3s ease, margin-top 0.3s ease;
+}
+
+/* Estado expandido - mostra subcategorias */
+.Gstore-catalog-shell--light .wc-block-product-categories-list li.has-children.is-expanded > ul.children,
+.Gstore-catalog-shell--light .product-categories li.has-children.is-expanded > ul.children {
+	max-height: 2000px;
+	opacity: 1;
+	margin-top: 4px;
+}
+
+/* Indentação progressiva para subcategorias */
+.Gstore-catalog-shell--light .wc-block-product-categories-list li ul.children li,
+.Gstore-catalog-shell--light .product-categories li ul.children li {
+	padding-left: 20px;
+}
+
+/* Subcategorias de segundo nível */
+.Gstore-catalog-shell--light .wc-block-product-categories-list li ul.children li ul.children li,
+.Gstore-catalog-shell--light .product-categories li ul.children li ul.children li {
+	padding-left: 20px;
+}
+
+/* Subcategorias de terceiro nível */
+.Gstore-catalog-shell--light .wc-block-product-categories-list li ul.children li ul.children li ul.children li,
+.Gstore-catalog-shell--light .product-categories li ul.children li ul.children li ul.children li {
+	padding-left: 20px;
+}
+
+/* Ajuste do link em subcategorias para manter alinhamento */
+.Gstore-catalog-shell--light .wc-block-product-categories-list li ul.children li > a,
+.Gstore-catalog-shell--light .product-categories li ul.children li > a {
+	padding-left: 32px;
+}
+
+/* Subcategorias com filhos também precisam do toggle */
+.Gstore-catalog-shell--light .wc-block-product-categories-list li ul.children li.has-children > a,
+.Gstore-catalog-shell--light .product-categories li ul.children li.has-children > a {
+	padding-left: 32px;
+}
+
+/* Hover em subcategorias */
+.Gstore-catalog-shell--light .wc-block-product-categories-list li ul.children li a:hover,
+.Gstore-catalog-shell--light .product-categories li ul.children li a:hover {
+	background: var(--gray-bg, #f0f2f5);
+	color: var(--gstore-color-accent, #ff5c00);
+}
+
+/* Estado ativo/current em categorias */
+.Gstore-catalog-shell--light .wc-block-product-categories-list li.current-cat > a,
+.Gstore-catalog-shell--light .product-categories li.current-cat > a,
+.Gstore-catalog-shell--light .wc-block-product-categories-list li.current-cat-parent > a,
+.Gstore-catalog-shell--light .product-categories li.current-cat-parent > a {
+	font-weight: 600;
+	color: var(--gstore-color-accent, #ff5c00);
+	background: var(--gray-bg, #f0f2f5);
+}
+
+/* Expandir automaticamente categorias ativas e seus pais */
+.Gstore-catalog-shell--light .wc-block-product-categories-list li.current-cat,
+.Gstore-catalog-shell--light .product-categories li.current-cat,
+.Gstore-catalog-shell--light .wc-block-product-categories-list li.current-cat-parent,
+.Gstore-catalog-shell--light .product-categories li.current-cat-parent {
+	/* Será controlado via JavaScript */
+}
+
+/* Acessibilidade - screen reader text */
+.Gstore-catalog-shell--light .category-toggle .screen-reader-text {
 	position: absolute;
 	width: 1px;
 	height: 1px;

@@ -21,7 +21,8 @@ $sale_price_amount     = $is_variable_product ? (float) $product->get_variation_
 $current_price_amount  = $is_variable_product ? (float) $product->get_variation_price( 'min', true ) : (float) $product->get_price();
 $has_sale_value        = $product->is_on_sale() && $regular_price_amount > 0 && $sale_price_amount > 0;
 $display_price_amount  = $has_sale_value ? $sale_price_amount : ( $current_price_amount > 0 ? $current_price_amount : $regular_price_amount );
-$installment_amount    = $display_price_amount > 0 ? $display_price_amount / 12 : 0;
+// Calcula parcela COM JUROS (taxa Blu: 2.99% a.m.)
+$installment_amount    = $display_price_amount > 0 ? gstore_calculate_installment_with_interest( $display_price_amount, 12 ) : 0;
 $regular_price_html    = $regular_price_amount > 0 ? wc_price( $regular_price_amount ) : '';
 $display_price_html    = $display_price_amount > 0 ? wc_price( $display_price_amount ) : $product->get_price_html();
 $installment_price_html = $installment_amount > 0 ? wc_price( $installment_amount ) : '';

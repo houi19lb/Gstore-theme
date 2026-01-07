@@ -787,6 +787,18 @@ function gstore_enqueue_styles() {
 add_action( 'wp_enqueue_scripts', 'gstore_enqueue_styles' );
 
 /**
+ * Adiciona cabeçalhos de política de permissões para permitir pagamentos e clipboard.
+ * Isso resolve o erro: Permissions policy violation: payment is not allowed in this document.
+ */
+function gstore_add_permissions_policy_header() {
+	if ( ! is_admin() ) {
+		// Permite pagamentos e área de transferência (para Pix) no documento e iframes.
+		header( 'Permissions-Policy: payment=*, clipboard-write=*' );
+	}
+}
+add_action( 'send_headers', 'gstore_add_permissions_policy_header' );
+
+/**
  * Enfileira scripts customizados.
  */
 function gstore_enqueue_scripts() {
@@ -920,6 +932,15 @@ function gstore_enqueue_scripts() {
 			wp_enqueue_script(
 				'gstore-catalog-filters',
 				get_theme_file_uri( 'assets/js/catalog-filters.js' ),
+				array(),
+				wp_get_theme()->get( 'Version' ),
+				true
+			);
+			
+			// Script para árvore de categorias (expandir/colapsar)
+			wp_enqueue_script(
+				'gstore-catalog-categories-tree',
+				get_theme_file_uri( 'assets/js/catalog-categories-tree.js' ),
 				array(),
 				wp_get_theme()->get( 'Version' ),
 				true
@@ -1292,6 +1313,64 @@ function gstore_always_show_rating_stars( $html, $attributes, $product ) {
 add_filter( 'render_block_woocommerce/product-rating', 'gstore_always_show_rating_stars', 10, 3 );
 
 /**
+ * ============================================
+ * CÁLCULO DE PARCELAS COM JUROS (BLU)
+ * ============================================
+ * Taxa padrão: 2.99% a.m. (configurável via filtro)
+ * Fórmula: PMT = PV * [i * (1 + i)^n] / [(1 + i)^n - 1]
+ */
+
+/**
+ * Calcula o valor da parcela com juros compostos.
+ *
+ * @param float $price         Valor total do produto (presente).
+ * @param int   $installments  Número de parcelas.
+ * @param float $rate          Taxa de juros mensal (decimal). Padrão: 0.0299 (2.99% a.m.).
+ * @return float Valor da parcela.
+ */
+function gstore_calculate_installment_with_interest( $price, $installments = 12, $rate = null ) {
+	if ( $price <= 0 || $installments <= 0 ) {
+		return 0;
+	}
+
+	// Taxa de juros configurável via filtro. Padrão: 2.99% a.m.
+	if ( null === $rate ) {
+		$rate = apply_filters( 'gstore_blu_installment_rate', 0.0299 );
+	}
+
+	// Se taxa for 0, retorna simples divisão (sem juros)
+	if ( $rate <= 0 ) {
+		return $price / $installments;
+	}
+
+	// Fórmula de parcela com juros compostos (Price/PGTO)
+	// PMT = PV * [i * (1 + i)^n] / [(1 + i)^n - 1]
+	$factor   = pow( 1 + $rate, $installments );
+	$pmt      = $price * ( $rate * $factor ) / ( $factor - 1 );
+
+	return $pmt;
+}
+
+/**
+ * Retorna a taxa de juros atual da Blu.
+ *
+ * @return float Taxa em decimal (ex: 0.0299 = 2.99%).
+ */
+function gstore_get_blu_installment_rate() {
+	return apply_filters( 'gstore_blu_installment_rate', 0.0299 );
+}
+
+/**
+ * Retorna a taxa de juros atual da Blu em percentual.
+ *
+ * @return string Taxa formatada (ex: "2,99%").
+ */
+function gstore_get_blu_installment_rate_percent() {
+	$rate = gstore_get_blu_installment_rate();
+	return number_format( $rate * 100, 2, ',', '.' ) . '%';
+}
+
+/**
  * Adiciona informações de pagamento ao bloco de preço.
  *
  * @param string $html HTML do bloco de preço.
@@ -1321,15 +1400,16 @@ function gstore_add_payment_info_to_price( $html, $block_content, $block ) {
 		global $product;
 	}
 	
-	// Calcula o valor da parcela
+	// Calcula o valor da parcela COM JUROS (taxa Blu)
 	$installment_value = 0;
-	$installment_text_content = 'ou em até 12x no cartão';
+	$installment_text_content = 'ou em até 21x no cartão';
 	
 	if ( $product && is_a( $product, 'WC_Product' ) ) {
 		$price_value = floatval( $product->get_price() );
 		if ( $price_value > 0 ) {
-			$installment_value = $price_value / 12;
-			$installment_text_content = 'ou em até 12x de ' . wc_price( $installment_value );
+			// Usa função de cálculo com juros compostos
+			$installment_value = gstore_calculate_installment_with_interest( $price_value, 21 );
+			$installment_text_content = 'ou em até 21x de ' . wc_price( $installment_value );
 		}
 	}
 	
@@ -2242,6 +2322,15 @@ function gstore_enqueue_checkout_assets() {
 			true
 		);
 
+		// Fornece nonce correto para processar checkout (fallback do JS quando o input não existir no DOM).
+		wp_localize_script(
+			'gstore-checkout-steps',
+			'gstoreCheckout',
+			array(
+				'processCheckoutNonce' => wp_create_nonce( 'woocommerce-process_checkout' ),
+			)
+		);
+
 		// CSS do Pix
 		wp_enqueue_style(
 			'gstore-checkout-pix',
@@ -2397,6 +2486,12 @@ function gstore_customize_checkout_fields( $fields ) {
         }
     }
 
+	// Detecta método selecionado (usa sessão do WooCommerce)
+	$selected_payment_method = '';
+	if ( class_exists( 'WooCommerce' ) && function_exists( 'WC' ) && WC()->session ) {
+		$selected_payment_method = (string) WC()->session->get( 'chosen_payment_method', '' );
+	}
+
     // Se gateway Blu está disponível, torna campos de endereço opcionais para pré-checkout
     // MAS: Se o método selecionado for blu_pix, mantém campos obrigatórios (checkout completo)
     if ( $blu_gateway_available && $selected_payment_method !== 'blu_pix' ) {
@@ -2483,6 +2578,378 @@ function gstore_customize_checkout_fields( $fields ) {
     return $fields;
 }
 add_filter( 'woocommerce_checkout_fields', 'gstore_customize_checkout_fields', 1000 );
+
+/**
+ * ================================
+ * BLU: Parcelas fixas + Taxa (admin)
+ * ================================
+ */
+
+/**
+ * Captura estado do checkout (método + parcelas) a cada update_order_review e armazena na sessão.
+ *
+ * @param string $post_data Querystring enviada pelo WooCommerce.
+ */
+function gstore_blu_capture_checkout_state( $post_data ) {
+	if ( ! function_exists( 'WC' ) || ! WC()->session ) {
+		return;
+	}
+
+	$parsed = array();
+	parse_str( (string) $post_data, $parsed );
+
+	if ( isset( $parsed['payment_method'] ) ) {
+		$method = sanitize_text_field( wp_unslash( $parsed['payment_method'] ) );
+		if ( $method ) {
+			WC()->session->set( 'chosen_payment_method', $method );
+		}
+	}
+
+	if ( isset( $parsed['gstore_blu_installments'] ) ) {
+		$installments = absint( $parsed['gstore_blu_installments'] );
+		if ( $installments < 1 ) {
+			$installments = 1;
+		}
+		WC()->session->set( 'gstore_blu_installments', $installments );
+	}
+}
+add_action( 'woocommerce_checkout_update_order_review', 'gstore_blu_capture_checkout_state', 10, 1 );
+
+/**
+ * Recupera parcelas selecionadas na sessão (fallback 1).
+ *
+ * @return int
+ */
+function gstore_blu_get_selected_installments() {
+	if ( ! function_exists( 'WC' ) || ! WC()->session ) {
+		return 1;
+	}
+	$value = absint( WC()->session->get( 'gstore_blu_installments', 1 ) );
+	return $value >= 1 ? $value : 1;
+}
+
+/**
+ * Renderiza seletor de parcelas do cartão (pré-checkout) quando Blu Checkout estiver disponível.
+ */
+function gstore_blu_render_installments_selector() {
+	if ( ! function_exists( 'WC' ) ) {
+		return;
+	}
+
+	$gateway = function_exists( 'gstore_blu_get_gateway_instance' ) ? gstore_blu_get_gateway_instance() : null;
+	if ( ! $gateway || ! method_exists( $gateway, 'allow_customer_installments' ) ) {
+		return;
+	}
+
+	if ( ! $gateway->is_available() ) {
+		return;
+	}
+
+	$allow = $gateway->allow_customer_installments();
+	$max   = method_exists( $gateway, 'get_max_installments' ) ? (int) $gateway->get_max_installments() : 21;
+	$max   = max( 1, min( 21, $max ) );
+
+	$selected = gstore_blu_get_selected_installments();
+	$selected = max( 1, min( $max, $selected ) );
+
+	?>
+	<div class="Gstore-blu-installments" data-allow="<?php echo esc_attr( $allow ? '1' : '0' ); ?>" data-max="<?php echo esc_attr( (string) $max ); ?>">
+		<input type="hidden" name="gstore_blu_installments" id="gstore_blu_installments" value="<?php echo esc_attr( (string) $selected ); ?>" />
+		<?php if ( $allow ) : ?>
+			<div class="Gstore-blu-installments__row">
+				<label for="gstore_blu_installments_select" class="Gstore-blu-installments__label">
+					<?php esc_html_e( 'Parcelamento no cartão', 'gstore' ); ?>
+				</label>
+				<select id="gstore_blu_installments_select" class="Gstore-blu-installments__select">
+					<?php for ( $i = 1; $i <= $max; $i++ ) : ?>
+						<option value="<?php echo esc_attr( (string) $i ); ?>" <?php selected( $selected, $i ); ?>>
+							<?php echo esc_html( sprintf( _n( '%sx', '%sx', $i, 'gstore' ), $i ) ); ?>
+						</option>
+					<?php endfor; ?>
+				</select>
+			</div>
+			<p class="Gstore-blu-installments__hint">
+				<?php esc_html_e( 'Ao gerar o link de pagamento, as parcelas ficam fixas. Para alterar, volte ao carrinho.', 'gstore' ); ?>
+			</p>
+			<p class="Gstore-blu-installments__preview" aria-live="polite"></p>
+		<?php else : ?>
+			<p class="Gstore-blu-installments__hint">
+				<?php esc_html_e( 'As parcelas estão fixas para este pagamento.', 'gstore' ); ?>
+			</p>
+		<?php endif; ?>
+	</div>
+	<?php
+}
+add_action( 'woocommerce_review_order_before_payment', 'gstore_blu_render_installments_selector', 12 );
+
+/**
+ * Adiciona fee de parcelamento (configurável no gateway Blu) quando Cartão Blu estiver selecionado.
+ *
+ * @param WC_Cart $cart Carrinho.
+ */
+function gstore_blu_add_installment_fee( $cart ) {
+	if ( is_admin() && ! defined( 'DOING_AJAX' ) ) {
+		return;
+	}
+	if ( ! $cart instanceof WC_Cart || ! function_exists( 'WC' ) || ! WC()->session ) {
+		return;
+	}
+
+	$chosen_method = (string) WC()->session->get( 'chosen_payment_method', '' );
+	if ( 'blu_checkout' !== $chosen_method ) {
+		// Em alguns fluxos (AJAX update_order_review / UI custom), o método vem no POST.
+		$posted_method = '';
+		if ( isset( $_POST['payment_method'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Missing
+			$posted_method = sanitize_text_field( wp_unslash( $_POST['payment_method'] ) ); // phpcs:ignore WordPress.Security.NonceVerification.Missing
+		} elseif ( isset( $_POST['post_data'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Missing
+			$parsed = array();
+			parse_str( (string) wp_unslash( $_POST['post_data'] ), $parsed ); // phpcs:ignore WordPress.Security.NonceVerification.Missing
+			if ( isset( $parsed['payment_method'] ) ) {
+				$posted_method = sanitize_text_field( (string) $parsed['payment_method'] );
+			}
+		}
+
+		if ( 'blu_checkout' !== $posted_method ) {
+			return;
+		}
+		$chosen_method = 'blu_checkout';
+	}
+
+	$gateway = function_exists( 'gstore_blu_get_gateway_instance' ) ? gstore_blu_get_gateway_instance() : null;
+	if ( ! $gateway || ! method_exists( $gateway, 'get_installment_fee_config' ) ) {
+		return;
+	}
+
+	$installments = gstore_blu_get_selected_installments();
+	$config       = (array) $gateway->get_installment_fee_config();
+
+	$min_installments = isset( $config['min_installments'] ) ? absint( $config['min_installments'] ) : 2;
+	$min_installments = max( 1, $min_installments );
+	if ( $installments < $min_installments ) {
+		return;
+	}
+
+	$mode     = isset( $config['mode'] ) ? (string) $config['mode'] : 'none';
+	$strategy = isset( $config['strategy'] ) ? (string) $config['strategy'] : 'flat';
+	$percent  = isset( $config['percent'] ) ? (float) $config['percent'] : 0.0;
+	$fixed    = isset( $config['fixed'] ) ? (float) $config['fixed'] : 0.0;
+
+	if ( 'none' === $mode ) {
+		return;
+	}
+
+	// Base: total de produtos + frete - descontos (sem incluir fees anteriores)
+	$cart_contents_total = (float) $cart->get_cart_contents_total();
+	$shipping_total      = (float) $cart->get_shipping_total();
+	$discount_total      = (float) $cart->get_discount_total();
+
+	// Neste tema, o frete pode entrar como "fee" (ex.: label "Frete") e não como shipping_total.
+	$shipping_fee_total = 0.0;
+	if ( $shipping_total <= 0 ) {
+		foreach ( $cart->get_fees() as $fee ) {
+			$fee_name = isset( $fee->name ) ? (string) $fee->name : '';
+			if ( '' === $fee_name ) {
+				continue;
+			}
+
+			// Ignora a própria taxa de parcelamento.
+			if ( false !== stripos( $fee_name, 'taxa de parcelamento' ) ) {
+				continue;
+			}
+
+			// Heurística: fee de frete normalmente é "Frete" (ou contém "frete").
+			if ( 'frete' === sanitize_title( $fee_name ) || false !== stripos( $fee_name, 'frete' ) ) {
+				$shipping_fee_total = isset( $fee->total ) ? (float) $fee->total : 0.0;
+				break;
+			}
+		}
+	}
+
+	$base = $cart_contents_total + ( $shipping_total > 0 ? $shipping_total : $shipping_fee_total ) - $discount_total;
+	if ( $base < 0 ) {
+		$base = 0;
+	}
+
+	$fee_value = 0.0;
+
+	// Resolve percent/fixed conforme estratégia
+	$resolved_percent = $percent;
+	$resolved_fixed   = $fixed;
+
+	if ( 'progressive' === $strategy ) {
+		$prog = isset( $config['progressive'] ) && is_array( $config['progressive'] ) ? $config['progressive'] : array();
+		$base_percent = isset( $prog['base_percent'] ) ? (float) $prog['base_percent'] : 0.0;
+		$step_percent = isset( $prog['step_percent'] ) ? (float) $prog['step_percent'] : 0.0;
+		$base_fixed   = isset( $prog['base_fixed'] ) ? (float) $prog['base_fixed'] : 0.0;
+		$step_fixed   = isset( $prog['step_fixed'] ) ? (float) $prog['step_fixed'] : 0.0;
+
+		$steps = max( 0, $installments - $min_installments );
+		$resolved_percent = $base_percent + ( $step_percent * $steps );
+		$resolved_fixed   = $base_fixed + ( $step_fixed * $steps );
+	} elseif ( 'table' === $strategy ) {
+		$rules_text = isset( $config['rules'] ) ? (string) $config['rules'] : '';
+		$lines = preg_split( "/\r\n|\n|\r/", $rules_text );
+		$rules = array(); // installments => [percent, fixed]
+
+		if ( is_array( $lines ) ) {
+			foreach ( $lines as $line ) {
+				$line = trim( (string) $line );
+				if ( '' === $line ) {
+					continue;
+				}
+				// Remove comentários
+				$line = preg_replace( '/\s*#.*$/', '', $line );
+				$line = trim( (string) $line );
+				if ( '' === $line ) {
+					continue;
+				}
+
+				// Formatos:
+				// 2=3.5
+				// 3=4%+2.90
+				// 6=+9.90
+				if ( preg_match( '/^(\d+)\s*=\s*(.+)$/', $line, $m ) ) {
+					$n = absint( $m[1] );
+					$expr = trim( (string) $m[2] );
+					if ( $n < 1 || $n > 21 || '' === $expr ) {
+						continue;
+					}
+
+					$p = 0.0;
+					$f = 0.0;
+
+					// only fixed: +9.90 or 9.90? (we require + for fixed-only to avoid ambiguity)
+					if ( preg_match( '/^\+\s*([0-9]+(?:[.,][0-9]+)?)$/', $expr, $mm ) ) {
+						$f = (float) str_replace( ',', '.', $mm[1] );
+					} else {
+						// percent or percent+fixed
+						if ( preg_match( '/^([0-9]+(?:[.,][0-9]+)?)\s*%?\s*(?:\+\s*([0-9]+(?:[.,][0-9]+)?))?$/', $expr, $mm ) ) {
+							$p = (float) str_replace( ',', '.', $mm[1] );
+							if ( isset( $mm[2] ) && '' !== $mm[2] ) {
+								$f = (float) str_replace( ',', '.', $mm[2] );
+							}
+						}
+					}
+
+					$rules[ $n ] = array( 'percent' => $p, 'fixed' => $f );
+				}
+			}
+		}
+
+		// Regra exata; se não existir, usa a mais próxima abaixo; se não, zero.
+		if ( isset( $rules[ $installments ] ) ) {
+			$resolved_percent = (float) $rules[ $installments ]['percent'];
+			$resolved_fixed   = (float) $rules[ $installments ]['fixed'];
+		} else {
+			$best = 0;
+			foreach ( array_keys( $rules ) as $n ) {
+				$n = (int) $n;
+				if ( $n <= $installments && $n > $best ) {
+					$best = $n;
+				}
+			}
+			if ( $best > 0 ) {
+				$resolved_percent = (float) $rules[ $best ]['percent'];
+				$resolved_fixed   = (float) $rules[ $best ]['fixed'];
+			} else {
+				$resolved_percent = 0.0;
+				$resolved_fixed   = 0.0;
+			}
+		}
+	}
+
+	if ( 'percent' === $mode || 'percent_plus_fixed' === $mode ) {
+		if ( $resolved_percent > 0 ) {
+			$fee_value += ( $base * ( $resolved_percent / 100 ) );
+		}
+	}
+	if ( 'fixed' === $mode || 'percent_plus_fixed' === $mode ) {
+		if ( $resolved_fixed > 0 ) {
+			$fee_value += $resolved_fixed;
+		}
+	}
+
+	$fee_value = round( $fee_value, wc_get_price_decimals() );
+	if ( $fee_value <= 0 ) {
+		return;
+	}
+
+	$cart->add_fee( __( 'Taxa de parcelamento', 'gstore' ), $fee_value, false, '' );
+}
+add_action( 'woocommerce_cart_calculate_fees', 'gstore_blu_add_installment_fee', 30, 1 );
+
+/**
+ * Valida parcelas quando o cliente escolhe Cartão Blu.
+ */
+function gstore_blu_validate_installments() {
+	if ( empty( $_POST['payment_method'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Missing
+		return;
+	}
+	$method = sanitize_text_field( wp_unslash( $_POST['payment_method'] ) ); // phpcs:ignore WordPress.Security.NonceVerification.Missing
+	if ( 'blu_checkout' !== $method ) {
+		return;
+	}
+
+	$gateway = function_exists( 'gstore_blu_get_gateway_instance' ) ? gstore_blu_get_gateway_instance() : null;
+	if ( ! $gateway || ! method_exists( $gateway, 'allow_customer_installments' ) ) {
+		return;
+	}
+
+	$max = method_exists( $gateway, 'get_max_installments' ) ? (int) $gateway->get_max_installments() : 21;
+	$max = max( 1, min( 21, $max ) );
+
+	$installments = isset( $_POST['gstore_blu_installments'] ) // phpcs:ignore WordPress.Security.NonceVerification.Missing
+		? absint( $_POST['gstore_blu_installments'] ) // phpcs:ignore WordPress.Security.NonceVerification.Missing
+		: 1;
+
+	if ( $installments < 1 || $installments > $max ) {
+		wc_add_notice( __( 'Selecione um número válido de parcelas para continuar.', 'gstore' ), 'error' );
+	}
+}
+add_action( 'woocommerce_checkout_process', 'gstore_blu_validate_installments', 12 );
+
+/**
+ * Salva parcelas e taxa no pedido (meta) para travar no payload da Blu.
+ *
+ * @param int $order_id Order ID.
+ */
+function gstore_blu_save_installments_meta( $order_id ) {
+	if ( ! $order_id || ! function_exists( 'WC' ) ) {
+		return;
+	}
+
+	$method = get_post_meta( $order_id, '_payment_method', true );
+	if ( 'blu_checkout' !== $method ) {
+		return;
+	}
+
+	$gateway = function_exists( 'gstore_blu_get_gateway_instance' ) ? gstore_blu_get_gateway_instance() : null;
+	$max     = ( $gateway && method_exists( $gateway, 'get_max_installments' ) ) ? (int) $gateway->get_max_installments() : 21;
+	$max     = max( 1, min( 21, $max ) );
+
+	$installments = isset( $_POST['gstore_blu_installments'] ) // phpcs:ignore WordPress.Security.NonceVerification.Missing
+		? absint( $_POST['gstore_blu_installments'] ) // phpcs:ignore WordPress.Security.NonceVerification.Missing
+		: gstore_blu_get_selected_installments();
+
+	$installments = max( 1, min( $max, $installments ) );
+
+	update_post_meta( $order_id, '_gstore_blu_installments', (string) $installments );
+
+	// Persiste o valor da fee (se existir) para auditoria
+	$fee_value = 0.0;
+	if ( WC()->cart ) {
+		foreach ( WC()->cart->get_fees() as $fee ) {
+			if ( isset( $fee->name ) && stripos( (string) $fee->name, 'taxa de parcelamento' ) !== false ) {
+				$fee_value = (float) $fee->total;
+				break;
+			}
+		}
+	}
+	if ( $fee_value > 0 ) {
+		update_post_meta( $order_id, '_gstore_blu_installment_fee', (string) $fee_value );
+	}
+}
+add_action( 'woocommerce_checkout_update_order_meta', 'gstore_blu_save_installments_meta', 20 );
 
 /**
  * Desabilita validação de CEP quando o campo não é obrigatório no pré-checkout
@@ -2618,6 +3085,11 @@ require_once get_theme_file_path( 'inc/blu-filter.php' );
  * Gerenciador de informações da loja (JSON centralizado).
  */
 require_once get_theme_file_path( 'inc/class-gstore-store-info.php' );
+
+/**
+ * API Visualizer (React + Mermaid) - shortcode e enqueue dos assets.
+ */
+require_once get_theme_file_path( 'inc/api-visualizer.php' );
 
 /**
  * Método de envio customizado Gstore.
@@ -2846,11 +3318,6 @@ if ( class_exists( 'WooCommerce' ) && class_exists( 'WC_Shipping_Method' ) ) {
 			return;
 		}
 
-		// Evita adicionar múltiplas vezes
-		if ( did_action( 'woocommerce_cart_calculate_fees' ) > 1 ) {
-			return;
-		}
-
 		// Obtém o CEP da sessão do cliente
 		if ( ! WC()->customer ) {
 			return;
@@ -2869,11 +3336,19 @@ if ( class_exists( 'WooCommerce' ) && class_exists( 'WC_Shipping_Method' ) ) {
 			return;
 		}
 
-		// Verifica se já existe uma taxa de frete Gstore
+		// Verifica se já existe uma taxa de frete (evita duplicar mesmo com múltiplos calculate_totals no mesmo request)
 		$fees = $cart->get_fees();
 		foreach ( $fees as $fee ) {
-			if ( $fee->id === 'gstore-shipping-fee' ) {
-				return; // Já existe
+			$fee_id   = isset( $fee->id ) ? (string) $fee->id : '';
+			$fee_name = isset( $fee->name ) ? (string) $fee->name : '';
+
+			// O WooCommerce costuma gerar id a partir do nome (ex: "Frete" -> "frete").
+			// Também aceitamos match por nome, porque alguns ambientes não expõem id consistentemente.
+			if ( '' !== $fee_id && 'frete' === sanitize_title( $fee_id ) ) {
+				return;
+			}
+			if ( '' !== $fee_name && false !== stripos( $fee_name, 'frete' ) ) {
+				return;
 			}
 		}
 
@@ -3397,6 +3872,84 @@ function gstore_display_cpf_admin_order_data( $order ) {
 add_action( 'woocommerce_admin_order_data_after_billing_address', 'gstore_display_cpf_admin_order_data', 10, 1 );
 
 /**
+ * Retorna o título amigável do método de pagamento a partir do ID do gateway.
+ *
+ * @param string $payment_method ID do gateway (ex: blu_pix, blu_checkout, cod).
+ * @return string
+ */
+function gstore_get_payment_method_title_by_id( $payment_method ) {
+	$payment_method = (string) $payment_method;
+	if ( '' === $payment_method ) {
+		return '';
+	}
+
+	// Overrides do tema (para manter o texto consistente no resumo).
+	$overrides = array(
+		'blu_pix'      => __( 'Pix', 'gstore' ),
+		'blu_checkout' => __( 'Cartão', 'gstore' ),
+	);
+	if ( isset( $overrides[ $payment_method ] ) ) {
+		return (string) $overrides[ $payment_method ];
+	}
+
+	if ( ! function_exists( 'WC' ) || ! WC()->payment_gateways() ) {
+		return '';
+	}
+
+	$payment_method_title = '';
+
+	// Preferir gateways disponíveis no checkout (já respeitam país/moeda/regras).
+	$available = WC()->payment_gateways()->get_available_payment_gateways();
+	if ( isset( $available[ $payment_method ] ) && is_object( $available[ $payment_method ] ) ) {
+		$title = '';
+		if ( method_exists( $available[ $payment_method ], 'get_title' ) ) {
+			$title = (string) $available[ $payment_method ]->get_title();
+		} elseif ( isset( $available[ $payment_method ]->title ) ) {
+			$title = (string) $available[ $payment_method ]->title;
+		}
+		$payment_method_title = wp_strip_all_tags( $title );
+	} else {
+		// Fallback: gateway registrado (pode não estar "available" ainda em alguns estados).
+		$all_gateways = WC()->payment_gateways()->payment_gateways();
+		if ( isset( $all_gateways[ $payment_method ] ) && is_object( $all_gateways[ $payment_method ] ) ) {
+			$title = '';
+			if ( method_exists( $all_gateways[ $payment_method ], 'get_title' ) ) {
+				$title = (string) $all_gateways[ $payment_method ]->get_title();
+			} elseif ( isset( $all_gateways[ $payment_method ]->title ) ) {
+				$title = (string) $all_gateways[ $payment_method ]->title;
+			}
+			$payment_method_title = wp_strip_all_tags( $title );
+		}
+	}
+
+	return (string) $payment_method_title;
+}
+
+/**
+ * Exibe o método de pagamento selecionado no resumo (tabela) do checkout clássico.
+ */
+function gstore_checkout_review_order_payment_method_row() {
+	if ( ! function_exists( 'WC' ) || ! WC()->session ) {
+		return;
+	}
+
+	$method = (string) WC()->session->get( 'chosen_payment_method', '' );
+	$title  = gstore_get_payment_method_title_by_id( $method );
+
+	if ( '' === $title ) {
+		return;
+	}
+
+	?>
+	<tr class="gstore-review-order-payment-method">
+		<th><?php esc_html_e( 'Pagamento', 'gstore' ); ?></th>
+		<td data-title="<?php esc_attr_e( 'Pagamento', 'gstore' ); ?>"><?php echo esc_html( $title ); ?></td>
+	</tr>
+	<?php
+}
+add_action( 'woocommerce_review_order_before_order_total', 'gstore_checkout_review_order_payment_method_row', 9 );
+
+/**
  * Endpoint AJAX para obter o resumo do carrinho no checkout de 3 etapas.
  */
 function gstore_get_cart_summary_ajax() {
@@ -3410,7 +3963,7 @@ function gstore_get_cart_summary_ajax() {
 		wp_send_json_error( array( 'message' => 'Carrinho não encontrado.' ) );
 	}
 
-	// Força o recálculo do shipping e totais para garantir valores atualizados
+	// Força recálculo para garantir valores atualizados (frete/fees/taxa de parcelas)
 	if ( WC()->customer && WC()->customer->get_shipping_postcode() ) {
 		// Garante que o método de envio está selecionado
 		if ( WC()->session ) {
@@ -3419,11 +3972,9 @@ function gstore_get_cart_summary_ajax() {
 				WC()->session->set( 'chosen_shipping_methods', array( 'gstore_custom_shipping' ) );
 			}
 		}
-		
-		// Recalcula tudo
 		$cart->calculate_shipping();
-		$cart->calculate_totals();
 	}
+	$cart->calculate_totals();
 
 	$items = array();
 	foreach ( $cart->get_cart() as $cart_item_key => $cart_item ) {
@@ -3442,24 +3993,47 @@ function gstore_get_cart_summary_ajax() {
 	// Verifica se há frete nas fees (taxa de frete Gstore)
 	$shipping_fee = null;
 	$fees = $cart->get_fees();
+	$other_fees = array();
 	foreach ( $fees as $fee ) {
 		if ( stripos( $fee->name, 'frete' ) !== false || $fee->id === 'gstore-shipping-fee' ) {
 			$shipping_fee = $fee->total;
 			break;
 		}
 	}
+	foreach ( $fees as $fee ) {
+		// Exclui fee de frete do array de taxas extras
+		if ( stripos( $fee->name, 'frete' ) !== false || $fee->id === 'gstore-shipping-fee' ) {
+			continue;
+		}
+		$other_fees[] = array(
+			'label' => (string) $fee->name,
+			'total' => wc_price( (float) $fee->total ),
+		);
+	}
 
 	// Usa shipping_total se disponível, senão usa a fee de frete
 	$shipping_value = $totals['shipping_total'] > 0 ? $totals['shipping_total'] : $shipping_fee;
 
+	$payment_method       = ( WC()->session ? (string) WC()->session->get( 'chosen_payment_method', '' ) : '' );
+	$payment_method_title = gstore_get_payment_method_title_by_id( $payment_method );
+
 	$response = array(
 		'items_count' => $cart->get_cart_contents_count(),
 		'items'       => $items,
+		'payment_method'       => $payment_method,
+		'payment_method_title' => $payment_method_title,
 		'total'       => wc_price( $totals['total'] ),
 		'totals'      => array(
 			'subtotal' => wc_price( $totals['subtotal'] ),
 			'shipping' => $shipping_value > 0 ? wc_price( $shipping_value ) : null,
 			'discount' => $totals['discount_total'] > 0 ? wc_price( $totals['discount_total'] ) : null,
+			'fees'     => ! empty( $other_fees ) ? $other_fees : null,
+		),
+		'installments' => array(
+			'selected' => gstore_blu_get_selected_installments(),
+			'per_installment' => wc_price(
+				max( 0, (float) $totals['total'] ) / max( 1, gstore_blu_get_selected_installments() )
+			),
 		),
 	);
 
@@ -3467,6 +4041,135 @@ function gstore_get_cart_summary_ajax() {
 }
 add_action( 'wp_ajax_gstore_get_cart_summary', 'gstore_get_cart_summary_ajax' );
 add_action( 'wp_ajax_nopriv_gstore_get_cart_summary', 'gstore_get_cart_summary_ajax' );
+
+/**
+ * AJAX: retorna simulação de valores por parcela (considerando taxa progressiva/tabela).
+ */
+function gstore_parse_money_to_float( $value ) {
+	if ( is_int( $value ) || is_float( $value ) ) {
+		return (float) $value;
+	}
+
+	if ( is_bool( $value ) || null === $value ) {
+		return 0.0;
+	}
+
+	if ( is_string( $value ) ) {
+		$str = html_entity_decode( wp_strip_all_tags( $value ) );
+		$str = preg_replace( '/[^0-9,\.\-]/', '', $str );
+		$str = trim( (string) $str );
+
+		if ( '' === $str || '-' === $str ) {
+			return 0.0;
+		}
+
+		// pt-BR: normalmente "1.234,56"
+		if ( false !== strpos( $str, ',' ) && false !== strpos( $str, '.' ) ) {
+			$str = str_replace( '.', '', $str );
+			$str = str_replace( ',', '.', $str );
+		} elseif ( false !== strpos( $str, ',' ) ) {
+			$str = str_replace( ',', '.', $str );
+		}
+
+		return (float) $str;
+	}
+
+	return 0.0;
+}
+
+function gstore_blu_get_installment_quotes_ajax() {
+	if ( ! class_exists( 'WooCommerce' ) || ! function_exists( 'WC' ) ) {
+		wp_send_json_error( array( 'message' => 'WooCommerce não está ativo.' ) );
+	}
+
+	$cart = WC()->cart;
+	if ( ! $cart || $cart->is_empty() ) {
+		wp_send_json_error( array( 'message' => 'Carrinho vazio.' ) );
+	}
+
+	if ( ! WC()->session ) {
+		wp_send_json_error( array( 'message' => 'Sessão não disponível.' ) );
+	}
+
+	$gateway = function_exists( 'gstore_blu_get_gateway_instance' ) ? gstore_blu_get_gateway_instance() : null;
+	$max     = $gateway && method_exists( $gateway, 'get_max_installments' ) ? (int) $gateway->get_max_installments() : 21;
+	$max     = max( 1, min( 21, $max ) );
+
+	$requested_max = isset( $_POST['max'] ) ? absint( $_POST['max'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification.Missing
+	if ( $requested_max > 0 ) {
+		$max = max( 1, min( 21, $requested_max, $max ) );
+	}
+
+	$orig_installments = absint( WC()->session->get( 'gstore_blu_installments', 1 ) );
+	$orig_method       = (string) WC()->session->get( 'chosen_payment_method', '' );
+
+	// Força método cartão Blu durante simulação para aplicar fee
+	WC()->session->set( 'chosen_payment_method', 'blu_checkout' );
+
+	$quotes = array();
+	for ( $i = 1; $i <= $max; $i++ ) {
+		WC()->session->set( 'gstore_blu_installments', $i );
+		$cart->calculate_totals();
+		$totals = $cart->get_totals();
+
+		// Total "raw" mais confiável (pode vir como string/HTML dependendo de hooks/plugins)
+		$total = 0.0;
+		if ( isset( $totals['total'] ) ) {
+			$total = gstore_parse_money_to_float( $totals['total'] );
+		}
+		if ( $total <= 0 && isset( $cart->total ) ) {
+			$total = gstore_parse_money_to_float( $cart->total );
+		}
+		if ( $total <= 0 && method_exists( $cart, 'get_total' ) ) {
+			// Alguns ambientes retornam string formatada mesmo com context 'edit'
+			$total = gstore_parse_money_to_float( $cart->get_total( 'edit' ) );
+			if ( $total <= 0 ) {
+				$total = gstore_parse_money_to_float( $cart->get_total() );
+			}
+		}
+
+		// Calcula o valor da parcela COM juros compostos (exceto para 1x que não tem juros)
+		if ( $i === 1 ) {
+			$per_installment = max( 0, $total );
+			$total_with_interest = $total;
+		} else {
+			// Usa função de cálculo com juros compostos (fórmula Price/PGTO)
+			$per_installment = gstore_calculate_installment_with_interest( $total, $i );
+			$total_with_interest = $per_installment * $i;
+		}
+
+		$total_html = wc_price( $total_with_interest );
+		$per_html   = wc_price( $per_installment );
+		$total_text = html_entity_decode( wp_strip_all_tags( $total_html ) );
+		$per_text   = html_entity_decode( wp_strip_all_tags( $per_html ) );
+
+		$quotes[ (string) $i ] = array(
+			'installments'         => $i,
+			'total'                => $total_html,
+			'per_installment'      => $per_html,
+			'total_text'           => $total_text,
+			'per_installment_text' => $per_text,
+			'total_raw'            => $total_with_interest,
+			'per_installment_raw'  => $per_installment,
+			'original_total'       => $total, // Valor base sem juros para referência
+		);
+	}
+
+	// Restaura sessão
+	WC()->session->set( 'gstore_blu_installments', $orig_installments >= 1 ? $orig_installments : 1 );
+	WC()->session->set( 'chosen_payment_method', $orig_method );
+	$cart->calculate_totals();
+
+	wp_send_json_success(
+		array(
+			'max'     => $max,
+			'quotes'  => $quotes,
+			'current' => gstore_blu_get_selected_installments(),
+		)
+	);
+}
+add_action( 'wp_ajax_gstore_blu_get_installment_quotes', 'gstore_blu_get_installment_quotes_ajax' );
+add_action( 'wp_ajax_nopriv_gstore_blu_get_installment_quotes', 'gstore_blu_get_installment_quotes_ajax' );
 
 /**
  * ============================================
@@ -9600,3 +10303,9 @@ add_action( 'wp_footer', 'gstore_age_verification_modal', 999 );
 // Inicializa classe de administração (regeneração de thumbnails)
 require_once get_template_directory() . '/inc/class-gstore-admin.php';
 new Gstore_Admin();
+
+// Atualizador do tema via GitHub (admin).
+if ( is_admin() ) {
+	require_once get_theme_file_path( 'inc/class-gstore-theme-updater.php' );
+	new Gstore_Theme_Git_Updater();
+}

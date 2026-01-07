@@ -25,6 +25,8 @@ class Gstore_Blu_Payment_Gateway extends WC_Payment_Gateway {
 	const META_STATUS         = '_gstore_blu_status';
 	const META_EXPIRATION     = '_gstore_blu_expiration';
 	const META_LAST_PAYLOAD   = '_gstore_blu_last_payload';
+	const META_SELECTED_INSTALLMENTS = '_gstore_blu_installments';
+	const META_INSTALLMENT_FEE       = '_gstore_blu_installment_fee';
 
 	/**
 	 * Token fornecido pela Blu.
@@ -45,7 +47,7 @@ class Gstore_Blu_Payment_Gateway extends WC_Payment_Gateway {
 	 *
 	 * @var int
 	 */
-	protected $max_installments = 12;
+	protected $max_installments = 21;
 
 	/**
 	 * Número fixo de parcelas (opcional).
@@ -53,6 +55,70 @@ class Gstore_Blu_Payment_Gateway extends WC_Payment_Gateway {
 	 * @var int
 	 */
 	protected $fixed_installments = 0;
+
+	/**
+	 * Permite que o cliente escolha as parcelas no pré-checkout.
+	 *
+	 * @var bool
+	 */
+	protected $allow_customer_installments = true;
+
+	/**
+	 * Configuração de taxa de parcelamento (aplicada no Woo via fee).
+	 *
+	 * @var string
+	 */
+	protected $installment_fee_mode = 'none';
+
+	/**
+	 * Taxa percentual (ex: 3.5).
+	 *
+	 * @var float
+	 */
+	protected $installment_fee_percent = 0.0;
+
+	/**
+	 * Taxa fixa (em reais).
+	 *
+	 * @var float
+	 */
+	protected $installment_fee_fixed = 0.0;
+
+	/**
+	 * Número mínimo de parcelas para aplicar taxa.
+	 *
+	 * @var int
+	 */
+	protected $installment_fee_min_installments = 2;
+
+	/**
+	 * Estratégia de taxa: flat | progressive | table
+	 *
+	 * @var string
+	 */
+	protected $installment_fee_strategy = 'flat';
+
+	/**
+	 * Regras por parcelas (texto).
+	 *
+	 * Exemplo por linha:
+	 * 2=3.5
+	 * 3=4%+2.90
+	 * 6=+9.90
+	 *
+	 * @var string
+	 */
+	protected $installment_fee_rules = '';
+
+	/**
+	 * Taxa progressiva (base + incremento por parcela acima do mínimo).
+	 *
+	 * @var float
+	 */
+	protected $installment_fee_progressive_base_percent = 0.0;
+	protected $installment_fee_progressive_step_percent = 0.0;
+	protected $installment_fee_progressive_base_fixed   = 0.0;
+	protected $installment_fee_progressive_step_fixed   = 0.0;
 
 	/**
 	 * Define se haverá repasse de taxas.
@@ -98,8 +164,19 @@ class Gstore_Blu_Payment_Gateway extends WC_Payment_Gateway {
 		$this->api_token = $this->get_option( 'api_token', '' );
 		$this->environment = $this->get_option( 'environment', 'homolog' );
 
-		$this->max_installments       = (int) $this->get_option( 'max_installments', 12 );
+		$this->max_installments       = (int) $this->get_option( 'max_installments', 21 );
 		$this->fixed_installments     = (int) $this->get_option( 'fixed_installments', 0 );
+		$this->allow_customer_installments = 'yes' === $this->get_option( 'allow_customer_installments', 'yes' );
+		$this->installment_fee_mode         = (string) $this->get_option( 'installment_fee_mode', 'none' );
+		$this->installment_fee_percent      = (float) $this->get_option( 'installment_fee_percent', 0 );
+		$this->installment_fee_fixed        = (float) $this->get_option( 'installment_fee_fixed', 0 );
+		$this->installment_fee_min_installments = (int) $this->get_option( 'installment_fee_min_installments', 2 );
+		$this->installment_fee_strategy     = (string) $this->get_option( 'installment_fee_strategy', 'flat' );
+		$this->installment_fee_rules        = (string) $this->get_option( 'installment_fee_rules', '' );
+		$this->installment_fee_progressive_base_percent = (float) $this->get_option( 'installment_fee_progressive_base_percent', 0 );
+		$this->installment_fee_progressive_step_percent = (float) $this->get_option( 'installment_fee_progressive_step_percent', 0 );
+		$this->installment_fee_progressive_base_fixed   = (float) $this->get_option( 'installment_fee_progressive_base_fixed', 0 );
+		$this->installment_fee_progressive_step_fixed   = (float) $this->get_option( 'installment_fee_progressive_step_fixed', 0 );
 		$this->issuer_rate_forwarding = 'yes' === $this->get_option( 'issuer_rate_forwarding', 'no' );
 		$this->webhook_secret         = $this->get_option( 'webhook_secret', '' );
 		$this->debug_logging          = 'yes' === $this->get_option( 'debug_logging', 'no' );
@@ -153,17 +230,23 @@ class Gstore_Blu_Payment_Gateway extends WC_Payment_Gateway {
 				),
 				'default'     => 'homolog',
 			),
-			'max_installments'       => array(
-				'title'       => __( 'Parcelas máximas', 'gstore' ),
-				'type'        => 'number',
-				'description' => __( 'Valor entre 1 e 12. Se vazio ou 0, o campo não será enviado.', 'gstore' ),
-				'default'     => 12,
-				'custom_attributes' => array(
-					'min' => 0,
-					'max' => 12,
-					'step' => 1,
-				),
+'allow_customer_installments' => array(
+				'title'   => __( 'Escolha de parcelas no pré-checkout', 'gstore' ),
+				'type'    => 'checkbox',
+				'label'   => __( 'Permitir que o cliente escolha o número de parcelas antes de gerar o link', 'gstore' ),
+				'default' => 'yes',
 			),
+'max_installments'       => array(
+			'title'       => __( 'Parcelas máximas', 'gstore' ),
+			'type'        => 'number',
+			'description' => __( 'Valor entre 1 e 21. Se vazio ou 0, o campo não será enviado.', 'gstore' ),
+			'default'     => 21,
+			'custom_attributes' => array(
+				'min' => 0,
+				'max' => 21,
+				'step' => 1,
+			),
+		),
 			'fixed_installments'     => array(
 				'title'       => __( 'Parcelas fixas', 'gstore' ),
 				'type'        => 'number',
@@ -172,6 +255,106 @@ class Gstore_Blu_Payment_Gateway extends WC_Payment_Gateway {
 				'custom_attributes' => array(
 					'min' => 0,
 					'max' => 12,
+					'step' => 1,
+				),
+			),
+			'installment_fee_mode' => array(
+				'title'       => __( 'Taxa de parcelamento (WooCommerce)', 'gstore' ),
+				'type'        => 'select',
+				'description' => __( 'Opcional. Adiciona uma taxa ao total do pedido quando o cliente escolher parcelamento no cartão. O valor final (com taxa) é o que será enviado à Blu.', 'gstore' ),
+				'options'     => array(
+					'none'              => __( 'Não aplicar taxa', 'gstore' ),
+					'percent'           => __( 'Percentual sobre o total (ex: 3,5%)', 'gstore' ),
+					'fixed'             => __( 'Valor fixo (R$)', 'gstore' ),
+					'percent_plus_fixed'=> __( 'Percentual + fixo', 'gstore' ),
+				),
+				'default'     => 'none',
+			),
+			'installment_fee_strategy' => array(
+				'title'       => __( 'Estratégia da taxa', 'gstore' ),
+				'type'        => 'select',
+				'description' => __( 'Escolha como a taxa deve variar conforme o número de parcelas.', 'gstore' ),
+				'options'     => array(
+					'flat'        => __( 'Fixa (mesma taxa para qualquer número de parcelas)', 'gstore' ),
+					'progressive' => __( 'Progressiva (aumenta conforme o número de parcelas)', 'gstore' ),
+					'table'       => __( 'Por parcela (tabela de regras)', 'gstore' ),
+				),
+				'default'     => 'flat',
+			),
+			'installment_fee_percent' => array(
+				'title'       => __( 'Taxa percentual (%)', 'gstore' ),
+				'type'        => 'number',
+				'description' => __( 'Usado quando o modo de taxa for Percentual ou Percentual + fixo.', 'gstore' ),
+				'default'     => 0,
+				'custom_attributes' => array(
+					'min'  => 0,
+					'step' => '0.01',
+				),
+			),
+			'installment_fee_fixed' => array(
+				'title'       => __( 'Taxa fixa (R$)', 'gstore' ),
+				'type'        => 'number',
+				'description' => __( 'Usado quando o modo de taxa for Fixo ou Percentual + fixo.', 'gstore' ),
+				'default'     => 0,
+				'custom_attributes' => array(
+					'min'  => 0,
+					'step' => '0.01',
+				),
+			),
+			'installment_fee_rules' => array(
+				'title'       => __( 'Regras por parcelas (tabela)', 'gstore' ),
+				'type'        => 'textarea',
+				'description' => __( 'Usado quando Estratégia = Por parcela. Um item por linha. Formatos: "2=3.5" (percentual), "3=4%+2.90" (percentual + fixo), "6=+9.90" (somente fixo).', 'gstore' ),
+				'default'     => '',
+			),
+			'installment_fee_progressive_base_percent' => array(
+				'title'       => __( 'Progressiva: percentual base (%)', 'gstore' ),
+				'type'        => 'number',
+				'description' => __( 'Usado quando Estratégia = Progressiva. Percentual aplicado na parcela mínima configurada.', 'gstore' ),
+				'default'     => 0,
+				'custom_attributes' => array(
+					'min'  => 0,
+					'step' => '0.01',
+				),
+			),
+			'installment_fee_progressive_step_percent' => array(
+				'title'       => __( 'Progressiva: incremento por parcela (%)', 'gstore' ),
+				'type'        => 'number',
+				'description' => __( 'Incremento percentual para cada parcela acima do mínimo.', 'gstore' ),
+				'default'     => 0,
+				'custom_attributes' => array(
+					'min'  => 0,
+					'step' => '0.01',
+				),
+			),
+			'installment_fee_progressive_base_fixed' => array(
+				'title'       => __( 'Progressiva: fixo base (R$)', 'gstore' ),
+				'type'        => 'number',
+				'description' => __( 'Valor fixo aplicado na parcela mínima configurada.', 'gstore' ),
+				'default'     => 0,
+				'custom_attributes' => array(
+					'min'  => 0,
+					'step' => '0.01',
+				),
+			),
+			'installment_fee_progressive_step_fixed' => array(
+				'title'       => __( 'Progressiva: incremento fixo por parcela (R$)', 'gstore' ),
+				'type'        => 'number',
+				'description' => __( 'Incremento fixo para cada parcela acima do mínimo.', 'gstore' ),
+				'default'     => 0,
+				'custom_attributes' => array(
+					'min'  => 0,
+					'step' => '0.01',
+				),
+			),
+			'installment_fee_min_installments' => array(
+				'title'       => __( 'Aplicar taxa a partir de (parcelas)', 'gstore' ),
+				'type'        => 'number',
+				'description' => __( 'Ex: 2 para aplicar taxa apenas quando o cliente escolher 2x ou mais.', 'gstore' ),
+				'default'     => 2,
+				'custom_attributes' => array(
+					'min'  => 2,
+					'max'  => 21,
 					'step' => 1,
 				),
 			),
@@ -476,10 +659,10 @@ class Gstore_Blu_Payment_Gateway extends WC_Payment_Gateway {
 		$description = mb_substr( $description, 0, 25 );
 
 		$payload = array(
-			'amount'              => $this->format_amount( $order->get_total() ),
-			'email_notification'  => $order->get_billing_email() ?: null,
-			'phone_notification'  => ( strlen( $phone ) >= 10 ) ? $phone : null,
-			'description'         => $description,
+			'amount'                 => $this->format_amount( $order->get_total() ),
+			'email_notification'     => $order->get_billing_email() ?: null,
+			'phone_notification'     => ( strlen( $phone ) === 11 ) ? $phone : null,
+			'description'            => $description,
 			'issuer_rate_forwarding' => $this->issuer_rate_forwarding ? true : null,
 		);
 
@@ -487,31 +670,82 @@ class Gstore_Blu_Payment_Gateway extends WC_Payment_Gateway {
 		if ( ! $is_precheckout ) {
 			$payload['document_type'] = $document['type'];
 			
-			$customer_name = $order->get_formatted_billing_full_name();
-			if ( ! empty( $customer_name ) ) {
-				$payload['customer_name'] = $customer_name;
-			}
-			
 			if ( 'CNPJ' === $document['type'] && ! empty( $document['value'] ) ) {
 				$payload['customer_cnpj'] = $document['value'];
-			}
-			
-			if ( 'CPF' === $document['type'] && ! empty( $document['value'] ) ) {
-				$payload['customer_cpf'] = $document['value'];
+			} else {
+				// Conforme documentação: Para CPF envie o campo customer_cnpj como null
+				$payload['customer_cnpj'] = null;
 			}
 		}
 
-		if ( $this->fixed_installments > 0 ) {
-			$payload['fixed_installment_number'] = (string) min( 12, $this->fixed_installments );
-		} elseif ( $this->max_installments > 0 ) {
-			$payload['max_installment_number'] = (string) min( 12, $this->max_installments );
+		// Lógica de parcelamento: se permite escolha no pré-checkout, enviamos como FIXED 
+		// para garantir que o valor cobrado (com taxa calculada no Woo) coincida com o plano escolhido.
+		if ( $this->allow_customer_installments() ) {
+			$selected_installments = (int) $order->get_meta( self::META_SELECTED_INSTALLMENTS );
+			$payload['fixed_installment_number'] = (string) max( 1, min( 21, $selected_installments ) );
+		} else {
+			// Se NÃO permite escolha no pré-checkout, usamos configuração fixa do admin ou deixamos livre até o máximo
+			if ( $this->fixed_installments > 0 ) {
+				$payload['fixed_installment_number'] = (string) min( 21, $this->fixed_installments );
+			} elseif ( $this->max_installments > 0 ) {
+				$payload['max_installment_number'] = (string) min( 21, $this->max_installments );
+			}
 		}
 
 		return array_filter(
 			$payload,
-			static function ( $value ) {
+			static function ( $value, $key ) {
+				// Para CPF, a documentação exige explicitamente enviar customer_cnpj como null.
+				// Para os outros campos, removemos se forem nulos ou vazios.
+				if ( 'customer_cnpj' === $key ) {
+					return true;
+				}
 				return null !== $value && '' !== $value;
-			}
+			},
+			ARRAY_FILTER_USE_BOTH
+		);
+	}
+
+	/**
+	 * Retorna o máximo de parcelas configurado (fallback para 21).
+	 *
+	 * @return int
+	 */
+	public function get_max_installments() {
+		if ( $this->fixed_installments > 0 ) {
+			return max( 1, min( 21, (int) $this->fixed_installments ) );
+		}
+		return max( 1, min( 21, (int) $this->max_installments ) );
+	}
+
+	/**
+	 * Indica se o cliente pode escolher parcelas.
+	 *
+	 * @return bool
+	 */
+	public function allow_customer_installments() {
+		return (bool) $this->allow_customer_installments && $this->fixed_installments <= 0;
+	}
+
+	/**
+	 * Recupera config de taxa de parcelamento.
+	 *
+	 * @return array
+	 */
+	public function get_installment_fee_config() {
+		return array(
+			'mode'            => (string) $this->installment_fee_mode,
+			'percent'         => (float) $this->installment_fee_percent,
+			'fixed'           => (float) $this->installment_fee_fixed,
+			'min_installments'=> (int) $this->installment_fee_min_installments,
+			'strategy'        => (string) $this->installment_fee_strategy,
+			'rules'           => (string) $this->installment_fee_rules,
+			'progressive'     => array(
+				'base_percent' => (float) $this->installment_fee_progressive_base_percent,
+				'step_percent' => (float) $this->installment_fee_progressive_step_percent,
+				'base_fixed'   => (float) $this->installment_fee_progressive_base_fixed,
+				'step_fixed'   => (float) $this->installment_fee_progressive_step_fixed,
+			),
 		);
 	}
 

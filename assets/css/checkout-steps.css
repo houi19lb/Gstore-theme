@@ -365,6 +365,15 @@ body.woocommerce-checkout .Gstore-checkout-steps-shell {
 	font-weight: 800;
 }
 
+.Gstore-summary-row--installments {
+	margin-top: 6px;
+	font-size: var(--gstore-font-size-085);
+}
+
+.Gstore-summary-row--installments span:first-child {
+	color: var(--gstore-text-muted);
+}
+
 /* ===========================================
    STEPPER - INDICADOR DE ETAPAS
    =========================================== */
@@ -720,6 +729,93 @@ body.woocommerce-checkout .Gstore-checkout-steps-shell {
 /* Container de pagamento (observações + métodos) */
 .Gstore-checkout-step[data-step="payment"] .Gstore-checkout-step__payment-container {
 	order: 3;
+}
+
+/* Slot do resumo do pedido dentro da etapa 3 */
+.Gstore-checkout-step[data-step="payment"] .Gstore-checkout-step__order-review-slot {
+	margin-top: 16px;
+}
+
+/* Resumo do pedido (order review) com visual de card e alinhamentos corretos */
+.Gstore-checkout-step[data-step="payment"] .Gstore-checkout-step__order-review-slot .Gstore-order-review-header {
+	display: flex;
+	align-items: baseline;
+	justify-content: space-between;
+	gap: 12px;
+	margin: 0 0 10px;
+}
+
+.Gstore-checkout-step[data-step="payment"] .Gstore-checkout-step__order-review-slot .Gstore-order-review-header__title {
+	font-size: var(--gstore-font-size-095);
+	font-weight: var(--gstore-font-weight-bold);
+	color: var(--gstore-foreground);
+	letter-spacing: var(--gstore-letter-spacing-02);
+	text-transform: uppercase;
+}
+
+.Gstore-checkout-step[data-step="payment"] .Gstore-checkout-step__order-review-slot #order_review {
+	background: var(--gstore-card-bg);
+	border: 1px solid var(--gstore-muted);
+	border-radius: var(--gstore-border-radius);
+	padding: 18px 18px 10px;
+}
+
+.Gstore-checkout-step[data-step="payment"] .Gstore-checkout-step__order-review-slot #order_review table.shop_table {
+	width: 100%;
+	border: none;
+	border-collapse: collapse;
+	margin: 0;
+}
+
+.Gstore-checkout-step[data-step="payment"] .Gstore-checkout-step__order-review-slot #order_review table.shop_table th,
+.Gstore-checkout-step[data-step="payment"] .Gstore-checkout-step__order-review-slot #order_review table.shop_table td {
+	padding: 14px 0;
+	border: none;
+	border-bottom: 1px solid var(--gstore-muted);
+	vertical-align: top;
+}
+
+/* Cabeçalho da tabela */
+.Gstore-checkout-step[data-step="payment"] .Gstore-checkout-step__order-review-slot #order_review table.shop_table thead th {
+	padding-top: 6px;
+	padding-bottom: 12px;
+	font-size: var(--gstore-font-size-xs);
+	font-weight: var(--gstore-font-weight-semibold);
+	color: var(--gstore-text-muted);
+	letter-spacing: var(--gstore-letter-spacing-wider);
+	text-transform: uppercase;
+}
+
+/* Alinhamentos: nome/labels à esquerda, valores à direita */
+.Gstore-checkout-step[data-step="payment"] .Gstore-checkout-step__order-review-slot #order_review th,
+.Gstore-checkout-step[data-step="payment"] .Gstore-checkout-step__order-review-slot #order_review td {
+	text-align: left !important;
+}
+
+.Gstore-checkout-step[data-step="payment"] .Gstore-checkout-step__order-review-slot #order_review th.product-total,
+.Gstore-checkout-step[data-step="payment"] .Gstore-checkout-step__order-review-slot #order_review td.product-total,
+.Gstore-checkout-step[data-step="payment"] .Gstore-checkout-step__order-review-slot #order_review tfoot td {
+	text-align: right !important;
+	white-space: nowrap;
+}
+
+.Gstore-checkout-step[data-step="payment"] .Gstore-checkout-step__order-review-slot #order_review td.product-name {
+	font-weight: var(--gstore-font-weight-semibold);
+	color: var(--gstore-foreground);
+}
+
+/* Rodapé (totais) */
+.Gstore-checkout-step[data-step="payment"] .Gstore-checkout-step__order-review-slot #order_review tfoot th {
+	font-weight: var(--gstore-font-weight-semibold);
+	color: var(--gstore-foreground);
+}
+
+.Gstore-checkout-step[data-step="payment"] .Gstore-checkout-step__order-review-slot #order_review tfoot tr.order-total th,
+.Gstore-checkout-step[data-step="payment"] .Gstore-checkout-step__order-review-slot #order_review tfoot tr.order-total td {
+	border-bottom: none;
+	padding-bottom: 6px;
+	font-size: var(--gstore-font-size-base);
+	font-weight: var(--gstore-font-weight-bold);
 }
 
 /* Botão Voltar vai para baixo, próximo do Finalizar Pedido */
@@ -2057,6 +2153,48 @@ body.woocommerce-checkout .Gstore-checkout-steps-shell {
 	background: var(--gstore-color-white);
 }
 
+/* Seletor de parcelas (pré-checkout) */
+.Gstore-blu-installments {
+	margin-top: 12px;
+	padding-top: 12px;
+	border-top: 1px dashed var(--gstore-muted);
+}
+
+.Gstore-blu-installments__row {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+}
+
+.Gstore-blu-installments__label {
+	font-size: var(--gstore-font-size-sm);
+	font-weight: var(--gstore-font-weight-semibold);
+	color: var(--gstore-foreground);
+}
+
+.Gstore-blu-installments__select {
+	min-width: 140px;
+	border: 1px solid var(--gstore-muted);
+	border-radius: var(--gstore-border-radius);
+	padding: 8px 10px;
+	font-size: var(--gstore-font-size-sm);
+	background: #fff;
+}
+
+.Gstore-blu-installments__hint {
+	margin: 10px 0 0;
+	font-size: var(--gstore-font-size-xs);
+	color: var(--gstore-text-muted);
+	line-height: 1.4;
+}
+
+.Gstore-blu-installments__preview {
+	margin: 8px 0 0;
+	font-size: var(--gstore-font-size-sm);
+	color: var(--gstore-foreground);
+}
+
 .Gstore-blu-payment-unified__content .payment_box {
 	border: none;
 	padding: 0;
@@ -2321,6 +2459,119 @@ body.woocommerce-checkout .Gstore-checkout-steps-shell {
 
 	.Gstore-success-icon {
 		font-size: var(--gstore-font-size-5xl);
+	}
+}
+
+/* ===========================================
+   MODAL: CHECKOUT BLU (IFRAME)
+   =========================================== */
+.Gstore-blu-checkout-modal {
+	position: fixed;
+	inset: 0;
+	z-index: 100000;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	opacity: 0;
+	visibility: hidden;
+	transition: opacity 0.25s ease, visibility 0.25s ease;
+}
+
+.Gstore-blu-checkout-modal.is-visible {
+	opacity: 1;
+	visibility: visible;
+}
+
+.Gstore-blu-checkout-modal__backdrop {
+	position: absolute;
+	inset: 0;
+	background: rgba(0, 0, 0, 0.75);
+	backdrop-filter: blur(4px);
+}
+
+.Gstore-blu-checkout-modal__content {
+	position: relative;
+	width: min(1080px, 96vw);
+	height: min(760px, 92vh);
+	background: #fff;
+	border-radius: 6px;
+	box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35);
+	display: flex;
+	flex-direction: column;
+	overflow: hidden;
+	transform: translateY(10px) scale(0.98);
+	transition: transform 0.25s ease;
+}
+
+.Gstore-blu-checkout-modal.is-visible .Gstore-blu-checkout-modal__content {
+	transform: translateY(0) scale(1);
+}
+
+.Gstore-blu-checkout-modal__close {
+	position: absolute;
+	top: 12px;
+	right: 12px;
+	width: 40px;
+	height: 40px;
+	border-radius: 6px;
+	border: none;
+	background: rgba(255, 255, 255, 0.9);
+	color: #111827;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	cursor: pointer;
+	z-index: 2;
+}
+
+.Gstore-blu-checkout-modal__header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+	padding: 16px 56px 8px 16px;
+	border-bottom: 1px solid #e5e7eb;
+}
+
+.Gstore-blu-checkout-modal__title {
+	font-weight: var(--gstore-font-weight-semibold);
+	color: #111827;
+}
+
+.Gstore-blu-checkout-modal__actions {
+	display: flex;
+	gap: 10px;
+	align-items: center;
+}
+
+.Gstore-blu-checkout-modal__hint {
+	padding: 8px 16px;
+	color: #6b7280;
+	font-size: var(--gstore-font-size-sm);
+	border-bottom: 1px solid #f3f4f6;
+}
+
+.Gstore-blu-checkout-modal__frame-wrap {
+	flex: 1;
+	background: #fff;
+}
+
+.Gstore-blu-checkout-modal__frame {
+	width: 100%;
+	height: 100%;
+	border: 0;
+	background: #fff;
+}
+
+body.gstore-blu-checkout-modal-open {
+	overflow: hidden;
+}
+
+@media (max-width: 480px) {
+	.Gstore-blu-checkout-modal__header {
+		flex-direction: column;
+		align-items: flex-start;
+		padding-right: 16px;
 	}
 }
 

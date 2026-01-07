@@ -140,8 +140,8 @@ Este documento lista todos os itens que precisam ser corrigidos/removidos antes 
 
 ---
 
-**Última atualização:** 2025-01-27
-**Versão do tema:** 1.2
+**Última atualização:** 2026-01-06
+**Versão do tema:** 1.4.2
 **Status:** ✅ Todas as tarefas críticas (🔴) e importantes (🟡) foram concluídas
 
 

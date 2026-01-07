@@ -1,0 +1,608 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "GStore API",
+    "version": "1.0.0",
+    "description": "API de exemplo para demonstração do visualizador. Esta API gerencia produtos, usuários, pedidos e categorias de uma loja virtual.",
+    "contact": {
+      "name": "Suporte GStore",
+      "email": "suporte@gstore.com"
+    }
+  },
+  "servers": [
+    {
+      "url": "https://api.gstore.com/v1",
+      "description": "Servidor de Produção"
+    },
+    {
+      "url": "https://sandbox.gstore.com/v1",
+      "description": "Servidor de Sandbox"
+    }
+  ],
+  "tags": [
+    { "name": "Produtos", "description": "Operações com produtos" },
+    { "name": "Categorias", "description": "Operações com categorias" },
+    { "name": "Usuários", "description": "Operações com usuários" },
+    { "name": "Pedidos", "description": "Operações com pedidos" },
+    { "name": "Carrinho", "description": "Operações com carrinho de compras" },
+    { "name": "Autenticação", "description": "Autenticação e autorização" }
+  ],
+  "paths": {
+    "/products": {
+      "get": {
+        "tags": ["Produtos"],
+        "summary": "Listar produtos",
+        "description": "Retorna uma lista paginada de todos os produtos disponíveis na loja.",
+        "operationId": "getProducts",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Número da página",
+            "schema": { "type": "integer", "default": 1 }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Itens por página",
+            "schema": { "type": "integer", "default": 20 }
+          },
+          {
+            "name": "category",
+            "in": "query",
+            "description": "Filtrar por categoria",
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": { "description": "Lista de produtos retornada com sucesso" },
+          "400": { "description": "Parâmetros inválidos" }
+        }
+      },
+      "post": {
+        "tags": ["Produtos"],
+        "summary": "Criar produto",
+        "description": "Adiciona um novo produto ao catálogo da loja.",
+        "operationId": "createProduct",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProductInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Produto criado com sucesso" },
+          "400": { "description": "Dados inválidos" },
+          "401": { "description": "Não autorizado" }
+        }
+      }
+    },
+    "/products/{id}": {
+      "get": {
+        "tags": ["Produtos"],
+        "summary": "Buscar produto",
+        "description": "Retorna os detalhes de um produto específico pelo ID.",
+        "operationId": "getProduct",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "ID do produto",
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": { "description": "Produto encontrado" },
+          "404": { "description": "Produto não encontrado" }
+        }
+      },
+      "put": {
+        "tags": ["Produtos"],
+        "summary": "Atualizar produto",
+        "description": "Atualiza todos os campos de um produto existente.",
+        "operationId": "updateProduct",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": { "description": "Produto atualizado" },
+          "404": { "description": "Produto não encontrado" }
+        }
+      },
+      "patch": {
+        "tags": ["Produtos"],
+        "summary": "Atualizar parcialmente",
+        "description": "Atualiza campos específicos de um produto.",
+        "operationId": "patchProduct",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": { "description": "Produto atualizado" },
+          "404": { "description": "Produto não encontrado" }
+        }
+      },
+      "delete": {
+        "tags": ["Produtos"],
+        "summary": "Remover produto",
+        "description": "Remove um produto do catálogo. Esta ação não pode ser desfeita.",
+        "operationId": "deleteProduct",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "204": { "description": "Produto removido" },
+          "404": { "description": "Produto não encontrado" }
+        }
+      }
+    },
+    "/products/{id}/images": {
+      "get": {
+        "tags": ["Produtos"],
+        "summary": "Listar imagens",
+        "description": "Retorna todas as imagens de um produto.",
+        "operationId": "getProductImages",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": { "description": "Lista de imagens" }
+        }
+      },
+      "post": {
+        "tags": ["Produtos"],
+        "summary": "Adicionar imagem",
+        "description": "Adiciona uma nova imagem ao produto.",
+        "operationId": "addProductImage",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "201": { "description": "Imagem adicionada" }
+        }
+      }
+    },
+    "/categories": {
+      "get": {
+        "tags": ["Categorias"],
+        "summary": "Listar categorias",
+        "description": "Retorna todas as categorias de produtos.",
+        "operationId": "getCategories",
+        "responses": {
+          "200": { "description": "Lista de categorias" }
+        }
+      },
+      "post": {
+        "tags": ["Categorias"],
+        "summary": "Criar categoria",
+        "description": "Cria uma nova categoria de produtos.",
+        "operationId": "createCategory",
+        "responses": {
+          "201": { "description": "Categoria criada" }
+        }
+      }
+    },
+    "/categories/{id}": {
+      "get": {
+        "tags": ["Categorias"],
+        "summary": "Buscar categoria",
+        "description": "Retorna detalhes de uma categoria.",
+        "operationId": "getCategory",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": { "description": "Categoria encontrada" }
+        }
+      },
+      "put": {
+        "tags": ["Categorias"],
+        "summary": "Atualizar categoria",
+        "description": "Atualiza uma categoria existente.",
+        "operationId": "updateCategory",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": { "description": "Categoria atualizada" }
+        }
+      },
+      "delete": {
+        "tags": ["Categorias"],
+        "summary": "Remover categoria",
+        "description": "Remove uma categoria. Produtos nesta categoria serão movidos para 'Sem Categoria'.",
+        "operationId": "deleteCategory",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "204": { "description": "Categoria removida" }
+        }
+      }
+    },
+    "/users": {
+      "get": {
+        "tags": ["Usuários"],
+        "summary": "Listar usuários",
+        "description": "Retorna lista de usuários cadastrados.",
+        "operationId": "getUsers",
+        "responses": {
+          "200": { "description": "Lista de usuários" }
+        }
+      },
+      "post": {
+        "tags": ["Usuários"],
+        "summary": "Criar usuário",
+        "description": "Registra um novo usuário no sistema.",
+        "operationId": "createUser",
+        "responses": {
+          "201": { "description": "Usuário criado" }
+        }
+      }
+    },
+    "/users/{id}": {
+      "get": {
+        "tags": ["Usuários"],
+        "summary": "Buscar usuário",
+        "description": "Retorna dados de um usuário.",
+        "operationId": "getUser",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": { "description": "Usuário encontrado" }
+        }
+      },
+      "put": {
+        "tags": ["Usuários"],
+        "summary": "Atualizar usuário",
+        "description": "Atualiza dados do usuário.",
+        "operationId": "updateUser",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": { "description": "Usuário atualizado" }
+        }
+      },
+      "delete": {
+        "tags": ["Usuários"],
+        "summary": "Remover usuário",
+        "description": "Remove um usuário do sistema.",
+        "operationId": "deleteUser",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "204": { "description": "Usuário removido" }
+        }
+      }
+    },
+    "/users/{id}/addresses": {
+      "get": {
+        "tags": ["Usuários"],
+        "summary": "Listar endereços",
+        "description": "Retorna endereços do usuário.",
+        "operationId": "getUserAddresses",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": { "description": "Lista de endereços" }
+        }
+      },
+      "post": {
+        "tags": ["Usuários"],
+        "summary": "Adicionar endereço",
+        "description": "Adiciona um novo endereço ao usuário.",
+        "operationId": "addUserAddress",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "201": { "description": "Endereço adicionado" }
+        }
+      }
+    },
+    "/orders": {
+      "get": {
+        "tags": ["Pedidos"],
+        "summary": "Listar pedidos",
+        "description": "Retorna lista de pedidos do usuário autenticado.",
+        "operationId": "getOrders",
+        "responses": {
+          "200": { "description": "Lista de pedidos" }
+        }
+      },
+      "post": {
+        "tags": ["Pedidos"],
+        "summary": "Criar pedido",
+        "description": "Cria um novo pedido a partir do carrinho.",
+        "operationId": "createOrder",
+        "responses": {
+          "201": { "description": "Pedido criado" }
+        }
+      }
+    },
+    "/orders/{id}": {
+      "get": {
+        "tags": ["Pedidos"],
+        "summary": "Buscar pedido",
+        "description": "Retorna detalhes de um pedido.",
+        "operationId": "getOrder",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": { "description": "Pedido encontrado" }
+        }
+      },
+      "patch": {
+        "tags": ["Pedidos"],
+        "summary": "Atualizar status",
+        "description": "Atualiza o status do pedido.",
+        "operationId": "updateOrderStatus",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": { "description": "Status atualizado" }
+        }
+      }
+    },
+    "/orders/{id}/cancel": {
+      "post": {
+        "tags": ["Pedidos"],
+        "summary": "Cancelar pedido",
+        "description": "Cancela um pedido que ainda não foi enviado.",
+        "operationId": "cancelOrder",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": { "description": "Pedido cancelado" }
+        }
+      }
+    },
+    "/cart": {
+      "get": {
+        "tags": ["Carrinho"],
+        "summary": "Ver carrinho",
+        "description": "Retorna os itens do carrinho do usuário.",
+        "operationId": "getCart",
+        "responses": {
+          "200": { "description": "Carrinho retornado" }
+        }
+      },
+      "delete": {
+        "tags": ["Carrinho"],
+        "summary": "Limpar carrinho",
+        "description": "Remove todos os itens do carrinho.",
+        "operationId": "clearCart",
+        "responses": {
+          "204": { "description": "Carrinho limpo" }
+        }
+      }
+    },
+    "/cart/items": {
+      "post": {
+        "tags": ["Carrinho"],
+        "summary": "Adicionar item",
+        "description": "Adiciona um produto ao carrinho.",
+        "operationId": "addCartItem",
+        "responses": {
+          "201": { "description": "Item adicionado" }
+        }
+      }
+    },
+    "/cart/items/{id}": {
+      "patch": {
+        "tags": ["Carrinho"],
+        "summary": "Atualizar quantidade",
+        "description": "Atualiza a quantidade de um item no carrinho.",
+        "operationId": "updateCartItem",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": { "description": "Item atualizado" }
+        }
+      },
+      "delete": {
+        "tags": ["Carrinho"],
+        "summary": "Remover item",
+        "description": "Remove um item do carrinho.",
+        "operationId": "removeCartItem",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "204": { "description": "Item removido" }
+        }
+      }
+    },
+    "/auth/login": {
+      "post": {
+        "tags": ["Autenticação"],
+        "summary": "Login",
+        "description": "Autentica um usuário e retorna um token JWT.",
+        "operationId": "login",
+        "responses": {
+          "200": { "description": "Login bem sucedido" },
+          "401": { "description": "Credenciais inválidas" }
+        }
+      }
+    },
+    "/auth/register": {
+      "post": {
+        "tags": ["Autenticação"],
+        "summary": "Registrar",
+        "description": "Registra um novo usuário.",
+        "operationId": "register",
+        "responses": {
+          "201": { "description": "Usuário registrado" }
+        }
+      }
+    },
+    "/auth/logout": {
+      "post": {
+        "tags": ["Autenticação"],
+        "summary": "Logout",
+        "description": "Invalida o token do usuário.",
+        "operationId": "logout",
+        "responses": {
+          "204": { "description": "Logout realizado" }
+        }
+      }
+    },
+    "/auth/refresh": {
+      "post": {
+        "tags": ["Autenticação"],
+        "summary": "Renovar token",
+        "description": "Renova o token JWT usando um refresh token.",
+        "operationId": "refreshToken",
+        "responses": {
+          "200": { "description": "Token renovado" }
+        }
+      }
+    },
+    "/auth/forgot-password": {
+      "post": {
+        "tags": ["Autenticação"],
+        "summary": "Recuperar senha",
+        "description": "Envia email para recuperação de senha.",
+        "operationId": "forgotPassword",
+        "responses": {
+          "200": { "description": "Email enviado" }
+        }
+      }
+    },
+    "/auth/reset-password": {
+      "post": {
+        "tags": ["Autenticação"],
+        "summary": "Redefinir senha",
+        "description": "Redefine a senha usando token recebido por email.",
+        "operationId": "resetPassword",
+        "responses": {
+          "200": { "description": "Senha redefinida" }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "ProductInput": {
+        "type": "object",
+        "required": ["name", "price"],
+        "properties": {
+          "name": { "type": "string" },
+          "price": { "type": "number" },
+          "description": { "type": "string" },
+          "category_id": { "type": "string" }
+        }
+      }
+    },
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    }
+  }
+}

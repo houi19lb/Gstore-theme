@@ -79,6 +79,10 @@ svg {
 	height: auto;
 }
 
+[hidden] {
+	display: none !important;
+}
+
 img {
 	border-style: none;
 }

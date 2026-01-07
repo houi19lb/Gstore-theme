@@ -116,7 +116,7 @@
 .flex { display: flex !important; }
 .inline-flex { display: inline-flex !important; }
 .grid { display: grid !important; }
-.hidden { display: none !important; }
+.hidden, [hidden] { display: none !important; }
 
 /* ========================================
    FLEXBOX

@@ -135,6 +135,14 @@
 **Arquivos modificados**:
 - `assets/js/mini-cart-fix.js`: Linhas 441-520, 526-550
 
+### ✅ Solução 6: Corrigir Imagens Duplicadas (Cart Block)
+**Causa**: O atributo `hidden` do HTML5 estava sendo ignorado devido a estilos base do tema que forçavam `display: block` em todas as imagens, e o tema remove os estilos padrão do WooCommerce Blocks que resolveriam isso.
+**Implementado**: Adicionada regra global `[hidden] { display: none !important; }` para garantir que elementos ocultos via atributo HTML (usados pela Interactivity API do WooCommerce) sejam respeitados.
+
+**Arquivos modificados**:
+- `assets/css/base.css`
+- `assets/css/utilities.css`
+
 ## Como Testar em Produção
 
 ### 1. Habilitar Debug Temporariamente
