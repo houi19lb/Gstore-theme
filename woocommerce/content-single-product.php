@@ -62,52 +62,6 @@ if ( ! function_exists( 'gstore_get_product_attributes' ) ) :
 	}
 endif;
 
-if ( ! function_exists( 'gstore_get_feature_items' ) ) :
-	/**
-	 * Obtém itens de características do produto.
-	 *
-	 * @param array  $attribute_data   Dados dos atributos.
-	 * @param string $short_description Descrição curta.
-	 * @return array
-	 */
-	function gstore_get_feature_items( $attribute_data, $short_description ) {
-		$items = array_slice( $attribute_data, 0, 6 );
-
-		// Se não há atributos, tenta extrair da descrição curta.
-		if ( empty( $items ) && $short_description ) {
-			$break_tokens = array( '<br>', '<br/>', '<br />', '</p>', '</li>' );
-			$normalized   = str_ireplace( $break_tokens, "\n", $short_description );
-			$normalized   = wp_strip_all_tags( $normalized );
-			$lines        = preg_split( '/\r\n|\r|\n/', $normalized );
-			$lines        = array_filter( array_map( 'trim', (array) $lines ) );
-
-			foreach ( $lines as $line ) {
-				if ( '' === $line ) {
-					continue;
-				}
-				$items[] = array(
-					'label' => $line,
-					'value' => '',
-				);
-				if ( count( $items ) >= 6 ) {
-					break;
-				}
-			}
-		}
-
-		// Fallback padrão.
-		if ( empty( $items ) ) {
-			$items = array(
-				array( 'label' => __( 'Materiais premium e resistentes', 'gstore' ), 'value' => '' ),
-				array( 'label' => __( 'Garantia oficial CAC Armas', 'gstore' ), 'value' => '' ),
-				array( 'label' => __( 'Atendimento humano especializado', 'gstore' ), 'value' => '' ),
-			);
-		}
-
-		return $items;
-	}
-endif;
-
 if ( ! function_exists( 'gstore_get_hero_meta_cards' ) ) :
 	/**
 	 * Retorna cards de meta informações.
@@ -193,14 +147,28 @@ if ( ! function_exists( 'gstore_get_details_info_rows' ) ) :
 	/**
 	 * Retorna linhas de informação para a seção de detalhes.
 	 *
+	 * @param int    $product_id        ID do produto.
 	 * @param string $short_description Descrição curta.
 	 * @param string $full_description  Descrição completa.
-	 * @param array  $feature_items     Itens de características.
 	 * @param array  $attribute_data    Dados dos atributos.
 	 * @return array
 	 */
-	function gstore_get_details_info_rows( $short_description, $full_description, $feature_items, $attribute_data ) {
-		$feature_lines   = gstore_format_items_as_lines( $feature_items );
+	function gstore_get_details_info_rows( $product_id, $short_description, $full_description, $attribute_data ) {
+		$product_id = (int) $product_id;
+
+		$principais_atributos_raw       = $product_id ? (string) get_post_meta( $product_id, '_gstore_key_attributes', true ) : '';
+		$observacoes_importantes_raw    = $product_id ? (string) get_post_meta( $product_id, '_gstore_important_notes', true ) : '';
+		$principais_atributos_has_value = '' !== trim( wp_strip_all_tags( $principais_atributos_raw ) );
+		$observacoes_importantes_has_value = '' !== trim( wp_strip_all_tags( $observacoes_importantes_raw ) );
+
+		$principais_atributos = $principais_atributos_has_value
+			? apply_filters( 'the_content', $principais_atributos_raw )
+			: '';
+
+		$observacoes_importantes = $observacoes_importantes_has_value
+			? apply_filters( 'the_content', $observacoes_importantes_raw )
+			: '';
+
 		$attribute_lines = gstore_format_items_as_lines( $attribute_data, true );
 
 		$rows = array(
@@ -222,12 +190,14 @@ if ( ! function_exists( 'gstore_get_details_info_rows' ) ) :
 			);
 		}
 
-		$rows[] = array(
-			'icon'       => 'fa-layer-group',
-			'title'      => __( 'Principais atributos', 'gstore' ),
-			'content'    => ! empty( $feature_lines ) ? gstore_render_details_list( $feature_lines ) : '',
-			'allow_html' => ! empty( $feature_lines ),
-		);
+		if ( ! empty( $principais_atributos ) ) {
+			$rows[] = array(
+				'icon'       => 'fa-layer-group',
+				'title'      => __( 'Principais atributos', 'gstore' ),
+				'content'    => $principais_atributos,
+				'allow_html' => true,
+			);
+		}
 
 		$rows[] = array(
 			'icon'       => 'fa-sliders',
@@ -236,12 +206,14 @@ if ( ! function_exists( 'gstore_get_details_info_rows' ) ) :
 			'allow_html' => ! empty( $attribute_lines ),
 		);
 
-		$rows[] = array(
-			'icon'       => 'fa-circle-exclamation',
-			'title'      => __( 'Observações importantes', 'gstore' ),
-			'content'    => __( 'A CAC Armas libera itens controlados somente após validar toda a documentação exigida pelos órgãos reguladores. Nosso time acompanha cada etapa do envio.', 'gstore' ),
-			'allow_html' => false,
-		);
+		if ( ! empty( $observacoes_importantes ) ) {
+			$rows[] = array(
+				'icon'       => 'fa-circle-exclamation',
+				'title'      => __( 'Observações importantes', 'gstore' ),
+				'content'    => $observacoes_importantes,
+				'allow_html' => true,
+			);
+		}
 
 		return array_values(
 			array_filter(
@@ -404,7 +376,6 @@ $buy_now_url = esc_url(
 */
 
 $attribute_data = gstore_get_product_attributes( $product );
-$feature_items  = gstore_get_feature_items( $attribute_data, $short_description );
 
 /*
 |--------------------------------------------------------------------------
@@ -419,7 +390,7 @@ $benefit_items = array(
 );
 
 $hero_meta_cards   = gstore_get_hero_meta_cards( $stock_label, $formatted_installment );
-$details_info_rows = gstore_get_details_info_rows( $short_description, $full_description, $feature_items, $attribute_data );
+$details_info_rows = gstore_get_details_info_rows( $product->get_id(), $short_description, $full_description, $attribute_data );
 $contact_entries   = gstore_get_contact_entries();
 $guarantee_badges  = gstore_get_guarantee_badges();
 
