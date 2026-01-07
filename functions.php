@@ -5168,6 +5168,28 @@ function gstore_render_settings_page() {
 				<span class="description" style="margin-left: 10px;"><?php _e( '(Cuidado: edição manual pode quebrar a estrutura)', 'gstore' ); ?></span>
 			</p>
 		</div>
+
+		<hr style="margin: 40px 0;" />
+
+		<h2 class="title"><?php _e( 'Sincronização GitHub', 'gstore' ); ?></h2>
+		<p class="description">
+			<?php _e( 'Mantenha os arquivos do tema atualizados diretamente do repositório GitHub.', 'gstore' ); ?>
+		</p>
+
+		<div class="gstore-github-sync" style="background: #fff; border: 1px solid #c3c4c7; border-radius: 4px; padding: 20px; margin-top: 20px; max-width: 800px;">
+			<h3 style="margin-top: 0;"><?php _e( 'Atualizar Tema via Git', 'gstore' ); ?></h3>
+			<p><?php _e( 'Este comando irá executar um "git pull" (fetch + reset --hard) para sincronizar os arquivos locais com a versão mais recente do branch principal no GitHub.', 'gstore' ); ?></p>
+			
+			<div style="margin-top: 20px;">
+				<button type="button" class="button button-primary gstore-theme-git-update" data-nonce="<?php echo esc_attr( wp_create_nonce( 'gstore_theme_git_pull' ) ); ?>">
+					<span class="dashicons dashicons-cloud-upload" style="margin-right: 5px; vertical-align: middle;"></span>
+					<?php _e( 'Sincronizar Agora', 'gstore' ); ?>
+				</button>
+				<p class="description" style="margin-top: 10px;">
+					<?php _e( 'Atenção: Quaisquer alterações locais não commitadas serão perdidas.', 'gstore' ); ?>
+				</p>
+			</div>
+		</div>
 	</div>
 	
 	<style>

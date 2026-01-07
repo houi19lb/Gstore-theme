@@ -57,6 +57,7 @@ class Gstore_Theme_Git_Updater {
 
 		add_filter( 'theme_action_links', array( $this, 'add_theme_action_link' ), 10, 2 );
 		add_action( 'admin_footer-themes.php', array( $this, 'print_inline_script' ) );
+		add_action( 'admin_footer-appearance_page_gstore-settings', array( $this, 'print_inline_script' ) );
 		add_action( 'wp_ajax_gstore_theme_git_pull', array( $this, 'ajax_git_pull' ) );
 	}
 
