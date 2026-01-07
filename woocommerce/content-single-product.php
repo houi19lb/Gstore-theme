@@ -396,25 +396,6 @@ $guarantee_badges  = gstore_get_guarantee_badges();
 
 ?>
 <div class="Gstore-single-product-shell">
-	<?php
-	// Debug seguro: adicione ?gstore_meta_debug=1 na URL (somente admin logado).
-	if ( is_user_logged_in() && current_user_can( 'manage_options' ) && isset( $_GET['gstore_meta_debug'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-		$debug_product_id = (int) $product->get_id();
-		$debug_attr_meta  = (string) get_post_meta( $debug_product_id, '_gstore_key_attributes', true );
-		$debug_notes_meta = (string) get_post_meta( $debug_product_id, '_gstore_important_notes', true );
-		?>
-		<div style="background: #fffbcc; padding: 16px; color: #111; border: 1px solid #e6d200; margin: 16px 0; position: relative; z-index: 9999;">
-			<strong>GSTORE DEBUG META</strong><br>
-			<strong>Template:</strong> <?php echo esc_html( __FILE__ ); ?><br>
-			<strong>ID do Produto:</strong> <?php echo esc_html( (string) $debug_product_id ); ?><br><br>
-			<strong>_gstore_key_attributes (raw):</strong>
-			<pre style="white-space: pre-wrap; margin: 8px 0;"><?php echo esc_html( $debug_attr_meta ); ?></pre>
-			<strong>_gstore_important_notes (raw):</strong>
-			<pre style="white-space: pre-wrap; margin: 8px 0;"><?php echo esc_html( $debug_notes_meta ); ?></pre>
-		</div>
-		<?php
-	}
-	?>
 	<div class="Gstore-single-product-shell__inner">
 		<div id="product-<?php the_ID(); ?>" <?php wc_product_class( 'Gstore-single-product__entry', $product ); ?>>
 
