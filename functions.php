@@ -783,6 +783,23 @@ function gstore_enqueue_styles() {
 		array( 'gstore-main' ),
 		$theme_version
 	);
+
+	// Filtro de Categorias Marketplace
+	wp_enqueue_style(
+		'gstore-category-filter',
+		get_theme_file_uri( 'assets/css/category-filter.css' ),
+		array( 'gstore-style' ),
+		$theme_version
+	);
+
+	// Filtro de Categorias Marketplace - JS
+	wp_enqueue_script(
+		'gstore-category-filter-js',
+		get_theme_file_uri( 'assets/js/category-filter.js' ),
+		array(),
+		$theme_version,
+		true
+	);
 }
 add_action( 'wp_enqueue_scripts', 'gstore_enqueue_styles' );
 
@@ -929,23 +946,28 @@ function gstore_enqueue_scripts() {
 		}
 		
 		if ( $is_catalog_page ) {
-			wp_enqueue_script(
-				'gstore-catalog-filters',
-				get_theme_file_uri( 'assets/js/catalog-filters.js' ),
-				array(),
-				wp_get_theme()->get( 'Version' ),
-				true
-			);
-			
-			// Script para árvore de categorias (expandir/colapsar)
-			wp_enqueue_script(
-				'gstore-catalog-categories-tree',
-				get_theme_file_uri( 'assets/js/catalog-categories-tree.js' ),
-				array(),
-				wp_get_theme()->get( 'Version' ),
-				true
-			);
-		}
+		/*
+		wp_enqueue_script(
+			'gstore-catalog-filters',
+			get_theme_file_uri( 'assets/js/catalog-filters.js' ),
+			array(),
+			wp_get_theme()->get( 'Version' ),
+			true
+		);
+		*/
+	}
+	
+	// #region agent log - Script para árvore de categorias carregado sempre para debug
+	/*
+	wp_enqueue_script(
+		'gstore-catalog-categories-tree',
+		get_theme_file_uri( 'assets/js/catalog-categories-tree.js' ),
+		array(),
+		(string) @filemtime( get_theme_file_path( 'assets/js/catalog-categories-tree.js' ) ),
+		true
+	);
+	*/
+	// #endregion
 
 		// Script para sincronização do Mini Cart Block (versão simplificada)
 		// Dependências: wc-settings (fornece storeApiNonce), wp-data (fornece wp.data store)
@@ -3080,6 +3102,11 @@ add_action( 'wp_footer', function() {
  * Filtro para deixar apenas a Blu como gateway (Opcional/Solicitado).
  */
 require_once get_theme_file_path( 'inc/blu-filter.php' );
+
+/**
+ * Filtro de Categorias Marketplace.
+ */
+require_once get_theme_file_path( 'inc/class-gstore-category-filter.php' );
 
 /**
  * Gerenciador de informações da loja (JSON centralizado).

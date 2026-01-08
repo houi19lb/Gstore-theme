@@ -7605,6 +7605,7 @@ body:has(.Gstore-catalog-shell--light) main {
 	display: flex;
 	align-items: center;
 	gap: 8px;
+	flex-wrap: wrap;
 }
 
 .Gstore-catalog-shell--light .wc-block-product-categories-list li>a,
@@ -7684,6 +7685,20 @@ body:has(.Gstore-catalog-shell--light) main {
 	color: var(--text-muted, #6b6b6b);
 }
 
+/* Acessibilidade: garante que o texto de screen reader do toggle não apareça visualmente */
+.Gstore-catalog-shell--light .wc-block-product-categories-list .category-toggle .screen-reader-text,
+.Gstore-catalog-shell--light .product-categories .category-toggle .screen-reader-text {
+	position: absolute !important;
+	width: 1px !important;
+	height: 1px !important;
+	padding: 0 !important;
+	margin: -1px !important;
+	overflow: hidden !important;
+	clip: rect(0, 0, 0, 0) !important;
+	white-space: nowrap !important;
+	border: 0 !important;
+}
+
 .Gstore-catalog-shell--light .wc-block-product-categories-list .category-toggle:hover,
 .Gstore-catalog-shell--light .product-categories .category-toggle:hover {
 	color: var(--gstore-color-accent, #ff5c00);
@@ -7716,6 +7731,8 @@ body:has(.Gstore-catalog-shell--light) main {
 	overflow: hidden;
 	opacity: 0;
 	transition: max-height 0.3s ease, opacity 0.3s ease, margin-top 0.3s ease;
+	flex-basis: 100%;
+	width: 100%;
 }
 
 /* Estado expandido - mostra subcategorias */
