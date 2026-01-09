@@ -987,6 +987,101 @@ body.single-product .onsale {
 	margin: 0 0 0;
 }
 
+/* WooCommerce - Produto variável (atributos + variação) */
+.Gstore-single-product__add-to-cart form.variations_form {
+	width: 100%;
+}
+
+/* Atributos: 2 colunas (label esquerda + select direita) */
+.Gstore-single-product__add-to-cart form.variations_form table.variations {
+	width: 100%;
+	border-collapse: separate;
+	border-spacing: 0 12px;
+	margin: 0;
+}
+
+.Gstore-single-product__add-to-cart form.variations_form table.variations th,
+.Gstore-single-product__add-to-cart form.variations_form table.variations td {
+	padding: 0;
+	border: 0;
+}
+
+.Gstore-single-product__add-to-cart form.variations_form table.variations th.label {
+	width: 96px;
+	min-width: 96px;
+	padding-right: 12px;
+	vertical-align: middle;
+}
+
+.Gstore-single-product__add-to-cart form.variations_form table.variations th.label label {
+	font-weight: 700;
+	color: var(--gstore-color-text-primary, #1a1a1a);
+	text-transform: capitalize;
+}
+
+.Gstore-single-product__add-to-cart form.variations_form table.variations td.value {
+	vertical-align: middle;
+}
+
+.Gstore-single-product__add-to-cart form.variations_form table.variations select {
+	display: block;
+	width: 100%;
+	box-sizing: border-box;
+	border: 1px solid var(--gstore-color-border-input, #d0d5dd);
+	border-radius: var(--gstore-radius-base, 6px);
+	padding: 12px 14px;
+	min-height: 48px;
+	background: var(--gstore-color-white, #ffffff);
+	color: var(--gstore-color-text-primary, #1a1a1a);
+	box-shadow: none;
+}
+
+.Gstore-single-product__add-to-cart form.variations_form table.variations select:focus {
+	outline: none;
+	border-color: var(--gstore-color-accent, #ff5c00);
+}
+
+.Gstore-single-product__add-to-cart form.variations_form table.variations .reset_variations {
+	display: inline-flex;
+	align-items: center;
+	margin-top: 8px;
+	font-size: var(--gstore-font-size-xs, 0.75rem);
+	color: var(--gstore-color-accent, #ff5c00);
+	text-decoration: none;
+}
+
+.Gstore-single-product__add-to-cart form.variations_form table.variations .reset_variations:hover {
+	text-decoration: underline;
+}
+
+/* Espaçamento do bloco de variação (preço/mensagem) */
+.Gstore-single-product__add-to-cart form.variations_form .single_variation_wrap {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+}
+
+/* Quantidade acima dos botões (evita “colar” no variável) */
+.Gstore-single-product__add-to-cart form.variations_form .woocommerce-variation-add-to-cart,
+.Gstore-single-product__add-to-cart form.variations_form .variations_button {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+	align-items: stretch;
+}
+
+.Gstore-single-product__add-to-cart form.variations_form .woocommerce-variation-add-to-cart .quantity,
+.Gstore-single-product__add-to-cart form.variations_form .variations_button .quantity {
+	float: none !important;
+	margin: 0 !important;
+	width: fit-content;
+}
+
+.Gstore-single-product__add-to-cart form.variations_form .woocommerce-variation-add-to-cart .Gstore-single-product__form-actions,
+.Gstore-single-product__add-to-cart form.variations_form .variations_button .Gstore-single-product__form-actions {
+	width: 100%;
+}
+
 .Gstore-single-product__add-to-cart .quantity .qty {
 	padding: 12px;
 	border-radius: 4px;

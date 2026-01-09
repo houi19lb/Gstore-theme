@@ -1,45 +1,4 @@
 document.addEventListener('DOMContentLoaded', () => {
-	// #region agent log - Debug de variações no JavaScript
-	const debugVariations = () => {
-		const variationsForm = document.querySelector('.variations_form');
-		const variationsTable = document.querySelector('.variations');
-		const variationSelects = document.querySelectorAll('.variations select');
-		const addToCartButton = document.querySelector('.single_add_to_cart_button');
-		const variationPrice = document.querySelector('.woocommerce-variation-price');
-		
-		const debugData = {
-			has_variations_form: !!variationsForm,
-			has_variations_table: !!variationsTable,
-			variation_selects_count: variationSelects.length,
-			has_add_to_cart_button: !!addToCartButton,
-			has_variation_price: !!variationPrice,
-			jquery_available: typeof jQuery !== 'undefined',
-			wc_variation_form_available: typeof jQuery !== 'undefined' && typeof jQuery.fn.wc_variation_form !== 'undefined',
-			wc_add_to_cart_variation_script_loaded: typeof wc_add_to_cart_variation_params !== 'undefined',
-		};
-		
-		if (variationsForm) {
-			debugData.variations_form_data_product_id = variationsForm.dataset.product_id;
-			debugData.variations_form_html_preview = variationsForm.outerHTML.substring(0, 500);
-		}
-		
-		if (variationSelects.length > 0) {
-			debugData.first_select_name = variationSelects[0].name;
-			debugData.first_select_options_count = variationSelects[0].options.length;
-			debugData.first_select_options = Array.from(variationSelects[0].options).map(o => ({ value: o.value, text: o.text }));
-		}
-		
-		// Log no console para debug em produção
-		console.log('%c[GSTORE DEBUG] Variações Frontend', 'background: #6366f1; color: white; padding: 2px 6px; border-radius: 3px;', debugData);
-		
-		// Também salvar no window para fácil acesso
-		window.GSTORE_DEBUG_VARIATIONS = debugData;
-	};
-	
-	// Executar debug após um pequeno delay para garantir que o WooCommerce inicializou
-	setTimeout(debugVariations, 500);
-	// #endregion
-
 	const reviewTriggers = document.querySelectorAll('[data-gstore-tab-target="reviews"]');
 
 	const focusReviewTab = () => {

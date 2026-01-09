@@ -303,43 +303,6 @@ if ( ! $product instanceof WC_Product ) {
 	return;
 }
 
-// #region agent log - Debug variações do produto
-$debug_data = array(
-	'product_id' => $product->get_id(),
-	'product_type' => $product->get_type(),
-	'is_variable' => $product->is_type('variable'),
-	'has_child' => $product->has_child(),
-);
-
-if ( $product->is_type('variable') ) {
-	$variation_ids = $product->get_children();
-	$debug_data['variation_count'] = count($variation_ids);
-	$debug_data['variation_ids'] = $variation_ids;
-	
-	// Verificar atributos de variação
-	$attributes = $product->get_variation_attributes();
-	$debug_data['variation_attributes'] = $attributes;
-	$debug_data['variation_attributes_count'] = count($attributes);
-	
-	// Verificar se há variações disponíveis (publicadas e com preço)
-	$available_variations = $product->get_available_variations();
-	$debug_data['available_variations_count'] = count($available_variations);
-	
-	// Verificar o primeiro atributo
-	if (!empty($attributes)) {
-		$first_attr_key = array_key_first($attributes);
-		$debug_data['first_attribute_key'] = $first_attr_key;
-		$debug_data['first_attribute_options'] = $attributes[$first_attr_key];
-	}
-}
-
-// Renderizar debug como elemento oculto na página (visível no DevTools)
-echo '<!-- GSTORE_DEBUG_START -->';
-echo '<script type="application/json" id="gstore-debug-product-init">';
-echo json_encode($debug_data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
-echo '</script>';
-echo '<!-- GSTORE_DEBUG_END -->';
-// #endregion
 
 // Remove hooks padrão do WooCommerce.
 remove_action( 'woocommerce_single_product_summary', 'woocommerce_template_single_title', 5 );
@@ -536,28 +499,6 @@ $guarantee_badges  = gstore_get_guarantee_badges();
 							ob_start();
 							woocommerce_template_single_add_to_cart();
 							$add_to_cart_markup = ob_get_clean();
-
-							// #region agent log - Debug do markup do add-to-cart
-							$has_variations_form = strpos($add_to_cart_markup, 'variations_form') !== false;
-							$has_variations_table = strpos($add_to_cart_markup, 'variations') !== false;
-							$has_attribute_select = strpos($add_to_cart_markup, '<select') !== false;
-							$has_variation_id = strpos($add_to_cart_markup, 'variation_id') !== false;
-							
-							$markup_debug = array(
-								'markup_length' => strlen($add_to_cart_markup),
-								'has_variations_form' => $has_variations_form,
-								'has_variations_table' => $has_variations_table,
-								'has_attribute_select' => $has_attribute_select,
-								'has_variation_id' => $has_variation_id,
-								'markup_preview' => substr(strip_tags($add_to_cart_markup), 0, 500),
-							);
-							
-							echo '<!-- GSTORE_DEBUG_MARKUP_START -->';
-							echo '<script type="application/json" id="gstore-debug-add-to-cart-markup">';
-							echo json_encode($markup_debug, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
-							echo '</script>';
-							echo '<!-- GSTORE_DEBUG_MARKUP_END -->';
-							// #endregion
 
 							if ( $add_to_cart_markup ) {
 								$buy_now_button = sprintf(
