@@ -1,0 +1,1247 @@
+{
+  "meta": {
+    "generatedAt": "2026-01-08",
+    "generator": "cursor-gpt",
+    "source": "theme/gstore",
+    "notes": "Documento focado nos principais subsistemas do tema (checkout/pagamentos, frete, store-info/placeholders, setup/admin, category-filter e api-visualizer)."
+  },
+  "rules": [
+    "Não inventar endpoints/hooks que não existam no código.",
+    "Marcar handoff quando houver transição clara de camada (PHP/WP -> React).",
+    "Preferir nós por subsistema (classes/arquivos/endpoints) em vez de listar todas as funções do functions.php."
+  ],
+  "project": {
+    "name": "CAC Armas Gstore",
+    "type": "theme",
+    "version": "1.5.0",
+    "description": "Tema personalizado da CAC Armas otimizado para WooCommerce (inclui gateways Blu, frete customizado, store-info.json, setup/admin e integrações de frontend)."
+  },
+  "entities": [
+    {
+      "id": "php:file:style.css",
+      "layer": "php",
+      "kind": "file",
+      "title": "style.css (Theme Header)",
+      "path": "style.css",
+      "summary": "Metadados do tema + estilos legados (versão 1.5.0).",
+      "tags": ["theme", "css"]
+    },
+    {
+      "id": "php:file:functions.php",
+      "layer": "php",
+      "kind": "file",
+      "title": "functions.php (bootstrap do tema)",
+      "path": "functions.php",
+      "summary": "Bootstrap do tema: registra supports, enqueues, hooks WooCommerce, endpoints AJAX e carrega módulos em inc/.",
+      "tags": ["bootstrap", "woocommerce", "admin", "frontend"]
+    },
+
+    {
+      "id": "wp:hook:after_setup_theme",
+      "layer": "wordpress",
+      "kind": "hook",
+      "title": "after_setup_theme"
+    },
+    {
+      "id": "wp:hook:wp_enqueue_scripts",
+      "layer": "wordpress",
+      "kind": "hook",
+      "title": "wp_enqueue_scripts"
+    },
+    {
+      "id": "wp:hook:send_headers",
+      "layer": "wordpress",
+      "kind": "hook",
+      "title": "send_headers"
+    },
+    {
+      "id": "wp:hook:init",
+      "layer": "wordpress",
+      "kind": "hook",
+      "title": "init"
+    },
+    {
+      "id": "wp:hook:admin_menu",
+      "layer": "wordpress",
+      "kind": "hook",
+      "title": "admin_menu"
+    },
+    {
+      "id": "wp:hook:admin_init",
+      "layer": "wordpress",
+      "kind": "hook",
+      "title": "admin_init"
+    },
+    {
+      "id": "wp:hook:admin_enqueue_scripts",
+      "layer": "wordpress",
+      "kind": "hook",
+      "title": "admin_enqueue_scripts"
+    },
+    {
+      "id": "wp:hook:rest_api_init",
+      "layer": "wordpress",
+      "kind": "hook",
+      "title": "rest_api_init"
+    },
+    {
+      "id": "wp:hook:template_redirect",
+      "layer": "wordpress",
+      "kind": "hook",
+      "title": "template_redirect"
+    },
+    {
+      "id": "wp:hook:shutdown",
+      "layer": "wordpress",
+      "kind": "hook",
+      "title": "shutdown"
+    },
+
+    {
+      "id": "wp:hook:woocommerce_payment_gateways",
+      "layer": "wordpress",
+      "kind": "hook",
+      "title": "woocommerce_payment_gateways (filter)"
+    },
+    {
+      "id": "wp:hook:woocommerce_available_payment_gateways",
+      "layer": "wordpress",
+      "kind": "hook",
+      "title": "woocommerce_available_payment_gateways (filter)"
+    },
+    {
+      "id": "wp:hook:woocommerce_order_actions",
+      "layer": "wordpress",
+      "kind": "hook",
+      "title": "woocommerce_order_actions (filter)"
+    },
+    {
+      "id": "wp:hook:woocommerce_order_action_gstore_blu_refresh_status",
+      "layer": "wordpress",
+      "kind": "hook",
+      "title": "woocommerce_order_action_gstore_blu_refresh_status"
+    },
+    {
+      "id": "wp:hook:woocommerce_blocks_payment_method_type_registration",
+      "layer": "wordpress",
+      "kind": "hook",
+      "title": "woocommerce_blocks_payment_method_type_registration"
+    },
+    {
+      "id": "wp:hook:woocommerce_shipping_methods",
+      "layer": "wordpress",
+      "kind": "hook",
+      "title": "woocommerce_shipping_methods (filter)"
+    },
+    {
+      "id": "wp:hook:woocommerce_package_rates",
+      "layer": "wordpress",
+      "kind": "hook",
+      "title": "woocommerce_package_rates (filter)"
+    },
+    {
+      "id": "wp:hook:woocommerce_checkout_update_order_review",
+      "layer": "wordpress",
+      "kind": "hook",
+      "title": "woocommerce_checkout_update_order_review"
+    },
+    {
+      "id": "wp:hook:woocommerce_shortcode_products_query",
+      "layer": "wordpress",
+      "kind": "hook",
+      "title": "woocommerce_shortcode_products_query (filter)"
+    },
+    {
+      "id": "wp:hook:woocommerce_product_query",
+      "layer": "wordpress",
+      "kind": "hook",
+      "title": "woocommerce_product_query"
+    },
+    {
+      "id": "wp:hook:render_block",
+      "layer": "wordpress",
+      "kind": "hook",
+      "title": "render_block (filter)"
+    },
+    {
+      "id": "wp:hook:render_block_core/html",
+      "layer": "wordpress",
+      "kind": "hook",
+      "title": "render_block_core/html (filter)"
+    },
+    {
+      "id": "wp:hook:render_block_core/template-part",
+      "layer": "wordpress",
+      "kind": "hook",
+      "title": "render_block_core/template-part (filter)"
+    },
+    {
+      "id": "wp:hook:render_block_core/image",
+      "layer": "wordpress",
+      "kind": "hook",
+      "title": "render_block_core/image (filter)"
+    },
+
+    {
+      "id": "php:subsystem:frontend_assets",
+      "layer": "php",
+      "kind": "subsystem",
+      "title": "Frontend Assets (enqueues)",
+      "summary": "Enfileira CSS/JS do tema (inclui category-filter) no wp_enqueue_scripts.",
+      "details": {
+        "entrypoints": ["gstore_enqueue_styles", "gstore_enqueue_scripts"],
+        "notes": "O tema enfileira diversos CSS/JS; aqui destacamos o filtro de categorias como subsistema visível."
+      },
+      "tags": ["frontend", "assets"]
+    },
+    {
+      "id": "wp:asset:assets/css/category-filter.css",
+      "layer": "wordpress",
+      "kind": "asset",
+      "title": "category-filter.css",
+      "path": "assets/css/category-filter.css",
+      "summary": "Estilos do filtro de categorias estilo marketplace."
+    },
+    {
+      "id": "wp:asset:assets/js/category-filter.js",
+      "layer": "wordpress",
+      "kind": "asset",
+      "title": "category-filter.js",
+      "path": "assets/js/category-filter.js",
+      "summary": "JS do filtro de categorias (chips, tree expand/collapse, apply/clear)."
+    },
+
+    {
+      "id": "php:file:inc/class-gstore-category-filter.php",
+      "layer": "php",
+      "kind": "file",
+      "title": "Category Filter (PHP)",
+      "path": "inc/class-gstore-category-filter.php",
+      "summary": "Intercepta o bloco woocommerce/product-categories e aplica filtro de categorias na query.",
+      "tags": ["frontend", "woocommerce", "filters"]
+    },
+    {
+      "id": "php:class:GStore_Category_Filter",
+      "layer": "php",
+      "kind": "class",
+      "title": "GStore_Category_Filter",
+      "path": "inc/class-gstore-category-filter.php",
+      "summary": "Filtro de categorias estilo marketplace (árvore multi-select) com querystring filter_cat[]."
+    },
+
+    {
+      "id": "php:file:inc/class-gstore-store-info.php",
+      "layer": "php",
+      "kind": "file",
+      "title": "Store Info (classe)",
+      "path": "inc/class-gstore-store-info.php",
+      "summary": "Classe singleton que lê/salva informações da loja em store-info.json (estrutura validada).",
+      "tags": ["config", "json"]
+    },
+    {
+      "id": "php:class:GStore_Store_Info",
+      "layer": "php",
+      "kind": "class",
+      "title": "GStore_Store_Info",
+      "path": "inc/class-gstore-store-info.php",
+      "summary": "API interna para get_value/set_value/export/import do store-info.json."
+    },
+    {
+      "id": "wp:asset:store-info.json",
+      "layer": "wordpress",
+      "kind": "asset",
+      "title": "store-info.json",
+      "path": "store-info.json",
+      "summary": "Dados centralizados da loja (store/contact/address/social/footer/meta/branding).",
+      "tags": ["config"]
+    },
+    {
+      "id": "php:subsystem:store_info_placeholders",
+      "layer": "php",
+      "kind": "subsystem",
+      "title": "Store Info Placeholders",
+      "summary": "Processa placeholders {{store_name}}, {{whatsapp_link}}, etc. via render_block + output buffer; lê dados do store-info.json.",
+      "details": {
+        "placeholdersPrefix": "{{...}}",
+        "buffering": { "startHook": "template_redirect", "endHook": "shutdown" }
+      },
+      "tags": ["frontend", "placeholders"]
+    },
+
+    {
+      "id": "wp:admin_page:gstore-settings",
+      "layer": "wordpress",
+      "kind": "admin_page",
+      "title": "Configurações Gstore",
+      "summary": "Aparência → Configurações Gstore (hero slider, banners, logo, store-info export/import, sync Git).",
+      "details": { "slug": "gstore-settings", "screenId": "appearance_page_gstore-settings" },
+      "tags": ["admin"]
+    },
+    {
+      "id": "wp:admin_post:gstore_export_store_info",
+      "layer": "wordpress",
+      "kind": "endpoint",
+      "title": "admin-post export store-info",
+      "summary": "POST /wp-admin/admin-post.php?action=gstore_export_store_info"
+    },
+    {
+      "id": "wp:admin_post:gstore_import_store_info",
+      "layer": "wordpress",
+      "kind": "endpoint",
+      "title": "admin-post import store-info",
+      "summary": "POST /wp-admin/admin-post.php?action=gstore_import_store_info"
+    },
+
+    {
+      "id": "php:file:inc/class-gstore-blu-payment-gateway.php",
+      "layer": "php",
+      "kind": "file",
+      "title": "Blu Checkout Gateway",
+      "path": "inc/class-gstore-blu-payment-gateway.php",
+      "summary": "Gateway WooCommerce 'blu_checkout' (checkout por link) + webhook REST + ação manual no pedido.",
+      "tags": ["woocommerce", "payments", "blu"]
+    },
+    {
+      "id": "php:class:Gstore_Blu_Payment_Gateway",
+      "layer": "php",
+      "kind": "class",
+      "title": "Gstore_Blu_Payment_Gateway",
+      "path": "inc/class-gstore-blu-payment-gateway.php",
+      "summary": "WC_Payment_Gateway: cria link Blu, salva metas, envia instruções por e-mail e aplica status por webhook."
+    },
+    {
+      "id": "php:file:inc/class-gstore-blu-pix-gateway.php",
+      "layer": "php",
+      "kind": "file",
+      "title": "Blu Pix Gateway",
+      "path": "inc/class-gstore-blu-pix-gateway.php",
+      "summary": "Gateway WooCommerce 'blu_pix' (Pix) + webhook REST Pix + consulta/atualização de metadados.",
+      "tags": ["woocommerce", "payments", "blu", "pix"]
+    },
+    {
+      "id": "php:class:Gstore_Blu_Pix_Gateway",
+      "layer": "php",
+      "kind": "class",
+      "title": "Gstore_Blu_Pix_Gateway",
+      "path": "inc/class-gstore-blu-pix-gateway.php",
+      "summary": "WC_Payment_Gateway: cria Pix, salva QR/EMV em meta e renderiza instruções no thankyou."
+    },
+    {
+      "id": "wp:endpoint:gstore_blu_v1_webhook",
+      "layer": "wordpress",
+      "kind": "endpoint",
+      "title": "POST/PUT /wp-json/gstore-blu/v1/webhook",
+      "summary": "Webhook do Blu Checkout (link)."
+    },
+    {
+      "id": "wp:endpoint:gstore_blu_v1_pix_webhook",
+      "layer": "wordpress",
+      "kind": "endpoint",
+      "title": "POST/PUT /wp-json/gstore-blu/v1/pix-webhook",
+      "summary": "Webhook do Pix Blu."
+    },
+    {
+      "id": "php:file:inc/blu-filter.php",
+      "layer": "php",
+      "kind": "file",
+      "title": "Blu Only Gateway Filter",
+      "path": "inc/blu-filter.php",
+      "summary": "Filtro opcional: no frontend, mantém apenas blu_checkout e blu_pix em woocommerce_available_payment_gateways.",
+      "tags": ["woocommerce", "payments"]
+    },
+    {
+      "id": "wp:ajax:gstore_get_pix_data",
+      "layer": "wordpress",
+      "kind": "endpoint",
+      "title": "AJAX gstore_get_pix_data",
+      "summary": "POST /wp-admin/admin-ajax.php?action=gstore_get_pix_data (nonce: gstore_pix_nonce)",
+      "tags": ["ajax", "pix"]
+    },
+    {
+      "id": "wp:ajax:gstore_blu_get_installment_quotes",
+      "layer": "wordpress",
+      "kind": "endpoint",
+      "title": "AJAX gstore_blu_get_installment_quotes",
+      "summary": "POST /wp-admin/admin-ajax.php?action=gstore_blu_get_installment_quotes",
+      "tags": ["ajax", "payments"]
+    },
+    {
+      "id": "wp:ajax:gstore_get_cart_summary",
+      "layer": "wordpress",
+      "kind": "endpoint",
+      "title": "AJAX gstore_get_cart_summary",
+      "summary": "POST /wp-admin/admin-ajax.php?action=gstore_get_cart_summary",
+      "tags": ["ajax", "checkout"]
+    },
+    {
+      "id": "php:file:inc/class-gstore-blu-payment-gateway-blocks.php",
+      "layer": "php",
+      "kind": "file",
+      "title": "Blu Blocks Integration",
+      "path": "inc/class-gstore-blu-payment-gateway-blocks.php",
+      "summary": "Integração do gateway Blu com WooCommerce Blocks (PaymentMethodType).",
+      "tags": ["woocommerce", "blocks", "payments"]
+    },
+    {
+      "id": "php:class:Gstore_Blu_Payment_Gateway_Blocks",
+      "layer": "php",
+      "kind": "class",
+      "title": "Gstore_Blu_Payment_Gateway_Blocks",
+      "path": "inc/class-gstore-blu-payment-gateway-blocks.php",
+      "summary": "Registra método de pagamento Blu para checkout em blocos."
+    },
+
+    {
+      "id": "php:file:inc/class-gstore-shipping-method.php",
+      "layer": "php",
+      "kind": "file",
+      "title": "Frete Gstore (método)",
+      "path": "inc/class-gstore-shipping-method.php",
+      "summary": "WC_Shipping_Method 'gstore_custom_shipping' baseado em peso tático + região; lê shipping-rates.json.",
+      "tags": ["shipping", "woocommerce"]
+    },
+    {
+      "id": "php:class:Gstore_Shipping_Method",
+      "layer": "php",
+      "kind": "class",
+      "title": "Gstore_Shipping_Method",
+      "path": "inc/class-gstore-shipping-method.php",
+      "summary": "Calcula frete com faixas (munição/arma/combos) por região (sul/resto_brasil/rio_janeiro)."
+    },
+    {
+      "id": "php:file:inc/class-gstore-shipping-admin.php",
+      "layer": "php",
+      "kind": "file",
+      "title": "Frete Gstore (admin)",
+      "path": "inc/class-gstore-shipping-admin.php",
+      "summary": "Tela admin para editar/exportar/importar shipping-rates.json (submenu em gstore-setup).",
+      "tags": ["shipping", "admin"]
+    },
+    {
+      "id": "php:class:Gstore_Shipping_Admin",
+      "layer": "php",
+      "kind": "class",
+      "title": "Gstore_Shipping_Admin",
+      "path": "inc/class-gstore-shipping-admin.php",
+      "summary": "Admin de frete: add_submenu_page, handle_form_submit e enqueue_admin_scripts; garante JSON padrão."
+    },
+    {
+      "id": "wp:asset:assets/json/shipping-rates.json",
+      "layer": "wordpress",
+      "kind": "asset",
+      "title": "shipping-rates.json",
+      "path": "assets/json/shipping-rates.json",
+      "summary": "Tabela de frete por região e faixa (editável via admin).",
+      "tags": ["shipping", "config"]
+    },
+    {
+      "id": "wp:ajax:gstore_calculate_shipping",
+      "layer": "wordpress",
+      "kind": "endpoint",
+      "title": "AJAX gstore_calculate_shipping",
+      "summary": "POST /wp-admin/admin-ajax.php?action=gstore_calculate_shipping (nonce: gstore_shipping_calculator)",
+      "tags": ["ajax", "shipping"]
+    },
+
+    {
+      "id": "wp:admin_page:gstore-setup",
+      "layer": "wordpress",
+      "kind": "admin_page",
+      "title": "Setup Gstore",
+      "summary": "Menu do admin para criação/sincronização de páginas e utilitários do tema.",
+      "details": { "slug": "gstore-setup" },
+      "tags": ["admin", "setup"]
+    },
+    {
+      "id": "wp:ajax:gstore_setup_action",
+      "layer": "wordpress",
+      "kind": "endpoint",
+      "title": "AJAX gstore_setup_action",
+      "summary": "POST /wp-admin/admin-ajax.php?action=gstore_setup_action (nonce: gstore_setup_nonce)",
+      "tags": ["ajax", "admin", "setup"]
+    },
+    {
+      "id": "wp:admin_page:gstore-design-tokens",
+      "layer": "wordpress",
+      "kind": "admin_page",
+      "title": "Design Tokens",
+      "summary": "Submenu em Setup Gstore: visualização/edição de tokens (cor de accent, preview).",
+      "details": { "slug": "gstore-design-tokens" },
+      "tags": ["admin", "design"]
+    },
+    {
+      "id": "wp:ajax:gstore_get_image_data",
+      "layer": "wordpress",
+      "kind": "endpoint",
+      "title": "AJAX gstore_get_image_data",
+      "summary": "POST /wp-admin/admin-ajax.php?action=gstore_get_image_data (nonce: gstore_ajax)",
+      "tags": ["ajax", "admin"]
+    },
+    {
+      "id": "wp:ajax:gstore_get_derived_tokens",
+      "layer": "wordpress",
+      "kind": "endpoint",
+      "title": "AJAX gstore_get_derived_tokens",
+      "summary": "POST /wp-admin/admin-ajax.php?action=gstore_get_derived_tokens (nonce: gstore_get_derived_tokens)",
+      "tags": ["ajax", "admin", "design"]
+    },
+    {
+      "id": "wp:ajax:gstore_save_accent_color",
+      "layer": "wordpress",
+      "kind": "endpoint",
+      "title": "AJAX gstore_save_accent_color",
+      "summary": "POST /wp-admin/admin-ajax.php?action=gstore_save_accent_color (nonce: gstore_save_accent_color)",
+      "tags": ["ajax", "admin", "design"]
+    },
+    {
+      "id": "wp:ajax:gstore_get_diagnostics_script",
+      "layer": "wordpress",
+      "kind": "endpoint",
+      "title": "AJAX gstore_get_diagnostics_script",
+      "summary": "POST /wp-admin/admin-ajax.php?action=gstore_get_diagnostics_script (nonce: gstore_setup_nonce)",
+      "tags": ["ajax", "admin", "diagnostics"]
+    },
+
+    {
+      "id": "php:file:inc/class-gstore-theme-updater.php",
+      "layer": "php",
+      "kind": "file",
+      "title": "Theme Git Updater",
+      "path": "inc/class-gstore-theme-updater.php",
+      "summary": "Atualizador do tema via GitHub (git fetch + reset --hard) acionado por AJAX no admin.",
+      "tags": ["admin", "git"]
+    },
+    {
+      "id": "php:class:Gstore_Theme_Git_Updater",
+      "layer": "php",
+      "kind": "class",
+      "title": "Gstore_Theme_Git_Updater",
+      "path": "inc/class-gstore-theme-updater.php",
+      "summary": "Adiciona link de ação no tema e endpoint wp_ajax_gstore_theme_git_pull."
+    },
+    {
+      "id": "wp:ajax:gstore_theme_git_pull",
+      "layer": "wordpress",
+      "kind": "endpoint",
+      "title": "AJAX gstore_theme_git_pull",
+      "summary": "POST /wp-admin/admin-ajax.php?action=gstore_theme_git_pull (nonce: gstore_theme_git_pull)",
+      "tags": ["ajax", "admin", "git"]
+    },
+
+    {
+      "id": "php:file:inc/class-gstore-admin.php",
+      "layer": "php",
+      "kind": "file",
+      "title": "Admin Media Tools",
+      "path": "inc/class-gstore-admin.php",
+      "summary": "Ferramentas administrativas (regeneração de miniaturas) via página em Aparência.",
+      "tags": ["admin", "media"]
+    },
+    {
+      "id": "php:class:Gstore_Admin",
+      "layer": "php",
+      "kind": "class",
+      "title": "Gstore_Admin",
+      "path": "inc/class-gstore-admin.php",
+      "summary": "Adiciona página 'GStore Media' e endpoint wp_ajax_gstore_regenerate_thumbnails."
+    },
+    {
+      "id": "wp:admin_page:gstore-media",
+      "layer": "wordpress",
+      "kind": "admin_page",
+      "title": "GStore Media Tools",
+      "summary": "Aparência → GStore Media (regenerar thumbnails).",
+      "details": { "slug": "gstore-media", "screenId": "appearance_page_gstore-media" },
+      "tags": ["admin", "media"]
+    },
+    {
+      "id": "wp:ajax:gstore_regenerate_thumbnails",
+      "layer": "wordpress",
+      "kind": "endpoint",
+      "title": "AJAX gstore_regenerate_thumbnails",
+      "summary": "POST /wp-admin/admin-ajax.php?action=gstore_regenerate_thumbnails",
+      "tags": ["ajax", "admin", "media"]
+    },
+
+    {
+      "id": "php:file:inc/api-visualizer.php",
+      "layer": "php",
+      "kind": "file",
+      "title": "API Visualizer (WP integration)",
+      "path": "inc/api-visualizer.php",
+      "summary": "Shortcode [api_visualizer] que monta app React (Vite) e injeta window.API_VISUALIZER_CONFIG.",
+      "tags": ["react", "shortcode", "docs"]
+    },
+    {
+      "id": "wp:shortcode:api_visualizer",
+      "layer": "wordpress",
+      "kind": "shortcode",
+      "title": "[api_visualizer]",
+      "summary": "Shortcode que renderiza <div id=\"api-visualizer-root\"> para montar o app."
+    },
+    {
+      "id": "react:app:api_visualizer",
+      "layer": "react",
+      "kind": "app",
+      "title": "API Visualizer (React)",
+      "path": "api-visualizer/src/main.jsx",
+      "summary": "App React (Vite) para visualizar OpenAPI como Mind Map/Swagger UI.",
+      "details": { "mountRootId": "api-visualizer-root", "build": "api-visualizer/dist/" }
+    },
+
+    {
+      "id": "php:subsystem:cart_ajax_no_cache",
+      "layer": "php",
+      "kind": "subsystem",
+      "title": "Carrinho: anti-cache em AJAX",
+      "summary": "Adiciona headers anti-cache em ações AJAX do carrinho (wp_ajax_* e wc_ajax_*) para evitar desync em produção.",
+      "details": {
+        "hooks": [
+          "wp_ajax_woocommerce_add_to_cart",
+          "wp_ajax_woocommerce_remove_from_cart",
+          "wp_ajax_woocommerce_update_cart",
+          "wc_ajax_add_to_cart",
+          "wc_ajax_remove_from_cart",
+          "wc_ajax_update_cart"
+        ]
+      },
+      "tags": ["ajax", "cart", "performance"]
+    }
+  ],
+  "connections": [
+    {
+      "id": "c:theme_bootstrap_after_setup",
+      "from": "php:file:functions.php",
+      "to": "wp:hook:after_setup_theme",
+      "type": "hooks_into",
+      "handoff": true,
+      "notes": "Registra supports do tema e ajustes iniciais (WooCommerce + imagens)."
+    },
+    {
+      "id": "c:theme_bootstrap_enqueue_frontend",
+      "from": "php:file:functions.php",
+      "to": "wp:hook:wp_enqueue_scripts",
+      "type": "hooks_into",
+      "handoff": true
+    },
+    {
+      "id": "c:enqueue_frontend_assets_subsystem",
+      "from": "wp:hook:wp_enqueue_scripts",
+      "to": "php:subsystem:frontend_assets",
+      "type": "invokes",
+      "handoff": true
+    },
+    {
+      "id": "c:frontend_assets_enqueues_category_filter_css",
+      "from": "php:subsystem:frontend_assets",
+      "to": "wp:asset:assets/css/category-filter.css",
+      "type": "enqueues"
+    },
+    {
+      "id": "c:frontend_assets_enqueues_category_filter_js",
+      "from": "php:subsystem:frontend_assets",
+      "to": "wp:asset:assets/js/category-filter.js",
+      "type": "enqueues"
+    },
+    {
+      "id": "c:theme_bootstrap_permissions_policy",
+      "from": "php:file:functions.php",
+      "to": "wp:hook:send_headers",
+      "type": "hooks_into",
+      "handoff": true,
+      "notes": "Envia Permissions-Policy: payment=*, clipboard-write=* (suporte a Pix/checkout)."
+    },
+
+    {
+      "id": "c:theme_requires_category_filter",
+      "from": "php:file:functions.php",
+      "to": "php:file:inc/class-gstore-category-filter.php",
+      "type": "requires"
+    },
+    {
+      "id": "c:category_filter_defines_class",
+      "from": "php:file:inc/class-gstore-category-filter.php",
+      "to": "php:class:GStore_Category_Filter",
+      "type": "defines"
+    },
+    {
+      "id": "c:category_filter_hooks_render_block",
+      "from": "php:class:GStore_Category_Filter",
+      "to": "wp:hook:render_block",
+      "type": "hooks_into",
+      "handoff": true,
+      "notes": "Intercepta o bloco woocommerce/product-categories e renderiza HTML customizado."
+    },
+    {
+      "id": "c:category_filter_hooks_shortcode_query",
+      "from": "php:class:GStore_Category_Filter",
+      "to": "wp:hook:woocommerce_shortcode_products_query",
+      "type": "hooks_into",
+      "handoff": true
+    },
+    {
+      "id": "c:category_filter_hooks_main_product_query",
+      "from": "php:class:GStore_Category_Filter",
+      "to": "wp:hook:woocommerce_product_query",
+      "type": "hooks_into",
+      "handoff": true
+    },
+
+    {
+      "id": "c:theme_requires_store_info_class",
+      "from": "php:file:functions.php",
+      "to": "php:file:inc/class-gstore-store-info.php",
+      "type": "requires"
+    },
+    {
+      "id": "c:store_info_defines_class",
+      "from": "php:file:inc/class-gstore-store-info.php",
+      "to": "php:class:GStore_Store_Info",
+      "type": "defines"
+    },
+    {
+      "id": "c:store_info_reads_json",
+      "from": "php:class:GStore_Store_Info",
+      "to": "wp:asset:store-info.json",
+      "type": "reads_writes",
+      "handoff": true
+    },
+    {
+      "id": "c:theme_registers_settings_page",
+      "from": "php:file:functions.php",
+      "to": "wp:admin_page:gstore-settings",
+      "type": "registers",
+      "handoff": true
+    },
+    {
+      "id": "c:settings_page_export_admin_post",
+      "from": "wp:admin_page:gstore-settings",
+      "to": "wp:admin_post:gstore_export_store_info",
+      "type": "posts_to",
+      "handoff": true
+    },
+    {
+      "id": "c:settings_page_import_admin_post",
+      "from": "wp:admin_page:gstore-settings",
+      "to": "wp:admin_post:gstore_import_store_info",
+      "type": "posts_to",
+      "handoff": true
+    },
+    {
+      "id": "c:admin_post_export_uses_store_info",
+      "from": "wp:admin_post:gstore_export_store_info",
+      "to": "php:class:GStore_Store_Info",
+      "type": "invokes",
+      "handoff": true
+    },
+    {
+      "id": "c:admin_post_import_uses_store_info",
+      "from": "wp:admin_post:gstore_import_store_info",
+      "to": "php:class:GStore_Store_Info",
+      "type": "invokes",
+      "handoff": true
+    },
+
+    {
+      "id": "c:theme_placeholders_buffer_start",
+      "from": "php:file:functions.php",
+      "to": "wp:hook:template_redirect",
+      "type": "hooks_into",
+      "handoff": true
+    },
+    {
+      "id": "c:theme_placeholders_buffer_end",
+      "from": "php:file:functions.php",
+      "to": "wp:hook:shutdown",
+      "type": "hooks_into",
+      "handoff": true
+    },
+    {
+      "id": "c:placeholders_hooks_render_block_core_html",
+      "from": "php:subsystem:store_info_placeholders",
+      "to": "wp:hook:render_block_core/html",
+      "type": "hooks_into",
+      "handoff": true
+    },
+    {
+      "id": "c:placeholders_hooks_render_block_core_template_part",
+      "from": "php:subsystem:store_info_placeholders",
+      "to": "wp:hook:render_block_core/template-part",
+      "type": "hooks_into",
+      "handoff": true
+    },
+    {
+      "id": "c:placeholders_hooks_render_block_core_image",
+      "from": "php:subsystem:store_info_placeholders",
+      "to": "wp:hook:render_block_core/image",
+      "type": "hooks_into",
+      "handoff": true
+    },
+    {
+      "id": "c:placeholders_hooks_render_block_all",
+      "from": "php:subsystem:store_info_placeholders",
+      "to": "wp:hook:render_block",
+      "type": "hooks_into",
+      "handoff": true
+    },
+    {
+      "id": "c:placeholders_use_store_info",
+      "from": "php:subsystem:store_info_placeholders",
+      "to": "php:class:GStore_Store_Info",
+      "type": "reads",
+      "handoff": true
+    },
+
+    {
+      "id": "c:theme_requires_blu_checkout_gateway",
+      "from": "php:file:functions.php",
+      "to": "php:file:inc/class-gstore-blu-payment-gateway.php",
+      "type": "requires"
+    },
+    {
+      "id": "c:blu_checkout_defines_gateway_class",
+      "from": "php:file:inc/class-gstore-blu-payment-gateway.php",
+      "to": "php:class:Gstore_Blu_Payment_Gateway",
+      "type": "defines"
+    },
+    {
+      "id": "c:blu_checkout_hooks_payment_gateways",
+      "from": "php:file:inc/class-gstore-blu-payment-gateway.php",
+      "to": "wp:hook:woocommerce_payment_gateways",
+      "type": "hooks_into",
+      "handoff": true
+    },
+    {
+      "id": "c:payment_gateways_registers_blu_checkout",
+      "from": "wp:hook:woocommerce_payment_gateways",
+      "to": "php:class:Gstore_Blu_Payment_Gateway",
+      "type": "registers",
+      "handoff": true
+    },
+    {
+      "id": "c:blu_checkout_hooks_order_actions",
+      "from": "php:file:inc/class-gstore-blu-payment-gateway.php",
+      "to": "wp:hook:woocommerce_order_actions",
+      "type": "hooks_into",
+      "handoff": true
+    },
+    {
+      "id": "c:blu_checkout_order_action_handler",
+      "from": "php:file:inc/class-gstore-blu-payment-gateway.php",
+      "to": "wp:hook:woocommerce_order_action_gstore_blu_refresh_status",
+      "type": "hooks_into",
+      "handoff": true
+    },
+    {
+      "id": "c:blu_checkout_hooks_rest_api_init",
+      "from": "php:file:inc/class-gstore-blu-payment-gateway.php",
+      "to": "wp:hook:rest_api_init",
+      "type": "hooks_into",
+      "handoff": true
+    },
+    {
+      "id": "c:rest_api_registers_blu_webhook",
+      "from": "wp:hook:rest_api_init",
+      "to": "wp:endpoint:gstore_blu_v1_webhook",
+      "type": "registers",
+      "handoff": true
+    },
+
+    {
+      "id": "c:theme_requires_blu_pix_gateway",
+      "from": "php:file:functions.php",
+      "to": "php:file:inc/class-gstore-blu-pix-gateway.php",
+      "type": "requires"
+    },
+    {
+      "id": "c:blu_pix_defines_gateway_class",
+      "from": "php:file:inc/class-gstore-blu-pix-gateway.php",
+      "to": "php:class:Gstore_Blu_Pix_Gateway",
+      "type": "defines"
+    },
+    {
+      "id": "c:blu_pix_hooks_payment_gateways",
+      "from": "php:file:inc/class-gstore-blu-pix-gateway.php",
+      "to": "wp:hook:woocommerce_payment_gateways",
+      "type": "hooks_into",
+      "handoff": true
+    },
+    {
+      "id": "c:payment_gateways_registers_blu_pix",
+      "from": "wp:hook:woocommerce_payment_gateways",
+      "to": "php:class:Gstore_Blu_Pix_Gateway",
+      "type": "registers",
+      "handoff": true
+    },
+    {
+      "id": "c:blu_pix_hooks_rest_api_init",
+      "from": "php:file:inc/class-gstore-blu-pix-gateway.php",
+      "to": "wp:hook:rest_api_init",
+      "type": "hooks_into",
+      "handoff": true
+    },
+    {
+      "id": "c:rest_api_registers_blu_pix_webhook",
+      "from": "wp:hook:rest_api_init",
+      "to": "wp:endpoint:gstore_blu_v1_pix_webhook",
+      "type": "registers",
+      "handoff": true
+    },
+
+    {
+      "id": "c:theme_requires_blu_only_filter",
+      "from": "php:file:functions.php",
+      "to": "php:file:inc/blu-filter.php",
+      "type": "requires"
+    },
+    {
+      "id": "c:blu_only_hooks_available_gateways",
+      "from": "php:file:inc/blu-filter.php",
+      "to": "wp:hook:woocommerce_available_payment_gateways",
+      "type": "hooks_into",
+      "handoff": true
+    },
+
+    {
+      "id": "c:ajax_pix_data_endpoint",
+      "from": "php:file:functions.php",
+      "to": "wp:ajax:gstore_get_pix_data",
+      "type": "registers",
+      "handoff": true
+    },
+    {
+      "id": "c:ajax_pix_data_uses_pix_gateway",
+      "from": "wp:ajax:gstore_get_pix_data",
+      "to": "php:class:Gstore_Blu_Pix_Gateway",
+      "type": "invokes",
+      "handoff": true,
+      "notes": "Lê metadados QR/EMV do pedido e consulta Pix na Blu quando necessário."
+    },
+    {
+      "id": "c:ajax_installment_quotes_endpoint",
+      "from": "php:file:functions.php",
+      "to": "wp:ajax:gstore_blu_get_installment_quotes",
+      "type": "registers",
+      "handoff": true
+    },
+    {
+      "id": "c:ajax_installment_quotes_uses_blu_gateway",
+      "from": "wp:ajax:gstore_blu_get_installment_quotes",
+      "to": "php:class:Gstore_Blu_Payment_Gateway",
+      "type": "invokes",
+      "handoff": true,
+      "notes": "Simula valores por parcela via session (chosen_payment_method=blu_checkout)."
+    },
+    {
+      "id": "c:ajax_cart_summary_endpoint",
+      "from": "php:file:functions.php",
+      "to": "wp:ajax:gstore_get_cart_summary",
+      "type": "registers",
+      "handoff": true
+    },
+    {
+      "id": "c:ajax_cart_summary_uses_shipping",
+      "from": "wp:ajax:gstore_get_cart_summary",
+      "to": "php:class:Gstore_Shipping_Method",
+      "type": "invokes",
+      "handoff": true,
+      "notes": "Força calculate_totals e usa sessão chosen_shipping_methods=gstore_custom_shipping quando necessário."
+    },
+
+    {
+      "id": "c:theme_requires_shipping",
+      "from": "php:file:functions.php",
+      "to": "php:file:inc/class-gstore-shipping-method.php",
+      "type": "requires"
+    },
+    {
+      "id": "c:shipping_method_defines_class",
+      "from": "php:file:inc/class-gstore-shipping-method.php",
+      "to": "php:class:Gstore_Shipping_Method",
+      "type": "defines"
+    },
+    {
+      "id": "c:shipping_method_reads_rates",
+      "from": "php:class:Gstore_Shipping_Method",
+      "to": "wp:asset:assets/json/shipping-rates.json",
+      "type": "reads",
+      "handoff": true
+    },
+    {
+      "id": "c:theme_requires_shipping_admin",
+      "from": "php:file:functions.php",
+      "to": "php:file:inc/class-gstore-shipping-admin.php",
+      "type": "requires"
+    },
+    {
+      "id": "c:shipping_admin_defines_class",
+      "from": "php:file:inc/class-gstore-shipping-admin.php",
+      "to": "php:class:Gstore_Shipping_Admin",
+      "type": "defines"
+    },
+    {
+      "id": "c:theme_registers_shipping_method_hook",
+      "from": "php:file:functions.php",
+      "to": "wp:hook:woocommerce_shipping_methods",
+      "type": "hooks_into",
+      "handoff": true
+    },
+    {
+      "id": "c:woocommerce_shipping_methods_registers_gstore_method",
+      "from": "wp:hook:woocommerce_shipping_methods",
+      "to": "php:class:Gstore_Shipping_Method",
+      "type": "registers",
+      "handoff": true
+    },
+    {
+      "id": "c:theme_injects_package_rates",
+      "from": "php:file:functions.php",
+      "to": "wp:hook:woocommerce_package_rates",
+      "type": "hooks_into",
+      "handoff": true
+    },
+    {
+      "id": "c:theme_clears_shipping_cache_on_update_review",
+      "from": "php:file:functions.php",
+      "to": "wp:hook:woocommerce_checkout_update_order_review",
+      "type": "hooks_into",
+      "handoff": true
+    },
+    {
+      "id": "c:shipping_admin_initialized_on_init",
+      "from": "php:file:functions.php",
+      "to": "wp:hook:init",
+      "type": "hooks_into",
+      "handoff": true,
+      "notes": "Instancia Gstore_Shipping_Admin no init quando WooCommerce está disponível."
+    },
+    {
+      "id": "c:shipping_admin_hooks_admin_menu",
+      "from": "php:class:Gstore_Shipping_Admin",
+      "to": "wp:hook:admin_menu",
+      "type": "hooks_into",
+      "handoff": true
+    },
+    {
+      "id": "c:shipping_admin_hooks_admin_init",
+      "from": "php:class:Gstore_Shipping_Admin",
+      "to": "wp:hook:admin_init",
+      "type": "hooks_into",
+      "handoff": true
+    },
+    {
+      "id": "c:shipping_admin_hooks_admin_enqueue",
+      "from": "php:class:Gstore_Shipping_Admin",
+      "to": "wp:hook:admin_enqueue_scripts",
+      "type": "hooks_into",
+      "handoff": true
+    },
+    {
+      "id": "c:shipping_admin_writes_rates",
+      "from": "php:class:Gstore_Shipping_Admin",
+      "to": "wp:asset:assets/json/shipping-rates.json",
+      "type": "reads_writes",
+      "handoff": true
+    },
+    {
+      "id": "c:ajax_shipping_endpoint",
+      "from": "php:file:functions.php",
+      "to": "wp:ajax:gstore_calculate_shipping",
+      "type": "registers",
+      "handoff": true
+    },
+    {
+      "id": "c:ajax_shipping_uses_shipping_method",
+      "from": "wp:ajax:gstore_calculate_shipping",
+      "to": "php:class:Gstore_Shipping_Method",
+      "type": "invokes",
+      "handoff": true,
+      "notes": "Calcula peso tático e custo, e sincroniza CEP/UF na sessão do WooCommerce."
+    },
+
+    {
+      "id": "c:theme_registers_setup_menu",
+      "from": "php:file:functions.php",
+      "to": "wp:admin_page:gstore-setup",
+      "type": "registers",
+      "handoff": true
+    },
+    {
+      "id": "c:setup_page_calls_setup_action_ajax",
+      "from": "wp:admin_page:gstore-setup",
+      "to": "wp:ajax:gstore_setup_action",
+      "type": "calls",
+      "handoff": true
+    },
+    {
+      "id": "c:setup_registers_ajax_action",
+      "from": "php:file:functions.php",
+      "to": "wp:ajax:gstore_setup_action",
+      "type": "registers",
+      "handoff": true
+    },
+
+    {
+      "id": "c:theme_registers_design_tokens_page",
+      "from": "php:file:functions.php",
+      "to": "wp:admin_page:gstore-design-tokens",
+      "type": "registers",
+      "handoff": true
+    },
+    {
+      "id": "c:design_tokens_ajax_get_image_data",
+      "from": "php:file:functions.php",
+      "to": "wp:ajax:gstore_get_image_data",
+      "type": "registers",
+      "handoff": true
+    },
+    {
+      "id": "c:design_tokens_ajax_get_derived_tokens",
+      "from": "php:file:functions.php",
+      "to": "wp:ajax:gstore_get_derived_tokens",
+      "type": "registers",
+      "handoff": true
+    },
+    {
+      "id": "c:design_tokens_ajax_save_accent_color",
+      "from": "php:file:functions.php",
+      "to": "wp:ajax:gstore_save_accent_color",
+      "type": "registers",
+      "handoff": true
+    },
+    {
+      "id": "c:setup_ajax_get_diagnostics_script",
+      "from": "php:file:functions.php",
+      "to": "wp:ajax:gstore_get_diagnostics_script",
+      "type": "registers",
+      "handoff": true
+    },
+
+    {
+      "id": "c:theme_updater_initialized_in_admin",
+      "from": "php:file:functions.php",
+      "to": "php:file:inc/class-gstore-theme-updater.php",
+      "type": "requires",
+      "notes": "Carrega updater apenas no admin."
+    },
+    {
+      "id": "c:theme_updater_defines_class",
+      "from": "php:file:inc/class-gstore-theme-updater.php",
+      "to": "php:class:Gstore_Theme_Git_Updater",
+      "type": "defines"
+    },
+    {
+      "id": "c:theme_updater_registers_ajax",
+      "from": "php:class:Gstore_Theme_Git_Updater",
+      "to": "wp:ajax:gstore_theme_git_pull",
+      "type": "registers",
+      "handoff": true
+    },
+    {
+      "id": "c:settings_page_calls_theme_git_pull",
+      "from": "wp:admin_page:gstore-settings",
+      "to": "wp:ajax:gstore_theme_git_pull",
+      "type": "calls",
+      "handoff": true
+    },
+
+    {
+      "id": "c:admin_media_requires_class",
+      "from": "php:file:functions.php",
+      "to": "php:file:inc/class-gstore-admin.php",
+      "type": "requires"
+    },
+    {
+      "id": "c:admin_media_defines_class",
+      "from": "php:file:inc/class-gstore-admin.php",
+      "to": "php:class:Gstore_Admin",
+      "type": "defines"
+    },
+    {
+      "id": "c:admin_media_registers_page",
+      "from": "php:class:Gstore_Admin",
+      "to": "wp:admin_page:gstore-media",
+      "type": "registers",
+      "handoff": true
+    },
+    {
+      "id": "c:admin_media_registers_ajax",
+      "from": "php:class:Gstore_Admin",
+      "to": "wp:ajax:gstore_regenerate_thumbnails",
+      "type": "registers",
+      "handoff": true
+    },
+
+    {
+      "id": "c:blocks_payment_registration_hook",
+      "from": "php:file:functions.php",
+      "to": "wp:hook:woocommerce_blocks_payment_method_type_registration",
+      "type": "hooks_into",
+      "handoff": true
+    },
+    {
+      "id": "c:blocks_requires_integration_file",
+      "from": "php:file:functions.php",
+      "to": "php:file:inc/class-gstore-blu-payment-gateway-blocks.php",
+      "type": "requires"
+    },
+    {
+      "id": "c:blocks_defines_class",
+      "from": "php:file:inc/class-gstore-blu-payment-gateway-blocks.php",
+      "to": "php:class:Gstore_Blu_Payment_Gateway_Blocks",
+      "type": "defines"
+    },
+    {
+      "id": "c:blocks_registry_registers_blu",
+      "from": "wp:hook:woocommerce_blocks_payment_method_type_registration",
+      "to": "php:class:Gstore_Blu_Payment_Gateway_Blocks",
+      "type": "registers",
+      "handoff": true
+    },
+
+    {
+      "id": "c:theme_requires_api_visualizer",
+      "from": "php:file:functions.php",
+      "to": "php:file:inc/api-visualizer.php",
+      "type": "requires"
+    },
+    {
+      "id": "c:api_visualizer_registers_shortcode",
+      "from": "php:file:inc/api-visualizer.php",
+      "to": "wp:shortcode:api_visualizer",
+      "type": "registers",
+      "handoff": true
+    },
+    {
+      "id": "c:api_visualizer_shortcode_mounts_react",
+      "from": "wp:shortcode:api_visualizer",
+      "to": "react:app:api_visualizer",
+      "type": "mounts",
+      "handoff": true,
+      "notes": "Renderiza #api-visualizer-root; em produção usa manifest Vite, em dev usa Vite server (WP_DEBUG)."
+    },
+
+    {
+      "id": "c:cart_ajax_no_cache_subsystem",
+      "from": "php:file:functions.php",
+      "to": "php:subsystem:cart_ajax_no_cache",
+      "type": "implements",
+      "notes": "Hooka gstore_prevent_cart_ajax_cache em wp_ajax_* e wc_ajax_*."
+    }
+  ],
+  "metadata": {
+    "generatedAt": "2026-01-08",
+    "scope": "theme",
+    "schema": "VizualizerDocumentation (draft-07)",
+    "notes": [
+      "Tema: CAC Armas Gstore (versão 1.5.0).",
+      "Pagamentos: gateways Blu (checkout link + Pix) com webhooks REST em gstore-blu/v1.",
+      "Frete: método customizado gstore_custom_shipping + admin para editar assets/json/shipping-rates.json.",
+      "Store Info: store-info.json com export/import via admin-post e placeholders {{...}} processados via output buffer e render_block.",
+      "Admin: Setup Gstore (AJAX), Design Tokens (AJAX tokens/accent) e Media Tools (AJAX thumbnails).",
+      "Frontend: category filter intercepta bloco de categorias e altera queries (shortcode e query principal).",
+      "React: api-visualizer é integrado via shortcode [api_visualizer]."
+    ]
+  }
+}
+

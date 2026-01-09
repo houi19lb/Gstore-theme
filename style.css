@@ -788,6 +788,66 @@ h2.wp-block-heading.has-text-align-center.has-x-large-font-size {
 	margin-right: auto;
 }
 
+/* Carrossel de thumbnails (ativa via JS quando houver mais de 4 imagens) */
+.Gstore-single-product__gallery .Gstore-thumbs-carousel {
+	display: grid;
+	grid-template-columns: 32px 1fr 32px;
+	gap: 8px;
+	align-items: center;
+	width: 100%;
+	margin: 12px 0 0 0;
+}
+
+.Gstore-single-product__gallery .Gstore-thumbs-carousel__btn {
+	width: 32px;
+	height: 32px;
+	border: 1px solid var(--gstore-color-border-light);
+	background: var(--gstore-color-bg-light);
+	border-radius: 999px;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	padding: 0;
+	color: inherit;
+	cursor: pointer;
+}
+
+.Gstore-single-product__gallery .Gstore-thumbs-carousel__btn[disabled] {
+	opacity: 0.45;
+	cursor: default;
+}
+
+.Gstore-single-product__gallery .Gstore-thumbs-carousel .flex-control-nav,
+.Gstore-single-product__gallery .Gstore-thumbs-carousel .flex-control-thumbs {
+	margin: 0 !important;
+	padding: 0 !important;
+	list-style: none !important;
+	display: flex !important;
+	flex-direction: row !important;
+	flex-wrap: nowrap !important;
+	gap: 8px !important;
+	justify-content: flex-start !important;
+	align-items: center !important;
+	overflow-x: auto !important;
+	overflow-y: hidden !important;
+	scroll-snap-type: x mandatory;
+	-webkit-overflow-scrolling: touch;
+	scrollbar-width: none;
+}
+
+.Gstore-single-product__gallery .Gstore-thumbs-carousel .flex-control-nav::-webkit-scrollbar,
+.Gstore-single-product__gallery .Gstore-thumbs-carousel .flex-control-thumbs::-webkit-scrollbar {
+	display: none;
+}
+
+.Gstore-single-product__gallery .Gstore-thumbs-carousel .flex-control-nav li,
+.Gstore-single-product__gallery .Gstore-thumbs-carousel .flex-control-thumbs li {
+	margin: 0 !important;
+	width: calc(25% - 6px) !important;
+	flex: 0 0 calc(25% - 6px) !important;
+	scroll-snap-align: start;
+}
+
 /* Garantir que as transições sejam horizontais */
 .Gstore-single-product__gallery .flex-viewport {
 	direction: ltr !important;

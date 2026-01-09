@@ -1,4 +1,45 @@
 document.addEventListener('DOMContentLoaded', () => {
+	// #region agent log - Debug de variações no JavaScript
+	const debugVariations = () => {
+		const variationsForm = document.querySelector('.variations_form');
+		const variationsTable = document.querySelector('.variations');
+		const variationSelects = document.querySelectorAll('.variations select');
+		const addToCartButton = document.querySelector('.single_add_to_cart_button');
+		const variationPrice = document.querySelector('.woocommerce-variation-price');
+		
+		const debugData = {
+			has_variations_form: !!variationsForm,
+			has_variations_table: !!variationsTable,
+			variation_selects_count: variationSelects.length,
+			has_add_to_cart_button: !!addToCartButton,
+			has_variation_price: !!variationPrice,
+			jquery_available: typeof jQuery !== 'undefined',
+			wc_variation_form_available: typeof jQuery !== 'undefined' && typeof jQuery.fn.wc_variation_form !== 'undefined',
+			wc_add_to_cart_variation_script_loaded: typeof wc_add_to_cart_variation_params !== 'undefined',
+		};
+		
+		if (variationsForm) {
+			debugData.variations_form_data_product_id = variationsForm.dataset.product_id;
+			debugData.variations_form_html_preview = variationsForm.outerHTML.substring(0, 500);
+		}
+		
+		if (variationSelects.length > 0) {
+			debugData.first_select_name = variationSelects[0].name;
+			debugData.first_select_options_count = variationSelects[0].options.length;
+			debugData.first_select_options = Array.from(variationSelects[0].options).map(o => ({ value: o.value, text: o.text }));
+		}
+		
+		// Log no console para debug em produção
+		console.log('%c[GSTORE DEBUG] Variações Frontend', 'background: #6366f1; color: white; padding: 2px 6px; border-radius: 3px;', debugData);
+		
+		// Também salvar no window para fácil acesso
+		window.GSTORE_DEBUG_VARIATIONS = debugData;
+	};
+	
+	// Executar debug após um pequeno delay para garantir que o WooCommerce inicializou
+	setTimeout(debugVariations, 500);
+	// #endregion
+
 	const reviewTriggers = document.querySelectorAll('[data-gstore-tab-target="reviews"]');
 
 	const focusReviewTab = () => {
@@ -153,6 +194,126 @@ document.addEventListener('DOMContentLoaded', () => {
 	// Garantir que o FlexSlider da galeria funcione corretamente com layout horizontal
 	const gallery = document.querySelector('.Gstore-single-product__gallery .woocommerce-product-gallery');
 	if (gallery) {
+		let thumbsResizeTimeout;
+
+		// Transformar thumbnails em "carrossel" quando houver mais de 4 imagens
+		const setupThumbsCarousel = () => {
+			const thumbsList = gallery.querySelector('.flex-control-thumbs');
+			if (!thumbsList) {
+				return;
+			}
+
+			const items = thumbsList.querySelectorAll('li');
+			const shouldEnable = items.length > 4;
+			const existingWrapper = thumbsList.closest('.Gstore-thumbs-carousel');
+
+			// Se não precisa de carrossel, desfaz (caso já tenha sido aplicado)
+			if (!shouldEnable) {
+				if (existingWrapper && existingWrapper.parentNode) {
+					existingWrapper.parentNode.insertBefore(thumbsList, existingWrapper);
+					existingWrapper.remove();
+				}
+				return;
+			}
+
+			// Envolve a lista com botões (somente uma vez)
+			if (!existingWrapper) {
+				const wrapper = document.createElement('div');
+				wrapper.className = 'Gstore-thumbs-carousel';
+				wrapper.setAttribute('data-gstore-thumbs-carousel', 'true');
+
+				const prevBtn = document.createElement('button');
+				prevBtn.type = 'button';
+				prevBtn.className = 'Gstore-thumbs-carousel__btn Gstore-thumbs-carousel__btn--prev';
+				prevBtn.setAttribute('aria-label', 'Miniaturas anteriores');
+				prevBtn.textContent = '‹';
+
+				const nextBtn = document.createElement('button');
+				nextBtn.type = 'button';
+				nextBtn.className = 'Gstore-thumbs-carousel__btn Gstore-thumbs-carousel__btn--next';
+				nextBtn.setAttribute('aria-label', 'Próximas miniaturas');
+				nextBtn.textContent = '›';
+
+				const parent = thumbsList.parentNode;
+				if (!parent) {
+					return;
+				}
+
+				parent.insertBefore(wrapper, thumbsList);
+				wrapper.appendChild(prevBtn);
+				wrapper.appendChild(thumbsList);
+				wrapper.appendChild(nextBtn);
+			}
+
+			const wrapper = thumbsList.closest('.Gstore-thumbs-carousel');
+			if (!wrapper) {
+				return;
+			}
+
+			const prevBtn = wrapper.querySelector('.Gstore-thumbs-carousel__btn--prev');
+			const nextBtn = wrapper.querySelector('.Gstore-thumbs-carousel__btn--next');
+			if (!prevBtn || !nextBtn) {
+				return;
+			}
+
+			const getScrollStep = () => {
+				const firstItem = thumbsList.querySelector('li');
+				if (!firstItem) return 0;
+
+				const itemWidth = firstItem.getBoundingClientRect().width || firstItem.offsetWidth || 0;
+				const styles = window.getComputedStyle(thumbsList);
+				const gap = parseFloat(styles.columnGap || styles.gap || '0') || 0;
+
+				return Math.max(1, Math.round(itemWidth + gap));
+			};
+
+			const updateButtons = () => {
+				const maxScrollLeft = thumbsList.scrollWidth - thumbsList.clientWidth;
+				const current = thumbsList.scrollLeft;
+
+				const atStart = current <= 1;
+				const atEnd = current >= maxScrollLeft - 1;
+
+				prevBtn.disabled = atStart;
+				nextBtn.disabled = atEnd;
+			};
+
+			const scrollByStep = (direction) => {
+				const step = getScrollStep();
+				if (!step) return;
+
+				thumbsList.scrollBy({
+					left: direction * step,
+					behavior: 'smooth',
+				});
+			};
+
+			// Inicializar listeners uma única vez por wrapper
+			if (!wrapper.dataset.gstoreThumbsCarouselInit) {
+				wrapper.dataset.gstoreThumbsCarouselInit = 'true';
+
+				prevBtn.addEventListener('click', () => scrollByStep(-1));
+				nextBtn.addEventListener('click', () => scrollByStep(1));
+
+				thumbsList.addEventListener(
+					'scroll',
+					() => {
+						window.requestAnimationFrame(updateButtons);
+					},
+					{ passive: true }
+				);
+
+				window.addEventListener('resize', () => {
+					clearTimeout(thumbsResizeTimeout);
+					thumbsResizeTimeout = setTimeout(() => {
+						updateButtons();
+					}, 100);
+				});
+			}
+
+			updateButtons();
+		};
+
 		// Função para configurar o FlexSlider corretamente
 		const configureFlexSlider = () => {
 			if (typeof jQuery === 'undefined' || !jQuery.fn.flexslider) {
@@ -365,10 +526,14 @@ document.addEventListener('DOMContentLoaded', () => {
 						
 						// Corrigir cliques nas thumbnails
 						setTimeout(fixThumbnailClicks, 100);
+
+						// Ativar carrossel de thumbnails quando necessário
+						setTimeout(setupThumbsCarousel, 120);
 						
 						// Observar mudanças no FlexSlider
 						$gallery.on('flexslider:after', () => {
 							setTimeout(configureFlexSlider, 50);
+							setTimeout(setupThumbsCarousel, 60);
 						});
 					}
 				}, 100);
@@ -389,6 +554,7 @@ document.addEventListener('DOMContentLoaded', () => {
 			clearTimeout(resizeTimeout);
 			resizeTimeout = setTimeout(() => {
 				configureFlexSlider();
+				setupThumbsCarousel();
 			}, 100);
 		});
 	}
