@@ -242,6 +242,14 @@ document.addEventListener('DOMContentLoaded', () => {
 				// #region agent log
 				fetch('http://127.0.0.1:7242/ingest/2e9bdb26-956d-44fb-8061-6eba8efc208f',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'run1',hypothesisId:'H2',location:'assets/js/single-product.js:found_variation',message:'found_variation fired',data:{hasQtyInput:!!form.querySelector('input.qty'),qtyType:form.querySelector('input.qty')?.type || null,hasQtyWrapper:!!form.querySelector('.Gstore-quantity-controls'),wrapperHasInput:!!form.querySelector('.Gstore-quantity-controls input.qty'),addBtnDisabled:!!form.querySelector('.single_add_to_cart_button')?.disabled},timestamp:Date.now()})}).catch(()=>{});
 				// #endregion
+				// #region agent log
+				{
+					const qtyInput = form.querySelector('input.qty');
+					const cs = qtyInput ? window.getComputedStyle(qtyInput) : null;
+					const rect = qtyInput ? qtyInput.getBoundingClientRect() : null;
+					fetch('http://127.0.0.1:7242/ingest/2e9bdb26-956d-44fb-8061-6eba8efc208f',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'run1',hypothesisId:'H3',location:'assets/js/single-product.js:found_variation:qty',message:'found_variation qty computed',data:{qtyExists:!!qtyInput,qtyType:qtyInput?.type||null,qtyValue:qtyInput?.value||null,qtyDisplay:cs?.display||null,qtyVisibility:cs?.visibility||null,qtyOpacity:cs?.opacity||null,qtyColor:cs?.color||null,qtyWidth:rect?.width||null,containerClass:form.querySelector('.woocommerce-variation-add-to-cart')?.className||null},timestamp:Date.now()})}).catch(()=>{});
+				}
+				// #endregion
 
 				if (priceEl && variation && typeof variation.price_html === 'string' && variation.price_html.trim().length) {
 					priceEl.innerHTML = variation.price_html;
@@ -251,6 +259,14 @@ document.addEventListener('DOMContentLoaded', () => {
 			$form.on('reset_data', () => {
 				// #region agent log
 				fetch('http://127.0.0.1:7242/ingest/2e9bdb26-956d-44fb-8061-6eba8efc208f',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'run1',hypothesisId:'H2',location:'assets/js/single-product.js:reset_data',message:'reset_data fired',data:{hasQtyInput:!!form.querySelector('input.qty'),qtyType:form.querySelector('input.qty')?.type || null,hasQtyWrapper:!!form.querySelector('.Gstore-quantity-controls'),wrapperHasInput:!!form.querySelector('.Gstore-quantity-controls input.qty'),addBtnDisabled:!!form.querySelector('.single_add_to_cart_button')?.disabled},timestamp:Date.now()})}).catch(()=>{});
+				// #endregion
+				// #region agent log
+				{
+					const qtyInput = form.querySelector('input.qty');
+					const cs = qtyInput ? window.getComputedStyle(qtyInput) : null;
+					const rect = qtyInput ? qtyInput.getBoundingClientRect() : null;
+					fetch('http://127.0.0.1:7242/ingest/2e9bdb26-956d-44fb-8061-6eba8efc208f',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'run1',hypothesisId:'H3',location:'assets/js/single-product.js:reset_data:qty',message:'reset_data qty computed',data:{qtyExists:!!qtyInput,qtyType:qtyInput?.type||null,qtyValue:qtyInput?.value||null,qtyDisplay:cs?.display||null,qtyVisibility:cs?.visibility||null,qtyOpacity:cs?.opacity||null,qtyColor:cs?.color||null,qtyWidth:rect?.width||null,containerClass:form.querySelector('.woocommerce-variation-add-to-cart')?.className||null},timestamp:Date.now()})}).catch(()=>{});
+				}
 				// #endregion
 
 				if (priceEl && initialPriceHtml) {
@@ -374,6 +390,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
 		// #region agent log
 		fetch('http://127.0.0.1:7242/ingest/2e9bdb26-956d-44fb-8061-6eba8efc208f',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'run1',hypothesisId:'H3',location:'assets/js/single-product.js:enhanceQuantityField',message:'enhanceQuantityField: wrapper built',data:{wrapperChildren:Array.from(wrapper.children).map(el=>({tag:el.tagName,cls:el.className,type:el.type||null,value:el.value||null})),wrapperHasInput:!!wrapper.querySelector('input.qty'),wrapperInputType:wrapper.querySelector('input.qty')?.type || null},timestamp:Date.now()})}).catch(()=>{});
+		// #endregion
+		// #region agent log
+		{
+			const cs = window.getComputedStyle(input);
+			const rect = input.getBoundingClientRect();
+			const wRect = wrapper.getBoundingClientRect();
+			const minusRect = minus.getBoundingClientRect();
+			const plusRect = plus.getBoundingClientRect();
+			const addToCartContainer = field.closest('.woocommerce-variation-add-to-cart');
+			fetch('http://127.0.0.1:7242/ingest/2e9bdb26-956d-44fb-8061-6eba8efc208f',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'run1',hypothesisId:'H3',location:'assets/js/single-product.js:enhanceQuantityField:styles',message:'qty styles after enhance',data:{inBuybox:!!field.closest('.buybox'),containerClass:addToCartContainer?.className||null,inputType:input.type,inputValue:input.value,inputDisplay:cs.display,inputVisibility:cs.visibility,inputOpacity:cs.opacity,inputColor:cs.color,inputWidth:rect.width,wrapperWidth:wRect.width,minusWidth:minusRect.width,plusWidth:plusRect.width},timestamp:Date.now()})}).catch(()=>{});
+		}
 		// #endregion
 
 		// Adiciona o aviso após o wrapper
