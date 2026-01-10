@@ -186,6 +186,11 @@ document.addEventListener('DOMContentLoaded', () => {
 		const addToCartButton = form.querySelector('.single_add_to_cart_button');
 		const priceEl = document.querySelector('[data-gstore-price]');
 		const initialPriceHtml = priceEl ? priceEl.innerHTML : '';
+		const dbgRunId = 'warn1';
+
+		// #region agent log
+		fetch('http://127.0.0.1:7242/ingest/2e9bdb26-956d-44fb-8061-6eba8efc208f',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:dbgRunId,hypothesisId:'W1',location:'assets/js/single-product.js:initVariationsState',message:'initVariationsState init (warning visibility)',data:{selectCount:selects.length,selectNames:selects.slice(0,6).map(s=>s.name||null),warningFound:!!warning,warningId:warning?.id||null,warningHidden:warning?warning.hidden:null,warningCountAll:document.querySelectorAll('[data-gstore-variation-warning]').length,warningCountInForm:form.querySelectorAll('[data-gstore-variation-warning]').length,atcContainerClass:form.querySelector('.woocommerce-variation-add-to-cart')?.className||null,addBtnFound:!!addToCartButton,addBtnDisabledProp:addToCartButton?addToCartButton.disabled:null,addBtnHasDisabledClass:addToCartButton?addToCartButton.classList.contains('disabled'):null,buyNowFound:!!buyNowButton,buyNowDisabled:buyNowButton?buyNowButton.disabled:null},timestamp:Date.now()})}).catch(()=>{});
+		// #endregion
 
 		const getPreviewText = () => {
 			const parts = selects
@@ -200,13 +205,18 @@ document.addEventListener('DOMContentLoaded', () => {
 			return parts.length ? parts.join(' • ') : '—';
 		};
 
+		let dbgLastOk = null;
+		let dbgCount = 0;
 		const update = () => {
 			if (preview) {
 				preview.textContent = getPreviewText();
 			}
 
 			const allSelected = selects.length > 0 && selects.every((s) => String(s.value || '').trim().length > 0);
-			const canAdd = addToCartButton ? !addToCartButton.disabled : allSelected;
+			const canAddProp = addToCartButton ? !addToCartButton.disabled : allSelected;
+			const canAddClass = addToCartButton ? !addToCartButton.classList.contains('disabled') : allSelected;
+			const atcEnabled = !!form.querySelector('.woocommerce-variation-add-to-cart.woocommerce-variation-add-to-cart-enabled');
+			const canAdd = canAddProp && canAddClass;
 			const ok = allSelected && canAdd;
 
 			if (buyNowButton) {
@@ -215,6 +225,15 @@ document.addEventListener('DOMContentLoaded', () => {
 			if (warning) {
 				warning.hidden = ok;
 			}
+
+			// #region agent log
+			if (dbgCount < 8 && (dbgLastOk === null || ok !== dbgLastOk || (warning && warning.hidden !== ok))) {
+				dbgCount += 1;
+				dbgLastOk = ok;
+				const warningCs = warning ? window.getComputedStyle(warning) : null;
+				fetch('http://127.0.0.1:7242/ingest/2e9bdb26-956d-44fb-8061-6eba8efc208f',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:dbgRunId,hypothesisId:'W2',location:'assets/js/single-product.js:update',message:'variation warning update',data:{allSelected,selectValues:selects.slice(0,6).map(s=>({name:s.name||null,value:String(s.value||'')})),canAddProp,canAddClass,atcEnabled,addBtnDisabledProp:addToCartButton?addToCartButton.disabled:null,addBtnHasDisabledClass:addToCartButton?addToCartButton.classList.contains('disabled'):null,addBtnClass:addToCartButton?.className||null,buyNowDisabled:buyNowButton?buyNowButton.disabled:null,warningHidden:warning?warning.hidden:null,warningDisplay:warningCs?warningCs.display:null,warningMarginTop:warningCs?warningCs.marginTop:null},timestamp:Date.now()})}).catch(()=>{});
+			}
+			// #endregion
 		};
 
 		// Eventos nativos
@@ -235,12 +254,18 @@ document.addEventListener('DOMContentLoaded', () => {
 		if (typeof jQuery !== 'undefined') {
 			const $form = jQuery(form);
 			$form.on('found_variation', (event, variation) => {
+				// #region agent log
+				fetch('http://127.0.0.1:7242/ingest/2e9bdb26-956d-44fb-8061-6eba8efc208f',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:dbgRunId,hypothesisId:'W3',location:'assets/js/single-product.js:found_variation',message:'found_variation fired',data:{atcContainerClass:form.querySelector('.woocommerce-variation-add-to-cart')?.className||null,addBtnClass:addToCartButton?.className||null,addBtnDisabledProp:addToCartButton?addToCartButton.disabled:null,addBtnHasDisabledClass:addToCartButton?addToCartButton.classList.contains('disabled'):null},timestamp:Date.now()})}).catch(()=>{});
+				// #endregion
 				if (priceEl && variation && typeof variation.price_html === 'string' && variation.price_html.trim().length) {
 					priceEl.innerHTML = variation.price_html;
 				}
 				setTimeout(update, 0);
 			});
 			$form.on('reset_data', () => {
+				// #region agent log
+				fetch('http://127.0.0.1:7242/ingest/2e9bdb26-956d-44fb-8061-6eba8efc208f',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:dbgRunId,hypothesisId:'W3',location:'assets/js/single-product.js:reset_data',message:'reset_data fired',data:{atcContainerClass:form.querySelector('.woocommerce-variation-add-to-cart')?.className||null},timestamp:Date.now()})}).catch(()=>{});
+				// #endregion
 				if (priceEl && initialPriceHtml) {
 					priceEl.innerHTML = initialPriceHtml;
 				}
@@ -447,6 +472,78 @@ document.addEventListener('DOMContentLoaded', () => {
 				}
 			});
 		}
+
+		/**
+		 * Quando existe apenas 1 imagem, o Woo/FlexSlider pode não gerar a lista
+		 * `.flex-control-thumbs`, deixando a coluna de thumbs vazia. Aqui garantimos
+		 * pelo menos 1 thumbnail usando a primeira imagem disponível na galeria.
+		 */
+		const ensureSingleThumb = () => {
+			// Se já existe lista de thumbs, não faz nada
+			const existingThumbs =
+				productCard.querySelector('.flex-control-thumbs') || gallery.querySelector('.flex-control-thumbs');
+			if (existingThumbs) {
+				return;
+			}
+
+			// Encontrar a primeira imagem renderizada pelo WooCommerce
+			const firstImg =
+				gallery.querySelector('.woocommerce-product-gallery__image img') ||
+				gallery.querySelector('img');
+			if (!firstImg) {
+				return;
+			}
+
+			const src = firstImg.currentSrc || firstImg.src;
+			if (!src) {
+				return;
+			}
+
+			const thumbsList = document.createElement('ol');
+			thumbsList.className = 'flex-control-nav flex-control-thumbs';
+			thumbsList.setAttribute('data-gstore-single-thumb', 'true');
+
+			const li = document.createElement('li');
+			const img = document.createElement('img');
+			img.src = src;
+			img.alt = firstImg.getAttribute('alt') || '';
+			img.className = 'flex-active';
+			img.dataset.slide = '0';
+			img.loading = 'lazy';
+
+			li.appendChild(img);
+			thumbsList.appendChild(li);
+
+			const target = thumbsTarget || gallery;
+			target.appendChild(thumbsList);
+
+			// Se o FlexSlider existir, garantir que click na thumb mantém o slide 0
+			img.addEventListener('click', () => {
+				try {
+					if (typeof jQuery !== 'undefined' && jQuery.fn.flexslider) {
+						const $gallery = jQuery(gallery);
+						const instance = $gallery.data('flexslider');
+						if (instance && typeof instance.flexAnimate === 'function') {
+							instance.flexAnimate(0);
+						}
+					}
+				} catch (_) {
+					// noop
+				}
+			});
+		};
+
+		// Se em algum cenário o FlexSlider criar thumbs depois, remove a thumb "fallback" duplicada
+		const removeSingleThumbIfDuplicated = () => {
+			const scope = thumbsTarget || productCard || gallery;
+			const lists = Array.from(scope.querySelectorAll('.flex-control-thumbs'));
+			if (lists.length <= 1) {
+				return;
+			}
+			lists
+				.filter((list) => list?.dataset?.gstoreSingleThumb === 'true')
+				.forEach((list) => list.remove());
+		};
 
 		// Transformar thumbnails em "carrossel" quando houver mais de 4 imagens
 		const setupThumbsCarousel = () => {
@@ -783,6 +880,10 @@ document.addEventListener('DOMContentLoaded', () => {
 					const flexsliderInstance = $gallery.data('flexslider');
 					if (flexsliderInstance) {
 						clearInterval(checkInit);
+
+						// Garantir thumb mesmo quando há apenas 1 imagem
+						ensureSingleThumb();
+						removeSingleThumbIfDuplicated();
 						
 						// Configurar o FlexSlider
 						configureFlexSlider();
@@ -791,7 +892,11 @@ document.addEventListener('DOMContentLoaded', () => {
 						setTimeout(fixThumbnailClicks, 100);
 
 						// Ativar carrossel de thumbnails quando necessário
-						setTimeout(setupThumbsCarousel, 120);
+						setTimeout(() => {
+							ensureSingleThumb();
+							removeSingleThumbIfDuplicated();
+							setupThumbsCarousel();
+						}, 120);
 						
 						// Observar mudanças no FlexSlider
 						$gallery.on('flexslider:after', () => {
@@ -804,12 +909,20 @@ document.addEventListener('DOMContentLoaded', () => {
 				// Timeout após 5 segundos
 				setTimeout(() => {
 					clearInterval(checkInit);
+					// Se o FlexSlider não inicializou, ainda assim mostrar uma thumb única
+					ensureSingleThumb();
 				}, 5000);
 			}
 		};
 
 		// Iniciar após um pequeno delay para garantir que o WooCommerce inicializou
 		setTimeout(waitForFlexSlider, 200);
+		// Fallback extra: em alguns casos o FlexSlider não inicializa com 1 imagem
+		setTimeout(() => {
+			ensureSingleThumb();
+			removeSingleThumbIfDuplicated();
+			setupThumbsCarousel();
+		}, 450);
 
 		// Recalcular ao redimensionar a janela
 		let resizeTimeout;
