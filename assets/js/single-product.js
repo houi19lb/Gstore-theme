@@ -212,14 +212,23 @@ document.addEventListener('DOMContentLoaded', () => {
 				const qtyInput = container.querySelector('input.qty');
 				const wrapper = container.querySelector('.Gstore-quantity-controls');
 				const plusBtn = container.querySelector('.Gstore-quantity-button--plus');
+				const minusBtn = container.querySelector('.Gstore-quantity-button--minus');
+				const addBtn = container.querySelector('.single_add_to_cart_button');
+				const buyNowBtn = container.querySelector('.Gstore-single-product__buy-now');
 				const csQty = qtyInput ? window.getComputedStyle(qtyInput) : null;
 				const csPlus = plusBtn ? window.getComputedStyle(plusBtn) : null;
+				const csMinus = minusBtn ? window.getComputedStyle(minusBtn) : null;
+				const csAdd = addBtn ? window.getComputedStyle(addBtn) : null;
+				const csBuyNow = buyNowBtn ? window.getComputedStyle(buyNowBtn) : null;
 				const rectQty = qtyInput ? qtyInput.getBoundingClientRect() : null;
 				const rectWrap = wrapper ? wrapper.getBoundingClientRect() : null;
 				const rectPlus = plusBtn ? plusBtn.getBoundingClientRect() : null;
+				const rectMinus = minusBtn ? minusBtn.getBoundingClientRect() : null;
+				const rectAdd = addBtn ? addBtn.getBoundingClientRect() : null;
+				const rectBuyNow = buyNowBtn ? buyNowBtn.getBoundingClientRect() : null;
 
 				// #region agent log
-				fetch('http://127.0.0.1:7242/ingest/2e9bdb26-956d-44fb-8061-6eba8efc208f',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'run1',hypothesisId:'H3',location:'assets/js/single-product.js:atc_state',message:'variation add-to-cart state',data:{reason,state,containerClass:container.className,qtyExists:!!qtyInput,qtyType:qtyInput?.type||null,qtyValue:qtyInput?.value||null,qtyDisplay:csQty?.display||null,qtyVisibility:csQty?.visibility||null,qtyOpacity:csQty?.opacity||null,qtyFontSize:csQty?.fontSize||null,qtyWidth:rectQty?.width||null,wrapperExists:!!wrapper,wrapperWidth:rectWrap?.width||null,wrapperLeft:rectWrap?.left||null,wrapperRight:rectWrap?.right||null,plusExists:!!plusBtn,plusDisplay:csPlus?.display||null,plusVisibility:csPlus?.visibility||null,plusOpacity:csPlus?.opacity||null,plusLeft:rectPlus?.left||null,plusRight:rectPlus?.right||null,plusWidth:rectPlus?.width||null},timestamp:Date.now()})}).catch(()=>{});
+				fetch('http://127.0.0.1:7242/ingest/2e9bdb26-956d-44fb-8061-6eba8efc208f',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'run1',hypothesisId:'H6',location:'assets/js/single-product.js:atc_state',message:'variation add-to-cart state',data:{reason,state,containerClass:container.className,qtyExists:!!qtyInput,qtyType:qtyInput?.type||null,qtyValue:qtyInput?.value||null,qtyDisplay:csQty?.display||null,qtyVisibility:csQty?.visibility||null,qtyOpacity:csQty?.opacity||null,qtyFontSize:csQty?.fontSize||null,qtyWidth:rectQty?.width||null,wrapperExists:!!wrapper,wrapperWidth:rectWrap?.width||null,wrapperLeft:rectWrap?.left||null,wrapperRight:rectWrap?.right||null,minusExists:!!minusBtn,minusFontSize:csMinus?.fontSize||null,minusLineHeight:csMinus?.lineHeight||null,minusWidth:rectMinus?.width||null,minusHeight:rectMinus?.height||null,plusExists:!!plusBtn,plusDisplay:csPlus?.display||null,plusVisibility:csPlus?.visibility||null,plusOpacity:csPlus?.opacity||null,plusFontSize:csPlus?.fontSize||null,plusLineHeight:csPlus?.lineHeight||null,plusLeft:rectPlus?.left||null,plusRight:rectPlus?.right||null,plusWidth:rectPlus?.width||null,plusHeight:rectPlus?.height||null,addBtnExists:!!addBtn,addBtnDisplay:csAdd?.display||null,addBtnWidth:rectAdd?.width||null,addBtnHeight:rectAdd?.height||null,addBtnPadding:csAdd?`${csAdd.paddingTop} ${csAdd.paddingRight} ${csAdd.paddingBottom} ${csAdd.paddingLeft}`:null,buyNowExists:!!buyNowBtn,buyNowDisplay:csBuyNow?.display||null,buyNowHeightProp:csBuyNow?.height||null,buyNowLineHeight:csBuyNow?.lineHeight||null,buyNowPadding:csBuyNow?`${csBuyNow.paddingTop} ${csBuyNow.paddingRight} ${csBuyNow.paddingBottom} ${csBuyNow.paddingLeft}`:null,buyNowWidth:rectBuyNow?.width||null,buyNowHeight:rectBuyNow?.height||null},timestamp:Date.now()})}).catch(()=>{});
 				// #endregion
 			};
 
