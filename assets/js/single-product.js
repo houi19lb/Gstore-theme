@@ -231,7 +231,11 @@ document.addEventListener('DOMContentLoaded', () => {
 				dbgCount += 1;
 				dbgLastOk = ok;
 				const warningCs = warning ? window.getComputedStyle(warning) : null;
-				fetch('http://127.0.0.1:7242/ingest/2e9bdb26-956d-44fb-8061-6eba8efc208f',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:dbgRunId,hypothesisId:'W2',location:'assets/js/single-product.js:update',message:'variation warning update',data:{allSelected,selectValues:selects.slice(0,6).map(s=>({name:s.name||null,value:String(s.value||'')})),canAddProp,canAddClass,atcEnabled,addBtnDisabledProp:addToCartButton?addToCartButton.disabled:null,addBtnHasDisabledClass:addToCartButton?addToCartButton.classList.contains('disabled'):null,addBtnClass:addToCartButton?.className||null,buyNowDisabled:buyNowButton?buyNowButton.disabled:null,warningHidden:warning?warning.hidden:null,warningDisplay:warningCs?warningCs.display:null,warningMarginTop:warningCs?warningCs.marginTop:null},timestamp:Date.now()})}).catch(()=>{});
+				const qtyRow = form.querySelector('.qty-row');
+				const qtyRowCs = qtyRow ? window.getComputedStyle(qtyRow) : null;
+				const atc = form.querySelector('.woocommerce-variation-add-to-cart');
+				const atcCs = atc ? window.getComputedStyle(atc) : null;
+				fetch('http://127.0.0.1:7242/ingest/2e9bdb26-956d-44fb-8061-6eba8efc208f',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:dbgRunId,hypothesisId:'W2',location:'assets/js/single-product.js:update',message:'variation warning update',data:{allSelected,selectValues:selects.slice(0,6).map(s=>({name:s.name||null,value:String(s.value||'')})),canAddProp,canAddClass,atcEnabled,addBtnDisabledProp:addToCartButton?addToCartButton.disabled:null,addBtnHasDisabledClass:addToCartButton?addToCartButton.classList.contains('disabled'):null,addBtnClass:addToCartButton?.className||null,buyNowDisabled:buyNowButton?buyNowButton.disabled:null,warningHidden:warning?warning.hidden:null,warningDisplay:warningCs?warningCs.display:null,warningMarginTop:warningCs?warningCs.marginTop:null,qtyRowFound:!!qtyRow,qtyRowMarginTop:qtyRowCs?qtyRowCs.marginTop:null,atcFound:!!atc,atcMarginTop:atcCs?atcCs.marginTop:null},timestamp:Date.now()})}).catch(()=>{});
 			}
 			// #endregion
 		};
