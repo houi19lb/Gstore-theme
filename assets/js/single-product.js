@@ -179,10 +179,6 @@ document.addEventListener('DOMContentLoaded', () => {
 			return;
 		}
 
-		// #region agent log
-		fetch('http://127.0.0.1:7242/ingest/2e9bdb26-956d-44fb-8061-6eba8efc208f',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'run1',hypothesisId:'H2',location:'assets/js/single-product.js:initVariationsState',message:'initVariationsState: form detected',data:{formClass:form.className,hasQtyInput:!!form.querySelector('input.qty'),qtyType:form.querySelector('input.qty')?.type || null,hasQtyWrapper:!!form.querySelector('.Gstore-quantity-controls')},timestamp:Date.now()})}).catch(()=>{});
-		// #endregion
-
 		const selects = Array.from(form.querySelectorAll('select'));
 		const preview = document.querySelector('[data-gstore-variation-preview]');
 		const warning = document.querySelector('[data-gstore-variation-warning]');
@@ -190,56 +186,6 @@ document.addEventListener('DOMContentLoaded', () => {
 		const addToCartButton = form.querySelector('.single_add_to_cart_button');
 		const priceEl = document.querySelector('[data-gstore-price]');
 		const initialPriceHtml = priceEl ? priceEl.innerHTML : '';
-
-		// Observa mudanças de estado do container add-to-cart (enabled/disabled) para debug.
-		const ensureAtcObserver = () => {
-			const container = form.querySelector('.woocommerce-variation-add-to-cart');
-			if (!container) return;
-			if (container.dataset.gstoreDbgObserved === 'true') return;
-			container.dataset.gstoreDbgObserved = 'true';
-
-			const logState = (reason) => {
-				const state = container.classList.contains('woocommerce-variation-add-to-cart-enabled')
-					? 'enabled'
-					: container.classList.contains('woocommerce-variation-add-to-cart-disabled')
-						? 'disabled'
-						: 'unknown';
-
-				const last = container.dataset.gstoreDbgAtcState || '';
-				if (last === state && reason !== 'first') return;
-				container.dataset.gstoreDbgAtcState = state;
-
-				const qtyInput = container.querySelector('input.qty');
-				const wrapper = container.querySelector('.Gstore-quantity-controls');
-				const plusBtn = container.querySelector('.Gstore-quantity-button--plus');
-				const minusBtn = container.querySelector('.Gstore-quantity-button--minus');
-				const addBtn = container.querySelector('.single_add_to_cart_button');
-				const buyNowBtn = container.querySelector('.Gstore-single-product__buy-now');
-				const csQty = qtyInput ? window.getComputedStyle(qtyInput) : null;
-				const csPlus = plusBtn ? window.getComputedStyle(plusBtn) : null;
-				const csMinus = minusBtn ? window.getComputedStyle(minusBtn) : null;
-				const csAdd = addBtn ? window.getComputedStyle(addBtn) : null;
-				const csBuyNow = buyNowBtn ? window.getComputedStyle(buyNowBtn) : null;
-				const rectQty = qtyInput ? qtyInput.getBoundingClientRect() : null;
-				const rectWrap = wrapper ? wrapper.getBoundingClientRect() : null;
-				const rectPlus = plusBtn ? plusBtn.getBoundingClientRect() : null;
-				const rectMinus = minusBtn ? minusBtn.getBoundingClientRect() : null;
-				const rectAdd = addBtn ? addBtn.getBoundingClientRect() : null;
-				const rectBuyNow = buyNowBtn ? buyNowBtn.getBoundingClientRect() : null;
-
-				// #region agent log
-				fetch('http://127.0.0.1:7242/ingest/2e9bdb26-956d-44fb-8061-6eba8efc208f',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'run1',hypothesisId:'H6',location:'assets/js/single-product.js:atc_state',message:'variation add-to-cart state',data:{reason,state,containerClass:container.className,qtyExists:!!qtyInput,qtyType:qtyInput?.type||null,qtyValue:qtyInput?.value||null,qtyDisplay:csQty?.display||null,qtyVisibility:csQty?.visibility||null,qtyOpacity:csQty?.opacity||null,qtyFontSize:csQty?.fontSize||null,qtyWidth:rectQty?.width||null,wrapperExists:!!wrapper,wrapperWidth:rectWrap?.width||null,wrapperLeft:rectWrap?.left||null,wrapperRight:rectWrap?.right||null,minusExists:!!minusBtn,minusFontSize:csMinus?.fontSize||null,minusLineHeight:csMinus?.lineHeight||null,minusWidth:rectMinus?.width||null,minusHeight:rectMinus?.height||null,plusExists:!!plusBtn,plusDisplay:csPlus?.display||null,plusVisibility:csPlus?.visibility||null,plusOpacity:csPlus?.opacity||null,plusFontSize:csPlus?.fontSize||null,plusLineHeight:csPlus?.lineHeight||null,plusLeft:rectPlus?.left||null,plusRight:rectPlus?.right||null,plusWidth:rectPlus?.width||null,plusHeight:rectPlus?.height||null,addBtnExists:!!addBtn,addBtnDisplay:csAdd?.display||null,addBtnWidth:rectAdd?.width||null,addBtnHeight:rectAdd?.height||null,addBtnPadding:csAdd?`${csAdd.paddingTop} ${csAdd.paddingRight} ${csAdd.paddingBottom} ${csAdd.paddingLeft}`:null,buyNowExists:!!buyNowBtn,buyNowDisplay:csBuyNow?.display||null,buyNowHeightProp:csBuyNow?.height||null,buyNowLineHeight:csBuyNow?.lineHeight||null,buyNowPadding:csBuyNow?`${csBuyNow.paddingTop} ${csBuyNow.paddingRight} ${csBuyNow.paddingBottom} ${csBuyNow.paddingLeft}`:null,buyNowWidth:rectBuyNow?.width||null,buyNowHeight:rectBuyNow?.height||null},timestamp:Date.now()})}).catch(()=>{});
-				// #endregion
-			};
-
-			const observer = new MutationObserver(() => logState('class_change'));
-			observer.observe(container, { attributes: true, attributeFilter: ['class'] });
-			logState('first');
-		};
-
-		ensureAtcObserver();
-		const formObserver = new MutationObserver(() => ensureAtcObserver());
-		formObserver.observe(form, { childList: true, subtree: true });
 
 		const getPreviewText = () => {
 			const parts = selects
@@ -289,36 +235,12 @@ document.addEventListener('DOMContentLoaded', () => {
 		if (typeof jQuery !== 'undefined') {
 			const $form = jQuery(form);
 			$form.on('found_variation', (event, variation) => {
-				// #region agent log
-				fetch('http://127.0.0.1:7242/ingest/2e9bdb26-956d-44fb-8061-6eba8efc208f',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'run1',hypothesisId:'H2',location:'assets/js/single-product.js:found_variation',message:'found_variation fired',data:{hasQtyInput:!!form.querySelector('input.qty'),qtyType:form.querySelector('input.qty')?.type || null,hasQtyWrapper:!!form.querySelector('.Gstore-quantity-controls'),wrapperHasInput:!!form.querySelector('.Gstore-quantity-controls input.qty'),addBtnDisabled:!!form.querySelector('.single_add_to_cart_button')?.disabled},timestamp:Date.now()})}).catch(()=>{});
-				// #endregion
-				// #region agent log
-				{
-					const qtyInput = form.querySelector('input.qty');
-					const cs = qtyInput ? window.getComputedStyle(qtyInput) : null;
-					const rect = qtyInput ? qtyInput.getBoundingClientRect() : null;
-					fetch('http://127.0.0.1:7242/ingest/2e9bdb26-956d-44fb-8061-6eba8efc208f',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'run1',hypothesisId:'H3',location:'assets/js/single-product.js:found_variation:qty',message:'found_variation qty computed',data:{qtyExists:!!qtyInput,qtyType:qtyInput?.type||null,qtyValue:qtyInput?.value||null,qtyDisplay:cs?.display||null,qtyVisibility:cs?.visibility||null,qtyOpacity:cs?.opacity||null,qtyColor:cs?.color||null,qtyWidth:rect?.width||null,containerClass:form.querySelector('.woocommerce-variation-add-to-cart')?.className||null},timestamp:Date.now()})}).catch(()=>{});
-				}
-				// #endregion
-
 				if (priceEl && variation && typeof variation.price_html === 'string' && variation.price_html.trim().length) {
 					priceEl.innerHTML = variation.price_html;
 				}
 				setTimeout(update, 0);
 			});
 			$form.on('reset_data', () => {
-				// #region agent log
-				fetch('http://127.0.0.1:7242/ingest/2e9bdb26-956d-44fb-8061-6eba8efc208f',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'run1',hypothesisId:'H2',location:'assets/js/single-product.js:reset_data',message:'reset_data fired',data:{hasQtyInput:!!form.querySelector('input.qty'),qtyType:form.querySelector('input.qty')?.type || null,hasQtyWrapper:!!form.querySelector('.Gstore-quantity-controls'),wrapperHasInput:!!form.querySelector('.Gstore-quantity-controls input.qty'),addBtnDisabled:!!form.querySelector('.single_add_to_cart_button')?.disabled},timestamp:Date.now()})}).catch(()=>{});
-				// #endregion
-				// #region agent log
-				{
-					const qtyInput = form.querySelector('input.qty');
-					const cs = qtyInput ? window.getComputedStyle(qtyInput) : null;
-					const rect = qtyInput ? qtyInput.getBoundingClientRect() : null;
-					fetch('http://127.0.0.1:7242/ingest/2e9bdb26-956d-44fb-8061-6eba8efc208f',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'run1',hypothesisId:'H3',location:'assets/js/single-product.js:reset_data:qty',message:'reset_data qty computed',data:{qtyExists:!!qtyInput,qtyType:qtyInput?.type||null,qtyValue:qtyInput?.value||null,qtyDisplay:cs?.display||null,qtyVisibility:cs?.visibility||null,qtyOpacity:cs?.opacity||null,qtyColor:cs?.color||null,qtyWidth:rect?.width||null,containerClass:form.querySelector('.woocommerce-variation-add-to-cart')?.className||null},timestamp:Date.now()})}).catch(()=>{});
-				}
-				// #endregion
-
 				if (priceEl && initialPriceHtml) {
 					priceEl.innerHTML = initialPriceHtml;
 				}
@@ -354,25 +276,14 @@ document.addEventListener('DOMContentLoaded', () => {
 			const qty = container.querySelector('.quantity');
 			const addBtn = container.querySelector('.single_add_to_cart_button');
 			if (!qty || !addBtn) {
-				// #region agent log
-				fetch('http://127.0.0.1:7242/ingest/2e9bdb26-956d-44fb-8061-6eba8efc208f',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'run1',hypothesisId:'H5',location:'assets/js/single-product.js:wrapInQtyRow',message:'wrapInQtyRow: missing qty or addBtn',data:{containerClass:container?.className || null,hasQty:!!qty,hasAddBtn:!!addBtn,qtyInputType:container?.querySelector('input.qty')?.type || null},timestamp:Date.now()})}).catch(()=>{});
-				// #endregion
 				return;
 			}
-
-			// #region agent log
-			fetch('http://127.0.0.1:7242/ingest/2e9bdb26-956d-44fb-8061-6eba8efc208f',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'run1',hypothesisId:'H5',location:'assets/js/single-product.js:wrapInQtyRow',message:'wrapInQtyRow: before wrap',data:{containerClass:container.className,qtyInputType:qty.querySelector('input.qty')?.type || null,qtyInputValue:qty.querySelector('input.qty')?.value || null},timestamp:Date.now()})}).catch(()=>{});
-			// #endregion
 
 			const row = document.createElement('div');
 			row.className = 'qty-row';
 			qty.parentNode.insertBefore(row, qty);
 			row.appendChild(qty);
 			row.appendChild(addBtn);
-
-			// #region agent log
-			fetch('http://127.0.0.1:7242/ingest/2e9bdb26-956d-44fb-8061-6eba8efc208f',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'run1',hypothesisId:'H5',location:'assets/js/single-product.js:wrapInQtyRow',message:'wrapInQtyRow: after wrap',data:{hasQtyRow:!!container.querySelector('.qty-row'),qtyRowChildren:Array.from(container.querySelector('.qty-row')?.children || []).map(el=>el.className),qtyInputType:container.querySelector('input.qty')?.type || null},timestamp:Date.now()})}).catch(()=>{});
-			// #endregion
 		};
 
 		// Produto simples
@@ -400,15 +311,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
 		const input = field.querySelector('input.qty');
 		if (!input) {
-			// #region agent log
-			fetch('http://127.0.0.1:7242/ingest/2e9bdb26-956d-44fb-8061-6eba8efc208f',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'run1',hypothesisId:'H5',location:'assets/js/single-product.js:enhanceQuantityField',message:'enhanceQuantityField: no input.qty found',data:{fieldClass:field.className,fieldHtml:field.outerHTML?.slice(0,200) || null},timestamp:Date.now()})}).catch(()=>{});
-			// #endregion
 			return;
 		}
-
-		// #region agent log
-		fetch('http://127.0.0.1:7242/ingest/2e9bdb26-956d-44fb-8061-6eba8efc208f',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'run1',hypothesisId:'H1',location:'assets/js/single-product.js:enhanceQuantityField',message:'enhanceQuantityField: input found',data:{fieldClass:field.className,inputType:input.type,inputValue:input.value,inputMin:input.min,inputMax:input.max,inputStep:input.step},timestamp:Date.now()})}).catch(()=>{});
-		// #endregion
 
 		field.dataset.gstoreQtyEnhanced = 'true';
 
@@ -438,40 +342,6 @@ document.addEventListener('DOMContentLoaded', () => {
 		wrapper.appendChild(input);
 		wrapper.appendChild(plus);
 
-		// #region agent log
-		fetch('http://127.0.0.1:7242/ingest/2e9bdb26-956d-44fb-8061-6eba8efc208f',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'run1',hypothesisId:'H3',location:'assets/js/single-product.js:enhanceQuantityField',message:'enhanceQuantityField: wrapper built',data:{wrapperChildren:Array.from(wrapper.children).map(el=>({tag:el.tagName,cls:el.className,type:el.type||null,value:el.value||null})),wrapperHasInput:!!wrapper.querySelector('input.qty'),wrapperInputType:wrapper.querySelector('input.qty')?.type || null},timestamp:Date.now()})}).catch(()=>{});
-		// #endregion
-		// #region agent log
-		{
-			const cs = window.getComputedStyle(input);
-			const rect = input.getBoundingClientRect();
-			const wRect = wrapper.getBoundingClientRect();
-			const minusRect = minus.getBoundingClientRect();
-			const plusRect = plus.getBoundingClientRect();
-			const addToCartContainer = field.closest('.woocommerce-variation-add-to-cart');
-			fetch('http://127.0.0.1:7242/ingest/2e9bdb26-956d-44fb-8061-6eba8efc208f',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'run1',hypothesisId:'H3',location:'assets/js/single-product.js:enhanceQuantityField:styles',message:'qty styles after enhance',data:{inBuybox:!!field.closest('.buybox'),containerClass:addToCartContainer?.className||null,inputType:input.type,inputValue:input.value,inputDisplay:cs.display,inputVisibility:cs.visibility,inputOpacity:cs.opacity,inputColor:cs.color,inputWidth:rect.width,wrapperWidth:wRect.width,minusWidth:minusRect.width,plusWidth:plusRect.width},timestamp:Date.now()})}).catch(()=>{});
-		}
-		// #endregion
-		// #region agent log
-		{
-			const inBuybox = !!field.closest('.buybox');
-			const buybox = field.closest('.buybox');
-			const qtyRow = field.closest('.qty-row');
-			const addBtn = qtyRow?.querySelector('.single_add_to_cart_button') || buybox?.querySelector('.single_add_to_cart_button');
-			const buyNow = buybox?.querySelector('.Gstore-single-product__buy-now');
-
-			const csMinus = window.getComputedStyle(minus);
-			const csPlus = window.getComputedStyle(plus);
-			const csAdd = addBtn ? window.getComputedStyle(addBtn) : null;
-			const csBuyNow = buyNow ? window.getComputedStyle(buyNow) : null;
-			const rectRow = qtyRow ? qtyRow.getBoundingClientRect() : null;
-			const rectAdd = addBtn ? addBtn.getBoundingClientRect() : null;
-			const rectBuyNow = buyNow ? buyNow.getBoundingClientRect() : null;
-
-			fetch('http://127.0.0.1:7242/ingest/2e9bdb26-956d-44fb-8061-6eba8efc208f',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'run1',hypothesisId:'H6',location:'assets/js/single-product.js:buybox_cta_styles',message:'buybox CTA computed styles',data:{inBuybox,minusText:minus.textContent,plusText:plus.textContent,minusFontSize:csMinus.fontSize,plusFontSize:csPlus.fontSize,minusLineHeight:csMinus.lineHeight,plusLineHeight:csPlus.lineHeight,minusFontWeight:csMinus.fontWeight,plusFontWeight:csPlus.fontWeight,minusWidth:minusRect.width,minusHeight:minusRect.height,plusWidth:plusRect.width,plusHeight:plusRect.height,qtyRowDisplay:qtyRow?window.getComputedStyle(qtyRow).display:null,qtyRowWidth:rectRow?.width||null,addBtnExists:!!addBtn,addBtnWidth:rectAdd?.width||null,addBtnHeight:rectAdd?.height||null,addBtnDisplay:csAdd?.display||null,addBtnFlex:csAdd?.flex||null,addBtnPadding:csAdd?`${csAdd.paddingTop} ${csAdd.paddingRight} ${csAdd.paddingBottom} ${csAdd.paddingLeft}`:null,buyNowExists:!!buyNow,buyNowClass:buyNow?.className||null,buyNowHasBtnOutline:buyNow?.classList?.contains('btn-outline')||false,buyNowInsideBuybox:!!buyNow?.closest('.buybox'),buyNowWidth:rectBuyNow?.width||null,buyNowHeight:rectBuyNow?.height||null,buyNowDisplay:csBuyNow?.display||null,buyNowComputedHeight:csBuyNow?.height||null,buyNowPadding:csBuyNow?`${csBuyNow.paddingTop} ${csBuyNow.paddingRight} ${csBuyNow.paddingBottom} ${csBuyNow.paddingLeft}`:null,buyNowLineHeight:csBuyNow?.lineHeight||null,buyNowFontSize:csBuyNow?.fontSize||null},timestamp:Date.now()})}).catch(()=>{});
-		}
-		// #endregion
-
 		// Adiciona o aviso após o wrapper
 		wrapper.parentNode.insertBefore(lastUnitWarning, wrapper.nextSibling);
 
@@ -497,13 +367,6 @@ document.addEventListener('DOMContentLoaded', () => {
 			const current = getCurrentValue();
 			const min = getMin();
 			const max = getMax();
-
-			if (!wrapper.dataset.gstoreDbgUpdateLogged) {
-				wrapper.dataset.gstoreDbgUpdateLogged = 'true';
-				// #region agent log
-				fetch('http://127.0.0.1:7242/ingest/2e9bdb26-956d-44fb-8061-6eba8efc208f',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'run1',hypothesisId:'H4',location:'assets/js/single-product.js:updateButtons',message:'updateButtons first run',data:{current,min,max,wrapperDisplay:wrapper.style.display,lastUnitDisplay:lastUnitWarning.style.display,inputType:input.type},timestamp:Date.now()})}).catch(()=>{});
-				// #endregion
-			}
 
 			// Quando há apenas 1 unidade (max < 2), esconde todo o seletor
 			if (max < 2) {
