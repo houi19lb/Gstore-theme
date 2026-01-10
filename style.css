@@ -3197,7 +3197,7 @@ padding: 16px;
 	display: none !important;
 }
 
-.buybox .qty.Gstore-quantity-controls {
+.buybox .Gstore-quantity-controls {
 	display: flex;
 	border: 1px solid var(--gstore-color-border-card, #d1d5db);
 	border-radius: var(--gstore-radius-base);
@@ -3207,7 +3207,7 @@ padding: 16px;
 	width: 112px;
 }
 
-.buybox .qty.Gstore-quantity-controls button {
+.buybox .Gstore-quantity-controls button {
 	width: 36px !important;
 	min-width: 36px !important;
 	max-width: 36px !important;
@@ -3218,7 +3218,7 @@ padding: 16px;
 	font-size: 16px;
 }
 
-.buybox .qty.Gstore-quantity-controls input.qty {
+.buybox .Gstore-quantity-controls input.qty {
 	width: 40px !important;
 	min-width: 40px !important;
 	max-width: 40px !important;

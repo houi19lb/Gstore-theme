@@ -317,7 +317,7 @@ document.addEventListener('DOMContentLoaded', () => {
 		field.dataset.gstoreQtyEnhanced = 'true';
 
 		const wrapper = document.createElement('div');
-		wrapper.className = 'qty Gstore-quantity-controls';
+		wrapper.className = 'Gstore-quantity-controls';
 
 		const minus = document.createElement('button');
 		minus.type = 'button';
