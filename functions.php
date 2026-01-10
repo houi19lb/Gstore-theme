@@ -1179,6 +1179,25 @@ function gstore_ensure_cart_events() {
 add_action( 'init', 'gstore_ensure_cart_events', 10 );
 
 /**
+ * "Comprar agora" (produto único): redireciona para o checkout após adicionar ao carrinho.
+ *
+ * Implementado via botão submit no template do produto único (name="gstore_buy_now").
+ */
+function gstore_buy_now_redirect_to_checkout( $url ) {
+	if ( ! class_exists( 'WooCommerce' ) || ! function_exists( 'wc_get_checkout_url' ) ) {
+		return $url;
+	}
+
+	// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+	if ( isset( $_REQUEST['gstore_buy_now'] ) ) {
+		return wc_get_checkout_url();
+	}
+
+	return $url;
+}
+add_filter( 'woocommerce_add_to_cart_redirect', 'gstore_buy_now_redirect_to_checkout', 20 );
+
+/**
  * Adiciona headers HTTP para evitar cache em requisições AJAX do carrinho.
  * 
  * Isso é crítico em ambientes de produção onde cache pode causar

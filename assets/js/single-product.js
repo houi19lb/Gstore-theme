@@ -2,15 +2,13 @@ document.addEventListener('DOMContentLoaded', () => {
 	const reviewTriggers = document.querySelectorAll('[data-gstore-tab-target="reviews"]');
 
 	const focusReviewTab = () => {
-		const reviewsTabLink =
-			document.querySelector('.woocommerce-tabs .reviews_tab a') ||
-			document.querySelector('#tab-title-reviews a');
-
-		if (reviewsTabLink) {
-			reviewsTabLink.click();
+		// Tabs customizados do tema
+		const reviewsTabButton = document.querySelector('[data-gstore-tabs] [data-gstore-tab="reviews"]');
+		if (reviewsTabButton) {
+			reviewsTabButton.click();
 		}
 
-		const reviewsPanel = document.querySelector('#tab-reviews');
+		const reviewsPanel = document.querySelector('#gstore-tab-reviews');
 		if (reviewsPanel) {
 			const preferredOffset = Number(document.body.dataset.gstoreStickyOffset || 120);
 			window.scrollTo({
@@ -23,6 +21,288 @@ document.addEventListener('DOMContentLoaded', () => {
 	reviewTriggers.forEach((trigger) => {
 		trigger.addEventListener('click', focusReviewTab);
 	});
+
+	/**
+	 * Tabs (Descrição / Especificações / Avaliações)
+	 */
+	const initTabs = () => {
+		const root = document.querySelector('[data-gstore-tabs]');
+		if (!root) {
+			return;
+		}
+
+		const buttons = Array.from(root.querySelectorAll('[data-gstore-tab]'));
+		const panels = Array.from(root.querySelectorAll('.Gstore-single-product__tab-panel'));
+		if (buttons.length === 0 || panels.length === 0) {
+			return;
+		}
+
+		const getPanelId = (tab) => `gstore-tab-${tab}`;
+
+		const activate = (tab) => {
+			buttons.forEach((btn) => {
+				const isActive = btn.dataset.gstoreTab === tab;
+				btn.classList.toggle('is-active', isActive);
+				btn.setAttribute('aria-selected', String(isActive));
+			});
+
+			panels.forEach((panel) => {
+				const isActive = panel.id === getPanelId(tab);
+				panel.classList.toggle('is-active', isActive);
+				panel.hidden = !isActive;
+			});
+		};
+
+		// Ativa o default baseado em markup (fallback: 1º)
+		const defaultBtn = buttons.find((b) => b.classList.contains('is-active')) || buttons[0];
+		if (defaultBtn?.dataset?.gstoreTab) {
+			activate(defaultBtn.dataset.gstoreTab);
+		}
+
+		buttons.forEach((btn) => {
+			btn.addEventListener('click', () => {
+				const tab = btn.dataset.gstoreTab;
+				if (!tab) return;
+				activate(tab);
+			});
+		});
+	};
+
+	/**
+	 * Favoritar (compatível com o storage usado nos cards)
+	 */
+	const initFavoriteButton = () => {
+		const button = document.querySelector('[data-gstore-favorite-product]');
+		if (!button) {
+			return;
+		}
+
+		const productId = String(button.dataset.gstoreFavoriteProduct || '').trim();
+		if (!productId) {
+			return;
+		}
+
+		const icon = button.querySelector('i');
+		const storageKey = 'gstore_favorites';
+
+		const readFavorites = () => {
+			try {
+				const raw = localStorage.getItem(storageKey);
+				return raw ? JSON.parse(raw) : [];
+			} catch (e) {
+				return [];
+			}
+		};
+
+		const writeFavorites = (favorites) => {
+			try {
+				localStorage.setItem(storageKey, JSON.stringify(favorites));
+			} catch (e) {
+				// Ignora
+			}
+		};
+
+		const setUI = (isActive) => {
+			button.classList.toggle('is-favorited', isActive);
+			button.setAttribute('aria-pressed', String(isActive));
+			if (icon) {
+				icon.classList.toggle('fa-solid', isActive);
+				icon.classList.toggle('fa-regular', !isActive);
+			}
+		};
+
+		const isFavorited = () => {
+			const favorites = readFavorites();
+			return Array.isArray(favorites) && favorites.includes(productId);
+		};
+
+		// Estado inicial
+		setUI(isFavorited());
+
+		button.addEventListener('click', (e) => {
+			e.preventDefault();
+			const favorites = readFavorites();
+			const current = Array.isArray(favorites) ? favorites : [];
+			const active = current.includes(productId);
+			const next = active ? current.filter((id) => id !== productId) : [...new Set([...current, productId])];
+			writeFavorites(next);
+			setUI(!active);
+		});
+	};
+
+	/**
+	 * Botão "Limpar" (reset de variações + qty)
+	 */
+	const initResetButton = () => {
+		const resetButton = document.querySelector('[data-gstore-reset-purchase]');
+		if (!resetButton) {
+			return;
+		}
+
+		resetButton.addEventListener('click', (e) => {
+			e.preventDefault();
+
+			const form = document.querySelector('.variations_form') || document.querySelector('form.cart');
+			if (!form) {
+				return;
+			}
+
+			// Se for variável, tenta resetar via link nativo do WooCommerce e força selects para vazio.
+			if (form.classList.contains('variations_form')) {
+				const resetLink = form.querySelector('.reset_variations');
+				if (resetLink) {
+					resetLink.click();
+				}
+
+				form.querySelectorAll('select').forEach((select) => {
+					select.value = '';
+					select.dispatchEvent(new Event('change', { bubbles: true }));
+				});
+			}
+
+			// Quantidade volta pro mínimo (fallback: 1)
+			const qty = form.querySelector('input.qty') || document.querySelector('.cart input.qty');
+			if (qty) {
+				const min = parseFloat(qty.min);
+				qty.value = String(isNaN(min) ? 1 : min);
+				qty.dispatchEvent(new Event('change', { bubbles: true }));
+			}
+		});
+	};
+
+	/**
+	 * Preview + gating do "Comprar agora" para produtos variáveis
+	 */
+	const initVariationsState = () => {
+		const form = document.querySelector('.variations_form');
+		if (!form) {
+			return;
+		}
+
+		const selects = Array.from(form.querySelectorAll('select'));
+		const preview = document.querySelector('[data-gstore-variation-preview]');
+		const warning = document.querySelector('[data-gstore-variation-warning]');
+		const buyNowButton = form.querySelector('.Gstore-single-product__buy-now');
+		const addToCartButton = form.querySelector('.single_add_to_cart_button');
+		const priceEl = document.querySelector('[data-gstore-price]');
+		const initialPriceHtml = priceEl ? priceEl.innerHTML : '';
+
+		const getPreviewText = () => {
+			const parts = selects
+				.map((select) => {
+					const value = String(select.value || '').trim();
+					if (!value) return '';
+					const option = select.selectedOptions?.[0];
+					return String(option?.textContent || '').trim();
+				})
+				.filter(Boolean);
+
+			return parts.length ? parts.join(' • ') : '—';
+		};
+
+		const update = () => {
+			if (preview) {
+				preview.textContent = getPreviewText();
+			}
+
+			const allSelected = selects.length > 0 && selects.every((s) => String(s.value || '').trim().length > 0);
+			const canAdd = addToCartButton ? !addToCartButton.disabled : allSelected;
+			const ok = allSelected && canAdd;
+
+			if (buyNowButton) {
+				buyNowButton.disabled = !ok;
+			}
+			if (warning) {
+				warning.hidden = ok;
+			}
+		};
+
+		// Eventos nativos
+		selects.forEach((select) => {
+			select.addEventListener('change', () => {
+				window.requestAnimationFrame(update);
+				setTimeout(update, 0);
+			});
+		});
+
+		// Observa mudança de disabled no botão de add-to-cart (WooCommerce varia isso)
+		if (addToCartButton) {
+			const observer = new MutationObserver(() => update());
+			observer.observe(addToCartButton, { attributes: true, attributeFilter: ['disabled', 'class'] });
+		}
+
+		// Eventos do WooCommerce (se jQuery existir)
+		if (typeof jQuery !== 'undefined') {
+			const $form = jQuery(form);
+			$form.on('found_variation', (event, variation) => {
+				if (priceEl && variation && typeof variation.price_html === 'string' && variation.price_html.trim().length) {
+					priceEl.innerHTML = variation.price_html;
+				}
+				setTimeout(update, 0);
+			});
+			$form.on('reset_data', () => {
+				if (priceEl && initialPriceHtml) {
+					priceEl.innerHTML = initialPriceHtml;
+				}
+				setTimeout(update, 0);
+			});
+			$form.on('found_variation reset_data woocommerce_variation_has_changed', () => {
+				setTimeout(update, 0);
+			});
+		}
+
+		update();
+	};
+
+	initTabs();
+	initFavoriteButton();
+	initResetButton();
+	initVariationsState();
+
+	/**
+	 * Estrutura visual do buybox (mock): qty + add-to-cart na mesma linha.
+	 */
+	const initBuyboxQtyRow = () => {
+		const buybox = document.querySelector('.buybox');
+		if (!buybox) {
+			return;
+		}
+
+		const wrapInQtyRow = (container) => {
+			if (!container || container.querySelector('.qty-row')) {
+				return;
+			}
+
+			const qty = container.querySelector('.quantity');
+			const addBtn = container.querySelector('.single_add_to_cart_button');
+			if (!qty || !addBtn) {
+				return;
+			}
+
+			const row = document.createElement('div');
+			row.className = 'qty-row';
+			qty.parentNode.insertBefore(row, qty);
+			row.appendChild(qty);
+			row.appendChild(addBtn);
+		};
+
+		// Produto simples
+		const simpleForm = buybox.querySelector('form.cart:not(.variations_form)');
+		if (simpleForm) {
+			wrapInQtyRow(simpleForm);
+		}
+
+		// Produto variável
+		const variationsForm = buybox.querySelector('form.variations_form');
+		if (variationsForm) {
+			const addToCartContainer =
+				variationsForm.querySelector('.woocommerce-variation-add-to-cart') ||
+				variationsForm.querySelector('.variations_button');
+			wrapInQtyRow(addToCartContainer);
+		}
+	};
+
+	initBuyboxQtyRow();
 
 	const enhanceQuantityField = (field) => {
 		if (field.dataset.gstoreQtyEnhanced) {
@@ -37,7 +317,7 @@ document.addEventListener('DOMContentLoaded', () => {
 		field.dataset.gstoreQtyEnhanced = 'true';
 
 		const wrapper = document.createElement('div');
-		wrapper.className = 'Gstore-quantity-controls';
+		wrapper.className = 'qty Gstore-quantity-controls';
 
 		const minus = document.createElement('button');
 		minus.type = 'button';
@@ -154,11 +434,34 @@ document.addEventListener('DOMContentLoaded', () => {
 	const gallery = document.querySelector('.Gstore-single-product__gallery .woocommerce-product-gallery');
 	if (gallery) {
 		let thumbsResizeTimeout;
+		const productCard = gallery.closest('.Gstore-single-product__product-card') || document;
+		const thumbsTarget = productCard.querySelector('[data-gstore-gallery-thumbs]');
+		const zoomButton = productCard.querySelector('[data-gstore-gallery-zoom]');
+
+		if (zoomButton) {
+			zoomButton.addEventListener('click', (e) => {
+				e.preventDefault();
+				const firstImageLink = gallery.querySelector('.woocommerce-product-gallery__image a') || gallery.querySelector('a');
+				if (firstImageLink) {
+					firstImageLink.click();
+				}
+			});
+		}
 
 		// Transformar thumbnails em "carrossel" quando houver mais de 4 imagens
 		const setupThumbsCarousel = () => {
-			const thumbsList = gallery.querySelector('.flex-control-thumbs');
+			const thumbsList = productCard.querySelector('.flex-control-thumbs') || gallery.querySelector('.flex-control-thumbs');
 			if (!thumbsList) {
+				return;
+			}
+
+			// Se existir o container da coluna de thumbs (layout do mock), move o <ol> pra lá
+			if (thumbsTarget && thumbsList.parentElement !== thumbsTarget) {
+				thumbsTarget.appendChild(thumbsList);
+			}
+
+			// No layout do mock, não usa o wrapper com botões (deixa scroll vertical via CSS)
+			if (thumbsTarget) {
 				return;
 			}
 
@@ -395,7 +698,8 @@ document.addEventListener('DOMContentLoaded', () => {
 			};
 			
 			// Encontrar todas as thumbnails e adicionar listeners
-			const thumbnails = gallery.querySelectorAll('.flex-control-nav li a, .flex-control-thumbs li a, .flex-control-thumbs li img');
+			const thumbnailsScope = gallery.closest('.Gstore-single-product__gallery') || gallery;
+			const thumbnails = thumbnailsScope.querySelectorAll('.flex-control-nav li a, .flex-control-thumbs li a, .flex-control-thumbs li img');
 			
 			thumbnails.forEach((thumbnail, index) => {
 				thumbnail.addEventListener('click', (e) => {

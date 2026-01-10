@@ -339,6 +339,11 @@ $short_description = apply_filters( 'woocommerce_short_description', $product->g
 $full_description  = apply_filters( 'the_content', $product->get_description() );
 $review_count      = (int) $product->get_review_count();
 $is_in_stock       = $product->is_in_stock();
+$is_variable       = $product->is_type( 'variable' );
+$sku               = (string) $product->get_sku();
+$average_rating    = (float) $product->get_average_rating();
+$rating_display    = $average_rating > 0 ? number_format_i18n( $average_rating, 1 ) : '';
+$review_count_i18n = $review_count > 0 ? number_format_i18n( $review_count ) : '';
 
 // Disponibilidade (seleção do admin via plugin GSTORE).
 $product_id = (int) $product->get_id();
@@ -382,14 +387,6 @@ $formatted_installment = $installment_amt > 0
 	)
 	: '';
 
-// URL de compra direta.
-$buy_now_url = esc_url(
-	add_query_arg(
-		array( 'add-to-cart' => $product->get_id() ),
-		wc_get_checkout_url()
-	)
-);
-
 /*
 |--------------------------------------------------------------------------
 | Atributos e características do produto
@@ -397,6 +394,19 @@ $buy_now_url = esc_url(
 */
 
 $attribute_data = gstore_get_product_attributes( $product );
+
+// Badge do produto (prioriza o 1º atributo visível; fallback: categoria).
+$badge_text = $category_label;
+if ( ! empty( $attribute_data ) && ! empty( $attribute_data[0]['value'] ) ) {
+	$first_value = trim( (string) $attribute_data[0]['value'] );
+	if ( '' !== $first_value ) {
+		$first_value = explode( ',', $first_value )[0];
+		$first_value = trim( (string) $first_value );
+		if ( '' !== $first_value ) {
+			$badge_text = $first_value;
+		}
+	}
+}
 
 /*
 |--------------------------------------------------------------------------
@@ -435,83 +445,260 @@ $guarantee_badges  = gstore_get_guarantee_badges();
 				?>
 			</nav>
 
-			<!-- Seção Principal: Galeria + Resumo -->
+			<!-- Seção Principal: Galeria + Compra -->
 			<section class="Gstore-single-product__section Gstore-single-product__main">
-				<div class="Gstore-single-product__gallery" data-gstore-sticky>
-					<?php do_action( 'woocommerce_before_single_product_summary' ); ?>
-				</div>
+				<div class="Gstore-single-product__left">
+					<article class="product-gallery card Gstore-single-product__card Gstore-single-product__product-card">
+						<div class="gallery-header">
+							<div>
+								<span class="badge"><?php echo esc_html( $badge_text ); ?></span>
 
-				<div class="Gstore-single-product__summary">
-					<div class="Gstore-single-product__summary-card <?php echo $is_in_stock ? 'is-in-stock' : 'is-on-order'; ?>">
-						<p class="Gstore-single-product__eyebrow">
-							<i class="fa-solid fa-shield-halved" aria-hidden="true"></i>
-							<?php echo esc_html( $category_label ); ?>
-						</p>
+								<h1 class="product_title entry-title product-title Gstore-single-product__title"><?php the_title(); ?></h1>
 
-						<h1 class="product_title entry-title Gstore-single-product__title"><?php the_title(); ?></h1>
+								<div class="product-meta">
+									<?php if ( $sku ) : ?>
+										<span class="product-meta__sku">
+											<?php
+											echo esc_html(
+												sprintf(
+													/* translators: %s: SKU do produto */
+													__( 'SKU: %s', 'gstore' ),
+													$sku
+												)
+											);
+											?>
+										</span>
+									<?php endif; ?>
 
-						<!-- Bloco de Preço -->
-						<div class="Gstore-single-product__price-block">
-							<?php if ( $has_discount ) : ?>
-								<div class="Gstore-single-product__price-meta">
-									<span class="Gstore-single-product__price-meta-old">
-										<?php echo wp_kses_post( wc_price( $regular_price ) ); ?>
-									</span>
-									<span class="Gstore-single-product__price-meta-badge">
-										-<?php echo esc_html( $discount_percent ); ?>%
-									</span>
-								</div>
-							<?php endif; ?>
+									<?php if ( $rating_display && $review_count_i18n ) : ?>
+										<?php if ( $sku ) : ?>
+											<span aria-hidden="true"> • </span>
+										<?php endif; ?>
 
-							<div class="Gstore-payment-label">
-								<?php esc_html_e( 'À vista no PIX', 'gstore' ); ?>
-							</div>
-							<div class="price">
-								<?php echo wp_kses_post( wc_price( $current_price ) ); ?>
-							</div>
-
-							<?php if ( $formatted_installment ) : ?>
-								<p class="Gstore-single-product__installments-text">
-									<?php echo wp_kses_post( $formatted_installment ); ?>
-								</p>
-							<?php endif; ?>
-						</div>
-
-						<!-- Add to Cart -->
-						<div class="Gstore-single-product__add-to-cart">
-							<div class="Gstore-single-product__stock-badge <?php echo $is_in_stock ? 'is-in-stock' : 'is-on-order'; ?>">
-								<div class="Gstore-single-product__stock-badge-icon">
-									<i class="fa-solid <?php echo $is_in_stock ? 'fa-circle-check' : 'fa-clock'; ?>" aria-hidden="true"></i>
-								</div>
-								<div class="Gstore-single-product__stock-badge-content">
-									<span class="Gstore-single-product__stock-badge-label">
-										<?php echo $is_in_stock ? esc_html__( 'Disponível', 'gstore' ) : esc_html__( 'Sob encomenda', 'gstore' ); ?>
-									</span>
-									<?php if ( ! $is_in_stock ) : ?>
-										<span class="Gstore-single-product__stock-badge-note">
-											<?php esc_html_e( 'Confirme prazos com nosso time', 'gstore' ); ?>
+										<span class="product-meta__rating">
+											<?php esc_html_e( 'Avaliação:', 'gstore' ); ?>
+											<button type="button" class="product-meta__rating-link" data-gstore-tab-target="reviews">
+												<?php echo esc_html( $rating_display ); ?> (<?php echo esc_html( $review_count_i18n ); ?>)
+											</button>
 										</span>
 									<?php endif; ?>
 								</div>
 							</div>
 
+							<button
+								type="button"
+								class="btn-secondary Gstore-single-product__favorite"
+								aria-pressed="false"
+								data-gstore-favorite-product="<?php echo esc_attr( $product->get_id() ); ?>"
+							>
+								<?php esc_html_e( 'Favoritar', 'gstore' ); ?>
+							</button>
+						</div>
+
+						<div class="gallery-body Gstore-single-product__gallery">
+							<div class="gallery-thumbs" data-gstore-gallery-thumbs></div>
+
+							<div class="gallery-main">
+								<?php do_action( 'woocommerce_before_single_product_summary' ); ?>
+
+								<?php if ( $is_variable ) : ?>
+									<div class="gallery-preview">
+										<?php esc_html_e( 'Preview:', 'gstore' ); ?>
+										<strong id="variantPreview" data-gstore-variation-preview aria-live="polite">—</strong>
+									</div>
+								<?php endif; ?>
+
+								<button type="button" class="btn-secondary" data-gstore-gallery-zoom>
+									<?php esc_html_e( 'Zoom', 'gstore' ); ?>
+								</button>
+							</div>
+						</div>
+
+						<?php if ( ! empty( $hero_meta_cards ) ) : ?>
+							<div class="Gstore-single-product__info-cards">
+								<?php foreach ( $hero_meta_cards as $card ) : ?>
+									<div class="Gstore-single-product__info-card">
+										<div class="Gstore-single-product__info-title">
+											<?php echo esc_html( $card['label'] ); ?>
+										</div>
+										<div class="Gstore-single-product__info-sub">
+											<?php
+											if ( ! empty( $card['allow_html'] ) ) {
+												echo wp_kses_post( $card['text'] );
+											} else {
+												echo esc_html( $card['text'] );
+											}
+											?>
+										</div>
+									</div>
+								<?php endforeach; ?>
+							</div>
+						<?php endif; ?>
+					</article>
+
+					<article class="Gstore-single-product__card Gstore-single-product__tabs" data-gstore-tabs>
+						<div class="Gstore-single-product__tab-buttons" role="tablist" aria-label="<?php esc_attr_e( 'Informações do produto', 'gstore' ); ?>">
+							<button type="button" class="is-active" role="tab" aria-selected="true" aria-controls="gstore-tab-description" id="gstore-tab-btn-description" data-gstore-tab="description">
+								<?php esc_html_e( 'Descrição', 'gstore' ); ?>
+							</button>
+							<button type="button" role="tab" aria-selected="false" aria-controls="gstore-tab-specs" id="gstore-tab-btn-specs" data-gstore-tab="specs">
+								<?php esc_html_e( 'Especificações', 'gstore' ); ?>
+							</button>
+							<button type="button" role="tab" aria-selected="false" aria-controls="gstore-tab-reviews" id="gstore-tab-btn-reviews" data-gstore-tab="reviews">
+								<?php esc_html_e( 'Avaliações', 'gstore' ); ?>
+							</button>
+						</div>
+
+						<div class="Gstore-single-product__tab-panels">
+							<div id="gstore-tab-description" class="Gstore-single-product__tab-panel is-active" role="tabpanel" aria-labelledby="gstore-tab-btn-description">
+								<?php if ( ! empty( $details_info_rows ) ) : ?>
+									<?php foreach ( $details_info_rows as $row ) : ?>
+										<?php
+										$description_icons = array( 'fa-circle-info', 'fa-file-lines' );
+										if ( empty( $row['icon'] ) || ! in_array( $row['icon'], $description_icons, true ) ) {
+											continue;
+										}
+										?>
+										<section class="Gstore-single-product__tab-section" aria-label="<?php echo esc_attr( $row['title'] ); ?>">
+											<h3 class="Gstore-single-product__tab-title">
+												<?php echo esc_html( $row['title'] ); ?>
+											</h3>
+											<div class="Gstore-single-product__tab-content">
+												<?php
+												if ( ! empty( $row['allow_html'] ) ) {
+													echo wp_kses_post( $row['content'] );
+												} else {
+													echo esc_html( $row['content'] );
+												}
+												?>
+											</div>
+										</section>
+									<?php endforeach; ?>
+								<?php endif; ?>
+							</div>
+
+							<div id="gstore-tab-specs" class="Gstore-single-product__tab-panel" role="tabpanel" aria-labelledby="gstore-tab-btn-specs" hidden>
+								<?php if ( ! empty( $details_info_rows ) ) : ?>
+									<?php foreach ( $details_info_rows as $row ) : ?>
+										<?php
+										$description_icons = array( 'fa-circle-info', 'fa-file-lines' );
+										if ( ! empty( $row['icon'] ) && in_array( $row['icon'], $description_icons, true ) ) {
+											continue;
+										}
+										?>
+										<section class="Gstore-single-product__tab-section" aria-label="<?php echo esc_attr( $row['title'] ); ?>">
+											<h3 class="Gstore-single-product__tab-title">
+												<?php echo esc_html( $row['title'] ); ?>
+											</h3>
+											<div class="Gstore-single-product__tab-content">
+												<?php
+												if ( ! empty( $row['allow_html'] ) ) {
+													echo wp_kses_post( $row['content'] );
+												} else {
+													echo esc_html( $row['content'] );
+												}
+												?>
+											</div>
+										</section>
+									<?php endforeach; ?>
+								<?php endif; ?>
+							</div>
+
+							<div id="gstore-tab-reviews" class="Gstore-single-product__tab-panel" role="tabpanel" aria-labelledby="gstore-tab-btn-reviews" hidden>
+								<?php comments_template(); ?>
+							</div>
+						</div>
+					</article>
+				</div>
+
+				<div class="Gstore-single-product__summary">
+					<div class="Gstore-single-product__summary-card Gstore-single-product__buybox buybox <?php echo $is_in_stock ? 'is-in-stock' : 'is-on-order'; ?>">
+						<!-- Preço -->
+						<div class="buybox-header">
+							<div>
+								<div class="price-label"><?php esc_html_e( 'À vista no PIX', 'gstore' ); ?></div>
+								<div class="price" id="price" data-gstore-price>
+									<?php woocommerce_template_single_price(); ?>
+								</div>
+								<?php if ( $is_variable ) : ?>
+									<div class="price-sub"><?php esc_html_e( 'Preço muda conforme as opções', 'gstore' ); ?></div>
+								<?php endif; ?>
+								<?php if ( $formatted_installment ) : ?>
+									<div class="price-sub">
+										<?php echo wp_kses_post( $formatted_installment ); ?>
+									</div>
+								<?php endif; ?>
+							</div>
+
+							<button type="button" class="btn-secondary" data-gstore-reset-purchase>
+								<?php esc_html_e( 'Limpar', 'gstore' ); ?>
+							</button>
+						</div>
+
+						<!-- Disponibilidade -->
+						<div class="stock <?php echo $is_in_stock ? 'is-in-stock' : 'is-on-order'; ?>">
+							<div class="stock-title">
+								<?php echo $is_in_stock ? esc_html__( 'Disponível', 'gstore' ) : esc_html__( 'Sob encomenda', 'gstore' ); ?>
+							</div>
+							<div class="stock-sub">
+								<?php
+								if ( $is_in_stock ) {
+									echo esc_html( $texto_disponibilidade );
+								} else {
+									esc_html_e( 'Confirme prazos com nosso time', 'gstore' );
+								}
+								?>
+							</div>
+						</div>
+
+						<!-- Variações + Quantidade + CTA -->
+						<div class="Gstore-single-product__add-to-cart">
 							<?php
 							ob_start();
 							woocommerce_template_single_add_to_cart();
 							$add_to_cart_markup = ob_get_clean();
 
+							$buy_now_button = sprintf(
+								'<button type="submit" name="gstore_buy_now" value="1" class="btn-outline Gstore-single-product__buy-now"%1$s>%2$s</button>',
+								$is_variable ? ' disabled' : '',
+								esc_html__( 'Comprar agora', 'gstore' )
+							);
+
+							$warning_markup = sprintf(
+								'<div class="warning" id="warning" data-gstore-variation-warning>%s</div>',
+								esc_html__( 'Selecione todas as opções para liberar o botão', 'gstore' )
+							);
+
 							if ( $add_to_cart_markup ) {
-								$buy_now_button = sprintf(
-									'<a class="Gstore-single-product__buy-now" href="%1$s">%2$s</a>',
-									esc_url( $buy_now_url ),
-									esc_html__( 'Comprar agora', 'gstore' )
+								// Aplica classe btn-main ao botão de adicionar ao carrinho.
+								$add_to_cart_markup = preg_replace(
+									'/(<button[^>]*class="[^"]*)single_add_to_cart_button([^"]*")/i',
+									'$1single_add_to_cart_button btn-main$2',
+									$add_to_cart_markup,
+									1
 								);
 
+								// Injeta o aviso ENTRE os selects e a área de quantidade/botões (produto variável).
+								if ( $is_variable ) {
+									if ( preg_match( '/<div class="single_variation_wrap"/i', $add_to_cart_markup ) ) {
+										$add_to_cart_markup = preg_replace(
+											'/(<div class="single_variation_wrap")/i',
+											$warning_markup . '$1',
+											$add_to_cart_markup,
+											1
+										);
+									} elseif ( false !== strpos( $add_to_cart_markup, '</form>' ) ) {
+										$add_to_cart_markup = str_replace( '</form>', $warning_markup . '</form>', $add_to_cart_markup );
+									} else {
+										$add_to_cart_markup .= $warning_markup;
+									}
+								}
+
+								// Insere botão "Comprar agora" após o botão "Adicionar ao carrinho".
 								$button_pattern = '/(<button[^>]*single_add_to_cart_button[^>]*>.*?<\\/button>)/s';
 
 								if ( preg_match( $button_pattern, $add_to_cart_markup ) ) {
-									$form_actions       = '<div class="Gstore-single-product__form-actions">$1' . $buy_now_button . '</div>';
-									$add_to_cart_markup = preg_replace( $button_pattern, $form_actions, $add_to_cart_markup, 1 );
+									$add_to_cart_markup = preg_replace( $button_pattern, '$1' . $buy_now_button, $add_to_cart_markup, 1 );
 								} elseif ( false !== strpos( $add_to_cart_markup, '</form>' ) ) {
 									$add_to_cart_markup = str_replace( '</form>', $buy_now_button . '</form>', $add_to_cart_markup );
 								} else {
@@ -521,22 +708,51 @@ $guarantee_badges  = gstore_get_guarantee_badges();
 								echo $add_to_cart_markup; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 							} else {
 								woocommerce_template_single_add_to_cart();
-								?>
-								<a class="Gstore-single-product__buy-now" href="<?php echo esc_url( $buy_now_url ); ?>">
-									<?php esc_html_e( 'Comprar agora', 'gstore' ); ?>
-								</a>
-								<?php
+								if ( $is_variable ) {
+									echo wp_kses_post( $warning_markup );
+								}
+								echo wp_kses_post( $buy_now_button );
 							}
 							?>
 						</div>
 
-						<!-- Calculador de Frete -->
-						<div class="gstore-shipping-calculator">
-							<h3 class="gstore-shipping-calculator__title">
-								<i class="fa-solid fa-calculator" aria-hidden="true"></i>
-								<?php esc_html_e( 'Calcular Frete', 'gstore' ); ?>
-							</h3>
-							<div class="gstore-shipping-calculator__form">
+						<!-- Leia antes -->
+						<div class="read-before">
+							<a href="<?php echo esc_url( home_url( '/como-comprar-arma/' ) ); ?>">
+								<div>
+									<strong><?php esc_html_e( 'Leia antes de comprar', 'gstore' ); ?></strong>
+									<div class="read-sub"><?php esc_html_e( 'Veja como funciona o processo passo a passo', 'gstore' ); ?></div>
+								</div>
+								<span aria-hidden="true">→</span>
+							</a>
+						</div>
+
+						<!-- Ajuda -->
+						<?php if ( ! empty( $contact_entries ) ) : ?>
+							<div class="help">
+								<div class="help-title"><?php esc_html_e( 'Precisa de ajuda?', 'gstore' ); ?></div>
+
+								<?php foreach ( $contact_entries as $contact ) : ?>
+									<div class="help-item">
+										<div>
+											<strong><?php echo esc_html( $contact['label'] ); ?></strong>
+											<div class="help-sub"><?php echo esc_html( $contact['value'] ); ?></div>
+										</div>
+										<?php if ( ! empty( $contact['cta'] ) && ! empty( $contact['href'] ) ) : ?>
+											<a class="help-btn" href="<?php echo esc_url( $contact['href'] ); ?>">
+												<?php echo esc_html( $contact['cta'] ); ?>
+											</a>
+										<?php endif; ?>
+									</div>
+								<?php endforeach; ?>
+							</div>
+						<?php endif; ?>
+
+						<!-- Entrega (calculador de frete) -->
+						<div class="shipping gstore-shipping-calculator">
+							<strong><?php esc_html_e( 'Entrega', 'gstore' ); ?></strong>
+
+							<div class="shipping-row gstore-shipping-calculator__form">
 								<input 
 									type="text" 
 									class="gstore-shipping-calculator__cep" 
@@ -546,38 +762,12 @@ $guarantee_badges  = gstore_get_guarantee_badges();
 								/>
 								<button type="button" class="gstore-shipping-calculator__button">
 									<i class="fa-solid fa-truck" aria-hidden="true"></i>
-									<?php esc_html_e( 'Calcular frete', 'gstore' ); ?>
+									<?php esc_html_e( 'Calcular', 'gstore' ); ?>
 								</button>
 							</div>
-							<div class="gstore-shipping-calculator__result" role="region" aria-live="polite"></div>
+
+							<div class="shipping-sub gstore-shipping-calculator__result" role="region" aria-live="polite"></div>
 							<div class="gstore-shipping-calculator__error" role="alert"></div>
-						</div>
-
-						<!-- Link para página "Como Comprar Arma" -->
-						<a href="<?php echo esc_url( home_url( '/como-comprar-arma/' ) ); ?>" class="Gstore-single-product__read-before-buy">
-							<i class="fa-solid fa-book-open" aria-hidden="true"></i>
-							<span>
-								<strong><?php esc_html_e( 'Leia antes de comprar', 'gstore' ); ?></strong>
-								<small><?php esc_html_e( 'Veja como funciona o processo passo a passo', 'gstore' ); ?></small>
-							</span>
-							<i class="fa-solid fa-arrow-right" aria-hidden="true"></i>
-						</a>
-
-						<!-- Benefícios -->
-						<?php if ( ! empty( $benefit_items ) ) : ?>
-							<ul class="Gstore-single-product__benefits">
-								<?php foreach ( $benefit_items as $benefit ) : ?>
-									<li>
-										<i class="fa-solid fa-circle-check" aria-hidden="true"></i>
-										<?php echo esc_html( $benefit ); ?>
-									</li>
-								<?php endforeach; ?>
-							</ul>
-						<?php endif; ?>
-
-						<!-- Meta -->
-						<div class="Gstore-single-product__meta">
-							<?php woocommerce_template_single_meta(); ?>
 						</div>
 
 						<!-- Extra (hooks de plugins) -->
@@ -585,113 +775,6 @@ $guarantee_badges  = gstore_get_guarantee_badges();
 							<?php do_action( 'woocommerce_single_product_summary' ); ?>
 						</div>
 					</div>
-
-					<!-- Card de Contato -->
-					<?php if ( ! empty( $contact_entries ) ) : ?>
-						<aside class="Gstore-single-product__contact-card">
-							<h3>
-								<i class="fa-solid fa-headset" aria-hidden="true"></i>
-								<?php esc_html_e( 'Precisa de ajuda?', 'gstore' ); ?>
-							</h3>
-							<ul>
-								<?php foreach ( $contact_entries as $contact ) : ?>
-									<li>
-										<i class="fa-solid <?php echo esc_attr( $contact['icon'] ); ?>" aria-hidden="true"></i>
-										<div>
-											<strong><?php echo esc_html( $contact['label'] ); ?></strong>
-											<span><?php echo esc_html( $contact['value'] ); ?></span>
-										</div>
-										<?php if ( ! empty( $contact['cta'] ) && ! empty( $contact['href'] ) ) : ?>
-											<a href="<?php echo esc_url( $contact['href'] ); ?>">
-												<?php echo esc_html( $contact['cta'] ); ?>
-											</a>
-										<?php endif; ?>
-									</li>
-								<?php endforeach; ?>
-							</ul>
-						</aside>
-					<?php endif; ?>
-				</div>
-			</section>
-
-			<!-- Seção de Detalhes -->
-			<section class="Gstore-single-product__section Gstore-single-product__details">
-				<div class="Gstore-single-product__details-overview">
-					<?php if ( ! empty( $hero_meta_cards ) ) : ?>
-						<div class="Gstore-single-product__details-highlight-grid">
-							<?php foreach ( $hero_meta_cards as $card ) : ?>
-								<article class="Gstore-single-product__details-highlight">
-									<div class="Gstore-single-product__details-highlight-icon">
-										<i class="fa-solid <?php echo esc_attr( $card['icon'] ); ?>" aria-hidden="true"></i>
-									</div>
-									<div>
-										<span class="Gstore-single-product__details-highlight-label">
-											<?php echo esc_html( $card['label'] ); ?>
-										</span>
-										<p>
-											<?php
-											if ( ! empty( $card['allow_html'] ) ) {
-												echo wp_kses_post( $card['text'] );
-											} else {
-												echo esc_html( $card['text'] );
-											}
-											?>
-										</p>
-									</div>
-								</article>
-							<?php endforeach; ?>
-						</div>
-					<?php endif; ?>
-
-					<?php if ( ! empty( $details_info_rows ) ) : ?>
-						<div class="Gstore-single-product__details-info-card">
-							<?php foreach ( $details_info_rows as $index => $row ) : ?>
-								<?php
-								$row_id = 'product-details-row-' . $index;
-								?>
-								<article class="Gstore-single-product__details-info-row Gstore-review-card--collapsible" aria-label="<?php echo esc_attr( $row['title'] ); ?>">
-									<button 
-										type="button" 
-										class="Gstore-review-card__toggle Gstore-single-product__details-info-toggle" 
-										aria-expanded="false" 
-										aria-controls="<?php echo esc_attr( $row_id ); ?>"
-										onclick="this.setAttribute('aria-expanded', this.getAttribute('aria-expanded') === 'false' ? 'true' : 'false'); this.closest('.Gstore-review-card--collapsible').classList.toggle('is-expanded');"
-									>
-										<header class="Gstore-review-card__header Gstore-single-product__details-info-meta">
-											<div>
-												<span class="Gstore-single-product__details-info-icon">
-													<i class="fa-solid <?php echo esc_attr( $row['icon'] ); ?>" aria-hidden="true"></i>
-												</span>
-												<strong><?php echo esc_html( $row['title'] ); ?></strong>
-											</div>
-											<span class="Gstore-review-card__toggle-icon" aria-hidden="true">
-												<svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-													<path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-												</svg>
-											</span>
-										</header>
-									</button>
-									<div id="<?php echo esc_attr( $row_id ); ?>" class="Gstore-review-card__content">
-										<div class="Gstore-review-card__content-inner">
-											<div class="Gstore-single-product__details-info-content">
-												<?php
-												if ( ! empty( $row['allow_html'] ) ) {
-													echo wp_kses_post( $row['content'] );
-												} else {
-													echo esc_html( $row['content'] );
-												}
-												?>
-											</div>
-										</div>
-									</div>
-								</article>
-							<?php endforeach; ?>
-						</div>
-					<?php endif; ?>
-				</div>
-
-				<div class="Gstore-single-product__details-reviews">
-					<?php comments_template(); ?>
 				</div>
 			</section>
 
