@@ -179,6 +179,10 @@ document.addEventListener('DOMContentLoaded', () => {
 			return;
 		}
 
+		// #region agent log
+		fetch('http://127.0.0.1:7242/ingest/2e9bdb26-956d-44fb-8061-6eba8efc208f',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'run1',hypothesisId:'H2',location:'assets/js/single-product.js:initVariationsState',message:'initVariationsState: form detected',data:{formClass:form.className,hasQtyInput:!!form.querySelector('input.qty'),qtyType:form.querySelector('input.qty')?.type || null,hasQtyWrapper:!!form.querySelector('.Gstore-quantity-controls')},timestamp:Date.now()})}).catch(()=>{});
+		// #endregion
+
 		const selects = Array.from(form.querySelectorAll('select'));
 		const preview = document.querySelector('[data-gstore-variation-preview]');
 		const warning = document.querySelector('[data-gstore-variation-warning]');
@@ -235,12 +239,20 @@ document.addEventListener('DOMContentLoaded', () => {
 		if (typeof jQuery !== 'undefined') {
 			const $form = jQuery(form);
 			$form.on('found_variation', (event, variation) => {
+				// #region agent log
+				fetch('http://127.0.0.1:7242/ingest/2e9bdb26-956d-44fb-8061-6eba8efc208f',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'run1',hypothesisId:'H2',location:'assets/js/single-product.js:found_variation',message:'found_variation fired',data:{hasQtyInput:!!form.querySelector('input.qty'),qtyType:form.querySelector('input.qty')?.type || null,hasQtyWrapper:!!form.querySelector('.Gstore-quantity-controls'),wrapperHasInput:!!form.querySelector('.Gstore-quantity-controls input.qty'),addBtnDisabled:!!form.querySelector('.single_add_to_cart_button')?.disabled},timestamp:Date.now()})}).catch(()=>{});
+				// #endregion
+
 				if (priceEl && variation && typeof variation.price_html === 'string' && variation.price_html.trim().length) {
 					priceEl.innerHTML = variation.price_html;
 				}
 				setTimeout(update, 0);
 			});
 			$form.on('reset_data', () => {
+				// #region agent log
+				fetch('http://127.0.0.1:7242/ingest/2e9bdb26-956d-44fb-8061-6eba8efc208f',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'run1',hypothesisId:'H2',location:'assets/js/single-product.js:reset_data',message:'reset_data fired',data:{hasQtyInput:!!form.querySelector('input.qty'),qtyType:form.querySelector('input.qty')?.type || null,hasQtyWrapper:!!form.querySelector('.Gstore-quantity-controls'),wrapperHasInput:!!form.querySelector('.Gstore-quantity-controls input.qty'),addBtnDisabled:!!form.querySelector('.single_add_to_cart_button')?.disabled},timestamp:Date.now()})}).catch(()=>{});
+				// #endregion
+
 				if (priceEl && initialPriceHtml) {
 					priceEl.innerHTML = initialPriceHtml;
 				}
@@ -276,14 +288,25 @@ document.addEventListener('DOMContentLoaded', () => {
 			const qty = container.querySelector('.quantity');
 			const addBtn = container.querySelector('.single_add_to_cart_button');
 			if (!qty || !addBtn) {
+				// #region agent log
+				fetch('http://127.0.0.1:7242/ingest/2e9bdb26-956d-44fb-8061-6eba8efc208f',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'run1',hypothesisId:'H5',location:'assets/js/single-product.js:wrapInQtyRow',message:'wrapInQtyRow: missing qty or addBtn',data:{containerClass:container?.className || null,hasQty:!!qty,hasAddBtn:!!addBtn,qtyInputType:container?.querySelector('input.qty')?.type || null},timestamp:Date.now()})}).catch(()=>{});
+				// #endregion
 				return;
 			}
+
+			// #region agent log
+			fetch('http://127.0.0.1:7242/ingest/2e9bdb26-956d-44fb-8061-6eba8efc208f',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'run1',hypothesisId:'H5',location:'assets/js/single-product.js:wrapInQtyRow',message:'wrapInQtyRow: before wrap',data:{containerClass:container.className,qtyInputType:qty.querySelector('input.qty')?.type || null,qtyInputValue:qty.querySelector('input.qty')?.value || null},timestamp:Date.now()})}).catch(()=>{});
+			// #endregion
 
 			const row = document.createElement('div');
 			row.className = 'qty-row';
 			qty.parentNode.insertBefore(row, qty);
 			row.appendChild(qty);
 			row.appendChild(addBtn);
+
+			// #region agent log
+			fetch('http://127.0.0.1:7242/ingest/2e9bdb26-956d-44fb-8061-6eba8efc208f',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'run1',hypothesisId:'H5',location:'assets/js/single-product.js:wrapInQtyRow',message:'wrapInQtyRow: after wrap',data:{hasQtyRow:!!container.querySelector('.qty-row'),qtyRowChildren:Array.from(container.querySelector('.qty-row')?.children || []).map(el=>el.className),qtyInputType:container.querySelector('input.qty')?.type || null},timestamp:Date.now()})}).catch(()=>{});
+			// #endregion
 		};
 
 		// Produto simples
@@ -311,8 +334,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
 		const input = field.querySelector('input.qty');
 		if (!input) {
+			// #region agent log
+			fetch('http://127.0.0.1:7242/ingest/2e9bdb26-956d-44fb-8061-6eba8efc208f',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'run1',hypothesisId:'H5',location:'assets/js/single-product.js:enhanceQuantityField',message:'enhanceQuantityField: no input.qty found',data:{fieldClass:field.className,fieldHtml:field.outerHTML?.slice(0,200) || null},timestamp:Date.now()})}).catch(()=>{});
+			// #endregion
 			return;
 		}
+
+		// #region agent log
+		fetch('http://127.0.0.1:7242/ingest/2e9bdb26-956d-44fb-8061-6eba8efc208f',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'run1',hypothesisId:'H1',location:'assets/js/single-product.js:enhanceQuantityField',message:'enhanceQuantityField: input found',data:{fieldClass:field.className,inputType:input.type,inputValue:input.value,inputMin:input.min,inputMax:input.max,inputStep:input.step},timestamp:Date.now()})}).catch(()=>{});
+		// #endregion
 
 		field.dataset.gstoreQtyEnhanced = 'true';
 
@@ -342,6 +372,10 @@ document.addEventListener('DOMContentLoaded', () => {
 		wrapper.appendChild(input);
 		wrapper.appendChild(plus);
 
+		// #region agent log
+		fetch('http://127.0.0.1:7242/ingest/2e9bdb26-956d-44fb-8061-6eba8efc208f',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'run1',hypothesisId:'H3',location:'assets/js/single-product.js:enhanceQuantityField',message:'enhanceQuantityField: wrapper built',data:{wrapperChildren:Array.from(wrapper.children).map(el=>({tag:el.tagName,cls:el.className,type:el.type||null,value:el.value||null})),wrapperHasInput:!!wrapper.querySelector('input.qty'),wrapperInputType:wrapper.querySelector('input.qty')?.type || null},timestamp:Date.now()})}).catch(()=>{});
+		// #endregion
+
 		// Adiciona o aviso após o wrapper
 		wrapper.parentNode.insertBefore(lastUnitWarning, wrapper.nextSibling);
 
@@ -367,6 +401,13 @@ document.addEventListener('DOMContentLoaded', () => {
 			const current = getCurrentValue();
 			const min = getMin();
 			const max = getMax();
+
+			if (!wrapper.dataset.gstoreDbgUpdateLogged) {
+				wrapper.dataset.gstoreDbgUpdateLogged = 'true';
+				// #region agent log
+				fetch('http://127.0.0.1:7242/ingest/2e9bdb26-956d-44fb-8061-6eba8efc208f',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'run1',hypothesisId:'H4',location:'assets/js/single-product.js:updateButtons',message:'updateButtons first run',data:{current,min,max,wrapperDisplay:wrapper.style.display,lastUnitDisplay:lastUnitWarning.style.display,inputType:input.type},timestamp:Date.now()})}).catch(()=>{});
+				// #endregion
+			}
 
 			// Quando há apenas 1 unidade (max < 2), esconde todo o seletor
 			if (max < 2) {
