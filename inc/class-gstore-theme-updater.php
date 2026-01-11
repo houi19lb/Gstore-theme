@@ -216,13 +216,14 @@ class Gstore_Theme_Git_Updater {
 
 		// Se houver alterações locais (inclusive arquivos não rastreados), faz stash automático
 		// para evitar erro "would be overwritten by checkout/reset".
-		$status = $this->run_in_dir( 'git status --porcelain', $theme_dir );
-		if ( false === $status ) {
+		$status_before = $this->run_in_dir( 'git status --porcelain', $theme_dir );
+		if ( false === $status_before ) {
 			wp_send_json_error( 'Falha ao checar status do Git.' );
 		}
-		$status = trim( (string) $status );
+		$status_before = trim( (string) $status_before );
+
 		$stash_output = '';
-		if ( '' !== $status ) {
+		if ( '' !== $status_before ) {
 			$stash_msg = 'gstore-auto-stash-before-update ' . gmdate( 'Y-m-d\TH:i:s\Z' );
 			$stash_output = $this->run_in_dir( 'git stash push -u -m ' . $this->quote( $stash_msg ), $theme_dir );
 			if ( $this->looks_like_git_error( $stash_output ) ) {
@@ -238,15 +239,55 @@ class Gstore_Theme_Git_Updater {
 		$cmd = 'git fetch origin ' . $branch . ' && git reset --hard origin/' . $branch;
 		$out = $this->run_in_dir( $cmd, $theme_dir );
 
+		// Fallback: se ainda falhar por "would be overwritten", tenta limpar e rodar novamente.
+		$out_lower = strtolower( (string) $out );
+		$needs_retry = ( false !== strpos( $out_lower, 'would be overwritten by checkout' ) ) || ( false !== strpos( $out_lower, 'would be overwritten by merge' ) );
+		$retry_output = '';
+		$retry_stash_output = '';
+		$status_retry = '';
+		if ( $needs_retry || $this->looks_like_git_error( $out ) ) {
+			$status_retry = $this->run_in_dir( 'git status --porcelain', $theme_dir );
+			$status_retry = trim( (string) $status_retry );
+
+			if ( '' !== $status_retry ) {
+				$stash_msg2 = 'gstore-auto-stash-retry ' . gmdate( 'Y-m-d\TH:i:s\Z' );
+				$retry_stash_output = $this->run_in_dir( 'git stash push -u -m ' . $this->quote( $stash_msg2 ), $theme_dir );
+			}
+
+			// Garante working tree limpa.
+			$this->run_in_dir( 'git reset --hard', $theme_dir );
+			$this->run_in_dir( 'git clean -fd', $theme_dir );
+
+			$retry_output = $this->run_in_dir( $cmd, $theme_dir );
+
+			// Se o retry funcionou, usa o output dele como resultado final.
+			if ( ! $this->looks_like_git_error( $retry_output ) ) {
+				$out = $retry_output;
+			} else {
+				// Mantém o output original e anexa o retry para diagnóstico.
+				$out = (string) $out . "\n\n--- RETRY ---\n" . (string) $retry_output;
+			}
+		}
+
 		// Remove token do remote por segurança (melhor esforço).
 		$this->run_in_dir( 'git remote set-url origin ' . $this->quote( $this->repo_url ), $theme_dir );
 
 		$masked = $this->mask_token( $out, $token );
 		$stash_masked = $this->mask_token( $stash_output, $token );
+		$retry_stash_masked = $this->mask_token( $retry_stash_output, $token );
 		if ( $this->looks_like_git_error( $out ) ) {
 			$full = $masked;
 			if ( '' !== trim( (string) $stash_masked ) ) {
 				$full = "Stash automático:\n" . $stash_masked . "\n\n" . $masked;
+			}
+			if ( '' !== trim( (string) $retry_stash_masked ) ) {
+				$full = $full . "\n\nStash automático (retry):\n" . $retry_stash_masked;
+			}
+			if ( '' !== trim( (string) $status_before ) ) {
+				$full = $full . "\n\nStatus antes:\n" . $status_before;
+			}
+			if ( '' !== trim( (string) $status_retry ) ) {
+				$full = $full . "\n\nStatus no retry:\n" . $status_retry;
 			}
 			wp_send_json_error( $full );
 		}
