@@ -4817,12 +4817,22 @@ function gstore_add_theme_settings_page() {
 	add_theme_page(
 		__( 'Configurações do Tema Gstore', 'gstore' ),
 		__( 'Configurações Gstore', 'gstore' ),
-		'manage_options',
+		'manage_woocommerce',
 		'gstore-settings',
 		'gstore_render_settings_page'
 	);
 }
 add_action( 'admin_menu', 'gstore_add_theme_settings_page' );
+
+/**
+ * Define o capability necessário para salvar/alterar opções do grupo gstore_settings via options.php.
+ *
+ * @return string
+ */
+function gstore_settings_option_page_capability() {
+	return 'manage_woocommerce';
+}
+add_filter( 'option_page_capability_gstore_settings', 'gstore_settings_option_page_capability' );
 
 /**
  * Registra as opções do tema.
@@ -4920,7 +4930,7 @@ add_action( 'admin_init', 'gstore_register_theme_settings' );
  * Renderiza a página de configurações.
  */
 function gstore_render_settings_page() {
-	if ( ! current_user_can( 'manage_options' ) ) {
+	if ( ! current_user_can( 'manage_woocommerce' ) ) {
 		return;
 	}
 	
@@ -5478,7 +5488,7 @@ function gstore_render_media_selector_with_link( $input_id, $alt_input_id, $link
 function gstore_ajax_get_image_data() {
 	check_ajax_referer( 'gstore_ajax', 'nonce' );
 	
-	if ( ! current_user_can( 'manage_options' ) ) {
+	if ( ! current_user_can( 'manage_woocommerce' ) ) {
 		wp_send_json_error( array( 'message' => __( 'Permissão negada.', 'gstore' ) ) );
 	}
 	
@@ -9542,7 +9552,7 @@ function gstore_get_founded_year() {
  */
 function gstore_handle_export_store_info() {
 	// Verifica permissões
-	if ( ! current_user_can( 'manage_options' ) ) {
+	if ( ! current_user_can( 'manage_woocommerce' ) ) {
 		wp_die( __( 'Você não tem permissão para realizar esta ação.', 'gstore' ) );
 	}
 	
@@ -9574,7 +9584,7 @@ add_action( 'admin_post_gstore_export_store_info', 'gstore_handle_export_store_i
  */
 function gstore_handle_import_store_info() {
 	// Verifica permissões
-	if ( ! current_user_can( 'manage_options' ) ) {
+	if ( ! current_user_can( 'manage_woocommerce' ) ) {
 		wp_die( __( 'Você não tem permissão para realizar esta ação.', 'gstore' ) );
 	}
 	
