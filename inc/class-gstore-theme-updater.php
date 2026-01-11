@@ -214,6 +214,22 @@ class Gstore_Theme_Git_Updater {
 		$this->run_in_dir( 'git config core.sparseCheckout true', $theme_dir );
 		$this->write_sparse_checkout_file( $theme_dir );
 
+		// Se houver alterações locais (inclusive arquivos não rastreados), faz stash automático
+		// para evitar erro "would be overwritten by checkout/reset".
+		$status = $this->run_in_dir( 'git status --porcelain', $theme_dir );
+		if ( false === $status ) {
+			wp_send_json_error( 'Falha ao checar status do Git.' );
+		}
+		$status = trim( (string) $status );
+		$stash_output = '';
+		if ( '' !== $status ) {
+			$stash_msg = 'gstore-auto-stash-before-update ' . gmdate( 'Y-m-d\TH:i:s\Z' );
+			$stash_output = $this->run_in_dir( 'git stash push -u -m ' . $this->quote( $stash_msg ), $theme_dir );
+			if ( $this->looks_like_git_error( $stash_output ) ) {
+				wp_send_json_error( $this->mask_token( $stash_output, $token ) );
+			}
+		}
+
 		// Atualiza.
 		$branch = $this->sanitize_branch( $this->branch );
 		if ( '' === $branch ) {
@@ -226,14 +242,21 @@ class Gstore_Theme_Git_Updater {
 		$this->run_in_dir( 'git remote set-url origin ' . $this->quote( $this->repo_url ), $theme_dir );
 
 		$masked = $this->mask_token( $out, $token );
+		$stash_masked = $this->mask_token( $stash_output, $token );
 		if ( $this->looks_like_git_error( $out ) ) {
-			wp_send_json_error( $masked );
+			$full = $masked;
+			if ( '' !== trim( (string) $stash_masked ) ) {
+				$full = "Stash automático:\n" . $stash_masked . "\n\n" . $masked;
+			}
+			wp_send_json_error( $full );
 		}
 
 		wp_send_json_success(
 			array(
 				'message' => 'Atualizado.',
-				'output'  => $masked,
+				'output'  => ( '' !== trim( (string) $stash_masked ) )
+					? ( "Stash automático:\n" . $stash_masked . "\n\n" . $masked )
+					: $masked,
 			)
 		);
 	}
