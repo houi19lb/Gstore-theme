@@ -340,6 +340,14 @@ function gstore_defer_non_critical_css( $tag, $handle, $href, $media ) {
 		return $tag;
 	}
 
+	// Android: alguns browsers/versões podem falhar em disparar onload em <link rel="stylesheet">
+	// quando usamos a técnica media="print" (o CSS fica preso em print e a página fica sem estilo).
+	// Preferimos confiabilidade no Android e não deferimos CSS por esta técnica nesse caso.
+	$ua = isset( $_SERVER['HTTP_USER_AGENT'] ) ? (string) $_SERVER['HTTP_USER_AGENT'] : '';
+	if ( $ua && preg_match( '/Android/i', $ua ) ) {
+		return $tag;
+	}
+
 	// Lista expandida de CSS não crítico que pode ser deferido
 	$non_critical_css = array(
 		// Font Awesome - não crítico para renderização inicial (ícones podem carregar depois)
@@ -395,23 +403,34 @@ function gstore_defer_non_critical_css( $tag, $handle, $href, $media ) {
 		return $tag;
 	}
 
+	$original_tag = $tag;
+
+	// Marca link como "deferido" para permitir fallback JS se o onload falhar.
+	// (Não usa DOMDocument por performance e para evitar efeitos colaterais no HTML gerado pelo WP.)
+	$tag = preg_replace(
+		'/<link\\s/i',
+		'<link data-gstore-deferred="1" data-gstore-media="' . esc_attr( $media ) . '" ',
+		$tag,
+		1
+	);
+
 	// Aplica técnica de defer usando JavaScript
 	// Troca media para print e depois muda para all quando carregar
 	// Suporta tanto aspas simples quanto duplas
 	if ( strpos( $tag, "media='" ) !== false ) {
 		$deferred_tag = str_replace(
 			"media='{$media}'",
-			"media='print' onload=\"this.media='{$media}'\"",
+			"media='print' onload=\"this.media=this.getAttribute('data-gstore-media')||'all'\"",
 			$tag
 		);
-		$noscript_tag = str_replace( "media='print'", "media='{$media}'", $tag );
+		$noscript_tag = str_replace( "media='print'", "media='{$media}'", $original_tag );
 	} else {
 		$deferred_tag = str_replace(
 			'media="' . $media . '"',
-			'media="print" onload="this.media=\'' . $media . '\'"',
+			'media="print" onload="this.media=this.getAttribute(\'data-gstore-media\')||\'all\'"',
 			$tag
 		);
-		$noscript_tag = str_replace( 'media="print"', 'media="' . $media . '"', $tag );
+		$noscript_tag = str_replace( 'media="print"', 'media="' . $media . '"', $original_tag );
 	}
 	
 	// Adiciona noscript fallback para browsers sem JS
@@ -420,6 +439,38 @@ function gstore_defer_non_critical_css( $tag, $handle, $href, $media ) {
 	return $deferred_tag;
 }
 add_filter( 'style_loader_tag', 'gstore_defer_non_critical_css', 10, 4 );
+
+/**
+ * Fallback para CSS deferido via media="print": se o onload falhar, reativa o CSS.
+ *
+ * Importante: só atua em links marcados pelo tema (data-gstore-deferred="1").
+ */
+function gstore_deferred_css_fallback_script() {
+	?>
+	<script id="gstore-deferred-css-fallback">
+	(function() {
+		'use strict';
+		function fixDeferredCss() {
+			var links = document.querySelectorAll('link[data-gstore-deferred="1"][rel~="stylesheet"][media="print"]');
+			for (var i = 0; i < links.length; i++) {
+				var link = links[i];
+				var targetMedia = link.getAttribute('data-gstore-media') || 'all';
+				link.media = targetMedia;
+			}
+		}
+		// Tenta cedo (após parse) e também após load, e com um timeout de segurança.
+		if (document.readyState === 'loading') {
+			document.addEventListener('DOMContentLoaded', fixDeferredCss);
+		} else {
+			fixDeferredCss();
+		}
+		window.addEventListener('load', fixDeferredCss);
+		setTimeout(fixDeferredCss, 2500);
+	})();
+	</script>
+	<?php
+}
+add_action( 'wp_head', 'gstore_deferred_css_fallback_script', 4 );
 
 /**
  * Otimiza carregamento de scripts para reduzir main-thread work.
