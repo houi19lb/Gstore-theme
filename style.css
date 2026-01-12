@@ -2349,6 +2349,13 @@ padding: 16px;
 	color: var(--gstore-color-text-primary);
 }
 
+/* Tira os cards grandes da galeria no mobile para o preço subir */
+@media (max-width: 1024px) {
+	.Gstore-single-product__info-cards--gallery {
+		display: none;
+	}
+}
+
 .Gstore-single-product__tab-buttons {
 	display: flex;
 	gap: 8px;
@@ -3075,20 +3082,65 @@ padding: 16px;
 
 .buybox .shipping-row .gstore-shipping-calculator__cep {
 	flex: 1;
-	height: 40px;
+	height: 48px;
 	border-radius: var(--gstore-radius-base);
 	border: 1px solid var(--gstore-color-border-card, #d1d5db);
-	padding: 0 10px;
+	padding: 0 12px;
+	font-size: 14px;
+	line-height: normal;
 }
 
 .buybox .shipping-row .gstore-shipping-calculator__button {
-	height: 40px;
+	height: 48px;
 	border-radius: var(--gstore-radius-base);
 	border: 1px solid var(--gstore-color-border-card, #d1d5db);
 	background-color: var(--gstore-color-accent);
 	font-weight: 600;
 	padding: 0 14px;
 	white-space: nowrap;
+}
+
+/* Faixa compacta (scroll horizontal) com os 3 cards dentro do buybox (mobile) */
+.Gstore-single-product__buybox-meta-strip {
+	display: none;
+}
+
+@media (max-width: 1024px) {
+	.Gstore-single-product__buybox-meta-strip {
+		display: flex;
+		gap: 8px;
+		margin-top: 12px;
+		overflow-x: auto;
+		-webkit-overflow-scrolling: touch;
+		padding-bottom: 2px;
+	}
+
+	.Gstore-single-product__buybox-meta-chip {
+		flex: 0 0 auto;
+		min-width: 220px;
+		background: var(--gstore-color-bg-gray-50);
+		border: 1px solid var(--gstore-color-border-divider, #e5e7eb);
+		border-radius: 4px;
+		padding: 10px 12px;
+	}
+
+	.Gstore-single-product__buybox-meta-chip-label {
+		font-size: 10px;
+		font-weight: 700;
+		letter-spacing: 0.06em;
+		text-transform: uppercase;
+		color: var(--gstore-color-text-gray-600);
+	}
+
+	.Gstore-single-product__buybox-meta-chip-text {
+		margin-top: 2px;
+		font-size: 12px;
+		font-weight: 600;
+		color: var(--gstore-color-text-primary);
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
+	}
 }
 
 .buybox .shipping-row .gstore-shipping-calculator__button:hover:not(:disabled) {

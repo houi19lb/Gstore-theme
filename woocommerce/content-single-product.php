@@ -591,7 +591,7 @@ if ( $reviews_has_value ) {
 						</div>
 
 						<?php if ( ! empty( $hero_meta_cards ) ) : ?>
-							<div class="Gstore-single-product__info-cards">
+							<div class="Gstore-single-product__info-cards Gstore-single-product__info-cards--gallery">
 								<?php foreach ( $hero_meta_cards as $card ) : ?>
 									<div class="Gstore-single-product__info-card">
 										<div class="Gstore-single-product__info-title">
@@ -636,6 +636,27 @@ if ( $reviews_has_value ) {
 								<?php esc_html_e( 'Limpar', 'gstore' ); ?>
 							</button>
 						</div>
+
+						<?php if ( ! empty( $hero_meta_cards ) ) : ?>
+							<div class="Gstore-single-product__buybox-meta-strip" aria-label="<?php esc_attr_e( 'Destaques', 'gstore' ); ?>">
+								<?php foreach ( $hero_meta_cards as $card ) : ?>
+									<div class="Gstore-single-product__buybox-meta-chip">
+										<div class="Gstore-single-product__buybox-meta-chip-label">
+											<?php echo esc_html( $card['label'] ); ?>
+										</div>
+										<div class="Gstore-single-product__buybox-meta-chip-text">
+											<?php
+											if ( ! empty( $card['allow_html'] ) ) {
+												echo wp_kses_post( $card['text'] );
+											} else {
+												echo esc_html( $card['text'] );
+											}
+											?>
+										</div>
+									</div>
+								<?php endforeach; ?>
+							</div>
+						<?php endif; ?>
 
 						<!-- Disponibilidade -->
 						<div class="stock <?php echo $is_in_stock ? 'is-in-stock' : 'is-on-order'; ?>">

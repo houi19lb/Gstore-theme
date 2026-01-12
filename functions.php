@@ -752,6 +752,8 @@ function gstore_enqueue_styles() {
 	$parent_handle = 'twentytwentyfive-style';
 	$parent_theme  = wp_get_theme( 'twentytwentyfive' );
 	$theme_version = wp_get_theme()->get( 'Version' );
+	$stylesheet_file = get_stylesheet_directory() . '/style.css';
+	$stylesheet_version = ( file_exists( $stylesheet_file ) ) ? (string) filemtime( $stylesheet_file ) : $theme_version;
 	
 	// Obtém timestamp da última atualização dos tokens para forçar recarregamento
 	$tokens_version = get_option( 'gstore_tokens_last_updated', time() );
@@ -788,7 +790,7 @@ function gstore_enqueue_styles() {
 		'gstore-style',
 		get_stylesheet_uri(),
 		array( 'gstore-main' ),
-		$theme_version
+		$stylesheet_version
 	);
 
 	// Footer CAC Armas (migrado do style.css para módulo dedicado)
@@ -947,11 +949,14 @@ function gstore_enqueue_scripts() {
 		);
 
 		if ( function_exists( 'is_product' ) && is_product() ) {
+			$single_product_js_path = get_theme_file_path( 'assets/js/single-product.js' );
+			$single_product_js_version = file_exists( $single_product_js_path ) ? (string) filemtime( $single_product_js_path ) : wp_get_theme()->get( 'Version' );
+
 			wp_enqueue_script(
 				'gstore-single-product',
 				get_theme_file_uri( 'assets/js/single-product.js' ),
 				array(),
-				wp_get_theme()->get( 'Version' ),
+				$single_product_js_version,
 				true
 			);
 		}
