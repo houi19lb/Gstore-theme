@@ -2618,7 +2618,9 @@ function gstore_customize_checkout_fields( $fields ) {
 
     return $fields;
 }
-add_filter( 'woocommerce_checkout_fields', 'gstore_customize_checkout_fields', 1000 );
+if ( ! defined( 'GSTORE_CORE_ACTIVE' ) ) {
+	add_filter( 'woocommerce_checkout_fields', 'gstore_customize_checkout_fields', 1000 );
+}
 
 /**
  * ================================
@@ -2654,7 +2656,9 @@ function gstore_blu_capture_checkout_state( $post_data ) {
 		WC()->session->set( 'gstore_blu_installments', $installments );
 	}
 }
-add_action( 'woocommerce_checkout_update_order_review', 'gstore_blu_capture_checkout_state', 10, 1 );
+if ( ! defined( 'GSTORE_CORE_ACTIVE' ) ) {
+	add_action( 'woocommerce_checkout_update_order_review', 'gstore_blu_capture_checkout_state', 10, 1 );
+}
 
 /**
  * Recupera parcelas selecionadas na sessão (fallback 1).
@@ -2721,7 +2725,9 @@ function gstore_blu_render_installments_selector() {
 	</div>
 	<?php
 }
-add_action( 'woocommerce_review_order_before_payment', 'gstore_blu_render_installments_selector', 12 );
+if ( ! defined( 'GSTORE_CORE_ACTIVE' ) ) {
+	add_action( 'woocommerce_review_order_before_payment', 'gstore_blu_render_installments_selector', 12 );
+}
 
 /**
  * Adiciona fee de parcelamento (configurável no gateway Blu) quando Cartão Blu estiver selecionado.
@@ -2917,7 +2923,9 @@ function gstore_blu_add_installment_fee( $cart ) {
 
 	$cart->add_fee( __( 'Taxa de parcelamento', 'gstore' ), $fee_value, false, '' );
 }
-add_action( 'woocommerce_cart_calculate_fees', 'gstore_blu_add_installment_fee', 30, 1 );
+if ( ! defined( 'GSTORE_CORE_ACTIVE' ) ) {
+	add_action( 'woocommerce_cart_calculate_fees', 'gstore_blu_add_installment_fee', 30, 1 );
+}
 
 /**
  * Valida parcelas quando o cliente escolhe Cartão Blu.
@@ -2947,7 +2955,9 @@ function gstore_blu_validate_installments() {
 		wc_add_notice( __( 'Selecione um número válido de parcelas para continuar.', 'gstore' ), 'error' );
 	}
 }
-add_action( 'woocommerce_checkout_process', 'gstore_blu_validate_installments', 12 );
+if ( ! defined( 'GSTORE_CORE_ACTIVE' ) ) {
+	add_action( 'woocommerce_checkout_process', 'gstore_blu_validate_installments', 12 );
+}
 
 /**
  * Salva parcelas e taxa no pedido (meta) para travar no payload da Blu.
@@ -2990,7 +3000,9 @@ function gstore_blu_save_installments_meta( $order_id ) {
 		update_post_meta( $order_id, '_gstore_blu_installment_fee', (string) $fee_value );
 	}
 }
-add_action( 'woocommerce_checkout_update_order_meta', 'gstore_blu_save_installments_meta', 20 );
+if ( ! defined( 'GSTORE_CORE_ACTIVE' ) ) {
+	add_action( 'woocommerce_checkout_update_order_meta', 'gstore_blu_save_installments_meta', 20 );
+}
 
 /**
  * Desabilita validação de CEP quando o campo não é obrigatório no pré-checkout
@@ -3028,7 +3040,9 @@ function gstore_validate_postcode_optional( $valid, $postcode, $country ) {
 	
 	return $valid;
 }
-add_filter( 'woocommerce_validate_postcode', 'gstore_validate_postcode_optional', 999, 3 );
+if ( ! defined( 'GSTORE_CORE_ACTIVE' ) ) {
+	add_filter( 'woocommerce_validate_postcode', 'gstore_validate_postcode_optional', 999, 3 );
+}
 
 /**
  * Verifica se as páginas essenciais existem na inicialização.
@@ -3068,19 +3082,7 @@ add_action( 'admin_init', 'gstore_check_essential_pages' );
 /**
  * Gateway Blu (Link de Pagamento).
  */
-if ( class_exists( 'WooCommerce' ) && class_exists( 'WC_Payment_Gateway' ) ) {
-	require_once get_theme_file_path( 'inc/class-gstore-blu-payment-gateway.php' );
-	
-	// Carrega gateway Pix apenas se o arquivo existir
-	$pix_gateway_file = get_theme_file_path( 'inc/class-gstore-blu-pix-gateway.php' );
-	if ( file_exists( $pix_gateway_file ) ) {
-		// Força invalidação do OPcache para garantir código atualizado
-		if ( function_exists( 'opcache_invalidate' ) ) {
-			@opcache_invalidate( $pix_gateway_file, true );
-		}
-		require_once $pix_gateway_file;
-	}
-}
+// Movido para o plugin gstore-core.
 
 /**
  * Correção temporária: Corrige o status do Pix via JavaScript.
@@ -3120,7 +3122,7 @@ add_action( 'wp_footer', function() {
 /**
  * Filtro para deixar apenas a Blu como gateway (Opcional/Solicitado).
  */
-require_once get_theme_file_path( 'inc/blu-filter.php' );
+// Movido para o plugin gstore-core.
 
 /**
  * Filtro de Categorias Marketplace.
@@ -3130,7 +3132,7 @@ require_once get_theme_file_path( 'inc/class-gstore-category-filter.php' );
 /**
  * Gerenciador de informações da loja (JSON centralizado).
  */
-require_once get_theme_file_path( 'inc/class-gstore-store-info.php' );
+// Movido para o plugin gstore-core (persistência em wp_options).
 
 /**
  * API Visualizer (React + Mermaid) - shortcode e enqueue dos assets.
@@ -3139,294 +3141,9 @@ require_once get_theme_file_path( 'inc/api-visualizer.php' );
 
 /**
  * Método de envio customizado Gstore.
+ *
+ * Movido para o plugin gstore-core.
  */
-if ( class_exists( 'WooCommerce' ) && class_exists( 'WC_Shipping_Method' ) ) {
-	require_once get_theme_file_path( 'inc/class-gstore-shipping-method.php' );
-	require_once get_theme_file_path( 'inc/class-gstore-shipping-admin.php' );
-
-	/**
-	 * Registra o método de envio customizado.
-	 *
-	 * @param array $methods Métodos de envio.
-	 * @return array
-	 */
-	function gstore_add_shipping_method( $methods ) {
-		$methods['gstore_custom_shipping'] = 'Gstore_Shipping_Method';
-		return $methods;
-	}
-	add_filter( 'woocommerce_shipping_methods', 'gstore_add_shipping_method' );
-
-	/**
-	 * Inicializa a classe admin de configuração de frete.
-	 */
-	function gstore_init_shipping_admin() {
-		if ( class_exists( 'Gstore_Shipping_Admin' ) ) {
-			new Gstore_Shipping_Admin();
-		}
-	}
-	add_action( 'init', 'gstore_init_shipping_admin' );
-
-	/**
-	 * Injeta o frete customizado Gstore nas taxas de envio do pacote.
-	 * Isso garante que o frete apareça mesmo sem zona de envio configurada.
-	 *
-	 * @param array $rates Taxas de envio disponíveis.
-	 * @param array $package Pacote de produtos.
-	 * @return array Taxas de envio modificadas.
-	 */
-	function gstore_inject_shipping_rate( $rates, $package ) {
-		// Verifica se já existe uma taxa do Gstore
-		foreach ( $rates as $rate ) {
-			if ( strpos( $rate->get_method_id(), 'gstore_custom_shipping' ) !== false ) {
-				return $rates; // Já existe, não precisa injetar
-			}
-		}
-
-		// Obtém o CEP do pacote de destino
-		$postcode = '';
-		$state    = '';
-		
-		if ( isset( $package['destination']['postcode'] ) ) {
-			$postcode = preg_replace( '/[^0-9]/', '', $package['destination']['postcode'] );
-		}
-		if ( isset( $package['destination']['state'] ) ) {
-			$state = strtoupper( $package['destination']['state'] );
-		}
-
-		// Se não tem CEP nem estado, não calcula
-		if ( empty( $postcode ) && empty( $state ) ) {
-			return $rates;
-		}
-
-		// Verifica se há produtos no pacote
-		if ( empty( $package['contents'] ) ) {
-			return $rates;
-		}
-
-		// Instancia o método de envio
-		$shipping_method = new Gstore_Shipping_Method();
-
-		// Calcula o peso tático
-		$total_weight = $shipping_method->calculate_tactical_weight_public( $package['contents'] );
-
-		if ( $total_weight <= 0 ) {
-			return $rates;
-		}
-
-		// Identifica a região
-		$region = gstore_get_shipping_region( $state, $postcode );
-
-		// Obtém o custo do frete
-		$shipping_cost = $shipping_method->get_shipping_cost_public( $total_weight, $region );
-
-		if ( $shipping_cost === false ) {
-			return $rates;
-		}
-
-		// Cria a taxa de envio
-		$rate = new WC_Shipping_Rate(
-			'gstore_custom_shipping',
-			__( 'Frete Gstore', 'gstore' ),
-			$shipping_cost,
-			array(),
-			'gstore_custom_shipping'
-		);
-
-		// Adiciona metadados úteis
-		$rate->add_meta_data( 'region', $region );
-		$rate->add_meta_data( 'weight', $total_weight );
-
-		// Adiciona a taxa ao início do array
-		$rates = array( 'gstore_custom_shipping' => $rate ) + $rates;
-
-		return $rates;
-	}
-	add_filter( 'woocommerce_package_rates', 'gstore_inject_shipping_rate', 10, 2 );
-
-	/**
-	 * Força o WooCommerce a recalcular o frete quando o CEP muda.
-	 * Limpa o cache de shipping quando necessário.
-	 *
-	 * @param string $post_data Dados do formulário de checkout.
-	 */
-	function gstore_clear_shipping_cache_on_cep_change( $post_data ) {
-		if ( ! function_exists( 'WC' ) || ! WC()->session || ! WC()->cart ) {
-			return;
-		}
-
-		// Parse dos dados do formulário
-		$posted = array();
-		if ( ! empty( $post_data ) ) {
-			parse_str( $post_data, $posted );
-		}
-
-		// Obtém o CEP do POST
-		$postcode = '';
-		if ( isset( $posted['billing_postcode'] ) ) {
-			$postcode = preg_replace( '/[^0-9]/', '', $posted['billing_postcode'] );
-		}
-
-		// Se tem CEP válido, atualiza a sessão
-		if ( strlen( $postcode ) === 8 ) {
-			// Identifica o estado
-			$state = gstore_get_state_from_postcode( $postcode );
-			
-			// Atualiza o cliente
-			if ( WC()->customer ) {
-				WC()->customer->set_billing_postcode( $postcode );
-				WC()->customer->set_shipping_postcode( $postcode );
-				WC()->customer->set_billing_country( 'BR' );
-				WC()->customer->set_shipping_country( 'BR' );
-				
-				if ( ! empty( $state ) ) {
-					WC()->customer->set_billing_state( $state );
-					WC()->customer->set_shipping_state( $state );
-				}
-				
-				WC()->customer->set_calculated_shipping( true );
-			}
-			
-			// Define o método de envio como selecionado
-			WC()->session->set( 'chosen_shipping_methods', array( 'gstore_custom_shipping' ) );
-		}
-
-		// Limpa cache de shipping rates para forçar recálculo
-		$packages = WC()->cart->get_shipping_packages();
-		foreach ( $packages as $key => $package ) {
-			WC()->session->set( 'shipping_for_package_' . $key, false );
-		}
-	}
-	add_action( 'woocommerce_checkout_update_order_review', 'gstore_clear_shipping_cache_on_cep_change' );
-
-	/**
-	 * Seleciona automaticamente o método de envio Gstore quando disponível.
-	 * Isso garante que o frete seja incluído no total do pedido.
-	 *
-	 * @param string $default Método padrão.
-	 * @param array  $rates Taxas disponíveis.
-	 * @param string $chosen_method Método escolhido atual.
-	 * @return string Método selecionado.
-	 */
-	function gstore_auto_select_shipping_method( $default, $rates, $chosen_method ) {
-		// Se já tem um método escolhido que existe nas rates, mantém
-		if ( ! empty( $chosen_method ) && isset( $rates[ $chosen_method ] ) ) {
-			return $chosen_method;
-		}
-
-		// Se o método Gstore está disponível, seleciona automaticamente
-		if ( isset( $rates['gstore_custom_shipping'] ) ) {
-			return 'gstore_custom_shipping';
-		}
-
-		return $default;
-	}
-	add_filter( 'woocommerce_shipping_chosen_method', 'gstore_auto_select_shipping_method', 10, 3 );
-
-	/**
-	 * Garante que o método de envio Gstore seja pré-selecionado na sessão.
-	 * Executado após o cálculo do shipping.
-	 */
-	function gstore_ensure_shipping_method_selected() {
-		if ( ! function_exists( 'WC' ) || ! WC()->session || ! WC()->cart ) {
-			return;
-		}
-
-		$chosen_methods = WC()->session->get( 'chosen_shipping_methods', array() );
-		
-		// Se não tem método escolhido ou está vazio
-		if ( empty( $chosen_methods ) || empty( $chosen_methods[0] ) ) {
-			// Obtém as taxas de shipping disponíveis
-			$packages = WC()->shipping()->get_packages();
-			
-			if ( ! empty( $packages ) ) {
-				foreach ( $packages as $i => $package ) {
-					if ( isset( $package['rates']['gstore_custom_shipping'] ) ) {
-						$chosen_methods[ $i ] = 'gstore_custom_shipping';
-					}
-				}
-				
-				if ( ! empty( $chosen_methods ) ) {
-					WC()->session->set( 'chosen_shipping_methods', $chosen_methods );
-				}
-			}
-		}
-	}
-	add_action( 'woocommerce_after_calculate_totals', 'gstore_ensure_shipping_method_selected', 20 );
-
-	/**
-	 * Adiciona o frete Gstore diretamente como taxa no carrinho.
-	 * Isso contorna a necessidade de zonas de envio configuradas.
-	 *
-	 * @param WC_Cart $cart Instância do carrinho.
-	 */
-	function gstore_add_shipping_as_fee( $cart ) {
-		if ( is_admin() && ! defined( 'DOING_AJAX' ) ) {
-			return;
-		}
-
-		// Obtém o CEP da sessão do cliente
-		if ( ! WC()->customer ) {
-			return;
-		}
-
-		$postcode = WC()->customer->get_shipping_postcode();
-		if ( empty( $postcode ) ) {
-			$postcode = WC()->customer->get_billing_postcode();
-		}
-
-		// Limpa o CEP
-		$postcode = preg_replace( '/[^0-9]/', '', $postcode );
-
-		// Só calcula se tem CEP válido
-		if ( strlen( $postcode ) !== 8 ) {
-			return;
-		}
-
-		// Verifica se já existe uma taxa de frete (evita duplicar mesmo com múltiplos calculate_totals no mesmo request)
-		$fees = $cart->get_fees();
-		foreach ( $fees as $fee ) {
-			$fee_id   = isset( $fee->id ) ? (string) $fee->id : '';
-			$fee_name = isset( $fee->name ) ? (string) $fee->name : '';
-
-			// O WooCommerce costuma gerar id a partir do nome (ex: "Frete" -> "frete").
-			// Também aceitamos match por nome, porque alguns ambientes não expõem id consistentemente.
-			if ( '' !== $fee_id && 'frete' === sanitize_title( $fee_id ) ) {
-				return;
-			}
-			if ( '' !== $fee_name && false !== stripos( $fee_name, 'frete' ) ) {
-				return;
-			}
-		}
-
-		// Identifica a região
-		$region = gstore_get_shipping_region( '', $postcode );
-
-		// Calcula o peso tático
-		$shipping_method = new Gstore_Shipping_Method();
-		$cart_contents = $cart->get_cart();
-		
-		if ( empty( $cart_contents ) ) {
-			return;
-		}
-
-		$total_weight = $shipping_method->calculate_tactical_weight_public( $cart_contents );
-
-		if ( $total_weight <= 0 ) {
-			return;
-		}
-
-		// Obtém o custo do frete
-		$shipping_cost = $shipping_method->get_shipping_cost_public( $total_weight, $region );
-
-		if ( $shipping_cost === false || $shipping_cost <= 0 ) {
-			return;
-		}
-
-		// Adiciona o frete como taxa
-		$cart->add_fee( __( 'Frete', 'gstore' ), $shipping_cost, false );
-	}
-	add_action( 'woocommerce_cart_calculate_fees', 'gstore_add_shipping_as_fee', 20 );
-}
 
 /**
  * Identifica a região de envio baseado no estado ou CEP.
@@ -3480,72 +3197,7 @@ function gstore_get_shipping_region( $state = '', $postcode = '' ) {
 	return 'resto_brasil';
 }
 
-/**
- * Endpoint AJAX para buscar dados do Pix.
- */
-function gstore_get_pix_data_ajax() {
-	check_ajax_referer( 'gstore_pix_nonce', 'nonce' );
-
-	$order_id = isset( $_POST['order_id'] ) ? intval( $_POST['order_id'] ) : 0;
-
-	if ( ! $order_id ) {
-		wp_send_json_error( array( 'message' => __( 'ID do pedido não informado.', 'gstore' ) ) );
-		return;
-	}
-
-	$order = wc_get_order( $order_id );
-
-	if ( ! $order ) {
-		wp_send_json_error( array( 'message' => __( 'Pedido não encontrado.', 'gstore' ) ) );
-		return;
-	}
-
-	// Verifica se o pedido é do gateway Pix
-	if ( $order->get_payment_method() !== 'blu_pix' ) {
-		wp_send_json_error( array( 'message' => __( 'Este pedido não foi pago via Pix.', 'gstore' ) ) );
-		return;
-	}
-
-	// Busca dados do Pix
-	$transaction_token = $order->get_meta( Gstore_Blu_Pix_Gateway::META_TRANSACTION_TOKEN );
-	$qr_code_base64    = $order->get_meta( Gstore_Blu_Pix_Gateway::META_QR_CODE_BASE64 );
-	$emv               = $order->get_meta( Gstore_Blu_Pix_Gateway::META_EMV );
-	$status            = $order->get_meta( Gstore_Blu_Pix_Gateway::META_STATUS );
-	$expires_at        = $order->get_meta( Gstore_Blu_Pix_Gateway::META_EXPIRES_AT );
-
-	// Se não tem QR Code ou EMV, tenta consultar na Blu
-	if ( ( empty( $qr_code_base64 ) || empty( $emv ) ) && ! empty( $transaction_token ) ) {
-		$gateway = gstore_blu_pix_get_gateway_instance();
-		if ( $gateway ) {
-			$response = $gateway->consult_pix( $transaction_token );
-			if ( ! is_wp_error( $response ) ) {
-				$qr_code_base64 = $response['qr_code_base64'] ?? $qr_code_base64;
-				$emv            = $response['emv'] ?? $emv;
-				$status         = $response['status'] ?? $status;
-				$expires_at     = $response['expires_at'] ?? $expires_at;
-
-				// Atualiza metadados
-				$order->update_meta_data( Gstore_Blu_Pix_Gateway::META_QR_CODE_BASE64, $qr_code_base64 );
-				$order->update_meta_data( Gstore_Blu_Pix_Gateway::META_EMV, $emv );
-				$order->update_meta_data( Gstore_Blu_Pix_Gateway::META_STATUS, $status );
-				$order->update_meta_data( Gstore_Blu_Pix_Gateway::META_EXPIRES_AT, $expires_at );
-				$order->save();
-			}
-		}
-	}
-
-	wp_send_json_success(
-		array(
-			'transaction_token' => $transaction_token,
-			'qr_code_base64'    => $qr_code_base64,
-			'emv'               => $emv,
-			'status'            => $status,
-			'expires_at'        => $expires_at,
-		)
-	);
-}
-add_action( 'wp_ajax_gstore_get_pix_data', 'gstore_get_pix_data_ajax' );
-add_action( 'wp_ajax_nopriv_gstore_get_pix_data', 'gstore_get_pix_data_ajax' );
+// Endpoint AJAX Pix movido para o plugin gstore-core.
 
 /**
  * Obtém o estado (UF) a partir do CEP.
@@ -3782,74 +3434,7 @@ function gstore_calculate_shipping_ajax() {
 		)
 	);
 }
-add_action( 'wp_ajax_gstore_calculate_shipping', 'gstore_calculate_shipping_ajax' );
-add_action( 'wp_ajax_nopriv_gstore_calculate_shipping', 'gstore_calculate_shipping_ajax' );
-
-/**
- * Registra o suporte a Blocos para o Gateway Blu.
- */
-add_action( 'woocommerce_blocks_payment_method_type_registration', 'gstore_blu_register_payment_method_type' );
-function gstore_blu_register_payment_method_type( Automattic\WooCommerce\Blocks\Payments\PaymentMethodRegistry $payment_method_registry ) {
-
-	// Verifica se a classe AbstractPaymentMethodType está disponível
-	if ( ! class_exists( 'Automattic\WooCommerce\Blocks\Payments\Integrations\AbstractPaymentMethodType' ) ) {
-		// Loga o erro para debug apenas se WP_DEBUG estiver ativo
-		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
-			if ( function_exists( 'wc_get_logger' ) ) {
-				wc_get_logger()->error(
-					'GSTORE BLU: AbstractPaymentMethodType class not available. WooCommerce Blocks may not be installed or version incompatible.',
-					array( 'source' => 'gstore-blu-blocks' )
-				);
-			} elseif ( defined( 'WP_DEBUG' ) && WP_DEBUG && function_exists( 'error_log' ) ) {
-				error_log( 'GSTORE BLU: AbstractPaymentMethodType class not available. WooCommerce Blocks may not be installed or version incompatible.' );
-			}
-		}
-		return;
-	}
-
-	try {
-		// Inclui o arquivo da classe de integração com blocos
-		$blocks_file = get_theme_file_path( 'inc/class-gstore-blu-payment-gateway-blocks.php' );
-		
-		if ( ! file_exists( $blocks_file ) ) {
-			throw new Exception( 'Blocks integration file not found: ' . $blocks_file );
-		}
-
-		require_once $blocks_file;
-
-		// Verifica se a classe foi carregada corretamente
-		if ( ! class_exists( 'Gstore_Blu_Payment_Gateway_Blocks' ) ) {
-			throw new Exception( 'Gstore_Blu_Payment_Gateway_Blocks class not loaded after including file' );
-		}
-
-		// Registra a integração
-		$payment_method_registry->register( new Gstore_Blu_Payment_Gateway_Blocks() );
-
-		// Loga sucesso apenas se debug estiver ativo
-		if ( defined( 'WP_DEBUG' ) && WP_DEBUG && function_exists( 'wc_get_logger' ) ) {
-			wc_get_logger()->info(
-				'GSTORE BLU: Blocks integration registered successfully',
-				array( 'source' => 'gstore-blu-blocks' )
-			);
-		}
-
-	} catch ( Exception $e ) {
-		// Loga o erro apenas se WP_DEBUG estiver ativo
-		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
-			if ( function_exists( 'wc_get_logger' ) ) {
-				wc_get_logger()->error(
-					'GSTORE BLU: Error registering blocks integration: ' . $e->getMessage(),
-					array(
-						'source' => 'gstore-blu-blocks',
-						'trace'  => $e->getTraceAsString(),
-					)
-				);
-			} elseif ( function_exists( 'error_log' ) ) {
-				error_log( 'GSTORE BLU: Error registering blocks integration: ' . $e->getMessage() );
-			}
-		}
-	}
-}
+// Endpoints/integrações de frete (AJAX) e Blu Blocks movidos para o plugin gstore-core.
 
 
 
@@ -3995,227 +3580,7 @@ function gstore_checkout_review_order_payment_method_row() {
 }
 add_action( 'woocommerce_review_order_before_order_total', 'gstore_checkout_review_order_payment_method_row', 9 );
 
-/**
- * Endpoint AJAX para obter o resumo do carrinho no checkout de 3 etapas.
- */
-function gstore_get_cart_summary_ajax() {
-	if ( ! class_exists( 'WooCommerce' ) ) {
-		wp_send_json_error( array( 'message' => 'WooCommerce não está ativo.' ) );
-	}
-
-	$cart = WC()->cart;
-
-	if ( ! $cart ) {
-		wp_send_json_error( array( 'message' => 'Carrinho não encontrado.' ) );
-	}
-
-	// Força recálculo para garantir valores atualizados (frete/fees/taxa de parcelas)
-	if ( WC()->customer && WC()->customer->get_shipping_postcode() ) {
-		// Garante que o método de envio está selecionado
-		if ( WC()->session ) {
-			$chosen_methods = WC()->session->get( 'chosen_shipping_methods', array() );
-			if ( empty( $chosen_methods ) || empty( $chosen_methods[0] ) ) {
-				WC()->session->set( 'chosen_shipping_methods', array( 'gstore_custom_shipping' ) );
-			}
-		}
-		$cart->calculate_shipping();
-	}
-	$cart->calculate_totals();
-
-	$items = array();
-	foreach ( $cart->get_cart() as $cart_item_key => $cart_item ) {
-		$product = $cart_item['data'];
-		$items[] = array(
-			'key'      => $cart_item_key,
-			'name'     => $product->get_name(),
-			'quantity' => $cart_item['quantity'],
-			'subtotal' => wc_price( $cart_item['line_subtotal'] ),
-			'image'    => wp_get_attachment_image_url( $product->get_image_id(), 'thumbnail' ) ?: wc_placeholder_img_src( 'thumbnail' ),
-		);
-	}
-
-	$totals = $cart->get_totals();
-
-	// Verifica se há frete nas fees (taxa de frete Gstore)
-	$shipping_fee = null;
-	$fees = $cart->get_fees();
-	$other_fees = array();
-	foreach ( $fees as $fee ) {
-		if ( stripos( $fee->name, 'frete' ) !== false || $fee->id === 'gstore-shipping-fee' ) {
-			$shipping_fee = $fee->total;
-			break;
-		}
-	}
-	foreach ( $fees as $fee ) {
-		// Exclui fee de frete do array de taxas extras
-		if ( stripos( $fee->name, 'frete' ) !== false || $fee->id === 'gstore-shipping-fee' ) {
-			continue;
-		}
-		$other_fees[] = array(
-			'label' => (string) $fee->name,
-			'total' => wc_price( (float) $fee->total ),
-		);
-	}
-
-	// Usa shipping_total se disponível, senão usa a fee de frete
-	$shipping_value = $totals['shipping_total'] > 0 ? $totals['shipping_total'] : $shipping_fee;
-
-	$payment_method       = ( WC()->session ? (string) WC()->session->get( 'chosen_payment_method', '' ) : '' );
-	$payment_method_title = gstore_get_payment_method_title_by_id( $payment_method );
-
-	$response = array(
-		'items_count' => $cart->get_cart_contents_count(),
-		'items'       => $items,
-		'payment_method'       => $payment_method,
-		'payment_method_title' => $payment_method_title,
-		'total'       => wc_price( $totals['total'] ),
-		'totals'      => array(
-			'subtotal' => wc_price( $totals['subtotal'] ),
-			'shipping' => $shipping_value > 0 ? wc_price( $shipping_value ) : null,
-			'discount' => $totals['discount_total'] > 0 ? wc_price( $totals['discount_total'] ) : null,
-			'fees'     => ! empty( $other_fees ) ? $other_fees : null,
-		),
-		'installments' => array(
-			'selected' => gstore_blu_get_selected_installments(),
-			'per_installment' => wc_price(
-				max( 0, (float) $totals['total'] ) / max( 1, gstore_blu_get_selected_installments() )
-			),
-		),
-	);
-
-	wp_send_json_success( $response );
-}
-add_action( 'wp_ajax_gstore_get_cart_summary', 'gstore_get_cart_summary_ajax' );
-add_action( 'wp_ajax_nopriv_gstore_get_cart_summary', 'gstore_get_cart_summary_ajax' );
-
-/**
- * AJAX: retorna simulação de valores por parcela (considerando taxa progressiva/tabela).
- */
-function gstore_parse_money_to_float( $value ) {
-	if ( is_int( $value ) || is_float( $value ) ) {
-		return (float) $value;
-	}
-
-	if ( is_bool( $value ) || null === $value ) {
-		return 0.0;
-	}
-
-	if ( is_string( $value ) ) {
-		$str = html_entity_decode( wp_strip_all_tags( $value ) );
-		$str = preg_replace( '/[^0-9,\.\-]/', '', $str );
-		$str = trim( (string) $str );
-
-		if ( '' === $str || '-' === $str ) {
-			return 0.0;
-		}
-
-		// pt-BR: normalmente "1.234,56"
-		if ( false !== strpos( $str, ',' ) && false !== strpos( $str, '.' ) ) {
-			$str = str_replace( '.', '', $str );
-			$str = str_replace( ',', '.', $str );
-		} elseif ( false !== strpos( $str, ',' ) ) {
-			$str = str_replace( ',', '.', $str );
-		}
-
-		return (float) $str;
-	}
-
-	return 0.0;
-}
-
-function gstore_blu_get_installment_quotes_ajax() {
-	if ( ! class_exists( 'WooCommerce' ) || ! function_exists( 'WC' ) ) {
-		wp_send_json_error( array( 'message' => 'WooCommerce não está ativo.' ) );
-	}
-
-	$cart = WC()->cart;
-	if ( ! $cart || $cart->is_empty() ) {
-		wp_send_json_error( array( 'message' => 'Carrinho vazio.' ) );
-	}
-
-	if ( ! WC()->session ) {
-		wp_send_json_error( array( 'message' => 'Sessão não disponível.' ) );
-	}
-
-	$gateway = function_exists( 'gstore_blu_get_gateway_instance' ) ? gstore_blu_get_gateway_instance() : null;
-	$max     = $gateway && method_exists( $gateway, 'get_max_installments' ) ? (int) $gateway->get_max_installments() : 21;
-	$max     = max( 1, min( 21, $max ) );
-
-	$requested_max = isset( $_POST['max'] ) ? absint( $_POST['max'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification.Missing
-	if ( $requested_max > 0 ) {
-		$max = max( 1, min( 21, $requested_max, $max ) );
-	}
-
-	$orig_installments = absint( WC()->session->get( 'gstore_blu_installments', 1 ) );
-	$orig_method       = (string) WC()->session->get( 'chosen_payment_method', '' );
-
-	// Força método cartão Blu durante simulação para aplicar fee
-	WC()->session->set( 'chosen_payment_method', 'blu_checkout' );
-
-	$quotes = array();
-	for ( $i = 1; $i <= $max; $i++ ) {
-		WC()->session->set( 'gstore_blu_installments', $i );
-		$cart->calculate_totals();
-		$totals = $cart->get_totals();
-
-		// Total "raw" mais confiável (pode vir como string/HTML dependendo de hooks/plugins)
-		$total = 0.0;
-		if ( isset( $totals['total'] ) ) {
-			$total = gstore_parse_money_to_float( $totals['total'] );
-		}
-		if ( $total <= 0 && isset( $cart->total ) ) {
-			$total = gstore_parse_money_to_float( $cart->total );
-		}
-		if ( $total <= 0 && method_exists( $cart, 'get_total' ) ) {
-			// Alguns ambientes retornam string formatada mesmo com context 'edit'
-			$total = gstore_parse_money_to_float( $cart->get_total( 'edit' ) );
-			if ( $total <= 0 ) {
-				$total = gstore_parse_money_to_float( $cart->get_total() );
-			}
-		}
-
-		// Calcula o valor da parcela COM juros compostos (exceto para 1x que não tem juros)
-		if ( $i === 1 ) {
-			$per_installment = max( 0, $total );
-			$total_with_interest = $total;
-		} else {
-			// Usa função de cálculo com juros compostos (fórmula Price/PGTO)
-			$per_installment = gstore_calculate_installment_with_interest( $total, $i );
-			$total_with_interest = $per_installment * $i;
-		}
-
-		$total_html = wc_price( $total_with_interest );
-		$per_html   = wc_price( $per_installment );
-		$total_text = html_entity_decode( wp_strip_all_tags( $total_html ) );
-		$per_text   = html_entity_decode( wp_strip_all_tags( $per_html ) );
-
-		$quotes[ (string) $i ] = array(
-			'installments'         => $i,
-			'total'                => $total_html,
-			'per_installment'      => $per_html,
-			'total_text'           => $total_text,
-			'per_installment_text' => $per_text,
-			'total_raw'            => $total_with_interest,
-			'per_installment_raw'  => $per_installment,
-			'original_total'       => $total, // Valor base sem juros para referência
-		);
-	}
-
-	// Restaura sessão
-	WC()->session->set( 'gstore_blu_installments', $orig_installments >= 1 ? $orig_installments : 1 );
-	WC()->session->set( 'chosen_payment_method', $orig_method );
-	$cart->calculate_totals();
-
-	wp_send_json_success(
-		array(
-			'max'     => $max,
-			'quotes'  => $quotes,
-			'current' => gstore_blu_get_selected_installments(),
-		)
-	);
-}
-add_action( 'wp_ajax_gstore_blu_get_installment_quotes', 'gstore_blu_get_installment_quotes_ajax' );
-add_action( 'wp_ajax_nopriv_gstore_blu_get_installment_quotes', 'gstore_blu_get_installment_quotes_ajax' );
+// Endpoints AJAX de checkout (resumo, parcelas) movidos para o plugin gstore-core.
 
 /**
  * ============================================
@@ -10378,12 +9743,4 @@ function gstore_age_verification_modal() {
 }
 add_action( 'wp_footer', 'gstore_age_verification_modal', 999 );
 
-// Inicializa classe de administração (regeneração de thumbnails)
-require_once get_template_directory() . '/inc/class-gstore-admin.php';
-new Gstore_Admin();
-
-// Atualizador do tema via GitHub (admin).
-if ( is_admin() ) {
-	require_once get_theme_file_path( 'inc/class-gstore-theme-updater.php' );
-	new Gstore_Theme_Git_Updater();
-}
+// Ferramentas administrativas (thumbnails + updater via git) movidas para o plugin gstore-core.

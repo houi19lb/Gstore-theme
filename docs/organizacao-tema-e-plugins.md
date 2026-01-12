@@ -35,21 +35,26 @@ O tema carrega funcionalidades tipicamente de plugin via `functions.php` e `inc/
   - `inc/class-gstore-shipping-admin.php` (tela admin e export/import do JSON)
   - `assets/json/shipping-rates.json` (dados de regra de frete)
 - **Config/infra de loja**
-  - `inc/class-gstore-store-info.php` + `store-info.json` (dados da loja em JSON, export/import)
+  - `inc/class-gstore-store-info.php` + `/<tema>/store-info.json` (dados da loja em JSON, export/import)
+    - Obs.: no repositório existe um **exemplo** em `docs/store-info.json`, mas o código lê/grava o arquivo na **raiz do tema** (`get_stylesheet_directory()/store-info.json`).
 - **Ferramentas admin**
   - `inc/class-gstore-admin.php` (regeneração de thumbnails)
 
 ### “Plugins dentro do tema” (anti-padrão)
 
-Existem diretórios de plugin dentro do tema:
+**No repositório atual, não existem diretórios de plugin dentro do tema.**  
+Se isso aparecer em algum ambiente (ex.: por upload manual em produção), trate como anti-padrão.
 
-- `Plugin GStore/` (ex.: `gstore-optimizer.php`)
-- `Plugin GStore White Label/` (ex.: `gstore-white-label.php`)
+**Ponto importante:** o WordPress **não carrega** plugins a partir do tema automaticamente.  
+Um “plugin dentro do tema” só “funciona” se o tema fizer `require/include` do arquivo, ou seja: na prática ele vira **código do tema**, não um plugin gerenciável.
 
-Isso funciona só porque o código está no filesystem, mas **não é o lugar correto** para plugins no WordPress.
+O local correto é:
 
-- O local correto é **`wp-content/plugins/`** (ou **`wp-content/mu-plugins/`** se precisar sempre ativo).
-- Se o tema for trocado ou atualizado por ZIP, esses “plugins” podem desaparecer.
+- **`wp-content/plugins/`** (plugin normal)  
+ou
+- **`wp-content/mu-plugins/`** (MU-plugin, se precisar sempre ativo)
+
+Se o tema for trocado ou atualizado por ZIP, qualquer “plugin” que esteja dentro do tema pode desaparecer.
 
 ---
 
@@ -125,7 +130,8 @@ ou
 **Mover para plugin** (ex.: `gstore-store-info` ou `gstore-core`):
 
 - `inc/class-gstore-store-info.php`
-- `store-info.json` (idealmente migrar para `wp_options` ou uploads)
+- `/<tema>/store-info.json` (idealmente migrar para `wp_options` ou uploads)
+  - Obs.: há um template em `docs/store-info.json`, mas o arquivo “vivo” é o da raiz do tema.
 
 **Por quê**
 
@@ -146,10 +152,10 @@ ou
 
 ### 5) Otimizações e white-label
 
-Esses itens **já são plugins**, só estão no lugar errado:
+Se existirem itens desse tipo, eles **já são plugins**, só estariam no lugar errado:
 
-- `Plugin GStore/gstore-optimizer.php`
-- `Plugin GStore White Label/gstore-white-label.php`
+- (exemplo) `gstore-optimizer`
+- (exemplo) `gstore-white-label`
 
 **Ação recomendada**
 
@@ -186,8 +192,8 @@ Opção B (mais modular): **plugins por domínio**
 - **`gstore-blu`** (checkout link + pix + webhooks)
 - **`gstore-shipping`** (método de envio + admin + dados)
 - **`gstore-store-info`** (dados da loja)
-- **`gstore-optimizer`** (já existe)
-- **`gstore-white-label`** (já existe)
+- **`gstore-optimizer`** (opcional, se existir)
+- **`gstore-white-label`** (opcional, se existir)
 
 ---
 
@@ -195,7 +201,7 @@ Opção B (mais modular): **plugins por domínio**
 
 ### Fase 0 — Preparação (sem mudar comportamento)
 
-- Mover `Plugin GStore/` e `Plugin GStore White Label/` para **`wp-content/plugins/`**.
+- Se existir algum “plugin dentro do tema” em algum ambiente, mover para **`wp-content/plugins/`** (ou **`mu-plugins/`**).
 - Confirmar que ativação e paths funcionam (URLs/`plugin_dir_path`, `plugin_dir_url`).
 
 ### Fase 1 — Criar plugin “core” e duplicar hooks (com fallback)
@@ -216,7 +222,7 @@ Opção B (mais modular): **plugins por domínio**
 ### Fase 3 — Migrar dados para fora do tema
 
 - Frete: migrar `assets/json/shipping-rates.json` para `wp_options` ou `uploads`.
-- Store Info: migrar `store-info.json` para `wp_options` ou `uploads`.
+- Store Info: migrar `/<tema>/store-info.json` para `wp_options` ou `uploads` (mantendo um fallback de importação se o JSON existir).
 - Criar rotina de migração “se existir JSON no tema e não existir dado no destino, importar”.
 
 ### Fase 4 — Enxugar `functions.php`
