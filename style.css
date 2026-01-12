@@ -56,432 +56,6 @@ h2.wp-block-heading.has-text-align-center.has-x-large-font-size {
 	color: var(--gstore-color-text-primary, #1a1a1a) !important;
 }
 
-/* =========================================
- * CAC Armas Tactical Product Page
- * ========================================= */
-.armastore-product-shell {
-	background: #fafaf9;
-	padding: clamp(24px, 4vw, 64px) 0;
-}
-
-.armastore-product-shell__inner {
-	max-width: var(--gstore-container-max-width, 1280px);
-	margin: 0 auto;
-	padding: 0 var(--gstore-container-padding-inline, 20px);
-}
-
-.armastore-product {
-	background: transparent;
-}
-
-.armastore-product__breadcrumb {
-	margin-bottom: 24px;
-	font-size: var(--gstore-font-size-sm);
-	color: #7a7a7a;
-}
-
-.armastore-breadcrumb {
-	display: flex;
-	flex-wrap: wrap;
-	gap: 6px;
-	color: inherit;
-}
-
-.armastore-breadcrumb a {
-	color: #5c6b5a;
-	text-decoration: none;
-	font-weight: 600;
-}
-
-.armastore-product__hero {
-	display: grid;
-	grid-template-columns: repeat(2, minmax(0, 1fr));
-	gap: clamp(32px, 5vw, 60px);
-	background: #ffffff;
-	border-radius: 8px;
-	padding: clamp(24px, 4vw, 40px);
-	box-shadow: 0 20px 60px rgba(17, 24, 39, 0.08);
-	border: 1px solid #e8e8e6;
-}
-
-.armastore-product__gallery {
-	position: sticky;
-	top: 32px;
-	align-self: flex-start;
-}
-
-.armastore-product__gallery .woocommerce-product-gallery {
-	border: 1px solid #dfe2df;
-	border-radius: 6px;
-	background: #fff;
-	padding: 16px;
-}
-
-.armastore-product__info {
-	display: flex;
-	flex-direction: column;
-	gap: 24px;
-}
-
-.armastore-product__eyebrow {
-	display: inline-flex;
-	align-items: center;
-	gap: 8px;
-	text-transform: uppercase;
-	font-size: var(--gstore-font-size-xs);
-	letter-spacing: 0.14em;
-	color: #5c6b5a;
-	font-weight: 700;
-}
-
-.armastore-product__title {
-	font-size: clamp(var(--gstore-font-size-3xl), calc(1vw + 1rem), var(--gstore-font-size-4xl));
-	color: var(--gstore-color-text-primary);
-	margin: 0;
-}
-
-.armastore-product__excerpt {
-	color: #4a4a4a;
-	font-size: var(--gstore-font-size-base);
-	line-height: 1.6;
-}
-
-.armastore-product__rating {
-	display: flex;
-	align-items: center;
-	gap: 12px;
-}
-
-.armastore-product__rating .star-rating {
-	--rating-color: #c9b88c;
-	color: var(--rating-color);
-}
-
-.armastore-product__rating-count {
-	border: none;
-	background: transparent;
-	color: #5c6b5a;
-	font-weight: 600;
-	cursor: pointer;
-	text-decoration: underline;
-}
-
-.armastore-product__price-card {
-	background: #fefefe;
-	border: 1px solid #e8e8e6;
-	border-radius: 8px;
-	padding: 20px;
-	box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4);
-}
-
-.armastore-product__price-top {
-	display: flex;
-	align-items: center;
-	gap: 12px;
-	margin-bottom: 8px;
-}
-
-.armastore-product__old-price {
-	color: #9ca3af;
-	text-decoration: line-through;
-	font-size: var(--gstore-font-size-base);
-}
-
-.armastore-product__discount-badge {
-	background: #5c6b5a;
-	color: #fff;
-	padding: 4px 10px;
-	border-radius: 999px;
-	font-size: var(--gstore-font-size-sm);
-	font-weight: 700;
-}
-
-.armastore-product__price-current {
-	font-size: clamp(34px, 4vw, 44px);
-	color: #1f1f1f;
-	font-weight: 700;
-}
-
-.armastore-product__installments {
-	margin: 0;
-	margin-top: 8px;
-	color: #6b7280;
-	font-size: var(--gstore-font-size-sm);
-}
-
-.armastore-product__features {
-	background: #ffffff;
-	border: 1px solid #e8e8e6;
-	border-radius: 8px;
-	padding: 20px 24px;
-}
-
-.armastore-product__features h3 {
-	margin: 0 0 12px;
-	color: #1f1f1f;
-	font-size: var(--gstore-font-size-lg);
-}
-
-.armastore-product__features ul {
-	list-style: none;
-	margin: 0;
-	padding: 0;
-	display: flex;
-	flex-direction: column;
-	gap: 10px;
-}
-
-.armastore-product__features li {
-	display: flex;
-	gap: 12px;
-	align-items: flex-start;
-	color: #4a4a4a;
-}
-
-.armastore-product__features li i {
-	color: #5c6b5a;
-	font-size: var(--gstore-font-size-lg);
-	margin-top: 2px;
-}
-
-.armastore-product__features strong {
-	display: block;
-	color: #1f1f1f;
-}
-
-.armastore-product__cta {
-	display: flex;
-	flex-direction: column;
-	gap: 16px;
-}
-
-.armastore-product__stock {
-	display: inline-flex;
-	align-items: center;
-	gap: 8px;
-	color: #1f1f1f;
-	font-weight: 600;
-}
-
-.armastore-product__stock i {
-	color: #5c6b5a;
-	font-size: var(--gstore-font-size-xs);
-}
-
-.armastore-product__add-cart form.cart {
-	display: flex;
-	flex-direction: column;
-	gap: 12px;
-}
-
-.armastore-product__add-cart .variations_form,
-.armastore-product__add-cart .variations {
-	width: 100%;
-}
-
-.armastore-quantity-controls {
-	display: inline-flex;
-	align-items: stretch;
-	border: 1px solid #d1d5db;
-	border-radius: 6px;
-	overflow: hidden;
-}
-
-.armastore-quantity-controls .qty {
-	width: 64px;
-	text-align: center;
-	border: none;
-	font-size: var(--gstore-font-size-base);
-	font-weight: 600;
-}
-
-.armastore-quantity-button {
-	border: none;
-	background: #f5f5f4;
-	width: 48px;
-	font-size: var(--gstore-font-size-xl);
-	font-weight: 600;
-	color: #1f1f1f;
-	cursor: pointer;
-	transition: background 0.2s ease;
-}
-
-.armastore-quantity-button:hover {
-	background: #e8e8e6;
-}
-
-.armastore-product__add-cart .single_add_to_cart_button {
-	width: 100%;
-	padding: 16px;
-	border-radius: 6px;
-	background: var(--green);
-	border: none;
-	color: #fff;
-	text-transform: uppercase;
-	font-weight: 700;
-	letter-spacing: 0.08em;
-	box-shadow: none;
-	transition: background var(--gstore-transition-fast);
-}
-
-.armastore-product__add-cart .single_add_to_cart_button:hover {
-	background: var(--green-dark);
-}
-
-.armastore-product__buy-now {
-	display: inline-flex;
-	justify-content: center;
-	align-items: center;
-	padding: 16px;
-	border: 2px solid #5c6b5a;
-	color: #5c6b5a;
-	font-weight: 700;
-	text-transform: uppercase;
-	letter-spacing: 0.08em;
-	border-radius: 6px;
-	transition: all 0.2s ease;
-	text-decoration: none;
-}
-
-.armastore-product__buy-now:hover {
-	background: #5c6b5a;
-	color: #fff;
-}
-
-.armastore-product__trust {
-	list-style: none;
-	margin: 0;
-	padding: 0;
-	display: grid;
-	grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-	gap: 12px;
-}
-
-.armastore-product__trust li {
-	border: 1px solid #e8e8e6;
-	border-radius: 6px;
-	padding: 12px;
-	background: #fefefe;
-	display: flex;
-	gap: 12px;
-	align-items: flex-start;
-}
-
-.armastore-product__trust i {
-	color: var(--gstore-color-rating, #c9b88c);
-	font-size: var(--gstore-font-size-xl);
-}
-
-.armastore-product__meta .product_meta {
-	display: grid;
-	gap: 4px;
-	font-size: var(--gstore-font-size-sm);
-	color: #6b7280;
-}
-
-.armastore-product__tabs {
-	margin-top: clamp(32px, 6vw, 60px);
-	background: #ffffff;
-	border: 1px solid #e8e8e6;
-	border-radius: 8px;
-	padding: clamp(16px, 4vw, 32px);
-	box-shadow: 0 12px 40px rgba(15, 23, 42, 0.06);
-}
-
-.armastore-product__tab-buttons {
-	display: flex;
-	gap: 8px;
-	border-bottom: 1px solid #e5e7eb;
-	padding-bottom: 12px;
-	margin-bottom: 20px;
-}
-
-.armastore-product__tab-buttons button {
-	border: none;
-	background: transparent;
-	font-weight: 600;
-	padding: 12px 18px;
-	border-radius: 6px 6px 0 0;
-	color: #9ca3af;
-	cursor: pointer;
-	transition: color 0.2s ease, background 0.2s ease;
-}
-
-.armastore-product__tab-buttons button.is-active {
-	color: #1f1f1f;
-	background: #f5f5f4;
-}
-
-.armastore-product__tab-panel {
-	display: none;
-	color: #444;
-	line-height: 1.7;
-}
-
-.armastore-product__tab-panel.is-active {
-	display: block;
-}
-
-.armastore-product__spec-grid {
-	display: grid;
-	grid-template-columns: repeat(2, minmax(0, 1fr));
-	gap: 16px;
-}
-
-.armastore-product__spec-item {
-	border-bottom: 1px solid #e8e8e6;
-	padding-bottom: 12px;
-	display: flex;
-	justify-content: space-between;
-	font-size: var(--gstore-font-size-base);
-	color: #4a4a4a;
-}
-
-.armastore-product__spec-label {
-	font-weight: 600;
-	color: #1f1f1f;
-}
-
-.armastore-product__upsells {
-	margin-top: clamp(32px, 6vw, 60px);
-}
-
-.armastore-product__upsells .product {
-	background: #fff;
-	border-radius: 6px;
-	padding: 12px;
-	border: 1px solid #e8e8e6;
-}
-
-@media (max-width: 1024px) {
-	.armastore-product__hero {
-		grid-template-columns: 1fr;
-	}
-
-	.armastore-product__gallery {
-		position: relative;
-		top: 0;
-	}
-}
-
-@media (max-width: 640px) {
-	.armastore-product-shell {
-		padding: 16px 0 40px;
-	}
-
-	.armastore-product__hero {
-		padding: 20px;
-	}
-
-	.armastore-product__tab-buttons {
-		flex-direction: column;
-	}
-
-	.armastore-product__spec-grid {
-		grid-template-columns: 1fr;
-	}
-}
-
 /* Bridge block theme wrappers */
 .single-product .Gstore-single-product-layout {
 	margin: 0;
@@ -583,11 +157,27 @@ h2.wp-block-heading.has-text-align-center.has-x-large-font-size {
 	background: var(--gstore-color-bg-light);
 	display: grid;
 	grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
+	grid-template-areas:
+		"left summary"
+		"tabs summary";
 	gap: clamp(20px, 3.5vw, 40px);
+	align-items: start;
 }
 
 .Gstore-single-product__main>* {
 	margin: 0;
+}
+
+.Gstore-single-product__left {
+	grid-area: left;
+}
+
+.Gstore-single-product__summary {
+	grid-area: summary;
+}
+
+.Gstore-single-product__tabs {
+	grid-area: tabs;
 }
 
 .Gstore-single-product__gallery {
@@ -2804,6 +2394,85 @@ padding: 16px;
 	color: var(--gstore-color-text-gray-600);
 }
 
+/* Accordion header/content existe no DOM (JS), mas só aparece no mobile */
+.Gstore-single-product__accordion-header {
+	display: none;
+}
+
+/* =========================================
+ * Single Product - Tabs como Accordions (Mobile)
+ * ========================================= */
+@media (max-width: 1024px) {
+	/* Remove o “card” externo no mobile para ficar no padrão: lista de blocos */
+	.Gstore-single-product__tabs.Gstore-single-product__card {
+		background: transparent;
+		border: 0;
+		padding: 0;
+		border-radius: 0;
+	}
+
+	.Gstore-single-product__tab-panels {
+		display: flex;
+		flex-direction: column;
+		gap: 12px;
+	}
+
+	/* Cada tab vira um item do accordion (o próprio panel) */
+	.Gstore-single-product__tab-panel {
+		background: #ffffff;
+		border: 1px solid var(--gstore-color-border-divider, var(--gstore-color-border));
+		border-radius: 4px; /* requisito: no máximo 4px */
+		overflow: hidden;
+	}
+
+	/* Header do accordion (injetado via JS) */
+	.Gstore-single-product__accordion-header {
+		display: flex;
+		width: 100%;
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 12px;
+		padding: 16px;
+		text-align: left;
+		background: #ffffff;
+		border: 0;
+		cursor: pointer;
+	}
+
+	.Gstore-single-product__accordion-title {
+		font-size: 14px;
+		font-weight: 700;
+		color: var(--gstore-color-text-primary);
+	}
+
+	.Gstore-single-product__accordion-icon {
+		width: 28px;
+		height: 28px;
+		border-radius: 4px; /* requisito: no máximo 4px */
+		border: 1px solid var(--gstore-color-border-divider, var(--gstore-color-border));
+		background: #ffffff;
+		color: var(--gstore-color-text-gray-600);
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		font-size: 16px;
+		line-height: 1;
+		flex: 0 0 auto;
+	}
+
+	.Gstore-single-product__tab-panel.is-open .Gstore-single-product__accordion-icon {
+		background: var(--gstore-color-bg-gray-50);
+	}
+
+	/* Conteúdo (wrapper injetado via JS) */
+	.Gstore-single-product__accordion-content {
+		border-top: 1px solid var(--gstore-color-border-divider, var(--gstore-color-border));
+		padding: 16px;
+		color: var(--gstore-color-text-gray-600);
+	}
+}
+
 .Gstore-single-product__summary-card {
 	background: var(--gstore-color-bg-light);
 	border: 1px solid var(--gstore-color-border-divider, var(--gstore-color-border));
@@ -3446,6 +3115,19 @@ padding: 16px;
 
 	.Gstore-single-product__main {
 		grid-template-columns: 1fr;
+		grid-template-areas:
+			"left"
+			"summary"
+			"tabs";
+	}
+
+	/* Mobile: tabs viram accordions (headers visíveis via JS/CSS) */
+	.Gstore-single-product__tab-buttons {
+		display: none;
+	}
+
+	.Gstore-single-product__tab-panels {
+		padding: 0;
 	}
 
 	.Gstore-single-product__details-highlight-grid {
@@ -8125,342 +7807,6 @@ main.Gstore-blog-single-shell .wp-block-group.is-layout-constrained:not(.Gstore-
 		width: 18px;
 		height: 18px;
 		fill: currentColor;
-	}
-}
-
-/* ========================================
-   FOOTER CAC ARMAS
-   ======================================== */
-.armastore-footer {
-	background-color: #0f0f0f;
-	color: #ccc;
-	font-size: var(--gstore-font-size-sm);
-}
-
-/* Remove limitações do layout constrained apenas para newsletter-wrapper */
-.armastore-footer.is-layout-constrained,
-.armastore-footer.wp-block-group {
-	width: 100%;
-	max-width: none !important;
-}
-
-.armastore-footer.is-layout-constrained>.newsletter-wrapper {
-	width: 100%;
-	max-width: none !important;
-	margin-left: 0 !important;
-	margin-right: 0 !important;
-}
-
-/* Mantém o footer-container limitado a 1280px */
-.armastore-footer.is-layout-constrained>.footer-container {
-	max-width: var(--gstore-container-max-width, 1280px) !important;
-	margin-left: auto !important;
-	margin-right: auto !important;
-}
-
-.armastore-footer a {
-	color: var(--gstore-color-accent, #ff5c00);
-	text-decoration: none;
-}
-
-.armastore-footer a:hover {
-	text-decoration: underline;
-}
-
-/* Newsletter Wrapper - Seção separada com cinza mais claro, full width */
-.newsletter-wrapper {
-	background-color: #1e1e1e;
-	width: 100%;
-}
-
-.newsletter-container {
-	max-width: var(--gstore-container-max-width, 1280px);
-	margin: 0 auto;
-	padding: 30px var(--gstore-container-padding-inline, 20px);
-}
-
-.footer-container {
-	max-width: var(--gstore-container-max-width, 1280px);
-	margin: 0 auto;
-	padding: 40px var(--gstore-container-padding-inline, 20px) 20px;
-}
-
-.newsletter {
-	display: flex;
-	justify-content: space-between;
-	align-items: center;
-	color: #fff;
-	font-weight: bold;
-	font-size: var(--gstore-font-size-base);
-}
-
-.newsletter span {
-	color: var(--gstore-color-accent, #ff5c00);
-}
-
-.newsletter form {
-	display: flex;
-	gap: 10px;
-}
-
-.newsletter input[type="text"],
-.newsletter input[type="email"] {
-	background: #111;
-	border: none;
-	border-radius: 4px;
-	padding: 8px 15px;
-	color: #fff;
-	width: 150px;
-}
-
-.newsletter button {
-	background: var(--gstore-color-accent, #ff5c00);
-	border-radius: 4px;
-	border: none;
-	padding: 8px 20px;
-	color: #111;
-	font-weight: bold;
-	cursor: pointer;
-	transition: background 0.3s ease;
-}
-
-.newsletter button:hover {
-	background: var(--gstore-color-accent-secondary, #9d8a35);
-}
-
-.footer-main {
-	display: flex;
-	gap: 40px;
-	color: #ccc;
-}
-
-.footer-column {
-	flex: 1;
-	border-right: 1px solid #222;
-	padding-right: 20px;
-	color: var(--card-meta-bg);
-}
-
-.footer-column:last-child {
-	border-right: none;
-}
-
-.footer-column h3 {
-	color: var(--gstore-color-accent, #ff5c00);
-	font-weight: bold;
-	margin-bottom: 15px;
-	font-size: var(--gstore-font-size-base);
-}
-
-/* Logo no footer */
-.footer-column .footer-logo,
-.footer-column .wp-block-site-logo.footer-logo {
-	margin-bottom: 15px;
-	display: block;
-}
-
-.footer-column .footer-logo a,
-.footer-column .wp-block-site-logo.footer-logo a {
-	display: inline-block;
-	text-decoration: none;
-}
-
-.footer-column .footer-logo img,
-.footer-column .wp-block-site-logo.footer-logo img {
-	max-height: 50px;
-	max-width: 200px;
-	width: auto;
-	height: auto;
-	display: block;
-	object-fit: contain;
-}
-
-.footer-column p,
-.footer-column li {
-	font-size: var(--gstore-font-size-sm);
-	line-height: 1.5;
-}
-
-.footer-column ul {
-	list-style: none;
-	padding: 0;
-	margin: 0;
-}
-
-.footer-column ul li {
-	margin-bottom: 8px;
-}
-
-.footer-column ul li a {
-	color: #ccc;
-	font-weight: normal;
-}
-
-.footer-column ul li a:hover {
-	color: var(--gstore-color-accent, #ff5c00);
-}
-
-.footer-column .contact-item {
-	display: flex;
-	align-items: center;
-	gap: 8px;
-	margin-bottom: 10px;
-	font-size: var(--gstore-font-size-sm);
-}
-
-.footer-column .contact-item svg,
-.footer-column .contact-item i {
-	fill: var(--gstore-color-accent, #ff5c00);
-	color: var(--gstore-color-accent, #ff5c00);
-	width: 16px;
-	height: 16px;
-	flex-shrink: 0;
-	display: inline-flex;
-	align-items: center;
-	justify-content: center;
-	font-size: var(--gstore-font-size-base);
-}
-
-.social-icons {
-	display: flex;
-	align-items: center;
-	gap: 10px;
-	margin-bottom: 15px;
-}
-
-.social-icons a {
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	background: #222;
-	border-radius: var(--gstore-radius-base);
-	padding: 8px;
-	color: var(--gstore-color-accent, #ff5c00);
-	font-size: var(--gstore-font-size-base);
-	width: 32px;
-	height: 32px;
-}
-
-.payment-security {
-	display: flex;
-	justify-content: space-between;
-	border-top: 1px solid #222;
-	padding-top: 20px;
-	margin-top: 30px;
-	font-size: var(--gstore-font-size-sm);
-	flex-wrap: wrap;
-	gap: 20px;
-}
-
-.payment-methods img,
-.security-badges img {
-	height: 24px;
-	margin-right: 8px;
-}
-
-.payment-methods {
-	display: flex;
-	align-items: center;
-	gap: 10px;
-	flex-wrap: wrap;
-}
-
-.security-badges {
-	display: flex;
-	align-items: center;
-	gap: 10px;
-	flex-wrap: wrap;
-}
-
-.payment-security .section-title {
-	font-weight: bold;
-	color: var(--gstore-color-accent, #ff5c00);
-	margin-bottom: 8px;
-}
-
-.payment-security .note {
-	font-style: italic;
-	font-size: var(--gstore-font-size-xs);
-	color: #666;
-	margin-top: 5px;
-}
-
-.footer-bottom {
-	text-align: center;
-	font-size: var(--gstore-font-size-xs);
-	color: #666;
-	margin-top: 30px;
-	line-height: 1.4;
-}
-
-.footer-bottom p {
-	margin-bottom: 8px;
-}
-
-.footer-bottom a {
-	color: var(--gstore-color-accent, #ff5c00);
-	font-weight: bold;
-}
-
-.footer-bottom a:hover {
-	text-decoration: underline;
-}
-
-/* Responsive Footer */
-@media (max-width: 1024px) {
-	.footer-main {
-		flex-wrap: wrap;
-		gap: 30px;
-	}
-
-	.footer-column {
-		flex: 1 1 45%;
-		border-right: none;
-		padding-right: 0;
-	}
-}
-
-@media (max-width: 768px) {
-	.newsletter-container {
-		padding: 20px var(--gstore-container-padding-inline, 15px);
-	}
-
-	.newsletter {
-		flex-direction: column;
-		align-items: flex-start;
-		gap: 15px;
-	}
-
-	.newsletter form {
-		width: 100%;
-		flex-direction: column;
-	}
-
-	.newsletter input[type="text"],
-	.newsletter input[type="email"] {
-		width: 100%;
-	}
-
-	.footer-main {
-		flex-direction: column;
-		gap: 30px;
-	}
-
-	.footer-column {
-		flex: 1 1 100%;
-		border-right: none;
-		padding-right: 0;
-		border-bottom: 1px solid #222;
-		padding-bottom: 20px;
-	}
-
-	.footer-column:last-child {
-		border-bottom: none;
-	}
-
-	.payment-security {
-		flex-direction: column;
-		gap: 20px;
 	}
 }
 

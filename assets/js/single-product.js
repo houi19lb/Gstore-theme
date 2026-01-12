@@ -37,35 +37,162 @@ document.addEventListener('DOMContentLoaded', () => {
 			return;
 		}
 
+		const isMobileQuery = window.matchMedia('(max-width: 1024px)');
 		const getPanelId = (tab) => `gstore-tab-${tab}`;
+		const getTabFromPanel = (panel) => String(panel.id || '').replace(/^gstore-tab-/, '');
 
-		const activate = (tab) => {
+		const ensureAccordionMarkup = () => {
+			if (root.dataset.gstoreAccordionReady === '1') {
+				return;
+			}
+
+			panels.forEach((panel) => {
+				const tab = getTabFromPanel(panel);
+				if (!tab) {
+					return;
+				}
+
+				// Já processado?
+				if (panel.querySelector('.Gstore-single-product__accordion-content')) {
+					return;
+				}
+
+				const label =
+					buttons.find((b) => b.dataset.gstoreTab === tab)?.textContent?.trim() ||
+					panel.querySelector('.Gstore-single-product__tab-title')?.textContent?.trim() ||
+					tab;
+
+				const header = document.createElement('button');
+				header.type = 'button';
+				header.className = 'Gstore-single-product__accordion-header';
+				header.dataset.gstoreAccordionTab = tab;
+				header.setAttribute('aria-controls', panel.id);
+				header.setAttribute('aria-expanded', 'false');
+
+				const title = document.createElement('span');
+				title.className = 'Gstore-single-product__accordion-title';
+				title.textContent = label;
+
+				const icon = document.createElement('span');
+				icon.className = 'Gstore-single-product__accordion-icon';
+				icon.setAttribute('aria-hidden', 'true');
+				icon.textContent = '+';
+
+				header.appendChild(title);
+				header.appendChild(icon);
+
+				const content = document.createElement('div');
+				content.className = 'Gstore-single-product__accordion-content';
+
+				// Move todo o conteúdo atual do panel para dentro do wrapper de conteúdo.
+				while (panel.firstChild) {
+					content.appendChild(panel.firstChild);
+				}
+
+				panel.appendChild(header);
+				panel.appendChild(content);
+			});
+
+			root.dataset.gstoreAccordionReady = '1';
+		};
+
+		// Estado inicial: baseado em markup (fallback: 1º)
+		const defaultBtn = buttons.find((b) => b.classList.contains('is-active')) || buttons[0];
+		let activeTab = defaultBtn?.dataset?.gstoreTab ? String(defaultBtn.dataset.gstoreTab) : '';
+
+		const normalizeForMode = () => {
+			const isMobile = isMobileQuery.matches;
+			if (!activeTab && !isMobile) {
+				activeTab = String(buttons[0]?.dataset?.gstoreTab || '');
+			}
+		};
+
+		const updateUI = () => {
+			const isMobile = isMobileQuery.matches;
+			normalizeForMode();
+
 			buttons.forEach((btn) => {
-				const isActive = btn.dataset.gstoreTab === tab;
+				const isActive = !!activeTab && btn.dataset.gstoreTab === activeTab;
 				btn.classList.toggle('is-active', isActive);
 				btn.setAttribute('aria-selected', String(isActive));
 			});
 
 			panels.forEach((panel) => {
-				const isActive = panel.id === getPanelId(tab);
-				panel.classList.toggle('is-active', isActive);
-				panel.hidden = !isActive;
+				const tab = getTabFromPanel(panel);
+				const isActive = !!activeTab && tab === activeTab;
+
+				const header = panel.querySelector('.Gstore-single-product__accordion-header');
+				const icon = panel.querySelector('.Gstore-single-product__accordion-icon');
+				const content = panel.querySelector('.Gstore-single-product__accordion-content');
+
+				if (isMobile) {
+					// No mobile, todos os itens aparecem (header sempre visível).
+					panel.hidden = false;
+					panel.classList.toggle('is-open', isActive);
+					panel.classList.toggle('is-active', isActive);
+
+					if (header) header.setAttribute('aria-expanded', String(isActive));
+					if (content) content.hidden = !isActive;
+					if (icon) icon.textContent = isActive ? '−' : '+';
+				} else {
+					// No desktop, mantém o comportamento clássico de tabs (1 painel por vez).
+					panel.classList.toggle('is-open', false);
+					panel.classList.toggle('is-active', isActive);
+					panel.hidden = !isActive;
+
+					if (header) header.setAttribute('aria-expanded', 'false');
+					if (content) content.hidden = false;
+					if (icon) icon.textContent = '+';
+				}
 			});
 		};
 
-		// Ativa o default baseado em markup (fallback: 1º)
-		const defaultBtn = buttons.find((b) => b.classList.contains('is-active')) || buttons[0];
-		if (defaultBtn?.dataset?.gstoreTab) {
-			activate(defaultBtn.dataset.gstoreTab);
-		}
+		const setActiveTab = (tabOrEmpty) => {
+			activeTab = tabOrEmpty ? String(tabOrEmpty) : '';
+			updateUI();
+		};
 
+		// Tabs (desktop)
 		buttons.forEach((btn) => {
 			btn.addEventListener('click', () => {
 				const tab = btn.dataset.gstoreTab;
 				if (!tab) return;
-				activate(tab);
+				setActiveTab(tab);
 			});
 		});
+
+		// Accordions (mobile)
+		ensureAccordionMarkup();
+		root.addEventListener('click', (event) => {
+			const header = event.target?.closest?.('.Gstore-single-product__accordion-header');
+			if (!header || !root.contains(header)) {
+				return;
+			}
+
+			// Só trata como accordion no mobile.
+			if (!isMobileQuery.matches) {
+				return;
+			}
+
+			const tab = header.dataset.gstoreAccordionTab;
+			if (!tab) {
+				return;
+			}
+
+			// Permite “fechar” o item ativo (fica tudo recolhido).
+			setActiveTab(activeTab === tab ? '' : tab);
+		});
+
+		// Atualiza ao trocar breakpoint (ex.: resize)
+		if (typeof isMobileQuery.addEventListener === 'function') {
+			isMobileQuery.addEventListener('change', updateUI);
+		} else if (typeof isMobileQuery.addListener === 'function') {
+			// Safari antigo
+			isMobileQuery.addListener(updateUI);
+		}
+
+		// Estado inicial consistente
+		updateUI();
 	};
 
 	/**

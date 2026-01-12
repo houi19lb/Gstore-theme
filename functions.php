@@ -791,6 +791,14 @@ function gstore_enqueue_styles() {
 		$theme_version
 	);
 
+	// Footer CAC Armas (migrado do style.css para módulo dedicado)
+	wp_enqueue_style(
+		'gstore-footer-css',
+		get_theme_file_uri( 'assets/css/layouts/footer.css' ),
+		array( 'gstore-style' ),
+		$theme_version
+	);
+
 	// Header CSS - carregado por último para ter prioridade sobre estilos legados
 	wp_enqueue_style(
 		'gstore-header-css',
