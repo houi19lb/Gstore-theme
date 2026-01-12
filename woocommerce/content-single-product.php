@@ -421,9 +421,85 @@ $benefit_items = array(
 );
 
 $hero_meta_cards   = gstore_get_hero_meta_cards( $stock_label, $formatted_installment );
-$details_info_rows = gstore_get_details_info_rows( $product->get_id(), $short_description, $full_description, $attribute_data );
 $contact_entries   = gstore_get_contact_entries();
 $guarantee_badges  = gstore_get_guarantee_badges();
+
+// Conteúdo das abas (dinâmico): só renderiza se tiver valor.
+$gstore_has_tab_content = function ( $html ) {
+	$text = wp_strip_all_tags( (string) $html );
+	$text = html_entity_decode( $text, ENT_QUOTES, get_bloginfo( 'charset' ) ? get_bloginfo( 'charset' ) : 'UTF-8' );
+	$text = str_replace( array( "\xc2\xa0", "\xa0" ), ' ', $text ); // nbsp
+	$text = preg_replace( '/\s+/u', ' ', $text );
+
+	return '' !== trim( (string) $text );
+};
+
+$short_description_has_value = $gstore_has_tab_content( $short_description );
+$full_description_has_value  = $gstore_has_tab_content( $full_description );
+
+$key_attributes_raw       = $product_id ? (string) get_post_meta( $product_id, '_gstore_key_attributes', true ) : '';
+$important_notes_raw      = $product_id ? (string) get_post_meta( $product_id, '_gstore_important_notes', true ) : '';
+$key_attributes_has_value = $gstore_has_tab_content( $key_attributes_raw );
+$important_notes_has_value = $gstore_has_tab_content( $important_notes_raw );
+
+$key_attributes_html  = $key_attributes_has_value ? apply_filters( 'the_content', $key_attributes_raw ) : '';
+$important_notes_html = $important_notes_has_value ? apply_filters( 'the_content', $important_notes_raw ) : '';
+
+$tech_lines     = gstore_format_items_as_lines( $attribute_data, true );
+$tech_has_value = ! empty( $tech_lines );
+$tech_html      = $tech_has_value ? gstore_render_details_list( $tech_lines ) : '';
+
+$reviews_has_value = comments_open();
+
+$gstore_product_tabs = array();
+
+if ( $short_description_has_value ) {
+	$gstore_product_tabs[] = array(
+		'slug'    => 'short',
+		'label'   => __( 'Resumo', 'gstore' ),
+		'content' => $short_description,
+	);
+}
+
+if ( $full_description_has_value ) {
+	$gstore_product_tabs[] = array(
+		'slug'    => 'description',
+		'label'   => __( 'Descrição completa', 'gstore' ),
+		'content' => $full_description,
+	);
+}
+
+if ( $key_attributes_has_value ) {
+	$gstore_product_tabs[] = array(
+		'slug'    => 'key-attributes',
+		'label'   => __( 'Principais atributos', 'gstore' ),
+		'content' => $key_attributes_html,
+	);
+}
+
+if ( $tech_has_value ) {
+	$gstore_product_tabs[] = array(
+		'slug'    => 'tech-specs',
+		'label'   => __( 'Informações técnicas', 'gstore' ),
+		'content' => $tech_html,
+	);
+}
+
+if ( $important_notes_has_value ) {
+	$gstore_product_tabs[] = array(
+		'slug'    => 'important-notes',
+		'label'   => __( 'Observações importantes', 'gstore' ),
+		'content' => $important_notes_html,
+	);
+}
+
+if ( $reviews_has_value ) {
+	$gstore_product_tabs[] = array(
+		'slug'    => 'reviews',
+		'label'   => __( 'Avaliações', 'gstore' ),
+		'content' => '',
+	);
+}
 
 ?>
 <div class="Gstore-single-product-shell">
@@ -536,79 +612,68 @@ $guarantee_badges  = gstore_get_guarantee_badges();
 						<?php endif; ?>
 					</article>
 
-					<article class="Gstore-single-product__card Gstore-single-product__tabs" data-gstore-tabs>
-						<div class="Gstore-single-product__tab-buttons" role="tablist" aria-label="<?php esc_attr_e( 'Informações do produto', 'gstore' ); ?>">
-							<button type="button" class="is-active" role="tab" aria-selected="true" aria-controls="gstore-tab-description" id="gstore-tab-btn-description" data-gstore-tab="description">
-								<?php esc_html_e( 'Descrição', 'gstore' ); ?>
-							</button>
-							<button type="button" role="tab" aria-selected="false" aria-controls="gstore-tab-specs" id="gstore-tab-btn-specs" data-gstore-tab="specs">
-								<?php esc_html_e( 'Especificações', 'gstore' ); ?>
-							</button>
-							<button type="button" role="tab" aria-selected="false" aria-controls="gstore-tab-reviews" id="gstore-tab-btn-reviews" data-gstore-tab="reviews">
-								<?php esc_html_e( 'Avaliações', 'gstore' ); ?>
-							</button>
-						</div>
-
-						<div class="Gstore-single-product__tab-panels">
-							<div id="gstore-tab-description" class="Gstore-single-product__tab-panel is-active" role="tabpanel" aria-labelledby="gstore-tab-btn-description">
-								<?php if ( ! empty( $details_info_rows ) ) : ?>
-									<?php foreach ( $details_info_rows as $row ) : ?>
-										<?php
-										$description_icons = array( 'fa-circle-info', 'fa-file-lines' );
-										if ( empty( $row['icon'] ) || ! in_array( $row['icon'], $description_icons, true ) ) {
-											continue;
-										}
-										?>
-										<section class="Gstore-single-product__tab-section" aria-label="<?php echo esc_attr( $row['title'] ); ?>">
-											<h3 class="Gstore-single-product__tab-title">
-												<?php echo esc_html( $row['title'] ); ?>
-											</h3>
-											<div class="Gstore-single-product__tab-content">
-												<?php
-												if ( ! empty( $row['allow_html'] ) ) {
-													echo wp_kses_post( $row['content'] );
-												} else {
-													echo esc_html( $row['content'] );
-												}
-												?>
-											</div>
-										</section>
-									<?php endforeach; ?>
-								<?php endif; ?>
+					<?php if ( ! empty( $gstore_product_tabs ) ) : ?>
+						<article class="Gstore-single-product__card Gstore-single-product__tabs" data-gstore-tabs>
+							<div class="Gstore-single-product__tab-buttons" role="tablist" aria-label="<?php esc_attr_e( 'Informações do produto', 'gstore' ); ?>">
+								<?php foreach ( $gstore_product_tabs as $index => $tab ) : ?>
+									<?php
+									$slug      = isset( $tab['slug'] ) ? (string) $tab['slug'] : '';
+									$label     = isset( $tab['label'] ) ? (string) $tab['label'] : '';
+									$is_active = 0 === (int) $index;
+									if ( '' === $slug || '' === $label ) {
+										continue;
+									}
+									?>
+									<button
+										type="button"
+										class="<?php echo $is_active ? 'is-active' : ''; ?>"
+										role="tab"
+										aria-selected="<?php echo $is_active ? 'true' : 'false'; ?>"
+										aria-controls="gstore-tab-<?php echo esc_attr( $slug ); ?>"
+										id="gstore-tab-btn-<?php echo esc_attr( $slug ); ?>"
+										data-gstore-tab="<?php echo esc_attr( $slug ); ?>"
+									>
+										<?php echo esc_html( $label ); ?>
+									</button>
+								<?php endforeach; ?>
 							</div>
 
-							<div id="gstore-tab-specs" class="Gstore-single-product__tab-panel" role="tabpanel" aria-labelledby="gstore-tab-btn-specs" hidden>
-								<?php if ( ! empty( $details_info_rows ) ) : ?>
-									<?php foreach ( $details_info_rows as $row ) : ?>
-										<?php
-										$description_icons = array( 'fa-circle-info', 'fa-file-lines' );
-										if ( ! empty( $row['icon'] ) && in_array( $row['icon'], $description_icons, true ) ) {
-											continue;
-										}
-										?>
-										<section class="Gstore-single-product__tab-section" aria-label="<?php echo esc_attr( $row['title'] ); ?>">
-											<h3 class="Gstore-single-product__tab-title">
-												<?php echo esc_html( $row['title'] ); ?>
-											</h3>
-											<div class="Gstore-single-product__tab-content">
-												<?php
-												if ( ! empty( $row['allow_html'] ) ) {
-													echo wp_kses_post( $row['content'] );
-												} else {
-													echo esc_html( $row['content'] );
-												}
-												?>
-											</div>
-										</section>
-									<?php endforeach; ?>
-								<?php endif; ?>
-							</div>
+							<div class="Gstore-single-product__tab-panels">
+								<?php foreach ( $gstore_product_tabs as $index => $tab ) : ?>
+									<?php
+									$slug      = isset( $tab['slug'] ) ? (string) $tab['slug'] : '';
+									$label     = isset( $tab['label'] ) ? (string) $tab['label'] : '';
+									$content   = isset( $tab['content'] ) ? (string) $tab['content'] : '';
+									$is_active = 0 === (int) $index;
 
-							<div id="gstore-tab-reviews" class="Gstore-single-product__tab-panel" role="tabpanel" aria-labelledby="gstore-tab-btn-reviews" hidden>
-								<?php comments_template(); ?>
+									if ( '' === $slug || '' === $label ) {
+										continue;
+									}
+									?>
+									<div
+										id="gstore-tab-<?php echo esc_attr( $slug ); ?>"
+										class="Gstore-single-product__tab-panel<?php echo $is_active ? ' is-active' : ''; ?>"
+										role="tabpanel"
+										aria-labelledby="gstore-tab-btn-<?php echo esc_attr( $slug ); ?>"
+										<?php echo $is_active ? '' : 'hidden'; ?>
+									>
+										<?php if ( 'reviews' === $slug ) : ?>
+											<?php comments_template(); ?>
+										<?php else : ?>
+											<section class="Gstore-single-product__tab-section" aria-label="<?php echo esc_attr( $label ); ?>">
+												<h3 class="Gstore-single-product__tab-title">
+													<?php echo esc_html( $label ); ?>
+												</h3>
+												<div class="Gstore-single-product__tab-content">
+													<?php echo wp_kses_post( $content ); ?>
+												</div>
+											</section>
+										<?php endif; ?>
+									</div>
+								<?php endforeach; ?>
 							</div>
-						</div>
-					</article>
+						</article>
+					<?php endif; ?>
 				</div>
 
 				<div class="Gstore-single-product__summary">
