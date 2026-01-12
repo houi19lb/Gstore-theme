@@ -5,8 +5,8 @@
 .gstore-shipping-calculator {
 	margin: 1.5rem 0;
 	padding: 1.5rem;
-	background: var(--wp--preset--color--base, #ffffff);
-	border: 1px solid var(--wp--preset--color--contrast-2, #e0e0e0);
+	background: var(--gstore-color-bg-light, #ffffff);
+	border: 1px solid var(--gstore-color-border-divider, #e5e7eb);
 	border-radius: 4px;
 }
 
@@ -14,14 +14,14 @@
 	margin: 0 0 1rem 0;
 	font-size: 1.125rem;
 	font-weight: 600;
-	color: var(--wp--preset--color--contrast, #1a1a1a);
+	color: var(--gstore-color-text-primary, #1a1a1a);
 	display: flex;
 	align-items: center;
 	gap: 0.5rem;
 }
 
 .gstore-shipping-calculator__title i {
-	color: var(--wp--preset--color--accent, #0073aa);
+	color: var(--gstore-color-accent-secondary, #5a8900);
 }
 
 .gstore-shipping-calculator__form {
@@ -33,9 +33,9 @@
 .gstore-shipping-calculator__cep {
 	flex: 1;
 	padding: 0.75rem 1rem;
-	background: #ffffff;
-	color: var(--gstore-color-text-primary);
-	border: 1px solid var(--gray-border);
+	background: var(--gstore-color-bg-light, #ffffff);
+	color: var(--gstore-color-text-primary, #1a1a1a);
+	border: 1px solid var(--gstore-color-border-card, #d1d5db);
 	border-radius: 4px;
 	font-size: 1rem;
 	transition: border-color 0.2s ease;
@@ -43,14 +43,14 @@
 
 .gstore-shipping-calculator__cep:focus {
 	outline: none;
-	border-color: var(--wp--preset--color--accent, #0073aa);
-	box-shadow: 0 0 0 3px rgba(0, 115, 170, 0.1);
+	border-color: var(--gstore-color-accent-secondary, #5a8900);
+	box-shadow: 0 0 0 3px var(--gstore-color-accent-secondary-12, rgba(90, 137, 0, 0.12));
 }
 
 .gstore-shipping-calculator__button {
 	padding: 0.75rem 1.5rem;
-	background: var(--wp--preset--color--accent, #0073aa);
-	color: var(--wp--preset--color--base, #ffffff);
+	background: var(--gstore-color-accent-secondary, #5a8900);
+	color: var(--gstore-color-white, #ffffff);
 	border: none;
 	border-radius: 4px;
 	font-size: 1rem;
@@ -63,8 +63,14 @@
 	white-space: nowrap;
 }
 
+.gstore-shipping-calculator__button:focus,
+.gstore-shipping-calculator__button:focus-visible {
+	outline: 2px solid var(--gstore-color-accent-secondary, #5a8900);
+	outline-offset: 2px;
+}
+
 .gstore-shipping-calculator__button:hover:not(:disabled) {
-	background: var(--wp--preset--color--accent-hover, #005a87);
+	background: var(--gstore-color-accent-secondary-hover, #4f7900);
 	transform: translateY(-1px);
 }
 
@@ -80,7 +86,7 @@
 .gstore-shipping-calculator__result {
 	margin-top: 1rem;
 	padding: 1rem;
-	background: var(--wp--preset--color--contrast-3, #f5f5f5);
+	background: var(--gstore-color-bg-gray-50, #f9fafb);
 	border-radius: 4px;
 	display: none;
 }
@@ -112,7 +118,7 @@
 	justify-content: space-between;
 	align-items: center;
 	padding: 0.5rem 0;
-	border-bottom: 1px solid var(--wp--preset--color--contrast-2, #e0e0e0);
+	border-bottom: 1px solid var(--gstore-color-border-divider, #e5e7eb);
 }
 
 .gstore-shipping-calculator__result-row:last-child {
@@ -123,17 +129,17 @@
 	display: flex;
 	align-items: center;
 	gap: 0.5rem;
-	color: var(--wp--preset--color--contrast, #1a1a1a);
+	color: var(--gstore-color-text-primary, #1a1a1a);
 	font-size: 0.9375rem;
 }
 
 .gstore-shipping-calculator__result-label i {
-	color: var(--wp--preset--color--accent, #0073aa);
+	color: var(--gstore-color-accent-secondary, #5a8900);
 	width: 1.25rem;
 }
 
 .gstore-shipping-calculator__result-value {
-	color: var(--wp--preset--color--contrast, #1a1a1a);
+	color: var(--gstore-color-text-primary, #1a1a1a);
 	font-size: 0.9375rem;
 	font-weight: 600;
 }
@@ -184,7 +190,7 @@
 /* Integração com página de produto único */
 .Gstore-single-product__summary-card .gstore-shipping-calculator {
 	margin-top: 1.5rem;
-	border: 1px solid var(--wp--preset--color--contrast-2, #e0e0e0);
+	border: 1px solid var(--gstore-color-border-divider, #e5e7eb);
 }
 
 /* Integração com checkout */

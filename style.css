@@ -913,7 +913,7 @@ body.single-product .onsale {
 	background: #ffffff;
 	border: 1px solid #e5e5e5;
 	border-radius: 4px;
-	padding: clamp(24px, 3.5vw, 36px);
+	padding: 32px 24px;
 	display: flex;
 	flex-direction: column;
 	gap: 0;
@@ -3422,6 +3422,17 @@ padding: 16px;
 	white-space: nowrap;
 }
 
+.buybox .shipping-row .gstore-shipping-calculator__button:hover:not(:disabled) {
+	background: var(--gstore-color-bg-gray-50, #f9fafb);
+	border-color: var(--gstore-color-border-divider, #e5e7eb);
+	transform: none;
+}
+
+.buybox .shipping-row .gstore-shipping-calculator__button:active:not(:disabled) {
+	background: var(--gstore-color-bg-gray-100, #f5f6f8);
+	transform: none;
+}
+
 .buybox .shipping-sub {
 	margin-top: 6px;
 	font-size: 11px;
@@ -3524,6 +3535,7 @@ padding: 16px;
 	}
 
 	.Gstore-single-product__summary-card {
+		padding: 32px 24px;
 		gap: 0;
 	}
 
