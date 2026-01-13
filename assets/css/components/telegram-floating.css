@@ -1,7 +1,7 @@
 .Gstore-telegram-float {
 	position: fixed;
 	right: calc(var(--gstore-telegram-float-right, 20px) + env(safe-area-inset-right, 0px));
-	top: 50%;
+	top: 25%;
 	width: var(--gstore-telegram-float-size, 56px);
 	height: var(--gstore-telegram-float-size, 56px);
 	display: inline-flex;
@@ -13,21 +13,20 @@
 	text-decoration: none;
 	box-shadow: 0 12px 28px rgba(0, 0, 0, 0.22);
 	z-index: 99999;
-	transform: translateY(-50%);
 	transition: transform 120ms ease, box-shadow 120ms ease, background-color 120ms ease;
 	-webkit-tap-highlight-color: transparent;
 }
 
 .Gstore-telegram-float:hover,
 .Gstore-telegram-float:focus-visible {
-	transform: translateY(calc(-50% - 2px));
+	transform: translateY(-2px);
 	box-shadow: 0 14px 34px rgba(0, 0, 0, 0.28);
 	background: color-mix(in srgb, var(--gstore-telegram-float-bg, #229ED9) 92%, #000 8%);
 	outline: none;
 }
 
 .Gstore-telegram-float:active {
-	transform: translateY(-50%);
+	transform: translateY(0);
 }
 
 .Gstore-telegram-float__icon {
