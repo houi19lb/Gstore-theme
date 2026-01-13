@@ -809,6 +809,14 @@ function gstore_enqueue_styles() {
 		$theme_version
 	);
 
+	// Botão flutuante do Telegram (usa href dinâmico da top bar; sem hardcode)
+	wp_enqueue_style(
+		'gstore-telegram-floating-css',
+		get_theme_file_uri( 'assets/css/components/telegram-floating.css' ),
+		array( 'gstore-header-css' ),
+		$theme_version
+	);
+
 	// CSS da página de minha conta (login/registro)
 	if ( class_exists( 'WooCommerce' ) && function_exists( 'is_account_page' ) && is_account_page() ) {
 		wp_enqueue_style(
@@ -885,6 +893,17 @@ function gstore_enqueue_scripts() {
 		get_theme_file_uri( 'assets/js/header.js' ),
 		array(),
 		wp_get_theme()->get( 'Version' ),
+		true
+	);
+
+	// Botão flutuante do Telegram (espelha o href do link existente na top bar)
+	$telegram_floating_js_path    = get_theme_file_path( 'assets/js/telegram-floating.js' );
+	$telegram_floating_js_version = file_exists( $telegram_floating_js_path ) ? (string) filemtime( $telegram_floating_js_path ) : wp_get_theme()->get( 'Version' );
+	wp_enqueue_script(
+		'gstore-telegram-floating',
+		get_theme_file_uri( 'assets/js/telegram-floating.js' ),
+		array(),
+		$telegram_floating_js_version,
 		true
 	);
 
