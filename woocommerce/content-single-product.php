@@ -169,8 +169,6 @@ if ( ! function_exists( 'gstore_get_details_info_rows' ) ) :
 			? apply_filters( 'the_content', $observacoes_importantes_raw )
 			: '';
 
-		$attribute_lines = gstore_format_items_as_lines( $attribute_data, true );
-
 		$rows = array(
 			array(
 				'icon'       => 'fa-circle-info',
@@ -198,13 +196,6 @@ if ( ! function_exists( 'gstore_get_details_info_rows' ) ) :
 				'allow_html' => true,
 			);
 		}
-
-		$rows[] = array(
-			'icon'       => 'fa-sliders',
-			'title'      => __( 'Informações técnicas', 'gstore' ),
-			'content'    => ! empty( $attribute_lines ) ? gstore_render_details_list( $attribute_lines ) : '',
-			'allow_html' => ! empty( $attribute_lines ),
-		);
 
 		if ( ! empty( $observacoes_importantes ) ) {
 			$rows[] = array(
@@ -482,10 +473,6 @@ $important_notes_has_value = $gstore_has_tab_content( $important_notes_raw );
 $key_attributes_html  = $key_attributes_has_value ? apply_filters( 'the_content', $key_attributes_raw ) : '';
 $important_notes_html = $important_notes_has_value ? apply_filters( 'the_content', $important_notes_raw ) : '';
 
-$tech_lines     = gstore_format_items_as_lines( $attribute_data, true );
-$tech_has_value = ! empty( $tech_lines );
-$tech_html      = $tech_has_value ? gstore_render_details_list( $tech_lines ) : '';
-
 $reviews_has_value = comments_open();
 
 $gstore_product_tabs = array();
@@ -511,14 +498,6 @@ if ( $key_attributes_has_value ) {
 		'slug'    => 'key-attributes',
 		'label'   => __( 'Principais atributos', 'gstore' ),
 		'content' => $key_attributes_html,
-	);
-}
-
-if ( $tech_has_value ) {
-	$gstore_product_tabs[] = array(
-		'slug'    => 'tech-specs',
-		'label'   => __( 'Informações técnicas', 'gstore' ),
-		'content' => $tech_html,
 	);
 }
 
