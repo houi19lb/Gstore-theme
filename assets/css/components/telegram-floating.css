@@ -1,7 +1,7 @@
 .Gstore-telegram-float {
 	position: fixed;
 	right: calc(var(--gstore-telegram-float-right, 20px) + env(safe-area-inset-right, 0px));
-	top: 75%;
+	top: var(--gstore-telegram-float-top, 75%);
 	width: var(--gstore-telegram-float-size, 56px);
 	height: var(--gstore-telegram-float-size, 56px);
 	display: inline-flex;
@@ -37,11 +37,12 @@
 
 @media (max-width: 480px) {
 	.Gstore-telegram-float {
-		--gstore-telegram-float-size: 52px;
+		--gstore-telegram-float-size: 46px;
+		--gstore-telegram-float-right: 14px;
 	}
 	.Gstore-telegram-float__icon {
-		width: 26px;
-		height: 26px;
+		width: 24px;
+		height: 24px;
 	}
 }
 

@@ -92,10 +92,9 @@
 		var rel = sourceAnchor.getAttribute('rel') || 'noopener';
 		floatAnchor.setAttribute('rel', rel);
 
-		// Se o link original estiver oculto por alguma condição, respeita.
-		var style = window.getComputedStyle(sourceAnchor);
-		var isHidden = style && (style.display === 'none' || style.visibility === 'hidden' || style.opacity === '0');
-		floatAnchor.style.display = isHidden ? 'none' : '';
+		// Importante: o link da top bar pode ficar oculto no mobile por CSS responsivo.
+		// O botão flutuante deve continuar aparecendo desde que exista um href válido.
+		floatAnchor.style.display = '';
 
 		return true;
 	}
