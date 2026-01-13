@@ -4413,39 +4413,58 @@ function gstore_render_home_category_section( $cat_id, $title = '' ) {
 		return '';
 	}
 
-	$products_html = do_shortcode(
-		sprintf(
-			'[products limit="8" columns="4" category="%s" stock_status="instock" paginate="false"]',
-			esc_attr( $slug )
-		)
+	$products_shortcode = sprintf(
+		'[products limit="8" columns="4" category="%s" stock_status="instock" paginate="false"]',
+		esc_attr( $slug )
 	);
 
-	$view_more_html = '';
+	$button_block = '';
 	if ( ! empty( $term_link ) ) {
-		$view_more_html = sprintf(
-			'<div class="wp-block-buttons" style="margin-top:32px"><div class="wp-block-button is-style-primary"><a class="wp-block-button__link wp-element-button" href="%s">%s</a></div></div>',
+		$button_block = sprintf(
+			'<!-- wp:buttons {"style":{"spacing":{"margin":{"top":"32px"}}},"layout":{"type":"flex","justifyContent":"center"}} -->
+<div class="wp-block-buttons" style="margin-top:32px">
+	<!-- wp:button {"className":"is-style-primary"} -->
+	<div class="wp-block-button is-style-primary"><a class="wp-block-button__link wp-element-button" href="%s">%s</a></div>
+	<!-- /wp:button -->
+</div>
+<!-- /wp:buttons -->',
 			esc_url( $term_link ),
-			esc_html__( 'Ver mais', 'gstore' )
+			esc_html__( 'Ver mais produtos', 'gstore' )
 		);
 	}
 
-	$html = sprintf(
-		'<div class="wp-block-group alignfull Gstore-home-section Gstore-home-products Gstore-products-shell" style="padding-top:48px;padding-bottom:56px;padding-left:0px;padding-right:0px">
-			<div class="wp-block-group Gstore-home-section__header Gstore-home-section__header--left">
-				<div class="Gstore-home-section__title-wrapper">
-					<h2 class="wp-block-heading has-text-align-left has-x-large-font-size">%s</h2>
-					<span class="Gstore-home-section__separator" aria-hidden="true"></span>
-				</div>
-			</div>
-			<div class="wp-block-group Gstore-products-grid">%s</div>
-			%s
-		</div>',
+	// Gera markup de blocos para manter o mesmo "padrão" (constrained/wideSize/classes) das seções existentes.
+	$block_markup = sprintf(
+		'<!-- wp:group {"align":"full","className":"Gstore-home-section Gstore-home-products Gstore-products-shell","style":{"spacing":{"padding":{"top":"48px","bottom":"56px","left":"0px","right":"0px"}}},"layout":{"type":"constrained","wideSize":"1280px"}} -->
+<div class="wp-block-group alignfull Gstore-home-section Gstore-home-products Gstore-products-shell" style="padding-top:48px;padding-bottom:56px;padding-left:0px;padding-right:0px">
+	<!-- wp:group {"className":"Gstore-home-section__header Gstore-home-section__header--left","layout":{"type":"constrained","contentSize":"1280px"}} -->
+	<div class="wp-block-group Gstore-home-section__header Gstore-home-section__header--left">
+		<!-- wp:html -->
+		<div class="Gstore-home-section__title-wrapper">
+			<h2 class="wp-block-heading has-text-align-left has-x-large-font-size">%s</h2>
+			<span class="Gstore-home-section__separator" aria-hidden="true"></span>
+		</div>
+		<!-- /wp:html -->
+	</div>
+	<!-- /wp:group -->
+	<!-- wp:group {"className":"Gstore-products-grid","layout":{"type":"default"}} -->
+	<div class="wp-block-group Gstore-products-grid">
+		<!-- wp:shortcode -->
+		%s
+		<!-- /wp:shortcode -->
+	</div>
+	<!-- /wp:group -->
+	%s
+</div>
+<!-- /wp:group -->',
 		esc_html( $section_title ),
-		$products_html,
-		$view_more_html
+		$products_shortcode,
+		$button_block
 	);
 
-	return preg_replace( '#<br\s*/?>#i', '', $html );
+	$rendered = function_exists( 'do_blocks' ) ? do_blocks( $block_markup ) : $block_markup;
+	$rendered = do_shortcode( $rendered );
+	return preg_replace( '#<br\s*/?>#i', '', $rendered );
 }
 
 /**
