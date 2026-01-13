@@ -717,6 +717,10 @@ document.addEventListener('DOMContentLoaded', () => {
 				const VISIBLE = 6;
 				const HIDDEN_CLASS = 'is-gstore-thumb-hidden';
 				const clamp = (n, a, b) => Math.max(a, Math.min(b, n));
+				const setLastAction = (value) => {
+					thumbsTarget.dataset.gstoreThumbsLastAction = value;
+				};
+				const getLastAction = () => String(thumbsTarget.dataset.gstoreThumbsLastAction || '');
 
 				const getActiveIndex = () => {
 					const activeImg = thumbsList.querySelector('img.flex-active');
@@ -740,6 +744,7 @@ document.addEventListener('DOMContentLoaded', () => {
 					if (existingNext) existingNext.remove();
 
 					delete thumbsTarget.dataset.gstoreThumbsStart;
+					delete thumbsTarget.dataset.gstoreThumbsLastAction;
 					showAllThumbs();
 				};
 
@@ -814,9 +819,13 @@ document.addEventListener('DOMContentLoaded', () => {
 					const active = clamp(getActiveIndex(), 0, total - 1);
 					let start = getStart();
 
-					// Se o active sair da janela visível, ajusta a janela automaticamente.
-					if (active < start) start = active;
-					if (active >= start + VISIBLE) start = active - (VISIBLE - 1);
+					// Se a mudança veio de “troca de imagem”, ajusta a janela para incluir a ativa.
+					// Se veio de navegação (setas/scroll/drag), respeita o start escolhido pelo usuário,
+					// mesmo que a imagem ativa fique fora da janela visível (como no exemplo de referência).
+					if (getLastAction() !== 'nav') {
+						if (active < start) start = active;
+						if (active >= start + VISIBLE) start = active - (VISIBLE - 1);
+					}
 
 					start = setStart(start);
 					const end = Math.min(start + VISIBLE, total);
@@ -831,6 +840,7 @@ document.addEventListener('DOMContentLoaded', () => {
 				};
 
 				const moveWindow = (delta) => {
+					setLastAction('nav');
 					const current = getStart();
 					setStart(current + delta);
 					applyWindow();
@@ -852,6 +862,7 @@ document.addEventListener('DOMContentLoaded', () => {
 					thumbsList.addEventListener(
 						'click',
 						() => {
+							setLastAction('active');
 							setTimeout(updateButtons, 0);
 						},
 						true
