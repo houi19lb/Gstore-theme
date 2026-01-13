@@ -713,20 +713,33 @@ document.addEventListener('DOMContentLoaded', () => {
 				const existingPrev = thumbsTarget.querySelector(prevBtnSelector);
 				const existingNext = thumbsTarget.querySelector(nextBtnSelector);
 
+				const VISIBLE = 6;
+				const clamp = (n, a, b) => Math.max(a, Math.min(b, n));
+
+				const getActiveIndex = () => {
+					const activeImg = thumbsList.querySelector('img.flex-active');
+					if (!activeImg) return 0;
+					const activeLi = activeImg.closest('li');
+					if (!activeLi) return 0;
+					const all = Array.from(thumbsList.querySelectorAll('li'));
+					const idx = all.indexOf(activeLi);
+					return idx >= 0 ? idx : 0;
+				};
+
+				const showAllThumbs = () => {
+					Array.from(thumbsList.querySelectorAll('li')).forEach((li) => {
+						li.hidden = false;
+						li.style.display = '';
+					});
+				};
+
 				const teardown = () => {
 					thumbsTarget.removeAttribute('data-gstore-thumbs-nav');
 					if (existingPrev) existingPrev.remove();
 					if (existingNext) existingNext.remove();
 
-					thumbsList.style.height = '';
-					thumbsList.style.maxHeight = '';
-					thumbsList.style.paddingTop = '';
-					thumbsList.style.paddingBottom = '';
-					thumbsList.style.overflowY = '';
-					thumbsList.style.overflowX = '';
-					thumbsList.style.scrollSnapType = '';
-					thumbsList.style.scrollbarWidth = '';
-					thumbsList.style.boxSizing = '';
+					delete thumbsTarget.dataset.gstoreThumbsStart;
+					showAllThumbs();
 				};
 
 				if (!shouldEnableNav) {
@@ -735,44 +748,6 @@ document.addEventListener('DOMContentLoaded', () => {
 				}
 
 				thumbsTarget.setAttribute('data-gstore-thumbs-nav', '1');
-
-				const getGap = () => {
-					const styles = window.getComputedStyle(thumbsList);
-					const gap = parseFloat(styles.rowGap || styles.gap || '0');
-					return Number.isFinite(gap) ? gap : 0;
-				};
-
-				const getItemHeight = () => {
-					const firstItem = thumbsList.querySelector('li');
-					if (!firstItem) return 0;
-					return firstItem.getBoundingClientRect().height || firstItem.offsetHeight || 0;
-				};
-
-				const getScrollStep = () => {
-					const itemH = getItemHeight();
-					if (!itemH) return 0;
-					return Math.max(1, Math.round(itemH + getGap()));
-				};
-
-				const applyViewportHeight = () => {
-					const itemH = getItemHeight();
-					const gap = getGap();
-					if (!itemH) return;
-
-					// Reserva espaço interno para as setas (sem alterar o layout externo da coluna)
-					const btnSize = 32;
-					const btnGap = 8;
-					const pad = btnSize + btnGap;
-
-					const visibleCount = 6;
-					const contentH = itemH * visibleCount + gap * Math.max(0, visibleCount - 1);
-					const viewportH = contentH + pad * 2;
-
-					thumbsList.style.boxSizing = 'border-box';
-					thumbsList.style.paddingTop = `${pad}px`;
-					thumbsList.style.paddingBottom = `${pad}px`;
-					thumbsList.style.height = `${Math.round(viewportH)}px`;
-				};
 
 				const ensureButtons = () => {
 					let prevBtn = thumbsTarget.querySelector(prevBtnSelector);
@@ -783,8 +758,8 @@ document.addEventListener('DOMContentLoaded', () => {
 						prevBtn.type = 'button';
 						prevBtn.className = 'Gstore-thumbs-nav-btn Gstore-thumbs-nav-btn--prev';
 						prevBtn.setAttribute('aria-label', 'Miniaturas anteriores');
-						prevBtn.textContent = '˄';
-						thumbsTarget.appendChild(prevBtn);
+						prevBtn.textContent = '↑';
+						thumbsTarget.insertBefore(prevBtn, thumbsList);
 					}
 
 					if (!nextBtn) {
@@ -792,7 +767,7 @@ document.addEventListener('DOMContentLoaded', () => {
 						nextBtn.type = 'button';
 						nextBtn.className = 'Gstore-thumbs-nav-btn Gstore-thumbs-nav-btn--next';
 						nextBtn.setAttribute('aria-label', 'Próximas miniaturas');
-						nextBtn.textContent = '˅';
+						nextBtn.textContent = '↓';
 						thumbsTarget.appendChild(nextBtn);
 					}
 
@@ -801,45 +776,80 @@ document.addEventListener('DOMContentLoaded', () => {
 
 				const { prevBtn, nextBtn } = ensureButtons();
 
-				const updateButtons = () => {
-					const maxScrollTop = thumbsList.scrollHeight - thumbsList.clientHeight;
-					const current = thumbsList.scrollTop;
-					const atStart = current <= 1;
-					const atEnd = current >= maxScrollTop - 1;
-					prevBtn.disabled = atStart;
-					nextBtn.disabled = atEnd;
+				const getStart = () => {
+					const raw = parseInt(thumbsTarget.dataset.gstoreThumbsStart || '0', 10);
+					return Number.isFinite(raw) ? raw : 0;
 				};
 
-				const scrollByStep = (direction) => {
-					const step = getScrollStep();
-					if (!step) return;
-					thumbsList.scrollBy({
-						top: direction * step,
-						behavior: 'smooth',
+				const setStart = (nextStart) => {
+					const maxStart = Math.max(0, items.length - VISIBLE);
+					const clamped = clamp(nextStart, 0, maxStart);
+					thumbsTarget.dataset.gstoreThumbsStart = String(clamped);
+					return clamped;
+				};
+
+				const applyWindow = () => {
+					const allLis = Array.from(thumbsList.querySelectorAll('li'));
+					const total = allLis.length;
+					if (total <= VISIBLE) {
+						showAllThumbs();
+						prevBtn.disabled = true;
+						nextBtn.disabled = true;
+						return;
+					}
+
+					const active = clamp(getActiveIndex(), 0, total - 1);
+					let start = getStart();
+
+					// Se o active sair da janela visível, ajusta a janela automaticamente.
+					if (active < start) start = active;
+					if (active >= start + VISIBLE) start = active - (VISIBLE - 1);
+
+					start = setStart(start);
+					const end = Math.min(start + VISIBLE, total);
+
+					allLis.forEach((li, idx) => {
+						const isVisible = idx >= start && idx < end;
+						li.hidden = !isVisible;
+						li.style.display = isVisible ? '' : 'none';
 					});
+
+					prevBtn.disabled = start <= 0;
+					nextBtn.disabled = end >= total;
 				};
 
-				thumbsList.style.overflowY = 'auto';
-				thumbsList.style.overflowX = 'hidden';
-				thumbsList.style.scrollSnapType = 'y mandatory';
-				thumbsList.style.scrollbarWidth = 'none';
+				const moveWindow = (delta) => {
+					const current = getStart();
+					setStart(current + delta);
+					applyWindow();
+				};
 
-				applyViewportHeight();
+				const updateButtons = () => {
+					applyWindow();
+				};
 
 				// Listeners: inicializa só uma vez por thumbsTarget
 				if (!thumbsTarget.dataset.gstoreThumbsNavInit) {
 					thumbsTarget.dataset.gstoreThumbsNavInit = 'true';
 
-					prevBtn.addEventListener('click', () => scrollByStep(-1));
-					nextBtn.addEventListener('click', () => scrollByStep(1));
+					prevBtn.addEventListener('click', () => moveWindow(-1));
+					nextBtn.addEventListener('click', () => moveWindow(1));
 
+					// Quando o usuário clica numa thumb (ou o Woo altera a ativa), recalcula a janela.
 					thumbsList.addEventListener(
-						'scroll',
+						'click',
 						() => {
-							window.requestAnimationFrame(updateButtons);
+							setTimeout(updateButtons, 0);
 						},
-						{ passive: true }
+						true
 					);
+
+					window.addEventListener('resize', () => {
+						clearTimeout(thumbsResizeTimeout);
+						thumbsResizeTimeout = setTimeout(() => {
+							updateButtons();
+						}, 100);
+					});
 				}
 
 				updateButtons();

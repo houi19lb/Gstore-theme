@@ -2143,46 +2143,26 @@ padding: 16px;
 	gap: 8px;
 }
 
-/* Desktop: setas sobrepostas para navegar nas thumbs (ativa via JS quando houver 7+ imagens) */
-.Gstore-single-product__product-card .gallery-thumbs[data-gstore-thumbs-nav="1"] {
-	position: relative;
-}
-
+/* Desktop: setas acima/abaixo da lista de thumbs (ativa via JS quando houver 7+ imagens) */
 .Gstore-single-product__product-card .gallery-thumbs[data-gstore-thumbs-nav="1"] .Gstore-thumbs-nav-btn {
-	position: absolute;
-	left: 50%;
-	transform: translateX(-50%);
-	z-index: 5;
-	width: 32px;
-	height: 32px;
-	border: 1px solid var(--gstore-color-border-light);
+	width: 28px;
+	height: 28px;
+	border-radius: 6px;
+	border: 1px solid var(--gstore-color-border-input, #d1d5db);
 	background: var(--gstore-color-bg-light);
-	border-radius: 999px;
+	cursor: pointer;
+	font-weight: 800;
+	line-height: 1;
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
+	align-self: center;
 	padding: 0;
-	color: inherit;
-	cursor: pointer;
-	box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
-}
-
-.Gstore-single-product__product-card .gallery-thumbs[data-gstore-thumbs-nav="1"] .Gstore-thumbs-nav-btn--prev {
-	top: 0;
-}
-
-.Gstore-single-product__product-card .gallery-thumbs[data-gstore-thumbs-nav="1"] .Gstore-thumbs-nav-btn--next {
-	bottom: 0;
 }
 
 .Gstore-single-product__product-card .gallery-thumbs[data-gstore-thumbs-nav="1"] .Gstore-thumbs-nav-btn[disabled] {
 	opacity: 0.45;
-	cursor: default;
-}
-
-.Gstore-single-product__product-card .gallery-thumbs[data-gstore-thumbs-nav="1"] .flex-control-nav::-webkit-scrollbar,
-.Gstore-single-product__product-card .gallery-thumbs[data-gstore-thumbs-nav="1"] .flex-control-thumbs::-webkit-scrollbar {
-	display: none;
+	cursor: not-allowed;
 }
 
 /* Sobrescreve estilos antigos (row/wrap) */
