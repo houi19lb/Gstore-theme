@@ -4223,9 +4223,85 @@ add_shortcode( 'gstore_banner_youtube', 'gstore_banner_youtube_shortcode' );
  * @return string
  */
 function gstore_home_sections_shortcode() {
-	$sections = function_exists( 'gstore_get_home_sections_config' )
-		? gstore_get_home_sections_config()
-		: array();
+	$fallback_render = function() {
+		// Helper local: carrega um template part HTML do tema e renderiza os blocos.
+		$render_part = function( $template_path ) {
+			$markup = gstore_load_template_part( $template_path );
+			if ( empty( $markup ) ) {
+				return '';
+			}
+			$rendered = function_exists( 'do_blocks' ) ? do_blocks( $markup ) : $markup;
+			// Garante execução de shortcodes que eventualmente permaneçam no output.
+			return do_shortcode( $rendered );
+		};
+
+		$out  = '';
+		$out .= $render_part( 'parts/home-lancamentos.html' );
+		$out .= $render_part( 'parts/home-promocoes.html' );
+		$out .= $render_part( 'parts/home-equipamentos.html' );
+		$out .= do_shortcode( '[gstore_banner_youtube]' );
+		$out .= $render_part( 'parts/home-blog.html' );
+		return $out;
+	};
+
+	// Normaliza diferentes formatos de "enabled" sem quebrar a Home.
+	$is_enabled = function( $value, $default = true ) {
+		if ( null === $value ) {
+			return (bool) $default;
+		}
+		if ( is_bool( $value ) ) {
+			return $value;
+		}
+		if ( is_int( $value ) || is_float( $value ) ) {
+			return (int) $value !== 0;
+		}
+		if ( is_string( $value ) ) {
+			$v = strtolower( trim( $value ) );
+			if ( '' === $v ) {
+				return (bool) $default;
+			}
+			if ( in_array( $v, array( '0', 'false', 'no', 'off' ), true ) ) {
+				return false;
+			}
+			if ( in_array( $v, array( '1', 'true', 'yes', 'on' ), true ) ) {
+				return true;
+			}
+		}
+		return (bool) $value;
+	};
+
+	try {
+		$sections = function_exists( 'gstore_get_home_sections_config' )
+			? gstore_get_home_sections_config()
+			: array();
+	} catch ( Throwable $e ) {
+		return $fallback_render();
+	}
+
+	// Fallback: mantém exatamente a ordem antiga quando não houver configuração.
+	if ( empty( $sections ) ) {
+		return $fallback_render();
+	}
+
+	// Permite o plugin retornar objeto/estrutura aninhada.
+	if ( is_object( $sections ) ) {
+		$sections = (array) $sections;
+	}
+	if ( ! is_array( $sections ) ) {
+		return $fallback_render();
+	}
+	if ( isset( $sections['sections'] ) && ( is_array( $sections['sections'] ) || is_object( $sections['sections'] ) ) ) {
+		$sections = is_object( $sections['sections'] ) ? (array) $sections['sections'] : $sections['sections'];
+	}
+
+	// Se vier como mapa (associativo), mantém só os valores para iterar na ordem.
+	$keys = array_keys( $sections );
+	$is_list = ( $keys === range( 0, count( $sections ) - 1 ) );
+	if ( ! $is_list ) {
+		$sections = array_values( $sections );
+	}
+
+	$out = '';
 
 	// Helper local: carrega um template part HTML do tema e renderiza os blocos.
 	$render_part = function( $template_path ) {
@@ -4238,25 +4314,29 @@ function gstore_home_sections_shortcode() {
 		return do_shortcode( $rendered );
 	};
 
-	// Fallback: mantém exatamente a ordem antiga quando não houver configuração.
-	if ( empty( $sections ) || ! is_array( $sections ) ) {
-		$out  = '';
-		$out .= $render_part( 'parts/home-lancamentos.html' );
-		$out .= $render_part( 'parts/home-promocoes.html' );
-		$out .= $render_part( 'parts/home-equipamentos.html' );
-		$out .= do_shortcode( '[gstore_banner_youtube]' );
-		$out .= $render_part( 'parts/home-blog.html' );
-		return $out;
-	}
-
-	$out = '';
-
 	foreach ( $sections as $section ) {
-		if ( empty( $section['enabled'] ) ) {
+		if ( is_object( $section ) ) {
+			$section = (array) $section;
+		}
+		if ( ! is_array( $section ) ) {
+			continue;
+		}
+
+		// Se "enabled" não vier, assume ligado (não derruba a Home).
+		$enabled_value = array_key_exists( 'enabled', $section ) ? $section['enabled'] : null;
+		if ( ! $is_enabled( $enabled_value, true ) ) {
 			continue;
 		}
 
 		$type = isset( $section['type'] ) ? (string) $section['type'] : '';
+		// Inferência: se não vier "type", tenta deduzir pelo conteúdo.
+		if ( '' === $type ) {
+			if ( isset( $section['key'] ) ) {
+				$type = 'builtin';
+			} elseif ( isset( $section['category_id'] ) ) {
+				$type = 'wc_category';
+			}
+		}
 
 		if ( 'builtin' === $type ) {
 			$key = isset( $section['key'] ) ? (string) $section['key'] : '';
@@ -4277,6 +4357,9 @@ function gstore_home_sections_shortcode() {
 				case 'youtube_banner':
 					$out .= do_shortcode( '[gstore_banner_youtube]' );
 					break;
+				default:
+					// Tipo/key desconhecidos não podem matar a Home.
+					continue 2;
 			}
 		} elseif ( 'wc_category' === $type ) {
 			$cat_id = (int) ( $section['category_id'] ?? 0 );
@@ -4286,10 +4369,14 @@ function gstore_home_sections_shortcode() {
 					$out .= gstore_render_home_category_section( $cat_id, $title );
 				}
 			}
+		} else {
+			// Tipo novo no futuro: ignora sem quebrar a Home.
+			continue;
 		}
 	}
 
-	return $out;
+	// Se por algum motivo não renderizou nada, cai no fallback (evita Home vazia).
+	return '' !== trim( $out ) ? $out : $fallback_render();
 }
 add_shortcode( 'gstore_home_sections', 'gstore_home_sections_shortcode' );
 
