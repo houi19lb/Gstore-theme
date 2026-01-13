@@ -15,7 +15,11 @@
 		animationDuration: 300, // 300ms para animações
 		headerSelector: '.Gstore-header-shell',
 		noticeSelector: '.wc-block-components-notice-banner',
-		classicNoticeSelector: '.woocommerce-message, .woocommerce-error, .woocommerce-info'
+		classicNoticeSelector: '.woocommerce-message, .woocommerce-error, .woocommerce-info',
+		noticesWrapperSelector: '.woocommerce-notices-wrapper',
+		floatingNoticeClass: 'gstore-notice-floating',
+		floatingWrapperClass: 'gstore-notices-floating',
+		floatingGap: 12
 	};
 
 	/**
@@ -27,6 +31,86 @@
 			return 0;
 		}
 		return header.offsetHeight || 0;
+	}
+
+	/**
+	 * Determina se um notice clássico deve virar flutuante.
+	 * Evita quebrar mensagens que devem permanecer no fluxo (ex: carrinho vazio) e layout do checkout steps.
+	 */
+	function shouldFloatClassicNotice(notice) {
+		// Mensagem de carrinho vazio (é conteúdo, não toast)
+		if (notice.classList && notice.classList.contains('cart-empty')) {
+			return false;
+		}
+
+		// No checkout steps, os avisos são parte do fluxo/step (layout específico)
+		if (notice.closest && notice.closest('.Gstore-checkout-step')) {
+			return false;
+		}
+
+		return true;
+	}
+
+	/**
+	 * Sincroniza o estado do wrapper de notices para não reservar espaço
+	 * quando só estiver "segurando" notices flutuantes.
+	 */
+	function syncNoticesWrappers() {
+		const wrappers = document.querySelectorAll(CONFIG.noticesWrapperSelector);
+		wrappers.forEach((wrapper) => {
+			const hasAnyNotice =
+				!!wrapper.querySelector(CONFIG.classicNoticeSelector) ||
+				!!wrapper.querySelector(CONFIG.noticeSelector);
+
+			// Se só sobrou whitespace, limpa para o :empty funcionar (evita espaço fantasma)
+			if (!hasAnyNotice && wrapper.children.length === 0) {
+				wrapper.textContent = '';
+			}
+
+			const hasFloating = !!wrapper.querySelector('.' + CONFIG.floatingNoticeClass);
+			if (hasFloating) {
+				wrapper.classList.add(CONFIG.floatingWrapperClass);
+			} else {
+				wrapper.classList.remove(CONFIG.floatingWrapperClass);
+			}
+		});
+	}
+
+	/**
+	 * Recalcula o stacking/posicionamento vertical de notices flutuantes
+	 * (clássicas + blocks), evitando sobreposição.
+	 */
+	function positionFloatingNotices() {
+		const floating = Array.from(document.querySelectorAll('.' + CONFIG.floatingNoticeClass));
+		if (!floating.length) {
+			syncNoticesWrappers();
+			return;
+		}
+
+		const headerHeight = getHeaderHeight();
+		let top = headerHeight + 16; // 16px de margem
+
+		floating.forEach((notice) => {
+			// Garante posicionamento base
+			notice.style.position = 'fixed';
+			notice.style.left = '50%';
+			notice.style.top = top + 'px';
+
+			// Mantém o transform correto conforme estado de animação
+			if (!notice.classList.contains('gstore-notice-slide-out')) {
+				if (notice.classList.contains('gstore-notice-slide-in')) {
+					notice.style.transform = 'translateX(-50%) translateY(0)';
+				} else {
+					notice.style.transform = 'translateX(-50%) translateY(-100px)';
+				}
+			}
+
+			// Avança o topo para o próximo notice
+			const rect = notice.getBoundingClientRect();
+			top += rect.height + CONFIG.floatingGap;
+		});
+
+		syncNoticesWrappers();
 	}
 
 	/**
@@ -61,6 +145,7 @@
 
 		// Adiciona classe para animação
 		notice.classList.add('gstore-notice-animated');
+		notice.classList.add(CONFIG.floatingNoticeClass);
 
 		// Adiciona botão de fechar com SVG
 		const closeBtn = createCloseButton(notice);
@@ -85,6 +170,7 @@
 		requestAnimationFrame(() => {
 			setTimeout(() => {
 				notice.classList.add('gstore-notice-slide-in');
+				positionFloatingNotices();
 			}, 10);
 		});
 
@@ -111,6 +197,8 @@
 			}, CONFIG.autoDismissDelay);
 			notice.dataset.dismissTimer = newTimer;
 		});
+
+		positionFloatingNotices();
 	}
 
 	/**
@@ -131,6 +219,7 @@
 			if (notice.parentNode) {
 				notice.remove();
 			}
+			positionFloatingNotices();
 		}, CONFIG.animationDuration);
 	}
 
@@ -143,33 +232,54 @@
 			return;
 		}
 
+		// Não processa mensagens que devem permanecer no fluxo (ex: carrinho vazio)
+		if (notice.classList && notice.classList.contains('cart-empty')) {
+			syncNoticesWrappers();
+			return;
+		}
+
 		// Marca como processado
 		notice.dataset.gstoreNoticeProcessed = 'true';
 
+		// Adiciona classe para animação
+		notice.classList.add('gstore-notice-animated');
+
 		// Adiciona botão de fechar com SVG
-		const closeBtn = document.createElement('button');
-		closeBtn.className = 'gstore-notice-close';
-		closeBtn.setAttribute('aria-label', 'Fechar aviso');
-		closeBtn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12"/></svg>';
-		
-		closeBtn.addEventListener('click', function(e) {
-			e.preventDefault();
-			e.stopPropagation();
-			
-			// Animação de saída
-			notice.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
-			notice.style.opacity = '0';
-			notice.style.transform = 'translateY(-10px)';
-			
-			// Remove após a animação
-			setTimeout(function() {
-				if (notice.parentNode) {
-					notice.remove();
-				}
-			}, CONFIG.animationDuration);
-		});
-		
+		const closeBtn = createCloseButton(notice);
 		notice.appendChild(closeBtn);
+
+		// Se for um contexto que deve ficar inline, não aplica floating
+		if (!shouldFloatClassicNotice(notice)) {
+			syncNoticesWrappers();
+			return;
+		}
+
+		// Marca como flutuante (para stacking e para o wrapper não reservar espaço)
+		notice.classList.add(CONFIG.floatingNoticeClass);
+
+		// Aplica estilos inline para posicionamento (similar ao WooCommerce Blocks)
+		const headerHeight = getHeaderHeight();
+		const topPosition = headerHeight + 16; // 16px de margem
+
+		notice.style.position = 'fixed';
+		notice.style.top = topPosition + 'px';
+		notice.style.left = '50%';
+		notice.style.transform = 'translateX(-50%) translateY(-100px)';
+		notice.style.zIndex = '1100';
+		notice.style.maxWidth = '600px';
+		notice.style.width = 'calc(100% - 32px)';
+		notice.style.margin = '0 auto';
+		notice.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.15)';
+
+		// Trigger para animação de entrada
+		requestAnimationFrame(() => {
+			setTimeout(() => {
+				notice.classList.add('gstore-notice-slide-in');
+				positionFloatingNotices();
+			}, 10);
+		});
+
+		positionFloatingNotices();
 	}
 
 	/**
@@ -235,17 +345,11 @@
 
 		// Recalcula posição quando a janela é redimensionada
 		window.addEventListener('resize', function() {
-			const notices = document.querySelectorAll(CONFIG.noticeSelector + '.gstore-notice-animated');
-			notices.forEach(function(notice) {
-				const headerHeight = getHeaderHeight();
-				const topPosition = headerHeight + 16;
-				notice.style.top = topPosition + 'px';
-				// Mantém o transform de centralização
-				if (!notice.classList.contains('gstore-notice-slide-out')) {
-					notice.style.transform = 'translateX(-50%) translateY(0)';
-				}
-			});
+			positionFloatingNotices();
 		});
+
+		// Primeira sincronização de wrappers
+		syncNoticesWrappers();
 	}
 
 	// Inicializa quando o DOM estiver pronto

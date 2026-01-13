@@ -15,6 +15,17 @@
     width: 100%;
 }
 
+/* Quando as notices viram flutuantes (position: fixed), o wrapper não deve reservar espaço */
+.woocommerce-notices-wrapper.gstore-notices-floating {
+    margin: 0 !important;
+    padding: 0 !important;
+    height: 0 !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+    gap: 0 !important;
+    display: block !important;
+}
+
 /* Esconder wrapper quando vazio (sem notices) */
 .woocommerce-notices-wrapper:empty {
     display: none;
@@ -44,6 +55,37 @@
     margin: 0 !important;
     width: 100%;
     box-sizing: border-box;
+}
+
+/* ==========================================
+   NOTICES CLÁSSICAS FLUTUANTES
+   ========================================== */
+
+.woocommerce-message.gstore-notice-floating,
+.woocommerce-error.gstore-notice-floating,
+.woocommerce-info.gstore-notice-floating {
+    /* Evita conflito com a animação original (usa classes slide-in/out) */
+    animation: none !important;
+    transition: all 0.3s ease-out;
+    opacity: 0;
+    pointer-events: none;
+    margin: 0 !important;
+}
+
+.woocommerce-message.gstore-notice-floating.gstore-notice-slide-in,
+.woocommerce-error.gstore-notice-floating.gstore-notice-slide-in,
+.woocommerce-info.gstore-notice-floating.gstore-notice-slide-in {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateX(-50%) translateY(0) !important;
+}
+
+.woocommerce-message.gstore-notice-floating.gstore-notice-slide-out,
+.woocommerce-error.gstore-notice-floating.gstore-notice-slide-out,
+.woocommerce-info.gstore-notice-floating.gstore-notice-slide-out {
+    opacity: 0;
+    pointer-events: none;
+    transform: translateX(-50%) translateY(-100px) !important;
 }
 
 /* Remover ícones padrão do WooCommerce (pseudo-elementos) */
