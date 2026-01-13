@@ -2234,20 +2234,18 @@ padding: 16px;
 	.Gstore-single-product__product-card .gallery-thumbs {
 		flex-direction: row;
 		overflow-x: auto;
-		padding: 0 12px 4px;
+		padding: 0 0 4px !important;
 		-webkit-overflow-scrolling: touch;
-		scroll-padding-left: 12px;
-		scroll-padding-right: 12px;
-		scroll-snap-type: x mandatory;
 	}
 
 	.Gstore-single-product__product-card .gallery-thumbs .flex-control-nav,
 	.Gstore-single-product__product-card .gallery-thumbs .flex-control-thumbs {
 		flex-direction: row !important;
 		width: max-content !important;
-		min-width: 100% !important;
-		padding-left: 0 !important;
-		padding-right: 0 !important;
+		min-width: calc(100% - 24px) !important;
+		padding: 0 12px !important;
+		margin: 0 !important;
+		box-sizing: content-box !important;
 	}
 
 	.Gstore-single-product__product-card .gallery-thumbs .flex-control-nav li,
@@ -2255,12 +2253,7 @@ padding: 16px;
 		width: 64px !important;
 		height: 64px !important;
 		flex: 0 0 64px !important;
-		scroll-snap-align: start;
-		scroll-margin-left: 12px;
-		scroll-margin-right: 12px;
 	}
-
-	/* Evita “corte” nas bordas: a folga fica no padding do <ol>, não no <li> (mais previsível com !important). */
 
 	.Gstore-single-product__product-card .gallery-thumbs .flex-control-nav li img,
 	.Gstore-single-product__product-card .gallery-thumbs .flex-control-thumbs li img {
