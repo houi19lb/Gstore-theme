@@ -2246,6 +2246,7 @@ padding: 16px;
 		padding: 0 !important;
 		margin: 0 !important;
 		box-sizing: border-box !important;
+		justify-content: flex-start !important; /* CORREÇÃO: Impede que a lista centralize e corte o lado esquerdo */
 	}
 
 	/* Spacer invisível no início da lista (garante que a 1ª thumb não fique cortada) */
