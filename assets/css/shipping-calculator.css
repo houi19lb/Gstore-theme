@@ -30,9 +30,9 @@
 	margin-bottom: 1rem;
 }
 
-.gstore-shipping-calculator__cep {
+input.gstore-shipping-calculator__cep {
 	flex: 1;
-	padding: 0.75rem 1rem;
+	padding: 10px 1rem;
 	background: var(--gstore-color-bg-light, #ffffff);
 	color: var(--gstore-color-text-primary, #1a1a1a);
 	border: 1px solid var(--gstore-color-border-card, #d1d5db);
@@ -41,7 +41,7 @@
 	transition: border-color 0.2s ease;
 }
 
-.gstore-shipping-calculator__cep:focus {
+input.gstore-shipping-calculator__cep:focus {
 	outline: none;
 	border-color: var(--gstore-color-accent-secondary, #5a8900);
 	box-shadow: 0 0 0 3px var(--gstore-color-accent-secondary-12, rgba(90, 137, 0, 0.12));
