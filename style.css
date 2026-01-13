@@ -2246,29 +2246,7 @@ padding: 16px;
 		padding: 0 !important;
 		margin: 0 !important;
 		box-sizing: border-box !important;
-		justify-content: flex-start !important; /* CORREÇÃO: Impede que a lista centralize e corte o lado esquerdo */
-	}
-
-	/* Spacer invisível no início da lista (garante que a 1ª thumb não fique cortada) */
-	.Gstore-single-product__product-card .gallery-thumbs .flex-control-nav::before,
-	.Gstore-single-product__product-card .gallery-thumbs .flex-control-thumbs::before {
-		content: '';
-		display: block;
-		flex: 0 0 12px;
-		width: 12px;
-		min-width: 12px;
-		height: 1px;
-	}
-
-	/* Spacer invisível no final da lista (garante que a última thumb não fique cortada) */
-	.Gstore-single-product__product-card .gallery-thumbs .flex-control-nav::after,
-	.Gstore-single-product__product-card .gallery-thumbs .flex-control-thumbs::after {
-		content: '';
-		display: block;
-		flex: 0 0 12px;
-		width: 12px;
-		min-width: 12px;
-		height: 1px;
+		justify-content: flex-start !important;
 	}
 
 	.Gstore-single-product__product-card .gallery-thumbs .flex-control-nav li,
