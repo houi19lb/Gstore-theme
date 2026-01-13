@@ -2143,6 +2143,49 @@ padding: 16px;
 	gap: 8px;
 }
 
+/* Desktop: carrossel vertical de thumbs (ativa via JS quando houver 7+ imagens) */
+.Gstore-single-product__product-card .gallery-thumbs .Gstore-thumbs-carousel--vertical {
+	display: grid;
+	grid-template-rows: 32px 1fr 32px;
+	gap: 8px;
+	align-items: center;
+	width: 88px;
+}
+
+.Gstore-single-product__product-card .gallery-thumbs .Gstore-thumbs-carousel--vertical .Gstore-thumbs-carousel__btn {
+	width: 32px;
+	height: 32px;
+	border: 1px solid var(--gstore-color-border-light);
+	background: var(--gstore-color-bg-light);
+	border-radius: 999px;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	padding: 0;
+	color: inherit;
+	cursor: pointer;
+	margin: 0 auto;
+}
+
+.Gstore-single-product__product-card .gallery-thumbs .Gstore-thumbs-carousel--vertical .Gstore-thumbs-carousel__btn[disabled] {
+	opacity: 0.45;
+	cursor: default;
+}
+
+.Gstore-single-product__product-card .gallery-thumbs .Gstore-thumbs-carousel--vertical .flex-control-nav,
+.Gstore-single-product__product-card .gallery-thumbs .Gstore-thumbs-carousel--vertical .flex-control-thumbs {
+	/* o JS define max-height exata para 6 itens */
+	overflow-y: auto !important;
+	overflow-x: hidden !important;
+	scrollbar-width: none;
+	-webkit-overflow-scrolling: touch;
+}
+
+.Gstore-single-product__product-card .gallery-thumbs .Gstore-thumbs-carousel--vertical .flex-control-nav::-webkit-scrollbar,
+.Gstore-single-product__product-card .gallery-thumbs .Gstore-thumbs-carousel--vertical .flex-control-thumbs::-webkit-scrollbar {
+	display: none;
+}
+
 /* Sobrescreve estilos antigos (row/wrap) */
 .Gstore-single-product__product-card .gallery-thumbs .flex-control-nav,
 .Gstore-single-product__product-card .gallery-thumbs .flex-control-thumbs {
