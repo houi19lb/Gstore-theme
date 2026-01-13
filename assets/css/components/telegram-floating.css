@@ -1,7 +1,7 @@
 .Gstore-telegram-float {
 	position: fixed;
 	right: calc(var(--gstore-telegram-float-right, 20px) + env(safe-area-inset-right, 0px));
-	top: 25%;
+	top: 75%;
 	width: var(--gstore-telegram-float-size, 56px);
 	height: var(--gstore-telegram-float-size, 56px);
 	display: inline-flex;
