@@ -92,7 +92,7 @@ add_filter( 'woocommerce_get_image_size_gallery_thumbnail', 'gstore_gallery_thum
 // 4. Filtro para woocommerce_single (imagem principal do produto)
 function gstore_single_size( $size ) {
 	return array(
-		'width'  => 600,
+		'width'  => 1000,
 		'height' => 9999,
 		'crop'   => false,
 	);
@@ -102,7 +102,7 @@ add_filter( 'woocommerce_get_image_size_single', 'gstore_single_size' );
 // 5. Atualizar opções do banco de dados (executa apenas uma vez para garantir robustez)
 function gstore_force_woocommerce_image_options() {
 	// Executa apenas uma vez (ou quando necessário)
-	if ( get_option( 'gstore_image_options_set' ) === 'yes' ) {
+	if ( get_option( 'gstore_image_options_set' ) === 'v2' ) {
 		return;
 	}
 	
@@ -111,10 +111,10 @@ function gstore_force_woocommerce_image_options() {
 	
 	// Opções de tamanho (formato antigo, ainda respeitado)
 	update_option( 'woocommerce_thumbnail_image_width', 300 );
-	update_option( 'woocommerce_single_image_width', 600 );
+	update_option( 'woocommerce_single_image_width', 1000 );
 	
 	// Marca como configurado
-	update_option( 'gstore_image_options_set', 'yes' );
+	update_option( 'gstore_image_options_set', 'v2' );
 }
 add_action( 'init', 'gstore_force_woocommerce_image_options' );
 
