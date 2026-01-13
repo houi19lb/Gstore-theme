@@ -160,7 +160,10 @@ h2.wp-block-heading.has-text-align-center.has-x-large-font-size {
 	grid-template-areas:
 		"left summary"
 		"tabs summary";
-	gap: clamp(20px, 3.5vw, 40px);
+	/* Evita “buraco” grande acima das tabs quando a coluna de resumo (direita) fica mais alta */
+	grid-template-rows: min-content auto;
+	column-gap: clamp(20px, 3.5vw, 40px);
+	row-gap: 24px;
 	align-items: start;
 }
 
@@ -174,6 +177,7 @@ h2.wp-block-heading.has-text-align-center.has-x-large-font-size {
 
 .Gstore-single-product__summary {
 	grid-area: summary;
+	min-height: 0;
 }
 
 .Gstore-single-product__tabs {
