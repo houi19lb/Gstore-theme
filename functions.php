@@ -4215,6 +4215,151 @@ function gstore_banner_youtube_shortcode() {
 add_shortcode( 'gstore_banner_youtube', 'gstore_banner_youtube_shortcode' );
 
 /**
+ * Renderiza as seções da Home na ordem configurada no admin (via plugin),
+ * com fallback para a ordem fixa quando o plugin estiver inativo/sem config.
+ *
+ * Uso: [gstore_home_sections]
+ *
+ * @return string
+ */
+function gstore_home_sections_shortcode() {
+	$sections = function_exists( 'gstore_get_home_sections_config' )
+		? gstore_get_home_sections_config()
+		: array();
+
+	// Helper local: carrega um template part HTML do tema e renderiza os blocos.
+	$render_part = function( $template_path ) {
+		$markup = gstore_load_template_part( $template_path );
+		if ( empty( $markup ) ) {
+			return '';
+		}
+		return function_exists( 'do_blocks' ) ? do_blocks( $markup ) : $markup;
+	};
+
+	// Fallback: mantém exatamente a ordem antiga quando não houver configuração.
+	if ( empty( $sections ) || ! is_array( $sections ) ) {
+		$out  = '';
+		$out .= $render_part( 'parts/home-lancamentos.html' );
+		$out .= $render_part( 'parts/home-promocoes.html' );
+		$out .= $render_part( 'parts/home-equipamentos.html' );
+		$out .= do_shortcode( '[gstore_banner_youtube]' );
+		$out .= $render_part( 'parts/home-blog.html' );
+		return $out;
+	}
+
+	$out = '';
+
+	foreach ( $sections as $section ) {
+		if ( empty( $section['enabled'] ) ) {
+			continue;
+		}
+
+		$type = isset( $section['type'] ) ? (string) $section['type'] : '';
+
+		if ( 'builtin' === $type ) {
+			$key = isset( $section['key'] ) ? (string) $section['key'] : '';
+
+			switch ( $key ) {
+				case 'lancamentos':
+					$out .= $render_part( 'parts/home-lancamentos.html' );
+					break;
+				case 'promocoes':
+					$out .= $render_part( 'parts/home-promocoes.html' );
+					break;
+				case 'equipamentos_taticos':
+					$out .= $render_part( 'parts/home-equipamentos.html' );
+					break;
+				case 'blog':
+					$out .= $render_part( 'parts/home-blog.html' );
+					break;
+				case 'youtube_banner':
+					$out .= do_shortcode( '[gstore_banner_youtube]' );
+					break;
+			}
+		} elseif ( 'wc_category' === $type ) {
+			$cat_id = (int) ( $section['category_id'] ?? 0 );
+			if ( $cat_id > 0 ) {
+				$title = (string) ( $section['title'] ?? '' );
+				if ( function_exists( 'gstore_render_home_category_section' ) ) {
+					$out .= gstore_render_home_category_section( $cat_id, $title );
+				}
+			}
+		}
+	}
+
+	return $out;
+}
+add_shortcode( 'gstore_home_sections', 'gstore_home_sections_shortcode' );
+
+/**
+ * Renderiza uma seção de vitrine de produtos por categoria (product_cat) para a Home.
+ *
+ * @param int    $cat_id ID da categoria (term_id em product_cat).
+ * @param string $title  Título opcional (se vazio, usa o nome da categoria).
+ * @return string
+ */
+function gstore_render_home_category_section( $cat_id, $title = '' ) {
+	$cat_id = absint( $cat_id );
+	if ( $cat_id <= 0 ) {
+		return '';
+	}
+
+	$term = get_term( $cat_id, 'product_cat' );
+	if ( ! $term || is_wp_error( $term ) ) {
+		return '';
+	}
+
+	$term_link = get_term_link( $term );
+	if ( is_wp_error( $term_link ) ) {
+		$term_link = '';
+	}
+
+	$section_title = is_string( $title ) ? trim( $title ) : '';
+	if ( '' === $section_title ) {
+		$section_title = $term->name;
+	}
+
+	$slug = isset( $term->slug ) ? (string) $term->slug : '';
+	if ( '' === $slug ) {
+		return '';
+	}
+
+	$products_html = do_shortcode(
+		sprintf(
+			'[products limit="8" columns="4" category="%s" stock_status="instock" paginate="false"]',
+			esc_attr( $slug )
+		)
+	);
+
+	$view_more_html = '';
+	if ( ! empty( $term_link ) ) {
+		$view_more_html = sprintf(
+			'<div class="wp-block-buttons" style="margin-top:32px"><div class="wp-block-button is-style-primary"><a class="wp-block-button__link wp-element-button" href="%s">%s</a></div></div>',
+			esc_url( $term_link ),
+			esc_html__( 'Ver mais', 'gstore' )
+		);
+	}
+
+	$html = sprintf(
+		'<div class="wp-block-group alignfull Gstore-home-section Gstore-home-products Gstore-products-shell" style="padding-top:48px;padding-bottom:56px;padding-left:0px;padding-right:0px">
+			<div class="wp-block-group Gstore-home-section__header Gstore-home-section__header--left">
+				<div class="Gstore-home-section__title-wrapper">
+					<h2 class="wp-block-heading has-text-align-left has-x-large-font-size">%s</h2>
+					<span class="Gstore-home-section__separator" aria-hidden="true"></span>
+				</div>
+			</div>
+			<div class="wp-block-group Gstore-products-grid">%s</div>
+			%s
+		</div>',
+		esc_html( $section_title ),
+		$products_html,
+		$view_more_html
+	);
+
+	return preg_replace( '#<br\s*/?>#i', '', $html );
+}
+
+/**
  * Remove <br> tags de dentro de elementos figure com classe Gstore-home-transition.
  *
  * @param string $content Conteúdo HTML.
