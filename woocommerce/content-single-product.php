@@ -793,13 +793,12 @@ if ( $reviews_has_value ) {
 								}
 							}
 
-						<?php
 						// Mostrar o card de indisponível:
 						// - Produto simples sem estoque: sempre visível
 						// - Produto variável sem estoque (todas variações): sempre visível
 						// - Produto variável com algumas variações em estoque: oculto inicialmente, JS controla
-						$show_oos_card      = $is_out_of_stock || $is_variable;
-						$oos_card_hidden    = $is_variable && $has_any_variation_in_stock;
+						$show_oos_card        = $is_out_of_stock || $is_variable;
+						$oos_card_hidden      = $is_variable && $has_any_variation_in_stock;
 						$oos_card_hidden_attr = $oos_card_hidden ? ' hidden' : '';
 
 						if ( $show_oos_card ) :
