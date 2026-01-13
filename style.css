@@ -3009,6 +3009,10 @@ padding: 16px;
 	border-color: #000000;
 	color: #ffffff;
 }
+
+.buybox .Gstore-oos-card[hidden] {
+	display: none !important;
+}
 .buybox .qty-row {
 	display: flex;
 	gap: 8px;

@@ -339,14 +339,39 @@ $short_description = apply_filters( 'woocommerce_short_description', $product->g
 $full_description  = apply_filters( 'the_content', $product->get_description() );
 $review_count      = (int) $product->get_review_count();
 $stock_status      = (string) $product->get_stock_status();
-$is_out_of_stock   = 'outofstock' === $stock_status;
-$is_on_backorder   = 'onbackorder' === $stock_status;
-$is_in_stock       = 'instock' === $stock_status;
 $is_variable       = $product->is_type( 'variable' );
 $sku               = (string) $product->get_sku();
 $average_rating    = (float) $product->get_average_rating();
 $rating_display    = $average_rating > 0 ? number_format_i18n( $average_rating, 1 ) : '';
 $review_count_i18n = $review_count > 0 ? number_format_i18n( $review_count ) : '';
+
+// Para produtos variáveis, verificar se TODAS as variações estão sem estoque.
+$all_variations_out_of_stock = false;
+$has_any_variation_in_stock  = false;
+
+if ( $is_variable && $product instanceof WC_Product_Variable ) {
+	$children = $product->get_children();
+	if ( ! empty( $children ) ) {
+		$all_variations_out_of_stock = true;
+		foreach ( $children as $child_id ) {
+			$child = wc_get_product( $child_id );
+			if ( $child && $child->is_in_stock() ) {
+				$all_variations_out_of_stock = false;
+				$has_any_variation_in_stock  = true;
+				break;
+			}
+		}
+	}
+}
+
+// Para variáveis: se TODAS estão sem estoque, forçar outofstock.
+if ( $is_variable && $all_variations_out_of_stock ) {
+	$stock_status = 'outofstock';
+}
+
+$is_out_of_stock   = 'outofstock' === $stock_status;
+$is_on_backorder   = 'onbackorder' === $stock_status;
+$is_in_stock       = 'instock' === $stock_status;
 $buybox_stock_class = $is_out_of_stock ? 'is-out-of-stock' : ( $is_in_stock ? 'is-in-stock' : 'is-on-order' );
 
 // Disponibilidade (seleção do admin via plugin GSTORE).
@@ -671,11 +696,17 @@ if ( $reviews_has_value ) {
 						<?php endif; ?>
 
 						<!-- Disponibilidade -->
-						<div class="stock <?php echo esc_attr( $buybox_stock_class ); ?>">
-							<div class="stock-title">
+						<div class="stock <?php echo esc_attr( $buybox_stock_class ); ?>" 
+							data-gstore-stock-block
+							data-default-class="<?php echo esc_attr( $buybox_stock_class ); ?>"
+							data-default-title="<?php echo esc_attr( $stock_title ); ?>"
+							data-default-subtitle="<?php echo esc_attr( $stock_subtitle ); ?>"
+							data-oos-title="<?php echo esc_attr__( 'Indisponível', 'gstore' ); ?>"
+							data-oos-subtitle="<?php echo esc_attr__( 'Sem estoque no momento', 'gstore' ); ?>">
+							<div class="stock-title" data-gstore-stock-title>
 								<?php echo esc_html( $stock_title ); ?>
 							</div>
-							<div class="stock-sub">
+							<div class="stock-sub" data-gstore-stock-subtitle>
 								<?php echo esc_html( $stock_subtitle ); ?>
 							</div>
 						</div>
@@ -762,19 +793,29 @@ if ( $reviews_has_value ) {
 								}
 							}
 
-							if ( $is_out_of_stock ) :
-								?>
-								<div class="Gstore-oos-card" role="region" aria-label="<?php esc_attr_e( 'Produto indisponível', 'gstore' ); ?>">
-									<div class="Gstore-oos-card__title"><?php esc_html_e( 'Produto indisponível no momento', 'gstore' ); ?></div>
-									<div class="Gstore-oos-card__text">
-										<?php esc_html_e( 'Quer saber previsão de reposição ou alternativas? Fale com nossa equipe.', 'gstore' ); ?>
-									</div>
-									<a class="Gstore-oos-card__cta" href="<?php echo esc_url( $att_url ); ?>">
-										<?php esc_html_e( 'Entrar em contato', 'gstore' ); ?>
-									</a>
+						<?php
+						// Mostrar o card de indisponível:
+						// - Produto simples sem estoque: sempre visível
+						// - Produto variável sem estoque (todas variações): sempre visível
+						// - Produto variável com algumas variações em estoque: oculto inicialmente, JS controla
+						$show_oos_card      = $is_out_of_stock || $is_variable;
+						$oos_card_hidden    = $is_variable && $has_any_variation_in_stock;
+						$oos_card_hidden_attr = $oos_card_hidden ? ' hidden' : '';
+
+						if ( $show_oos_card ) :
+							?>
+							<div class="Gstore-oos-card" id="gstore-oos-card" role="region" aria-label="<?php esc_attr_e( 'Produto indisponível', 'gstore' ); ?>"<?php echo esc_attr( $oos_card_hidden_attr ); ?> data-gstore-oos-card>
+								<div class="Gstore-oos-card__title"><?php esc_html_e( 'Produto indisponível no momento', 'gstore' ); ?></div>
+								<div class="Gstore-oos-card__text">
+									<?php esc_html_e( 'Quer saber previsão de reposição ou alternativas? Fale com nossa equipe.', 'gstore' ); ?>
 								</div>
-								<?php
-							endif;
+								<a class="Gstore-oos-card__cta" href="<?php echo esc_url( $att_url ); ?>">
+									<?php esc_html_e( 'Entrar em contato', 'gstore' ); ?>
+								</a>
+							</div>
+							<?php
+						endif;
+						?>
 							?>
 						</div>
 

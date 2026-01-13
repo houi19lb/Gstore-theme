@@ -422,6 +422,104 @@ document.addEventListener('DOMContentLoaded', () => {
 	initVariationsState();
 
 	/**
+	 * Controla o estado de indisponibilidade por variação selecionada.
+	 * Quando o usuário seleciona uma variação sem estoque, mostra o card "Produto indisponível"
+	 * e esconde os CTAs de compra. Quando seleciona uma com estoque, faz o inverso.
+	 */
+	const initVariationStockState = () => {
+		const form = document.querySelector('.variations_form');
+		if (!form) {
+			return;
+		}
+
+		const buybox = document.querySelector('.buybox');
+		const oosCard = document.querySelector('[data-gstore-oos-card]');
+		const stockBlock = document.querySelector('[data-gstore-stock-block]');
+		const stockTitle = stockBlock?.querySelector('[data-gstore-stock-title]');
+		const stockSubtitle = stockBlock?.querySelector('[data-gstore-stock-subtitle]');
+		const warning = document.querySelector('[data-gstore-variation-warning]');
+
+		// Se não tem o card de indisponível, não há o que controlar
+		if (!oosCard || !buybox) {
+			return;
+		}
+
+		// Dados padrão do bloco de estoque
+		const defaultClass = stockBlock?.dataset?.defaultClass || 'is-in-stock';
+		const defaultTitle = stockBlock?.dataset?.defaultTitle || 'Disponível';
+		const defaultSubtitle = stockBlock?.dataset?.defaultSubtitle || 'Pronta entrega';
+		const oosTitle = stockBlock?.dataset?.oosTitle || 'Indisponível';
+		const oosSubtitle = stockBlock?.dataset?.oosSubtitle || 'Sem estoque no momento';
+
+		const setOutOfStockState = (isOos) => {
+			if (isOos) {
+				// Mostrar card de indisponível
+				oosCard.hidden = false;
+
+				// Adicionar classe is-out-of-stock ao buybox (esconde CTAs via CSS)
+				buybox.classList.remove('is-in-stock', 'is-on-order');
+				buybox.classList.add('is-out-of-stock');
+
+				// Atualizar bloco de estoque
+				if (stockBlock) {
+					stockBlock.classList.remove('is-in-stock', 'is-on-order');
+					stockBlock.classList.add('is-out-of-stock');
+				}
+				if (stockTitle) {
+					stockTitle.textContent = oosTitle;
+				}
+				if (stockSubtitle) {
+					stockSubtitle.textContent = oosSubtitle;
+				}
+
+				// Esconder o warning de variações (não faz sentido mostrar "selecione para liberar" se não tem estoque)
+				if (warning) {
+					warning.hidden = true;
+				}
+			} else {
+				// Esconder card de indisponível
+				oosCard.hidden = true;
+
+				// Remover classe is-out-of-stock do buybox
+				buybox.classList.remove('is-out-of-stock');
+				buybox.classList.add(defaultClass);
+
+				// Restaurar bloco de estoque
+				if (stockBlock) {
+					stockBlock.classList.remove('is-out-of-stock');
+					stockBlock.classList.add(defaultClass);
+				}
+				if (stockTitle) {
+					stockTitle.textContent = defaultTitle;
+				}
+				if (stockSubtitle) {
+					stockSubtitle.textContent = defaultSubtitle;
+				}
+			}
+		};
+
+		// Estado inicial: se o buybox já está com is-out-of-stock (todas variações sem estoque), manter
+		const initiallyOos = buybox.classList.contains('is-out-of-stock');
+
+		if (typeof jQuery !== 'undefined') {
+			const $form = jQuery(form);
+
+			$form.on('found_variation', (event, variation) => {
+				// Verificar se a variação selecionada está em estoque
+				const variationInStock = variation && variation.is_in_stock === true;
+				setOutOfStockState(!variationInStock);
+			});
+
+			$form.on('reset_data', () => {
+				// Ao resetar, voltar ao estado inicial
+				setOutOfStockState(initiallyOos);
+			});
+		}
+	};
+
+	initVariationStockState();
+
+	/**
 	 * Estrutura visual do buybox (mock): qty + add-to-cart na mesma linha.
 	 */
 	const initBuyboxQtyRow = () => {
