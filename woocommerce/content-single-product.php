@@ -338,12 +338,16 @@ if ( ! empty( $categories ) && ! is_wp_error( $categories ) ) {
 $short_description = apply_filters( 'woocommerce_short_description', $product->get_short_description() );
 $full_description  = apply_filters( 'the_content', $product->get_description() );
 $review_count      = (int) $product->get_review_count();
-$is_in_stock       = $product->is_in_stock();
+$stock_status      = (string) $product->get_stock_status();
+$is_out_of_stock   = 'outofstock' === $stock_status;
+$is_on_backorder   = 'onbackorder' === $stock_status;
+$is_in_stock       = 'instock' === $stock_status;
 $is_variable       = $product->is_type( 'variable' );
 $sku               = (string) $product->get_sku();
 $average_rating    = (float) $product->get_average_rating();
 $rating_display    = $average_rating > 0 ? number_format_i18n( $average_rating, 1 ) : '';
 $review_count_i18n = $review_count > 0 ? number_format_i18n( $review_count ) : '';
+$buybox_stock_class = $is_out_of_stock ? 'is-out-of-stock' : ( $is_in_stock ? 'is-in-stock' : 'is-on-order' );
 
 // Disponibilidade (seleção do admin via plugin GSTORE).
 $product_id = (int) $product->get_id();
@@ -362,6 +366,14 @@ $nomes_disponibilidade = array(
 $texto_disponibilidade = isset( $nomes_disponibilidade[ $slug_disponibilidade ] )
 	? $nomes_disponibilidade[ $slug_disponibilidade ]
 	: __( 'Pronta entrega', 'gstore' );
+
+$stock_title = $is_out_of_stock
+	? __( 'Indisponível', 'gstore' )
+	: ( $is_in_stock ? __( 'Disponível', 'gstore' ) : __( 'Sob encomenda', 'gstore' ) );
+
+$stock_subtitle = $is_in_stock
+	? (string) $texto_disponibilidade
+	: ( $is_out_of_stock ? __( 'Sem estoque no momento', 'gstore' ) : __( 'Confirme prazos com nosso time', 'gstore' ) );
 
 // Mantém um wrapper para facilitar estilização sem quebrar o layout.
 $stock_label = sprintf(
@@ -614,7 +626,7 @@ if ( $reviews_has_value ) {
 				</div>
 
 				<div class="Gstore-single-product__summary">
-					<div class="Gstore-single-product__summary-card Gstore-single-product__buybox buybox <?php echo $is_in_stock ? 'is-in-stock' : 'is-on-order'; ?>">
+					<div class="Gstore-single-product__summary-card Gstore-single-product__buybox buybox <?php echo esc_attr( $buybox_stock_class ); ?>">
 						<!-- Preço -->
 						<div class="buybox-header">
 							<div>
@@ -659,83 +671,110 @@ if ( $reviews_has_value ) {
 						<?php endif; ?>
 
 						<!-- Disponibilidade -->
-						<div class="stock <?php echo $is_in_stock ? 'is-in-stock' : 'is-on-order'; ?>">
+						<div class="stock <?php echo esc_attr( $buybox_stock_class ); ?>">
 							<div class="stock-title">
-								<?php echo $is_in_stock ? esc_html__( 'Disponível', 'gstore' ) : esc_html__( 'Sob encomenda', 'gstore' ); ?>
+								<?php echo esc_html( $stock_title ); ?>
 							</div>
 							<div class="stock-sub">
-								<?php
-								if ( $is_in_stock ) {
-									echo esc_html( $texto_disponibilidade );
-								} else {
-									esc_html_e( 'Confirme prazos com nosso time', 'gstore' );
-								}
-								?>
+								<?php echo esc_html( $stock_subtitle ); ?>
 							</div>
 						</div>
 
 						<!-- Variações + Quantidade + CTA -->
 						<div class="Gstore-single-product__add-to-cart">
 							<?php
-							ob_start();
-							woocommerce_template_single_add_to_cart();
-							$add_to_cart_markup = ob_get_clean();
+							$att_page = get_page_by_path( 'atendimento' );
+							$att_url  = $att_page ? get_permalink( $att_page ) : home_url( '/atendimento/' );
 
-							$buy_now_button = sprintf(
-								'<button type="submit" name="gstore_buy_now" value="1" class="btn-outline Gstore-single-product__buy-now"%1$s>%2$s</button>',
-								$is_variable ? ' disabled' : '',
-								esc_html__( 'Comprar agora', 'gstore' )
-							);
+							$warning_text = $is_out_of_stock
+								? __( 'Selecione marca, cor, tamanho para enviar sua escolha ao atendimento.', 'gstore' )
+								: __( 'Selecione todas as opções para liberar o botão', 'gstore' );
+
+							$should_render_buy_now = ! $is_out_of_stock;
+
+							$buy_now_button = $should_render_buy_now
+								? sprintf(
+									'<button type="submit" name="gstore_buy_now" value="1" class="btn-outline Gstore-single-product__buy-now"%1$s>%2$s</button>',
+									$is_variable ? ' disabled' : '',
+									esc_html__( 'Comprar agora', 'gstore' )
+								)
+								: '';
 
 							$warning_markup = sprintf(
 								'<div class="warning" id="warning" data-gstore-variation-warning>%s</div>',
-								esc_html__( 'Selecione todas as opções para liberar o botão', 'gstore' )
+								esc_html( $warning_text )
 							);
 
-							if ( $add_to_cart_markup ) {
-								// Aplica classe btn-main ao botão de adicionar ao carrinho.
-								$add_to_cart_markup = preg_replace(
-									'/(<button[^>]*class="[^"]*)single_add_to_cart_button([^"]*")/i',
-									'$1single_add_to_cart_button btn-main$2',
-									$add_to_cart_markup,
-									1
-								);
+							$should_render_add_to_cart = ! $is_out_of_stock || $is_variable;
 
-								// Injeta o aviso ENTRE os selects e a área de quantidade/botões (produto variável).
-								if ( $is_variable ) {
-									if ( preg_match( '/<div class="single_variation_wrap"/i', $add_to_cart_markup ) ) {
-										$add_to_cart_markup = preg_replace(
-											'/(<div class="single_variation_wrap")/i',
-											$warning_markup . '$1',
-											$add_to_cart_markup,
-											1
-										);
-									} elseif ( false !== strpos( $add_to_cart_markup, '</form>' ) ) {
-										$add_to_cart_markup = str_replace( '</form>', $warning_markup . '</form>', $add_to_cart_markup );
-									} else {
-										$add_to_cart_markup .= $warning_markup;
+							if ( $should_render_add_to_cart ) {
+								ob_start();
+								woocommerce_template_single_add_to_cart();
+								$add_to_cart_markup = ob_get_clean();
+
+								if ( $add_to_cart_markup ) {
+									// Aplica classe btn-main ao botão de adicionar ao carrinho.
+									$add_to_cart_markup = preg_replace(
+										'/(<button[^>]*class="[^"]*)single_add_to_cart_button([^"]*")/i',
+										'$1single_add_to_cart_button btn-main$2',
+										$add_to_cart_markup,
+										1
+									);
+
+									// Injeta o aviso ENTRE os selects e a área de quantidade/botões (produto variável).
+									if ( $is_variable ) {
+										if ( preg_match( '/<div class="single_variation_wrap"/i', $add_to_cart_markup ) ) {
+											$add_to_cart_markup = preg_replace(
+												'/(<div class="single_variation_wrap")/i',
+												$warning_markup . '$1',
+												$add_to_cart_markup,
+												1
+											);
+										} elseif ( false !== strpos( $add_to_cart_markup, '</form>' ) ) {
+											$add_to_cart_markup = str_replace( '</form>', $warning_markup . '</form>', $add_to_cart_markup );
+										} else {
+											$add_to_cart_markup .= $warning_markup;
+										}
+									}
+
+									// Insere botão "Comprar agora" após o botão "Adicionar ao carrinho" (quando aplicável).
+									if ( $buy_now_button ) {
+										$button_pattern = '/(<button[^>]*single_add_to_cart_button[^>]*>.*?<\\/button>)/s';
+
+										if ( preg_match( $button_pattern, $add_to_cart_markup ) ) {
+											$add_to_cart_markup = preg_replace( $button_pattern, '$1' . $buy_now_button, $add_to_cart_markup, 1 );
+										} elseif ( false !== strpos( $add_to_cart_markup, '</form>' ) ) {
+											$add_to_cart_markup = str_replace( '</form>', $buy_now_button . '</form>', $add_to_cart_markup );
+										} else {
+											$add_to_cart_markup .= $buy_now_button;
+										}
+									}
+
+									echo $add_to_cart_markup; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+								} else {
+									woocommerce_template_single_add_to_cart();
+									if ( $is_variable ) {
+										echo wp_kses_post( $warning_markup );
+									}
+									if ( $buy_now_button ) {
+										echo wp_kses_post( $buy_now_button );
 									}
 								}
-
-								// Insere botão "Comprar agora" após o botão "Adicionar ao carrinho".
-								$button_pattern = '/(<button[^>]*single_add_to_cart_button[^>]*>.*?<\\/button>)/s';
-
-								if ( preg_match( $button_pattern, $add_to_cart_markup ) ) {
-									$add_to_cart_markup = preg_replace( $button_pattern, '$1' . $buy_now_button, $add_to_cart_markup, 1 );
-								} elseif ( false !== strpos( $add_to_cart_markup, '</form>' ) ) {
-									$add_to_cart_markup = str_replace( '</form>', $buy_now_button . '</form>', $add_to_cart_markup );
-								} else {
-									$add_to_cart_markup .= $buy_now_button;
-								}
-
-								echo $add_to_cart_markup; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-							} else {
-								woocommerce_template_single_add_to_cart();
-								if ( $is_variable ) {
-									echo wp_kses_post( $warning_markup );
-								}
-								echo wp_kses_post( $buy_now_button );
 							}
+
+							if ( $is_out_of_stock ) :
+								?>
+								<div class="Gstore-oos-card" role="region" aria-label="<?php esc_attr_e( 'Produto indisponível', 'gstore' ); ?>">
+									<div class="Gstore-oos-card__title"><?php esc_html_e( 'Produto indisponível no momento', 'gstore' ); ?></div>
+									<div class="Gstore-oos-card__text">
+										<?php esc_html_e( 'Quer saber previsão de reposição ou alternativas? Fale com nossa equipe.', 'gstore' ); ?>
+									</div>
+									<a class="Gstore-oos-card__cta" href="<?php echo esc_url( $att_url ); ?>">
+										<?php esc_html_e( 'Entrar em contato', 'gstore' ); ?>
+									</a>
+								</div>
+								<?php
+							endif;
 							?>
 						</div>
 
