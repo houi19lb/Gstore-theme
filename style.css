@@ -2234,14 +2234,17 @@ padding: 16px;
 	.Gstore-single-product__product-card .gallery-thumbs {
 		flex-direction: row;
 		overflow-x: auto;
-		padding-bottom: 4px;
+		padding: 0 8px 4px;
 		-webkit-overflow-scrolling: touch;
+		scroll-padding-left: 8px;
+		scroll-padding-right: 8px;
 	}
 
 	.Gstore-single-product__product-card .gallery-thumbs .flex-control-nav,
 	.Gstore-single-product__product-card .gallery-thumbs .flex-control-thumbs {
 		flex-direction: row !important;
-		width: 100% !important;
+		width: max-content !important;
+		min-width: 100% !important;
 	}
 
 	.Gstore-single-product__product-card .gallery-thumbs .flex-control-nav li,
