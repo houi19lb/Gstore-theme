@@ -2836,6 +2836,11 @@ padding: 16px;
 	border: 1px solid var(--gstore-color-border-accent-warm);
 }
 
+.buybox.is-out-of-stock .stock {
+	background: var(--gstore-color-bg-light);
+	border: 1px solid var(--gstore-color-border-divider, #e5e7eb);
+}
+
 .buybox .stock-title {
 	font-size: 11px;
 	font-weight: 700;
@@ -2851,6 +2856,10 @@ padding: 16px;
 	color: #9a3412;
 }
 
+.buybox.is-out-of-stock .stock-title {
+	color: #111827;
+}
+
 .buybox .stock-sub {
 	margin-top: 4px;
 	font-size: var(--gstore-font-size-base);
@@ -2862,6 +2871,10 @@ padding: 16px;
 
 .buybox.is-on-order .stock-sub {
 	color: #7c2d12;
+}
+
+.buybox.is-out-of-stock .stock-sub {
+	color: var(--gstore-color-text-gray-600, #4b5563);
 }
 
 /* Selects (WooCommerce variável) -> estilo "select-group" do mock */
@@ -2936,6 +2949,66 @@ padding: 16px;
 	display: block;
 }
 
+.buybox.is-out-of-stock .qty-row,
+.buybox.is-out-of-stock .quantity,
+.buybox.is-out-of-stock .single_add_to_cart_button,
+.buybox.is-out-of-stock .Gstore-single-product__buy-now,
+.buybox.is-out-of-stock button[name="add-to-cart"] {
+	display: none !important;
+}
+
+.buybox.is-out-of-stock .woocommerce-variation-add-to-cart,
+.buybox.is-out-of-stock .variations_button,
+.buybox.is-out-of-stock form.cart {
+	margin-top: 0;
+}
+
+.buybox.is-out-of-stock .warning {
+	margin-bottom: 16px;
+}
+
+/* Card: Produto indisponível */
+.buybox .Gstore-oos-card {
+	margin-top: 16px;
+	padding: 14px;
+	border-radius: var(--gstore-radius-base);
+	border: 1px solid var(--gstore-color-border-divider, #e5e7eb);
+	background: #ffffff;
+}
+
+.buybox .Gstore-oos-card__title {
+	font-size: var(--gstore-font-size-base);
+	font-weight: 700;
+	color: var(--gstore-color-text-primary, #111827);
+}
+
+.buybox .Gstore-oos-card__text {
+	margin-top: 6px;
+	font-size: var(--gstore-font-size-sm);
+	color: var(--gstore-color-text-gray-600, #4b5563);
+}
+
+.buybox .Gstore-oos-card__cta {
+	margin-top: 12px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 100%;
+	min-height: 44px;
+	padding: 0 14px;
+	border-radius: var(--gstore-radius-base);
+	background: #111111;
+	border: 1px solid #111111;
+	color: #ffffff;
+	text-decoration: none;
+	font-weight: 700;
+}
+
+.buybox .Gstore-oos-card__cta:hover {
+	background: #000000;
+	border-color: #000000;
+	color: #ffffff;
+}
 .buybox .qty-row {
 	display: flex;
 	gap: 8px;
