@@ -714,6 +714,7 @@ document.addEventListener('DOMContentLoaded', () => {
 				const existingNext = thumbsTarget.querySelector(nextBtnSelector);
 
 				const VISIBLE = 6;
+				const HIDDEN_CLASS = 'is-gstore-thumb-hidden';
 				const clamp = (n, a, b) => Math.max(a, Math.min(b, n));
 
 				const getActiveIndex = () => {
@@ -728,8 +729,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 				const showAllThumbs = () => {
 					Array.from(thumbsList.querySelectorAll('li')).forEach((li) => {
-						li.hidden = false;
-						li.style.display = '';
+						li.classList.remove(HIDDEN_CLASS);
 					});
 				};
 
@@ -810,8 +810,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 					allLis.forEach((li, idx) => {
 						const isVisible = idx >= start && idx < end;
-						li.hidden = !isVisible;
-						li.style.display = isVisible ? '' : 'none';
+						li.classList.toggle(HIDDEN_CLASS, !isVisible);
 					});
 
 					prevBtn.disabled = start <= 0;

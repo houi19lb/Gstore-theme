@@ -2165,6 +2165,12 @@ padding: 16px;
 	cursor: not-allowed;
 }
 
+/* Esconde thumbs fora da “janela” (precisa ser !important por conta de regras antigas com display: flex !important) */
+.Gstore-single-product__product-card .gallery-thumbs[data-gstore-thumbs-nav="1"] .flex-control-nav li.is-gstore-thumb-hidden,
+.Gstore-single-product__product-card .gallery-thumbs[data-gstore-thumbs-nav="1"] .flex-control-thumbs li.is-gstore-thumb-hidden {
+	display: none !important;
+}
+
 /* Sobrescreve estilos antigos (row/wrap) */
 .Gstore-single-product__product-card .gallery-thumbs .flex-control-nav,
 .Gstore-single-product__product-card .gallery-thumbs .flex-control-thumbs {
