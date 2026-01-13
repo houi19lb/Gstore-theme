@@ -4233,7 +4233,9 @@ function gstore_home_sections_shortcode() {
 		if ( empty( $markup ) ) {
 			return '';
 		}
-		return function_exists( 'do_blocks' ) ? do_blocks( $markup ) : $markup;
+		$rendered = function_exists( 'do_blocks' ) ? do_blocks( $markup ) : $markup;
+		// Garante execução de shortcodes que eventualmente permaneçam no output.
+		return do_shortcode( $rendered );
 	};
 
 	// Fallback: mantém exatamente a ordem antiga quando não houver configuração.
