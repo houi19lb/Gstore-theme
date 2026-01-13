@@ -105,7 +105,6 @@ if ( ! function_exists( 'gstore_render_product_review' ) ) {
 					<h3><?php esc_html_e( 'Experiência geral dos clientes', 'gstore' ); ?></h3>
 					<p><?php echo esc_html( $reviews_subtitle ); ?></p>
 				</div>
-				<span class="Gstore-review-chip"><?php esc_html_e( 'Avaliações verificadas', 'gstore' ); ?></span>
 			</header>
 
 			<div class="Gstore-review-summary">
