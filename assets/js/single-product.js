@@ -891,6 +891,8 @@ document.addEventListener('DOMContentLoaded', () => {
 						if (e.button !== undefined && e.button !== 0) return;
 						// Não iniciar drag ao clicar diretamente em uma thumb (não atrapalhar troca de imagem)
 						if (e.target && e.target.closest && e.target.closest('li')) return;
+						// Não iniciar drag ao clicar nos botões (não atrapalhar o click das setas)
+						if (e.target && e.target.closest && e.target.closest('.Gstore-thumbs-nav-btn')) return;
 						dragging = true;
 						dragStartY = e.clientY;
 						try {
