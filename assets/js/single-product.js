@@ -705,8 +705,9 @@ document.addEventListener('DOMContentLoaded', () => {
 					legacyWrapper.remove();
 				}
 
-				const items = thumbsList.querySelectorAll('li');
-				const shouldEnableNav = isDesktop && items.length > 6;
+				const getAllLis = () => Array.from(thumbsList.querySelectorAll('li'));
+				const getTotal = () => getAllLis().length;
+				const shouldEnableNav = isDesktop && getTotal() > 6;
 
 				const prevBtnSelector = '.Gstore-thumbs-nav-btn--prev';
 				const nextBtnSelector = '.Gstore-thumbs-nav-btn--next';
@@ -722,7 +723,7 @@ document.addEventListener('DOMContentLoaded', () => {
 					if (!activeImg) return 0;
 					const activeLi = activeImg.closest('li');
 					if (!activeLi) return 0;
-					const all = Array.from(thumbsList.querySelectorAll('li'));
+					const all = getAllLis();
 					const idx = all.indexOf(activeLi);
 					return idx >= 0 ? idx : 0;
 				};
@@ -794,14 +795,14 @@ document.addEventListener('DOMContentLoaded', () => {
 				};
 
 				const setStart = (nextStart) => {
-					const maxStart = Math.max(0, items.length - VISIBLE);
+					const maxStart = Math.max(0, getTotal() - VISIBLE);
 					const clamped = clamp(nextStart, 0, maxStart);
 					thumbsTarget.dataset.gstoreThumbsStart = String(clamped);
 					return clamped;
 				};
 
 				const applyWindow = () => {
-					const allLis = Array.from(thumbsList.querySelectorAll('li'));
+					const allLis = getAllLis();
 					const total = allLis.length;
 					if (total <= VISIBLE) {
 						showAllThumbs();
@@ -839,12 +840,13 @@ document.addEventListener('DOMContentLoaded', () => {
 					applyWindow();
 				};
 
+				// Click handlers das setas: sempre reatribui (evita closures com contagem antiga)
+				prevBtn.onclick = () => moveWindow(-1);
+				nextBtn.onclick = () => moveWindow(1);
+
 				// Listeners: inicializa só uma vez por thumbsTarget
 				if (!thumbsTarget.dataset.gstoreThumbsNavInit) {
 					thumbsTarget.dataset.gstoreThumbsNavInit = 'true';
-
-					prevBtn.addEventListener('click', () => moveWindow(-1));
-					nextBtn.addEventListener('click', () => moveWindow(1));
 
 					// Quando o usuário clica numa thumb (ou o Woo altera a ativa), recalcula a janela.
 					thumbsList.addEventListener(
@@ -861,7 +863,7 @@ document.addEventListener('DOMContentLoaded', () => {
 						'wheel',
 						(e) => {
 							if (!window.matchMedia('(min-width: 1025px)').matches) return;
-							if (items.length <= VISIBLE) return;
+							if (getTotal() <= VISIBLE) return;
 
 							// Só captura wheel quando o mouse está sobre a coluna de thumbs
 							if (!thumbsTarget.contains(e.target)) return;
@@ -885,8 +887,10 @@ document.addEventListener('DOMContentLoaded', () => {
 					let dragging = false;
 					thumbsTarget.addEventListener('pointerdown', (e) => {
 						if (!window.matchMedia('(min-width: 1025px)').matches) return;
-						if (items.length <= VISIBLE) return;
+						if (getTotal() <= VISIBLE) return;
 						if (e.button !== undefined && e.button !== 0) return;
+						// Não iniciar drag ao clicar diretamente em uma thumb (não atrapalhar troca de imagem)
+						if (e.target && e.target.closest && e.target.closest('li')) return;
 						dragging = true;
 						dragStartY = e.clientY;
 						try {
