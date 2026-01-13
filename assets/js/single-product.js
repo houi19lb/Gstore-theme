@@ -696,77 +696,45 @@ document.addEventListener('DOMContentLoaded', () => {
 
 			const isDesktop = window.matchMedia('(min-width: 1025px)').matches;
 
-			// No layout do mock (coluna de thumbs), ativa carrossel vertical no desktop quando houver 7+ imagens.
+			// Layout do mock (coluna .gallery-thumbs): manter visual original e só adicionar setas (cima/baixo) quando houver 7+ imagens no desktop.
 			if (thumbsTarget) {
+				// Se houver wrapper antigo (versão anterior), desmonta pra não quebrar layout.
+				const legacyWrapper = thumbsList.closest('.Gstore-thumbs-carousel--vertical');
+				if (legacyWrapper && legacyWrapper.parentNode) {
+					legacyWrapper.parentNode.insertBefore(thumbsList, legacyWrapper);
+					legacyWrapper.remove();
+				}
+
 				const items = thumbsList.querySelectorAll('li');
-				const shouldEnableVertical = isDesktop && items.length > 6;
+				const shouldEnableNav = isDesktop && items.length > 6;
 
-				const existingWrapper = thumbsList.closest('.Gstore-thumbs-carousel--vertical');
+				const prevBtnSelector = '.Gstore-thumbs-nav-btn--prev';
+				const nextBtnSelector = '.Gstore-thumbs-nav-btn--next';
+				const existingPrev = thumbsTarget.querySelector(prevBtnSelector);
+				const existingNext = thumbsTarget.querySelector(nextBtnSelector);
 
-				const teardownVertical = () => {
+				const teardown = () => {
+					thumbsTarget.removeAttribute('data-gstore-thumbs-nav');
+					if (existingPrev) existingPrev.remove();
+					if (existingNext) existingNext.remove();
+
+					thumbsList.style.height = '';
 					thumbsList.style.maxHeight = '';
+					thumbsList.style.paddingTop = '';
+					thumbsList.style.paddingBottom = '';
 					thumbsList.style.overflowY = '';
 					thumbsList.style.overflowX = '';
 					thumbsList.style.scrollSnapType = '';
 					thumbsList.style.scrollbarWidth = '';
-					thumbsList.style.cursor = '';
-					thumbsList.style.userSelect = '';
-					thumbsList.style.touchAction = '';
-					thumbsList.removeAttribute('data-gstore-vertical-drag-ready');
-
-					if (existingWrapper && existingWrapper.parentNode) {
-						existingWrapper.parentNode.insertBefore(thumbsList, existingWrapper);
-						existingWrapper.remove();
-					}
+					thumbsList.style.boxSizing = '';
 				};
 
-				if (!shouldEnableVertical) {
-					// Se não precisa de carrossel vertical, garante markup “limpo”.
-					if (existingWrapper) {
-						teardownVertical();
-					}
+				if (!shouldEnableNav) {
+					teardown();
 					return;
 				}
 
-				// Envolve a lista com botões (somente uma vez)
-				if (!existingWrapper) {
-					const wrapper = document.createElement('div');
-					wrapper.className = 'Gstore-thumbs-carousel Gstore-thumbs-carousel--vertical';
-					wrapper.setAttribute('data-gstore-thumbs-carousel', 'true');
-
-					const prevBtn = document.createElement('button');
-					prevBtn.type = 'button';
-					prevBtn.className = 'Gstore-thumbs-carousel__btn Gstore-thumbs-carousel__btn--prev';
-					prevBtn.setAttribute('aria-label', 'Miniaturas anteriores');
-					prevBtn.textContent = '˄';
-
-					const nextBtn = document.createElement('button');
-					nextBtn.type = 'button';
-					nextBtn.className = 'Gstore-thumbs-carousel__btn Gstore-thumbs-carousel__btn--next';
-					nextBtn.setAttribute('aria-label', 'Próximas miniaturas');
-					nextBtn.textContent = '˅';
-
-					const parent = thumbsList.parentNode;
-					if (!parent) {
-						return;
-					}
-
-					parent.insertBefore(wrapper, thumbsList);
-					wrapper.appendChild(prevBtn);
-					wrapper.appendChild(thumbsList);
-					wrapper.appendChild(nextBtn);
-				}
-
-				const wrapper = thumbsList.closest('.Gstore-thumbs-carousel--vertical');
-				if (!wrapper) {
-					return;
-				}
-
-				const prevBtn = wrapper.querySelector('.Gstore-thumbs-carousel__btn--prev');
-				const nextBtn = wrapper.querySelector('.Gstore-thumbs-carousel__btn--next');
-				if (!prevBtn || !nextBtn) {
-					return;
-				}
+				thumbsTarget.setAttribute('data-gstore-thumbs-nav', '1');
 
 				const getGap = () => {
 					const styles = window.getComputedStyle(thumbsList);
@@ -780,14 +748,58 @@ document.addEventListener('DOMContentLoaded', () => {
 					return firstItem.getBoundingClientRect().height || firstItem.offsetHeight || 0;
 				};
 
+				const getScrollStep = () => {
+					const itemH = getItemHeight();
+					if (!itemH) return 0;
+					return Math.max(1, Math.round(itemH + getGap()));
+				};
+
 				const applyViewportHeight = () => {
 					const itemH = getItemHeight();
 					const gap = getGap();
 					if (!itemH) return;
+
+					// Reserva espaço interno para as setas (sem alterar o layout externo da coluna)
+					const btnSize = 32;
+					const btnGap = 8;
+					const pad = btnSize + btnGap;
+
 					const visibleCount = 6;
-					const viewportH = itemH * visibleCount + gap * Math.max(0, visibleCount - 1);
-					thumbsList.style.maxHeight = `${Math.round(viewportH)}px`;
+					const contentH = itemH * visibleCount + gap * Math.max(0, visibleCount - 1);
+					const viewportH = contentH + pad * 2;
+
+					thumbsList.style.boxSizing = 'border-box';
+					thumbsList.style.paddingTop = `${pad}px`;
+					thumbsList.style.paddingBottom = `${pad}px`;
+					thumbsList.style.height = `${Math.round(viewportH)}px`;
 				};
+
+				const ensureButtons = () => {
+					let prevBtn = thumbsTarget.querySelector(prevBtnSelector);
+					let nextBtn = thumbsTarget.querySelector(nextBtnSelector);
+
+					if (!prevBtn) {
+						prevBtn = document.createElement('button');
+						prevBtn.type = 'button';
+						prevBtn.className = 'Gstore-thumbs-nav-btn Gstore-thumbs-nav-btn--prev';
+						prevBtn.setAttribute('aria-label', 'Miniaturas anteriores');
+						prevBtn.textContent = '˄';
+						thumbsTarget.appendChild(prevBtn);
+					}
+
+					if (!nextBtn) {
+						nextBtn = document.createElement('button');
+						nextBtn.type = 'button';
+						nextBtn.className = 'Gstore-thumbs-nav-btn Gstore-thumbs-nav-btn--next';
+						nextBtn.setAttribute('aria-label', 'Próximas miniaturas');
+						nextBtn.textContent = '˅';
+						thumbsTarget.appendChild(nextBtn);
+					}
+
+					return { prevBtn, nextBtn };
+				};
+
+				const { prevBtn, nextBtn } = ensureButtons();
 
 				const updateButtons = () => {
 					const maxScrollTop = thumbsList.scrollHeight - thumbsList.clientHeight;
@@ -796,12 +808,6 @@ document.addEventListener('DOMContentLoaded', () => {
 					const atEnd = current >= maxScrollTop - 1;
 					prevBtn.disabled = atStart;
 					nextBtn.disabled = atEnd;
-				};
-
-				const getScrollStep = () => {
-					const itemH = getItemHeight();
-					if (!itemH) return 0;
-					return Math.max(1, Math.round(itemH + getGap()));
 				};
 
 				const scrollByStep = (direction) => {
@@ -813,18 +819,16 @@ document.addEventListener('DOMContentLoaded', () => {
 					});
 				};
 
-				// Estilos base para o modo vertical (JS controla altura exata)
 				thumbsList.style.overflowY = 'auto';
 				thumbsList.style.overflowX = 'hidden';
 				thumbsList.style.scrollSnapType = 'y mandatory';
 				thumbsList.style.scrollbarWidth = 'none';
-				thumbsList.style.touchAction = 'pan-y';
 
 				applyViewportHeight();
 
-				// Inicializar listeners uma única vez por wrapper
-				if (!wrapper.dataset.gstoreThumbsCarouselInit) {
-					wrapper.dataset.gstoreThumbsCarouselInit = 'true';
+				// Listeners: inicializa só uma vez por thumbsTarget
+				if (!thumbsTarget.dataset.gstoreThumbsNavInit) {
+					thumbsTarget.dataset.gstoreThumbsNavInit = 'true';
 
 					prevBtn.addEventListener('click', () => scrollByStep(-1));
 					nextBtn.addEventListener('click', () => scrollByStep(1));
@@ -835,83 +839,6 @@ document.addEventListener('DOMContentLoaded', () => {
 							window.requestAnimationFrame(updateButtons);
 						},
 						{ passive: true }
-					);
-
-					window.addEventListener('resize', () => {
-						clearTimeout(thumbsResizeTimeout);
-						thumbsResizeTimeout = setTimeout(() => {
-							applyViewportHeight();
-							updateButtons();
-						}, 100);
-					});
-				}
-
-				// Drag-to-scroll (pointer)
-				if (!thumbsList.dataset.gstoreVerticalDragReady) {
-					thumbsList.dataset.gstoreVerticalDragReady = 'true';
-					thumbsList.style.cursor = 'grab';
-					thumbsList.style.userSelect = 'none';
-
-					let isPointerDown = false;
-					let startY = 0;
-					let startScrollTop = 0;
-					let moved = false;
-
-					const endDrag = () => {
-						isPointerDown = false;
-						thumbsList.style.cursor = 'grab';
-						if (moved) {
-							// Marca como “dragging” por um tick para evitar clique acidental
-							wrapper.dataset.gstoreThumbsJustDragged = '1';
-							setTimeout(() => {
-								delete wrapper.dataset.gstoreThumbsJustDragged;
-							}, 0);
-						}
-						moved = false;
-					};
-
-					thumbsList.addEventListener('pointerdown', (e) => {
-						// Só ativa drag quando o modo vertical está realmente ativo
-						if (!thumbsList.closest('.Gstore-thumbs-carousel--vertical')) return;
-						if (!window.matchMedia('(min-width: 1025px)').matches) return;
-
-						// apenas botão principal / toque
-						if (e.button !== undefined && e.button !== 0) return;
-						isPointerDown = true;
-						moved = false;
-						startY = e.clientY;
-						startScrollTop = thumbsList.scrollTop;
-						thumbsList.style.cursor = 'grabbing';
-						try {
-							thumbsList.setPointerCapture(e.pointerId);
-						} catch (_) {
-							// noop
-						}
-					});
-
-					thumbsList.addEventListener('pointermove', (e) => {
-						if (!thumbsList.closest('.Gstore-thumbs-carousel--vertical')) return;
-						if (!window.matchMedia('(min-width: 1025px)').matches) return;
-						if (!isPointerDown) return;
-						const deltaY = e.clientY - startY;
-						if (Math.abs(deltaY) > 4) moved = true;
-						thumbsList.scrollTop = startScrollTop - deltaY;
-					});
-
-					thumbsList.addEventListener('pointerup', endDrag);
-					thumbsList.addEventListener('pointercancel', endDrag);
-
-					thumbsList.addEventListener(
-						'click',
-						(e) => {
-							// Se o wrapper foi desmontado, não interfere em cliques
-							if (!thumbsList.closest('.Gstore-thumbs-carousel--vertical')) return;
-							if (wrapper.dataset.gstoreThumbsJustDragged === '1') {
-								e.preventDefault();
-								e.stopPropagation();
-							}
-						},
-						true
 					);
 				}
 

@@ -2143,16 +2143,16 @@ padding: 16px;
 	gap: 8px;
 }
 
-/* Desktop: carrossel vertical de thumbs (ativa via JS quando houver 7+ imagens) */
-.Gstore-single-product__product-card .gallery-thumbs .Gstore-thumbs-carousel--vertical {
-	display: grid;
-	grid-template-rows: 32px 1fr 32px;
-	gap: 8px;
-	align-items: center;
-	width: 88px;
+/* Desktop: setas sobrepostas para navegar nas thumbs (ativa via JS quando houver 7+ imagens) */
+.Gstore-single-product__product-card .gallery-thumbs[data-gstore-thumbs-nav="1"] {
+	position: relative;
 }
 
-.Gstore-single-product__product-card .gallery-thumbs .Gstore-thumbs-carousel--vertical .Gstore-thumbs-carousel__btn {
+.Gstore-single-product__product-card .gallery-thumbs[data-gstore-thumbs-nav="1"] .Gstore-thumbs-nav-btn {
+	position: absolute;
+	left: 50%;
+	transform: translateX(-50%);
+	z-index: 5;
 	width: 32px;
 	height: 32px;
 	border: 1px solid var(--gstore-color-border-light);
@@ -2164,25 +2164,24 @@ padding: 16px;
 	padding: 0;
 	color: inherit;
 	cursor: pointer;
-	margin: 0 auto;
+	box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
 }
 
-.Gstore-single-product__product-card .gallery-thumbs .Gstore-thumbs-carousel--vertical .Gstore-thumbs-carousel__btn[disabled] {
+.Gstore-single-product__product-card .gallery-thumbs[data-gstore-thumbs-nav="1"] .Gstore-thumbs-nav-btn--prev {
+	top: 0;
+}
+
+.Gstore-single-product__product-card .gallery-thumbs[data-gstore-thumbs-nav="1"] .Gstore-thumbs-nav-btn--next {
+	bottom: 0;
+}
+
+.Gstore-single-product__product-card .gallery-thumbs[data-gstore-thumbs-nav="1"] .Gstore-thumbs-nav-btn[disabled] {
 	opacity: 0.45;
 	cursor: default;
 }
 
-.Gstore-single-product__product-card .gallery-thumbs .Gstore-thumbs-carousel--vertical .flex-control-nav,
-.Gstore-single-product__product-card .gallery-thumbs .Gstore-thumbs-carousel--vertical .flex-control-thumbs {
-	/* o JS define max-height exata para 6 itens */
-	overflow-y: auto !important;
-	overflow-x: hidden !important;
-	scrollbar-width: none;
-	-webkit-overflow-scrolling: touch;
-}
-
-.Gstore-single-product__product-card .gallery-thumbs .Gstore-thumbs-carousel--vertical .flex-control-nav::-webkit-scrollbar,
-.Gstore-single-product__product-card .gallery-thumbs .Gstore-thumbs-carousel--vertical .flex-control-thumbs::-webkit-scrollbar {
+.Gstore-single-product__product-card .gallery-thumbs[data-gstore-thumbs-nav="1"] .flex-control-nav::-webkit-scrollbar,
+.Gstore-single-product__product-card .gallery-thumbs[data-gstore-thumbs-nav="1"] .flex-control-thumbs::-webkit-scrollbar {
 	display: none;
 }
 
