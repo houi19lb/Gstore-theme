@@ -349,13 +349,13 @@ $review_count_i18n = $review_count > 0 ? number_format_i18n( $review_count ) : '
 $all_variations_out_of_stock = false;
 $has_any_variation_in_stock  = false;
 
-if ( $is_variable && $product instanceof WC_Product_Variable ) {
+if ( $is_variable && method_exists( $product, 'get_children' ) ) {
 	$children = $product->get_children();
 	if ( ! empty( $children ) ) {
 		$all_variations_out_of_stock = true;
 		foreach ( $children as $child_id ) {
-			$child = wc_get_product( $child_id );
-			if ( $child && $child->is_in_stock() ) {
+			$child_stock_status = (string) get_post_meta( (int) $child_id, '_stock_status', true );
+			if ( 'instock' === $child_stock_status ) {
 				$all_variations_out_of_stock = false;
 				$has_any_variation_in_stock  = true;
 				break;
@@ -816,7 +816,6 @@ if ( $reviews_has_value ) {
 							<?php
 						endif;
 						?>
-							?>
 						</div>
 
 						<!-- Leia antes -->
