@@ -771,6 +771,18 @@ document.addEventListener('DOMContentLoaded', () => {
 						thumbsTarget.appendChild(nextBtn);
 					}
 
+					// Garantir ordem correta no DOM: prev antes da lista, next depois da lista
+					try {
+						if (prevBtn && prevBtn.nextSibling !== thumbsList) {
+							thumbsTarget.insertBefore(prevBtn, thumbsList);
+						}
+						if (nextBtn && nextBtn.previousSibling !== thumbsList) {
+							thumbsTarget.appendChild(nextBtn);
+						}
+					} catch (_) {
+						// noop
+					}
+
 					return { prevBtn, nextBtn };
 				};
 
@@ -842,6 +854,57 @@ document.addEventListener('DOMContentLoaded', () => {
 						},
 						true
 					);
+
+					// Wheel para “girar” o carrossel (sem depender de scroll/overflow)
+					let wheelLock = false;
+					thumbsTarget.addEventListener(
+						'wheel',
+						(e) => {
+							if (!window.matchMedia('(min-width: 1025px)').matches) return;
+							if (items.length <= VISIBLE) return;
+
+							// Só captura wheel quando o mouse está sobre a coluna de thumbs
+							if (!thumbsTarget.contains(e.target)) return;
+
+							e.preventDefault();
+							if (wheelLock) return;
+							wheelLock = true;
+
+							const dir = e.deltaY > 0 ? 1 : -1;
+							moveWindow(dir);
+
+							setTimeout(() => {
+								wheelLock = false;
+							}, 120);
+						},
+						{ passive: false }
+					);
+
+					// Drag vertical simples para “girar” (arrastar pra cima/baixo)
+					let dragStartY = 0;
+					let dragging = false;
+					thumbsTarget.addEventListener('pointerdown', (e) => {
+						if (!window.matchMedia('(min-width: 1025px)').matches) return;
+						if (items.length <= VISIBLE) return;
+						if (e.button !== undefined && e.button !== 0) return;
+						dragging = true;
+						dragStartY = e.clientY;
+						try {
+							thumbsTarget.setPointerCapture(e.pointerId);
+						} catch (_) {
+							// noop
+						}
+					});
+					thumbsTarget.addEventListener('pointerup', (e) => {
+						if (!dragging) return;
+						dragging = false;
+						const delta = e.clientY - dragStartY;
+						if (Math.abs(delta) < 28) return;
+						moveWindow(delta > 0 ? -1 : 1);
+					});
+					thumbsTarget.addEventListener('pointercancel', () => {
+						dragging = false;
+					});
 
 					window.addEventListener('resize', () => {
 						clearTimeout(thumbsResizeTimeout);
