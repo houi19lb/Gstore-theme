@@ -2254,6 +2254,17 @@ padding: 16px;
 		flex: 0 0 64px !important;
 	}
 
+	/* Evita “corte” da 1ª/última thumb nas bordas do scroll (as regras base zeram margin com !important) */
+	.Gstore-single-product__product-card .gallery-thumbs .flex-control-nav li:first-child,
+	.Gstore-single-product__product-card .gallery-thumbs .flex-control-thumbs li:first-child {
+		margin-left: 8px !important;
+	}
+
+	.Gstore-single-product__product-card .gallery-thumbs .flex-control-nav li:last-child,
+	.Gstore-single-product__product-card .gallery-thumbs .flex-control-thumbs li:last-child {
+		margin-right: 8px !important;
+	}
+
 	.Gstore-single-product__product-card .gallery-thumbs .flex-control-nav li img,
 	.Gstore-single-product__product-card .gallery-thumbs .flex-control-thumbs li img {
 		width: 64px !important;
