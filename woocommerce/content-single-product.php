@@ -752,23 +752,26 @@ if ( $reviews_has_value ) {
 
 						<!-- Ajuda -->
 						<?php if ( ! empty( $contact_entries ) ) : ?>
-							<div class="help">
-								<div class="help-title"><?php esc_html_e( 'Precisa de ajuda?', 'gstore' ); ?></div>
+							<section class="help help-box" aria-label="<?php esc_attr_e( 'Precisa de ajuda', 'gstore' ); ?>">
+								<h3 class="help-title help-box__title"><?php esc_html_e( 'Precisa de ajuda?', 'gstore' ); ?></h3>
 
-								<?php foreach ( $contact_entries as $contact ) : ?>
-									<div class="help-item">
-										<div>
-											<strong><?php echo esc_html( $contact['label'] ); ?></strong>
-											<div class="help-sub"><?php echo esc_html( $contact['value'] ); ?></div>
+								<div class="help-items">
+									<?php foreach ( $contact_entries as $contact ) : ?>
+										<div class="help-item">
+											<div class="help-item__text">
+												<div class="help-item__heading"><?php echo esc_html( $contact['label'] ); ?></div>
+												<div class="help-item__sub"><?php echo esc_html( $contact['value'] ); ?></div>
+											</div>
+
+											<?php if ( ! empty( $contact['cta'] ) && ! empty( $contact['href'] ) ) : ?>
+												<a class="help-btn help-item__btn" href="<?php echo esc_url( $contact['href'] ); ?>">
+													<?php echo esc_html( $contact['cta'] ); ?>
+												</a>
+											<?php endif; ?>
 										</div>
-										<?php if ( ! empty( $contact['cta'] ) && ! empty( $contact['href'] ) ) : ?>
-											<a class="help-btn" href="<?php echo esc_url( $contact['href'] ); ?>">
-												<?php echo esc_html( $contact['cta'] ); ?>
-											</a>
-										<?php endif; ?>
-									</div>
-								<?php endforeach; ?>
-							</div>
+									<?php endforeach; ?>
+								</div>
+							</section>
 						<?php endif; ?>
 
 						<!-- Entrega (calculador de frete) -->
