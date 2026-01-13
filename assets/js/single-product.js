@@ -746,6 +746,13 @@ document.addEventListener('DOMContentLoaded', () => {
 					delete thumbsTarget.dataset.gstoreThumbsStart;
 					delete thumbsTarget.dataset.gstoreThumbsLastAction;
 					showAllThumbs();
+
+					// Mobile: garantir que a lista de thumbs começa totalmente no início (evita 1ª thumb “cortada”).
+					try {
+						thumbsTarget.scrollLeft = 0;
+					} catch (_) {
+						// noop
+					}
 				};
 
 				if (!shouldEnableNav) {
