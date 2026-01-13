@@ -2234,10 +2234,10 @@ padding: 16px;
 	.Gstore-single-product__product-card .gallery-thumbs {
 		flex-direction: row;
 		overflow-x: auto;
-		padding: 0 8px 4px;
+		padding: 0 0 4px;
 		-webkit-overflow-scrolling: touch;
-		scroll-padding-left: 8px;
-		scroll-padding-right: 8px;
+		scroll-padding-left: 12px;
+		scroll-padding-right: 12px;
 	}
 
 	.Gstore-single-product__product-card .gallery-thumbs .flex-control-nav,
@@ -2245,6 +2245,9 @@ padding: 16px;
 		flex-direction: row !important;
 		width: max-content !important;
 		min-width: 100% !important;
+		box-sizing: border-box;
+		padding-left: 12px !important;
+		padding-right: 12px !important;
 	}
 
 	.Gstore-single-product__product-card .gallery-thumbs .flex-control-nav li,
@@ -2254,16 +2257,7 @@ padding: 16px;
 		flex: 0 0 64px !important;
 	}
 
-	/* Evita “corte” da 1ª/última thumb nas bordas do scroll (as regras base zeram margin com !important) */
-	.Gstore-single-product__product-card .gallery-thumbs .flex-control-nav li:first-child,
-	.Gstore-single-product__product-card .gallery-thumbs .flex-control-thumbs li:first-child {
-		margin-left: 8px !important;
-	}
-
-	.Gstore-single-product__product-card .gallery-thumbs .flex-control-nav li:last-child,
-	.Gstore-single-product__product-card .gallery-thumbs .flex-control-thumbs li:last-child {
-		margin-right: 8px !important;
-	}
+	/* Evita “corte” nas bordas: a folga fica no padding do <ol>, não no <li> (mais previsível com !important). */
 
 	.Gstore-single-product__product-card .gallery-thumbs .flex-control-nav li img,
 	.Gstore-single-product__product-card .gallery-thumbs .flex-control-thumbs li img {
