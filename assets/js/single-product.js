@@ -1204,14 +1204,16 @@ document.addEventListener('DOMContentLoaded', () => {
 				const $target = ($active && $active.length ? $active : $gallery.find('.woocommerce-product-gallery__image').first()).first();
 				if (!$target.length) return;
 
-				// Inicializar zoom só no slide ativo
-				const zoomOptions = window?.wc_single_product_params?.zoom_options;
+				// Inicializar zoom só no slide ativo com opções otimizadas
+				const zoomOptions = {
+					touch: false,
+					duration: 0,
+					...(window?.wc_single_product_params?.zoom_options || {})
+				};
+
 				try {
-					if (zoomOptions && typeof zoomOptions === 'object') {
-						$target.zoom(zoomOptions);
-					} else {
-						$target.zoom();
-					}
+					$target.trigger('zoom.destroy');
+					$target.zoom(zoomOptions);
 				} catch (_) {
 					// noop
 				}
