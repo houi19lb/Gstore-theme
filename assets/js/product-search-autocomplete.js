@@ -7,7 +7,9 @@
 
 	var config = window.gstoreProductSearch || {};
 	var endpoint = config.endpoint || '';
-	var minChars = typeof config.minChars === 'number' ? config.minChars : 2;
+	var minCharsRaw = config.minChars;
+	var minChars = typeof minCharsRaw === 'number' ? minCharsRaw : parseInt(minCharsRaw, 10);
+	if (!isFinite(minChars) || minChars < 1) minChars = 2;
 
 	if (!endpoint) {
 		return;
@@ -16,10 +18,11 @@
 	function debounce(fn, wait) {
 		var t;
 		return function () {
+			var ctx = this;
 			var args = arguments;
 			clearTimeout(t);
 			t = setTimeout(function () {
-				fn.apply(null, args);
+				fn.apply(ctx, args);
 			}, wait);
 		};
 	}

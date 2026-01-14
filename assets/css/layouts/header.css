@@ -720,6 +720,8 @@ body:has(.Gstore-header-shell) {
  * ========================================== */
 .Gstore-search-form--suggest .wp-block-search__inside-wrapper {
 	position: relative;
+	/* Permite o dropdown (position:absolute) aparecer fora do wrapper */
+	overflow: visible !important;
 }
 
 .Gstore-search-suggest {
