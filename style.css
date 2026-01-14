@@ -8898,6 +8898,15 @@ body:has(.Gstore-catalog-shell--light) main {
 	line-height: 1;
 }
 
+/* Fix (mobile): centraliza os números dentro do quadrado (vence o `display: block` do WooCommerce) */
+.woocommerce nav.woocommerce-pagination ul li a.page-numbers,
+.woocommerce nav.woocommerce-pagination ul li span.page-numbers {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	line-height: 1;
+}
+
 /* =========================================
  * RESPONSIVE - LIGHT THEME
  * ========================================= */
