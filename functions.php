@@ -931,11 +931,14 @@ function gstore_enqueue_scripts() {
 			$home_hero_js_version,
 			true
 		);
+
+		$home_benefits_js_path    = get_theme_file_path( 'assets/js/home-benefits.js' );
+		$home_benefits_js_version = file_exists( $home_benefits_js_path ) ? (string) filemtime( $home_benefits_js_path ) : wp_get_theme()->get( 'Version' );
 		wp_enqueue_script(
 			'gstore-home-benefits',
 			get_theme_file_uri( 'assets/js/home-benefits.js' ),
 			array(),
-			wp_get_theme()->get( 'Version' ),
+			$home_benefits_js_version,
 			true
 		);
 

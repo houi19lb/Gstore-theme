@@ -7,9 +7,10 @@
 	const DOT_SELECTOR = '[data-gstore-benefits-dot]';
 	const PREV_SELECTOR = '[data-gstore-benefits-prev]';
 	const NEXT_SELECTOR = '[data-gstore-benefits-next]';
-	const AUTOPLAY_DELAY = 4000;
+	const AUTOPLAY_DELAY = 7000;
 
 	function initSlider(slider) {
+		const forceAutoplay = slider.hasAttribute('data-gstore-benefits-force-autoplay');
 		const track = slider.querySelector(TRACK_SELECTOR);
 		const slides = Array.from(slider.querySelectorAll(SLIDE_SELECTOR));
 		const dots = Array.from(slider.querySelectorAll(DOT_SELECTOR));
@@ -24,7 +25,7 @@
 		const prefersReducedMotion =
 			window.matchMedia &&
 			window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-		const canAutoplay = !prefersReducedMotion && slides.length > 1;
+		const canAutoplay = slides.length > 1 && (forceAutoplay || !prefersReducedMotion);
 		let autoplayId = null;
 		let touchStartX = 0;
 		let touchEndX = 0;
@@ -177,12 +178,11 @@
 		slider.addEventListener('touchmove', handleTouchMove, { passive: false });
 		slider.addEventListener('touchend', handleTouchEnd);
 
-		if (canAutoplay) {
-			slider.addEventListener('mouseenter', stopAutoplay);
-			slider.addEventListener('mouseleave', startAutoplay);
-			slider.addEventListener('focusin', stopAutoplay);
-			slider.addEventListener('focusout', startAutoplay);
-		}
+		// Pausa autoplay ao interagir (mesmo quando prefers-reduced-motion estiver ativo)
+		slider.addEventListener('mouseenter', stopAutoplay);
+		slider.addEventListener('mouseleave', startAutoplay);
+		slider.addEventListener('focusin', stopAutoplay);
+		slider.addEventListener('focusout', startAutoplay);
 
 		// Função para recalcular a largura do track e slides
 		let trackResizeTimeout;
