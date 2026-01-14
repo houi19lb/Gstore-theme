@@ -985,10 +985,53 @@ function gstore_enqueue_scripts() {
 
 	// Script dos cards de produto
 	if ( class_exists( 'WooCommerce' ) ) {
+		// Core de Favoritos (conta + fallback localStorage)
+		$favorites_core_js_path    = get_theme_file_path( 'assets/js/favorites-core.js' );
+		$favorites_core_js_version = file_exists( $favorites_core_js_path ) ? (string) filemtime( $favorites_core_js_path ) : wp_get_theme()->get( 'Version' );
+		wp_enqueue_script(
+			'gstore-favorites-core',
+			get_theme_file_uri( 'assets/js/favorites-core.js' ),
+			array(),
+			$favorites_core_js_version,
+			true
+		);
+
+		$initial_favorite_ids = array();
+		if ( is_user_logged_in() ) {
+			$stored = get_user_meta( get_current_user_id(), 'gstore_favorites', true );
+			if ( is_array( $stored ) ) {
+				$seen = array();
+				foreach ( $stored as $id ) {
+					$id = absint( $id );
+					if ( $id <= 0 ) {
+						continue;
+					}
+					if ( isset( $seen[ $id ] ) ) {
+						continue;
+					}
+					$seen[ $id ]          = true;
+					$initial_favorite_ids[] = (string) $id;
+				}
+			}
+		}
+
+		wp_localize_script(
+			'gstore-favorites-core',
+			'gstoreFavoritesConfig',
+			array(
+				'ajaxUrl'     => admin_url( 'admin-ajax.php' ),
+				'nonce'       => wp_create_nonce( 'gstore_favorites' ),
+				'isLoggedIn'  => is_user_logged_in(),
+				'initialIds'  => $initial_favorite_ids,
+				'catalogUrl'  => home_url( '/catalogo/' ),
+				'favoritesUrl'=> home_url( '/favoritos/' ),
+			)
+		);
+
 		wp_enqueue_script(
 			'gstore-product-card',
 			get_theme_file_uri( 'assets/js/product-card.js' ),
-			array(),
+			array( 'gstore-favorites-core' ),
 			wp_get_theme()->get( 'Version' ),
 			true
 		);
@@ -1000,8 +1043,21 @@ function gstore_enqueue_scripts() {
 			wp_enqueue_script(
 				'gstore-single-product',
 				get_theme_file_uri( 'assets/js/single-product.js' ),
-				array(),
+				array( 'gstore-favorites-core' ),
 				$single_product_js_version,
+				true
+			);
+		}
+
+		// Script da página de favoritos
+		if ( function_exists( 'is_page' ) && is_page( 'favoritos' ) ) {
+			$favorites_page_js_path    = get_theme_file_path( 'assets/js/favorites-page.js' );
+			$favorites_page_js_version = file_exists( $favorites_page_js_path ) ? (string) filemtime( $favorites_page_js_path ) : wp_get_theme()->get( 'Version' );
+			wp_enqueue_script(
+				'gstore-favorites-page',
+				get_theme_file_uri( 'assets/js/favorites-page.js' ),
+				array( 'gstore-favorites-core' ),
+				$favorites_page_js_version,
 				true
 			);
 		}
@@ -1132,6 +1188,179 @@ function gstore_enqueue_scripts() {
 	}
 }
 add_action( 'wp_enqueue_scripts', 'gstore_enqueue_scripts' );
+
+/**
+ * ============================
+ * Favoritos (Meus Favoritos)
+ * ============================
+ */
+
+/**
+ * Sanitiza uma lista de IDs.
+ *
+ * @param mixed $raw_ids
+ * @return int[]
+ */
+function gstore_favorites_sanitize_ids( $raw_ids ) {
+	if ( ! is_array( $raw_ids ) ) {
+		return array();
+	}
+
+	$out  = array();
+	$seen = array();
+	foreach ( $raw_ids as $id ) {
+		$id = absint( $id );
+		if ( $id <= 0 ) {
+			continue;
+		}
+		if ( isset( $seen[ $id ] ) ) {
+			continue;
+		}
+		$seen[ $id ] = true;
+		$out[]       = $id;
+	}
+
+	return $out;
+}
+
+/**
+ * Toggle de favorito (somente logado).
+ */
+function gstore_ajax_favorites_toggle() {
+	check_ajax_referer( 'gstore_favorites', 'nonce' );
+
+	if ( ! is_user_logged_in() ) {
+		wp_send_json_error( array( 'message' => 'Você precisa estar logado para salvar favoritos.' ), 401 );
+	}
+
+	if ( ! class_exists( 'WooCommerce' ) ) {
+		wp_send_json_error( array( 'message' => 'WooCommerce não está ativo.' ), 400 );
+	}
+
+	$product_id = isset( $_POST['product_id'] ) ? absint( wp_unslash( $_POST['product_id'] ) ) : 0; // phpcs:ignore WordPress.Security.NonceVerification.Missing
+	if ( $product_id <= 0 || 'product' !== get_post_type( $product_id ) ) {
+		wp_send_json_error( array( 'message' => 'Produto inválido.' ), 400 );
+	}
+
+	$user_id = get_current_user_id();
+	$stored  = get_user_meta( $user_id, 'gstore_favorites', true );
+	$ids     = is_array( $stored ) ? gstore_favorites_sanitize_ids( $stored ) : array();
+
+	$idx = array_search( $product_id, $ids, true );
+	if ( false === $idx ) {
+		$ids[] = $product_id;
+	} else {
+		array_splice( $ids, (int) $idx, 1 );
+	}
+
+	update_user_meta( $user_id, 'gstore_favorites', $ids );
+
+	wp_send_json_success(
+		array(
+			'ids' => array_map( 'strval', $ids ),
+		)
+	);
+}
+add_action( 'wp_ajax_gstore_favorites_toggle', 'gstore_ajax_favorites_toggle' );
+
+/**
+ * Merge de favoritos local -> conta (somente logado).
+ */
+function gstore_ajax_favorites_merge() {
+	check_ajax_referer( 'gstore_favorites', 'nonce' );
+
+	if ( ! is_user_logged_in() ) {
+		wp_send_json_error( array( 'message' => 'Você precisa estar logado para sincronizar favoritos.' ), 401 );
+	}
+
+	$user_id = get_current_user_id();
+	$stored  = get_user_meta( $user_id, 'gstore_favorites', true );
+	$ids     = is_array( $stored ) ? gstore_favorites_sanitize_ids( $stored ) : array();
+
+	$incoming = isset( $_POST['ids'] ) ? gstore_favorites_sanitize_ids( wp_unslash( $_POST['ids'] ) ) : array(); // phpcs:ignore WordPress.Security.NonceVerification.Missing
+	if ( ! empty( $incoming ) ) {
+		$seen = array();
+		foreach ( $ids as $id ) {
+			$seen[ (int) $id ] = true;
+		}
+		foreach ( $incoming as $id ) {
+			if ( isset( $seen[ (int) $id ] ) ) {
+				continue;
+			}
+			$seen[ (int) $id ] = true;
+			$ids[]             = (int) $id;
+		}
+		update_user_meta( $user_id, 'gstore_favorites', $ids );
+	}
+
+	wp_send_json_success(
+		array(
+			'ids' => array_map( 'strval', $ids ),
+		)
+	);
+}
+add_action( 'wp_ajax_gstore_favorites_merge', 'gstore_ajax_favorites_merge' );
+
+/**
+ * Renderiza lista de favoritos em HTML.
+ * - Logado: se não vier ids, usa user meta.
+ * - Deslogado: usa ids enviados.
+ */
+function gstore_ajax_favorites_render() {
+	check_ajax_referer( 'gstore_favorites', 'nonce' );
+
+	if ( ! class_exists( 'WooCommerce' ) ) {
+		wp_send_json_error( array( 'message' => 'WooCommerce não está ativo.' ), 400 );
+	}
+
+	$ids = isset( $_POST['ids'] ) ? gstore_favorites_sanitize_ids( wp_unslash( $_POST['ids'] ) ) : array(); // phpcs:ignore WordPress.Security.NonceVerification.Missing
+	if ( empty( $ids ) && is_user_logged_in() ) {
+		$stored = get_user_meta( get_current_user_id(), 'gstore_favorites', true );
+		$ids    = is_array( $stored ) ? gstore_favorites_sanitize_ids( $stored ) : array();
+	}
+
+	if ( empty( $ids ) ) {
+		wp_send_json_success(
+			array(
+				'html' => '',
+				'ids'  => array(),
+			)
+		);
+	}
+
+	$args = array(
+		'post_type'           => 'product',
+		'post_status'         => 'publish',
+		'ignore_sticky_posts' => true,
+		'posts_per_page'      => count( $ids ),
+		'post__in'            => $ids,
+		'orderby'             => 'post__in',
+	);
+
+	$q = new WP_Query( $args );
+
+	ob_start();
+	wc_set_loop_prop( 'columns', 3 );
+	if ( $q->have_posts() ) {
+		woocommerce_product_loop_start();
+		while ( $q->have_posts() ) {
+			$q->the_post();
+			wc_get_template_part( 'content', 'product' );
+		}
+		woocommerce_product_loop_end();
+	}
+	wp_reset_postdata();
+	$html = (string) ob_get_clean();
+
+	wp_send_json_success(
+		array(
+			'html' => $html,
+			'ids'  => array_map( 'strval', $ids ),
+		)
+	);
+}
+add_action( 'wp_ajax_gstore_favorites_render', 'gstore_ajax_favorites_render' );
+add_action( 'wp_ajax_nopriv_gstore_favorites_render', 'gstore_ajax_favorites_render' );
 
 /**
  * Atualiza o fragmento do carrinho para refletir mudanças em tempo real.

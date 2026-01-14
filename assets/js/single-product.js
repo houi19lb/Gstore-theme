@@ -210,24 +210,6 @@ document.addEventListener('DOMContentLoaded', () => {
 		}
 
 		const icon = button.querySelector('i');
-		const storageKey = 'gstore_favorites';
-
-		const readFavorites = () => {
-			try {
-				const raw = localStorage.getItem(storageKey);
-				return raw ? JSON.parse(raw) : [];
-			} catch (e) {
-				return [];
-			}
-		};
-
-		const writeFavorites = (favorites) => {
-			try {
-				localStorage.setItem(storageKey, JSON.stringify(favorites));
-			} catch (e) {
-				// Ignora
-			}
-		};
 
 		const setUI = (isActive) => {
 			button.classList.toggle('is-favorited', isActive);
@@ -238,22 +220,45 @@ document.addEventListener('DOMContentLoaded', () => {
 			}
 		};
 
-		const isFavorited = () => {
-			const favorites = readFavorites();
-			return Array.isArray(favorites) && favorites.includes(productId);
+		const hasCore = () => typeof window.GstoreFavorites?.toggle === 'function';
+
+		const syncFromCore = async () => {
+			if (!hasCore()) {
+				return;
+			}
+			try {
+				await window.GstoreFavorites.ready;
+				const active = await window.GstoreFavorites.isFavorited(productId);
+				setUI(active);
+			} catch (e) {
+				// ignore
+			}
 		};
 
 		// Estado inicial
-		setUI(isFavorited());
+		syncFromCore();
 
-		button.addEventListener('click', (e) => {
+		button.addEventListener('click', async (e) => {
 			e.preventDefault();
-			const favorites = readFavorites();
-			const current = Array.isArray(favorites) ? favorites : [];
-			const active = current.includes(productId);
-			const next = active ? current.filter((id) => id !== productId) : [...new Set([...current, productId])];
-			writeFavorites(next);
-			setUI(!active);
+			if (!hasCore()) {
+				return;
+			}
+
+			const prev = button.classList.contains('is-favorited');
+			setUI(!prev);
+			try {
+				const result = await window.GstoreFavorites.toggle(productId);
+				setUI(Boolean(result?.isFavorited));
+			} catch (err) {
+				setUI(prev);
+			}
+		});
+
+		// Sincroniza se o favorito mudar em outro lugar (ex.: lista /favoritos/)
+		window.addEventListener('gstore:favorites-changed', (ev) => {
+			const ids = ev?.detail?.ids;
+			if (!Array.isArray(ids)) return;
+			setUI(ids.includes(productId));
 		});
 	};
 
