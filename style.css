@@ -281,8 +281,6 @@ h2.wp-block-heading.has-text-align-center.has-x-large-font-size {
 	display: flex !important;
 	flex-direction: row !important;
 	flex-wrap: nowrap !important;
-	transform: translateX(0) !important;
-	white-space: nowrap !important;
 }
 
 /* FORÇAR todas as imagens a ficarem em linha horizontal */

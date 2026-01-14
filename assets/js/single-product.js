@@ -1151,201 +1151,100 @@ document.addEventListener('DOMContentLoaded', () => {
 			updateButtons();
 		};
 
-		// Função para configurar o FlexSlider corretamente
-		const configureFlexSlider = () => {
+		const refreshFlexSliderLayout = () => {
 			if (typeof jQuery === 'undefined' || !jQuery.fn.flexslider) {
 				return;
 			}
 
 			const $gallery = jQuery(gallery);
 			const flexsliderInstance = $gallery.data('flexslider');
-
 			if (!flexsliderInstance) {
-				// Se ainda não foi inicializado, tentar novamente
-				setTimeout(configureFlexSlider, 100);
 				return;
 			}
 
-			// Reconfigurar o FlexSlider para garantir direção horizontal
-			const options = flexsliderInstance.vars || {};
-			
-			// Garantir configuração horizontal
-			if (options.direction !== 'horizontal') {
-				options.direction = 'horizontal';
-			}
-			
-			// Garantir animação de slide horizontal
-			if (options.animation !== 'slide') {
-				options.animation = 'slide';
-			}
-
-			// Atualizar o FlexSlider
-			$gallery.flexslider(options);
-
-			const viewport = gallery.querySelector('.flex-viewport');
-			if (viewport) {
-				const slides = viewport.querySelector('.flex-slides');
-				if (slides) {
-					const images = slides.querySelectorAll('.woocommerce-product-gallery__image');
-					if (images.length > 0) {
-						const viewportWidth = viewport.offsetWidth;
-						if (viewportWidth > 0) {
-							// Configurar largura do container de slides
-							slides.style.width = `${viewportWidth * images.length}px`;
-							
-							// Configurar cada imagem para ocupar 100% da largura do viewport
-							images.forEach((img) => {
-								img.style.width = `${viewportWidth}px`;
-								img.style.minWidth = `${viewportWidth}px`;
-								img.style.maxWidth = `${viewportWidth}px`;
-								img.style.flex = `0 0 ${viewportWidth}px`;
-							});
-
-							// Garantir que o slide atual seja exibido corretamente
-							const currentSlide = flexsliderInstance.currentSlide || 0;
-							const translateX = -currentSlide * viewportWidth;
-							slides.style.transform = `translateX(${translateX}px)`;
-							slides.style.transition = 'transform 0.3s ease';
-						}
-					}
+			// Não reinicializa o plugin (isso quebra o zoom e o estado do slider).
+			// Apenas pede um resize/refresh quando disponível.
+			try {
+				if (typeof flexsliderInstance.resize === 'function') {
+					flexsliderInstance.resize();
+				} else if (typeof flexsliderInstance.doMath === 'function' && typeof flexsliderInstance.update === 'function') {
+					flexsliderInstance.doMath();
+					flexsliderInstance.update();
 				}
+			} catch (_) {
+				// noop
 			}
 		};
 
-		// Função para corrigir cliques nas thumbnails e garantir exibição correta
-		const fixThumbnailClicks = () => {
-			// Função para garantir que a imagem seja exibida corretamente após clique
-			const ensureImageDisplay = (slideIndex) => {
-				setTimeout(() => {
-					const viewport = gallery.querySelector('.flex-viewport');
-					if (!viewport) return;
-					
-					const slides = viewport.querySelector('.flex-slides');
-					if (!slides) return;
-					
-					const images = slides.querySelectorAll('.woocommerce-product-gallery__image');
-					if (images.length === 0) return;
-					
-					const viewportWidth = viewport.offsetWidth;
-					if (viewportWidth <= 0) return;
-					
-					// Garantir que o índice seja válido
-					const validIndex = Math.max(0, Math.min(slideIndex, images.length - 1));
-					
-					// Garantir larguras corretas
-					slides.style.width = `${viewportWidth * images.length}px`;
-					images.forEach((img) => {
-						img.style.width = `${viewportWidth}px`;
-						img.style.minWidth = `${viewportWidth}px`;
-						img.style.maxWidth = `${viewportWidth}px`;
-						img.style.flex = `0 0 ${viewportWidth}px`;
-					});
-					
-					// Mover para o slide correto
-					const translateX = -validIndex * viewportWidth;
-					slides.style.transform = `translateX(${translateX}px)`;
-					slides.style.transition = 'transform 0.3s ease';
-					
-					// Garantir que a imagem seja visível e carregada
-					const targetImage = images[validIndex];
-					if (targetImage) {
-						targetImage.style.opacity = '1';
-						targetImage.style.visibility = 'visible';
-						targetImage.style.display = 'block';
-						
-						const img = targetImage.querySelector('img');
-						if (img) {
-							img.style.display = 'block';
-							img.style.opacity = '1';
-							img.style.visibility = 'visible';
-							
-							// Se a imagem não foi carregada, forçar carregamento
-							if (!img.complete || img.naturalHeight === 0) {
-								const originalSrc = img.src;
-								if (originalSrc) {
-									img.src = '';
-									img.src = originalSrc;
-								}
-							}
-						}
-					}
-				}, 100);
-			};
-			
-			// Encontrar todas as thumbnails e adicionar listeners
-			const thumbnailsScope = gallery.closest('.Gstore-single-product__gallery') || gallery;
-			const thumbnails = thumbnailsScope.querySelectorAll('.flex-control-nav li a, .flex-control-thumbs li a, .flex-control-thumbs li img');
-			
-			thumbnails.forEach((thumbnail, index) => {
-				thumbnail.addEventListener('click', (e) => {
-					// Determinar o índice do slide
-					let slideIndex = index;
-					
-					// Tentar obter do atributo data-slide
-					const dataSlide = thumbnail.dataset.slide || thumbnail.closest('li')?.dataset.slide;
-					if (dataSlide !== undefined) {
-						slideIndex = parseInt(dataSlide, 10);
-					} else {
-						// Tentar obter pela posição na lista
-						const parentList = thumbnail.closest('ul, ol');
-						if (parentList) {
-							const items = Array.from(parentList.querySelectorAll('li'));
-							const currentItem = thumbnail.closest('li');
-							if (currentItem) {
-								slideIndex = items.indexOf(currentItem);
-							}
-						}
-					}
-					
-					// Garantir exibição da imagem após um pequeno delay
-					setTimeout(() => ensureImageDisplay(slideIndex), 50);
-				});
-			});
-			
-			// Também monitorar mudanças no FlexSlider para garantir exibição correta
-			if (typeof jQuery !== 'undefined' && jQuery.fn.flexslider) {
-				const $gallery = jQuery(gallery);
-				
-				// Escutar eventos do FlexSlider
-				$gallery.on('flexslider:after', function(event, slider) {
-					setTimeout(() => {
-						const viewport = gallery.querySelector('.flex-viewport');
-						if (viewport) {
-							const slides = viewport.querySelector('.flex-slides');
-							const images = slides?.querySelectorAll('.woocommerce-product-gallery__image');
-							const viewportWidth = viewport.offsetWidth;
-							
-							if (slides && images && images.length > 0 && viewportWidth > 0) {
-								const currentSlide = slider.currentSlide || 0;
-								
-								// Garantir que todas as imagens tenham largura correta
-								slides.style.width = `${viewportWidth * images.length}px`;
-								images.forEach((img) => {
-									img.style.width = `${viewportWidth}px`;
-									img.style.minWidth = `${viewportWidth}px`;
-									img.style.maxWidth = `${viewportWidth}px`;
-									img.style.flex = `0 0 ${viewportWidth}px`;
-								});
-								
-								// Garantir posição horizontal correta
-								const translateX = -currentSlide * viewportWidth;
-								slides.style.transform = `translateX(${translateX}px)`;
-								
-								// Garantir que a imagem atual seja visível
-								const targetImage = images[currentSlide];
-								if (targetImage) {
-									const img = targetImage.querySelector('img');
-									if (img) {
-										img.style.display = 'block';
-										img.style.opacity = '1';
-										img.style.visibility = 'visible';
-									}
-								}
-							}
-						}
-					}, 10);
-				});
+		const resetZoomForActiveSlide = () => {
+			// Só aplica o zoom nativo se o Woo marcou a galeria como "with zoom"
+			if (!gallery.classList.contains('woocommerce-product-gallery--with-zoom')) {
+				return;
 			}
+
+			if (typeof jQuery === 'undefined' || typeof jQuery.fn.zoom !== 'function') {
+				return;
+			}
+
+			const $gallery = jQuery(gallery);
+
+			const run = () => {
+				// Destruir qualquer zoom anterior
+				try {
+					$gallery.find('.woocommerce-product-gallery__image').trigger('zoom.destroy');
+				} catch (_) {
+					// noop
+				}
+
+				$gallery.find('.zoomImg, .zoomContainer').remove();
+
+				// Encontrar slide ativo (FlexSlider adiciona .flex-active-slide)
+				const $active = $gallery.find('.flex-viewport .flex-active-slide').first();
+
+				const $target = ($active && $active.length ? $active : $gallery.find('.woocommerce-product-gallery__image').first()).first();
+				if (!$target.length) return;
+
+				// Inicializar zoom só no slide ativo
+				const zoomOptions = window?.wc_single_product_params?.zoom_options;
+				try {
+					if (zoomOptions && typeof zoomOptions === 'object') {
+						$target.zoom(zoomOptions);
+					} else {
+						$target.zoom();
+					}
+				} catch (_) {
+					// noop
+				}
+			};
+
+			// Garante que a imagem atual está carregada antes de iniciar (evita offsets errados)
+			const $img = $gallery.find('.flex-viewport .flex-active-slide img, .woocommerce-product-gallery__image img').first();
+			const imgEl = $img && $img.length ? $img[0] : null;
+			if (imgEl && (!imgEl.complete || imgEl.naturalWidth === 0)) {
+				$img.one('load', () => setTimeout(run, 0));
+				return;
+			}
+
+			setTimeout(run, 0);
+		};
+
+		const bindZoomResetOnThumbClicks = () => {
+			const root = gallery.closest('.Gstore-single-product__gallery') || gallery;
+			if (root.dataset.gstoreZoomResetInit === 'true') {
+				return;
+			}
+			root.dataset.gstoreZoomResetInit = 'true';
+
+			// Não impede o comportamento padrão do Woo/FlexSlider; só reseta o zoom após a troca.
+			root.addEventListener(
+				'click',
+				(e) => {
+					const thumb = e.target?.closest?.('.flex-control-thumbs a, .flex-control-thumbs img, .flex-control-nav a, .flex-control-nav img');
+					if (!thumb) return;
+					setTimeout(resetZoomForActiveSlide, 60);
+				},
+				true
+			);
 		};
 
 		// Aguardar inicialização do FlexSlider pelo WooCommerce
@@ -1362,24 +1261,27 @@ document.addEventListener('DOMContentLoaded', () => {
 						// Garantir thumb mesmo quando há apenas 1 imagem
 						ensureSingleThumb();
 						removeSingleThumbIfDuplicated();
-						
-						// Configurar o FlexSlider
-						configureFlexSlider();
-						
-						// Corrigir cliques nas thumbnails
-						setTimeout(fixThumbnailClicks, 100);
+
+						// Ajustes leves de layout + zoom (sem reinicializar o slider)
+						refreshFlexSliderLayout();
+						bindZoomResetOnThumbClicks();
+						resetZoomForActiveSlide();
 
 						// Ativar carrossel de thumbnails quando necessário
 						setTimeout(() => {
 							ensureSingleThumb();
 							removeSingleThumbIfDuplicated();
 							setupThumbsCarousel();
+							resetZoomForActiveSlide();
 						}, 120);
 						
 						// Observar mudanças no FlexSlider
-						$gallery.on('flexslider:after', () => {
-							setTimeout(configureFlexSlider, 50);
-							setTimeout(setupThumbsCarousel, 60);
+						$gallery.off('flexslider:after.gstoreZoomFix').on('flexslider:after.gstoreZoomFix', () => {
+							setTimeout(() => {
+								refreshFlexSliderLayout();
+								setupThumbsCarousel();
+								resetZoomForActiveSlide();
+							}, 0);
 						});
 					}
 				}, 100);
@@ -1407,8 +1309,9 @@ document.addEventListener('DOMContentLoaded', () => {
 		window.addEventListener('resize', () => {
 			clearTimeout(resizeTimeout);
 			resizeTimeout = setTimeout(() => {
-				configureFlexSlider();
+				refreshFlexSliderLayout();
 				setupThumbsCarousel();
+				resetZoomForActiveSlide();
 			}, 100);
 		});
 	}
