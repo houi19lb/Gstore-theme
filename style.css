@@ -2313,6 +2313,15 @@ padding: 16px;
 	bottom: 12px;
 }
 
+/* =========================================
+ * WooCommerce Gallery Zoom - estabilidade
+ * Evita a zoomImg capturar o mouse e causar "puxões"/tremedeira no hover
+ * ========================================= */
+.woocommerce-product-gallery .zoomImg {
+	pointer-events: none !important;
+	transition: none !important;
+}
+
 .Gstore-single-product__left {
 	display: flex;
 	flex-direction: column;
