@@ -193,7 +193,8 @@
 		if (drawerContent) {
 			drawerContent.addEventListener('click', function(e) {
 				var link = e.target.closest('a');
-				if (link && !link.hasAttribute('target') || link.getAttribute('target') !== '_blank') {
+				// Só fecha se clicou em um link e ele NÃO abre em nova aba
+				if (link && (!link.hasAttribute('target') || link.getAttribute('target') !== '_blank')) {
 					// Pequeno delay para permitir navegação antes de fechar
 					setTimeout(closeMenu, 100);
 				}

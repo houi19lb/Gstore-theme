@@ -896,6 +896,27 @@ function gstore_enqueue_scripts() {
 		true
 	);
 
+	// Autocomplete / Busca inteligente (produtos + categorias)
+	$product_search_js_path    = get_theme_file_path( 'assets/js/product-search-autocomplete.js' );
+	$product_search_js_version = file_exists( $product_search_js_path ) ? (string) filemtime( $product_search_js_path ) : wp_get_theme()->get( 'Version' );
+	wp_enqueue_script(
+		'gstore-product-search-autocomplete',
+		get_theme_file_uri( 'assets/js/product-search-autocomplete.js' ),
+		array(),
+		$product_search_js_version,
+		true
+	);
+	wp_localize_script(
+		'gstore-product-search-autocomplete',
+		'gstoreProductSearch',
+		array(
+			'endpoint'   => rest_url( 'gstore/v1/search-suggest' ),
+			'catalogUrl' => home_url( '/catalogo/' ),
+			'minChars'   => 2,
+			'limit'      => 8,
+		)
+	);
+
 	// Botão flutuante do Telegram (espelha o href do link existente na top bar)
 	$telegram_floating_js_path    = get_theme_file_path( 'assets/js/telegram-floating.js' );
 	$telegram_floating_js_version = file_exists( $telegram_floating_js_path ) ? (string) filemtime( $telegram_floating_js_path ) : wp_get_theme()->get( 'Version' );
@@ -5976,6 +5997,320 @@ function gstore_process_template_part_block( $block_content, $block ) {
 		$block_content = gstore_process_image_placeholders( $block_content );
 	}
 	return $block_content;
+}
+
+/**
+ * Garante que a busca do tema (core/search) envia para /catalogo (produtos).
+ *
+ * Importante: só altera blocos core/search com classes do tema (Gstore-*),
+ * para não afetar outras buscas (ex.: blog, widgets etc.).
+ */
+add_filter( 'render_block_core/search', 'gstore_search_block_action_to_catalog', 10, 2 );
+function gstore_search_block_action_to_catalog( $block_content, $block ) {
+	if ( empty( $block_content ) || ! is_string( $block_content ) ) {
+		return $block_content;
+	}
+
+	$attrs = isset( $block['attrs'] ) && is_array( $block['attrs'] ) ? $block['attrs'] : array();
+	$class = isset( $attrs['className'] ) ? (string) $attrs['className'] : '';
+
+	$target_classes = array(
+		'Gstore-header__search',
+		'Gstore-nav__search',
+		'Gstore-catalog-search',
+	);
+
+	$is_theme_search = false;
+	foreach ( $target_classes as $needle ) {
+		if ( ( $class && strpos( $class, $needle ) !== false ) || strpos( $block_content, $needle ) !== false ) {
+			$is_theme_search = true;
+			break;
+		}
+	}
+
+	if ( ! $is_theme_search ) {
+		return $block_content;
+	}
+
+	$catalog_url = esc_url( home_url( '/catalogo/' ) );
+
+	// Substitui o action do form.
+	$updated = preg_replace(
+		'/(<form\b[^>]*\baction=)(["\']).*?\2/i',
+		'$1$2' . $catalog_url . '$2',
+		$block_content,
+		1
+	);
+
+	// Fallback: se não existir action, injeta após a abertura do <form ...>.
+	if ( $updated === $block_content ) {
+		$updated = preg_replace(
+			'/(<form\b)([^>]*)(>)/i',
+			'$1$2 action="' . $catalog_url . '"$3',
+			$block_content,
+			1
+		);
+	}
+
+	return $updated;
+}
+
+/**
+ * Aplica o termo de busca (?s=) e match de categoria na query do shortcode [products]
+ * quando usado no catálogo (/catalogo).
+ */
+add_filter( 'woocommerce_shortcode_products_query', 'gstore_catalog_apply_search_to_products_shortcode', 25, 3 );
+function gstore_catalog_apply_search_to_products_shortcode( $query_args, $attr, $type ) {
+	if ( ! function_exists( 'is_page' ) || ! is_page( 'catalogo' ) ) {
+		return $query_args;
+	}
+
+	$search_term = isset( $_GET['s'] ) ? sanitize_text_field( wp_unslash( $_GET['s'] ) ) : '';
+	$search_term = trim( $search_term );
+	if ( $search_term === '' ) {
+		return $query_args;
+	}
+
+	// Aplica busca textual padrão do WP/WooCommerce.
+	$query_args['s'] = $search_term;
+
+	// Se o usuário já selecionou categoria via filter_cat[], não forçamos match automático.
+	$has_manual_category_filter = isset( $_GET['filter_cat'] ) || isset( $_GET['filter_cat[]'] );
+	if ( $has_manual_category_filter ) {
+		return $query_args;
+	}
+
+	// Tenta associar o termo a categorias (tolerante a acentos).
+	$needle = strtolower( remove_accents( $search_term ) );
+	if ( $needle === '' ) {
+		return $query_args;
+	}
+
+	$terms = array();
+	$terms_a = get_terms(
+		array(
+			'taxonomy'   => 'product_cat',
+			'hide_empty' => true,
+			'number'     => 20,
+			'search'     => $search_term,
+		)
+	);
+	if ( ! is_wp_error( $terms_a ) && ! empty( $terms_a ) ) {
+		$terms = array_merge( $terms, $terms_a );
+	}
+
+	$search_no_accents = remove_accents( $search_term );
+	if ( $search_no_accents && $search_no_accents !== $search_term ) {
+		$terms_b = get_terms(
+			array(
+				'taxonomy'   => 'product_cat',
+				'hide_empty' => true,
+				'number'     => 20,
+				'search'     => $search_no_accents,
+			)
+		);
+		if ( ! is_wp_error( $terms_b ) && ! empty( $terms_b ) ) {
+			$terms = array_merge( $terms, $terms_b );
+		}
+	}
+
+	if ( empty( $terms ) ) {
+		return $query_args;
+	}
+
+	$matched_term_ids = array();
+	foreach ( $terms as $term ) {
+		if ( empty( $term ) || ! isset( $term->term_id ) ) {
+			continue;
+		}
+
+		$name_norm = strtolower( remove_accents( (string) $term->name ) );
+		$slug_norm = strtolower( remove_accents( (string) $term->slug ) );
+
+		if ( strpos( $name_norm, $needle ) !== false || strpos( $slug_norm, $needle ) !== false ) {
+			$matched_term_ids[] = (int) $term->term_id;
+		}
+	}
+
+	$matched_term_ids = array_values( array_unique( array_filter( $matched_term_ids ) ) );
+	if ( empty( $matched_term_ids ) ) {
+		return $query_args;
+	}
+
+	if ( ! isset( $query_args['tax_query'] ) || ! is_array( $query_args['tax_query'] ) ) {
+		$query_args['tax_query'] = array();
+	}
+
+	$query_args['tax_query'][] = array(
+		'taxonomy'         => 'product_cat',
+		'field'            => 'term_id',
+		'terms'            => $matched_term_ids,
+		'operator'         => 'IN',
+		'include_children' => true,
+	);
+
+	return $query_args;
+}
+
+/**
+ * Endpoint REST para autocomplete de busca (produtos + categorias).
+ */
+add_action( 'rest_api_init', 'gstore_register_search_suggest_route' );
+function gstore_register_search_suggest_route() {
+	register_rest_route(
+		'gstore/v1',
+		'/search-suggest',
+		array(
+			'methods'             => WP_REST_Server::READABLE,
+			'permission_callback' => '__return_true',
+			'callback'            => 'gstore_handle_search_suggest',
+			'args'                => array(
+				'q' => array(
+					'type'              => 'string',
+					'required'          => false,
+					'sanitize_callback' => 'sanitize_text_field',
+				),
+			),
+		)
+	);
+}
+
+function gstore_handle_search_suggest( WP_REST_Request $request ) {
+	if ( ! class_exists( 'WooCommerce' ) ) {
+		return new WP_REST_Response(
+			array(
+				'products'   => array(),
+				'categories' => array(),
+			),
+			200
+		);
+	}
+
+	$term = (string) $request->get_param( 'q' );
+	$term = trim( $term );
+
+	$len = function_exists( 'mb_strlen' ) ? (int) mb_strlen( $term ) : (int) strlen( $term );
+	if ( $len < 2 ) {
+		return new WP_REST_Response(
+			array(
+				'products'   => array(),
+				'categories' => array(),
+			),
+			200
+		);
+	}
+
+	$cache_key = 'gstore_search_suggest_' . md5( strtolower( remove_accents( $term ) ) );
+	$cached    = get_transient( $cache_key );
+	if ( is_array( $cached ) ) {
+		return new WP_REST_Response( $cached, 200 );
+	}
+
+	$limit = 8;
+
+	// Produtos
+	$product_ids = array();
+	$query       = new WP_Query(
+		array(
+			'post_type'              => 'product',
+			'post_status'            => 'publish',
+			'posts_per_page'         => $limit,
+			'no_found_rows'          => true,
+			'ignore_sticky_posts'    => true,
+			's'                      => $term,
+			'fields'                 => 'ids',
+			'update_post_meta_cache' => false,
+			'update_post_term_cache' => false,
+		)
+	);
+	if ( $query->have_posts() ) {
+		$product_ids = array_map( 'intval', $query->posts );
+	}
+
+	$products = array();
+	foreach ( $product_ids as $product_id ) {
+		$product = wc_get_product( $product_id );
+		if ( ! $product ) {
+			continue;
+		}
+
+		$image_id  = $product->get_image_id();
+		$image_url = $image_id ? wp_get_attachment_image_url( $image_id, 'woocommerce_thumbnail' ) : '';
+
+		$products[] = array(
+			'id'         => $product_id,
+			'name'       => $product->get_name(),
+			'permalink'  => get_permalink( $product_id ),
+			'image'      => $image_url ? $image_url : '',
+			'price_html' => $product->get_price_html(),
+			'in_stock'   => $product->is_in_stock(),
+		);
+	}
+
+	// Categorias
+	$terms = array();
+	$terms_a = get_terms(
+		array(
+			'taxonomy'   => 'product_cat',
+			'hide_empty' => true,
+			'number'     => $limit,
+			'search'     => $term,
+		)
+	);
+	if ( ! is_wp_error( $terms_a ) && ! empty( $terms_a ) ) {
+		$terms = array_merge( $terms, $terms_a );
+	}
+
+	$term_no_accents = remove_accents( $term );
+	if ( $term_no_accents && $term_no_accents !== $term ) {
+		$terms_b = get_terms(
+			array(
+				'taxonomy'   => 'product_cat',
+				'hide_empty' => true,
+				'number'     => $limit,
+				'search'     => $term_no_accents,
+			)
+		);
+		if ( ! is_wp_error( $terms_b ) && ! empty( $terms_b ) ) {
+			$terms = array_merge( $terms, $terms_b );
+		}
+	}
+
+	$needle_norm = strtolower( remove_accents( $term ) );
+	$seen_term   = array();
+	$categories  = array();
+	foreach ( $terms as $t ) {
+		if ( empty( $t ) || empty( $t->term_id ) ) {
+			continue;
+		}
+		if ( isset( $seen_term[ $t->term_id ] ) ) {
+			continue;
+		}
+		$seen_term[ $t->term_id ] = true;
+
+		$name_norm = strtolower( remove_accents( (string) $t->name ) );
+		$slug_norm = strtolower( remove_accents( (string) $t->slug ) );
+		if ( strpos( $name_norm, $needle_norm ) === false && strpos( $slug_norm, $needle_norm ) === false ) {
+			continue;
+		}
+
+		$categories[] = array(
+			'term_id' => (int) $t->term_id,
+			'slug'    => (string) $t->slug,
+			'name'    => (string) $t->name,
+			'url'     => add_query_arg( array( 'filter_cat[]' => (string) $t->slug ), home_url( '/catalogo/' ) ),
+		);
+	}
+
+	$payload = array(
+		'products'   => $products,
+		'categories' => $categories,
+	);
+
+	// Cache curto para reduzir carga (autocomplete).
+	set_transient( $cache_key, $payload, 60 );
+
+	return new WP_REST_Response( $payload, 200 );
 }
 
 /**
