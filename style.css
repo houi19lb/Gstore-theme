@@ -8145,7 +8145,7 @@ main.Gstore-blog-single-shell .wp-block-group.is-layout-constrained:not(.Gstore-
 /* Garante fundo branco em toda a página do catálogo */
 body:has(.Gstore-catalog-shell--light),
 body:has(.Gstore-catalog-shell--light) .wp-site-blocks,
-body:has(.Gstore-catalog-shell--light) .wp-site-blocks>.wp-block-group,
+body:has(.Gstore-catalog-shell--light) .wp-site-blocks>.wp-block-group:not(header):not(footer),
 body:has(.Gstore-catalog-shell--light) main {
 	background: #ffffff !important;
 	background-color: #ffffff !important;
@@ -9039,6 +9039,13 @@ body:has(.Gstore-catalog-shell--light) main {
 
 	.Gstore-catalog-shell--light .woocommerce-pagination ul {
 		gap: 4px;
+		flex-wrap: wrap;
+		max-width: 100%;
+	}
+
+	.Gstore-catalog-shell--light .woocommerce-pagination ul.page-numbers {
+		flex-wrap: wrap;
+		max-width: 100%;
 	}
 
 	.Gstore-catalog-shell--light .woocommerce-pagination ul li a,
