@@ -539,94 +539,159 @@ if ( $reviews_has_value ) {
 
 			<!-- Seção Principal: Galeria + Compra -->
 			<section class="Gstore-single-product__section Gstore-single-product__main">
-				<div class="Gstore-single-product__left">
-					<article class="product-gallery card Gstore-single-product__card Gstore-single-product__product-card">
-						<div class="gallery-header">
-							<div>
-								<span class="badge"><?php echo esc_html( $badge_text ); ?></span>
+				<div class="Gstore-single-product__left-stack">
+					<div class="Gstore-single-product__left">
+						<article class="product-gallery card Gstore-single-product__card Gstore-single-product__product-card">
+							<div class="gallery-header">
+								<div>
+									<span class="badge"><?php echo esc_html( $badge_text ); ?></span>
 
-								<h1 class="product_title entry-title product-title Gstore-single-product__title"><?php the_title(); ?></h1>
+									<h1 class="product_title entry-title product-title Gstore-single-product__title"><?php the_title(); ?></h1>
 
-								<div class="product-meta">
-									<?php if ( $sku ) : ?>
-										<span class="product-meta__sku">
-											<?php
-											echo esc_html(
-												sprintf(
-													/* translators: %s: SKU do produto */
-													__( 'SKU: %s', 'gstore' ),
-													$sku
-												)
-											);
-											?>
-										</span>
-									<?php endif; ?>
-
-									<?php if ( $rating_display && $review_count_i18n ) : ?>
+									<div class="product-meta">
 										<?php if ( $sku ) : ?>
-											<span aria-hidden="true"> • </span>
+											<span class="product-meta__sku">
+												<?php
+												echo esc_html(
+													sprintf(
+														/* translators: %s: SKU do produto */
+														__( 'SKU: %s', 'gstore' ),
+														$sku
+													)
+												);
+												?>
+											</span>
 										<?php endif; ?>
 
-										<span class="product-meta__rating">
-											<?php esc_html_e( 'Avaliação:', 'gstore' ); ?>
-											<button type="button" class="product-meta__rating-link" data-gstore-tab-target="reviews">
-												<?php echo esc_html( $rating_display ); ?> (<?php echo esc_html( $review_count_i18n ); ?>)
-											</button>
-										</span>
+										<?php if ( $rating_display && $review_count_i18n ) : ?>
+											<?php if ( $sku ) : ?>
+												<span aria-hidden="true"> • </span>
+											<?php endif; ?>
+
+											<span class="product-meta__rating">
+												<?php esc_html_e( 'Avaliação:', 'gstore' ); ?>
+												<button type="button" class="product-meta__rating-link" data-gstore-tab-target="reviews">
+													<?php echo esc_html( $rating_display ); ?> (<?php echo esc_html( $review_count_i18n ); ?>)
+												</button>
+											</span>
+										<?php endif; ?>
+									</div>
+								</div>
+
+								<button
+									type="button"
+									class="btn-secondary Gstore-single-product__favorite"
+									aria-pressed="false"
+									data-gstore-favorite-product="<?php echo esc_attr( $product->get_id() ); ?>"
+								>
+									<?php esc_html_e( 'Favoritar', 'gstore' ); ?>
+								</button>
+							</div>
+
+							<div class="gallery-body Gstore-single-product__gallery">
+								<div class="gallery-thumbs" data-gstore-gallery-thumbs></div>
+
+								<div class="gallery-main">
+									<?php do_action( 'woocommerce_before_single_product_summary' ); ?>
+
+									<?php if ( $is_variable ) : ?>
+										<div class="gallery-preview">
+											<?php esc_html_e( 'Preview:', 'gstore' ); ?>
+											<strong id="variantPreview" data-gstore-variation-preview aria-live="polite">—</strong>
+										</div>
 									<?php endif; ?>
+
+									<button type="button" class="btn-secondary" data-gstore-gallery-zoom>
+										<?php esc_html_e( 'Zoom', 'gstore' ); ?>
+									</button>
 								</div>
 							</div>
 
-							<button
-								type="button"
-								class="btn-secondary Gstore-single-product__favorite"
-								aria-pressed="false"
-								data-gstore-favorite-product="<?php echo esc_attr( $product->get_id() ); ?>"
-							>
-								<?php esc_html_e( 'Favoritar', 'gstore' ); ?>
-							</button>
-						</div>
+							<?php if ( ! empty( $hero_meta_cards ) ) : ?>
+								<div class="Gstore-single-product__info-cards Gstore-single-product__info-cards--gallery">
+									<?php foreach ( $hero_meta_cards as $card ) : ?>
+										<div class="Gstore-single-product__info-card">
+											<div class="Gstore-single-product__info-title">
+												<?php echo esc_html( $card['label'] ); ?>
+											</div>
+											<div class="Gstore-single-product__info-sub">
+												<?php
+												if ( ! empty( $card['allow_html'] ) ) {
+													echo wp_kses_post( $card['text'] );
+												} else {
+													echo esc_html( $card['text'] );
+												}
+												?>
+											</div>
+										</div>
+									<?php endforeach; ?>
+								</div>
+							<?php endif; ?>
+						</article>
+					</div>
 
-						<div class="gallery-body Gstore-single-product__gallery">
-							<div class="gallery-thumbs" data-gstore-gallery-thumbs></div>
-
-							<div class="gallery-main">
-								<?php do_action( 'woocommerce_before_single_product_summary' ); ?>
-
-								<?php if ( $is_variable ) : ?>
-									<div class="gallery-preview">
-										<?php esc_html_e( 'Preview:', 'gstore' ); ?>
-										<strong id="variantPreview" data-gstore-variation-preview aria-live="polite">—</strong>
-									</div>
-								<?php endif; ?>
-
-								<button type="button" class="btn-secondary" data-gstore-gallery-zoom>
-									<?php esc_html_e( 'Zoom', 'gstore' ); ?>
-								</button>
+					<?php if ( ! empty( $gstore_product_tabs ) ) : ?>
+						<article class="Gstore-single-product__card Gstore-single-product__tabs" data-gstore-tabs>
+							<div class="Gstore-single-product__tab-buttons" role="tablist" aria-label="<?php esc_attr_e( 'Informações do produto', 'gstore' ); ?>">
+								<?php foreach ( $gstore_product_tabs as $index => $tab ) : ?>
+									<?php
+									$slug      = isset( $tab['slug'] ) ? (string) $tab['slug'] : '';
+									$label     = isset( $tab['label'] ) ? (string) $tab['label'] : '';
+									$is_active = 0 === (int) $index;
+									if ( '' === $slug || '' === $label ) {
+										continue;
+									}
+									?>
+									<button
+										type="button"
+										class="<?php echo $is_active ? 'is-active' : ''; ?>"
+										role="tab"
+										aria-selected="<?php echo $is_active ? 'true' : 'false'; ?>"
+										aria-controls="gstore-tab-<?php echo esc_attr( $slug ); ?>"
+										id="gstore-tab-btn-<?php echo esc_attr( $slug ); ?>"
+										data-gstore-tab="<?php echo esc_attr( $slug ); ?>"
+									>
+										<?php echo esc_html( $label ); ?>
+									</button>
+								<?php endforeach; ?>
 							</div>
-						</div>
 
-						<?php if ( ! empty( $hero_meta_cards ) ) : ?>
-							<div class="Gstore-single-product__info-cards Gstore-single-product__info-cards--gallery">
-								<?php foreach ( $hero_meta_cards as $card ) : ?>
-									<div class="Gstore-single-product__info-card">
-										<div class="Gstore-single-product__info-title">
-											<?php echo esc_html( $card['label'] ); ?>
-										</div>
-										<div class="Gstore-single-product__info-sub">
-											<?php
-											if ( ! empty( $card['allow_html'] ) ) {
-												echo wp_kses_post( $card['text'] );
-											} else {
-												echo esc_html( $card['text'] );
-											}
-											?>
-										</div>
+							<div class="Gstore-single-product__tab-panels">
+								<?php foreach ( $gstore_product_tabs as $index => $tab ) : ?>
+									<?php
+									$slug      = isset( $tab['slug'] ) ? (string) $tab['slug'] : '';
+									$label     = isset( $tab['label'] ) ? (string) $tab['label'] : '';
+									$content   = isset( $tab['content'] ) ? (string) $tab['content'] : '';
+									$is_active = 0 === (int) $index;
+
+									if ( '' === $slug || '' === $label ) {
+										continue;
+									}
+									?>
+									<div
+										id="gstore-tab-<?php echo esc_attr( $slug ); ?>"
+										class="Gstore-single-product__tab-panel<?php echo $is_active ? ' is-active' : ''; ?>"
+										role="tabpanel"
+										aria-labelledby="gstore-tab-btn-<?php echo esc_attr( $slug ); ?>"
+										<?php echo $is_active ? '' : 'hidden'; ?>
+									>
+										<?php if ( 'reviews' === $slug ) : ?>
+											<?php comments_template(); ?>
+										<?php else : ?>
+											<section class="Gstore-single-product__tab-section" aria-label="<?php echo esc_attr( $label ); ?>">
+												<h3 class="Gstore-single-product__tab-title">
+													<?php echo esc_html( $label ); ?>
+												</h3>
+												<div class="Gstore-single-product__tab-content">
+													<?php echo wp_kses_post( $content ); ?>
+												</div>
+											</section>
+										<?php endif; ?>
 									</div>
 								<?php endforeach; ?>
 							</div>
-						<?php endif; ?>
-					</article>
+						</article>
+					<?php endif; ?>
 				</div>
 
 				<div class="Gstore-single-product__summary">
@@ -859,69 +924,6 @@ if ( $reviews_has_value ) {
 						</div>
 					</div>
 				</div>
-
-				<?php if ( ! empty( $gstore_product_tabs ) ) : ?>
-					<article class="Gstore-single-product__card Gstore-single-product__tabs" data-gstore-tabs>
-						<div class="Gstore-single-product__tab-buttons" role="tablist" aria-label="<?php esc_attr_e( 'Informações do produto', 'gstore' ); ?>">
-							<?php foreach ( $gstore_product_tabs as $index => $tab ) : ?>
-								<?php
-								$slug      = isset( $tab['slug'] ) ? (string) $tab['slug'] : '';
-								$label     = isset( $tab['label'] ) ? (string) $tab['label'] : '';
-								$is_active = 0 === (int) $index;
-								if ( '' === $slug || '' === $label ) {
-									continue;
-								}
-								?>
-								<button
-									type="button"
-									class="<?php echo $is_active ? 'is-active' : ''; ?>"
-									role="tab"
-									aria-selected="<?php echo $is_active ? 'true' : 'false'; ?>"
-									aria-controls="gstore-tab-<?php echo esc_attr( $slug ); ?>"
-									id="gstore-tab-btn-<?php echo esc_attr( $slug ); ?>"
-									data-gstore-tab="<?php echo esc_attr( $slug ); ?>"
-								>
-									<?php echo esc_html( $label ); ?>
-								</button>
-							<?php endforeach; ?>
-						</div>
-
-						<div class="Gstore-single-product__tab-panels">
-							<?php foreach ( $gstore_product_tabs as $index => $tab ) : ?>
-								<?php
-								$slug      = isset( $tab['slug'] ) ? (string) $tab['slug'] : '';
-								$label     = isset( $tab['label'] ) ? (string) $tab['label'] : '';
-								$content   = isset( $tab['content'] ) ? (string) $tab['content'] : '';
-								$is_active = 0 === (int) $index;
-
-								if ( '' === $slug || '' === $label ) {
-									continue;
-								}
-								?>
-								<div
-									id="gstore-tab-<?php echo esc_attr( $slug ); ?>"
-									class="Gstore-single-product__tab-panel<?php echo $is_active ? ' is-active' : ''; ?>"
-									role="tabpanel"
-									aria-labelledby="gstore-tab-btn-<?php echo esc_attr( $slug ); ?>"
-									<?php echo $is_active ? '' : 'hidden'; ?>
-								>
-									<?php if ( 'reviews' === $slug ) : ?>
-										<?php comments_template(); ?>
-									<?php else : ?>
-										<section class="Gstore-single-product__tab-section" aria-label="<?php echo esc_attr( $label ); ?>">
-											<h3 class="Gstore-single-product__tab-title">
-												<?php echo esc_html( $label ); ?>
-											</h3>
-											<div class="Gstore-single-product__tab-content">
-												<?php echo wp_kses_post( $content ); ?>
-											</div>
-										</section>
-									<?php endif; ?>
-								</div>
-							<?php endforeach; ?>
-						</div>
-					</article>
-				<?php endif; ?>
 			</section>
 
 			<!-- Seção de Upsells/Relacionados -->

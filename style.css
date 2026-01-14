@@ -157,13 +157,8 @@ h2.wp-block-heading.has-text-align-center.has-x-large-font-size {
 	background: var(--gstore-color-bg-light);
 	display: grid;
 	grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
-	grid-template-areas:
-		"left summary"
-		"tabs summary";
-	/* Evita “buraco” grande acima das tabs quando a coluna de resumo (direita) fica mais alta */
-	grid-template-rows: min-content auto;
-	column-gap: clamp(20px, 3.5vw, 40px);
-	row-gap: 24px;
+	grid-template-areas: "left summary";
+	gap: clamp(20px, 3.5vw, 40px);
 	align-items: start;
 }
 
@@ -171,17 +166,16 @@ h2.wp-block-heading.has-text-align-center.has-x-large-font-size {
 	margin: 0;
 }
 
-.Gstore-single-product__left {
+.Gstore-single-product__left-stack {
 	grid-area: left;
+	display: flex;
+	flex-direction: column;
+	gap: 24px;
+	min-width: 0;
 }
 
 .Gstore-single-product__summary {
 	grid-area: summary;
-	min-height: 0;
-}
-
-.Gstore-single-product__tabs {
-	grid-area: tabs;
 }
 
 .Gstore-single-product__gallery {
@@ -3411,6 +3405,23 @@ padding: 16px;
 			"left"
 			"summary"
 			"tabs";
+	}
+
+	/* No mobile, voltamos a tratar left/tabs como itens separados do grid */
+	.Gstore-single-product__left-stack {
+		display: contents;
+	}
+
+	.Gstore-single-product__left {
+		grid-area: left;
+	}
+
+	.Gstore-single-product__summary {
+		grid-area: summary;
+	}
+
+	.Gstore-single-product__tabs {
+		grid-area: tabs;
 	}
 
 	/* Mobile: tabs viram accordions (headers visíveis via JS/CSS) */
