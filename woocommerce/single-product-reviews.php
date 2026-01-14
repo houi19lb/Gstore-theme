@@ -40,61 +40,20 @@ $reviews_subtitle = $review_count
 
 $average_display = $average_rating ? number_format_i18n( $average_rating, 1 ) : '0';
 
-if ( ! function_exists( 'gstore_render_product_review' ) ) {
-	/**
-	 * Callback customizado para listar avaliações.
-	 *
-	 * @param WP_Comment $comment Comentário atual.
-	 * @param array      $args    Argumentos do wp_list_comments.
-	 */
-	function gstore_render_product_review( $comment, $args, $depth ) { // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedFunctionFound,Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed
-		$GLOBALS['comment'] = $comment;
-
-		$rating        = (int) get_comment_meta( $comment->comment_ID, 'rating', true );
-		$rating_markup = $rating ? wc_get_rating_html( $rating ) : '';
-		$is_verified   = wc_review_is_from_verified_owner( $comment->comment_ID );
-		?>
-		<article <?php comment_class( 'Gstore-review-item' ); ?> id="comment-<?php comment_ID(); ?>">
-			<header class="Gstore-review-item__header">
-				<div class="Gstore-review-item__author">
-					<span class="Gstore-review-item__author-name"><?php comment_author(); ?></span>
-					<span class="Gstore-review-item__meta">
-						<?php echo esc_html( get_comment_date() ); ?>
-						<?php if ( $is_verified ) : ?>
-							<span aria-hidden="true">&#183;</span>
-							<?php esc_html_e( 'Compra verificada', 'gstore' ); ?>
-						<?php endif; ?>
-					</span>
-				</div>
-				<div class="Gstore-review-item__rating">
-					<?php if ( $rating_markup ) : ?>
-						<span class="Gstore-review-stars" aria-hidden="true">
-							<?php echo wp_kses_post( $rating_markup ); ?>
-						</span>
-					<?php endif; ?>
-					<?php if ( $rating ) : ?>
-						<span class="Gstore-review-item__rating-text">
-							<?php
-							printf(
-								/* translators: %s: numeric rating */
-								esc_html__( '%s / 5', 'gstore' ),
-								number_format_i18n( $rating, 1 )
-							);
-							?>
-						</span>
-					<?php endif; ?>
-				</div>
-			</header>
-			<div class="Gstore-review-item__body">
-				<?php if ( '0' === $comment->comment_approved ) : ?>
-					<em><?php esc_html_e( 'Sua avaliação está aguardando moderação.', 'gstore' ); ?></em>
-				<?php endif; ?>
-				<?php comment_text(); ?>
-			</div>
-		</article>
-		<?php
-	}
-}
+$initial_reviews_limit = 4;
+$product_id            = (int) $product->get_id();
+$initial_reviews       = get_comments(
+	array(
+		'post_id' => $product_id,
+		'type'    => 'review',
+		'status'  => 'approve',
+		'number'  => $initial_reviews_limit,
+		'orderby' => 'comment_date_gmt',
+		'order'   => 'DESC',
+	)
+);
+$initial_reviews_count = is_array( $initial_reviews ) ? count( $initial_reviews ) : 0;
+$load_more_nonce       = wp_create_nonce( 'gstore_load_reviews_' . $product_id );
 
 ?>
 <section id="reviews" class="woocommerce-Reviews" aria-label="<?php esc_attr_e( 'Avaliações do produto', 'gstore' ); ?>">
@@ -157,8 +116,8 @@ if ( ! function_exists( 'gstore_render_product_review' ) ) {
 			</div>
 
 			<div class="Gstore-review-body" aria-label="<?php esc_attr_e( 'Lista de avaliações', 'gstore' ); ?>">
-				<div class="Gstore-reviews-list">
-					<?php if ( have_comments() ) : ?>
+				<div class="Gstore-reviews-list" id="gstore-reviews-list" data-gstore-review-limit="<?php echo esc_attr( (string) $initial_reviews_limit ); ?>">
+					<?php if ( $initial_reviews_count > 0 ) : ?>
 						<?php
 						wp_list_comments(
 							apply_filters(
@@ -168,28 +127,9 @@ if ( ! function_exists( 'gstore_render_product_review' ) ) {
 									'style'    => 'div',
 									'short_ping' => true,
 								)
-							)
+							),
+							$initial_reviews
 						);
-						?>
-
-						<?php
-						if ( get_comment_pages_count() > 1 && get_option( 'page_comments' ) ) :
-							?>
-							<nav class="Gstore-review-pagination">
-								<?php
-								paginate_comments_links(
-									apply_filters(
-										'woocommerce_comment_pagination_args',
-										array(
-											'prev_text' => is_rtl() ? '&rarr;' : '&larr;',
-											'next_text' => is_rtl() ? '&larr;' : '&rarr;',
-										)
-									)
-								);
-								?>
-							</nav>
-							<?php
-						endif;
 						?>
 					<?php else : ?>
 						<article class="Gstore-review-item Gstore-review-item--empty" aria-hidden="true">
@@ -209,6 +149,22 @@ if ( ! function_exists( 'gstore_render_product_review' ) ) {
 						</article>
 					<?php endif; ?>
 				</div>
+				<?php if ( $review_count > $initial_reviews_limit ) : ?>
+					<div class="Gstore-reviews-actions">
+						<button
+							type="button"
+							class="Gstore-reviews-load-more"
+							data-gstore-load-reviews="1"
+							data-product-id="<?php echo esc_attr( (string) $product_id ); ?>"
+							data-offset="<?php echo esc_attr( (string) $initial_reviews_count ); ?>"
+							data-nonce="<?php echo esc_attr( $load_more_nonce ); ?>"
+							aria-controls="gstore-reviews-list"
+						>
+							<?php esc_html_e( 'Ver todos os comentários', 'gstore' ); ?>
+						</button>
+						<p class="Gstore-reviews-status" role="status" aria-live="polite"></p>
+					</div>
+				<?php endif; ?>
 			</div>
 
 			<div class="Gstore-review-separator" aria-hidden="true"></div>

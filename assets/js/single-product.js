@@ -23,6 +23,119 @@ document.addEventListener('DOMContentLoaded', () => {
 	});
 
 	/**
+	 * Avaliações: carrega todas ao clicar no botão (AJAX).
+	 */
+	const initLoadAllReviews = () => {
+		const button = document.querySelector('[data-gstore-load-reviews="1"]');
+		if (!button) {
+			return;
+		}
+
+		const controlsId = String(button.getAttribute('aria-controls') || '');
+		const list =
+			(controlsId ? document.getElementById(controlsId) : null) ||
+			document.querySelector('.Gstore-reviews-list');
+
+		const actions = button.closest('.Gstore-reviews-actions');
+		const statusEl = actions ? actions.querySelector('.Gstore-reviews-status') : null;
+
+		const resolveAjaxUrl = () => {
+			// Preferência: config já presente no tema (favorites-core).
+			if (typeof gstoreFavoritesConfig !== 'undefined' && gstoreFavoritesConfig?.ajaxUrl) {
+				return String(gstoreFavoritesConfig.ajaxUrl);
+			}
+			if (typeof gstoreSettings !== 'undefined' && gstoreSettings?.ajax_url) {
+				return String(gstoreSettings.ajax_url);
+			}
+			if (typeof ajaxurl !== 'undefined' && ajaxurl) {
+				return String(ajaxurl);
+			}
+			return '/wp-admin/admin-ajax.php';
+		};
+
+		const ajaxUrl = resolveAjaxUrl();
+		if (!ajaxUrl) {
+			return;
+		}
+
+		let isLoading = false;
+
+		button.addEventListener('click', async () => {
+			if (isLoading) {
+				return;
+			}
+
+			const productId = String(button.dataset.productId || '');
+			const offset = String(button.dataset.offset || '0');
+			const nonce = String(button.dataset.nonce || '');
+
+			if (!productId || !nonce) {
+				return;
+			}
+
+			isLoading = true;
+			button.disabled = true;
+			button.classList.add('is-loading');
+			button.setAttribute('aria-busy', 'true');
+			if (statusEl) {
+				statusEl.textContent = 'Carregando comentários...';
+			}
+
+			const body = new URLSearchParams();
+			body.set('action', 'gstore_load_product_reviews');
+			body.set('product_id', productId);
+			body.set('offset', offset);
+			body.set('nonce', nonce);
+
+			try {
+				const response = await fetch(ajaxUrl, {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+					},
+					credentials: 'same-origin',
+					body: body.toString(),
+				});
+
+				const payload = await response.json();
+				if (!response.ok) {
+					throw new Error(payload?.data?.message || 'Falha ao carregar comentários.');
+				}
+				if (!payload?.success) {
+					throw new Error(payload?.data?.message || 'Falha ao carregar comentários.');
+				}
+
+				const html = String(payload?.data?.html || '');
+				if (html && list) {
+					list.insertAdjacentHTML('beforeend', html);
+					// Mantém scroll interno, mas leva o usuário para a área recém adicionada.
+					list.scrollTo({ top: list.scrollHeight, behavior: 'smooth' });
+				}
+
+				if (statusEl) {
+					statusEl.textContent = '';
+				}
+				if (actions) {
+					actions.remove();
+				} else {
+					button.remove();
+				}
+			} catch (err) {
+				button.disabled = false;
+				button.classList.remove('is-loading');
+				button.removeAttribute('aria-busy');
+				if (statusEl) {
+					statusEl.textContent = 'Não foi possível carregar os comentários. Tente novamente.';
+				}
+			} finally {
+				isLoading = false;
+			}
+		});
+	};
+
+	initLoadAllReviews();
+
+	/**
 	 * Tabs (Descrição / Especificações / Avaliações)
 	 */
 	const initTabs = () => {

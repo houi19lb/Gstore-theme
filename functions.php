@@ -1363,6 +1363,132 @@ add_action( 'wp_ajax_gstore_favorites_render', 'gstore_ajax_favorites_render' );
 add_action( 'wp_ajax_nopriv_gstore_favorites_render', 'gstore_ajax_favorites_render' );
 
 /**
+ * ============================
+ * Avaliações de produto (WooCommerce)
+ * ============================
+ */
+
+if ( ! function_exists( 'gstore_render_product_review' ) ) {
+	/**
+	 * Callback customizado para listar avaliações (reviews) do WooCommerce.
+	 *
+	 * @param WP_Comment $comment Comentário atual.
+	 * @param array      $args    Argumentos do wp_list_comments.
+	 * @param int        $depth   Profundidade.
+	 */
+	function gstore_render_product_review( $comment, $args, $depth ) { // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedFunctionFound,Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed
+		$GLOBALS['comment'] = $comment;
+
+		$rating        = (int) get_comment_meta( $comment->comment_ID, 'rating', true );
+		$rating_markup = $rating ? wc_get_rating_html( $rating ) : '';
+		$is_verified   = wc_review_is_from_verified_owner( $comment->comment_ID );
+		?>
+		<article <?php comment_class( 'Gstore-review-item' ); ?> id="comment-<?php comment_ID(); ?>">
+			<header class="Gstore-review-item__header">
+				<div class="Gstore-review-item__author">
+					<span class="Gstore-review-item__author-name"><?php comment_author(); ?></span>
+					<span class="Gstore-review-item__meta">
+						<?php echo esc_html( get_comment_date() ); ?>
+						<?php if ( $is_verified ) : ?>
+							<span aria-hidden="true">&#183;</span>
+							<?php esc_html_e( 'Compra verificada', 'gstore' ); ?>
+						<?php endif; ?>
+					</span>
+				</div>
+				<div class="Gstore-review-item__rating">
+					<?php if ( $rating_markup ) : ?>
+						<span class="Gstore-review-stars" aria-hidden="true">
+							<?php echo wp_kses_post( $rating_markup ); ?>
+						</span>
+					<?php endif; ?>
+					<?php if ( $rating ) : ?>
+						<span class="Gstore-review-item__rating-text">
+							<?php
+							printf(
+								/* translators: %s: numeric rating */
+								esc_html__( '%s / 5', 'gstore' ),
+								number_format_i18n( $rating, 1 )
+							);
+							?>
+						</span>
+					<?php endif; ?>
+				</div>
+			</header>
+			<div class="Gstore-review-item__body">
+				<?php if ( '0' === $comment->comment_approved ) : ?>
+					<em><?php esc_html_e( 'Sua avaliação está aguardando moderação.', 'gstore' ); ?></em>
+				<?php endif; ?>
+				<?php comment_text(); ?>
+			</div>
+		</article>
+		<?php
+	}
+}
+
+/**
+ * AJAX: carrega o restante das avaliações (após um offset).
+ */
+function gstore_ajax_load_product_reviews() {
+	if ( ! class_exists( 'WooCommerce' ) ) {
+		wp_send_json_error( array( 'message' => 'WooCommerce não está ativo.' ), 400 );
+	}
+
+	$product_id = isset( $_REQUEST['product_id'] ) ? absint( wp_unslash( $_REQUEST['product_id'] ) ) : 0; // phpcs:ignore WordPress.Security.NonceVerification.Missing
+	$offset     = isset( $_REQUEST['offset'] ) ? absint( wp_unslash( $_REQUEST['offset'] ) ) : 0; // phpcs:ignore WordPress.Security.NonceVerification.Missing
+	$nonce      = isset( $_REQUEST['nonce'] ) ? (string) wp_unslash( $_REQUEST['nonce'] ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Missing
+
+	if ( $product_id <= 0 ) {
+		wp_send_json_error( array( 'message' => 'Produto inválido.' ), 400 );
+	}
+
+	if ( ! wp_verify_nonce( $nonce, 'gstore_load_reviews_' . $product_id ) ) {
+		wp_send_json_error( array( 'message' => 'Nonce inválido.' ), 403 );
+	}
+
+	$product = wc_get_product( $product_id );
+	if ( ! $product ) {
+		wp_send_json_error( array( 'message' => 'Produto não encontrado.' ), 404 );
+	}
+
+	$comments = get_comments(
+		array(
+			'post_id' => $product_id,
+			'type'    => 'review',
+			'status'  => 'approve',
+			'offset'  => $offset,
+			'number'  => 0,
+			'orderby' => 'comment_date_gmt',
+			'order'   => 'DESC',
+		)
+	);
+
+	ob_start();
+	if ( is_array( $comments ) && ! empty( $comments ) ) {
+		wp_list_comments(
+			apply_filters(
+				'woocommerce_product_review_list_args',
+				array(
+					'callback'   => 'gstore_render_product_review',
+					'style'      => 'div',
+					'short_ping' => true,
+				)
+			),
+			$comments
+		);
+	}
+	$html = (string) ob_get_clean();
+
+	wp_send_json_success(
+		array(
+			'html'  => $html,
+			'count' => is_array( $comments ) ? count( $comments ) : 0,
+		)
+	);
+}
+add_action( 'wp_ajax_gstore_load_product_reviews', 'gstore_ajax_load_product_reviews' );
+add_action( 'wp_ajax_nopriv_gstore_load_product_reviews', 'gstore_ajax_load_product_reviews' );
+
+/**
  * Atualiza o fragmento do carrinho para refletir mudanças em tempo real.
  *
  * @param array $fragments Fragmentos de carrinho.
