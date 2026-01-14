@@ -922,11 +922,13 @@ function gstore_enqueue_scripts() {
 	}
 
 	if ( is_front_page() ) {
+		$home_hero_js_path    = get_theme_file_path( 'assets/js/home-hero.js' );
+		$home_hero_js_version = file_exists( $home_hero_js_path ) ? (string) filemtime( $home_hero_js_path ) : wp_get_theme()->get( 'Version' );
 		wp_enqueue_script(
 			'gstore-home-hero',
 			get_theme_file_uri( 'assets/js/home-hero.js' ),
 			array(),
-			wp_get_theme()->get( 'Version' ),
+			$home_hero_js_version,
 			true
 		);
 		wp_enqueue_script(
@@ -5312,7 +5314,7 @@ function gstore_render_hero_slider() {
 	
 	ob_start();
 	?>
-	<div class="Gstore-hero-slider" data-gstore-hero-slider>
+	<div class="Gstore-hero-slider" data-gstore-hero-slider data-gstore-hero-force-autoplay>
 		<!-- Desktop Slides -->
 		<div class="Gstore-hero-slider__track Gstore-hero-slider__track--desktop" data-gstore-hero-track>
 			<?php 

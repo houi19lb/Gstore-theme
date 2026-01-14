@@ -2,13 +2,15 @@
 
 (function () {
 	const SLIDER_SELECTOR = '[data-gstore-hero-slider]';
-	const AUTOPLAY_DELAY = 6500;
+	const AUTOPLAY_DELAY = 7000;
 	const MOBILE_BREAKPOINT = 781;
 
 	/**
 	 * Inicializa um slider individual com suporte a Desktop/Mobile separados.
 	 */
 	function initSlider(slider) {
+		const forceAutoplay = slider.hasAttribute('data-gstore-hero-force-autoplay');
+
 		// Elementos Desktop
 		const desktopTrack = slider.querySelector('[data-gstore-hero-track]');
 		const desktopSlides = Array.from(slider.querySelectorAll('[data-gstore-hero-slide]'));
@@ -65,7 +67,7 @@
 		 */
 		function canAutoplay() {
 			const elements = getCurrentSliderElements();
-			return !prefersReducedMotion && elements.slides.length > 1;
+			return elements.slides.length > 1 && (forceAutoplay || !prefersReducedMotion);
 		}
 
 		/**
@@ -216,13 +218,11 @@
 			});
 		}
 
-		// Pausa autoplay ao interagir
-		if (!prefersReducedMotion) {
-			slider.addEventListener('mouseenter', stopAutoplay);
-			slider.addEventListener('mouseleave', startAutoplay);
-			slider.addEventListener('focusin', stopAutoplay);
-			slider.addEventListener('focusout', startAutoplay);
-		}
+		// Pausa autoplay ao interagir (mesmo quando prefers-reduced-motion estiver ativo)
+		slider.addEventListener('mouseenter', stopAutoplay);
+		slider.addEventListener('mouseleave', startAutoplay);
+		slider.addEventListener('focusin', stopAutoplay);
+		slider.addEventListener('focusout', startAutoplay);
 
 		// Atualiza ao redimensionar
 		let resizeTimeout;
