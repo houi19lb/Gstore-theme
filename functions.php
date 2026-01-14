@@ -6052,6 +6052,16 @@ function gstore_search_block_action_to_catalog( $block_content, $block ) {
 		);
 	}
 
+	// Troca o parâmetro padrão de busca do WP (s) por um parâmetro do catálogo (q),
+	// para evitar conflito entre /catalogo e o modo search do WordPress.
+	// Mantém o tipo de aspas (simples/duplas).
+	$updated = preg_replace(
+		'/(<input\b[^>]*\bname=)(["\'])s\2/i',
+		'$1$2q$2',
+		$updated,
+		1
+	);
+
 	return $updated;
 }
 
@@ -6065,7 +6075,13 @@ function gstore_catalog_apply_search_to_products_shortcode( $query_args, $attr, 
 		return $query_args;
 	}
 
-	$search_term = isset( $_GET['s'] ) ? sanitize_text_field( wp_unslash( $_GET['s'] ) ) : '';
+	$search_term = '';
+	if ( isset( $_GET['q'] ) ) {
+		$search_term = sanitize_text_field( wp_unslash( $_GET['q'] ) );
+	} elseif ( isset( $_GET['s'] ) ) {
+		// Compatibilidade com links antigos.
+		$search_term = sanitize_text_field( wp_unslash( $_GET['s'] ) );
+	}
 	$search_term = trim( $search_term );
 	if ( $search_term === '' ) {
 		return $query_args;
@@ -6150,6 +6166,49 @@ function gstore_catalog_apply_search_to_products_shortcode( $query_args, $attr, 
 	);
 
 	return $query_args;
+}
+
+/**
+ * Compatibilidade: redireciona /catalogo/?s=... para /catalogo/?q=...
+ * para evitar conflito de rotas quando o WP entra em modo search.
+ */
+add_action( 'template_redirect', 'gstore_catalog_redirect_s_to_q', 0 );
+function gstore_catalog_redirect_s_to_q() {
+	if ( is_admin() ) {
+		return;
+	}
+
+	if ( empty( $_GET['s'] ) || isset( $_GET['q'] ) ) {
+		return;
+	}
+
+	$request_uri = isset( $_SERVER['REQUEST_URI'] ) ? (string) wp_unslash( $_SERVER['REQUEST_URI'] ) : '';
+	if ( $request_uri === '' || stripos( $request_uri, '/catalogo' ) === false ) {
+		return;
+	}
+
+	// Preserva outros params, troca s->q (sanitiza valores escalares).
+	$params = array();
+	foreach ( (array) $_GET as $k => $v ) {
+		if ( $k === 's' ) {
+			continue;
+		}
+		if ( is_array( $v ) ) {
+			$params[ $k ] = array_map(
+				static function( $item ) {
+					return sanitize_text_field( wp_unslash( $item ) );
+				},
+				$v
+			);
+		} else {
+			$params[ $k ] = sanitize_text_field( wp_unslash( $v ) );
+		}
+	}
+	$params['q'] = sanitize_text_field( wp_unslash( $_GET['s'] ) );
+
+	$target = add_query_arg( $params, home_url( '/catalogo/' ) );
+	wp_safe_redirect( $target, 302 );
+	exit;
 }
 
 /**
