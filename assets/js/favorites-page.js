@@ -14,6 +14,11 @@
 	const root = document.getElementById('gstore-favorites-root');
 	if (!root) return;
 
+	const searchInput = document.getElementById('gstore-favorites-search');
+	const clearBtn = document.getElementById('gstore-favorites-clear');
+
+	let activeCategorySlug = '';
+
 	function renderLoading() {
 		root.innerHTML = '<div class="Gstore-favorites__loading">Carregando seus favoritos…</div>';
 	}
@@ -29,11 +34,64 @@
 	}
 
 	function renderHtml(html) {
-		root.innerHTML = `
-			<div class="Gstore-favorites__list">
-				${html}
-			</div>
-		`;
+		// O HTML vindo do endpoint já inclui o loop do Woo (ul.products ...).
+		root.innerHTML = `<div class="Gstore-favorites__list">${html}</div>`;
+	}
+
+	function extractSlugFromCategoryHref(href) {
+		if (!href) return '';
+		try {
+			const u = new URL(href, window.location.origin);
+			const parts = u.pathname.split('/').filter(Boolean);
+			return parts.length ? parts[parts.length - 1] : '';
+		} catch (e) {
+			const parts = String(href).split('/').filter(Boolean);
+			return parts.length ? parts[parts.length - 1] : '';
+		}
+	}
+
+	function applyFilters() {
+		const query = String(searchInput?.value || '').trim().toLowerCase();
+		const cards = root.querySelectorAll('li.Gstore-product-card');
+		let visibleCount = 0;
+
+		cards.forEach((li) => {
+			// Categoria: Woo adiciona classes tipo `product_cat-slug`
+			let okCategory = true;
+			if (activeCategorySlug) {
+				okCategory = li.classList.contains(`product_cat-${activeCategorySlug}`);
+			}
+
+			// Texto: filtra por título (e fallback por texto do card)
+			let okText = true;
+			if (query) {
+				const title = li.querySelector('.Gstore-product-card__title a')?.textContent || '';
+				const hay = String(title || li.textContent || '').toLowerCase();
+				okText = hay.includes(query);
+			}
+
+			const show = okCategory && okText;
+			li.style.display = show ? '' : 'none';
+			if (show) visibleCount += 1;
+		});
+
+		if (clearBtn) {
+			clearBtn.hidden = !(query || activeCategorySlug);
+		}
+
+		// Se a lista existir mas nenhum item bater, mostra um aviso simples
+		const emptyHintId = 'gstore-favorites-empty-hint';
+		const existingHint = document.getElementById(emptyHintId);
+		if (cards.length > 0 && visibleCount === 0) {
+			if (!existingHint) {
+				root.insertAdjacentHTML(
+					'afterbegin',
+					`<div id="${emptyHintId}" class="Gstore-favorites__empty-hint">Nenhum favorito encontrado com os filtros atuais.</div>`
+				);
+			}
+		} else if (existingHint) {
+			existingHint.remove();
+		}
 	}
 
 	function postAjax(action, data) {
@@ -96,6 +154,7 @@
 				return;
 			}
 			renderHtml(html);
+			applyFilters();
 		} catch (e) {
 			renderEmpty();
 		}
@@ -104,6 +163,45 @@
 	function scheduleRefresh() {
 		if (refreshTimer) clearTimeout(refreshTimer);
 		refreshTimer = setTimeout(refresh, 150);
+	}
+
+	// Busca instantânea (somente nos favoritos da página)
+	if (searchInput) {
+		searchInput.addEventListener('input', () => {
+			applyFilters();
+		});
+	}
+
+	// Clique em categoria: filtra sem navegar
+	document.addEventListener('click', (e) => {
+		const a = e.target?.closest?.('.wc-block-product-categories a');
+		if (!a) return;
+
+		// Só intercepta se a sidebar existir nesta página
+		if (!document.getElementById('gstore-favorites-root')) return;
+
+		e.preventDefault();
+		const slug = extractSlugFromCategoryHref(a.getAttribute('href'));
+		activeCategorySlug = (activeCategorySlug === slug) ? '' : slug;
+
+		// feedback visual simples
+		document.querySelectorAll('.wc-block-product-categories a').forEach((link) => {
+			const linkSlug = extractSlugFromCategoryHref(link.getAttribute('href'));
+			link.classList.toggle('is-active', activeCategorySlug && linkSlug === activeCategorySlug);
+		});
+
+		applyFilters();
+	});
+
+	if (clearBtn) {
+		clearBtn.addEventListener('click', () => {
+			activeCategorySlug = '';
+			if (searchInput) searchInput.value = '';
+			document.querySelectorAll('.wc-block-product-categories a').forEach((link) => {
+				link.classList.remove('is-active');
+			});
+			applyFilters();
+		});
 	}
 
 	// Se o script for carregado no footer, o DOM pode já estar pronto.
