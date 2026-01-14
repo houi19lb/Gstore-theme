@@ -8890,8 +8890,8 @@ body:has(.Gstore-catalog-shell--light) main {
 }
 
 /* Fix: centraliza as setas (← →) dentro da box da paginação (independente do wrapper do catálogo) */
-.woocommerce-pagination ul li a.prev,
-.woocommerce-pagination ul li a.next {
+.woocommerce nav.woocommerce-pagination ul li a.prev,
+.woocommerce nav.woocommerce-pagination ul li a.next {
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
