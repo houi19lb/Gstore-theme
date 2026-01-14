@@ -770,13 +770,19 @@ body:has(.Gstore-header-shell) {
 	width: 44px;
 	height: 44px;
 	flex: 0 0 44px;
+	overflow: hidden;
+	border-radius: 8px;
 }
 
 .Gstore-search-suggest__img {
-	width: 44px;
-	height: 44px;
-	border-radius: 8px;
-	object-fit: cover;
+	/* Força thumbnail mesmo que existam regras globais de img */
+	display: block !important;
+	width: 44px !important;
+	height: 44px !important;
+	max-width: 44px !important;
+	max-height: 44px !important;
+	border-radius: 8px !important;
+	object-fit: cover !important;
 	background: rgba(0, 0, 0, 0.05);
 }
 
