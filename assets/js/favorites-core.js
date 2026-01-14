@@ -71,7 +71,12 @@
 		body.set('nonce', nonce);
 		Object.entries(data || {}).forEach(([k, v]) => {
 			if (Array.isArray(v)) {
-				v.forEach(item => body.append(k + '[]', String(item)));
+				// Alguns ambientes/proxy/WAF podem bloquear o formato `ids[]`.
+				// Usamos `ids[123]=123` (associativo) para garantir que chegue no PHP.
+				v.forEach(item => {
+					const s = String(item);
+					body.set(`${k}[${s}]`, s);
+				});
 			} else if (v !== undefined && v !== null) {
 				body.set(k, String(v));
 			}

@@ -43,7 +43,11 @@
 		body.set('nonce', nonce);
 		Object.entries(data || {}).forEach(([k, v]) => {
 			if (Array.isArray(v)) {
-				v.forEach(item => body.append(k + '[]', String(item)));
+				// Evita o formato `ids[]` que pode ser filtrado em alguns ambientes.
+				v.forEach(item => {
+					const s = String(item);
+					body.set(`${k}[${s}]`, s);
+				});
 			} else if (v !== undefined && v !== null) {
 				body.set(k, String(v));
 			}
