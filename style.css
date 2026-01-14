@@ -479,7 +479,6 @@ h2.wp-block-heading.has-text-align-center.has-x-large-font-size {
 	position: relative !important;
 	margin: 0 !important;
 	padding: 0 !important;
-	vertical-align: top !important;
 }
 
 /* Removido: Tag "Oferta" não é mais exibida na página de produto único */
@@ -2026,14 +2025,10 @@ body.single-product .onsale {
 
 .Gstore-single-product__upsells .products .product {
 	background: var(--gstore-color-bg-light);
+	border: 1px solid #e4e7ec;
+	border-radius: 4px;
+	padding: 16px;
 }
-
-border: 1px solid #e4e7ec;
-border-radius: 4px;
-padding: 16px;
-}
-
-.woocommerce div.product .related.products {}
 
 .Gstore-single-product__upsells .related.products,
 .Gstore-single-product__upsells .upsells.products {
@@ -8641,13 +8636,7 @@ body:has(.Gstore-catalog-shell--light) main {
 	background: var(--gray-bg, #f0f2f5);
 }
 
-/* Expandir automaticamente categorias ativas e seus pais */
-.Gstore-catalog-shell--light .wc-block-product-categories-list li.current-cat,
-.Gstore-catalog-shell--light .product-categories li.current-cat,
-.Gstore-catalog-shell--light .wc-block-product-categories-list li.current-cat-parent,
-.Gstore-catalog-shell--light .product-categories li.current-cat-parent {
-	/* Será controlado via JavaScript */
-}
+/* Expandir automaticamente categorias ativas e seus pais (controlado via JavaScript) */
 
 /* Acessibilidade - screen reader text */
 .Gstore-catalog-shell--light .category-toggle .screen-reader-text {
@@ -8898,6 +8887,15 @@ body:has(.Gstore-catalog-shell--light) main {
 	background: var(--gstore-color-accent, #ff5c00);
 	color: #ffffff;
 	border-color: var(--gstore-color-accent, #ff5c00);
+}
+
+/* Fix: centraliza as setas (← →) dentro da box da paginação (independente do wrapper do catálogo) */
+.woocommerce-pagination ul li a.prev,
+.woocommerce-pagination ul li a.next {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	line-height: 1;
 }
 
 /* =========================================
