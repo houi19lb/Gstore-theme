@@ -424,6 +424,7 @@ document.addEventListener('DOMContentLoaded', () => {
 			return;
 		}
 
+		const buybox = document.querySelector('.buybox');
 		const selects = Array.from(form.querySelectorAll('select'));
 		const preview = document.querySelector('[data-gstore-variation-preview]');
 		const warning = document.querySelector('[data-gstore-variation-warning]');
@@ -461,14 +462,15 @@ document.addEventListener('DOMContentLoaded', () => {
 			const canAddProp = addToCartButton ? !addToCartButton.disabled : allSelected;
 			const canAddClass = addToCartButton ? !addToCartButton.classList.contains('disabled') : allSelected;
 			const atcEnabled = !!form.querySelector('.woocommerce-variation-add-to-cart.woocommerce-variation-add-to-cart-enabled');
-			const canAdd = canAddProp && canAddClass;
+			const isOos = buybox ? buybox.classList.contains('is-out-of-stock') : false;
+			const canAdd = canAddProp && canAddClass && !isOos;
 			const ok = allSelected && canAdd;
 
 			if (buyNowButton) {
 				buyNowButton.disabled = !ok;
 			}
 			if (warning) {
-				warning.hidden = ok;
+				warning.hidden = isOos ? true : ok;
 			}
 
 			// #region agent log
@@ -569,6 +571,22 @@ document.addEventListener('DOMContentLoaded', () => {
 		const oosTitle = stockBlock?.dataset?.oosTitle || 'Indisponível';
 		const oosSubtitle = stockBlock?.dataset?.oosSubtitle || 'Sem estoque no momento';
 
+		const resolveVariationStock = (variation) => {
+			if (!variation) {
+				return null;
+			}
+			if (typeof variation.gstore_is_in_stock !== 'undefined') {
+				return Boolean(variation.gstore_is_in_stock);
+			}
+			if (typeof variation.is_in_stock !== 'undefined') {
+				return variation.is_in_stock === true;
+			}
+			if (typeof variation.is_purchasable !== 'undefined') {
+				return variation.is_purchasable === true;
+			}
+			return null;
+		};
+
 		const setOutOfStockState = (isOos) => {
 			if (isOos) {
 				// Mostrar card de indisponível
@@ -624,12 +642,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
 			$form.on('found_variation', (event, variation) => {
 				// Verificar se a variação selecionada está em estoque
-				const variationInStock = variation && variation.is_in_stock === true;
+				const variationInStock = resolveVariationStock(variation);
+				if (variationInStock === null) {
+					return;
+				}
 				setOutOfStockState(!variationInStock);
 			});
 
 			$form.on('reset_data', () => {
 				// Ao resetar, voltar ao estado inicial
+				setOutOfStockState(initiallyOos);
+			});
+
+			$form.on('hide_variation', () => {
 				setOutOfStockState(initiallyOos);
 			});
 		}
