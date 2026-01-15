@@ -558,6 +558,7 @@ document.addEventListener('DOMContentLoaded', () => {
 		const stockTitle = stockBlock?.querySelector('[data-gstore-stock-title]');
 		const stockSubtitle = stockBlock?.querySelector('[data-gstore-stock-subtitle]');
 		const warning = document.querySelector('[data-gstore-variation-warning]');
+		const selects = Array.from(form.querySelectorAll('select'));
 		const oosCardTemplate = oosCard ? oosCard.innerHTML : '';
 
 		// Se não tem o card de indisponível, não há o que controlar
@@ -571,6 +572,9 @@ document.addEventListener('DOMContentLoaded', () => {
 		const defaultSubtitle = stockBlock?.dataset?.defaultSubtitle || 'Pronta entrega';
 		const oosTitle = stockBlock?.dataset?.oosTitle || 'Indisponível';
 		const oosSubtitle = stockBlock?.dataset?.oosSubtitle || 'Sem estoque no momento';
+
+		const areAllAttributesSelected = () =>
+			selects.length > 0 && selects.every((s) => String(s.value || '').trim().length > 0);
 
 		/**
 		 * Resolve se uma variação está em estoque.
@@ -601,7 +605,8 @@ document.addEventListener('DOMContentLoaded', () => {
 			if (atcContainer) {
 				// WooCommerce adiciona classe disabled quando sem estoque
 				if (atcContainer.classList.contains('woocommerce-variation-add-to-cart-disabled')) {
-					return false;
+					// Importante: antes de selecionar tudo, esse estado é esperado (não conclui estoque)
+					return areAllAttributesSelected() ? false : null;
 				}
 				if (atcContainer.classList.contains('woocommerce-variation-add-to-cart-enabled')) {
 					return true;
@@ -611,6 +616,10 @@ document.addEventListener('DOMContentLoaded', () => {
 			// 3. Fallback: verificar estado do botão add-to-cart
 			const addBtn = form.querySelector('.single_add_to_cart_button');
 			if (addBtn) {
+				// Se ainda não selecionou tudo, não conclui por estoque com base no disabled
+				if (!areAllAttributesSelected()) {
+					return null;
+				}
 				if (addBtn.disabled || addBtn.classList.contains('disabled')) {
 					return false;
 				}
@@ -710,6 +719,12 @@ document.addEventListener('DOMContentLoaded', () => {
 			});
 
 			$form.on('hide_variation', () => {
+				// Quando todas as opções estão selecionadas e mesmo assim o WooCommerce “esconde”,
+				// é o caso típico de variação indisponível/sem estoque → manter card + CTA.
+				if (areAllAttributesSelected()) {
+					setOutOfStockState(true);
+					return;
+				}
 				setOutOfStockState(initiallyOos);
 			});
 
