@@ -558,6 +558,7 @@ document.addEventListener('DOMContentLoaded', () => {
 		const stockTitle = stockBlock?.querySelector('[data-gstore-stock-title]');
 		const stockSubtitle = stockBlock?.querySelector('[data-gstore-stock-subtitle]');
 		const warning = document.querySelector('[data-gstore-variation-warning]');
+		const oosCardTemplate = oosCard ? oosCard.innerHTML : '';
 
 		// Se não tem o card de indisponível, não há o que controlar
 		if (!oosCard || !buybox) {
@@ -597,6 +598,9 @@ document.addEventListener('DOMContentLoaded', () => {
 			if (isOos) {
 				// Mostrar card de indisponível
 				oosCard.hidden = false;
+				if (oosCardTemplate && !oosCard.innerHTML.trim()) {
+					oosCard.innerHTML = oosCardTemplate;
+				}
 
 				// Adicionar classe is-out-of-stock ao buybox (esconde CTAs via CSS)
 				buybox.classList.remove('is-in-stock', 'is-on-order');
