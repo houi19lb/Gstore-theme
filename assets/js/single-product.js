@@ -697,27 +697,50 @@ document.addEventListener('DOMContentLoaded', () => {
 				return null;
 			};
 
+			// DEBUG: Log variações disponíveis
+			console.log('[GStore Debug] Variações disponíveis:', variations);
+			console.log('[GStore Debug] initiallyOos:', initiallyOos);
+
 			$form.on('found_variation', (event, variation) => {
+				console.log('[GStore Debug] found_variation disparado:', {
+					variation_id: variation?.variation_id,
+					is_in_stock: variation?.is_in_stock,
+					gstore_is_in_stock: variation?.gstore_is_in_stock,
+					is_purchasable: variation?.is_purchasable,
+					attributes: variation?.attributes
+				});
+
 				// Verificar se a variação selecionada está em estoque
 				const variationInStock = resolveVariationStock(variation);
+				console.log('[GStore Debug] variationInStock resolvido:', variationInStock);
+
 				if (variationInStock === null) {
+					console.log('[GStore Debug] variationInStock é null, ignorando');
 					return;
 				}
+				console.log('[GStore Debug] Chamando setOutOfStockState com:', !variationInStock);
 				setOutOfStockState(!variationInStock);
 			});
 
 			$form.on('reset_data', () => {
+				console.log('[GStore Debug] reset_data disparado, voltando para initiallyOos:', initiallyOos);
 				// Ao resetar, voltar ao estado inicial
 				setOutOfStockState(initiallyOos);
 			});
 
 			$form.on('hide_variation', () => {
+				console.log('[GStore Debug] hide_variation disparado');
+
 				// Verificar se há atributos selecionados
 				const selectedAttrs = getSelectedAttributes();
 				const selectedValues = Object.values(selectedAttrs);
 				const allEmpty = selectedValues.every((v) => !v || v.trim().length === 0);
 
+				console.log('[GStore Debug] selectedAttrs:', selectedAttrs);
+				console.log('[GStore Debug] allEmpty:', allEmpty);
+
 				if (allEmpty) {
+					console.log('[GStore Debug] Nenhuma seleção, voltando para initiallyOos:', initiallyOos);
 					// Nenhuma seleção -> voltar ao estado inicial
 					setOutOfStockState(initiallyOos);
 					return;
@@ -725,17 +748,23 @@ document.addEventListener('DOMContentLoaded', () => {
 
 				// Alguma seleção existe -> verificar se existe variação correspondente
 				const matchedVariation = findMatchingVariation(selectedAttrs);
+				console.log('[GStore Debug] matchedVariation encontrada:', matchedVariation);
 
 				if (matchedVariation) {
 					// Variação existe mas WooCommerce ocultou (provavelmente sem estoque)
 					const inStock = resolveVariationStock(matchedVariation);
+					console.log('[GStore Debug] inStock da variação encontrada:', inStock);
+
 					if (inStock !== null) {
+						console.log('[GStore Debug] Chamando setOutOfStockState com:', !inStock);
 						setOutOfStockState(!inStock);
 					} else {
+						console.log('[GStore Debug] inStock é null, mostrando indisponível');
 						// Se não conseguimos determinar, mostrar indisponível (seguro)
 						setOutOfStockState(true);
 					}
 				} else {
+					console.log('[GStore Debug] Variação não encontrada, voltando para initiallyOos:', initiallyOos);
 					// Combinação inválida ou não encontrada -> voltar ao estado inicial
 					setOutOfStockState(initiallyOos);
 				}
