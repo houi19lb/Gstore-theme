@@ -58,6 +58,7 @@
 	let installmentQuotes = null;
 	let isLoadingInstallmentQuotes = false;
 	let lastInstallmentQuotesSignature = '';
+	let lastBluOrderPaymentUrl = null; // URL do pagamento Blu do último pedido criado (para exibir aviso quando modal fecha)
 
 	/**
 	 * Garante cálculo/validação do frete quando o CEP já está preenchido (sem precisar clicar/sair do campo).
@@ -1864,6 +1865,7 @@
 					if (name.indexOf('wc_') === 0 || 
 					    name.indexOf('woocommerce') === 0 || 
 					    name.indexOf('_wp') === 0 ||
+						name.indexOf('gstore_') === 0 || // Campos do GStore (parcelas, etc.)
 					    name === 'terms' ||
 					    name === 'terms-field' ||
 					    name === 'ship_to_different_address') {
@@ -1871,6 +1873,12 @@
 					}
 				}
 			});
+			
+			// 5.1 Garante que o valor das parcelas Blu seja coletado (mesmo se estiver fora do form)
+			const $bluInstallments = $('#gstore_blu_installments');
+			if ($bluInstallments.length && $bluInstallments.val()) {
+				formDataObj['gstore_blu_installments'] = $bluInstallments.val();
+			}
 			
 			// 6. Coleta campos do formulário original que ainda existem
 			$form.find('input, select, textarea').each(function() {
@@ -2012,6 +2020,10 @@
 
 	function openBluCheckoutModal(url) {
 		if (!url) return;
+
+		// Armazena a URL do pagamento para exibir aviso se o modal for fechado sem pagar
+		lastBluOrderPaymentUrl = url;
+
 		ensureBluCheckoutModal();
 
 		const $modal = $('#gstore-blu-checkout-modal');
@@ -2044,6 +2056,43 @@
 
 		// Limpa o iframe para parar carregamentos/sons
 		$modal.find('.Gstore-blu-checkout-modal__frame').attr('src', 'about:blank');
+
+		// Reseta o estado do form para permitir nova interação
+		const $form = $('form.checkout');
+		if ($form.length) {
+			$form.removeClass('processing').unblock();
+		}
+
+		// Se havia um pedido Blu criado, mostra aviso com link para pagar
+		if (lastBluOrderPaymentUrl) {
+			const paymentUrl = lastBluOrderPaymentUrl;
+			lastBluOrderPaymentUrl = null; // Limpa para não mostrar novamente
+
+			// Remove avisos anteriores
+			$('.gstore-blu-pending-notice').remove();
+
+			// Mostra aviso com link para o pagamento
+			const noticeHtml = `
+				<div class="gstore-blu-pending-notice woocommerce-info" style="margin-bottom: 20px;">
+					<strong>Seu pedido foi criado!</strong><br>
+					O pagamento ainda está pendente. 
+					<a href="${paymentUrl}" target="_blank" rel="noopener noreferrer" style="font-weight: bold;">Clique aqui para finalizar o pagamento</a>
+					 ou acesse "Minha Conta > Pedidos" para pagar depois.
+				</div>
+			`;
+
+			const $stepsContent = $('.Gstore-checkout-steps__content');
+			if ($stepsContent.length) {
+				$stepsContent.prepend(noticeHtml);
+			} else {
+				$form.prepend(noticeHtml);
+			}
+
+			// Scroll para o topo para ver o aviso
+			$('html, body').animate({
+				scrollTop: ($('.gstore-blu-pending-notice').offset() || { top: 0 }).top - 100
+			}, 300);
+		}
 	}
 
 	// Inicializa quando o DOM estiver pronto
