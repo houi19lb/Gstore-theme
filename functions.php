@@ -123,10 +123,27 @@ function gstore_available_variation_stock_payload( $data, $product, $variation )
 		return $data;
 	}
 
+	// Verificar estoque de forma mais precisa
 	$is_in_stock = $variation->is_in_stock();
 
+	// Se o estoque é gerenciado, verificar a quantidade real
+	if ( $variation->managing_stock() ) {
+		$stock_quantity = $variation->get_stock_quantity();
+		// Se quantidade é 0 ou menor, considerar fora de estoque
+		if ( $stock_quantity <= 0 ) {
+			$is_in_stock = false;
+		}
+	}
+
+	// Também verificar o status direto do post meta como fallback
+	$stock_status = get_post_meta( $variation->get_id(), '_stock_status', true );
+	if ( 'outofstock' === $stock_status ) {
+		$is_in_stock = false;
+	}
+
 	$data['gstore_is_in_stock'] = $is_in_stock;
-	$data['gstore_is_purchasable'] = $variation->is_purchasable();
+	$data['is_in_stock'] = $is_in_stock; // Sobrescreve o valor padrão do WooCommerce
+	$data['gstore_is_purchasable'] = $is_in_stock && $variation->is_purchasable();
 	$data['gstore_stock_text'] = $is_in_stock
 		? __( 'Disponível', 'gstore' )
 		: __( 'Sem estoque no momento', 'gstore' );
