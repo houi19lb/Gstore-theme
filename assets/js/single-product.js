@@ -575,6 +575,9 @@ document.addEventListener('DOMContentLoaded', () => {
 			if (!variation) {
 				return null;
 			}
+			if (typeof variation.gstore_stock_status !== 'undefined') {
+				return String(variation.gstore_stock_status) !== 'outofstock';
+			}
 			if (typeof variation.gstore_is_in_stock !== 'undefined') {
 				return Boolean(variation.gstore_is_in_stock);
 			}
