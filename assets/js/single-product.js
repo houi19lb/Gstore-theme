@@ -685,29 +685,139 @@ document.addEventListener('DOMContentLoaded', () => {
 			}
 		};
 
+		// Flag para evitar loop infinito se o MutationObserver disparar setOutOfStockState
+		let isUpdatingState = false;
+
+		/**
+		 * Resolve se uma variação está em estoque.
+		 * Usa múltiplos fallbacks para garantir detecção correta.
+		 */
+		const resolveVariationStock = (variation) => {
+			// 1. Verificar flags customizadas do Gstore (mais confiáveis)
+			if (variation) {
+				if (typeof variation.gstore_is_oos !== 'undefined' && variation.gstore_is_oos === true) {
+					return false;
+				}
+				if (typeof variation.gstore_stock_status !== 'undefined' && variation.gstore_stock_status === 'outofstock') {
+					return false;
+				}
+				if (typeof variation.is_purchasable !== 'undefined' && variation.is_purchasable === false) {
+					return false;
+				}
+				if (typeof variation.is_in_stock !== 'undefined' && variation.is_in_stock === false) {
+					return false;
+				}
+				
+				// Se chegamos aqui com um objeto de variação, e nenhuma flag diz que está sem estoque, retornamos true
+				return true;
+			}
+
+			// 2. Fallback: verificar estado do container de add-to-cart
+			// Este é o sinal MAIS FORTE do WooCommerce no front-end
+			const atcContainer = form.querySelector('.woocommerce-variation-add-to-cart');
+			if (atcContainer) {
+				if (atcContainer.classList.contains('woocommerce-variation-add-to-cart-disabled')) {
+					// Se tudo selecionado, o disabled significa sem estoque/bloqueado
+					return areAllAttributesSelected() ? false : null;
+				}
+				if (atcContainer.classList.contains('woocommerce-variation-add-to-cart-enabled')) {
+					return true;
+				}
+			}
+
+			// 3. Fallback: verificar estado do botão add-to-cart
+			const addBtn = form.querySelector('.single_add_to_cart_button');
+			if (addBtn && areAllAttributesSelected()) {
+				if (addBtn.disabled || addBtn.classList.contains('disabled')) {
+					return false;
+				}
+				return true;
+			}
+
+			return null;
+		};
+
+		const setOutOfStockState = (isOos) => {
+			if (isUpdatingState) return;
+			isUpdatingState = true;
+
+			try {
+				if (isOos) {
+					// Mostrar card de indisponível
+					oosCard.hidden = false;
+					if (oosCardTemplate && !oosCard.innerHTML.trim()) {
+						oosCard.innerHTML = oosCardTemplate;
+					}
+
+					// Adicionar classe is-out-of-stock ao buybox (esconde CTAs via CSS)
+					buybox.classList.remove('is-in-stock', 'is-on-order');
+					buybox.classList.add('is-out-of-stock');
+
+					// Atualizar bloco de estoque
+					if (stockBlock) {
+						stockBlock.classList.remove('is-in-stock', 'is-on-order');
+						stockBlock.classList.add('is-out-of-stock');
+					}
+					if (stockTitle) {
+						stockTitle.textContent = oosTitle;
+					}
+					if (stockSubtitle) {
+						stockSubtitle.textContent = oosSubtitle;
+					}
+
+					// Esconder o warning de variações (não faz sentido mostrar "selecione para liberar" se não tem estoque)
+					if (warning) {
+						warning.hidden = true;
+					}
+				} else {
+					// Esconder card de indisponível
+					oosCard.hidden = true;
+
+					// Remover classe is-out-of-stock do buybox
+					buybox.classList.remove('is-out-of-stock');
+					buybox.classList.add(defaultClass);
+
+					// Restaurar bloco de estoque
+					if (stockBlock) {
+						stockBlock.classList.remove('is-out-of-stock');
+						stockBlock.classList.add(defaultClass);
+					}
+					if (stockTitle) {
+						stockTitle.textContent = defaultTitle;
+					}
+					if (stockSubtitle) {
+						stockSubtitle.textContent = defaultSubtitle;
+					}
+				}
+			} finally {
+				isUpdatingState = false;
+			}
+		};
+
+		const syncFromBuyboxClass = () => {
+			if (buybox.classList.contains('is-out-of-stock')) {
+				setOutOfStockState(true);
+			}
+		};
+
 		// Estado inicial: se o buybox já está com is-out-of-stock (todas variações sem estoque), manter
 		const initiallyOos = buybox.classList.contains('is-out-of-stock');
-
-		// Flag para evitar que fallbacks do DOM sobrescrevam dados confiáveis de found_variation
-		let hasValidStockData = false;
 
 		/**
 		 * Atualiza o estado de estoque baseado no DOM atual.
 		 * Usado como fallback quando eventos não fornecem dados completos.
-		 * NÃO executa se já temos dados confiáveis de found_variation.
 		 */
 		const updateStockFromDOM = () => {
-			// Se já temos dados confiáveis de found_variation, não sobrescrever
-			if (hasValidStockData) {
-				return;
-			}
 			const inStock = resolveVariationStock(null);
 			if (inStock !== null) {
 				setOutOfStockState(!inStock);
 			} else if (areAllAttributesSelected()) {
-				// Se tudo selecionado mas resolveVariationStock retornou null (WooCommerce escondeu o bloco),
-				// tratamos como indisponível
-				setOutOfStockState(true);
+				// Se tudo selecionado mas resolveVariationStock retornou null,
+				// verificamos se o container de ATC sumiu ou está desabilitado
+				const atc = form.querySelector('.woocommerce-variation-add-to-cart');
+				if (!atc || atc.classList.contains('woocommerce-variation-add-to-cart-disabled')) {
+					setOutOfStockState(true);
+				}
 			}
 		};
 
@@ -715,27 +825,17 @@ document.addEventListener('DOMContentLoaded', () => {
 			const $form = jQuery(form);
 
 			$form.on('found_variation', (event, variation) => {
-				// Verificar se a variação selecionada está em estoque
 				const variationInStock = resolveVariationStock(variation);
 				if (variationInStock !== null) {
-					// Temos dados confiáveis do WooCommerce - marcar flag para evitar sobrescrita
-					hasValidStockData = true;
 					setOutOfStockState(!variationInStock);
 				}
 			});
 
 			$form.on('reset_data', () => {
-				// Ao resetar, limpar flag e voltar ao estado inicial
-				hasValidStockData = false;
 				setOutOfStockState(initiallyOos);
 			});
 
 			$form.on('hide_variation', () => {
-				// Limpar flag pois não temos mais uma variação válida selecionada
-				hasValidStockData = false;
-				
-				// Se todas as opções estão selecionadas e o WooCommerce escondeu a variação,
-				// é porque ela não está disponível para compra (sem estoque ou bloqueada)
 				if (areAllAttributesSelected()) {
 					setOutOfStockState(true);
 				} else {
@@ -743,19 +843,31 @@ document.addEventListener('DOMContentLoaded', () => {
 				}
 			});
 
-			// Evento adicional: quando a variação muda (só usa fallback se não tivermos dados válidos)
 			$form.on('woocommerce_variation_has_changed', () => {
-				// Delay pequeno para dar tempo ao WooCommerce atualizar o DOM
-				setTimeout(() => {
-					if (!hasValidStockData) {
-						updateStockFromDOM();
-					}
-				}, 150);
+				setTimeout(updateStockFromDOM, 100);
 			});
 		}
 
-		// Forçar um sync inicial
+		// MutationObserver no container de variação - o sinal mais confiável
+		const singleVariationWrap = form.querySelector('.single_variation_wrap');
+		if (singleVariationWrap) {
+			const observer = new MutationObserver(() => {
+				if (!isUpdatingState) {
+					updateStockFromDOM();
+				}
+			});
+
+			observer.observe(singleVariationWrap, {
+				attributes: true,
+				attributeFilter: ['class'],
+				childList: true,
+				subtree: true
+			});
+		}
+
+		// Forçar um sync inicial e após interações
 		setTimeout(updateStockFromDOM, 500);
+		form.addEventListener('change', () => setTimeout(updateStockFromDOM, 200));
 
 		// Garante que o card continue visível se o buybox estiver em OOS (estado inicial do PHP).
 		syncFromBuyboxClass();
