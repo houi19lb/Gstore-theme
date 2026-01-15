@@ -688,11 +688,19 @@ document.addEventListener('DOMContentLoaded', () => {
 		// Estado inicial: se o buybox já está com is-out-of-stock (todas variações sem estoque), manter
 		const initiallyOos = buybox.classList.contains('is-out-of-stock');
 
+		// Flag para evitar que fallbacks do DOM sobrescrevam dados confiáveis de found_variation
+		let hasValidStockData = false;
+
 		/**
 		 * Atualiza o estado de estoque baseado no DOM atual.
 		 * Usado como fallback quando eventos não fornecem dados completos.
+		 * NÃO executa se já temos dados confiáveis de found_variation.
 		 */
 		const updateStockFromDOM = () => {
+			// Se já temos dados confiáveis de found_variation, não sobrescrever
+			if (hasValidStockData) {
+				return;
+			}
 			const inStock = resolveVariationStock(null);
 			if (inStock !== null) {
 				setOutOfStockState(!inStock);
@@ -705,20 +713,23 @@ document.addEventListener('DOMContentLoaded', () => {
 			$form.on('found_variation', (event, variation) => {
 				// Verificar se a variação selecionada está em estoque
 				const variationInStock = resolveVariationStock(variation);
-				if (variationInStock === null) {
-					// Fallback: verificar DOM após pequeno delay (WooCommerce pode estar atualizando)
-					setTimeout(updateStockFromDOM, 50);
-					return;
+				if (variationInStock !== null) {
+					// Temos dados confiáveis do WooCommerce - marcar flag para evitar sobrescrita
+					hasValidStockData = true;
+					setOutOfStockState(!variationInStock);
 				}
-				setOutOfStockState(!variationInStock);
+				// Se variationInStock for null, não fazemos nada - esperamos outro evento
 			});
 
 			$form.on('reset_data', () => {
-				// Ao resetar, voltar ao estado inicial
+				// Ao resetar, limpar flag e voltar ao estado inicial
+				hasValidStockData = false;
 				setOutOfStockState(initiallyOos);
 			});
 
 			$form.on('hide_variation', () => {
+				// Limpar flag pois nao temos mais uma variacao valida selecionada
+				hasValidStockData = false;
 				// Quando todas as opções estão selecionadas e mesmo assim o WooCommerce “esconde”,
 				// é o caso típico de variação indisponível/sem estoque → manter card + CTA.
 				if (areAllAttributesSelected()) {
@@ -728,55 +739,22 @@ document.addEventListener('DOMContentLoaded', () => {
 				setOutOfStockState(initiallyOos);
 			});
 
-			// Evento adicional: quando a variação muda
+			// Evento adicional: quando a variação muda (só usa fallback se não tivermos dados válidos)
 			$form.on('woocommerce_variation_has_changed', () => {
-				setTimeout(updateStockFromDOM, 50);
-			});
-		}
-
-		// MutationObserver para detectar quando WooCommerce atualiza o container de add-to-cart
-		const singleVariationWrap = form.querySelector('.single_variation_wrap');
-		if (singleVariationWrap) {
-			const observer = new MutationObserver((mutations) => {
-				// Verifica se houve mudança relevante nas classes
-				for (const mutation of mutations) {
-					if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
-						const target = mutation.target;
-						if (target.classList.contains('woocommerce-variation-add-to-cart')) {
-							updateStockFromDOM();
-							return;
-						}
-					}
-					// Também observa mudanças no conteúdo (WooCommerce pode substituir elementos)
-					if (mutation.type === 'childList') {
+				// Delay pequeno para dar tempo ao WooCommerce atualizar o DOM
+				// Mas só executa se não tivermos dados válidos de found_variation
+				setTimeout(() => {
+					if (!hasValidStockData) {
 						updateStockFromDOM();
-						return;
 					}
-				}
-			});
-
-			observer.observe(singleVariationWrap, {
-				attributes: true,
-				attributeFilter: ['class'],
-				childList: true,
-				subtree: true,
+				}, 100);
 			});
 		}
 
-		// Também observar o container de add-to-cart diretamente
-		const atcContainer = form.querySelector('.woocommerce-variation-add-to-cart');
-		if (atcContainer) {
-			const atcObserver = new MutationObserver(() => {
-				updateStockFromDOM();
-			});
+		// MutationObservers removidos - os eventos do WooCommerce (found_variation, hide_variation, reset_data)
+		// são suficientes e os observers estavam causando conflitos de timing.
 
-			atcObserver.observe(atcContainer, {
-				attributes: true,
-				attributeFilter: ['class'],
-			});
-		}
-
-		// Garante que o card continue visível se o buybox estiver em OOS.
+		// Garante que o card continue visível se o buybox estiver em OOS (estado inicial do PHP).
 		syncFromBuyboxClass();
 	};
 
