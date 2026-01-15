@@ -127,9 +127,11 @@ function gstore_available_variation_stock_payload( $data, $product, $variation )
 		? (string) $variation->get_stock_status()
 		: ( $variation->is_in_stock() ? 'instock' : 'outofstock' );
 	$is_in_stock = 'outofstock' !== $stock_status;
+	$is_oos = 'outofstock' === $stock_status;
 
 	$data['gstore_stock_status'] = $stock_status;
 	$data['gstore_is_in_stock'] = $is_in_stock;
+	$data['gstore_is_oos'] = $is_oos;
 	$data['gstore_is_purchasable'] = $variation->is_purchasable();
 	$data['gstore_backorders'] = $variation->backorders_allowed();
 	$data['gstore_stock_text'] = $is_in_stock

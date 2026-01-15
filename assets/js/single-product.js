@@ -575,6 +575,9 @@ document.addEventListener('DOMContentLoaded', () => {
 			if (!variation) {
 				return null;
 			}
+			if (typeof variation.gstore_is_oos !== 'undefined') {
+				return !variation.gstore_is_oos;
+			}
 			if (typeof variation.gstore_stock_status !== 'undefined') {
 				return String(variation.gstore_stock_status) !== 'outofstock';
 			}
@@ -637,6 +640,12 @@ document.addEventListener('DOMContentLoaded', () => {
 			}
 		};
 
+		const syncFromBuyboxClass = () => {
+			if (buybox.classList.contains('is-out-of-stock')) {
+				setOutOfStockState(true);
+			}
+		};
+
 		// Estado inicial: se o buybox já está com is-out-of-stock (todas variações sem estoque), manter
 		const initiallyOos = buybox.classList.contains('is-out-of-stock');
 
@@ -661,6 +670,9 @@ document.addEventListener('DOMContentLoaded', () => {
 				setOutOfStockState(initiallyOos);
 			});
 		}
+
+		// Garante que o card continue visível se o buybox estiver em OOS.
+		syncFromBuyboxClass();
 	};
 
 	initVariationStockState();
