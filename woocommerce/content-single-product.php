@@ -796,6 +796,35 @@ if ( $reviews_has_value ) {
 										1
 									);
 
+									/**
+									 * "Comprar agora" em produto simples:
+									 * Quando o usuário clica no nosso botão `gstore_buy_now`, o submit não inclui
+									 * o parâmetro `add-to-cart` (porque o botão padrão não foi clicado). O WooCommerce
+									 * depende desse parâmetro para executar o add-to-cart, então a página só recarrega.
+									 *
+									 * Ao injetar `add-to-cart` como input hidden no form, garantimos que:
+									 * - o add-to-cart ocorre respeitando `quantity`
+									 * - o filtro `gstore_buy_now_redirect_to_checkout()` consegue redirecionar ao checkout
+									 */
+									if ( $buy_now_button && ! $is_variable && isset( $product ) && $product instanceof WC_Product ) {
+										$has_add_to_cart_input = preg_match( '/<input[^>]+name="add-to-cart"/i', $add_to_cart_markup );
+										if ( ! $has_add_to_cart_input ) {
+											$product_id = (int) $product->get_id();
+											if ( $product_id > 0 ) {
+												$hidden_add_to_cart = sprintf(
+													'<input type="hidden" name="add-to-cart" value="%d" />',
+													$product_id
+												);
+												$add_to_cart_markup = preg_replace(
+													'/(<form[^>]*class="[^"]*\\bcart\\b[^"]*"[^>]*>)/i',
+													'$1' . $hidden_add_to_cart,
+													$add_to_cart_markup,
+													1
+												);
+											}
+										}
+									}
+
 									// Injeta o aviso ENTRE os selects e a área de quantidade/botões (produto variável).
 									if ( $is_variable ) {
 										if ( preg_match( '/<div class="single_variation_wrap"/i', $add_to_cart_markup ) ) {
