@@ -54,6 +54,7 @@
 	let lastCalculatedShippingCep = ''; // CEP (somente dígitos) do último frete calculado com sucesso
 	let lastRequestedShippingCep = ''; // CEP (somente dígitos) da última requisição de frete disparada
 	let lastCartSummaryData = null;
+	let lastNonEmptyCartSummaryData = null; // Mantém o último resumo com itens para não zerar o topo quando o Woo esvazia o carrinho
 	let installmentQuotes = null;
 	let isLoadingInstallmentQuotes = false;
 	let lastInstallmentQuotesSignature = '';
@@ -604,9 +605,10 @@
 			if (!val || !installmentQuotes[val]) return;
 
 			const q = installmentQuotes[val];
-			// Exibe apenas "Nx de R$ ..." (com valor correto para aquele N)
+			// Exibe "Nx de R$ ... — total R$ ..." (valor por parcela + total daquela opção)
 			const perText = q.per_installment_text || q.per_installment || '';
-			$opt.text(`${q.installments}x de ${perText}`);
+			const totalText = q.total_text || q.total || '';
+			$opt.text(`${q.installments}x de ${perText} — total ${totalText}`);
 		});
 	}
 
@@ -1266,13 +1268,25 @@
 	function renderSummary(data) {
 		lastCartSummaryData = data;
 
+		// Se o Woo já esvaziou o carrinho (pedido Blu criado), não sobrescreve o topo com 0.
+		// Reusa o último resumo não-vazio para manter os dados corretos.
+		if (data && data.items_count === 0 && lastNonEmptyCartSummaryData) {
+			data = lastNonEmptyCartSummaryData;
+		} else if (data && data.items_count > 0) {
+			lastNonEmptyCartSummaryData = data;
+		}
+
+		// Usa base_total (total sem taxa de parcelamento) para o topo e linha "Total".
+		// O total real (com taxa) só aparece em "Você pagará" quando escolher parcelas.
+		const baseTotal = data.base_total || data.total;
+
 		// Atualiza contagem de itens
 		$('.Gstore-summary-items-count').text(
 			`${data.items_count} ${data.items_count === 1 ? 'item' : 'itens'} no carrinho`
 		);
 
-		// Atualiza total
-		$('.Gstore-checkout-summary-top__total-amount').html(data.total);
+		// Atualiza total no topo (usa base_total)
+		$('.Gstore-checkout-summary-top__total-amount').html(baseTotal);
 
 		// Renderiza itens
 		let itemsHtml = '';
@@ -1328,32 +1342,21 @@
 			`;
 		}
 
-		// Taxas extras (ex: taxa de parcelamento)
-		if (data.totals.fees && Array.isArray(data.totals.fees)) {
-			data.totals.fees.forEach(fee => {
-				if (!fee || !fee.label || !fee.total) return;
-				totalsHtml += `
-					<div class="Gstore-summary-row">
-						<span>${fee.label}</span>
-						<span>${fee.total}</span>
-					</div>
-				`;
-			});
-		}
-
+		// Linha "Total" usa base_total (valor antes da taxa de parcelamento)
 		totalsHtml += `
 			<div class="Gstore-summary-row Gstore-summary-row--total">
 				<span>Total</span>
-				<span>${data.total}</span>
+				<span>${baseTotal}</span>
 			</div>
 		`;
 
-		// Informação de parcelamento (apenas informativa)
-		if (data.payment_method === 'blu_checkout' && data.installments && data.installments.selected && parseInt(data.installments.selected, 10) > 1) {
+		// "Você pagará" só aparece quando cartão Blu e parcelas > 1, mostrando o total real com taxa
+		const selectedN = parseInt((data.installments && data.installments.selected) ? data.installments.selected : '1', 10) || 1;
+		if (data.payment_method === 'blu_checkout' && selectedN > 1) {
 			totalsHtml += `
-				<div class="Gstore-summary-row Gstore-summary-row--installments">
-					<span>${data.installments.selected}x de</span>
-					<span>${data.installments.per_installment}</span>
+				<div class="Gstore-summary-row Gstore-summary-row--payable">
+					<span>Você pagará</span>
+					<span><strong>${selectedN}x de ${data.installments.per_installment}</strong> — ${data.total}</span>
 				</div>
 			`;
 		}
