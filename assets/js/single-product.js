@@ -682,6 +682,56 @@ document.addEventListener('DOMContentLoaded', () => {
 
 	initBuyboxQtyRow();
 
+	/**
+	 * "Comprar agora" em produto simples: redireciona via GET para garantir que
+	 * o WooCommerce processe o add-to-cart e então vá para o checkout.
+	 *
+	 * Isso evita dependência de redirect PHP que pode ser bloqueado por cache/output.
+	 */
+	const initBuyNowRedirect = () => {
+		const form = document.querySelector('form.cart:not(.variations_form)');
+		if (!form) {
+			return;
+		}
+
+		const buyNowBtn = form.querySelector('.Gstore-single-product__buy-now');
+		if (!buyNowBtn) {
+			return;
+		}
+
+		buyNowBtn.addEventListener('click', (e) => {
+			e.preventDefault();
+
+			// Tenta pegar o product ID de várias fontes
+			const productIdInput = form.querySelector('input[name="add-to-cart"]');
+			const productIdButton = form.querySelector('button[name="add-to-cart"]');
+			const productId =
+				productIdInput?.value ||
+				productIdButton?.value ||
+				form.querySelector('input[name="product_id"]')?.value ||
+				'';
+
+			const qtyInput = form.querySelector('input[name="quantity"]');
+			const qty = qtyInput?.value || '1';
+
+			if (!productId) {
+				// Fallback: deixa o form submeter normalmente
+				form.submit();
+				return;
+			}
+
+			// Monta a URL GET que comprovadamente funciona
+			const url = new URL(window.location.href);
+			url.searchParams.set('add-to-cart', productId);
+			url.searchParams.set('quantity', qty);
+			url.searchParams.set('gstore_buy_now', '1');
+
+			window.location.href = url.toString();
+		});
+	};
+
+	initBuyNowRedirect();
+
 	const enhanceQuantityField = (field) => {
 		if (field.dataset.gstoreQtyEnhanced) {
 			return;
