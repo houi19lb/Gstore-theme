@@ -572,25 +572,51 @@ document.addEventListener('DOMContentLoaded', () => {
 		const oosTitle = stockBlock?.dataset?.oosTitle || 'Indisponível';
 		const oosSubtitle = stockBlock?.dataset?.oosSubtitle || 'Sem estoque no momento';
 
+		/**
+		 * Resolve se uma variação está em estoque.
+		 * Usa múltiplos fallbacks para garantir detecção correta.
+		 */
 		const resolveVariationStock = (variation) => {
-			if (!variation) {
-				return null;
+			// 1. Verificar flags customizadas do Gstore (mais confiáveis)
+			if (variation) {
+				if (typeof variation.gstore_is_oos !== 'undefined') {
+					return !variation.gstore_is_oos;
+				}
+				if (typeof variation.gstore_stock_status !== 'undefined') {
+					return String(variation.gstore_stock_status) !== 'outofstock';
+				}
+				if (typeof variation.gstore_is_in_stock !== 'undefined') {
+					return Boolean(variation.gstore_is_in_stock);
+				}
+				if (typeof variation.is_in_stock !== 'undefined') {
+					return variation.is_in_stock === true;
+				}
+				if (typeof variation.is_purchasable !== 'undefined') {
+					return variation.is_purchasable === true;
+				}
 			}
-			if (typeof variation.gstore_is_oos !== 'undefined') {
-				return !variation.gstore_is_oos;
+
+			// 2. Fallback: verificar estado do container de add-to-cart
+			const atcContainer = form.querySelector('.woocommerce-variation-add-to-cart');
+			if (atcContainer) {
+				// WooCommerce adiciona classe disabled quando sem estoque
+				if (atcContainer.classList.contains('woocommerce-variation-add-to-cart-disabled')) {
+					return false;
+				}
+				if (atcContainer.classList.contains('woocommerce-variation-add-to-cart-enabled')) {
+					return true;
+				}
 			}
-			if (typeof variation.gstore_stock_status !== 'undefined') {
-				return String(variation.gstore_stock_status) !== 'outofstock';
+
+			// 3. Fallback: verificar estado do botão add-to-cart
+			const addBtn = form.querySelector('.single_add_to_cart_button');
+			if (addBtn) {
+				if (addBtn.disabled || addBtn.classList.contains('disabled')) {
+					return false;
+				}
+				return true;
 			}
-			if (typeof variation.gstore_is_in_stock !== 'undefined') {
-				return Boolean(variation.gstore_is_in_stock);
-			}
-			if (typeof variation.is_in_stock !== 'undefined') {
-				return variation.is_in_stock === true;
-			}
-			if (typeof variation.is_purchasable !== 'undefined') {
-				return variation.is_purchasable === true;
-			}
+
 			return null;
 		};
 
@@ -653,6 +679,17 @@ document.addEventListener('DOMContentLoaded', () => {
 		// Estado inicial: se o buybox já está com is-out-of-stock (todas variações sem estoque), manter
 		const initiallyOos = buybox.classList.contains('is-out-of-stock');
 
+		/**
+		 * Atualiza o estado de estoque baseado no DOM atual.
+		 * Usado como fallback quando eventos não fornecem dados completos.
+		 */
+		const updateStockFromDOM = () => {
+			const inStock = resolveVariationStock(null);
+			if (inStock !== null) {
+				setOutOfStockState(!inStock);
+			}
+		};
+
 		if (typeof jQuery !== 'undefined') {
 			const $form = jQuery(form);
 
@@ -660,6 +697,8 @@ document.addEventListener('DOMContentLoaded', () => {
 				// Verificar se a variação selecionada está em estoque
 				const variationInStock = resolveVariationStock(variation);
 				if (variationInStock === null) {
+					// Fallback: verificar DOM após pequeno delay (WooCommerce pode estar atualizando)
+					setTimeout(updateStockFromDOM, 50);
 					return;
 				}
 				setOutOfStockState(!variationInStock);
@@ -672,6 +711,53 @@ document.addEventListener('DOMContentLoaded', () => {
 
 			$form.on('hide_variation', () => {
 				setOutOfStockState(initiallyOos);
+			});
+
+			// Evento adicional: quando a variação muda
+			$form.on('woocommerce_variation_has_changed', () => {
+				setTimeout(updateStockFromDOM, 50);
+			});
+		}
+
+		// MutationObserver para detectar quando WooCommerce atualiza o container de add-to-cart
+		const singleVariationWrap = form.querySelector('.single_variation_wrap');
+		if (singleVariationWrap) {
+			const observer = new MutationObserver((mutations) => {
+				// Verifica se houve mudança relevante nas classes
+				for (const mutation of mutations) {
+					if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
+						const target = mutation.target;
+						if (target.classList.contains('woocommerce-variation-add-to-cart')) {
+							updateStockFromDOM();
+							return;
+						}
+					}
+					// Também observa mudanças no conteúdo (WooCommerce pode substituir elementos)
+					if (mutation.type === 'childList') {
+						updateStockFromDOM();
+						return;
+					}
+				}
+			});
+
+			observer.observe(singleVariationWrap, {
+				attributes: true,
+				attributeFilter: ['class'],
+				childList: true,
+				subtree: true,
+			});
+		}
+
+		// Também observar o container de add-to-cart diretamente
+		const atcContainer = form.querySelector('.woocommerce-variation-add-to-cart');
+		if (atcContainer) {
+			const atcObserver = new MutationObserver(() => {
+				updateStockFromDOM();
+			});
+
+			atcObserver.observe(atcContainer, {
+				attributes: true,
+				attributeFilter: ['class'],
 			});
 		}
 
