@@ -1733,25 +1733,36 @@ function gstore_handle_buy_now_simple_product() {
 	}
 	$qty = max( 1, (int) $qty );
 
-	// Adiciona ao carrinho e redireciona (PRG) para evitar reenvio de POST.
-	$added = false;
-	if ( function_exists( 'WC' ) && WC() && WC()->cart ) {
-		$added = (bool) WC()->cart->add_to_cart( $product_id, $qty );
-	}
+	/**
+	 * Fluxo robusto (igual experiência do variável):
+	 * 1) Se veio via POST, fazemos PRG para uma URL GET com add-to-cart + quantity.
+	 *    Assim o WooCommerce processa o add-to-cart no hook nativo dele (wp_loaded) e aplica nosso
+	 *    redirect para checkout via `woocommerce_add_to_cart_redirect` quando `gstore_buy_now` estiver presente.
+	 * 2) Se já estivermos no GET (por ex. depois do PRG), mandamos direto para o checkout.
+	 */
+	$method = isset( $_SERVER['REQUEST_METHOD'] ) ? strtoupper( (string) $_SERVER['REQUEST_METHOD'] ) : 'GET';
 
-	if ( $added ) {
+	if ( 'POST' === $method ) {
+		$target = add_query_arg(
+			array(
+				'add-to-cart'    => $product_id,
+				'quantity'       => $qty,
+				'gstore_buy_now' => 1,
+			),
+			get_permalink( $product_id )
+		);
+
 		if ( function_exists( 'nocache_headers' ) ) {
 			nocache_headers();
 		}
-		wp_safe_redirect( wc_get_checkout_url() );
+		wp_safe_redirect( $target );
 		exit;
 	}
 
-	// Se falhar, redireciona de volta ao produto sem POST para evitar o aviso do navegador.
 	if ( function_exists( 'nocache_headers' ) ) {
 		nocache_headers();
 	}
-	wp_safe_redirect( get_permalink( $product_id ) );
+	wp_safe_redirect( wc_get_checkout_url() );
 	exit;
 }
 add_action( 'template_redirect', 'gstore_handle_buy_now_simple_product', 0 );
