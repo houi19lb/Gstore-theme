@@ -1683,6 +1683,13 @@ function gstore_handle_buy_now_simple_product() {
 		return;
 	}
 
+	// Se algum plugin/tema imprimiu warning/deprecated em output buffer, limpamos para não quebrar o redirect.
+	if ( function_exists( 'ob_get_level' ) && function_exists( 'ob_end_clean' ) ) {
+		while ( ob_get_level() ) {
+			@ob_end_clean(); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
+		}
+	}
+
 	// Tenta pegar o ID do produto a partir do contexto da página.
 	$product_id = 0;
 	if ( function_exists( 'is_product' ) && is_product() ) {
@@ -1733,15 +1740,21 @@ function gstore_handle_buy_now_simple_product() {
 	}
 
 	if ( $added ) {
+		if ( function_exists( 'nocache_headers' ) ) {
+			nocache_headers();
+		}
 		wp_safe_redirect( wc_get_checkout_url() );
 		exit;
 	}
 
 	// Se falhar, redireciona de volta ao produto sem POST para evitar o aviso do navegador.
+	if ( function_exists( 'nocache_headers' ) ) {
+		nocache_headers();
+	}
 	wp_safe_redirect( get_permalink( $product_id ) );
 	exit;
 }
-add_action( 'wp_loaded', 'gstore_handle_buy_now_simple_product', 30 );
+add_action( 'template_redirect', 'gstore_handle_buy_now_simple_product', 0 );
 
 /**
  * Adiciona headers HTTP para evitar cache em requisições AJAX do carrinho.
@@ -2092,11 +2105,13 @@ function gstore_cleanup_shortcode_paragraphs( $html ) {
 
 		$dom = new DOMDocument();
 
-		$has_mb_convert   = function_exists( 'mb_convert_encoding' );
-		$needs_unwrap_div = ! $has_mb_convert;
-		$content          = $has_mb_convert
-			? mb_convert_encoding( $html, 'HTML-ENTITIES', 'UTF-8' )
-			: '<div>' . $html . '</div>';
+		/**
+		 * Evita `mb_convert_encoding(..., 'HTML-ENTITIES', ...)` (deprecated no PHP 8.2+).
+		 * Em vez disso, força UTF-8 no DOMDocument via header XML e sempre envolve em um wrapper <div>
+		 * para conseguirmos "unwrap" com segurança no final.
+		 */
+		$needs_unwrap_div = true;
+		$content          = '<?xml encoding="UTF-8"?>' . '<div>' . $html . '</div>';
 
 		$dom->loadHTML(
 			$content,
