@@ -704,6 +704,10 @@ document.addEventListener('DOMContentLoaded', () => {
 			const inStock = resolveVariationStock(null);
 			if (inStock !== null) {
 				setOutOfStockState(!inStock);
+			} else if (areAllAttributesSelected()) {
+				// Se tudo selecionado mas resolveVariationStock retornou null (WooCommerce escondeu o bloco),
+				// tratamos como indisponível
+				setOutOfStockState(true);
 			}
 		};
 
@@ -718,7 +722,6 @@ document.addEventListener('DOMContentLoaded', () => {
 					hasValidStockData = true;
 					setOutOfStockState(!variationInStock);
 				}
-				// Se variationInStock for null, não fazemos nada - esperamos outro evento
 			});
 
 			$form.on('reset_data', () => {
@@ -728,31 +731,31 @@ document.addEventListener('DOMContentLoaded', () => {
 			});
 
 			$form.on('hide_variation', () => {
-				// Limpar flag pois nao temos mais uma variacao valida selecionada
+				// Limpar flag pois não temos mais uma variação válida selecionada
 				hasValidStockData = false;
-				// Quando todas as opções estão selecionadas e mesmo assim o WooCommerce “esconde”,
-				// é o caso típico de variação indisponível/sem estoque → manter card + CTA.
+				
+				// Se todas as opções estão selecionadas e o WooCommerce escondeu a variação,
+				// é porque ela não está disponível para compra (sem estoque ou bloqueada)
 				if (areAllAttributesSelected()) {
 					setOutOfStockState(true);
-					return;
+				} else {
+					setOutOfStockState(initiallyOos);
 				}
-				setOutOfStockState(initiallyOos);
 			});
 
 			// Evento adicional: quando a variação muda (só usa fallback se não tivermos dados válidos)
 			$form.on('woocommerce_variation_has_changed', () => {
 				// Delay pequeno para dar tempo ao WooCommerce atualizar o DOM
-				// Mas só executa se não tivermos dados válidos de found_variation
 				setTimeout(() => {
 					if (!hasValidStockData) {
 						updateStockFromDOM();
 					}
-				}, 100);
+				}, 150);
 			});
 		}
 
-		// MutationObservers removidos - os eventos do WooCommerce (found_variation, hide_variation, reset_data)
-		// são suficientes e os observers estavam causando conflitos de timing.
+		// Forçar um sync inicial
+		setTimeout(updateStockFromDOM, 500);
 
 		// Garante que o card continue visível se o buybox estiver em OOS (estado inicial do PHP).
 		syncFromBuyboxClass();
