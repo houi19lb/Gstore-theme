@@ -116,41 +116,24 @@ function gstore_variation_is_purchasable( $purchasable, $variation ) {
 
 	return $purchasable;
 }
-add_filter( 'woocommerce_variation_is_purchasable', 'gstore_variation_is_purchasable', 999, 2 );
+add_filter( 'woocommerce_variation_is_purchasable', 'gstore_variation_is_purchasable', 10, 2 );
 
 function gstore_available_variation_stock_payload( $data, $product, $variation ) {
 	if ( ! $variation instanceof WC_Product_Variation ) {
 		return $data;
 	}
 
-	$stock_status = method_exists( $variation, 'get_stock_status' )
-		? (string) $variation->get_stock_status()
-		: ( $variation->is_in_stock() ? 'instock' : 'outofstock' );
-	
-	// Considera OOS se o status for outofstock OU se gerenciar estoque e quantidade for <= 0 sem permitir backorders
-	$is_in_stock = 'outofstock' !== $stock_status;
-	if ( $variation->managing_stock() ) {
-		$qty = $variation->get_stock_quantity();
-		if ( $qty <= 0 && ! $variation->backorders_allowed() ) {
-			$is_in_stock = false;
-			$stock_status = 'outofstock';
-		}
-	}
+	$is_in_stock = $variation->is_in_stock();
 
-	$is_oos = ! $is_in_stock;
-
-	$data['gstore_stock_status'] = $stock_status;
 	$data['gstore_is_in_stock'] = $is_in_stock;
-	$data['gstore_is_oos'] = $is_oos;
 	$data['gstore_is_purchasable'] = $variation->is_purchasable();
-	$data['gstore_backorders'] = $variation->backorders_allowed();
 	$data['gstore_stock_text'] = $is_in_stock
 		? __( 'Disponível', 'gstore' )
 		: __( 'Sem estoque no momento', 'gstore' );
 
 	return $data;
 }
-add_filter( 'woocommerce_available_variation', 'gstore_available_variation_stock_payload', 999, 3 );
+add_filter( 'woocommerce_available_variation', 'gstore_available_variation_stock_payload', 10, 3 );
 
 // 5. Atualizar opções do banco de dados (executa apenas uma vez para garantir robustez)
 function gstore_force_woocommerce_image_options() {
