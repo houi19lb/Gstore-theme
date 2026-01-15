@@ -843,11 +843,10 @@ if ( $reviews_has_value ) {
 						// - Produto variável com algumas variações em estoque: oculto inicialmente, JS controla
 						$show_oos_card        = $is_out_of_stock || $is_variable;
 						$oos_card_hidden      = $is_variable && $has_any_variation_in_stock;
-						$oos_card_hidden_attr = $oos_card_hidden ? ' hidden' : '';
 
 						if ( $show_oos_card ) :
 							?>
-							<div class="Gstore-oos-card" id="gstore-oos-card" role="region" aria-label="<?php esc_attr_e( 'Produto indisponível', 'gstore' ); ?>"<?php echo esc_attr( $oos_card_hidden_attr ); ?> data-gstore-oos-card>
+							<div class="Gstore-oos-card" id="gstore-oos-card" role="region" aria-label="<?php esc_attr_e( 'Produto indisponível', 'gstore' ); ?>"<?php echo $oos_card_hidden ? ' hidden' : ''; ?> data-gstore-oos-card>
 								<div class="Gstore-oos-card__title"><?php esc_html_e( 'Produto indisponível no momento', 'gstore' ); ?></div>
 								<div class="Gstore-oos-card__text">
 									<?php esc_html_e( 'Quer saber previsão de reposição ou alternativas? Fale com nossa equipe.', 'gstore' ); ?>
