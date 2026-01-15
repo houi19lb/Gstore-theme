@@ -1468,9 +1468,10 @@ function gstore_ajax_load_product_reviews() {
 			apply_filters(
 				'woocommerce_product_review_list_args',
 				array(
-					'callback'   => 'gstore_render_product_review',
-					'style'      => 'div',
-					'short_ping' => true,
+					'callback'     => 'gstore_render_product_review',
+					'end-callback' => '__return_null',
+					'style'        => 'div',
+					'short_ping'   => true,
 				)
 			),
 			$comments

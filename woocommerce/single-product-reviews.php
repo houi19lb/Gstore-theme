@@ -123,8 +123,9 @@ $load_more_nonce       = wp_create_nonce( 'gstore_load_reviews_' . $product_id )
 							apply_filters(
 								'woocommerce_product_review_list_args',
 								array(
-									'callback' => 'gstore_render_product_review',
-									'style'    => 'div',
+									'callback'     => 'gstore_render_product_review',
+									'end-callback' => '__return_null',
+									'style'        => 'div',
 									'short_ping' => true,
 								)
 							),
