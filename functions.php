@@ -1663,6 +1663,87 @@ function gstore_buy_now_redirect_to_checkout( $url ) {
 add_filter( 'woocommerce_add_to_cart_redirect', 'gstore_buy_now_redirect_to_checkout', 20 );
 
 /**
+ * "Comprar agora" (produto simples): adiciona ao carrinho respeitando quantidade e redireciona ao checkout.
+ *
+ * Motivo: o botão customizado `name="gstore_buy_now"` pode submeter o form sem disparar o handler nativo
+ * de add-to-cart (que normalmente depende de `add-to-cart` vindo do botão padrão). Aqui tratamos no backend
+ * para garantir o fluxo e evitar o aviso de reenvio de formulário ao recarregar a página.
+ */
+function gstore_handle_buy_now_simple_product() {
+	if ( wp_doing_ajax() ) {
+		return;
+	}
+
+	if ( ! class_exists( 'WooCommerce' ) || ! function_exists( 'wc_get_checkout_url' ) ) {
+		return;
+	}
+
+	// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+	if ( ! isset( $_REQUEST['gstore_buy_now'] ) ) {
+		return;
+	}
+
+	// Tenta pegar o ID do produto a partir do contexto da página.
+	$product_id = 0;
+	if ( function_exists( 'is_product' ) && is_product() ) {
+		$product_id = (int) get_queried_object_id();
+	}
+	// Fallbacks comuns
+	// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+	if ( ! $product_id && isset( $_REQUEST['product_id'] ) ) {
+		$product_id = (int) $_REQUEST['product_id'];
+	}
+	// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+	if ( ! $product_id && isset( $_REQUEST['add-to-cart'] ) ) {
+		$product_id = (int) $_REQUEST['add-to-cart'];
+	}
+
+	$product_id = absint( $product_id );
+	if ( ! $product_id ) {
+		return;
+	}
+
+	if ( ! function_exists( 'wc_get_product' ) ) {
+		return;
+	}
+
+	$product = wc_get_product( $product_id );
+	if ( ! $product instanceof WC_Product ) {
+		return;
+	}
+
+	// Só cobre produto simples aqui (o seu caso). Variáveis precisam de variation_id/atributos.
+	if ( ! $product->is_type( 'simple' ) ) {
+		return;
+	}
+
+	// Quantidade
+	$qty = 1;
+	// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+	if ( isset( $_REQUEST['quantity'] ) ) {
+		$qty_raw = wp_unslash( $_REQUEST['quantity'] );
+		$qty     = function_exists( 'wc_stock_amount' ) ? wc_stock_amount( $qty_raw ) : (int) $qty_raw;
+	}
+	$qty = max( 1, (int) $qty );
+
+	// Adiciona ao carrinho e redireciona (PRG) para evitar reenvio de POST.
+	$added = false;
+	if ( function_exists( 'WC' ) && WC() && WC()->cart ) {
+		$added = (bool) WC()->cart->add_to_cart( $product_id, $qty );
+	}
+
+	if ( $added ) {
+		wp_safe_redirect( wc_get_checkout_url() );
+		exit;
+	}
+
+	// Se falhar, redireciona de volta ao produto sem POST para evitar o aviso do navegador.
+	wp_safe_redirect( get_permalink( $product_id ) );
+	exit;
+}
+add_action( 'wp_loaded', 'gstore_handle_buy_now_simple_product', 30 );
+
+/**
  * Adiciona headers HTTP para evitar cache em requisições AJAX do carrinho.
  * 
  * Isso é crítico em ambientes de produção onde cache pode causar
