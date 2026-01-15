@@ -640,6 +640,63 @@ document.addEventListener('DOMContentLoaded', () => {
 		if (typeof jQuery !== 'undefined') {
 			const $form = jQuery(form);
 
+			// Capturar dados de todas as variações disponíveis
+			const variations = $form.data('product_variations') || [];
+
+			// Função para obter os atributos selecionados atualmente
+			const getSelectedAttributes = () => {
+				const attrs = {};
+				$form.find('select[name^="attribute_"]').each(function () {
+					const name = jQuery(this).attr('name');
+					const value = jQuery(this).val() || '';
+					attrs[name] = value;
+				});
+				return attrs;
+			};
+
+			// Função para encontrar variação correspondente aos atributos selecionados
+			const findMatchingVariation = (selectedAttrs) => {
+				if (!variations || !variations.length) {
+					return null;
+				}
+
+				// Verificar se todos os atributos estão selecionados
+				const selectedValues = Object.values(selectedAttrs);
+				const allSelected = selectedValues.length > 0 && selectedValues.every((v) => v && v.trim().length > 0);
+				if (!allSelected) {
+					return null;
+				}
+
+				// Procurar variação que corresponde a todos os atributos
+				for (const variation of variations) {
+					if (!variation.attributes) {
+						continue;
+					}
+
+					let matches = true;
+					for (const [attrName, attrValue] of Object.entries(selectedAttrs)) {
+						const variationAttrValue = variation.attributes[attrName];
+
+						// Se a variação tem valor vazio para esse atributo, significa "any" (qualquer valor)
+						if (variationAttrValue === '' || variationAttrValue === undefined) {
+							continue;
+						}
+
+						// Comparar valores (case-insensitive e trim)
+						if (variationAttrValue.toLowerCase().trim() !== attrValue.toLowerCase().trim()) {
+							matches = false;
+							break;
+						}
+					}
+
+					if (matches) {
+						return variation;
+					}
+				}
+
+				return null;
+			};
+
 			$form.on('found_variation', (event, variation) => {
 				// Verificar se a variação selecionada está em estoque
 				const variationInStock = resolveVariationStock(variation);
@@ -655,7 +712,33 @@ document.addEventListener('DOMContentLoaded', () => {
 			});
 
 			$form.on('hide_variation', () => {
-				setOutOfStockState(initiallyOos);
+				// Verificar se há atributos selecionados
+				const selectedAttrs = getSelectedAttributes();
+				const selectedValues = Object.values(selectedAttrs);
+				const allEmpty = selectedValues.every((v) => !v || v.trim().length === 0);
+
+				if (allEmpty) {
+					// Nenhuma seleção -> voltar ao estado inicial
+					setOutOfStockState(initiallyOos);
+					return;
+				}
+
+				// Alguma seleção existe -> verificar se existe variação correspondente
+				const matchedVariation = findMatchingVariation(selectedAttrs);
+
+				if (matchedVariation) {
+					// Variação existe mas WooCommerce ocultou (provavelmente sem estoque)
+					const inStock = resolveVariationStock(matchedVariation);
+					if (inStock !== null) {
+						setOutOfStockState(!inStock);
+					} else {
+						// Se não conseguimos determinar, mostrar indisponível (seguro)
+						setOutOfStockState(true);
+					}
+				} else {
+					// Combinação inválida ou não encontrada -> voltar ao estado inicial
+					setOutOfStockState(initiallyOos);
+				}
 			});
 		}
 	};
