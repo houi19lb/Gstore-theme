@@ -4422,6 +4422,29 @@ function gstore_allow_order_again_for_pending( $statuses ) {
 add_filter( 'woocommerce_valid_order_statuses_for_order_again', 'gstore_allow_order_again_for_pending', 10, 1 );
 
 /**
+ * Remove botões "Pagar" e "Cancelar" padrão do WooCommerce da tabela de pedidos.
+ *
+ * Esses botões nativos não são mais necessários, pois usamos "Order Again"
+ * para pagar pedidos com menos de 1 dia.
+ *
+ * @param array    $actions Ações disponíveis para o pedido.
+ * @param WC_Order $order   Objeto do pedido.
+ * @return array Ações atualizadas (sem 'pay' e 'cancel').
+ */
+function gstore_remove_default_order_actions( $actions, $order ) {
+	if ( ! is_array( $actions ) ) {
+		return $actions;
+	}
+
+	// Remover ações padrão 'pay' e 'cancel'
+	unset( $actions['pay'] );
+	unset( $actions['cancel'] );
+
+	return $actions;
+}
+add_filter( 'woocommerce_my_account_my_orders_actions', 'gstore_remove_default_order_actions', 5, 2 );
+
+/**
  * Adiciona botão "Pagar" na página de visualização de pedidos, apenas se:
  * - Pedido tem menos de 1 dia (24 horas)
  * - Status é pending ou on-hold
