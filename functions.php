@@ -11197,4 +11197,89 @@ function gstore_age_verification_modal() {
 }
 add_action( 'wp_footer', 'gstore_age_verification_modal', 999 );
 
+/**
+ * Customiza a exibição do endereço na página Minha Conta para incluir rótulos.
+ */
+add_filter( 'woocommerce_my_account_my_address_formatted_address', 'gstore_custom_my_account_address_labels', 10, 3 );
+function gstore_custom_my_account_address_labels( $address, $customer_id, $name_type ) {
+    $first_name = $address['first_name'] ?? '';
+    $last_name  = $address['last_name'] ?? '';
+    $address_1  = $address['address_1'] ?? '';
+    $address_2  = $address['address_2'] ?? '';
+    $city       = $address['city'] ?? '';
+    $state      = $address['state'] ?? '';
+    $postcode   = $address['postcode'] ?? '';
+    
+    // Campos extras do tema
+    $number       = get_user_meta( $customer_id, $name_type . '_number', true );
+    $neighborhood = get_user_meta( $customer_id, $name_type . '_neighborhood', true );
+
+    $new_address = array();
+    
+    // Nome: Nome Completo
+    if ( $first_name || $last_name ) {
+        $new_address['first_name'] = 'Nome: ' . trim( $first_name . ' ' . $last_name );
+        $new_address['last_name']  = ''; 
+    }
+    
+    // Endereço: Rua, Numero - Complemento
+    if ( $address_1 ) {
+        $addr = 'Endereço: ' . $address_1;
+        if ( $number ) {
+            $addr .= ', ' . $number;
+        }
+        if ( $address_2 ) {
+            $addr .= ' - ' . $address_2;
+        }
+        $new_address['address_1'] = $addr;
+        $new_address['address_2'] = ''; 
+    }
+
+    // Bairro (apenas se preenchido)
+    if ( $neighborhood ) {
+        $new_address['neighborhood'] = 'Bairro: ' . $neighborhood;
+    } else {
+        $new_address['neighborhood'] = '';
+    }
+
+    if ( $city ) {
+        $new_address['city'] = 'Cidade: ' . $city;
+    }
+
+    if ( $state ) {
+        $new_address['state'] = 'Estado: ' . $state;
+    }
+
+    if ( $postcode ) {
+        $new_address['postcode'] = 'CEP: ' . $postcode;
+    }
+
+    // Não exibe o país na página de conta se for BR
+    $new_address['country'] = (isset($address['country']) && $address['country'] !== 'BR') ? $address['country'] : ''; 
+
+    return $new_address;
+}
+
+/**
+ * Define o formato de endereço para o Brasil para incluir o bairro e garantir a ordem.
+ * Nota: Isso afeta apenas quando wc_get_formatted_address é chamado, 
+ * mas como alteramos os valores apenas na Minha Conta, o impacto visual é controlado.
+ */
+add_filter( 'woocommerce_localisation_address_formats', 'gstore_br_address_format_with_neighborhood' );
+function gstore_br_address_format_with_neighborhood( $formats ) {
+    $formats['BR'] = "{first_name}\n{address_1}\n{neighborhood}\n{city}\n{state}\n{postcode}";
+    return $formats;
+}
+
+/**
+ * Adiciona suporte ao placeholder {neighborhood} no formato de endereço.
+ */
+add_filter( 'woocommerce_formatted_address_replacements', 'gstore_add_neighborhood_replacement', 10, 2 );
+function gstore_add_neighborhood_replacement( $replacements, $args ) {
+    if ( ! isset( $replacements['{neighborhood}'] ) ) {
+        $replacements['{neighborhood}'] = $args['neighborhood'] ?? '';
+    }
+    return $replacements;
+}
+
 // Ferramentas administrativas (thumbnails + updater via git) movidas para o plugin gstore-core.
