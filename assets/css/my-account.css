@@ -671,6 +671,52 @@ body.woocommerce-account .armastore-footer {
 	border-bottom: none;
 }
 
+/* Pagination */
+.gstore-myaccount__content .woocommerce-pagination {
+	display: flex;
+	justify-content: center;
+	margin-top: 24px;
+}
+
+.gstore-myaccount__content .woocommerce-pagination ul {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	list-style: none;
+	margin: 0;
+	padding: 0;
+}
+
+.gstore-myaccount__content .woocommerce-pagination li {
+	margin: 0;
+}
+
+.gstore-myaccount__content .woocommerce-pagination a,
+.gstore-myaccount__content .woocommerce-pagination span {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-width: 36px;
+	height: 36px;
+	padding: 0 10px;
+	border: 1px solid var(--gstore-color-border, #e6e6e6);
+	border-radius: var(--gstore-radius-base, 4px);
+	color: var(--gstore-color-text-primary, #1a1a1a);
+	text-decoration: none;
+	background: #fff;
+}
+
+.gstore-myaccount__content .woocommerce-pagination a:hover {
+	border-color: var(--gstore-color-accent, #ff5c00);
+	color: var(--gstore-color-accent, #ff5c00);
+}
+
+.gstore-myaccount__content .woocommerce-pagination .current {
+	background: var(--gstore-color-accent, #ff5c00);
+	border-color: var(--gstore-color-accent, #ff5c00);
+	color: #fff;
+}
+
 /* Buttons */
 .gstore-myaccount__content .woocommerce-button,
 .gstore-myaccount__content .button {
