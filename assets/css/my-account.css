@@ -678,16 +678,23 @@ body.woocommerce-account .armastore-footer {
 	margin-top: 24px;
 }
 
-.gstore-myaccount__content .woocommerce-pagination ul {
+.gstore-myaccount__content .woocommerce-pagination ul,
+.gstore-myaccount__content .woocommerce-pagination .page-numbers {
 	display: flex;
 	align-items: center;
-	gap: 12px;
+	gap: 14px;
 	list-style: none;
 	margin: 0;
 	padding: 0;
 }
 
-.gstore-myaccount__content .woocommerce-pagination li {
+.gstore-myaccount__content .woocommerce-pagination li,
+.gstore-myaccount__content .woocommerce-pagination .page-numbers li {
+	margin: 0 4px;
+}
+
+.gstore-myaccount__content .woocommerce-pagination a,
+.gstore-myaccount__content .woocommerce-pagination span {
 	margin: 0 2px;
 }
 
