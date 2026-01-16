@@ -1105,6 +1105,22 @@ body.woocommerce-account .armastore-footer {
 	.gstore-myaccount__content .woocommerce-orders-table {
 		display: block;
 		overflow-x: auto;
+		width: 100%;
+	}
+
+	.gstore-myaccount__content .woocommerce-orders-table,
+	.gstore-myaccount__content .woocommerce-orders-table tbody,
+	.gstore-myaccount__content .woocommerce-orders-table tr,
+	.gstore-myaccount__content .woocommerce-orders-table th,
+	.gstore-myaccount__content .woocommerce-orders-table td {
+		box-sizing: border-box;
+		width: 100%;
+	}
+
+	.gstore-myaccount__content .woocommerce-orders-table th,
+	.gstore-myaccount__content .woocommerce-orders-table td {
+		display: block;
+		min-width: 100%;
 	}
 }
 
