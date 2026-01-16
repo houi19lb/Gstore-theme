@@ -1122,6 +1122,17 @@ body.woocommerce-account .armastore-footer {
 		display: block;
 		min-width: 100%;
 	}
+
+	.gstore-myaccount__content .woocommerce-orders-table.shop_table_responsive td {
+		padding-left: 16px;
+		text-align: left;
+	}
+
+	.gstore-myaccount__content .woocommerce-orders-table.shop_table_responsive td::before {
+		display: block;
+		float: none;
+		margin-bottom: 6px;
+	}
 }
 
 @media (max-width: 480px) {
