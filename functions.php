@@ -3630,6 +3630,17 @@ if ( ! defined( 'GSTORE_CORE_ACTIVE' ) ) {
 }
 
 /**
+ * Blu: mantém carrinho até o pagamento ser concluído (link de pagamento).
+ */
+function gstore_blu_keep_cart_until_paid( $should_empty_cart, $order, $response = null ) {
+	if ( $order instanceof WC_Order && 'blu_checkout' === $order->get_payment_method() ) {
+		return false;
+	}
+	return $should_empty_cart;
+}
+add_filter( 'gstore_blu_empty_cart_on_create', 'gstore_blu_keep_cart_until_paid', 10, 3 );
+
+/**
  * Desabilita validação de CEP quando o campo não é obrigatório no pré-checkout
  */
 function gstore_validate_postcode_optional( $valid, $postcode, $country ) {

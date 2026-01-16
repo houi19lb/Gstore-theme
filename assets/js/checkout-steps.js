@@ -55,6 +55,7 @@
 	let lastRequestedShippingCep = ''; // CEP (somente dígitos) da última requisição de frete disparada
 	let lastCartSummaryData = null;
 	let lastNonEmptyCartSummaryData = null; // Mantém o último resumo com itens para não zerar o topo quando o Woo esvazia o carrinho
+	let bluInstallmentsChosen = false; // Só mostra "Você pagará" e Total após escolha de parcelas
 	let installmentQuotes = null;
 	let isLoadingInstallmentQuotes = false;
 	let lastInstallmentQuotesSignature = '';
@@ -531,6 +532,7 @@
 				$select.on('change', function() {
 					const val = $(this).val() || '1';
 					$hidden.val(val);
+					bluInstallmentsChosen = true;
 					$(document.body).trigger('update_checkout');
 				});
 			}
@@ -1277,8 +1279,7 @@
 			lastNonEmptyCartSummaryData = data;
 		}
 
-		// Usa base_total (total sem taxa de parcelamento) para o topo e linha "Total".
-		// O total real (com taxa) só aparece em "Você pagará" quando escolher parcelas.
+		// Usa base_total (total sem taxa de parcelamento) para o topo.
 		const baseTotal = data.base_total || data.total;
 
 		// Atualiza contagem de itens
@@ -1307,62 +1308,69 @@
 		}
 		$('.Gstore-checkout-summary-top__items').html(itemsHtml);
 
+		const isBluCheckout = data.payment_method === 'blu_checkout';
+		const selectedN = parseInt((data.installments && data.installments.selected) ? data.installments.selected : '1', 10) || 1;
+		const hasInstallmentsInfo = !!(data.installments && data.installments.per_installment);
+		const shouldShowInstallments = isBluCheckout && hasInstallmentsInfo && (bluInstallmentsChosen || selectedN > 1);
+		const shouldShowTotal = !isBluCheckout || shouldShowInstallments;
+
 		// Renderiza totais
-		let totalsHtml = `
+		const totalsRows = [];
+		totalsRows.push(`
 			<div class="Gstore-summary-row">
 				<span>Subtotal</span>
 				<span>${data.totals.subtotal}</span>
 			</div>
-		`;
+		`);
 
 		// Método de pagamento selecionado (Pix, Cartão, etc.)
 		if (data.payment_method_title) {
-			totalsHtml += `
+			totalsRows.push(`
 				<div class="Gstore-summary-row">
 					<span>Pagamento</span>
 					<span>${data.payment_method_title}</span>
 				</div>
-			`;
+			`);
 		}
 
 		if (data.totals.shipping) {
-			totalsHtml += `
+			totalsRows.push(`
 				<div class="Gstore-summary-row">
 					<span>Frete</span>
 					<span>${data.totals.shipping}</span>
 				</div>
-			`;
+			`);
+		}
+
+		if (shouldShowInstallments) {
+			totalsRows.push(`
+				<div class="Gstore-summary-row Gstore-summary-row--payable">
+					<span>Você pagará</span>
+					<span><strong>${selectedN}x de ${data.installments.per_installment}</strong></span>
+				</div>
+			`);
 		}
 
 		if (data.totals.discount) {
-			totalsHtml += `
+			totalsRows.push(`
 				<div class="Gstore-summary-row">
 					<span>Desconto</span>
 					<span>-${data.totals.discount}</span>
 				</div>
-			`;
+			`);
 		}
 
-		// Linha "Total" usa base_total (valor antes da taxa de parcelamento)
-		totalsHtml += `
-			<div class="Gstore-summary-row Gstore-summary-row--total">
-				<span>Total</span>
-				<span>${baseTotal}</span>
-			</div>
-		`;
-
-		// "Você pagará" só aparece quando cartão Blu e parcelas > 1, mostrando o total real com taxa
-		const selectedN = parseInt((data.installments && data.installments.selected) ? data.installments.selected : '1', 10) || 1;
-		if (data.payment_method === 'blu_checkout' && selectedN > 1) {
-			totalsHtml += `
-				<div class="Gstore-summary-row Gstore-summary-row--payable">
-					<span>Você pagará</span>
-					<span><strong>${selectedN}x de ${data.installments.per_installment}</strong> — ${data.total}</span>
+		if (shouldShowTotal) {
+			const totalValue = isBluCheckout ? data.total : baseTotal;
+			totalsRows.push(`
+				<div class="Gstore-summary-row Gstore-summary-row--total">
+					<span>Total</span>
+					<span>${totalValue}</span>
 				</div>
-			`;
+			`);
 		}
 
-		$('.Gstore-checkout-summary-top__totals').html(totalsHtml);
+		$('.Gstore-checkout-summary-top__totals').html(totalsRows.join(''));
 
 		updateInstallmentsPreview(data);
 		setTimeout(maybeFetchInstallmentQuotes, 0);
@@ -2062,6 +2070,10 @@
 		if ($form.length) {
 			$form.removeClass('processing').unblock();
 		}
+
+		// Recarrega o checkout/resumo ao fechar o modal
+		$(document.body).trigger('update_checkout');
+		setTimeout(loadCartSummary, 0);
 
 		// Se havia um pedido Blu criado, mostra aviso com link para pagar
 		if (lastBluOrderPaymentUrl) {

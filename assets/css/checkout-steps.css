@@ -374,6 +374,15 @@ body.woocommerce-checkout .Gstore-checkout-steps-shell {
 	color: var(--gstore-text-muted);
 }
 
+.Gstore-summary-row--payable {
+	margin-top: 6px;
+	font-size: var(--gstore-font-size-09);
+}
+
+.Gstore-summary-row--payable span:first-child {
+	color: var(--gstore-text-muted);
+}
+
 /* ===========================================
    STEPPER - INDICADOR DE ETAPAS
    =========================================== */
