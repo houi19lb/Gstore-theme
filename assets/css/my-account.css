@@ -1108,7 +1108,7 @@ body.woocommerce-account .armastore-footer {
 		width: 100% !important;
 		max-width: 100%;
 		min-width: 100%;
-		table-layout: fixed;
+		table-layout: auto;
 		margin: 0;
 		border-spacing: 0;
 		background: #fff;
@@ -1131,7 +1131,7 @@ body.woocommerce-account .armastore-footer {
 
 	.gstore-myaccount__content .woocommerce-orders-table.shop_table_responsive td {
 		padding: 14px 16px;
-		text-align: left;
+		text-align: left !important;
 	}
 
 	.gstore-myaccount__content .woocommerce-orders-table.shop_table_responsive td::before {
@@ -1146,9 +1146,17 @@ body.woocommerce-account .armastore-footer {
 		display: none;
 	}
 
+	.gstore-myaccount__content .woocommerce-orders-table.shop_table_responsive tbody {
+		display: block;
+		width: 100% !important;
+		max-width: 100%;
+	}
+
 	.gstore-myaccount__content .woocommerce-orders-table.shop_table_responsive tr {
 		display: block;
-		width: 100%;
+		width: 100% !important;
+		max-width: 100%;
+		min-width: 100% !important;
 	}
 
 	.gstore-myaccount__content .woocommerce-orders-table.shop_table_responsive .woocommerce-orders-table__cell-order-actions {
