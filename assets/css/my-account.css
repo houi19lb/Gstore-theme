@@ -696,6 +696,20 @@ body.woocommerce-account .armastore-footer {
 	transform: translateY(-1px);
 }
 
+/* Botão "Pagar" na página de visualização de pedidos (Order Again) */
+.gstore-myaccount__content .woocommerce-orders-table .woocommerce-button.order-again,
+.gstore-myaccount__content .woocommerce-order-details .woocommerce-button.order-again {
+	background: var(--gstore-color-accent, #ff5c00);
+	color: #fff;
+	border: 1px solid var(--gstore-color-accent, #ff5c00);
+}
+
+.gstore-myaccount__content .woocommerce-orders-table .woocommerce-button.order-again:hover,
+.gstore-myaccount__content .woocommerce-order-details .woocommerce-button.order-again:hover {
+	background: var(--gstore-color-accent-hover, #e05000);
+	border-color: var(--gstore-color-accent-hover, #e05000);
+}
+
 /* Forms */
 .gstore-myaccount__content .woocommerce-EditAccountForm,
 .gstore-myaccount__content .woocommerce-address-fields {
