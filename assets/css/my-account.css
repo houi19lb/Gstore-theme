@@ -1153,10 +1153,18 @@ body.woocommerce-account .armastore-footer {
 	}
 
 	.gstore-myaccount__content .woocommerce-orders-table.shop_table_responsive tr {
-		display: block;
+		display: flex;
+		flex-direction: column;
 		width: 100% !important;
 		max-width: 100%;
 		min-width: 100% !important;
+	}
+
+	.gstore-myaccount__content .woocommerce-orders-table.shop_table_responsive .woocommerce-orders-table__cell-order-number {
+		display: block !important;
+		order: -1;
+		font-weight: var(--gstore-font-weight-semibold, 600);
+		background: var(--gstore-color-bg-muted, #f0f2f5);
 	}
 
 	.gstore-myaccount__content .woocommerce-orders-table.shop_table_responsive .woocommerce-orders-table__cell-order-actions {
