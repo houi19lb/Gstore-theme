@@ -676,19 +676,26 @@ body.woocommerce-account .armastore-footer {
 	display: flex;
 	justify-content: center;
 	margin-top: 24px;
+	border: none !important;
+	background: transparent !important;
+	box-shadow: none !important;
 }
 
 .gstore-myaccount__content .woocommerce-pagination ul {
 	display: flex;
 	align-items: center;
-	gap: 8px;
+	gap: 12px;
 	list-style: none;
 	margin: 0;
-	padding: 4px 8px;
+	padding: 0;
+	border: none !important;
+	background: transparent !important;
 }
 
 .gstore-myaccount__content .woocommerce-pagination li {
 	margin: 0;
+	border: none !important;
+	background: transparent !important;
 }
 
 .gstore-myaccount__content .woocommerce-pagination a,
@@ -696,14 +703,16 @@ body.woocommerce-account .armastore-footer {
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
-	min-width: 36px;
-	height: 36px;
-	padding: 0 10px;
+	width: 38px;
+	height: 38px;
+	padding: 0;
+	margin: 0 4px;
 	border: 1px solid var(--gstore-color-border, #e6e6e6);
 	border-radius: var(--gstore-radius-base, 4px);
 	color: var(--gstore-color-text-primary, #1a1a1a);
 	text-decoration: none;
 	background: #fff;
+	box-sizing: border-box;
 }
 
 .gstore-myaccount__content .woocommerce-pagination a:hover {
