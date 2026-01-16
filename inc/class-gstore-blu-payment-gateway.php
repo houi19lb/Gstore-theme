@@ -432,11 +432,8 @@ class Gstore_Blu_Payment_Gateway extends WC_Payment_Gateway {
 		// Reduz estoque
 		wc_reduce_stock_levels( $order_id );
 		
-		$should_empty_cart = apply_filters( 'gstore_blu_empty_cart_on_create', true, $order, $response );
-		if ( $should_empty_cart && function_exists( 'WC' ) && WC()->cart ) {
-			// Limpa carrinho
-			WC()->cart->empty_cart();
-		}
+		// Limpa carrinho
+		WC()->cart->empty_cart();
 
 		// Define status como pendente (aguardando pagamento)
 		$order->update_status( 'pending', __( 'Aguardando pagamento no checkout da Blu.', 'gstore' ) );
