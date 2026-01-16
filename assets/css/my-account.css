@@ -1105,9 +1105,13 @@ body.woocommerce-account .armastore-footer {
 	.gstore-myaccount__content .woocommerce-orders-table {
 		display: block;
 		overflow-x: auto;
-		width: 100%;
+		width: 100% !important;
+		max-width: 100%;
 		min-width: 100%;
 		table-layout: fixed;
+		margin: 0;
+		border-spacing: 0;
+		background: #fff;
 	}
 
 	.gstore-myaccount__content .woocommerce-orders-table,
@@ -1116,7 +1120,7 @@ body.woocommerce-account .armastore-footer {
 	.gstore-myaccount__content .woocommerce-orders-table th,
 	.gstore-myaccount__content .woocommerce-orders-table td {
 		box-sizing: border-box;
-		width: 100%;
+		width: 100% !important;
 	}
 
 	.gstore-myaccount__content .woocommerce-orders-table th,
