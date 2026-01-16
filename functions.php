@@ -4399,27 +4399,24 @@ function gstore_get_myaccount_icon( $endpoint ) {
 
 /**
  * ============================================
- * FUNCIONALIDADE: PAGAR PEDIDOS ANTIGOS
+ * FUNCIONALIDADE: REFAZER COMPRA (PEDIDOS CANCELADOS)
  * ============================================
- * Permite pagar pedidos pendentes usando funcionalidade nativa "Order Again"
- * do WooCommerce, apenas para pedidos com menos de 1 dia.
+ * Permite refazer compras de pedidos cancelados usando "Order Again".
  */
 
 /**
- * Permite "Order Again" para pedidos com status pending e on-hold.
+ * Permite "Order Again" apenas para pedidos cancelados.
  *
  * Por padrão, o WooCommerce só permite "Order Again" para pedidos completed.
- * Esta função estende para permitir pending e on-hold também.
+ * Esta função ajusta para aceitar apenas pedidos cancelados.
  *
  * @param array $statuses Array de status permitidos.
  * @return array Status permitidos atualizados.
  */
-function gstore_allow_order_again_for_pending( $statuses ) {
-	$statuses[] = 'pending';
-	$statuses[] = 'on-hold';
-	return $statuses;
+function gstore_allow_order_again_for_cancelled( $statuses ) {
+	return array( 'cancelled' );
 }
-add_filter( 'woocommerce_valid_order_statuses_for_order_again', 'gstore_allow_order_again_for_pending', 10, 1 );
+add_filter( 'woocommerce_valid_order_statuses_for_order_again', 'gstore_allow_order_again_for_cancelled', 10, 1 );
 
 /**
  * Remove botões "Pagar" e "Cancelar" padrão do WooCommerce da tabela de pedidos.
@@ -4445,9 +4442,8 @@ function gstore_remove_default_order_actions( $actions, $order ) {
 add_filter( 'woocommerce_my_account_my_orders_actions', 'gstore_remove_default_order_actions', 5, 2 );
 
 /**
- * Adiciona botão "Pagar" na página de visualização de pedidos, apenas se:
- * - Pedido tem menos de 1 dia (24 horas)
- * - Status é pending ou on-hold
+ * Adiciona botão "Refazer compra" na lista de pedidos, apenas se:
+ * - Status é cancelled
  *
  * Usa funcionalidade nativa "Order Again" do WooCommerce.
  *
@@ -4455,41 +4451,26 @@ add_filter( 'woocommerce_my_account_my_orders_actions', 'gstore_remove_default_o
  * @param WC_Order $order   Objeto do pedido.
  * @return array Ações atualizadas.
  */
-function gstore_add_pay_button_to_order_actions( $actions, $order ) {
+function gstore_add_refazer_compra_button_to_order_actions( $actions, $order ) {
 	if ( ! $order instanceof WC_Order ) {
 		return $actions;
 	}
 
-	// Verificar se pedido tem menos de 1 dia (24 horas)
-	$order_date = $order->get_date_created();
-	if ( ! $order_date ) {
-		return $actions;
-	}
-
-	$order_timestamp = $order_date->getTimestamp();
-	$current_timestamp = current_time( 'timestamp' );
-	$hours_diff = ( $current_timestamp - $order_timestamp ) / HOUR_IN_SECONDS;
-
-	// Se pedido tem mais de 24 horas, não mostrar botão
-	if ( $hours_diff >= 24 ) {
-		return $actions;
-	}
-
-	// Verificar se status é pending ou on-hold
+	// Verificar se status é cancelled
 	$order_status = $order->get_status();
-	if ( ! in_array( $order_status, array( 'pending', 'on-hold' ), true ) ) {
+	if ( 'cancelled' !== $order_status ) {
 		return $actions;
 	}
 
-	// Adicionar ação "Pagar" usando sistema nativo order_again
+	// Adicionar ação "Refazer compra" usando sistema nativo order_again
 	$actions['order-again'] = array(
 		'url'  => wp_nonce_url( add_query_arg( 'order_again', $order->get_id() ), 'woocommerce-order_again' ),
-		'name' => __( 'Pagar', 'gstore' ),
+		'name' => __( 'Refazer compra', 'gstore' ),
 	);
 
 	return $actions;
 }
-add_filter( 'woocommerce_my_account_my_orders_actions', 'gstore_add_pay_button_to_order_actions', 10, 2 );
+add_filter( 'woocommerce_my_account_my_orders_actions', 'gstore_add_refazer_compra_button_to_order_actions', 10, 2 );
 
 /**
  * Valida estoque antes de adicionar produtos ao carrinho via "Order Again".
@@ -4532,7 +4513,7 @@ function gstore_validate_order_again_stock( $cart_item_data, $order_item, $order
 		wc_add_notice(
 			sprintf(
 				/* translators: %s: nome do produto */
-				__( 'O produto "%s" está sem estoque no momento.', 'gstore' ),
+				__( 'Não existe mais estoque para o produto "%s".', 'gstore' ),
 				$order_item->get_name()
 			),
 			'error'
@@ -4547,7 +4528,7 @@ function gstore_validate_order_again_stock( $cart_item_data, $order_item, $order
 			wc_add_notice(
 				sprintf(
 					/* translators: 1: nome do produto, 2: quantidade disponível */
-					__( 'Apenas %2$d unidade(s) disponível(is) do produto "%1$s".', 'gstore' ),
+					__( 'Apenas %2$d unidade(s) disponível(is) do produto "%1$s". Ajustamos a quantidade.', 'gstore' ),
 					$order_item->get_name(),
 					$stock_quantity
 				),
@@ -4567,16 +4548,15 @@ function gstore_validate_order_again_stock( $cart_item_data, $order_item, $order
 add_filter( 'woocommerce_order_again_cart_item_data', 'gstore_validate_order_again_stock', 10, 3 );
 
 /**
- * Redireciona para checkout após "Order Again" de pedidos com menos de 1 dia.
+ * Redireciona para o carrinho após "Order Again" de pedidos cancelados.
  *
- * Similar ao comportamento de "Comprar agora" (gstore_buy_now).
- * Verifica se a requisição veio de order_again e se o pedido tem < 1 dia.
+ * Verifica se a requisição veio de order_again e se o pedido está cancelado.
  *
  * @param string $url URL de redirecionamento.
- * @return string URL do checkout ou URL original.
+ * @return string URL do carrinho ou URL original.
  */
-function gstore_redirect_order_again_to_checkout( $url ) {
-	if ( ! class_exists( 'WooCommerce' ) || ! function_exists( 'wc_get_checkout_url' ) ) {
+function gstore_redirect_order_again_to_cart( $url ) {
+	if ( ! class_exists( 'WooCommerce' ) || ! function_exists( 'wc_get_cart_url' ) ) {
 		return $url;
 	}
 
@@ -4609,31 +4589,16 @@ function gstore_redirect_order_again_to_checkout( $url ) {
 		return $url;
 	}
 
-	// Verificar se pedido tem menos de 1 dia
-	$order_date = $order->get_date_created();
-	if ( ! $order_date ) {
-		return $url;
-	}
-
-	$order_timestamp = $order_date->getTimestamp();
-	$current_timestamp = current_time( 'timestamp' );
-	$hours_diff = ( $current_timestamp - $order_timestamp ) / HOUR_IN_SECONDS;
-
-	// Se pedido tem mais de 24 horas, não redirecionar (usar comportamento padrão)
-	if ( $hours_diff >= 24 ) {
-		return $url;
-	}
-
-	// Verificar se status é pending ou on-hold
+	// Verificar se status é cancelled
 	$order_status = $order->get_status();
-	if ( ! in_array( $order_status, array( 'pending', 'on-hold' ), true ) ) {
+	if ( 'cancelled' !== $order_status ) {
 		return $url;
 	}
 
-	// Redirecionar para checkout
-	return wc_get_checkout_url();
+	// Redirecionar para carrinho
+	return wc_get_cart_url();
 }
-add_filter( 'woocommerce_add_to_cart_redirect', 'gstore_redirect_order_again_to_checkout', 25 );
+add_filter( 'woocommerce_add_to_cart_redirect', 'gstore_redirect_order_again_to_cart', 25 );
 
 /**
  * ============================================
