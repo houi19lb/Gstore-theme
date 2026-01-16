@@ -705,26 +705,35 @@ body.woocommerce-account .armastore-footer {
 	display: flex !important;
 	align-items: center !important;
 	justify-content: center !important;
-	width: 38px !important;
-	height: 38px !important;
-	padding: 0 !important;
-	border: 1px solid var(--gstore-color-border, #e6e6e6) !important;
-	border-radius: var(--gstore-radius-base, 4px) !important;
-	color: var(--gstore-color-text-primary, #1a1a1a) !important;
+	min-width: 32px !important;
+	height: 40px !important;
+	padding: 0 8px !important;
+	border: 1px solid #d3ced2 !important;
+	border-radius: 4px !important;
+	color: #1a1a1a !important;
 	text-decoration: none !important;
 	background: #fff !important;
 	box-sizing: border-box !important;
+	font-size: 14px !important;
+	font-weight: 500 !important;
+	margin: 0 !important;
 }
 
 .gstore-myaccount__content .woocommerce-pagination a:hover {
-	border-color: var(--gstore-color-accent, #ff5c00);
-	color: var(--gstore-color-accent, #ff5c00);
+	background: #f0f2f5 !important;
+	border-color: #1a1a1a !important;
 }
 
 .gstore-myaccount__content .woocommerce-pagination .current {
-	background: var(--gstore-color-accent, #ff5c00);
-	border-color: var(--gstore-color-accent, #ff5c00);
-	color: #fff;
+	background: #f0f2f5 !important;
+	border-color: #1a1a1a !important;
+	color: #1a1a1a !important;
+}
+
+.gstore-myaccount__content .woocommerce-pagination .dots {
+	border: none !important;
+	background: transparent !important;
+	min-width: 20px !important;
 }
 
 /* Buttons */

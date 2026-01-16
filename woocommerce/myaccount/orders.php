@@ -82,8 +82,8 @@ if ( $has_orders ) :
 				'format'    => '',
 				'current'   => max( 1, (int) $current_page ),
 				'total'     => (int) $customer_orders->max_num_pages,
-				'prev_text' => '&#8249;',
-				'next_text' => '&#8250;',
+				'prev_text' => '&larr;',
+				'next_text' => '&rarr;',
 				'type'      => 'list',
 			)
 		);
