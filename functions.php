@@ -3996,7 +3996,7 @@ if ( ! function_exists( 'gstore_normalize_shipping_mode' ) ) {
 			return 'land';
 		}
 
-		return 'land';
+		return '';
 	}
 }
 
@@ -4135,6 +4135,9 @@ if ( ! function_exists( 'gstore_sync_cart_shipping_modes' ) ) {
 		foreach ( $posted_modes as $cart_item_key => $mode ) {
 			$cart_item_key = (string) $cart_item_key;
 			$mode          = gstore_normalize_shipping_mode( $mode );
+			if ( '' === $mode ) {
+				continue;
+			}
 
 			if ( ! isset( WC()->cart->cart_contents[ $cart_item_key ] ) ) {
 				continue;
@@ -4214,6 +4217,9 @@ if ( ! function_exists( 'gstore_get_cart_item_shipping_cost_display' ) ) {
 		}
 
 		$mode = gstore_normalize_shipping_mode( $mode );
+		if ( '' === $mode ) {
+			return '';
+		}
 		foreach ( $rates as $rate ) {
 			if ( isset( $rate['mode'] ) && $rate['mode'] === $mode ) {
 				if ( ! empty( $rate['cost_formatted'] ) ) {
@@ -4262,6 +4268,9 @@ if ( ! function_exists( 'gstore_apply_cart_freight_fees' ) ) {
 
 			$mode = gstore_get_cart_item_shipping_mode( $cart_item );
 			$mode = gstore_normalize_shipping_mode( $mode );
+			if ( '' === $mode ) {
+				continue;
+			}
 
 			$selected_cost = 0.0;
 			foreach ( $rates as $rate ) {

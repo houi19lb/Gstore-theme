@@ -69,7 +69,7 @@
 		if (value === 'ground' || value === 'land' || value === 'terrestre') {
 			return 'land';
 		}
-		return 'land';
+		return '';
 	}
 
 	function fetchRatesForItem(itemEl, cep) {
@@ -108,12 +108,14 @@
 		const fixedContainer = shippingBlock.querySelector('[data-gstore-shipping-fixed]');
 		const ratesInput = shippingBlock.querySelector(`input[name="gstore_shipping_rates[${cartItemKey}]"]`);
 
-		const normalizedRates = (rates || []).map((rate) => ({
-			mode: normalizeRateMode(rate.mode),
-			label: rate.label || '',
-			cost: rate.cost || '',
-			cost_formatted: rate.cost_formatted || '',
-		}));
+		const normalizedRates = (rates || [])
+			.map((rate) => ({
+				mode: normalizeRateMode(rate.mode),
+				label: rate.label || '',
+				cost: rate.cost || '',
+				cost_formatted: rate.cost_formatted || '',
+			}))
+			.filter((rate) => rate.mode);
 
 		if (ratesInput) {
 			ratesInput.value = JSON.stringify(normalizedRates);
@@ -126,7 +128,7 @@
 		const hasMultiple = normalizedRates.length > 1;
 		const optionsHtml = hasMultiple
 			? normalizedRates.map((rate) => {
-				const mode = rate.mode;
+					const mode = rate.mode;
 				const label = rate.label || (mode === 'air' ? 'Frete Aéreo' : 'Frete Terrestre');
 				const cost = rate.cost_formatted || '-';
 				const checked = selectedMode === mode ? 'checked' : '';
