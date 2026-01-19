@@ -3096,9 +3096,22 @@ function gstore_enqueue_checkout_assets() {
 		// Localiza script do calculador
 		global $product;
 		$product_id = 0;
+	$quantity = 1;
 		if ( is_product() && $product ) {
 			$product_id = $product->get_id();
 		}
+	if ( function_exists( 'is_checkout' ) && is_checkout() && function_exists( 'WC' ) && WC()->cart ) {
+		$cart_items = WC()->cart->get_cart();
+		if ( ! empty( $cart_items ) ) {
+			$first_item = reset( $cart_items );
+			if ( ! empty( $first_item['product_id'] ) ) {
+				$product_id = (int) $first_item['product_id'];
+			}
+			if ( ! empty( $first_item['quantity'] ) ) {
+				$quantity = (int) $first_item['quantity'];
+			}
+		}
+	}
 
 		wp_localize_script(
 			'gstore-shipping-calculator',
@@ -3107,15 +3120,14 @@ function gstore_enqueue_checkout_assets() {
 				'ajaxUrl'    => admin_url( 'admin-ajax.php' ),
 				'nonce'      => wp_create_nonce( 'gstore_shipping_calculator' ),
 				'productId'  => $product_id,
+			'quantity'   => $quantity,
 				'i18n'       => array(
 					'calculate'        => __( 'Calcular frete', 'gstore' ),
 					'calculating'      => __( 'Calculando...', 'gstore' ),
 					'invalidCep'       => __( 'CEP inválido. Por favor, informe um CEP válido com 8 dígitos.', 'gstore' ),
 					'error'            => __( 'Erro ao calcular frete. Tente novamente.', 'gstore' ),
 					'frete'            => __( 'Frete', 'gstore' ),
-					'region'           => __( 'Região', 'gstore' ),
-					'estimatedDelivery' => __( 'Prazo estimado', 'gstore' ),
-					'days'             => __( 'dias úteis', 'gstore' ),
+				'destination'      => __( 'Destino', 'gstore' ),
 				),
 			)
 		);

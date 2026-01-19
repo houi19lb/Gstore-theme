@@ -114,19 +114,16 @@
 				action: 'gstore_calculate_shipping',
 				nonce: this.options.nonce,
 				postcode: cep.replace(/\D/g, ''),
+				product_id: this.options.productId || 0,
+				quantity: this.options.quantity || 1
 			};
 
-			// Adiciona product_id se disponível
-			if (this.options.productId > 0) {
-				data.product_id = this.options.productId;
-				
-				// Tenta obter quantidade do formulário de produto
-				const quantityInput = $('input[name="quantity"], .quantity input');
-				if (quantityInput.length) {
-					const qty = parseInt(quantityInput.val(), 10);
-					if (qty > 0) {
-						data.quantity = qty;
-					}
+			// Tenta obter quantidade do formulário de produto
+			const quantityInput = $('input[name="quantity"], .quantity input');
+			if (quantityInput.length) {
+				const qty = parseInt(quantityInput.val(), 10);
+				if (qty > 0) {
+					data.quantity = qty;
 				}
 			}
 
@@ -176,6 +173,16 @@
 
 		showResult(data) {
 			const i18n = this.options.i18n;
+			const rate = Array.isArray(data.rates) && data.rates.length ? data.rates[0] : null;
+			const destination = data.destination || {};
+			const city = destination.city ? String(destination.city).trim() : '';
+			const state = destination.state ? String(destination.state).trim() : '';
+			const destinationLabel = city && state ? `${city}/${state}` : (city || state);
+
+			if (!rate || !rate.cost_formatted) {
+				this.showError(this.options.i18n.error || 'Erro ao calcular frete. Tente novamente.');
+				return;
+			}
 			
 			const html = `
 				<div class="gstore-shipping-calculator__result-content">
@@ -184,21 +191,14 @@
 							<i class="fa-solid fa-truck" aria-hidden="true"></i>
 							${i18n.frete || 'Frete'}:
 						</span>
-						<strong class="gstore-shipping-calculator__result-value">${data.cost_formatted}</strong>
+						<strong class="gstore-shipping-calculator__result-value">${rate.cost_formatted}</strong>
 					</div>
 					<div class="gstore-shipping-calculator__result-row">
 						<span class="gstore-shipping-calculator__result-label">
 							<i class="fa-solid fa-map-marker-alt" aria-hidden="true"></i>
-							${i18n.region || 'Região'}:
+							${i18n.destination || 'Destino'}:
 						</span>
-						<span class="gstore-shipping-calculator__result-value">${data.region_label}</span>
-					</div>
-					<div class="gstore-shipping-calculator__result-row">
-						<span class="gstore-shipping-calculator__result-label">
-							<i class="fa-solid fa-calendar-days" aria-hidden="true"></i>
-							${i18n.estimatedDelivery || 'Prazo estimado'}:
-						</span>
-						<span class="gstore-shipping-calculator__result-value">${data.estimated_days} ${i18n.days || 'dias úteis'}</span>
+						<span class="gstore-shipping-calculator__result-value">${destinationLabel || '-'}</span>
 					</div>
 				</div>
 			`;

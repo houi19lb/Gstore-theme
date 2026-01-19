@@ -771,6 +771,26 @@
 	/**
 	 * Calcula o frete baseado no CEP informado
 	 */
+	function getCheckoutShippingItem() {
+		let productId = 0;
+		let quantity = 1;
+
+		if (lastCartSummaryData && Array.isArray(lastCartSummaryData.items) && lastCartSummaryData.items.length) {
+			const item = lastCartSummaryData.items[0];
+			const rawProductId = item.product_id || item.productId || item.id;
+			productId = parseInt(rawProductId, 10) || 0;
+			quantity = parseInt(item.quantity, 10) || 1;
+		}
+
+		if (!productId) {
+			const $firstCartItem = $('.woocommerce-checkout-review-order-table .cart_item').first();
+			const domProductId = $firstCartItem.data('product_id') || $firstCartItem.attr('data-product_id');
+			productId = parseInt(domProductId, 10) || 0;
+		}
+
+		return { productId, quantity };
+	}
+
 	function calculateShipping(postcode) {
 		// Limpa CEP (remove caracteres não numéricos)
 		const cleanCep = postcode.replace(/\D/g, '');
@@ -799,10 +819,13 @@
 			? gstoreShippingCalculator.nonce
 			: '';
 		
+		const checkoutItem = getCheckoutShippingItem();
 		const data = {
 			action: 'gstore_calculate_shipping',
 			nonce: nonce,
-			postcode: cleanCep
+			postcode: cleanCep,
+			product_id: checkoutItem.productId,
+			quantity: checkoutItem.quantity
 		};
 
 		$.ajax({
@@ -814,6 +837,18 @@
 				isCalculatingShipping = false;
 				
 				if (response.success && response.data) {
+					const rate = Array.isArray(response.data.rates) && response.data.rates.length
+						? response.data.rates[0]
+						: null;
+
+					if (!rate || !rate.cost_formatted) {
+						showShippingError('Não foi possível calcular o frete para este destino.');
+						calculatedShipping = null;
+						lastCalculatedShippingCep = '';
+						lastCalculatedDestination = null;
+						return;
+					}
+
 					calculatedShipping = response.data;
 					lastCalculatedShippingCep = cleanCep;
 					lastCalculatedDestination = response.data.destination || null;
@@ -878,6 +913,17 @@
 		const $postcodeField = $('#billing_postcode_field');
 		if (!$postcodeField.length) return;
 
+		const rate = Array.isArray(data.rates) && data.rates.length ? data.rates[0] : null;
+		const destination = data.destination || {};
+		const city = destination.city ? String(destination.city).trim() : '';
+		const state = destination.state ? String(destination.state).trim() : '';
+		const destinationLabel = city && state ? `${city}/${state}` : (city || state);
+
+		if (!rate || !rate.cost_formatted) {
+			showShippingError('Não foi possível calcular o frete para este destino.');
+			return;
+		}
+
 		// Busca por um resultado existente
 		let $shippingResult = $('.Gstore-shipping-result').first();
 		
@@ -894,17 +940,12 @@
 				<div class="Gstore-shipping-result__row">
 					<i class="fa-solid fa-truck"></i>
 					<span class="Gstore-shipping-result__label">Frete:</span>
-					<strong class="Gstore-shipping-result__value">${data.cost_formatted}</strong>
+					<strong class="Gstore-shipping-result__value">${rate.cost_formatted}</strong>
 				</div>
 				<div class="Gstore-shipping-result__row">
 					<i class="fa-solid fa-map-marker-alt"></i>
-					<span class="Gstore-shipping-result__label">Região:</span>
-					<span class="Gstore-shipping-result__value">${data.region_label}</span>
-				</div>
-				<div class="Gstore-shipping-result__row">
-					<i class="fa-solid fa-calendar-days"></i>
-					<span class="Gstore-shipping-result__label">Prazo:</span>
-					<span class="Gstore-shipping-result__value">${data.estimated_days} dias úteis</span>
+					<span class="Gstore-shipping-result__label">Destino:</span>
+					<span class="Gstore-shipping-result__value">${destinationLabel || '-'}</span>
 				</div>
 			</div>
 		`).removeClass('has-error').addClass('is-visible');
