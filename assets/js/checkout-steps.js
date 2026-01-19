@@ -53,6 +53,7 @@
 	let isCalculatingShipping = false; // Flag para evitar múltiplos cálculos simultâneos
 	let lastCalculatedShippingCep = ''; // CEP (somente dígitos) do último frete calculado com sucesso
 	let lastRequestedShippingCep = ''; // CEP (somente dígitos) da última requisição de frete disparada
+	let lastCalculatedDestination = null; // Destino (cidade/UF) do último frete calculado
 	let lastCartSummaryData = null;
 	let lastNonEmptyCartSummaryData = null; // Mantém o último resumo com itens para não zerar o topo quando o Woo esvazia o carrinho
 	let installmentQuotes = null;
@@ -815,6 +816,7 @@
 				if (response.success && response.data) {
 					calculatedShipping = response.data;
 					lastCalculatedShippingCep = cleanCep;
+					lastCalculatedDestination = response.data.destination || null;
 					showShippingResult(response.data);
 					updateSummaryWithShipping(response.data);
 				} else {
@@ -824,6 +826,7 @@
 					showShippingError(message);
 					calculatedShipping = null;
 					lastCalculatedShippingCep = '';
+					lastCalculatedDestination = null;
 				}
 			},
 			error: function() {
@@ -831,6 +834,7 @@
 				showShippingError('Erro ao calcular frete. Tente novamente.');
 				calculatedShipping = null;
 				lastCalculatedShippingCep = '';
+				lastCalculatedDestination = null;
 			}
 		});
 	}
@@ -937,6 +941,14 @@
 	 */
 	function hideShippingResult() {
 		$('.Gstore-shipping-result').removeClass('is-visible has-error').html('');
+	}
+
+	function getDestinationLabel(destination) {
+		if (!destination) return '';
+		const city = destination.city ? String(destination.city).trim() : '';
+		const state = destination.state ? String(destination.state).trim() : '';
+		if (city && state) return `${city}/${state}`;
+		return city || state || '';
 	}
 
 	/**
@@ -1168,6 +1180,15 @@
 							$fieldWrapper.addClass('woocommerce-invalid');
 							if (!$firstError) $firstError = $input;
 							showNotice('Por favor, aguarde o cálculo do frete ou verifique se o CEP está correto.', 'error');
+						} else if (lastCalculatedShippingCep && lastCalculatedShippingCep !== cep) {
+							isValid = false;
+							$fieldWrapper.addClass('woocommerce-invalid');
+							if (!$firstError) $firstError = $input;
+							const destinationLabel = getDestinationLabel(lastCalculatedDestination);
+							const destinationText = destinationLabel
+								? `para ${destinationLabel}`
+								: 'para outro CEP';
+							showNotice(`O frete foi calculado ${destinationText}. Atualize o CEP para recalcular.`, 'error');
 						}
 					}
 				} else if (isRequired) {
@@ -1561,6 +1582,8 @@
 			if (value.replace(/\D/g, '').length < 8) {
 				hideShippingResult();
 				calculatedShipping = null;
+				lastCalculatedDestination = null;
+				lastCalculatedShippingCep = '';
 			}
 		});
 

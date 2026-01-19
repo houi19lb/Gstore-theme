@@ -24,6 +24,7 @@
 			if (typeof gstoreShippingCalculator !== 'undefined') {
 				this.options = $.extend(this.options, gstoreShippingCalculator);
 			}
+			this.lastDestination = null;
 
 			this.init();
 		}
@@ -79,6 +80,19 @@
 			return cleanCep.length === 8;
 		}
 
+		resolveAjaxUrl() {
+			if (this.options.ajaxUrl) {
+				return this.options.ajaxUrl;
+			}
+			if (typeof gstoreShippingCalculator !== 'undefined' && gstoreShippingCalculator.ajaxUrl) {
+				return gstoreShippingCalculator.ajaxUrl;
+			}
+			if (typeof wc_checkout_params !== 'undefined' && wc_checkout_params.ajax_url) {
+				return wc_checkout_params.ajax_url;
+			}
+			return '/wp-admin/admin-ajax.php';
+		}
+
 		calculate() {
 			const cep = this.cepInput.val().trim();
 
@@ -118,7 +132,7 @@
 
 			// Faz requisição AJAX
 			$.ajax({
-				url: this.options.ajaxUrl,
+				url: this.resolveAjaxUrl(),
 				type: 'POST',
 				data: data,
 				dataType: 'json',
@@ -126,17 +140,20 @@
 					this.setLoading(false);
 
 					if (response.success && response.data) {
+						this.lastDestination = response.data.destination || null;
 						this.showResult(response.data);
 					} else {
 						const message = response.data && response.data.message 
 							? response.data.message 
 							: (this.options.i18n.error || 'Erro ao calcular frete. Tente novamente.');
 						this.showError(message);
+						this.lastDestination = null;
 					}
 				},
 				error: () => {
 					this.setLoading(false);
 					this.showError(this.options.i18n.error || 'Erro ao calcular frete. Tente novamente.');
+					this.lastDestination = null;
 				}
 			});
 		}
