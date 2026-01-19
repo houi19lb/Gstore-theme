@@ -42,7 +42,10 @@ if ( function_exists( 'wc_wp_theme_get_element_class_name' ) ) {
 				<div class="Gstore-cart-main">
 					<?php
 					$gstore_cart_postcode = '';
-					if ( function_exists( 'WC' ) && WC()->customer ) {
+					if ( function_exists( 'WC' ) && WC()->session ) {
+						$gstore_cart_postcode = (string) WC()->session->get( 'gstore_freight_postcode', '' );
+					}
+					if ( ! $gstore_cart_postcode && function_exists( 'WC' ) && WC()->customer ) {
 						$gstore_cart_postcode = (string) WC()->customer->get_shipping_postcode();
 					}
 					if ( '' !== $gstore_cart_postcode ) {
@@ -253,9 +256,9 @@ if ( function_exists( 'wc_wp_theme_get_element_class_name' ) ) {
 																<span class="Gstore-cart-card__shipping-text">
 																	<?php echo esc_html( function_exists( 'gstore_get_cart_item_shipping_label' ) ? gstore_get_cart_item_shipping_label( $mode ) : $mode ); ?>
 																</span>
-																<?php if ( ! empty( $freight_costs[ $mode ] ) ) : ?>
-																	<span class="Gstore-cart-card__shipping-price"><?php echo wp_kses_post( $freight_costs[ $mode ] ); ?></span>
-																<?php endif; ?>
+																<span class="Gstore-cart-card__shipping-price">
+																	<?php echo wp_kses_post( isset( $freight_costs[ $mode ] ) ? $freight_costs[ $mode ] : wc_price( 0 ) ); ?>
+																</span>
 															</label>
 														<?php endforeach; ?>
 													</div>
@@ -264,9 +267,9 @@ if ( function_exists( 'wc_wp_theme_get_element_class_name' ) ) {
 														<span class="Gstore-cart-card__shipping-text">
 															<?php echo esc_html( function_exists( 'gstore_get_cart_item_shipping_label' ) ? gstore_get_cart_item_shipping_label( 'land' ) : __( 'Terrestre', 'gstore' ) ); ?>
 														</span>
-														<?php if ( ! empty( $freight_costs['land'] ) ) : ?>
-															<span class="Gstore-cart-card__shipping-price"><?php echo wp_kses_post( $freight_costs['land'] ); ?></span>
-														<?php endif; ?>
+														<span class="Gstore-cart-card__shipping-price">
+															<?php echo wp_kses_post( isset( $freight_costs['land'] ) ? $freight_costs['land'] : wc_price( 0 ) ); ?>
+														</span>
 													</div>
 												<?php endif; ?>
 											</div>
