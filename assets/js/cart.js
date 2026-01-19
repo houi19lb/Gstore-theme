@@ -6,6 +6,7 @@
 	'use strict';
 
 	let cartUpdateTimeout = null;
+	let cartUpdateRequest = null;
 
 	/**
 	 * Atualiza o carrinho automaticamente (AJAX).
@@ -36,15 +37,43 @@
 		updateInput.value = 'Update Cart';
 		form.appendChild(updateInput);
 
-		const actionUrl = form.action || (typeof wc_cart_params !== 'undefined' ? wc_cart_params.cart_url : null) || window.location.href;
+		const wcAjaxBase = (typeof wc_cart_params !== 'undefined' && wc_cart_params.wc_ajax_url)
+			? wc_cart_params.wc_ajax_url.toString()
+			: '';
+		const ajaxEndpoint = wcAjaxBase ? wcAjaxBase.replace('%%endpoint%%', 'update_cart') : '';
+		const actionUrl = ajaxEndpoint || form.action || (typeof wc_cart_params !== 'undefined' ? wc_cart_params.cart_url : null) || window.location.href;
+		const dataType = ajaxEndpoint ? 'json' : 'html';
 
-		jQuery.ajax({
+		if (cartUpdateRequest && cartUpdateRequest.readyState !== 4) {
+			cartUpdateRequest.abort();
+		}
+
+		cartUpdateRequest = jQuery.ajax({
 			type: form.method || 'POST',
 			url: actionUrl,
 			data: jQuery(form).serialize(),
-			dataType: 'html',
+			dataType: dataType,
 			success: function (response) {
-				if (typeof update_wc_div === 'function') {
+				if (ajaxEndpoint && response) {
+					if (response.fragments) {
+						jQuery.each(response.fragments, function (selector, html) {
+							jQuery(selector).replaceWith(html);
+						});
+					} else if (response.cart_html && typeof update_wc_div === 'function') {
+						update_wc_div(response.cart_html);
+					} else if (response.cart_html) {
+						const $response = jQuery(response.cart_html);
+						const $cartContent = $response.find('.woocommerce-cart-form, .Gstore-cart-form');
+						const $cartTotals = $response.find('.cart_totals, .Gstore-cart-sidebar');
+
+						if ($cartContent.length > 0) {
+							$form.replaceWith($cartContent);
+						}
+						if ($cartTotals.length > 0) {
+							jQuery('.cart_totals, .Gstore-cart-sidebar').replaceWith($cartTotals);
+						}
+					}
+				} else if (typeof update_wc_div === 'function') {
 					update_wc_div(response);
 				} else {
 					const $response = jQuery(response);
@@ -57,12 +86,12 @@
 					if ($cartTotals.length > 0) {
 						jQuery('.cart_totals, .Gstore-cart-sidebar').replaceWith($cartTotals);
 					}
-
-					setTimeout(() => {
-						initQuantitySelectors();
-						initShippingChoices();
-					}, 100);
 				}
+
+				setTimeout(() => {
+					initQuantitySelectors();
+					initShippingChoices();
+				}, 100);
 
 				jQuery(document.body).trigger('updated_wc_div');
 			},
@@ -88,7 +117,7 @@
 	 */
 	function scheduleCartUpdate() {
 		clearTimeout(cartUpdateTimeout);
-		cartUpdateTimeout = setTimeout(updateCartAutomatically, 400);
+		cartUpdateTimeout = setTimeout(updateCartAutomatically, 600);
 	}
 
 	/**
@@ -200,7 +229,7 @@
 		let updateTimeout = null;
 		const debouncedUpdateCart = () => {
 			clearTimeout(updateTimeout);
-			updateTimeout = setTimeout(scheduleCartUpdate, 200);
+			updateTimeout = setTimeout(scheduleCartUpdate, 300);
 		};
 
 		// Função para definir valor
