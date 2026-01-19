@@ -8,6 +8,7 @@
 	let cartUpdateTimeout = null;
 	let ratesSyncInProgress = false;
 	let suppressNextRatesRefresh = false;
+	const CART_CEP_STORAGE_KEY = 'gstore_cart_cep';
 
 	function getCartCep() {
 		const cepInput = document.querySelector('.gstore-shipping-calculator__cep');
@@ -18,6 +19,36 @@
 		const raw = cepInput.value || '';
 		const digits = raw.replace(/\D/g, '');
 		return digits.length === 8 ? digits : '';
+	}
+
+	function restoreCartCep() {
+		const cepInput = document.querySelector('.gstore-shipping-calculator__cep');
+		if (!cepInput || cepInput.value) {
+			return;
+		}
+
+		if (typeof window === 'undefined' || !window.localStorage) {
+			return;
+		}
+
+		const saved = window.localStorage.getItem(CART_CEP_STORAGE_KEY) || '';
+		const digits = saved.replace(/\D/g, '');
+		if (digits.length !== 8) {
+			return;
+		}
+
+		cepInput.value = digits.replace(/(\d{5})(\d{3})/, '$1-$2');
+	}
+
+	function storeCartCep(cep) {
+		if (typeof window === 'undefined' || !window.localStorage) {
+			return;
+		}
+
+		const digits = String(cep || '').replace(/\D/g, '');
+		if (digits.length === 8) {
+			window.localStorage.setItem(CART_CEP_STORAGE_KEY, digits);
+		}
 	}
 
 	function getShippingAjaxUrl() {
@@ -103,7 +134,7 @@
 			if (optionsContainer) {
 				optionsContainer.innerHTML = normalizedRates.map((rate) => {
 					const mode = rate.mode;
-					const label = rate.label || (mode === 'air' ? 'Frete Aereo' : 'Frete Terrestre');
+					const label = rate.label || (mode === 'air' ? 'Frete Aéreo' : 'Frete Terrestre');
 					const cost = rate.cost_formatted || '-';
 					const checked = selectedMode === mode ? 'checked' : '';
 					return `
@@ -120,7 +151,7 @@
 			}
 		} else {
 			const onlyRate = normalizedRates[0];
-			const label = onlyRate.label || (onlyRate.mode === 'air' ? 'Frete Aereo' : 'Frete Terrestre');
+			const label = onlyRate.label || (onlyRate.mode === 'air' ? 'Frete Aéreo' : 'Frete Terrestre');
 			const cost = onlyRate.cost_formatted || '-';
 			if (fixedContainer) {
 				fixedContainer.innerHTML = `
@@ -145,6 +176,8 @@
 		if (!cep) {
 			return;
 		}
+
+		storeCartCep(cep);
 
 		const cartItems = document.querySelectorAll('[data-gstore-shipping-item]');
 		if (!cartItems.length) {
@@ -405,6 +438,7 @@
 			// Atualiza o carrinho automaticamente se o valor mudou
 			if (value !== oldValue) {
 				debouncedUpdateCart();
+				calculateRatesForCart(true);
 			}
 		};
 
@@ -437,6 +471,7 @@
 				updateButtons();
 				// Atualiza o carrinho automaticamente quando o valor é válido
 				debouncedUpdateCart();
+				calculateRatesForCart(true);
 			}
 		});
 
@@ -453,6 +488,7 @@
 			// Garante que o carrinho seja atualizado ao perder o foco
 			clearTimeout(updateTimeout);
 			scheduleCartUpdate();
+			calculateRatesForCart(true);
 		});
 
 		// Suporte para teclado
@@ -565,6 +601,7 @@
 				suppressNextRatesRefresh = false;
 				return;
 			}
+			restoreCartCep();
 			calculateRatesForCart(true);
 		});
 	}
@@ -573,6 +610,18 @@
 		jQuery(document).on('click', '.gstore-shipping-calculator__button', function () {
 			calculateRatesForCart(true);
 		});
+	}
+
+	if (typeof jQuery !== 'undefined') {
+		jQuery(document).on('input', '.gstore-shipping-calculator__cep', function () {
+			storeCartCep(this.value || '');
+		});
+	}
+
+	if (document.readyState === 'loading') {
+		document.addEventListener('DOMContentLoaded', restoreCartCep);
+	} else {
+		restoreCartCep();
 	}
 })();
 
