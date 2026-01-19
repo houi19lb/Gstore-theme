@@ -80,7 +80,7 @@ if ( function_exists( 'wc_wp_theme_get_element_class_name' ) ) {
 								$cart_item_class   = implode( ' ', array_map( 'sanitize_html_class', explode( ' ', apply_filters( 'woocommerce_cart_item_class', 'cart_item', $cart_item, $cart_item_key ) ) ) );
 								?>
 
-								<article class="Gstore-cart-card <?php echo esc_attr( $cart_item_class ); ?>" role="listitem" data-cart-item-key="<?php echo esc_attr( $cart_item_key ); ?>">
+								<article class="Gstore-cart-card <?php echo esc_attr( $cart_item_class ); ?>" role="listitem" data-cart-item-key="<?php echo esc_attr( $cart_item_key ); ?>" data-product-id="<?php echo esc_attr( $product_id ); ?>" data-quantity="<?php echo esc_attr( $cart_item['quantity'] ); ?>">
 									<div class="Gstore-cart-card__media">
 										<?php
 										if ( ! $product_permalink ) {
@@ -194,14 +194,16 @@ if ( function_exists( 'wc_wp_theme_get_element_class_name' ) ) {
 										</div>
 
 										<?php
-										$freight_context = function_exists( 'gstore_get_cart_item_freight_context' )
-											? gstore_get_cart_item_freight_context( $cart_item )
-											: array();
-
-										$freight_type = isset( $freight_context['type'] ) ? $freight_context['type'] : 'other';
-										$freight_options = isset( $freight_context['options'] ) && is_array( $freight_context['options'] )
-											? $freight_context['options']
-											: array();
+										$freight_rates = isset( $cart_item['gstore_shipping_rates'] ) ? $cart_item['gstore_shipping_rates'] : array();
+										if ( function_exists( 'gstore_normalize_cart_rates' ) ) {
+											$freight_rates = gstore_normalize_cart_rates( $freight_rates );
+										}
+										$freight_options = array();
+										foreach ( $freight_rates as $rate ) {
+											if ( ! empty( $rate['mode'] ) ) {
+												$freight_options[] = $rate['mode'];
+											}
+										}
 										$selected_mode = function_exists( 'gstore_get_cart_item_shipping_mode' )
 											? gstore_get_cart_item_shipping_mode( $cart_item )
 											: 'land';
@@ -211,27 +213,30 @@ if ( function_exists( 'wc_wp_theme_get_element_class_name' ) ) {
 											$selected_mode = 'air' === $posted_mode ? 'air' : 'land';
 										}
 										$freight_costs = array();
+										foreach ( $freight_rates as $rate ) {
+											$mode = isset( $rate['mode'] ) ? $rate['mode'] : '';
+											$freight_costs[ $mode ] = isset( $rate['cost_formatted'] ) ? $rate['cost_formatted'] : '';
+										}
 
 										if ( ! empty( $freight_options ) && ! in_array( $selected_mode, $freight_options, true ) ) {
 											$selected_mode = $freight_options[0];
 										}
 
 										$has_shipping_postcode = function_exists( 'WC' ) && WC()->customer && WC()->customer->get_shipping_postcode();
-
-										if ( $has_shipping_postcode && function_exists( 'gstore_get_cart_item_shipping_cost_display' ) ) {
-											foreach ( $freight_options as $mode ) {
-												$freight_costs[ $mode ] = gstore_get_cart_item_shipping_cost_display( $cart_item, $mode );
-											}
-										}
 										?>
 
-										<?php if ( 'other' !== $freight_type && ! empty( $freight_options ) ) : ?>
-											<div class="Gstore-cart-card__shipping" data-cart-item-key="<?php echo esc_attr( $cart_item_key ); ?>">
-												<span class="Gstore-cart-card__label"><?php esc_html_e( 'Frete', 'gstore' ); ?></span>
+										<div class="Gstore-cart-card__shipping" data-cart-item-key="<?php echo esc_attr( $cart_item_key ); ?>" data-gstore-shipping-item>
+											<span class="Gstore-cart-card__label"><?php esc_html_e( 'Frete', 'gstore' ); ?></span>
+											<input type="hidden" name="gstore_shipping_rates[<?php echo esc_attr( $cart_item_key ); ?>]" value="<?php echo esc_attr( wp_json_encode( $freight_rates ) ); ?>" />
 
-												<?php if ( in_array( $freight_type, array( 'gun', 'accessory' ), true ) && count( $freight_options ) > 1 ) : ?>
-													<div class="Gstore-cart-card__shipping-options">
-														<?php foreach ( $freight_options as $mode ) : ?>
+											<?php if ( ! empty( $freight_options ) ) : ?>
+												<?php if ( count( $freight_options ) > 1 ) : ?>
+													<div class="Gstore-cart-card__shipping-options" data-gstore-shipping-options>
+														<?php foreach ( $freight_rates as $rate ) : ?>
+															<?php
+															$mode = isset( $rate['mode'] ) ? $rate['mode'] : 'land';
+															$label = isset( $rate['label'] ) ? $rate['label'] : ( function_exists( 'gstore_get_cart_item_shipping_label' ) ? gstore_get_cart_item_shipping_label( $mode ) : $mode );
+															?>
 															<label class="Gstore-cart-card__shipping-option">
 																<input
 																	type="radio"
@@ -239,31 +244,32 @@ if ( function_exists( 'wc_wp_theme_get_element_class_name' ) ) {
 																	value="<?php echo esc_attr( $mode ); ?>"
 																	<?php checked( $selected_mode, $mode ); ?>
 																/>
-																<span class="Gstore-cart-card__shipping-text">
-																	<?php echo esc_html( function_exists( 'gstore_get_cart_item_shipping_label' ) ? gstore_get_cart_item_shipping_label( $mode ) : $mode ); ?>
+																<span class="Gstore-cart-card__shipping-text"><?php echo esc_html( $label ); ?></span>
+																<span class="Gstore-cart-card__shipping-price">
+																	<?php echo $has_shipping_postcode && ! empty( $freight_costs[ $mode ] ) ? wp_kses_post( $freight_costs[ $mode ] ) : '-'; ?>
 																</span>
-																<?php if ( ! empty( $freight_costs[ $mode ] ) ) : ?>
-																	<span class="Gstore-cart-card__shipping-price"><?php echo wp_kses_post( $freight_costs[ $mode ] ); ?></span>
-																<?php elseif ( ! $has_shipping_postcode ) : ?>
-																	<span class="Gstore-cart-card__shipping-price">—</span>
-																<?php endif; ?>
 															</label>
 														<?php endforeach; ?>
 													</div>
 												<?php else : ?>
-													<div class="Gstore-cart-card__shipping-fixed">
-														<span class="Gstore-cart-card__shipping-text">
-															<?php echo esc_html( function_exists( 'gstore_get_cart_item_shipping_label' ) ? gstore_get_cart_item_shipping_label( 'land' ) : __( 'Terrestre', 'gstore' ) ); ?>
+													<?php
+													$only_rate = reset( $freight_rates );
+													$only_mode = isset( $only_rate['mode'] ) ? $only_rate['mode'] : 'land';
+													$only_label = isset( $only_rate['label'] ) ? $only_rate['label'] : ( function_exists( 'gstore_get_cart_item_shipping_label' ) ? gstore_get_cart_item_shipping_label( $only_mode ) : $only_mode );
+													?>
+													<div class="Gstore-cart-card__shipping-fixed" data-gstore-shipping-fixed>
+														<span class="Gstore-cart-card__shipping-text"><?php echo esc_html( $only_label ); ?></span>
+														<span class="Gstore-cart-card__shipping-price">
+															<?php echo $has_shipping_postcode && ! empty( $freight_costs[ $only_mode ] ) ? wp_kses_post( $freight_costs[ $only_mode ] ) : '-'; ?>
 														</span>
-														<?php if ( ! empty( $freight_costs['land'] ) ) : ?>
-															<span class="Gstore-cart-card__shipping-price"><?php echo wp_kses_post( $freight_costs['land'] ); ?></span>
-														<?php elseif ( ! $has_shipping_postcode ) : ?>
-															<span class="Gstore-cart-card__shipping-price">—</span>
-														<?php endif; ?>
 													</div>
 												<?php endif; ?>
-											</div>
-										<?php endif; ?>
+											<?php else : ?>
+												<div class="Gstore-cart-card__shipping-fixed" data-gstore-shipping-fixed>
+													<span class="Gstore-cart-card__shipping-text"><?php esc_html_e( 'Calcule o frete para ver os valores.', 'gstore' ); ?></span>
+												</div>
+											<?php endif; ?>
+										</div>
 									</div>
 								</article>
 								<?php

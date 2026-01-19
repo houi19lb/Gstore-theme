@@ -3986,6 +3986,76 @@ if ( ! function_exists( 'gstore_get_cart_item_shipping_label' ) ) {
 	}
 }
 
+if ( ! function_exists( 'gstore_normalize_shipping_mode' ) ) {
+	function gstore_normalize_shipping_mode( $mode ) {
+		$mode = strtolower( trim( (string) $mode ) );
+		if ( in_array( $mode, array( 'air', 'aereo', 'aéreo' ), true ) ) {
+			return 'air';
+		}
+		if ( in_array( $mode, array( 'ground', 'land', 'terrestre' ), true ) ) {
+			return 'land';
+		}
+
+		return 'land';
+	}
+}
+
+if ( ! function_exists( 'gstore_parse_shipping_cost' ) ) {
+	function gstore_parse_shipping_cost( $value ) {
+		if ( '' === trim( (string) $value ) ) {
+			return 0.0;
+		}
+
+		if ( function_exists( 'wc_format_decimal' ) ) {
+			$value = wc_format_decimal( $value );
+		}
+
+		return (float) $value;
+	}
+}
+
+if ( ! function_exists( 'gstore_normalize_cart_rates' ) ) {
+	function gstore_normalize_cart_rates( $rates ) {
+		if ( ! is_array( $rates ) ) {
+			return array();
+		}
+
+		$normalized = array();
+
+		foreach ( $rates as $rate ) {
+			if ( ! is_array( $rate ) ) {
+				continue;
+			}
+
+			$mode = gstore_normalize_shipping_mode( isset( $rate['mode'] ) ? $rate['mode'] : '' );
+			$label = isset( $rate['label'] ) ? sanitize_text_field( $rate['label'] ) : gstore_get_cart_item_shipping_label( $mode );
+
+			$cost = 0.0;
+			if ( isset( $rate['cost'] ) && is_numeric( $rate['cost'] ) ) {
+				$cost = (float) $rate['cost'];
+			} elseif ( isset( $rate['cost_formatted'] ) ) {
+				$cost = gstore_parse_shipping_cost( $rate['cost_formatted'] );
+			}
+
+			$cost_formatted = '';
+			if ( isset( $rate['cost_formatted'] ) ) {
+				$cost_formatted = sanitize_text_field( $rate['cost_formatted'] );
+			} elseif ( $cost > 0 && function_exists( 'wc_price' ) ) {
+				$cost_formatted = wc_price( $cost );
+			}
+
+			$normalized[] = array(
+				'mode'           => $mode,
+				'label'          => $label,
+				'cost'           => $cost,
+				'cost_formatted' => $cost_formatted,
+			);
+		}
+
+		return $normalized;
+	}
+}
+
 if ( ! function_exists( 'gstore_restore_cart_item_shipping_mode' ) ) {
 	function gstore_restore_cart_item_shipping_mode( $cart_item, $values ) {
 		if ( isset( $values['gstore_shipping_mode'] ) ) {
@@ -4007,7 +4077,13 @@ if ( ! function_exists( 'gstore_sync_cart_shipping_modes' ) ) {
 			return;
 		}
 
-		if ( empty( $_POST['gstore_shipping_mode'] ) || ! function_exists( 'WC' ) || ! WC()->cart ) { // phpcs:ignore WordPress.Security.NonceVerification.Missing
+		if ( ! function_exists( 'WC' ) || ! WC()->cart ) {
+			return;
+		}
+
+		$has_posted_modes = ! empty( $_POST['gstore_shipping_mode'] ); // phpcs:ignore WordPress.Security.NonceVerification.Missing
+		$has_posted_rates = ! empty( $_POST['gstore_shipping_rates'] ); // phpcs:ignore WordPress.Security.NonceVerification.Missing
+		if ( ! $has_posted_modes && ! $has_posted_rates ) {
 			return;
 		}
 
@@ -4015,27 +4091,70 @@ if ( ! function_exists( 'gstore_sync_cart_shipping_modes' ) ) {
 			return;
 		}
 
-		$posted_modes = wp_unslash( $_POST['gstore_shipping_mode'] ); // phpcs:ignore WordPress.Security.NonceVerification.Missing
-		if ( ! is_array( $posted_modes ) ) {
-			return;
-		}
+		$posted_modes = $has_posted_modes
+			? wp_unslash( $_POST['gstore_shipping_mode'] ) // phpcs:ignore WordPress.Security.NonceVerification.Missing
+			: array();
+		$posted_rates = $has_posted_rates
+			? wp_unslash( $_POST['gstore_shipping_rates'] ) // phpcs:ignore WordPress.Security.NonceVerification.Missing
+			: array();
+
+		$posted_modes = is_array( $posted_modes ) ? $posted_modes : array();
+		$posted_rates = is_array( $posted_rates ) ? $posted_rates : array();
 
 		$syncing = true;
 		$dirty   = false;
 
-		foreach ( $posted_modes as $cart_item_key => $mode ) {
+		foreach ( $posted_rates as $cart_item_key => $raw_rates ) {
 			$cart_item_key = (string) $cart_item_key;
-			$mode          = 'air' === $mode ? 'air' : 'land';
 
 			if ( ! isset( WC()->cart->cart_contents[ $cart_item_key ] ) ) {
 				continue;
 			}
 
-			$context = gstore_get_cart_item_freight_context( WC()->cart->cart_contents[ $cart_item_key ] );
-			if ( empty( $context['options'] ) ) {
-				$mode = 'land';
-			} elseif ( ! in_array( $mode, $context['options'], true ) ) {
-				$mode = $context['options'][0];
+			$decoded_rates = $raw_rates;
+			if ( is_string( $raw_rates ) ) {
+				$decoded_rates = json_decode( wp_unslash( $raw_rates ), true );
+			}
+
+			$normalized_rates = gstore_normalize_cart_rates( $decoded_rates );
+			if ( empty( $normalized_rates ) ) {
+				continue;
+			}
+
+			$previous_rates = isset( WC()->cart->cart_contents[ $cart_item_key ]['gstore_shipping_rates'] )
+				? WC()->cart->cart_contents[ $cart_item_key ]['gstore_shipping_rates']
+				: array();
+
+			if ( $previous_rates !== $normalized_rates ) {
+				$dirty = true;
+			}
+
+			WC()->cart->cart_contents[ $cart_item_key ]['gstore_shipping_rates'] = $normalized_rates;
+		}
+
+		foreach ( $posted_modes as $cart_item_key => $mode ) {
+			$cart_item_key = (string) $cart_item_key;
+			$mode          = gstore_normalize_shipping_mode( $mode );
+
+			if ( ! isset( WC()->cart->cart_contents[ $cart_item_key ] ) ) {
+				continue;
+			}
+
+			$rates = isset( WC()->cart->cart_contents[ $cart_item_key ]['gstore_shipping_rates'] )
+				? gstore_normalize_cart_rates( WC()->cart->cart_contents[ $cart_item_key ]['gstore_shipping_rates'] )
+				: array();
+
+			if ( ! empty( $rates ) ) {
+				$available_modes = array_map(
+					function ( $rate ) {
+						return isset( $rate['mode'] ) ? $rate['mode'] : 'land';
+					},
+					$rates
+				);
+
+				if ( ! in_array( $mode, $available_modes, true ) ) {
+					$mode = $available_modes[0];
+				}
 			}
 
 			$previous = isset( WC()->cart->cart_contents[ $cart_item_key ]['gstore_shipping_mode'] )
@@ -4087,30 +4206,26 @@ if ( ! function_exists( 'gstore_get_cart_item_shipping_cost_display' ) ) {
 			return '';
 		}
 
-		if ( function_exists( 'WC' ) && WC()->customer ) {
-			$shipping_postcode = WC()->customer->get_shipping_postcode();
-			if ( ! $shipping_postcode ) {
-				return '';
+		$rates = isset( $cart_item['gstore_shipping_rates'] )
+			? gstore_normalize_cart_rates( $cart_item['gstore_shipping_rates'] )
+			: array();
+		if ( empty( $rates ) ) {
+			return '';
+		}
+
+		$mode = gstore_normalize_shipping_mode( $mode );
+		foreach ( $rates as $rate ) {
+			if ( isset( $rate['mode'] ) && $rate['mode'] === $mode ) {
+				if ( ! empty( $rate['cost_formatted'] ) ) {
+					return $rate['cost_formatted'];
+				}
+				if ( ! empty( $rate['cost'] ) && function_exists( 'wc_price' ) ) {
+					return wc_price( (float) $rate['cost'] );
+				}
 			}
 		}
 
-		$context = gstore_get_cart_item_freight_context( $cart_item );
-		if ( empty( $context['variation'] ) ) {
-			return '';
-		}
-
-		$type = isset( $context['type'] ) ? $context['type'] : 'other';
-		if ( 'ammo' === $type ) {
-			$mode = 'land';
-		}
-
-		$quantity = isset( $cart_item['quantity'] ) ? (int) $cart_item['quantity'] : 1;
-		$cost = gstore_get_variation_shipping_cost( $context['variation'], $mode, $quantity );
-		if ( $cost <= 0 ) {
-			return '';
-		}
-
-		return wc_price( $cost );
+		return '';
 	}
 }
 
@@ -4135,101 +4250,37 @@ if ( ! function_exists( 'gstore_apply_cart_freight_fees' ) ) {
 			}
 		}
 
-		$config = gstore_get_freight_config();
-		if ( empty( $config['variations'] ) ) {
-			return;
-		}
-
-		$rules = isset( $config['rules'] ) ? (array) $config['rules'] : array();
-		$base_ammo_limit = isset( $rules['baseAmmoLimit'] ) ? max( 1, (float) $rules['baseAmmoLimit'] ) : 7000;
-		$gun_surcharge_enabled = ! empty( $rules['gunSurchargeEnabled'] );
-		$gun_surcharge_threshold = isset( $rules['gunSurchargeThreshold'] ) ? (float) $rules['gunSurchargeThreshold'] : 0;
-		$gun_surcharge_percent = isset( $rules['gunSurchargePercent'] ) ? (float) $rules['gunSurchargePercent'] : 0;
-		$gun_surcharge_land = isset( $rules['gunSurchargeEnabledLand'] ) ? (bool) $rules['gunSurchargeEnabledLand'] : true;
-		$gun_surcharge_air  = isset( $rules['gunSurchargeEnabledAir'] ) ? (bool) $rules['gunSurchargeEnabledAir'] : true;
-
-		$ammo_shipping_total = 0.0;
-		$ammo_value_total    = 0.0;
-		$gun_value_total     = 0.0;
-
-		$gun_totals = array(
-			'land' => 0.0,
-			'air'  => 0.0,
-		);
-		$accessory_totals = array(
-			'land' => 0.0,
-			'air'  => 0.0,
-		);
+		$total_shipping = 0.0;
 
 		foreach ( $cart->get_cart() as $cart_item ) {
-			if ( empty( $cart_item['data'] ) || ! $cart_item['data'] instanceof WC_Product ) {
-				continue;
-			}
-
-			$context = gstore_get_cart_item_freight_context( $cart_item );
-			if ( empty( $context['type'] ) || 'other' === $context['type'] ) {
-				continue;
-			}
-
-			$quantity = isset( $cart_item['quantity'] ) ? (int) $cart_item['quantity'] : 1;
-			$line_total = isset( $cart_item['line_subtotal'] ) ? (float) $cart_item['line_subtotal'] : 0.0;
-			$variation = $context['variation'];
-
-			if ( 'ammo' === $context['type'] ) {
-				$ammo_value_total += $line_total;
-				$ammo_shipping_total += gstore_get_variation_shipping_cost( $variation, 'land', $quantity );
+			$rates = isset( $cart_item['gstore_shipping_rates'] )
+				? gstore_normalize_cart_rates( $cart_item['gstore_shipping_rates'] )
+				: array();
+			if ( empty( $rates ) ) {
 				continue;
 			}
 
 			$mode = gstore_get_cart_item_shipping_mode( $cart_item );
-			if ( empty( $context['options'] ) || ! in_array( $mode, $context['options'], true ) ) {
-				$mode = 'land';
+			$mode = gstore_normalize_shipping_mode( $mode );
+
+			$selected_cost = 0.0;
+			foreach ( $rates as $rate ) {
+				if ( isset( $rate['mode'] ) && $rate['mode'] === $mode ) {
+					$selected_cost = isset( $rate['cost'] ) ? (float) $rate['cost'] : 0.0;
+					if ( $selected_cost <= 0 && ! empty( $rate['cost_formatted'] ) ) {
+						$selected_cost = gstore_parse_shipping_cost( $rate['cost_formatted'] );
+					}
+					break;
+				}
 			}
 
-			$cost = gstore_get_variation_shipping_cost( $variation, $mode, $quantity );
-			if ( $cost <= 0 ) {
-				continue;
-			}
-
-			if ( 'gun' === $context['type'] ) {
-				$gun_totals[ $mode ] += $cost;
-				$gun_value_total += $line_total;
-			} else {
-				$accessory_totals[ $mode ] += $cost;
-			}
-		}
-
-		if ( $ammo_shipping_total > 0 ) {
-			$shipments = (int) floor( $ammo_value_total / $base_ammo_limit ) + 1;
-			$ammo_shipping_total *= max( 1, $shipments );
-		}
-
-		if ( $gun_surcharge_enabled && $gun_value_total > $gun_surcharge_threshold && $gun_surcharge_percent > 0 ) {
-			$percent_factor = $gun_surcharge_percent / 100;
-
-			if ( $gun_surcharge_land && $gun_totals['land'] > 0 ) {
-				$gun_totals['land'] += $gun_totals['land'] * $percent_factor;
-			}
-			if ( $gun_surcharge_air && $gun_totals['air'] > 0 ) {
-				$gun_totals['air'] += $gun_totals['air'] * $percent_factor;
+			if ( $selected_cost > 0 ) {
+				$total_shipping += $selected_cost;
 			}
 		}
 
-		$non_ammo_totals = array(
-			'land' => $gun_totals['land'] + $accessory_totals['land'],
-			'air'  => $gun_totals['air'] + $accessory_totals['air'],
-		);
-
-		if ( $ammo_shipping_total > 0 ) {
-			$cart->add_fee( __( 'Frete munição (terrestre)', 'gstore' ), $ammo_shipping_total, true );
-		}
-
-		if ( $non_ammo_totals['land'] > 0 ) {
-			$cart->add_fee( __( 'Frete terrestre (armas/acessórios)', 'gstore' ), $non_ammo_totals['land'], true );
-		}
-
-		if ( $non_ammo_totals['air'] > 0 ) {
-			$cart->add_fee( __( 'Frete aéreo (armas/acessórios)', 'gstore' ), $non_ammo_totals['air'], true );
+		if ( $total_shipping > 0 ) {
+			$cart->add_fee( __( 'Frete', 'gstore' ), $total_shipping, true );
 		}
 	}
 }
@@ -4524,11 +4575,13 @@ function gstore_calculate_shipping_ajax() {
 		)
 	);
 }
-if ( ! has_action( 'wp_ajax_gstore_calculate_shipping' ) ) {
-	add_action( 'wp_ajax_gstore_calculate_shipping', 'gstore_calculate_shipping_ajax' );
-}
-if ( ! has_action( 'wp_ajax_nopriv_gstore_calculate_shipping' ) ) {
-	add_action( 'wp_ajax_nopriv_gstore_calculate_shipping', 'gstore_calculate_shipping_ajax' );
+if ( ! defined( 'GSTORE_CORE_ACTIVE' ) ) {
+	if ( ! has_action( 'wp_ajax_gstore_calculate_shipping' ) ) {
+		add_action( 'wp_ajax_gstore_calculate_shipping', 'gstore_calculate_shipping_ajax' );
+	}
+	if ( ! has_action( 'wp_ajax_nopriv_gstore_calculate_shipping' ) ) {
+		add_action( 'wp_ajax_nopriv_gstore_calculate_shipping', 'gstore_calculate_shipping_ajax' );
+	}
 }
 // Endpoints/integrações de frete (AJAX) e Blu Blocks movidos para o plugin gstore-core.
 

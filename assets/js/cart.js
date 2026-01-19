@@ -6,6 +6,182 @@
 	'use strict';
 
 	let cartUpdateTimeout = null;
+	let ratesSyncInProgress = false;
+	let suppressNextRatesRefresh = false;
+
+	function getCartCep() {
+		const cepInput = document.querySelector('.gstore-shipping-calculator__cep');
+		if (!cepInput) {
+			return '';
+		}
+
+		const raw = cepInput.value || '';
+		const digits = raw.replace(/\D/g, '');
+		return digits.length === 8 ? digits : '';
+	}
+
+	function getShippingAjaxUrl() {
+		if (typeof gstoreShippingCalculator !== 'undefined' && gstoreShippingCalculator.ajaxUrl) {
+			return gstoreShippingCalculator.ajaxUrl;
+		}
+		if (typeof wc_checkout_params !== 'undefined' && wc_checkout_params.ajax_url) {
+			return wc_checkout_params.ajax_url;
+		}
+		return '/wp-admin/admin-ajax.php';
+	}
+
+	function normalizeRateMode(mode) {
+		const value = String(mode || '').toLowerCase();
+		if (value === 'air' || value === 'aereo') {
+			return 'air';
+		}
+		if (value === 'ground' || value === 'land' || value === 'terrestre') {
+			return 'land';
+		}
+		return 'land';
+	}
+
+	function fetchRatesForItem(itemEl, cep) {
+		const productId = parseInt(itemEl.dataset.productId || '0', 10);
+		const quantity = parseInt(itemEl.dataset.quantity || '1', 10);
+
+		if (!productId || !quantity || !cep) {
+			return Promise.resolve(null);
+		}
+
+		return jQuery.ajax({
+			url: getShippingAjaxUrl(),
+			type: 'POST',
+			dataType: 'json',
+			data: {
+				action: 'gstore_calculate_shipping',
+				nonce: typeof gstoreShippingCalculator !== 'undefined' ? gstoreShippingCalculator.nonce : '',
+				postcode: cep,
+				product_id: productId,
+				quantity: quantity,
+			},
+		}).then((response) => {
+			if (!response || !response.success || !response.data || !Array.isArray(response.data.rates)) {
+				return null;
+			}
+			return response.data.rates;
+		}).catch(() => null);
+	}
+
+	function updateShippingBlock(shippingBlock, rates, cartItemKey, selectedMode) {
+		if (!shippingBlock) {
+			return;
+		}
+
+		const optionsContainer = shippingBlock.querySelector('[data-gstore-shipping-options]');
+		const fixedContainer = shippingBlock.querySelector('[data-gstore-shipping-fixed]');
+		const ratesInput = shippingBlock.querySelector(`input[name="gstore_shipping_rates[${cartItemKey}]"]`);
+
+		const normalizedRates = (rates || []).map((rate) => ({
+			mode: normalizeRateMode(rate.mode),
+			label: rate.label || '',
+			cost: rate.cost || '',
+			cost_formatted: rate.cost_formatted || '',
+		}));
+
+		if (ratesInput) {
+			ratesInput.value = JSON.stringify(normalizedRates);
+		}
+
+		if (!normalizedRates.length) {
+			if (optionsContainer) {
+				optionsContainer.innerHTML = '';
+			}
+			if (fixedContainer) {
+				fixedContainer.innerHTML = '<span class="Gstore-cart-card__shipping-text">Calcule o frete para ver os valores.</span>';
+			}
+			return;
+		}
+
+		const hasMultiple = normalizedRates.length > 1;
+		if (hasMultiple) {
+			if (optionsContainer) {
+				optionsContainer.innerHTML = normalizedRates.map((rate) => {
+					const mode = rate.mode;
+					const label = rate.label || (mode === 'air' ? 'Frete Aereo' : 'Frete Terrestre');
+					const cost = rate.cost_formatted || '-';
+					const checked = selectedMode === mode ? 'checked' : '';
+					return `
+						<label class="Gstore-cart-card__shipping-option">
+							<input type="radio" name="gstore_shipping_mode[${cartItemKey}]" value="${mode}" ${checked} />
+							<span class="Gstore-cart-card__shipping-text">${label}</span>
+							<span class="Gstore-cart-card__shipping-price">${cost}</span>
+						</label>
+					`;
+				}).join('');
+			}
+			if (fixedContainer) {
+				fixedContainer.innerHTML = '';
+			}
+		} else {
+			const onlyRate = normalizedRates[0];
+			const label = onlyRate.label || (onlyRate.mode === 'air' ? 'Frete Aereo' : 'Frete Terrestre');
+			const cost = onlyRate.cost_formatted || '-';
+			if (fixedContainer) {
+				fixedContainer.innerHTML = `
+					<span class="Gstore-cart-card__shipping-text">${label}</span>
+					<span class="Gstore-cart-card__shipping-price">${cost}</span>
+				`;
+			}
+			if (optionsContainer) {
+				optionsContainer.innerHTML = '';
+			}
+		}
+
+		initShippingChoices();
+	}
+
+	function calculateRatesForCart(shouldUpdateCart) {
+		if (ratesSyncInProgress) {
+			return;
+		}
+
+		const cep = getCartCep();
+		if (!cep) {
+			return;
+		}
+
+		const cartItems = document.querySelectorAll('[data-gstore-shipping-item]');
+		if (!cartItems.length) {
+			return;
+		}
+
+		ratesSyncInProgress = true;
+
+		const requests = [];
+		cartItems.forEach((shippingBlock) => {
+			const cartItemKey = shippingBlock.dataset.cartItemKey || shippingBlock.getAttribute('data-cart-item-key');
+			const itemEl = shippingBlock.closest('[data-cart-item-key]');
+			if (!itemEl || !cartItemKey) {
+				return;
+			}
+
+			const selectedInput = shippingBlock.querySelector('input[type="radio"]:checked');
+			const selectedMode = selectedInput ? selectedInput.value : 'land';
+
+			requests.push(
+				fetchRatesForItem(itemEl, cep).then((rates) => {
+					if (!rates) {
+						return;
+					}
+					updateShippingBlock(shippingBlock, rates, cartItemKey, selectedMode);
+				})
+			);
+		});
+
+		Promise.allSettled(requests).then(() => {
+			ratesSyncInProgress = false;
+			if (shouldUpdateCart) {
+				suppressNextRatesRefresh = true;
+				scheduleCartUpdate();
+			}
+		});
+	}
 
 	/**
 	 * Atualiza o carrinho automaticamente (AJAX).
@@ -385,6 +561,17 @@
 	if (typeof jQuery !== 'undefined') {
 		jQuery(document).on('updated_wc_div updated_cart_totals', function () {
 			setTimeout(init, 100);
+			if (suppressNextRatesRefresh) {
+				suppressNextRatesRefresh = false;
+				return;
+			}
+			calculateRatesForCart(true);
+		});
+	}
+
+	if (typeof jQuery !== 'undefined') {
+		jQuery(document).on('click', '.gstore-shipping-calculator__button', function () {
+			calculateRatesForCart(true);
 		});
 	}
 })();
