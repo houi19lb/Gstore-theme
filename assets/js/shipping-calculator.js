@@ -138,11 +138,7 @@
 
 					if (response.success && response.data) {
 						this.lastDestination = response.data.destination || null;
-						if ($('body').hasClass('woocommerce-cart')) {
-							$(document.body).trigger('gstore_update_cart');
-						} else {
-							this.showResult(response.data);
-						}
+						this.showResult(response.data);
 					} else {
 						const message = response.data && response.data.message 
 							? response.data.message 

@@ -40,22 +40,7 @@ if ( function_exists( 'wc_wp_theme_get_element_class_name' ) ) {
 
 			<div class="Gstore-cart-layout">
 				<div class="Gstore-cart-main">
-					<?php
-					$gstore_cart_postcode = '';
-					if ( function_exists( 'WC' ) && WC()->session ) {
-						$gstore_cart_postcode = (string) WC()->session->get( 'gstore_freight_postcode', '' );
-					}
-					if ( ! $gstore_cart_postcode && function_exists( 'WC' ) && WC()->customer ) {
-						$gstore_cart_postcode = (string) WC()->customer->get_shipping_postcode();
-					}
-					if ( '' !== $gstore_cart_postcode ) {
-						$gstore_cart_postcode = preg_replace( '/[^0-9]/', '', $gstore_cart_postcode );
-						if ( strlen( $gstore_cart_postcode ) === 8 ) {
-							$gstore_cart_postcode = substr( $gstore_cart_postcode, 0, 5 ) . '-' . substr( $gstore_cart_postcode, 5, 3 );
-						}
-					}
-					?>
-					<div class="Gstore-cart-card gstore-shipping-calculator gstore-shipping-calculator--cart" data-gstore-cart-freight>
+					<div class="Gstore-cart-card gstore-shipping-calculator gstore-shipping-calculator--cart">
 						<h3 class="gstore-shipping-calculator__title">
 							<svg class="gstore-shipping-calculator__icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
 								<path d="M3 7h11v10H3z" fill="currentColor" opacity="0.2"></path>
@@ -71,7 +56,6 @@ if ( function_exists( 'wc_wp_theme_get_element_class_name' ) ) {
 								class="gstore-shipping-calculator__cep"
 								placeholder="<?php esc_attr_e( '00000-000', 'gstore' ); ?>"
 								maxlength="9"
-								value="<?php echo esc_attr( $gstore_cart_postcode ); ?>"
 								aria-label="<?php esc_attr_e( 'CEP para cálculo de frete', 'gstore' ); ?>"
 							/>
 							<button type="button" class="gstore-shipping-calculator__button">
@@ -239,7 +223,7 @@ if ( function_exists( 'wc_wp_theme_get_element_class_name' ) ) {
 										}
 										?>
 
-										<?php if ( function_exists( 'gstore_is_freight_confirmed' ) && gstore_is_freight_confirmed() && 'other' !== $freight_type && ! empty( $freight_options ) ) : ?>
+										<?php if ( 'other' !== $freight_type && ! empty( $freight_options ) ) : ?>
 											<div class="Gstore-cart-card__shipping" data-cart-item-key="<?php echo esc_attr( $cart_item_key ); ?>">
 												<span class="Gstore-cart-card__label"><?php esc_html_e( 'Frete', 'gstore' ); ?></span>
 
@@ -256,9 +240,9 @@ if ( function_exists( 'wc_wp_theme_get_element_class_name' ) ) {
 																<span class="Gstore-cart-card__shipping-text">
 																	<?php echo esc_html( function_exists( 'gstore_get_cart_item_shipping_label' ) ? gstore_get_cart_item_shipping_label( $mode ) : $mode ); ?>
 																</span>
-																<span class="Gstore-cart-card__shipping-price">
-																	<?php echo wp_kses_post( isset( $freight_costs[ $mode ] ) ? $freight_costs[ $mode ] : wc_price( 0 ) ); ?>
-																</span>
+																<?php if ( ! empty( $freight_costs[ $mode ] ) ) : ?>
+																	<span class="Gstore-cart-card__shipping-price"><?php echo wp_kses_post( $freight_costs[ $mode ] ); ?></span>
+																<?php endif; ?>
 															</label>
 														<?php endforeach; ?>
 													</div>
@@ -267,9 +251,9 @@ if ( function_exists( 'wc_wp_theme_get_element_class_name' ) ) {
 														<span class="Gstore-cart-card__shipping-text">
 															<?php echo esc_html( function_exists( 'gstore_get_cart_item_shipping_label' ) ? gstore_get_cart_item_shipping_label( 'land' ) : __( 'Terrestre', 'gstore' ) ); ?>
 														</span>
-														<span class="Gstore-cart-card__shipping-price">
-															<?php echo wp_kses_post( isset( $freight_costs['land'] ) ? $freight_costs['land'] : wc_price( 0 ) ); ?>
-														</span>
+														<?php if ( ! empty( $freight_costs['land'] ) ) : ?>
+															<span class="Gstore-cart-card__shipping-price"><?php echo wp_kses_post( $freight_costs['land'] ); ?></span>
+														<?php endif; ?>
 													</div>
 												<?php endif; ?>
 											</div>
