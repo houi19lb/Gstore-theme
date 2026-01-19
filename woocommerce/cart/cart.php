@@ -223,7 +223,7 @@ if ( function_exists( 'wc_wp_theme_get_element_class_name' ) ) {
 										}
 										?>
 
-										<?php if ( 'other' !== $freight_type && ! empty( $freight_options ) ) : ?>
+										<?php if ( function_exists( 'gstore_is_freight_confirmed' ) && gstore_is_freight_confirmed() && 'other' !== $freight_type && ! empty( $freight_options ) ) : ?>
 											<div class="Gstore-cart-card__shipping" data-cart-item-key="<?php echo esc_attr( $cart_item_key ); ?>">
 												<span class="Gstore-cart-card__label"><?php esc_html_e( 'Frete', 'gstore' ); ?></span>
 

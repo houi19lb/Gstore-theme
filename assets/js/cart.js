@@ -386,6 +386,10 @@
 		jQuery(document).on('updated_wc_div updated_cart_totals', function () {
 			setTimeout(init, 100);
 		});
+
+		jQuery(document.body).on('gstore_update_cart', function () {
+			scheduleCartUpdate();
+		});
 	}
 })();
 

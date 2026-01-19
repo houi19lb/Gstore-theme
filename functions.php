@@ -4103,6 +4103,19 @@ if ( ! function_exists( 'gstore_get_cart_item_shipping_cost_display' ) ) {
 	}
 }
 
+if ( ! function_exists( 'gstore_is_freight_confirmed' ) ) {
+	function gstore_is_freight_confirmed() {
+		if ( ! function_exists( 'WC' ) || ! WC()->session || ! WC()->customer ) {
+			return false;
+		}
+
+		$confirmed = (bool) WC()->session->get( 'gstore_freight_confirmed', false );
+		$postcode  = WC()->customer->get_shipping_postcode();
+
+		return $confirmed && ! empty( $postcode );
+	}
+}
+
 if ( ! function_exists( 'gstore_apply_cart_freight_fees' ) ) {
 	function gstore_apply_cart_freight_fees( $cart ) {
 		if ( ! $cart instanceof WC_Cart ) {
@@ -4117,11 +4130,8 @@ if ( ! function_exists( 'gstore_apply_cart_freight_fees' ) ) {
 			return;
 		}
 
-		if ( function_exists( 'WC' ) && WC()->customer ) {
-			$shipping_postcode = WC()->customer->get_shipping_postcode();
-			if ( ! $shipping_postcode ) {
-				return;
-			}
+		if ( ! gstore_is_freight_confirmed() ) {
+			return;
 		}
 
 		$config = gstore_get_freight_config();
@@ -4481,6 +4491,7 @@ function gstore_calculate_shipping_ajax() {
 	if ( function_exists( 'WC' ) && WC()->session ) {
 		// Define o método de envio Gstore como o escolhido
 		WC()->session->set( 'chosen_shipping_methods', array( 'gstore_custom_shipping' ) );
+		WC()->session->set( 'gstore_freight_confirmed', true );
 	}
 	
 	// Força o recálculo do frete e totais do carrinho
