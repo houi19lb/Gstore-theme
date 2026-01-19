@@ -234,7 +234,8 @@
 		const requests = [];
 		cartItems.forEach((shippingBlock) => {
 			const cartItemKey = shippingBlock.dataset.cartItemKey || shippingBlock.getAttribute('data-cart-item-key');
-			const itemEl = shippingBlock.closest('[data-cart-item-key]');
+			// Usa article.Gstore-cart-card para evitar pegar o próprio shippingBlock que também tem data-cart-item-key
+			const itemEl = shippingBlock.closest('article.Gstore-cart-card');
 			if (!itemEl || !cartItemKey) {
 				return;
 			}
