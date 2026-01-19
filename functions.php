@@ -1119,7 +1119,7 @@ function gstore_enqueue_scripts() {
 			wp_enqueue_script(
 				'gstore-cart',
 				get_theme_file_uri( 'assets/js/cart.js' ),
-				array( 'jquery', 'wc-cart' ),
+				array(),
 				wp_get_theme()->get( 'Version' ),
 				true
 			);
