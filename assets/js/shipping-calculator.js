@@ -173,11 +173,19 @@
 
 		showResult(data) {
 			const i18n = this.options.i18n;
-			const rates = Array.isArray(data.rates) ? data.rates : [];
+			let rates = Array.isArray(data.rates) ? data.rates : [];
 			const destination = data.destination || {};
 			const city = destination.city ? String(destination.city).trim() : '';
 			const state = destination.state ? String(destination.state).trim() : '';
 			const destinationLabel = city && state ? `${city}/${state}` : (city || state);
+
+			if (!rates.length && data.cost_formatted) {
+				rates = [{
+					label: i18n.frete || 'Frete',
+					cost_formatted: data.cost_formatted,
+					mode: data.mode || 'land'
+				}];
+			}
 
 			if (!rates.length) {
 				this.showError(this.options.i18n.error || 'Erro ao calcular frete. Tente novamente.');
@@ -315,11 +323,26 @@
 		}
 	}
 
+	/**
+	 * Inicializa calculador no carrinho
+	 */
+	function initCart() {
+		const $calculator = $('.gstore-shipping-calculator');
+		if ($calculator.length) {
+			new ShippingCalculator($calculator);
+		}
+	}
+
 	// Inicialização
 	$(document).ready(function() {
 		// Página de produto único
 		if ($('body').hasClass('single-product')) {
 			initProductPage();
+		}
+
+		// Carrinho
+		if ($('body').hasClass('woocommerce-cart')) {
+			initCart();
 		}
 
 		// Checkout

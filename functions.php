@@ -3074,8 +3074,12 @@ function gstore_enqueue_checkout_assets() {
         );
     }
 
-	// Calculador de Frete - Página de Produto Único e Checkout
-	if ( ( function_exists( 'is_product' ) && is_product() ) || ( function_exists( 'is_checkout' ) && is_checkout() ) ) {
+	// Calculador de Frete - Produto único, carrinho e checkout
+	if (
+		( function_exists( 'is_product' ) && is_product() )
+		|| ( function_exists( 'is_cart' ) && is_cart() )
+		|| ( function_exists( 'is_checkout' ) && is_checkout() )
+	) {
 		// CSS do calculador
 		wp_enqueue_style(
 			'gstore-shipping-calculator',
@@ -3096,22 +3100,27 @@ function gstore_enqueue_checkout_assets() {
 		// Localiza script do calculador
 		global $product;
 		$product_id = 0;
-	$quantity = 1;
-		if ( is_product() && $product ) {
+		$quantity   = 1;
+
+		if ( function_exists( 'is_cart' ) && is_cart() ) {
+			$product_id = 0;
+			$quantity   = 1;
+		} elseif ( is_product() && $product ) {
 			$product_id = $product->get_id();
 		}
-	if ( function_exists( 'is_checkout' ) && is_checkout() && function_exists( 'WC' ) && WC()->cart ) {
-		$cart_items = WC()->cart->get_cart();
-		if ( ! empty( $cart_items ) ) {
-			$first_item = reset( $cart_items );
-			if ( ! empty( $first_item['product_id'] ) ) {
-				$product_id = (int) $first_item['product_id'];
-			}
-			if ( ! empty( $first_item['quantity'] ) ) {
-				$quantity = (int) $first_item['quantity'];
+
+		if ( function_exists( 'is_checkout' ) && is_checkout() && function_exists( 'WC' ) && WC()->cart ) {
+			$cart_items = WC()->cart->get_cart();
+			if ( ! empty( $cart_items ) ) {
+				$first_item = reset( $cart_items );
+				if ( ! empty( $first_item['product_id'] ) ) {
+					$product_id = (int) $first_item['product_id'];
+				}
+				if ( ! empty( $first_item['quantity'] ) ) {
+					$quantity = (int) $first_item['quantity'];
+				}
 			}
 		}
-	}
 
 		wp_localize_script(
 			'gstore-shipping-calculator',
@@ -3120,7 +3129,7 @@ function gstore_enqueue_checkout_assets() {
 				'ajaxUrl'    => admin_url( 'admin-ajax.php' ),
 				'nonce'      => wp_create_nonce( 'gstore_shipping_calculator' ),
 				'productId'  => $product_id,
-			'quantity'   => $quantity,
+				'quantity'   => $quantity,
 				'i18n'       => array(
 					'calculate'        => __( 'Calcular frete', 'gstore' ),
 					'calculating'      => __( 'Calculando...', 'gstore' ),
@@ -4043,6 +4052,7 @@ if ( ! function_exists( 'gstore_sync_cart_shipping_modes' ) ) {
 	}
 }
 add_action( 'woocommerce_cart_updated', 'gstore_sync_cart_shipping_modes', 20 );
+add_action( 'woocommerce_before_calculate_totals', 'gstore_sync_cart_shipping_modes', 20 );
 
 if ( ! function_exists( 'gstore_get_variation_shipping_cost' ) ) {
 	function gstore_get_variation_shipping_cost( $variation, $mode, $quantity ) {
@@ -4067,6 +4077,32 @@ if ( ! function_exists( 'gstore_get_variation_shipping_cost' ) ) {
 	}
 }
 
+if ( ! function_exists( 'gstore_get_cart_item_shipping_cost_display' ) ) {
+	function gstore_get_cart_item_shipping_cost_display( $cart_item, $mode ) {
+		if ( ! isset( $cart_item['data'] ) || ! $cart_item['data'] instanceof WC_Product ) {
+			return '';
+		}
+
+		$context = gstore_get_cart_item_freight_context( $cart_item );
+		if ( empty( $context['variation'] ) ) {
+			return '';
+		}
+
+		$type = isset( $context['type'] ) ? $context['type'] : 'other';
+		if ( 'ammo' === $type ) {
+			$mode = 'land';
+		}
+
+		$quantity = isset( $cart_item['quantity'] ) ? (int) $cart_item['quantity'] : 1;
+		$cost = gstore_get_variation_shipping_cost( $context['variation'], $mode, $quantity );
+		if ( $cost <= 0 ) {
+			return '';
+		}
+
+		return wc_price( $cost );
+	}
+}
+
 if ( ! function_exists( 'gstore_apply_cart_freight_fees' ) ) {
 	function gstore_apply_cart_freight_fees( $cart ) {
 		if ( ! $cart instanceof WC_Cart ) {
@@ -4079,6 +4115,13 @@ if ( ! function_exists( 'gstore_apply_cart_freight_fees' ) ) {
 
 		if ( ! ( is_cart() || is_checkout() ) ) {
 			return;
+		}
+
+		if ( function_exists( 'WC' ) && WC()->customer ) {
+			$shipping_postcode = WC()->customer->get_shipping_postcode();
+			if ( ! $shipping_postcode ) {
+				return;
+			}
 		}
 
 		$config = gstore_get_freight_config();
@@ -4469,6 +4512,12 @@ function gstore_calculate_shipping_ajax() {
 			'state'           => $state,
 		)
 	);
+}
+if ( ! has_action( 'wp_ajax_gstore_calculate_shipping' ) ) {
+	add_action( 'wp_ajax_gstore_calculate_shipping', 'gstore_calculate_shipping_ajax' );
+}
+if ( ! has_action( 'wp_ajax_nopriv_gstore_calculate_shipping' ) ) {
+	add_action( 'wp_ajax_nopriv_gstore_calculate_shipping', 'gstore_calculate_shipping_ajax' );
 }
 // Endpoints/integrações de frete (AJAX) e Blu Blocks movidos para o plugin gstore-core.
 

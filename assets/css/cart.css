@@ -493,6 +493,15 @@ div.woocommerce section.Gstore-cart-shell div.Gstore-cart-container {
 	cursor: pointer;
 }
 
+.Gstore-cart-card__shipping-text {
+	font-weight: var(--gstore-font-weight-medium);
+}
+
+.Gstore-cart-card__shipping-price {
+	font-weight: var(--gstore-font-weight-semibold);
+	color: var(--gstore-cart-green);
+}
+
 .Gstore-cart-card__shipping-option input[type="radio"] {
 	accent-color: var(--gstore-cart-green);
 }
@@ -501,6 +510,9 @@ div.woocommerce section.Gstore-cart-shell div.Gstore-cart-container {
 	font-size: var(--gstore-font-size-09);
 	font-weight: var(--gstore-font-weight-semibold);
 	color: var(--gstore-cart-text);
+	display: inline-flex;
+	align-items: center;
+	gap: 10px;
 }
 
 /* ==========================================

@@ -20,6 +20,12 @@
 	gap: 0.5rem;
 }
 
+.gstore-shipping-calculator__icon {
+	width: 20px;
+	height: 20px;
+	color: var(--gstore-color-accent-secondary, #5a8900);
+}
+
 .gstore-shipping-calculator__title i {
 	color: var(--gstore-color-accent-secondary, #5a8900);
 }
@@ -167,6 +173,11 @@ input.gstore-shipping-calculator__cep:focus {
 /* Versão no checkout */
 .gstore-shipping-calculator--checkout {
 	margin-bottom: 2rem;
+}
+
+/* Versão no carrinho */
+.gstore-shipping-calculator--cart {
+	margin: 0 0 1.5rem 0;
 }
 
 /* Responsividade */

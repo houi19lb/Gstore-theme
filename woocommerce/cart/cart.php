@@ -40,6 +40,32 @@ if ( function_exists( 'wc_wp_theme_get_element_class_name' ) ) {
 
 			<div class="Gstore-cart-layout">
 				<div class="Gstore-cart-main">
+					<div class="Gstore-cart-card gstore-shipping-calculator gstore-shipping-calculator--cart">
+						<h3 class="gstore-shipping-calculator__title">
+							<svg class="gstore-shipping-calculator__icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+								<path d="M3 7h11v10H3z" fill="currentColor" opacity="0.2"></path>
+								<path d="M14 7h4l3 4v6h-7V7z" fill="currentColor"></path>
+								<circle cx="7" cy="19" r="2" fill="currentColor"></circle>
+								<circle cx="17" cy="19" r="2" fill="currentColor"></circle>
+							</svg>
+							<?php esc_html_e( 'Calcular frete', 'gstore' ); ?>
+						</h3>
+						<div class="gstore-shipping-calculator__form">
+							<input
+								type="text"
+								class="gstore-shipping-calculator__cep"
+								placeholder="<?php esc_attr_e( '00000-000', 'gstore' ); ?>"
+								maxlength="9"
+								aria-label="<?php esc_attr_e( 'CEP para cálculo de frete', 'gstore' ); ?>"
+							/>
+							<button type="button" class="gstore-shipping-calculator__button">
+								<?php esc_html_e( 'Calcular frete', 'gstore' ); ?>
+							</button>
+						</div>
+						<div class="gstore-shipping-calculator__result" role="region" aria-live="polite"></div>
+						<div class="gstore-shipping-calculator__error" role="alert"></div>
+					</div>
+
 					<div class="Gstore-cart-list" role="list">
 						<?php do_action( 'woocommerce_before_cart_contents' ); ?>
 
@@ -180,8 +206,20 @@ if ( function_exists( 'wc_wp_theme_get_element_class_name' ) ) {
 											? gstore_get_cart_item_shipping_mode( $cart_item )
 											: 'land';
 
+										if ( is_cart() && isset( $_POST['gstore_shipping_mode'][ $cart_item_key ] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Missing
+											$posted_mode = sanitize_text_field( wp_unslash( $_POST['gstore_shipping_mode'][ $cart_item_key ] ) ); // phpcs:ignore WordPress.Security.NonceVerification.Missing
+											$selected_mode = 'air' === $posted_mode ? 'air' : 'land';
+										}
+										$freight_costs = array();
+
 										if ( ! empty( $freight_options ) && ! in_array( $selected_mode, $freight_options, true ) ) {
 											$selected_mode = $freight_options[0];
+										}
+
+										if ( function_exists( 'gstore_get_cart_item_shipping_cost_display' ) ) {
+											foreach ( $freight_options as $mode ) {
+												$freight_costs[ $mode ] = gstore_get_cart_item_shipping_cost_display( $cart_item, $mode );
+											}
 										}
 										?>
 
@@ -199,13 +237,23 @@ if ( function_exists( 'wc_wp_theme_get_element_class_name' ) ) {
 																	value="<?php echo esc_attr( $mode ); ?>"
 																	<?php checked( $selected_mode, $mode ); ?>
 																/>
-																<span><?php echo esc_html( function_exists( 'gstore_get_cart_item_shipping_label' ) ? gstore_get_cart_item_shipping_label( $mode ) : $mode ); ?></span>
+																<span class="Gstore-cart-card__shipping-text">
+																	<?php echo esc_html( function_exists( 'gstore_get_cart_item_shipping_label' ) ? gstore_get_cart_item_shipping_label( $mode ) : $mode ); ?>
+																</span>
+																<?php if ( ! empty( $freight_costs[ $mode ] ) ) : ?>
+																	<span class="Gstore-cart-card__shipping-price"><?php echo wp_kses_post( $freight_costs[ $mode ] ); ?></span>
+																<?php endif; ?>
 															</label>
 														<?php endforeach; ?>
 													</div>
 												<?php else : ?>
 													<div class="Gstore-cart-card__shipping-fixed">
-														<?php echo esc_html( function_exists( 'gstore_get_cart_item_shipping_label' ) ? gstore_get_cart_item_shipping_label( 'land' ) : __( 'Terrestre', 'gstore' ) ); ?>
+														<span class="Gstore-cart-card__shipping-text">
+															<?php echo esc_html( function_exists( 'gstore_get_cart_item_shipping_label' ) ? gstore_get_cart_item_shipping_label( 'land' ) : __( 'Terrestre', 'gstore' ) ); ?>
+														</span>
+														<?php if ( ! empty( $freight_costs['land'] ) ) : ?>
+															<span class="Gstore-cart-card__shipping-price"><?php echo wp_kses_post( $freight_costs['land'] ); ?></span>
+														<?php endif; ?>
 													</div>
 												<?php endif; ?>
 											</div>
