@@ -837,11 +837,9 @@
 				isCalculatingShipping = false;
 				
 				if (response.success && response.data) {
-					const rate = Array.isArray(response.data.rates) && response.data.rates.length
-						? response.data.rates[0]
-						: null;
+					const rates = Array.isArray(response.data.rates) ? response.data.rates : [];
 
-					if (!rate || !rate.cost_formatted) {
+					if (!rates.length) {
 						showShippingError('Não foi possível calcular o frete para este destino.');
 						calculatedShipping = null;
 						lastCalculatedShippingCep = '';
@@ -913,16 +911,34 @@
 		const $postcodeField = $('#billing_postcode_field');
 		if (!$postcodeField.length) return;
 
-		const rate = Array.isArray(data.rates) && data.rates.length ? data.rates[0] : null;
+		const rates = Array.isArray(data.rates) ? data.rates : [];
 		const destination = data.destination || {};
 		const city = destination.city ? String(destination.city).trim() : '';
 		const state = destination.state ? String(destination.state).trim() : '';
 		const destinationLabel = city && state ? `${city}/${state}` : (city || state);
 
-		if (!rate || !rate.cost_formatted) {
+		if (!rates.length) {
 			showShippingError('Não foi possível calcular o frete para este destino.');
 			return;
 		}
+
+		const ratesHtml = rates.map((rate) => {
+			const label = rate.label || '';
+			let mode = rate.mode ? String(rate.mode).toLowerCase() : '';
+			if (!mode && label) {
+				mode = label.toLowerCase().includes('aéreo') ? 'air' : 'ground';
+			}
+			const labelText = label
+				? label
+				: (mode === 'air' ? 'Frete Aéreo' : 'Frete Terrestre');
+			return `
+				<div class="Gstore-shipping-result__row">
+					<i class="fa-solid fa-truck"></i>
+					<span class="Gstore-shipping-result__label">${labelText}:</span>
+					<strong class="Gstore-shipping-result__value">${rate.cost_formatted || '-'}</strong>
+				</div>
+			`;
+		}).join('');
 
 		// Busca por um resultado existente
 		let $shippingResult = $('.Gstore-shipping-result').first();
@@ -937,11 +953,7 @@
 		
 		$shippingResult.html(`
 			<div class="Gstore-shipping-result__content">
-				<div class="Gstore-shipping-result__row">
-					<i class="fa-solid fa-truck"></i>
-					<span class="Gstore-shipping-result__label">Frete:</span>
-					<strong class="Gstore-shipping-result__value">${rate.cost_formatted}</strong>
-				</div>
+				${ratesHtml}
 				<div class="Gstore-shipping-result__row">
 					<i class="fa-solid fa-map-marker-alt"></i>
 					<span class="Gstore-shipping-result__label">Destino:</span>

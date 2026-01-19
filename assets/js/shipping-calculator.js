@@ -173,26 +173,36 @@
 
 		showResult(data) {
 			const i18n = this.options.i18n;
-			const rate = Array.isArray(data.rates) && data.rates.length ? data.rates[0] : null;
+			const rates = Array.isArray(data.rates) ? data.rates : [];
 			const destination = data.destination || {};
 			const city = destination.city ? String(destination.city).trim() : '';
 			const state = destination.state ? String(destination.state).trim() : '';
 			const destinationLabel = city && state ? `${city}/${state}` : (city || state);
 
-			if (!rate || !rate.cost_formatted) {
+			if (!rates.length) {
 				this.showError(this.options.i18n.error || 'Erro ao calcular frete. Tente novamente.');
 				return;
 			}
-			
-			const html = `
-				<div class="gstore-shipping-calculator__result-content">
+
+			const ratesHtml = rates.map((rate) => {
+				const label = rate.label || '';
+				const labelText = label
+					? label
+					: ((rate.mode || '').toLowerCase() === 'air' ? 'Frete Aéreo' : 'Frete Terrestre');
+				return `
 					<div class="gstore-shipping-calculator__result-row">
 						<span class="gstore-shipping-calculator__result-label">
 							<i class="fa-solid fa-truck" aria-hidden="true"></i>
-							${i18n.frete || 'Frete'}:
+							${labelText}:
 						</span>
-						<strong class="gstore-shipping-calculator__result-value">${rate.cost_formatted}</strong>
+						<strong class="gstore-shipping-calculator__result-value">${rate.cost_formatted || '-'}</strong>
 					</div>
+				`;
+			}).join('');
+			
+			const html = `
+				<div class="gstore-shipping-calculator__result-content">
+					${ratesHtml}
 					<div class="gstore-shipping-calculator__result-row">
 						<span class="gstore-shipping-calculator__result-label">
 							<i class="fa-solid fa-map-marker-alt" aria-hidden="true"></i>
