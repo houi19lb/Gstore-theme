@@ -40,7 +40,19 @@ if ( function_exists( 'wc_wp_theme_get_element_class_name' ) ) {
 
 			<div class="Gstore-cart-layout">
 				<div class="Gstore-cart-main">
-					<div class="Gstore-cart-card gstore-shipping-calculator gstore-shipping-calculator--cart">
+					<?php
+					$gstore_cart_postcode = '';
+					if ( function_exists( 'WC' ) && WC()->customer ) {
+						$gstore_cart_postcode = (string) WC()->customer->get_shipping_postcode();
+					}
+					if ( '' !== $gstore_cart_postcode ) {
+						$gstore_cart_postcode = preg_replace( '/[^0-9]/', '', $gstore_cart_postcode );
+						if ( strlen( $gstore_cart_postcode ) === 8 ) {
+							$gstore_cart_postcode = substr( $gstore_cart_postcode, 0, 5 ) . '-' . substr( $gstore_cart_postcode, 5, 3 );
+						}
+					}
+					?>
+					<div class="Gstore-cart-card gstore-shipping-calculator gstore-shipping-calculator--cart" data-gstore-cart-freight>
 						<h3 class="gstore-shipping-calculator__title">
 							<svg class="gstore-shipping-calculator__icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
 								<path d="M3 7h11v10H3z" fill="currentColor" opacity="0.2"></path>
@@ -56,6 +68,7 @@ if ( function_exists( 'wc_wp_theme_get_element_class_name' ) ) {
 								class="gstore-shipping-calculator__cep"
 								placeholder="<?php esc_attr_e( '00000-000', 'gstore' ); ?>"
 								maxlength="9"
+								value="<?php echo esc_attr( $gstore_cart_postcode ); ?>"
 								aria-label="<?php esc_attr_e( 'CEP para cálculo de frete', 'gstore' ); ?>"
 							/>
 							<button type="button" class="gstore-shipping-calculator__button">
