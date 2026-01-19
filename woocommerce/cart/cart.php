@@ -216,7 +216,9 @@ if ( function_exists( 'wc_wp_theme_get_element_class_name' ) ) {
 											$selected_mode = $freight_options[0];
 										}
 
-										if ( function_exists( 'gstore_get_cart_item_shipping_cost_display' ) ) {
+										$has_shipping_postcode = function_exists( 'WC' ) && WC()->customer && WC()->customer->get_shipping_postcode();
+
+										if ( $has_shipping_postcode && function_exists( 'gstore_get_cart_item_shipping_cost_display' ) ) {
 											foreach ( $freight_options as $mode ) {
 												$freight_costs[ $mode ] = gstore_get_cart_item_shipping_cost_display( $cart_item, $mode );
 											}
@@ -242,6 +244,8 @@ if ( function_exists( 'wc_wp_theme_get_element_class_name' ) ) {
 																</span>
 																<?php if ( ! empty( $freight_costs[ $mode ] ) ) : ?>
 																	<span class="Gstore-cart-card__shipping-price"><?php echo wp_kses_post( $freight_costs[ $mode ] ); ?></span>
+																<?php elseif ( ! $has_shipping_postcode ) : ?>
+																	<span class="Gstore-cart-card__shipping-price">—</span>
 																<?php endif; ?>
 															</label>
 														<?php endforeach; ?>
@@ -253,6 +257,8 @@ if ( function_exists( 'wc_wp_theme_get_element_class_name' ) ) {
 														</span>
 														<?php if ( ! empty( $freight_costs['land'] ) ) : ?>
 															<span class="Gstore-cart-card__shipping-price"><?php echo wp_kses_post( $freight_costs['land'] ); ?></span>
+														<?php elseif ( ! $has_shipping_postcode ) : ?>
+															<span class="Gstore-cart-card__shipping-price">—</span>
 														<?php endif; ?>
 													</div>
 												<?php endif; ?>

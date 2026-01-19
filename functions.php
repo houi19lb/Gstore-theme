@@ -3918,27 +3918,7 @@ if ( ! function_exists( 'gstore_get_product_freight_type' ) ) {
 			}
 			if ( ! empty( $variation['isAccessory'] ) ) {
 				return 'accessory';
-			}
 		}
-
-		$categories = wp_get_post_terms( $product->get_id(), 'product_cat', array( 'fields' => 'slugs' ) );
-		$categories = is_array( $categories ) && ! is_wp_error( $categories ) ? $categories : array();
-		$categories = array_map( 'sanitize_title', $categories );
-
-		$gun_categories = array( 'armas', 'armas-curtas', 'armas-longas' );
-		$ammo_categories = array( 'municao', 'municoes', 'muni', 'municao-airsoft' );
-		$accessory_categories = array( 'acessorio', 'acessorios', 'pecas' );
-
-		if ( array_intersect( $categories, $ammo_categories ) ) {
-			return 'ammo';
-		}
-
-		if ( array_intersect( $categories, $gun_categories ) ) {
-			return 'gun';
-		}
-
-		if ( array_intersect( $categories, $accessory_categories ) ) {
-			return 'accessory';
 		}
 
 		return 'other';
@@ -4021,7 +4001,17 @@ add_filter( 'woocommerce_get_cart_item_from_session', 'gstore_restore_cart_item_
 
 if ( ! function_exists( 'gstore_sync_cart_shipping_modes' ) ) {
 	function gstore_sync_cart_shipping_modes() {
+		static $syncing = false;
+
+		if ( $syncing ) {
+			return;
+		}
+
 		if ( empty( $_POST['gstore_shipping_mode'] ) || ! function_exists( 'WC' ) || ! WC()->cart ) { // phpcs:ignore WordPress.Security.NonceVerification.Missing
+			return;
+		}
+
+		if ( ! ( is_cart() || is_checkout() ) ) {
 			return;
 		}
 
@@ -4029,6 +4019,9 @@ if ( ! function_exists( 'gstore_sync_cart_shipping_modes' ) ) {
 		if ( ! is_array( $posted_modes ) ) {
 			return;
 		}
+
+		$syncing = true;
+		$dirty   = false;
 
 		foreach ( $posted_modes as $cart_item_key => $mode ) {
 			$cart_item_key = (string) $cart_item_key;
@@ -4045,14 +4038,25 @@ if ( ! function_exists( 'gstore_sync_cart_shipping_modes' ) ) {
 				$mode = $context['options'][0];
 			}
 
+			$previous = isset( WC()->cart->cart_contents[ $cart_item_key ]['gstore_shipping_mode'] )
+				? (string) WC()->cart->cart_contents[ $cart_item_key ]['gstore_shipping_mode']
+				: '';
+
+			if ( $previous !== $mode ) {
+				$dirty = true;
+			}
+
 			WC()->cart->cart_contents[ $cart_item_key ]['gstore_shipping_mode'] = $mode;
 		}
 
-		WC()->cart->set_session();
+		if ( $dirty ) {
+			WC()->cart->set_session();
+		}
+
+		$syncing = false;
 	}
 }
 add_action( 'woocommerce_cart_updated', 'gstore_sync_cart_shipping_modes', 20 );
-add_action( 'woocommerce_before_calculate_totals', 'gstore_sync_cart_shipping_modes', 20 );
 
 if ( ! function_exists( 'gstore_get_variation_shipping_cost' ) ) {
 	function gstore_get_variation_shipping_cost( $variation, $mode, $quantity ) {
@@ -4081,6 +4085,13 @@ if ( ! function_exists( 'gstore_get_cart_item_shipping_cost_display' ) ) {
 	function gstore_get_cart_item_shipping_cost_display( $cart_item, $mode ) {
 		if ( ! isset( $cart_item['data'] ) || ! $cart_item['data'] instanceof WC_Product ) {
 			return '';
+		}
+
+		if ( function_exists( 'WC' ) && WC()->customer ) {
+			$shipping_postcode = WC()->customer->get_shipping_postcode();
+			if ( ! $shipping_postcode ) {
+				return '';
+			}
 		}
 
 		$context = gstore_get_cart_item_freight_context( $cart_item );
