@@ -465,6 +465,45 @@ div.woocommerce section.Gstore-cart-shell div.Gstore-cart-container {
 }
 
 /* ==========================================
+   FRETE POR ITEM
+   ========================================== */
+
+.Gstore-cart-card__shipping {
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+	padding: 12px 16px;
+	border: 1px dashed var(--gstore-cart-border);
+	border-radius: var(--gstore-cart-radius);
+	background: #ffffff;
+}
+
+.Gstore-cart-card__shipping-options {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 12px;
+}
+
+.Gstore-cart-card__shipping-option {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	font-size: var(--gstore-font-size-09);
+	color: var(--gstore-cart-text);
+	cursor: pointer;
+}
+
+.Gstore-cart-card__shipping-option input[type="radio"] {
+	accent-color: var(--gstore-cart-green);
+}
+
+.Gstore-cart-card__shipping-fixed {
+	font-size: var(--gstore-font-size-09);
+	font-weight: var(--gstore-font-weight-semibold);
+	color: var(--gstore-cart-text);
+}
+
+/* ==========================================
    CONTROLES DE QUANTIDADE
    ========================================== */
 

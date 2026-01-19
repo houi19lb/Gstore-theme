@@ -60,6 +60,10 @@ Se existir `window.gstoreFreightDefaults`, esse valor sobrescreve o fallback.
 ## Integração por CEP (ViaCEP)
 O cálculo de frete no front utiliza CEP e resolve **cidade/UF** via ViaCEP no backend, com cache de 90 dias e LRU de 200k entradas.
 
+### Autoload ViaCEP
+Para garantir que o autoloader PSR-4 encontre o serviço do ViaCEP, existe um arquivo ponte:
+- `includes/Services/class-via-cep-service.php` → carrega `class-viacep-service.php`.
+
 ### Fluxo (checkout e AJAX)
 1. Cliente informa CEP (8 dígitos).
 2. Backend consulta ViaCEP e atualiza `state` e `city` (cache LRU).
@@ -72,6 +76,14 @@ O endpoint AJAX do plugin retorna também `destination` com `city` e `state`:
 {
   "rates": [{ "id": "...", "label": "...", "cost": 10.5, "cost_formatted": "R$ 10,50" }],
   "destination": { "city": "São Paulo", "state": "SP" }
+}
+```
+
+Em caso de erro, o endpoint também retorna `destination` para debug:
+```json
+{
+  "message": "Não foi possível calcular o frete para este destino.",
+  "destination": { "city": "", "state": "SP" }
 }
 ```
 
@@ -139,8 +151,8 @@ Estrutura (sanitizada em `class-freight-service.php`):
 ```
 
 ### Notas importantes
-- `variationPrices` **sobrescreve por variação** dentro da região.
-- Se `variationPrices` estiver vazio/0 para terrestre ou aéreo, **essa modalidade fica indisponível** para a variação **naquela região**.
+- `variationPrices` e `landPrice`/`airPrice` da região **não sobrescrevem** os preços globais.
+- A região serve **apenas** para restringir a lista de cidades/UF.
 - `isAccessory` é usado para classificar produtos no simulador.
 - A importação de cidades guarda **apenas** `city`, `uf` e `cep` e atualiza automaticamente `locs.land`.
 
@@ -199,9 +211,7 @@ Seção **Frete por região**:
 - Múltiplas regiões com:
   - Nome
   - Lista de cidades/UF (uma por linha, `UF` ou `Cidade;UF`)
-  - Frete terrestre/aéreo
-  - `variationPrices` para sobrescrever por variação
-- Se preço regional estiver vazio, usa a regra global.
+- Frete terrestre/aéreo e `variationPrices` são **ignorados** no cálculo (os preços vêm sempre das variações globais).
 
 ## Categoria existente
 O picker de categorias:

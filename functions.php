@@ -3783,6 +3783,405 @@ require_once get_theme_file_path( 'inc/api-visualizer.php' );
  */
 
 /**
+ * Helpers de frete no carrinho (baseado na config do admin).
+ */
+if ( ! function_exists( 'gstore_get_freight_config' ) ) {
+	function gstore_get_freight_config() {
+		$config = get_option( 'gstore_freight_config' );
+		if ( ! is_array( $config ) ) {
+			$config = array();
+		}
+
+		$config['variations'] = isset( $config['variations'] ) && is_array( $config['variations'] )
+			? $config['variations']
+			: array();
+
+		$config['rules'] = isset( $config['rules'] ) && is_array( $config['rules'] )
+			? $config['rules']
+			: array();
+
+		return $config;
+	}
+}
+
+if ( ! function_exists( 'gstore_parse_freight_slugs' ) ) {
+	function gstore_parse_freight_slugs( $value ) {
+		$value = is_string( $value ) ? $value : '';
+		if ( '' === trim( $value ) ) {
+			return array();
+		}
+
+		$parts = preg_split( '/\s*,\s*/', $value );
+		$slugs = array();
+
+		foreach ( $parts as $part ) {
+			$slug = sanitize_title( $part );
+			if ( '' !== $slug ) {
+				$slugs[] = $slug;
+			}
+		}
+
+		return array_values( array_unique( $slugs ) );
+	}
+}
+
+if ( ! function_exists( 'gstore_get_product_slug_candidates' ) ) {
+	function gstore_get_product_slug_candidates( $product ) {
+		if ( ! $product instanceof WC_Product ) {
+			return array();
+		}
+
+		$slugs = array();
+
+		$product_slug = sanitize_title( $product->get_slug() );
+		if ( $product_slug ) {
+			$slugs[] = $product_slug;
+		}
+
+		$categories = wp_get_post_terms( $product->get_id(), 'product_cat', array( 'fields' => 'slugs' ) );
+		if ( is_array( $categories ) && ! is_wp_error( $categories ) ) {
+			$slugs = array_merge( $slugs, array_map( 'sanitize_title', $categories ) );
+		}
+
+		$tags = wp_get_post_terms( $product->get_id(), 'product_tag', array( 'fields' => 'slugs' ) );
+		if ( is_array( $tags ) && ! is_wp_error( $tags ) ) {
+			$slugs = array_merge( $slugs, array_map( 'sanitize_title', $tags ) );
+		}
+
+		$slugs = array_filter( array_unique( array_map( 'sanitize_title', $slugs ) ) );
+
+		return array_values( $slugs );
+	}
+}
+
+if ( ! function_exists( 'gstore_find_freight_variation' ) ) {
+	function gstore_find_freight_variation( $product ) {
+		if ( ! $product instanceof WC_Product ) {
+			return null;
+		}
+
+		$config = gstore_get_freight_config();
+		if ( empty( $config['variations'] ) ) {
+			return null;
+		}
+
+		$product_slugs = gstore_get_product_slug_candidates( $product );
+		if ( empty( $product_slugs ) ) {
+			return null;
+		}
+
+		foreach ( $config['variations'] as $variation ) {
+			if ( ! is_array( $variation ) ) {
+				continue;
+			}
+
+			$slugs = array_merge(
+				gstore_parse_freight_slugs( isset( $variation['mainSlugs'] ) ? $variation['mainSlugs'] : '' ),
+				gstore_parse_freight_slugs( isset( $variation['extraSlugs'] ) ? $variation['extraSlugs'] : '' )
+			);
+
+			if ( empty( $slugs ) ) {
+				continue;
+			}
+
+			if ( array_intersect( $product_slugs, $slugs ) ) {
+				return $variation;
+			}
+		}
+
+		return null;
+	}
+}
+
+if ( ! function_exists( 'gstore_get_product_freight_type' ) ) {
+	function gstore_get_product_freight_type( $product ) {
+		if ( ! $product instanceof WC_Product ) {
+			return 'other';
+		}
+
+		$variation = gstore_find_freight_variation( $product );
+		if ( is_array( $variation ) ) {
+			if ( ! empty( $variation['isAmmo'] ) ) {
+				return 'ammo';
+			}
+			if ( ! empty( $variation['isGun'] ) ) {
+				return 'gun';
+			}
+			if ( ! empty( $variation['isAccessory'] ) ) {
+				return 'accessory';
+			}
+		}
+
+		$categories = wp_get_post_terms( $product->get_id(), 'product_cat', array( 'fields' => 'slugs' ) );
+		$categories = is_array( $categories ) && ! is_wp_error( $categories ) ? $categories : array();
+		$categories = array_map( 'sanitize_title', $categories );
+
+		$gun_categories = array( 'armas', 'armas-curtas', 'armas-longas' );
+		$ammo_categories = array( 'municao', 'municoes', 'muni', 'municao-airsoft' );
+		$accessory_categories = array( 'acessorio', 'acessorios', 'pecas' );
+
+		if ( array_intersect( $categories, $ammo_categories ) ) {
+			return 'ammo';
+		}
+
+		if ( array_intersect( $categories, $gun_categories ) ) {
+			return 'gun';
+		}
+
+		if ( array_intersect( $categories, $accessory_categories ) ) {
+			return 'accessory';
+		}
+
+		return 'other';
+	}
+}
+
+if ( ! function_exists( 'gstore_get_cart_item_shipping_mode' ) ) {
+	function gstore_get_cart_item_shipping_mode( $cart_item ) {
+		$mode = isset( $cart_item['gstore_shipping_mode'] ) ? (string) $cart_item['gstore_shipping_mode'] : 'land';
+		return 'air' === $mode ? 'air' : 'land';
+	}
+}
+
+if ( ! function_exists( 'gstore_get_freight_mode_options' ) ) {
+	function gstore_get_freight_mode_options( $variation, $type ) {
+		$options = array();
+
+		if ( 'ammo' === $type ) {
+			$options[] = 'land';
+			return $options;
+		}
+
+		$allow_land = true;
+		$allow_air  = true;
+
+		if ( is_array( $variation ) ) {
+			if ( array_key_exists( 'allowLand', $variation ) ) {
+				$allow_land = (bool) $variation['allowLand'];
+			}
+			if ( array_key_exists( 'allowAir', $variation ) ) {
+				$allow_air = (bool) $variation['allowAir'];
+			}
+		}
+
+		if ( $allow_land ) {
+			$options[] = 'land';
+		}
+		if ( $allow_air ) {
+			$options[] = 'air';
+		}
+
+		return $options;
+	}
+}
+
+if ( ! function_exists( 'gstore_get_cart_item_freight_context' ) ) {
+	function gstore_get_cart_item_freight_context( $cart_item ) {
+		$product = isset( $cart_item['data'] ) ? $cart_item['data'] : null;
+		$type    = gstore_get_product_freight_type( $product );
+		$variation = gstore_find_freight_variation( $product );
+		$options = gstore_get_freight_mode_options( $variation, $type );
+
+		return array(
+			'product'   => $product,
+			'type'      => $type,
+			'variation' => $variation,
+			'options'   => $options,
+		);
+	}
+}
+
+if ( ! function_exists( 'gstore_get_cart_item_shipping_label' ) ) {
+	function gstore_get_cart_item_shipping_label( $mode ) {
+		return 'air' === $mode ? __( 'Aéreo', 'gstore' ) : __( 'Terrestre', 'gstore' );
+	}
+}
+
+if ( ! function_exists( 'gstore_restore_cart_item_shipping_mode' ) ) {
+	function gstore_restore_cart_item_shipping_mode( $cart_item, $values ) {
+		if ( isset( $values['gstore_shipping_mode'] ) ) {
+			$cart_item['gstore_shipping_mode'] = 'air' === $values['gstore_shipping_mode'] ? 'air' : 'land';
+		} elseif ( ! isset( $cart_item['gstore_shipping_mode'] ) ) {
+			$cart_item['gstore_shipping_mode'] = 'land';
+		}
+
+		return $cart_item;
+	}
+}
+add_filter( 'woocommerce_get_cart_item_from_session', 'gstore_restore_cart_item_shipping_mode', 20, 2 );
+
+if ( ! function_exists( 'gstore_sync_cart_shipping_modes' ) ) {
+	function gstore_sync_cart_shipping_modes() {
+		if ( empty( $_POST['gstore_shipping_mode'] ) || ! function_exists( 'WC' ) || ! WC()->cart ) { // phpcs:ignore WordPress.Security.NonceVerification.Missing
+			return;
+		}
+
+		$posted_modes = wp_unslash( $_POST['gstore_shipping_mode'] ); // phpcs:ignore WordPress.Security.NonceVerification.Missing
+		if ( ! is_array( $posted_modes ) ) {
+			return;
+		}
+
+		foreach ( $posted_modes as $cart_item_key => $mode ) {
+			$cart_item_key = (string) $cart_item_key;
+			$mode          = 'air' === $mode ? 'air' : 'land';
+
+			if ( ! isset( WC()->cart->cart_contents[ $cart_item_key ] ) ) {
+				continue;
+			}
+
+			$context = gstore_get_cart_item_freight_context( WC()->cart->cart_contents[ $cart_item_key ] );
+			if ( empty( $context['options'] ) ) {
+				$mode = 'land';
+			} elseif ( ! in_array( $mode, $context['options'], true ) ) {
+				$mode = $context['options'][0];
+			}
+
+			WC()->cart->cart_contents[ $cart_item_key ]['gstore_shipping_mode'] = $mode;
+		}
+
+		WC()->cart->set_session();
+	}
+}
+add_action( 'woocommerce_cart_updated', 'gstore_sync_cart_shipping_modes', 20 );
+
+if ( ! function_exists( 'gstore_get_variation_shipping_cost' ) ) {
+	function gstore_get_variation_shipping_cost( $variation, $mode, $quantity ) {
+		if ( ! is_array( $variation ) ) {
+			return 0.0;
+		}
+
+		$mode = 'air' === $mode ? 'air' : 'land';
+		$price_key = 'air' === $mode ? 'airPrice' : 'landPrice';
+
+		$price = isset( $variation[ $price_key ] ) ? (float) $variation[ $price_key ] : 0.0;
+		if ( $price <= 0 ) {
+			return 0.0;
+		}
+
+		$billing_mode = isset( $variation['billingMode'] ) ? (string) $variation['billingMode'] : 'per_item';
+		if ( 'per_variation' === $billing_mode ) {
+			return $price;
+		}
+
+		return $price * max( 1, (int) $quantity );
+	}
+}
+
+if ( ! function_exists( 'gstore_apply_cart_freight_fees' ) ) {
+	function gstore_apply_cart_freight_fees( $cart ) {
+		if ( ! $cart instanceof WC_Cart ) {
+			return;
+		}
+
+		if ( is_admin() && ! defined( 'DOING_AJAX' ) ) {
+			return;
+		}
+
+		if ( ! ( is_cart() || is_checkout() ) ) {
+			return;
+		}
+
+		$config = gstore_get_freight_config();
+		if ( empty( $config['variations'] ) ) {
+			return;
+		}
+
+		$rules = isset( $config['rules'] ) ? (array) $config['rules'] : array();
+		$base_ammo_limit = isset( $rules['baseAmmoLimit'] ) ? max( 1, (float) $rules['baseAmmoLimit'] ) : 7000;
+		$gun_surcharge_enabled = ! empty( $rules['gunSurchargeEnabled'] );
+		$gun_surcharge_threshold = isset( $rules['gunSurchargeThreshold'] ) ? (float) $rules['gunSurchargeThreshold'] : 0;
+		$gun_surcharge_percent = isset( $rules['gunSurchargePercent'] ) ? (float) $rules['gunSurchargePercent'] : 0;
+		$gun_surcharge_land = isset( $rules['gunSurchargeEnabledLand'] ) ? (bool) $rules['gunSurchargeEnabledLand'] : true;
+		$gun_surcharge_air  = isset( $rules['gunSurchargeEnabledAir'] ) ? (bool) $rules['gunSurchargeEnabledAir'] : true;
+
+		$ammo_shipping_total = 0.0;
+		$ammo_value_total    = 0.0;
+		$gun_value_total     = 0.0;
+
+		$gun_totals = array(
+			'land' => 0.0,
+			'air'  => 0.0,
+		);
+		$accessory_totals = array(
+			'land' => 0.0,
+			'air'  => 0.0,
+		);
+
+		foreach ( $cart->get_cart() as $cart_item ) {
+			if ( empty( $cart_item['data'] ) || ! $cart_item['data'] instanceof WC_Product ) {
+				continue;
+			}
+
+			$context = gstore_get_cart_item_freight_context( $cart_item );
+			if ( empty( $context['type'] ) || 'other' === $context['type'] ) {
+				continue;
+			}
+
+			$quantity = isset( $cart_item['quantity'] ) ? (int) $cart_item['quantity'] : 1;
+			$line_total = isset( $cart_item['line_subtotal'] ) ? (float) $cart_item['line_subtotal'] : 0.0;
+			$variation = $context['variation'];
+
+			if ( 'ammo' === $context['type'] ) {
+				$ammo_value_total += $line_total;
+				$ammo_shipping_total += gstore_get_variation_shipping_cost( $variation, 'land', $quantity );
+				continue;
+			}
+
+			$mode = gstore_get_cart_item_shipping_mode( $cart_item );
+			if ( empty( $context['options'] ) || ! in_array( $mode, $context['options'], true ) ) {
+				$mode = 'land';
+			}
+
+			$cost = gstore_get_variation_shipping_cost( $variation, $mode, $quantity );
+			if ( $cost <= 0 ) {
+				continue;
+			}
+
+			if ( 'gun' === $context['type'] ) {
+				$gun_totals[ $mode ] += $cost;
+				$gun_value_total += $line_total;
+			} else {
+				$accessory_totals[ $mode ] += $cost;
+			}
+		}
+
+		if ( $ammo_shipping_total > 0 ) {
+			$shipments = (int) floor( $ammo_value_total / $base_ammo_limit ) + 1;
+			$ammo_shipping_total *= max( 1, $shipments );
+		}
+
+		if ( $gun_surcharge_enabled && $gun_value_total > $gun_surcharge_threshold && $gun_surcharge_percent > 0 ) {
+			$percent_factor = $gun_surcharge_percent / 100;
+
+			if ( $gun_surcharge_land && $gun_totals['land'] > 0 ) {
+				$gun_totals['land'] += $gun_totals['land'] * $percent_factor;
+			}
+			if ( $gun_surcharge_air && $gun_totals['air'] > 0 ) {
+				$gun_totals['air'] += $gun_totals['air'] * $percent_factor;
+			}
+		}
+
+		$non_ammo_totals = array(
+			'land' => $gun_totals['land'] + $accessory_totals['land'],
+			'air'  => $gun_totals['air'] + $accessory_totals['air'],
+		);
+
+		if ( $ammo_shipping_total > 0 ) {
+			$cart->add_fee( __( 'Frete munição (terrestre)', 'gstore' ), $ammo_shipping_total, true );
+		}
+
+		if ( $non_ammo_totals['land'] > 0 ) {
+			$cart->add_fee( __( 'Frete terrestre (armas/acessórios)', 'gstore' ), $non_ammo_totals['land'], true );
+		}
+
+		if ( $non_ammo_totals['air'] > 0 ) {
+			$cart->add_fee( __( 'Frete aéreo (armas/acessórios)', 'gstore' ), $non_ammo_totals['air'], true );
+		}
+	}
+}
+add_action( 'woocommerce_cart_calculate_fees', 'gstore_apply_cart_freight_fees', 20 );
+
+/**
  * Identifica a região de envio baseado no estado ou CEP.
  *
  * @param string $state Estado (UF) ou vazio.

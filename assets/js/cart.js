@@ -5,6 +5,92 @@
 (function () {
 	'use strict';
 
+	let cartUpdateTimeout = null;
+
+	/**
+	 * Atualiza o carrinho automaticamente (AJAX).
+	 */
+	function updateCartAutomatically() {
+		if (typeof jQuery === 'undefined') {
+			return;
+		}
+
+		const $form = jQuery('.woocommerce-cart-form, .Gstore-cart-form');
+		if ($form.length === 0) {
+			return;
+		}
+
+		const form = $form[0];
+		if (!form) {
+			return;
+		}
+
+		if (typeof block === 'function') {
+			block($form);
+			block(jQuery('div.cart_totals'));
+		}
+
+		const updateInput = document.createElement('input');
+		updateInput.type = 'hidden';
+		updateInput.name = 'update_cart';
+		updateInput.value = 'Update Cart';
+		form.appendChild(updateInput);
+
+		const actionUrl = form.action || (typeof wc_cart_params !== 'undefined' ? wc_cart_params.cart_url : null) || window.location.href;
+
+		jQuery.ajax({
+			type: form.method || 'POST',
+			url: actionUrl,
+			data: jQuery(form).serialize(),
+			dataType: 'html',
+			success: function (response) {
+				if (typeof update_wc_div === 'function') {
+					update_wc_div(response);
+				} else {
+					const $response = jQuery(response);
+					const $cartContent = $response.find('.woocommerce-cart-form, .Gstore-cart-form');
+					const $cartTotals = $response.find('.cart_totals, .Gstore-cart-sidebar');
+
+					if ($cartContent.length > 0) {
+						$form.replaceWith($cartContent);
+					}
+					if ($cartTotals.length > 0) {
+						jQuery('.cart_totals, .Gstore-cart-sidebar').replaceWith($cartTotals);
+					}
+
+					setTimeout(() => {
+						initQuantitySelectors();
+						initShippingChoices();
+					}, 100);
+				}
+
+				jQuery(document.body).trigger('updated_wc_div');
+			},
+			complete: function () {
+				if (form.contains(updateInput)) {
+					form.removeChild(updateInput);
+				}
+
+				if (typeof unblock === 'function') {
+					unblock($form);
+					unblock(jQuery('div.cart_totals'));
+				}
+
+				if (typeof jQuery.scroll_to_notices === 'function') {
+					jQuery.scroll_to_notices(jQuery('[role="alert"]'));
+				}
+			},
+		});
+	}
+
+	/**
+	 * Debounce para evitar múltiplas chamadas de atualização.
+	 */
+	function scheduleCartUpdate() {
+		clearTimeout(cartUpdateTimeout);
+		cartUpdateTimeout = setTimeout(updateCartAutomatically, 400);
+	}
+
 	/**
 	 * Adiciona botões de incremento/decremento ao seletor de quantidade
 	 */
@@ -111,96 +197,10 @@
 			}
 		};
 
-		// Função para atualizar o carrinho automaticamente
-		const updateCartAutomatically = () => {
-			// Verifica se jQuery está disponível
-			if (typeof jQuery === 'undefined') {
-				return;
-			}
-
-			const $form = jQuery('.woocommerce-cart-form, .Gstore-cart-form');
-			if ($form.length === 0) {
-				return;
-			}
-
-			const form = $form[0];
-			if (!form) {
-				return;
-			}
-
-			// Bloqueia o formulário durante a atualização
-			if (typeof block === 'function') {
-				block($form);
-				block(jQuery('div.cart_totals'));
-			}
-
-			// Cria um input hidden temporário para simular o botão de atualizar
-			const updateInput = document.createElement('input');
-			updateInput.type = 'hidden';
-			updateInput.name = 'update_cart';
-			updateInput.value = 'Update Cart';
-			form.appendChild(updateInput);
-
-			// Obtém a URL de ação do formulário ou usa a URL atual
-			const actionUrl = form.action || (typeof wc_cart_params !== 'undefined' ? wc_cart_params.cart_url : null) || window.location.href;
-
-			// Faz a requisição AJAX
-			jQuery.ajax({
-				type: form.method || 'POST',
-				url: actionUrl,
-				data: jQuery(form).serialize(),
-				dataType: 'html',
-				success: function (response) {
-					// Usa a função do WooCommerce para atualizar a div se disponível
-					if (typeof update_wc_div === 'function') {
-						update_wc_div(response);
-					} else {
-						// Fallback: atualiza manualmente a área do carrinho
-						const $response = jQuery(response);
-						const $cartContent = $response.find('.woocommerce-cart-form, .Gstore-cart-form');
-						const $cartTotals = $response.find('.cart_totals, .Gstore-cart-sidebar');
-
-						if ($cartContent.length > 0) {
-							$form.replaceWith($cartContent);
-						}
-						if ($cartTotals.length > 0) {
-							jQuery('.cart_totals, .Gstore-cart-sidebar').replaceWith($cartTotals);
-						}
-
-						// Reinicializa os seletores de quantidade após atualização
-						setTimeout(() => {
-							initQuantitySelectors();
-						}, 100);
-					}
-
-					// Dispara evento do WooCommerce
-					jQuery(document.body).trigger('updated_wc_div');
-				},
-				complete: function () {
-					// Remove o input temporário
-					if (form.contains(updateInput)) {
-						form.removeChild(updateInput);
-					}
-
-					// Desbloqueia o formulário
-					if (typeof unblock === 'function') {
-						unblock($form);
-						unblock(jQuery('div.cart_totals'));
-					}
-
-					// Scroll para notificações se a função existir
-					if (typeof jQuery.scroll_to_notices === 'function') {
-						jQuery.scroll_to_notices(jQuery('[role="alert"]'));
-					}
-				},
-			});
-		};
-
-		// Debounce para evitar múltiplas chamadas
 		let updateTimeout = null;
 		const debouncedUpdateCart = () => {
 			clearTimeout(updateTimeout);
-			updateTimeout = setTimeout(updateCartAutomatically, 500); // Aguarda 500ms após a última mudança
+			updateTimeout = setTimeout(scheduleCartUpdate, 200);
 		};
 
 		// Função para definir valor
@@ -276,7 +276,7 @@
 			}
 			// Garante que o carrinho seja atualizado ao perder o foco
 			clearTimeout(updateTimeout);
-			updateCartAutomatically();
+			scheduleCartUpdate();
 		});
 
 		// Suporte para teclado
@@ -326,6 +326,27 @@
 	}
 
 	/**
+	 * Inicializa seleção de frete por item no carrinho
+	 */
+	function initShippingChoices() {
+		const shippingInputs = document.querySelectorAll(
+			'.Gstore-cart-card__shipping-option input[type="radio"]'
+		);
+
+		shippingInputs.forEach((input) => {
+			if (input.dataset.gstoreShippingBound === 'true') {
+				return;
+			}
+
+			input.dataset.gstoreShippingBound = 'true';
+
+			input.addEventListener('change', () => {
+				scheduleCartUpdate();
+			});
+		});
+	}
+
+	/**
 	 * Observa mudanças dinâmicas no DOM (para AJAX)
 	 */
 	function setupMutationObserver() {
@@ -349,6 +370,7 @@
 	 */
 	function init() {
 		initQuantitySelectors();
+		initShippingChoices();
 		setupMutationObserver();
 	}
 

@@ -166,6 +166,50 @@ if ( function_exists( 'wc_wp_theme_get_element_class_name' ) ) {
 												?>
 											</div>
 										</div>
+
+										<?php
+										$freight_context = function_exists( 'gstore_get_cart_item_freight_context' )
+											? gstore_get_cart_item_freight_context( $cart_item )
+											: array();
+
+										$freight_type = isset( $freight_context['type'] ) ? $freight_context['type'] : 'other';
+										$freight_options = isset( $freight_context['options'] ) && is_array( $freight_context['options'] )
+											? $freight_context['options']
+											: array();
+										$selected_mode = function_exists( 'gstore_get_cart_item_shipping_mode' )
+											? gstore_get_cart_item_shipping_mode( $cart_item )
+											: 'land';
+
+										if ( ! empty( $freight_options ) && ! in_array( $selected_mode, $freight_options, true ) ) {
+											$selected_mode = $freight_options[0];
+										}
+										?>
+
+										<?php if ( 'other' !== $freight_type && ! empty( $freight_options ) ) : ?>
+											<div class="Gstore-cart-card__shipping" data-cart-item-key="<?php echo esc_attr( $cart_item_key ); ?>">
+												<span class="Gstore-cart-card__label"><?php esc_html_e( 'Frete', 'gstore' ); ?></span>
+
+												<?php if ( in_array( $freight_type, array( 'gun', 'accessory' ), true ) && count( $freight_options ) > 1 ) : ?>
+													<div class="Gstore-cart-card__shipping-options">
+														<?php foreach ( $freight_options as $mode ) : ?>
+															<label class="Gstore-cart-card__shipping-option">
+																<input
+																	type="radio"
+																	name="gstore_shipping_mode[<?php echo esc_attr( $cart_item_key ); ?>]"
+																	value="<?php echo esc_attr( $mode ); ?>"
+																	<?php checked( $selected_mode, $mode ); ?>
+																/>
+																<span><?php echo esc_html( function_exists( 'gstore_get_cart_item_shipping_label' ) ? gstore_get_cart_item_shipping_label( $mode ) : $mode ); ?></span>
+															</label>
+														<?php endforeach; ?>
+													</div>
+												<?php else : ?>
+													<div class="Gstore-cart-card__shipping-fixed">
+														<?php echo esc_html( function_exists( 'gstore_get_cart_item_shipping_label' ) ? gstore_get_cart_item_shipping_label( 'land' ) : __( 'Terrestre', 'gstore' ) ); ?>
+													</div>
+												<?php endif; ?>
+											</div>
+										<?php endif; ?>
 									</div>
 								</article>
 								<?php
