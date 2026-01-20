@@ -715,9 +715,16 @@
 					// #endregion
 
 					if ($cartContent.length > 0) {
-						$form.replaceWith($cartContent);
+						const newForm = $cartContent[0];
+						if (newForm && form) {
+							form.action = newForm.getAttribute('action') || form.action;
+							form.method = newForm.getAttribute('method') || form.method;
+							form.innerHTML = newForm.innerHTML;
+						} else {
+							$form.replaceWith($cartContent);
+						}
 						// #region agent log
-						fetch('http://127.0.0.1:7247/ingest/cce9ccaa-d42e-4577-9651-ba22a488615c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'cart.js:635',message:'updateCartAutomatically: cartContent replaced',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'pre-fix',hypothesisId:'H12'})}).catch(()=>{});
+						fetch('http://127.0.0.1:7247/ingest/cce9ccaa-d42e-4577-9651-ba22a488615c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'cart.js:635',message:'updateCartAutomatically: cartContent updated',data:{usedInnerHTML:Boolean(newForm && form)},timestamp:Date.now(),sessionId:'debug-session',runId:'pre-fix',hypothesisId:'H14'})}).catch(()=>{});
 						// #endregion
 					}
 					if ($cartTotals.length > 0) {
