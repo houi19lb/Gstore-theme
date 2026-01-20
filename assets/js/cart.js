@@ -91,11 +91,21 @@
 				quantity: quantity,
 			},
 		}).then((response) => {
+			console.log('fetchRatesForItem response:', response);
 			if (!response || !response.success || !response.data || !Array.isArray(response.data.rates)) {
+				console.log('fetchRatesForItem validation failed:', {
+					hasResponse: !!response,
+					success: response?.success,
+					hasData: !!response?.data,
+					ratesIsArray: Array.isArray(response?.data?.rates)
+				});
 				return null;
 			}
 			return response.data.rates;
-		}).catch(() => null);
+		}).catch((error) => {
+			console.error('fetchRatesForItem error:', error);
+			return null;
+		});
 	}
 
 	function updateShippingBlock(shippingBlock, rates, cartItemKey, selectedMode) {
@@ -201,7 +211,9 @@
 	}
 
 	function calculateRatesForCart(shouldUpdateCart) {
+		console.log('calculateRatesForCart called with shouldUpdateCart:', shouldUpdateCart);
 		if (ratesSyncInProgress) {
+			console.log('Rates sync already in progress, returning');
 			return;
 		}
 
@@ -597,6 +609,7 @@
 			input.dataset.gstoreShippingBound = 'true';
 
 			input.addEventListener('change', () => {
+				console.log('Shipping mode changed to:', input.value, 'for item:', input.name);
 				scheduleCartUpdate();
 			});
 		});

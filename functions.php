@@ -4074,6 +4074,7 @@ if ( ! function_exists( 'gstore_sync_cart_shipping_modes' ) ) {
 		static $syncing = false;
 
 		if ( $syncing ) {
+			error_log( 'gstore_sync_cart_shipping_modes: Already syncing, returning' );
 			return;
 		}
 
@@ -4083,6 +4084,9 @@ if ( ! function_exists( 'gstore_sync_cart_shipping_modes' ) ) {
 
 		$has_posted_modes = ! empty( $_POST['gstore_shipping_mode'] ); // phpcs:ignore WordPress.Security.NonceVerification.Missing
 		$has_posted_rates = ! empty( $_POST['gstore_shipping_rates'] ); // phpcs:ignore WordPress.Security.NonceVerification.Missing
+		
+		error_log( 'gstore_sync_cart_shipping_modes: has_posted_modes=' . ( $has_posted_modes ? 'yes' : 'no' ) . ', has_posted_rates=' . ( $has_posted_rates ? 'yes' : 'no' ) );
+		
 		if ( ! $has_posted_modes && ! $has_posted_rates ) {
 			return;
 		}
@@ -4444,6 +4448,7 @@ function gstore_get_state_from_postcode( $postcode ) {
  * Retorna array de rates com modos permitidos (terrestre/aéreo) baseado na variação do produto.
  */
 function gstore_calculate_shipping_ajax() {
+	error_log('gstore_calculate_shipping_ajax called with product_id: ' . ( isset( $_POST['product_id'] ) ? $_POST['product_id'] : 'none' ) );
 	check_ajax_referer( 'gstore_shipping_calculator', 'nonce' );
 
 	$postcode   = isset( $_POST['postcode'] ) ? sanitize_text_field( $_POST['postcode'] ) : '';
@@ -4515,6 +4520,7 @@ function gstore_calculate_shipping_ajax() {
 			WC()->cart->calculate_totals();
 		}
 
+		error_log( 'Returning rates for product ' . $product_id . ': ' . wp_json_encode( $rates ) );
 		wp_send_json_success(
 			array(
 				'rates'       => $rates,
