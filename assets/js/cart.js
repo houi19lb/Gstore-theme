@@ -981,13 +981,16 @@
 			// #region agent log
 			fetch('http://127.0.0.1:7247/ingest/cce9ccaa-d42e-4577-9651-ba22a488615c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'cart.js:908',message:'updated_wc_div: after restoreCartCep',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'pre-fix',hypothesisId:'H7'})}).catch(()=>{});
 			// #endregion
-			if (hasCalculatedShippingFlag()) {
+			const shouldRecalculate = hasCalculatedShippingFlag();
+			// #region agent log
+			fetch('http://127.0.0.1:7247/ingest/cce9ccaa-d42e-4577-9651-ba22a488615c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'cart.js:913',message:'updated_wc_div: decide recalculation',data:{shouldRecalculate},timestamp:Date.now(),sessionId:'debug-session',runId:'pre-fix',hypothesisId:'H8'})}).catch(()=>{});
+			// #endregion
+			if (shouldRecalculate) {
 				calculateRatesForCart(false);
 			} else {
+				updateCartTotalsSummary();
 				updateCheckoutAvailability();
 			}
-			updateCartTotalsSummary();
-			updateCheckoutAvailability();
 		});
 
 		jQuery(document).on('click', '.gstore-shipping-calculator__button', function () {
