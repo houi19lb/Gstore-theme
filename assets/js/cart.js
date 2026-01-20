@@ -1063,6 +1063,12 @@
 			// #endregion
 			setTimeout(init, 100);
 			ensureShippingBlocksExist();
+			if (!hasCalculatedShipping()) {
+				setCalculatedShippingFlag(false);
+				// #region agent log
+				fetch('http://127.0.0.1:7247/ingest/cce9ccaa-d42e-4577-9651-ba22a488615c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'cart.js:905',message:'updated_wc_div: reset calculated flag (no rates)',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'pre-fix',hypothesisId:'H16'})}).catch(()=>{});
+				// #endregion
+			}
 			// #region agent log
 			fetch('http://127.0.0.1:7247/ingest/cce9ccaa-d42e-4577-9651-ba22a488615c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'cart.js:906',message:'updated_wc_div: before restoreCartCep',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'pre-fix',hypothesisId:'H7'})}).catch(()=>{});
 			// #endregion
@@ -1086,7 +1092,6 @@
 			// #region agent log
 			fetch('http://127.0.0.1:7247/ingest/cce9ccaa-d42e-4577-9651-ba22a488615c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'cart.js:910',message:'shipping calculator clicked',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'pre-fix',hypothesisId:'H5'})}).catch(()=>{});
 			// #endregion
-			setCalculatedShippingFlag(true);
 			calculateRatesForCart(false);
 			updateCartTotalsSummary();
 			updateCheckoutAvailability();
