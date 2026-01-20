@@ -494,6 +494,9 @@
 			shippingBlock.appendChild(fixedWrapper);
 		}
 
+		// #region agent log
+		fetch('http://127.0.0.1:7247/ingest/cce9ccaa-d42e-4577-9651-ba22a488615c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'cart.js:485',message:'updateShippingBlock: applied',data:{cartItemKey,rateCount:normalizedRates.length,resolvedMode},timestamp:Date.now(),sessionId:'debug-session',runId:'pre-fix',hypothesisId:'H5'})}).catch(()=>{});
+		// #endregion
 		initShippingChoices();
 		updateCartTotalsSummary();
 	}
@@ -592,6 +595,9 @@
 		Promise.allSettled(requests).then(() => {
 			ratesSyncInProgress = false;
 			updateCartTotalsSummary();
+			// #region agent log
+			fetch('http://127.0.0.1:7247/ingest/cce9ccaa-d42e-4577-9651-ba22a488615c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'cart.js:579',message:'calculateRatesForCart: completed',data:{shouldUpdateCart},timestamp:Date.now(),sessionId:'debug-session',runId:'pre-fix',hypothesisId:'H5'})}).catch(()=>{});
+			// #endregion
 			if (shouldUpdateCart) {
 				scheduleCartUpdate();
 			}
@@ -938,6 +944,9 @@
 		});
 
 		jQuery(document).on('click', '.gstore-shipping-calculator__button', function () {
+			// #region agent log
+			fetch('http://127.0.0.1:7247/ingest/cce9ccaa-d42e-4577-9651-ba22a488615c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'cart.js:910',message:'shipping calculator clicked',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'pre-fix',hypothesisId:'H5'})}).catch(()=>{});
+			// #endregion
 			calculateRatesForCart(false);
 			updateCartTotalsSummary();
 			updateCheckoutAvailability();
