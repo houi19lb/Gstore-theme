@@ -97,11 +97,8 @@
 		return '';
 	}
 
-	function fetchRatesForItem(itemEl, cep) {
-		const productId = parseInt(itemEl.dataset.productId || '0', 10);
-		const quantity = parseInt(itemEl.dataset.quantity || '1', 10);
-
-		if (!productId || !quantity || !cep) {
+	function fetchRatesForCart(cep) {
+		if (!cep) {
 			return Promise.resolve(null);
 		}
 
@@ -110,17 +107,15 @@
 			type: 'POST',
 			dataType: 'json',
 			data: {
-				action: 'gstore_calculate_shipping',
+				action: 'gstore_calculate_cart_item_rates',
 				nonce: typeof gstoreShippingCalculator !== 'undefined' ? gstoreShippingCalculator.nonce : '',
 				postcode: cep,
-				product_id: productId,
-				quantity: quantity,
 			},
 		}).then((response) => {
-			if (!response || !response.success || !response.data || !Array.isArray(response.data.rates)) {
+			if (!response || !response.success || !response.data || !response.data.items) {
 				return null;
 			}
-			return response.data.rates;
+			return response.data.items;
 		}).catch(() => null);
 	}
 
@@ -149,6 +144,10 @@
 		if (!normalizedRates.length) {
 			return;
 		}
+
+	if (!normalizedRates.some((rate) => rate.mode === selectedMode)) {
+		selectedMode = normalizedRates[0].mode;
+	}
 
 		const hasMultiple = normalizedRates.length > 1;
 		const optionsHtml = hasMultiple
@@ -256,14 +255,18 @@
 		}
 
 		ratesSyncInProgress = true;
+	fetchRatesForCart(cep).then((itemsRates) => {
+		if (!itemsRates) {
+			ratesSyncInProgress = false;
+			return;
+		}
 
-		const requests = [];
 		shippingBlocks.forEach((shippingBlock) => {
 			const itemEl = shippingBlock.closest('article.Gstore-cart-card, [data-cart-item-key]');
 			if (!itemEl) {
 				return;
 			}
-			
+
 			const cartItemKey = itemEl.dataset.cartItemKey || itemEl.getAttribute('data-cart-item-key');
 			if (!cartItemKey) {
 				return;
@@ -271,24 +274,21 @@
 
 			const selectedInput = shippingBlock.querySelector('input[type="radio"]:checked');
 			const selectedMode = selectedInput ? selectedInput.value : (shippingBlock.dataset.lastSelectedMode || 'land');
+			const itemRates = itemsRates[cartItemKey] ? itemsRates[cartItemKey].rates : null;
 
-			requests.push(
-				fetchRatesForItem(itemEl, cep).then((rates) => {
-					if (!rates) {
-						return;
-					}
-					shippingBlock.dataset.lastSelectedMode = selectedMode;
-					updateShippingBlock(shippingBlock, rates, cartItemKey, selectedMode);
-				})
-			);
-		});
-
-		Promise.allSettled(requests).then(() => {
-			ratesSyncInProgress = false;
-			if (shouldUpdateCart) {
-				scheduleCartUpdate();
+			if (!itemRates) {
+				return;
 			}
+
+			shippingBlock.dataset.lastSelectedMode = selectedMode;
+			updateShippingBlock(shippingBlock, itemRates, cartItemKey, selectedMode);
 		});
+
+		ratesSyncInProgress = false;
+		if (shouldUpdateCart) {
+			scheduleCartUpdate();
+		}
+	});
 	}
 
 	/**
