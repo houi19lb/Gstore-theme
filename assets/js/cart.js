@@ -7,6 +7,7 @@
 
 	let cartUpdateTimeout = null;
 	let ratesSyncInProgress = false;
+	let shippingChoicesDelegated = false;
 	const CART_CEP_STORAGE_KEY = 'gstore_cart_cep';
 
 	function getCartCep() {
@@ -105,7 +106,7 @@
 
 		const optionsContainer = shippingBlock.querySelector('[data-gstore-shipping-options]');
 		const fixedContainer = shippingBlock.querySelector('[data-gstore-shipping-fixed]');
-		const ratesInput = shippingBlock.querySelector(`input[name="gstore_shipping_rates[${cartItemKey}]"]`);
+		let ratesInput = shippingBlock.querySelector(`input[name="gstore_shipping_rates[${cartItemKey}]"]`);
 
 		const normalizedRates = (rates || [])
 			.map((rate) => ({
@@ -116,9 +117,13 @@
 			}))
 			.filter((rate) => rate.mode);
 
-		if (ratesInput) {
-			ratesInput.value = JSON.stringify(normalizedRates);
+		if (!ratesInput) {
+			ratesInput = document.createElement('input');
+			ratesInput.type = 'hidden';
+			ratesInput.name = `gstore_shipping_rates[${cartItemKey}]`;
+			shippingBlock.appendChild(ratesInput);
 		}
+		ratesInput.value = JSON.stringify(normalizedRates);
 
 		if (!normalizedRates.length) {
 			return;
@@ -188,6 +193,11 @@
 				return;
 			}
 
+			const cartItemKey = item.dataset.cartItemKey || item.getAttribute('data-cart-item-key');
+			if (!cartItemKey) {
+				return;
+			}
+
 			const shippingBlock = document.createElement('div');
 			shippingBlock.className = 'Gstore-cart-card__shipping';
 			shippingBlock.setAttribute('data-gstore-shipping-item', '');
@@ -196,6 +206,7 @@
 				<div class="Gstore-cart-card__shipping-fixed" data-gstore-shipping-fixed>
 					<span class="Gstore-cart-card__shipping-text">Calcule o frete para ver os valores.</span>
 				</div>
+				<input type="hidden" name="gstore_shipping_rates[${cartItemKey}]" value="" />
 			`;
 			body.appendChild(shippingBlock);
 		});
@@ -507,16 +518,46 @@
 	}
 
 	function initShippingChoices() {
-		const shippingInputs = document.querySelectorAll('.Gstore-cart-card__shipping-option input[type="radio"]');
-		shippingInputs.forEach((input) => {
-			if (input.dataset.gstoreShippingBound === 'true') {
+		if (shippingChoicesDelegated) {
+			return;
+		}
+
+		document.addEventListener('change', (event) => {
+			const target = event.target;
+			if (!(target instanceof HTMLInputElement)) {
 				return;
 			}
-			input.dataset.gstoreShippingBound = 'true';
-			input.addEventListener('change', () => {
-				scheduleCartUpdate();
-			});
+			if (!target.matches('.Gstore-cart-card__shipping-option input[type="radio"]')) {
+				return;
+			}
+
+			const shippingBlock = target.closest('[data-gstore-shipping-item]');
+			const itemEl = target.closest('[data-cart-item-key]');
+			if (!shippingBlock || !itemEl) {
+				return;
+			}
+
+			const cartItemKey = itemEl.dataset.cartItemKey || itemEl.getAttribute('data-cart-item-key');
+			if (!cartItemKey) {
+				return;
+			}
+
+			shippingBlock.dataset.lastSelectedMode = target.value;
+
+			let hiddenModeInput = shippingBlock.querySelector(`input[data-gstore-mode-hidden="true"][name="gstore_shipping_mode[${cartItemKey}]"]`);
+			if (!hiddenModeInput) {
+				hiddenModeInput = document.createElement('input');
+				hiddenModeInput.type = 'hidden';
+				hiddenModeInput.name = `gstore_shipping_mode[${cartItemKey}]`;
+				hiddenModeInput.setAttribute('data-gstore-mode-hidden', 'true');
+				shippingBlock.appendChild(hiddenModeInput);
+			}
+			hiddenModeInput.value = target.value;
+
+			scheduleCartUpdate();
 		});
+
+		shippingChoicesDelegated = true;
 	}
 
 	function setupMutationObserver() {
