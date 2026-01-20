@@ -433,6 +433,9 @@
 				cost_formatted: rate.cost_formatted || '',
 			}))
 			.filter((rate) => rate.mode);
+		// #region agent log
+		fetch('http://127.0.0.1:7247/ingest/cce9ccaa-d42e-4577-9651-ba22a488615c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'cart.js:431',message:'cart rates normalized',data:{cartItemKey:cartItemKey,ratesCount:normalizedRates.length,firstRate:normalizedRates[0] || null,selectedMode:selectedMode},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H8'})}).catch(()=>{});
+		// #endregion agent log
 
 		if (!ratesInput) {
 			ratesInput = document.createElement('input');
