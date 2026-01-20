@@ -1924,6 +1924,9 @@
 				</div>
 			`;
 		}
+		// #region agent log
+		fetch('http://127.0.0.1:7247/ingest/cce9ccaa-d42e-4577-9651-ba22a488615c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'checkout-steps.js:1924',message:'summary payable rendered',data:{paymentMethod:data.payment_method,selectedN:selectedN,total:data.total,baseTotal:data.base_total},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H19'})}).catch(()=>{});
+		// #endregion agent log
 
 		$('.Gstore-checkout-summary-top__totals').html(totalsHtml);
 
@@ -1953,6 +1956,9 @@
 			$preview.html('');
 			return;
 		}
+		// #region agent log
+		fetch('http://127.0.0.1:7247/ingest/cce9ccaa-d42e-4577-9651-ba22a488615c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'checkout-steps.js:1957',message:'installments preview inputs',data:{selected:selected,paymentMethod:data.payment_method,total:data.total,baseTotal:data.base_total},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H19'})}).catch(()=>{});
+		// #endregion agent log
 
 		// Detecta se existe “Taxa de parcelamento” na resposta
 		let hasFee = false;
