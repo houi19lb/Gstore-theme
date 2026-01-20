@@ -1077,6 +1077,9 @@
 				selectedMode = resolveCheckoutShippingMode(rates, selectedMode);
 				checkoutSelectedShippingByItem[cartItemKey] = selectedMode;
 			}
+			// #region agent log
+			fetch('http://127.0.0.1:7247/ingest/cce9ccaa-d42e-4577-9651-ba22a488615c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'checkout-steps.js:943',message:'item shipping render',data:{cartItemKey:cartItemKey,ratesCount:rates.length,selectedMode:selectedMode},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H12'})}).catch(()=>{});
+			// #endregion agent log
 			const optionsHtml = rates.length
 				? rates.map((rate) => {
 						const label = rate.label || (rate.mode === 'air' ? 'Frete Aéreo' : 'Frete Terrestre');
@@ -1188,6 +1191,9 @@
 			}
 			selectedModes.add(selectedMode);
 		}
+		// #region agent log
+		fetch('http://127.0.0.1:7247/ingest/cce9ccaa-d42e-4577-9651-ba22a488615c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'checkout-steps.js:898',message:'shipping totals computed',data:{selectedTotal:selectedTotal,groundTotal:groundTotal,airTotal:airTotal,selectedModes:Array.from(selectedModes)},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H11'})}).catch(()=>{});
+		// #endregion agent log
 
 		const totalValue = subtotalValue + selectedTotal - discountValue;
 
