@@ -598,6 +598,7 @@
 			// #region agent log
 			fetch('http://127.0.0.1:7247/ingest/cce9ccaa-d42e-4577-9651-ba22a488615c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'cart.js:579',message:'calculateRatesForCart: completed',data:{shouldUpdateCart},timestamp:Date.now(),sessionId:'debug-session',runId:'pre-fix',hypothesisId:'H5'})}).catch(()=>{});
 			// #endregion
+			updateCheckoutAvailability();
 			if (shouldUpdateCart) {
 				scheduleCartUpdate();
 			}
