@@ -855,6 +855,9 @@
 		}
 		try {
 			const raw = window.localStorage.getItem(CART_MODE_STORAGE_KEY);
+			// #region agent log
+			fetch('http://127.0.0.1:7247/ingest/cce9ccaa-d42e-4577-9651-ba22a488615c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'checkout-steps.js:818',message:'localStorage shipping mode raw',data:{rawSize:raw ? raw.length : 0,hasRaw:!!raw},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H7'})}).catch(()=>{});
+			// #endregion agent log
 			if (!raw) {
 				return '';
 			}
@@ -1537,6 +1540,9 @@
 			},
 			success: function(response) {
 				if (response.success) {
+					// #region agent log
+					fetch('http://127.0.0.1:7247/ingest/cce9ccaa-d42e-4577-9651-ba22a488615c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'checkout-steps.js:1329',message:'cart summary response',data:{hasData:!!response.data,itemsCount:response.data && response.data.items_count,totalsKeys:response.data && response.data.totals ? Object.keys(response.data.totals) : []},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H6'})}).catch(()=>{});
+					// #endregion agent log
 					renderSummary(response.data);
 				}
 			},
@@ -1572,6 +1578,9 @@
 		const storedMode = getStoredShippingModeFromStorage(getCartItemKeysFromSummary(data));
 		// #region agent log
 		fetch('http://127.0.0.1:7247/ingest/cce9ccaa-d42e-4577-9651-ba22a488615c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'checkout-steps.js:1362',message:'stored mode from localStorage',data:{storedMode:storedMode,selectedBefore:checkoutSelectedShippingMode},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H2'})}).catch(()=>{});
+		// #endregion agent log
+		// #region agent log
+		fetch('http://127.0.0.1:7247/ingest/cce9ccaa-d42e-4577-9651-ba22a488615c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'checkout-steps.js:1367',message:'cart summary item schema',data:{itemsCount:data && data.items_count,itemsSchema:(Array.isArray(data && data.items)?data.items.map(item=>({keys:Object.keys(item||{}).slice(0,12),cart_item_key:item && (item.cart_item_key||item.cartItemKey||item.key||''),shipping_mode:item && (item.gstore_shipping_mode||item.shipping_mode||''),shipping_rates_count:Array.isArray(item && item.gstore_shipping_rates)?item.gstore_shipping_rates.length:(Array.isArray(item && item.shipping_rates)?item.shipping_rates.length:0)})):[])},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H6'})}).catch(()=>{});
 		// #endregion agent log
 		checkoutSelectedShippingMode = storedMode || checkoutSelectedShippingMode || 'land';
 
