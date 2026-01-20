@@ -10,6 +10,7 @@
 	let shippingChoicesDelegated = false;
 	const CART_CEP_STORAGE_KEY = 'gstore_cart_cep';
 	const CART_MODE_STORAGE_KEY = 'gstore_cart_shipping_mode';
+	const CART_RATES_CALCULATED_KEY = 'gstore_cart_rates_calculated';
 
 	function getCartCep() {
 		const cepInput = document.querySelector('.gstore-shipping-calculator__cep');
@@ -95,6 +96,42 @@
 			window.localStorage.setItem(CART_MODE_STORAGE_KEY, JSON.stringify(payload));
 		} catch (e) {
 			// ignore storage errors
+		}
+	}
+
+	function markRatesAsCalculated() {
+		if (typeof window === 'undefined' || !window.localStorage) {
+			return;
+		}
+		try {
+			window.localStorage.setItem(CART_RATES_CALCULATED_KEY, 'true');
+		} catch (e) {
+			// ignore storage errors
+		}
+	}
+
+	function isRatesCalculated() {
+		if (typeof window === 'undefined' || !window.localStorage) {
+			return false;
+		}
+		try {
+			return window.localStorage.getItem(CART_RATES_CALCULATED_KEY) === 'true';
+		} catch (e) {
+			return false;
+		}
+	}
+
+	function updateCheckoutButtonState() {
+		const btn = document.querySelector('.wc-proceed-to-checkout a, .Gstore-cart-form button[name="update_cart"]');
+		if (!btn) {
+			return;
+		}
+		if (isRatesCalculated()) {
+			btn.disabled = false;
+			btn.classList.remove('is-disabled');
+		} else {
+			btn.disabled = true;
+			btn.classList.add('is-disabled');
 		}
 	}
 
@@ -574,14 +611,16 @@
 			);
 		});
 
-		Promise.allSettled(requests).then(() => {
-			ratesSyncInProgress = false;
-			updateCartTotalsSummary();
-			if (shouldUpdateCart) {
-				scheduleCartUpdate();
-			}
-		});
-	}
+	Promise.allSettled(requests).then(() => {
+		ratesSyncInProgress = false;
+		markRatesAsCalculated();
+		updateCartTotalsSummary();
+		updateCheckoutButtonState();
+		if (shouldUpdateCart) {
+			scheduleCartUpdate();
+		}
+	});
+}
 
 	/**
 	 * Atualiza o carrinho automaticamente (AJAX).
@@ -889,6 +928,7 @@
 		ensureShippingBlocksExist();
 		updateCartTotalsSummary();
 		updateCheckoutAvailability();
+		updateCheckoutButtonState();
 	}
 
 	if (document.readyState === 'loading') {
