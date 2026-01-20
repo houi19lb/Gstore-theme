@@ -4074,7 +4074,6 @@ if ( ! function_exists( 'gstore_sync_cart_shipping_modes' ) ) {
 		static $syncing = false;
 
 		if ( $syncing ) {
-			error_log( 'gstore_sync_cart_shipping_modes: Already syncing, returning' );
 			return;
 		}
 
@@ -4084,14 +4083,16 @@ if ( ! function_exists( 'gstore_sync_cart_shipping_modes' ) ) {
 
 		$has_posted_modes = ! empty( $_POST['gstore_shipping_mode'] ); // phpcs:ignore WordPress.Security.NonceVerification.Missing
 		$has_posted_rates = ! empty( $_POST['gstore_shipping_rates'] ); // phpcs:ignore WordPress.Security.NonceVerification.Missing
-		
-		error_log( 'gstore_sync_cart_shipping_modes: has_posted_modes=' . ( $has_posted_modes ? 'yes' : 'no' ) . ', has_posted_rates=' . ( $has_posted_rates ? 'yes' : 'no' ) );
-		
+
 		if ( ! $has_posted_modes && ! $has_posted_rates ) {
 			return;
 		}
 
-		if ( ! ( is_cart() || is_checkout() ) ) {
+		$is_cart_context = ( is_cart() || is_checkout() );
+		$is_update_cart_ajax = ( defined( 'DOING_AJAX' ) && DOING_AJAX )
+			&& ( ! empty( $_POST['update_cart'] )
+				|| ( ! empty( $_REQUEST['wc-ajax'] ) && 'update_cart' === $_REQUEST['wc-ajax'] ) );
+		if ( ! $is_cart_context && ! $is_update_cart_ajax ) {
 			return;
 		}
 
@@ -4520,7 +4521,6 @@ function gstore_calculate_shipping_ajax() {
 			WC()->cart->calculate_totals();
 		}
 
-		error_log( 'Returning rates for product ' . $product_id . ': ' . wp_json_encode( $rates ) );
 		wp_send_json_success(
 			array(
 				'rates'       => $rates,
