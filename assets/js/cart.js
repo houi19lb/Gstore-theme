@@ -10,6 +10,7 @@
 	let shippingChoicesDelegated = false;
 	const CART_CEP_STORAGE_KEY = 'gstore_cart_cep';
 	const CART_MODE_STORAGE_KEY = 'gstore_cart_shipping_mode';
+	let loadingReleaseTimer = null;
 
 	function getCartCep() {
 		const cepInput = document.querySelector('.gstore-shipping-calculator__cep');
@@ -123,6 +124,15 @@
 		shippingBlocks.forEach((block) => {
 			block.classList.toggle('is-loading', Boolean(isLoading));
 		});
+	}
+
+	function scheduleLoadingRelease(delay = 160) {
+		if (loadingReleaseTimer) {
+			clearTimeout(loadingReleaseTimer);
+		}
+		loadingReleaseTimer = setTimeout(() => {
+			setCartLoadingState(false);
+		}, delay);
 	}
 
 	function parsePriceValue(rawText) {
@@ -494,7 +504,7 @@
 		}
 
 		if (!cep) {
-			setCartLoadingState(false);
+			scheduleLoadingRelease(0);
 			return;
 		}
 
@@ -502,7 +512,7 @@
 
 		const shippingBlocks = document.querySelectorAll('[data-gstore-shipping-item]');
 		if (!shippingBlocks.length) {
-			setCartLoadingState(false);
+			scheduleLoadingRelease(0);
 			return;
 		}
 
@@ -540,7 +550,7 @@
 
 		Promise.allSettled(requests).then(() => {
 			ratesSyncInProgress = false;
-			setCartLoadingState(false);
+			scheduleLoadingRelease(160);
 			updateCartTotalsSummary();
 			if (shouldUpdateCart) {
 				scheduleCartUpdate();
@@ -605,6 +615,7 @@
 						initQuantitySelectors();
 						initShippingChoices();
 						updateCartTotalsSummary();
+						scheduleLoadingRelease(160);
 					}, 100);
 				}
 
