@@ -4441,13 +4441,14 @@ function gstore_get_state_from_postcode( $postcode ) {
 
 /**
  * Endpoint AJAX para calcular frete.
+ * Retorna array de rates com modos permitidos (terrestre/aéreo) baseado na variação do produto.
  */
 function gstore_calculate_shipping_ajax() {
 	check_ajax_referer( 'gstore_shipping_calculator', 'nonce' );
 
-	$postcode = isset( $_POST['postcode'] ) ? sanitize_text_field( $_POST['postcode'] ) : '';
+	$postcode   = isset( $_POST['postcode'] ) ? sanitize_text_field( $_POST['postcode'] ) : '';
 	$product_id = isset( $_POST['product_id'] ) ? intval( $_POST['product_id'] ) : 0;
-	$quantity = isset( $_POST['quantity'] ) ? intval( $_POST['quantity'] ) : 1;
+	$quantity   = isset( $_POST['quantity'] ) ? intval( $_POST['quantity'] ) : 1;
 
 	// Limpa o CEP
 	$postcode = preg_replace( '/[^0-9]/', '', $postcode );
@@ -4457,142 +4458,167 @@ function gstore_calculate_shipping_ajax() {
 		return;
 	}
 
-	// Identifica a região e o estado
-	$region = gstore_get_shipping_region( '', $postcode );
-	$state  = gstore_get_state_from_postcode( $postcode );
+	// Identifica o estado do CEP
+	$state = gstore_get_state_from_postcode( $postcode );
 
-	// Labels das regiões
-	$region_labels = array(
-		'sul'          => __( 'Região Sul', 'gstore' ),
-		'resto_brasil' => __( 'Resto do Brasil', 'gstore' ),
-		'rio_janeiro'  => __( 'Rio de Janeiro', 'gstore' ),
-	);
+	// ===== SINCRONIZA CEP COM SESSÃO DO WOOCOMMERCE =====
+	if ( function_exists( 'WC' ) && WC()->customer ) {
+		WC()->customer->set_billing_postcode( $postcode );
+		WC()->customer->set_shipping_postcode( $postcode );
 
-	$region_label = isset( $region_labels[ $region ] ) ? $region_labels[ $region ] : $region;
+		if ( ! empty( $state ) ) {
+			WC()->customer->set_billing_state( $state );
+			WC()->customer->set_shipping_state( $state );
+		}
 
-	// Calcula o peso
-	$total_weight = 0;
+		WC()->customer->set_billing_country( 'BR' );
+		WC()->customer->set_shipping_country( 'BR' );
+		WC()->customer->set_calculated_shipping( true );
+		WC()->customer->save();
+	}
 
-	$shipping_method = new Gstore_Shipping_Method();
-
+	// ===== CÁLCULO PARA PRODUTO ÚNICO =====
 	if ( $product_id > 0 ) {
-		// Cálculo para produto único
 		$product = wc_get_product( $product_id );
 		if ( ! $product ) {
 			wp_send_json_error( array( 'message' => __( 'Produto não encontrado.', 'gstore' ) ) );
 			return;
 		}
 
-		// Verifica se é arma
-		$is_weapon = $shipping_method->is_weapon_product( $product );
+		// Encontra a variação de frete do produto
+		$variation = gstore_find_freight_variation( $product );
+		$type      = gstore_get_product_freight_type( $product );
+		$options   = gstore_get_freight_mode_options( $variation, $type );
 
-		if ( $is_weapon ) {
-			$total_weight = 100 * $quantity;
-		} else {
-			$product_weight = $product->get_weight();
-			if ( $product_weight ) {
-				$total_weight = floatval( $product_weight ) * $quantity;
+		if ( empty( $options ) ) {
+			wp_send_json_error( array( 'message' => __( 'Não foi possível calcular o frete para este produto.', 'gstore' ) ) );
+			return;
+		}
+
+		// Monta array de rates
+		$rates = array();
+		foreach ( $options as $mode ) {
+			$cost = gstore_get_variation_shipping_cost( $variation, $mode, $quantity );
+			$label = 'air' === $mode ? __( 'Frete Aéreo', 'gstore' ) : __( 'Frete Terrestre', 'gstore' );
+
+			$rates[] = array(
+				'mode'           => $mode,
+				'label'          => $label,
+				'cost'           => $cost,
+				'cost_formatted' => wc_price( $cost ),
+			);
+		}
+
+		// Recalcula totais do carrinho se disponível
+		if ( function_exists( 'WC' ) && WC()->cart ) {
+			WC()->cart->calculate_shipping();
+			WC()->cart->calculate_totals();
+		}
+
+		wp_send_json_success(
+			array(
+				'rates'       => $rates,
+				'destination' => array(
+					'city'  => '',
+					'state' => $state,
+				),
+			)
+		);
+		return;
+	}
+
+	// ===== CÁLCULO PARA CARRINHO (product_id = 0) =====
+	if ( ! function_exists( 'WC' ) || ! WC()->cart ) {
+		wp_send_json_error( array( 'message' => __( 'Carrinho não disponível.', 'gstore' ) ) );
+		return;
+	}
+
+	$cart_contents = WC()->cart->get_cart();
+	if ( empty( $cart_contents ) ) {
+		wp_send_json_error( array( 'message' => __( 'Carrinho vazio.', 'gstore' ) ) );
+		return;
+	}
+
+	// Calcula totais de frete para todo o carrinho
+	$total_land = 0.0;
+	$total_air  = 0.0;
+	$has_land   = false;
+	$has_air    = false;
+	$has_ammo   = false;
+
+	foreach ( $cart_contents as $cart_item ) {
+		$item_product  = isset( $cart_item['data'] ) ? $cart_item['data'] : null;
+		$item_quantity = isset( $cart_item['quantity'] ) ? (int) $cart_item['quantity'] : 1;
+
+		if ( ! $item_product instanceof WC_Product ) {
+			continue;
+		}
+
+		$item_variation = gstore_find_freight_variation( $item_product );
+		$item_type      = gstore_get_product_freight_type( $item_product );
+		$item_options   = gstore_get_freight_mode_options( $item_variation, $item_type );
+
+		if ( 'ammo' === $item_type ) {
+			$has_ammo = true;
+		}
+
+		foreach ( $item_options as $mode ) {
+			$cost = gstore_get_variation_shipping_cost( $item_variation, $mode, $item_quantity );
+			if ( 'land' === $mode ) {
+				$total_land += $cost;
+				$has_land = true;
+			} elseif ( 'air' === $mode ) {
+				$total_air += $cost;
+				$has_air = true;
 			}
 		}
-	} else {
-		// Cálculo para carrinho (checkout)
-		if ( ! function_exists( 'WC' ) || ! WC()->cart ) {
-			wp_send_json_error( array( 'message' => __( 'Carrinho não disponível.', 'gstore' ) ) );
-			return;
-		}
-
-		$cart_contents = WC()->cart->get_cart();
-		if ( empty( $cart_contents ) ) {
-			wp_send_json_error( array( 'message' => __( 'Carrinho vazio.', 'gstore' ) ) );
-			return;
-		}
-
-		$total_weight = $shipping_method->calculate_tactical_weight_public( $cart_contents );
 	}
 
-	if ( $total_weight <= 0 ) {
-		wp_send_json_error( array( 'message' => __( 'Não foi possível calcular o peso dos produtos.', 'gstore' ) ) );
+	// Monta rates do carrinho
+	$rates = array();
+
+	if ( $has_land ) {
+		$rates[] = array(
+			'mode'           => 'land',
+			'label'          => __( 'Frete Terrestre', 'gstore' ),
+			'cost'           => $total_land,
+			'cost_formatted' => wc_price( $total_land ),
+		);
+	}
+
+	// Aéreo só disponível se não tiver munição
+	if ( $has_air && ! $has_ammo ) {
+		$rates[] = array(
+			'mode'           => 'air',
+			'label'          => __( 'Frete Aéreo', 'gstore' ),
+			'cost'           => $total_air,
+			'cost_formatted' => wc_price( $total_air ),
+		);
+	}
+
+	if ( empty( $rates ) ) {
+		wp_send_json_error( array( 'message' => __( 'Não foi possível calcular o frete para este destino.', 'gstore' ) ) );
 		return;
 	}
 
-	// Obtém o custo do frete
-	$shipping_cost = $shipping_method->get_shipping_cost_public( $total_weight, $region );
-
-	if ( $shipping_cost === false ) {
-		wp_send_json_error( array( 'message' => __( 'Não foi possível calcular o frete para esta região. Entre em contato conosco.', 'gstore' ) ) );
-		return;
-	}
-
-	// ===== SINCRONIZA CEP COM SESSÃO DO WOOCOMMERCE =====
-	// Isso permite que o WooCommerce calcule o frete oficialmente
-	if ( function_exists( 'WC' ) && WC()->customer ) {
-		// Salva o CEP na sessão do cliente
-		WC()->customer->set_billing_postcode( $postcode );
-		WC()->customer->set_shipping_postcode( $postcode );
-		
-		// Salva o estado identificado
-		if ( ! empty( $state ) ) {
-			WC()->customer->set_billing_state( $state );
-			WC()->customer->set_shipping_state( $state );
-		}
-		
-		// Define o país como Brasil
-		WC()->customer->set_billing_country( 'BR' );
-		WC()->customer->set_shipping_country( 'BR' );
-		
-		// Marca que o frete foi calculado
-		WC()->customer->set_calculated_shipping( true );
-		
-		// Salva as alterações na sessão
-		WC()->customer->save();
-	}
-	
-	// ===== DEFINE O MÉTODO DE ENVIO COMO SELECIONADO =====
-	// Isso é ESSENCIAL para que o frete seja incluído no total
-	if ( function_exists( 'WC' ) && WC()->session ) {
-		// Define o método de envio Gstore como o escolhido
-		WC()->session->set( 'chosen_shipping_methods', array( 'gstore_custom_shipping' ) );
-	}
-	
-	// Força o recálculo do frete e totais do carrinho
-	if ( function_exists( 'WC' ) && WC()->cart ) {
-		// Limpa cache de shipping rates
-		WC()->session->set( 'shipping_for_package_0', false );
-		
-		// Recalcula shipping e totais
-		WC()->cart->calculate_shipping();
-		WC()->cart->calculate_totals();
-	}
-
-	// Estima prazo de entrega (dias úteis)
-	$estimated_days = 7; // Padrão
-	if ( $region === 'rio_janeiro' ) {
-		$estimated_days = 5;
-	} elseif ( $region === 'sul' ) {
-		$estimated_days = 6;
-	}
+	// Recalcula totais do carrinho
+	WC()->session->set( 'shipping_for_package_0', false );
+	WC()->cart->calculate_shipping();
+	WC()->cart->calculate_totals();
 
 	wp_send_json_success(
 		array(
-			'cost'           => floatval( $shipping_cost ),
-			'cost_formatted' => wc_price( $shipping_cost ),
-			'region'          => $region,
-			'region_label'    => $region_label,
-			'estimated_days'  => $estimated_days,
-			'weight'          => $total_weight,
-			'state'           => $state,
+			'rates'       => $rates,
+			'destination' => array(
+				'city'  => '',
+				'state' => $state,
+			),
 		)
 	);
 }
-if ( ! defined( 'GSTORE_CORE_ACTIVE' ) ) {
-	if ( ! has_action( 'wp_ajax_gstore_calculate_shipping' ) ) {
-		add_action( 'wp_ajax_gstore_calculate_shipping', 'gstore_calculate_shipping_ajax' );
-	}
-	if ( ! has_action( 'wp_ajax_nopriv_gstore_calculate_shipping' ) ) {
-		add_action( 'wp_ajax_nopriv_gstore_calculate_shipping', 'gstore_calculate_shipping_ajax' );
-	}
-}
-// Endpoints/integrações de frete (AJAX) e Blu Blocks movidos para o plugin gstore-core.
+// Sempre registra o endpoint AJAX do tema para cálculo de frete
+add_action( 'wp_ajax_gstore_calculate_shipping', 'gstore_calculate_shipping_ajax' );
+add_action( 'wp_ajax_nopriv_gstore_calculate_shipping', 'gstore_calculate_shipping_ajax' );
 
 
 

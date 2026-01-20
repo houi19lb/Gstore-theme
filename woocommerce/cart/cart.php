@@ -225,7 +225,7 @@ if ( function_exists( 'wc_wp_theme_get_element_class_name' ) ) {
 										$has_shipping_postcode = function_exists( 'WC' ) && WC()->customer && WC()->customer->get_shipping_postcode();
 										?>
 
-										<div class="Gstore-cart-card__shipping" data-cart-item-key="<?php echo esc_attr( $cart_item_key ); ?>" data-gstore-shipping-item>
+										<div class="Gstore-cart-card__shipping" data-gstore-shipping-item>
 											<span class="Gstore-cart-card__label"><?php esc_html_e( 'Frete', 'gstore' ); ?></span>
 											<input type="hidden" name="gstore_shipping_rates[<?php echo esc_attr( $cart_item_key ); ?>]" value="<?php echo esc_attr( wp_json_encode( $freight_rates ) ); ?>" />
 

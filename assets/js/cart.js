@@ -191,7 +191,6 @@
 			const shippingBlock = document.createElement('div');
 			shippingBlock.className = 'Gstore-cart-card__shipping';
 			shippingBlock.setAttribute('data-gstore-shipping-item', '');
-			shippingBlock.setAttribute('data-cart-item-key', item.dataset.cartItemKey || '');
 			shippingBlock.innerHTML = `
 				<span class="Gstore-cart-card__label">Frete</span>
 				<div class="Gstore-cart-card__shipping-fixed" data-gstore-shipping-fixed>
@@ -233,10 +232,12 @@
 
 		const requests = [];
 		cartItems.forEach((shippingBlock) => {
-			const cartItemKey = shippingBlock.dataset.cartItemKey || shippingBlock.getAttribute('data-cart-item-key');
-			// Usa article.Gstore-cart-card para evitar pegar o próprio shippingBlock que também tem data-cart-item-key
-			const itemEl = shippingBlock.closest('article.Gstore-cart-card');
-			if (!itemEl || !cartItemKey) {
+			const itemEl = shippingBlock.closest('[data-cart-item-key]');
+			if (!itemEl) {
+				return;
+			}
+			const cartItemKey = itemEl.dataset.cartItemKey || itemEl.getAttribute('data-cart-item-key');
+			if (!cartItemKey) {
 				return;
 			}
 
