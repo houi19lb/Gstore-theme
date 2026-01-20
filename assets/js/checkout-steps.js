@@ -617,6 +617,7 @@
 		const $select = $('#gstore_blu_installments_select');
 		if (!$select.length) return;
 		if (!installmentQuotes) return;
+	const displayTotals = getInstallmentDisplayTotals(lastCartSummaryData);
 	// #region agent log
 	fetch('http://127.0.0.1:7247/ingest/cce9ccaa-d42e-4577-9651-ba22a488615c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'checkout-steps.js:1628',message:'installment quotes sample',data:{quoteKeys:Object.keys(installmentQuotes||{}).slice(0,3),sample:(function(){const keys=Object.keys(installmentQuotes||{});return keys.length?installmentQuotes[keys[0]]:null;})()},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H12'})}).catch(()=>{});
 	// #endregion agent log
@@ -626,11 +627,20 @@
 			const val = String($opt.attr('value') || '');
 			if (!val || !installmentQuotes[val]) return;
 
-			const q = installmentQuotes[val];
-			// Exibe "Nx de R$ ... — total R$ ..." (valor por parcela + total daquela opção)
-			const perText = q.per_installment_text || q.per_installment || '';
-			const totalText = q.total_text || q.total || '';
-			$opt.text(`${q.installments}x de ${perText} — total ${totalText}`);
+		const q = installmentQuotes[val];
+		const installments = parseInt(q.installments, 10) || parseInt(val, 10) || 1;
+		let totalValue = Number.isFinite(q.total_raw) ? q.total_raw : parsePriceValue(q.total_text || q.total || '');
+		if (!Number.isFinite(totalValue) || totalValue <= 0) {
+			totalValue = parsePriceValue(q.total || '');
+		}
+		let perValue = Number.isFinite(q.per_installment_raw) ? q.per_installment_raw : parsePriceValue(q.per_installment_text || q.per_installment || '');
+		if (displayTotals.shouldAddShipping && displayTotals.shippingTotal > 0 && totalValue > 0) {
+			totalValue += displayTotals.shippingTotal;
+			perValue = totalValue / installments;
+		}
+		const perText = perValue > 0 ? formatCurrency(perValue) : (q.per_installment_text || q.per_installment || '');
+		const totalText = totalValue > 0 ? formatCurrency(totalValue) : (q.total_text || q.total || '');
+		$opt.text(`${installments}x de ${perText} — total ${totalText}`);
 		});
 	}
 
@@ -848,6 +858,25 @@
 			return `R$ ${amount.toFixed(2)}`.replace('.', ',');
 		}
 	}
+
+function getInstallmentDisplayTotals(summaryData) {
+	const rawTotal = summaryData && summaryData.total ? parsePriceValue(summaryData.total) : 0;
+	const summaryTotal = lastSummaryTotals && Number.isFinite(lastSummaryTotals.totalValue)
+		? lastSummaryTotals.totalValue
+		: 0;
+	const shippingTotal = lastSummaryTotals && Number.isFinite(lastSummaryTotals.selectedTotal)
+		? lastSummaryTotals.selectedTotal
+		: 0;
+	const shouldAddShipping = shippingTotal > 0 && summaryTotal > 0 && rawTotal > 0 && rawTotal + 0.01 < summaryTotal;
+	const displayTotal = shouldAddShipping ? rawTotal + shippingTotal : rawTotal;
+	return {
+		rawTotal,
+		displayTotal,
+		shippingTotal,
+		shouldAddShipping,
+		summaryTotal,
+	};
+}
 
 	function getCartItemKeysFromSummary(data) {
 		if (!data || !Array.isArray(data.items)) {
@@ -1961,6 +1990,10 @@
 	// #region agent log
 	fetch('http://127.0.0.1:7247/ingest/cce9ccaa-d42e-4577-9651-ba22a488615c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'checkout-steps.js:1975',message:'installments preview input',data:{selected:selected,per_installment:data.installments && data.installments.per_installment,total:data.total,base_total:data.base_total,shipping_total:data.shipping_total,hasFees:(data.totals && Array.isArray(data.totals.fees)?data.totals.fees.length:0)},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H13'})}).catch(()=>{});
 	// #endregion agent log
+	const displayTotals = getInstallmentDisplayTotals(data);
+	// #region agent log
+	fetch('http://127.0.0.1:7247/ingest/cce9ccaa-d42e-4577-9651-ba22a488615c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'checkout-steps.js:1978',message:'installments preview totals',data:{rawTotal:displayTotals.rawTotal,displayTotal:displayTotals.displayTotal,shippingTotal:displayTotals.shippingTotal,shouldAddShipping:displayTotals.shouldAddShipping,summaryTotal:displayTotals.summaryTotal},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H20'})}).catch(()=>{});
+	// #endregion agent log
 		if (selected <= 1) {
 			$preview.html('');
 			return;
@@ -1972,8 +2005,12 @@
 			hasFee = data.totals.fees.some(f => f && f.label && String(f.label).toLowerCase().indexOf('taxa') !== -1);
 		}
 
-		const suffix = hasFee ? ' (valores já com taxa — a taxa pode variar conforme as parcelas)' : '';
-		$preview.html(`${selected}x de <strong>${data.installments.per_installment}</strong> — total <strong>${data.total}</strong>${suffix}`);
+	const suffix = hasFee ? ' (valores já com taxa — a taxa pode variar conforme as parcelas)' : '';
+	const totalValue = displayTotals.displayTotal || displayTotals.rawTotal;
+	const perValue = totalValue > 0 ? (totalValue / selected) : 0;
+	const perText = perValue > 0 ? formatCurrency(perValue) : data.installments.per_installment;
+	const totalText = totalValue > 0 ? formatCurrency(totalValue) : data.total;
+	$preview.html(`${selected}x de <strong>${perText}</strong> — total <strong>${totalText}</strong>${suffix}`);
 	}
 
 	/**
