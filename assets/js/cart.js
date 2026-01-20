@@ -109,6 +109,11 @@
 	}
 
 	function setCartLoadingState(isLoading) {
+		const cartContainer = document.querySelector('.Gstore-cart-container, .Gstore-cart-shell');
+		if (cartContainer) {
+			cartContainer.classList.toggle('is-loading', Boolean(isLoading));
+		}
+
 		const summaryCard = document.querySelector('.Gstore-cart-summary-card');
 		if (summaryCard) {
 			summaryCard.classList.toggle('is-loading', Boolean(isLoading));

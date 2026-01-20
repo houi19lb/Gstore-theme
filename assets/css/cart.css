@@ -775,6 +775,8 @@ div.woocommerce section.Gstore-cart-shell div.Gstore-cart-container {
 }
 
 /* Loading suave para evitar flash */
+.Gstore-cart-container.is-loading,
+.Gstore-cart-shell.is-loading,
 .Gstore-cart-summary-card.is-loading,
 .Gstore-cart-card__shipping.is-loading {
 	position: relative;
@@ -782,6 +784,8 @@ div.woocommerce section.Gstore-cart-shell div.Gstore-cart-container {
 	transition: opacity 0.2s ease;
 }
 
+.Gstore-cart-container.is-loading::after,
+.Gstore-cart-shell.is-loading::after,
 .Gstore-cart-summary-card.is-loading::after,
 .Gstore-cart-card__shipping.is-loading::after {
 	content: '';
