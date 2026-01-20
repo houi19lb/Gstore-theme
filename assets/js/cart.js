@@ -11,6 +11,7 @@
 	const CART_CEP_STORAGE_KEY = 'gstore_cart_cep';
 	const CART_MODE_STORAGE_KEY = 'gstore_cart_shipping_mode';
 	const CART_CALCULATED_STORAGE_KEY = 'gstore_cart_shipping_calculated';
+	const CART_CALCULATED_SESSION_KEY = 'gstore_cart_shipping_calculated_session';
 
 	function getCartCep() {
 		const cepInput = document.querySelector('.gstore-shipping-calculator__cep');
@@ -62,20 +63,24 @@
 	}
 
 	function hasCalculatedShippingFlag() {
-		if (typeof window === 'undefined' || !window.localStorage) {
+		if (typeof window === 'undefined' || !window.sessionStorage) {
 			return false;
 		}
-		return window.localStorage.getItem(CART_CALCULATED_STORAGE_KEY) === 'true';
+		const value = window.sessionStorage.getItem(CART_CALCULATED_SESSION_KEY) === 'true';
+		// #region agent log
+		fetch('http://127.0.0.1:7247/ingest/cce9ccaa-d42e-4577-9651-ba22a488615c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'cart.js:57',message:'hasCalculatedShippingFlag',data:{value},timestamp:Date.now(),sessionId:'debug-session',runId:'pre-fix',hypothesisId:'H10'})}).catch(()=>{});
+		// #endregion
+		return value;
 	}
 
 	function setCalculatedShippingFlag(value) {
-		if (typeof window === 'undefined' || !window.localStorage) {
+		if (typeof window === 'undefined' || !window.sessionStorage) {
 			return;
 		}
 		if (value) {
-			window.localStorage.setItem(CART_CALCULATED_STORAGE_KEY, 'true');
+			window.sessionStorage.setItem(CART_CALCULATED_SESSION_KEY, 'true');
 		} else {
-			window.localStorage.removeItem(CART_CALCULATED_STORAGE_KEY);
+			window.sessionStorage.removeItem(CART_CALCULATED_SESSION_KEY);
 		}
 	}
 
