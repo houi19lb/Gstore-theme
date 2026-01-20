@@ -615,25 +615,16 @@
 		if (!$select.length) return;
 		if (!installmentQuotes) return;
 
-		const effectiveTotal = (lastSummaryTotals && Number.isFinite(lastSummaryTotals.totalValue) && lastSummaryTotals.totalValue > 0)
-			? lastSummaryTotals.totalValue
-			: 0;
-		// #region agent log
-		fetch('http://127.0.0.1:7247/ingest/cce9ccaa-d42e-4577-9651-ba22a488615c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'checkout-steps.js:618',message:'applyInstallmentQuotesToSelect',data:{hasEffectiveTotal:effectiveTotal>0,effectiveTotal:effectiveTotal},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H20'})}).catch(()=>{});
-		// #endregion agent log
-
 		$select.find('option').each(function() {
 			const $opt = $(this);
 			const val = String($opt.attr('value') || '');
 			if (!val || !installmentQuotes[val]) return;
 
 			const q = installmentQuotes[val];
-			const installmentsN = parseInt(q.installments, 10) || parseInt(val, 10) || 1;
-			const perFromTotal = effectiveTotal > 0 ? (effectiveTotal / installmentsN) : 0;
 			// Exibe "Nx de R$ ... — total R$ ..." (valor por parcela + total daquela opção)
-			const perText = effectiveTotal > 0 ? formatCurrency(perFromTotal) : (q.per_installment_text || q.per_installment || '');
-			const totalText = effectiveTotal > 0 ? formatCurrency(effectiveTotal) : (q.total_text || q.total || '');
-			$opt.text(`${installmentsN}x de ${perText} — total ${totalText}`);
+			const perText = q.per_installment_text || q.per_installment || '';
+			const totalText = q.total_text || q.total || '';
+			$opt.text(`${q.installments}x de ${perText} — total ${totalText}`);
 		});
 	}
 
