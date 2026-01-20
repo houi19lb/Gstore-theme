@@ -715,17 +715,52 @@
 					// #endregion
 
 					if ($cartContent.length > 0) {
-						const newForm = $cartContent[0];
-						if (newForm && form) {
-							form.action = newForm.getAttribute('action') || form.action;
-							form.method = newForm.getAttribute('method') || form.method;
-							form.innerHTML = newForm.innerHTML;
+						if (shouldPreserveTotals) {
+							// Atualização cirúrgica: apenas preços e quantidades
+							const $newItems = $cartContent.find('[data-cart-item-key]');
+							$newItems.each(function() {
+								const $newItem = jQuery(this);
+								const key = $newItem.attr('data-cart-item-key');
+								if (!key) return;
+								const $currentItem = jQuery(`[data-cart-item-key="${key}"]`);
+								if ($currentItem.length === 0) return;
+								// Atualiza preço do item
+								const $newPrice = $newItem.find('.Gstore-cart-card__price, .product-price');
+								const $currentPrice = $currentItem.find('.Gstore-cart-card__price, .product-price');
+								if ($newPrice.length > 0 && $currentPrice.length > 0) {
+									$currentPrice.html($newPrice.html());
+								}
+								// Atualiza quantidade (validação do servidor)
+								const $newQty = $newItem.find('input.qty');
+								const $currentQty = $currentItem.find('input.qty');
+								if ($newQty.length > 0 && $currentQty.length > 0) {
+									const newVal = $newQty.val();
+									const newMax = $newQty.attr('max');
+									if (newVal) $currentQty.val(newVal);
+									if (newMax) $currentQty.attr('max', newMax);
+								}
+								// Atualiza data-quantity
+								const newQuantity = $newItem.attr('data-quantity');
+								if (newQuantity) {
+									$currentItem.attr('data-quantity', newQuantity);
+								}
+							});
+							// #region agent log
+							fetch('http://127.0.0.1:7247/ingest/cce9ccaa-d42e-4577-9651-ba22a488615c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'cart.js:635',message:'updateCartAutomatically: surgical update (no flicker)',data:{itemsUpdated:$newItems.length},timestamp:Date.now(),sessionId:'debug-session',runId:'pre-fix',hypothesisId:'H15'})}).catch(()=>{});
+							// #endregion
 						} else {
-							$form.replaceWith($cartContent);
+							const newForm = $cartContent[0];
+							if (newForm && form) {
+								form.action = newForm.getAttribute('action') || form.action;
+								form.method = newForm.getAttribute('method') || form.method;
+								form.innerHTML = newForm.innerHTML;
+							} else {
+								$form.replaceWith($cartContent);
+							}
+							// #region agent log
+							fetch('http://127.0.0.1:7247/ingest/cce9ccaa-d42e-4577-9651-ba22a488615c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'cart.js:635',message:'updateCartAutomatically: full replace',data:{usedInnerHTML:Boolean(newForm && form)},timestamp:Date.now(),sessionId:'debug-session',runId:'pre-fix',hypothesisId:'H14'})}).catch(()=>{});
+							// #endregion
 						}
-						// #region agent log
-						fetch('http://127.0.0.1:7247/ingest/cce9ccaa-d42e-4577-9651-ba22a488615c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'cart.js:635',message:'updateCartAutomatically: cartContent updated',data:{usedInnerHTML:Boolean(newForm && form)},timestamp:Date.now(),sessionId:'debug-session',runId:'pre-fix',hypothesisId:'H14'})}).catch(()=>{});
-						// #endregion
 					}
 					if ($cartTotals.length > 0) {
 						if (shouldPreserveTotals) {
