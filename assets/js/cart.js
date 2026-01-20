@@ -35,11 +35,17 @@
 
 		const saved = window.localStorage.getItem(CART_CEP_STORAGE_KEY) || '';
 		const digits = saved.replace(/\D/g, '');
+		// #region agent log
+		fetch('http://127.0.0.1:7247/ingest/cce9ccaa-d42e-4577-9651-ba22a488615c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'cart.js:35',message:'restoreCartCep: read storage',data:{hasInput:Boolean(cepInput),inputValue:cepInput.value || '',storedDigitsLength:digits.length},timestamp:Date.now(),sessionId:'debug-session',runId:'pre-fix',hypothesisId:'H7'})}).catch(()=>{});
+		// #endregion
 		if (digits.length !== 8) {
 			return;
 		}
 
 		cepInput.value = digits.replace(/(\d{5})(\d{3})/, '$1-$2');
+		// #region agent log
+		fetch('http://127.0.0.1:7247/ingest/cce9ccaa-d42e-4577-9651-ba22a488615c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'cart.js:41',message:'restoreCartCep: applied',data:{inputValue:cepInput.value || ''},timestamp:Date.now(),sessionId:'debug-session',runId:'pre-fix',hypothesisId:'H7'})}).catch(()=>{});
+		// #endregion
 	}
 
 	function storeCartCep(cep) {
@@ -968,7 +974,13 @@
 			// #endregion
 			setTimeout(init, 100);
 			ensureShippingBlocksExist();
+			// #region agent log
+			fetch('http://127.0.0.1:7247/ingest/cce9ccaa-d42e-4577-9651-ba22a488615c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'cart.js:906',message:'updated_wc_div: before restoreCartCep',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'pre-fix',hypothesisId:'H7'})}).catch(()=>{});
+			// #endregion
 			restoreCartCep();
+			// #region agent log
+			fetch('http://127.0.0.1:7247/ingest/cce9ccaa-d42e-4577-9651-ba22a488615c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'cart.js:908',message:'updated_wc_div: after restoreCartCep',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'pre-fix',hypothesisId:'H7'})}).catch(()=>{});
+			// #endregion
 			if (hasCalculatedShippingFlag()) {
 				calculateRatesForCart(false);
 			} else {
