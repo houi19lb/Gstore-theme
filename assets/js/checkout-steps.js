@@ -1917,10 +1917,14 @@
 		// "Você pagará" só aparece quando cartão Blu e parcelas > 1, mostrando o total real com taxa
 		const selectedN = parseInt((data.installments && data.installments.selected) ? data.installments.selected : '1', 10) || 1;
 		if (data.payment_method === 'blu_checkout' && selectedN > 1) {
+			const payableTotal = (lastSummaryTotals && Number.isFinite(lastSummaryTotals.totalValue) && lastSummaryTotals.totalValue > 0)
+				? lastSummaryTotals.totalValue
+				: parsePriceValue(data.total || '') || parsePriceValue(data.base_total || '');
+			const payablePer = selectedN > 0 && Number.isFinite(payableTotal) ? payableTotal / selectedN : 0;
 			totalsHtml += `
 				<div class="Gstore-summary-row Gstore-summary-row--payable">
 					<span>Você pagará</span>
-					<span><strong>${selectedN}x de ${data.installments.per_installment}</strong> — ${data.total}</span>
+					<span><strong>${selectedN}x de ${formatCurrency(payablePer)}</strong> — ${formatCurrency(payableTotal)}</span>
 				</div>
 			`;
 		}
@@ -1959,6 +1963,9 @@
 		// #region agent log
 		fetch('http://127.0.0.1:7247/ingest/cce9ccaa-d42e-4577-9651-ba22a488615c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'checkout-steps.js:1957',message:'installments preview inputs',data:{selected:selected,paymentMethod:data.payment_method,total:data.total,baseTotal:data.base_total},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H19'})}).catch(()=>{});
 		// #endregion agent log
+		// #region agent log
+		fetch('http://127.0.0.1:7247/ingest/cce9ccaa-d42e-4577-9651-ba22a488615c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'checkout-steps.js:1957',message:'installments preview inputs',data:{selected:selected,paymentMethod:data.payment_method,total:data.total,baseTotal:data.base_total},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H19'})}).catch(()=>{});
+		// #endregion agent log
 
 		// Detecta se existe “Taxa de parcelamento” na resposta
 		let hasFee = false;
@@ -1966,8 +1973,17 @@
 			hasFee = data.totals.fees.some(f => f && f.label && String(f.label).toLowerCase().indexOf('taxa') !== -1);
 		}
 
+		const effectiveTotal = (lastSummaryTotals && Number.isFinite(lastSummaryTotals.totalValue) && lastSummaryTotals.totalValue > 0)
+			? lastSummaryTotals.totalValue
+			: parsePriceValue(data.total || '') || parsePriceValue(data.base_total || '');
+		const effectivePer = selected > 0 && Number.isFinite(effectiveTotal)
+			? effectiveTotal / selected
+			: 0;
+		// #region agent log
+		fetch('http://127.0.0.1:7247/ingest/cce9ccaa-d42e-4577-9651-ba22a488615c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'checkout-steps.js:1976',message:'installments preview totals',data:{effectiveTotal:effectiveTotal,effectivePer:effectivePer,hasSummaryTotals:!!lastSummaryTotals},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H20'})}).catch(()=>{});
+		// #endregion agent log
 		const suffix = hasFee ? ' (valores já com taxa — a taxa pode variar conforme as parcelas)' : '';
-		$preview.html(`${selected}x de <strong>${data.installments.per_installment}</strong> — total <strong>${data.total}</strong>${suffix}`);
+		$preview.html(`${selected}x de <strong>${formatCurrency(effectivePer)}</strong> — total <strong>${formatCurrency(effectiveTotal)}</strong>${suffix}`);
 	}
 
 	/**
