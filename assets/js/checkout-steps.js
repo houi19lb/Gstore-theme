@@ -1110,6 +1110,13 @@
 					</label>
 				`;
 			$slot.html(optionsHtml);
+			// #region agent log
+			const slotEl = $slot.get(0);
+			const firstOption = slotEl ? slotEl.querySelector('.Gstore-checkout-item-shipping-option') : null;
+			const slotStyles = slotEl ? window.getComputedStyle(slotEl) : null;
+			const optionStyles = firstOption ? window.getComputedStyle(firstOption) : null;
+			fetch('http://127.0.0.1:7247/ingest/cce9ccaa-d42e-4577-9651-ba22a488615c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'checkout-steps.js:1000',message:'shipping layout styles',data:{cartItemKey:cartItemKey,slotDisplay:slotStyles?slotStyles.display:null,slotFlexDirection:slotStyles?slotStyles.flexDirection:null,slotFlexWrap:slotStyles?slotStyles.flexWrap:null,slotWidth:slotEl?slotEl.getBoundingClientRect().width:null,optionDisplay:optionStyles?optionStyles.display:null,optionWidth:firstOption?firstOption.getBoundingClientRect().width:null},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H15'})}).catch(()=>{});
+			// #endregion agent log
 		});
 		// #region agent log
 		fetch('http://127.0.0.1:7247/ingest/cce9ccaa-d42e-4577-9651-ba22a488615c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'checkout-steps.js:965',message:'renderItemShippingOptions',data:{itemsCount:items.length,itemsWithRates:Object.keys(checkoutShippingRatesByItem).length},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H10'})}).catch(()=>{});
