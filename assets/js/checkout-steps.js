@@ -816,8 +816,12 @@
 		if (!text) {
 			return 0;
 		}
-		const normalized = text
-			.replace(/[^\d.,-]/g, '')
+		const matches = text.match(/\d[\d.,]*/g) || [];
+		const candidate = matches.length ? matches[matches.length - 1] : '';
+		if (!candidate) {
+			return 0;
+		}
+		const normalized = candidate
 			.replace(/\.(?=\d{3})/g, '')
 			.replace(',', '.');
 		const value = parseFloat(normalized);

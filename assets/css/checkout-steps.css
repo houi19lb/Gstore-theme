@@ -2630,8 +2630,10 @@ body.gstore-blu-checkout-modal-open {
 	border-radius: var(--gstore-border-radius);
 	background: #fff;
 	display: flex;
-	flex-direction: column;
-	gap: 6px;
+	flex-direction: row;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 12px 16px;
 }
 
 .Gstore-checkout-item-shipping-option {
