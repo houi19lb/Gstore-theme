@@ -108,6 +108,177 @@
 		return '/wp-admin/admin-ajax.php';
 	}
 
+	function parsePriceValue(rawText) {
+		if (!rawText) {
+			return 0;
+		}
+		const text = String(rawText).trim();
+		if (!text) {
+			return 0;
+		}
+		const normalized = text
+			.replace(/[^\d.,-]/g, '')
+			.replace(/\.(?=\d{3})/g, '')
+			.replace(',', '.');
+		const value = parseFloat(normalized);
+		return Number.isFinite(value) ? value : 0;
+	}
+
+	function formatCurrency(value) {
+		const amount = Number.isFinite(value) ? value : 0;
+		try {
+			return new Intl.NumberFormat('pt-BR', {
+				style: 'currency',
+				currency: 'BRL',
+				minimumFractionDigits: 2,
+				maximumFractionDigits: 2,
+			}).format(amount);
+		} catch (e) {
+			return `R$ ${amount.toFixed(2)}`.replace('.', ',');
+		}
+	}
+
+	function getCartSubtotalValue() {
+		const subtotalEl = document.querySelector('.cart_totals .cart-subtotal .woocommerce-Price-amount, .cart_totals .cart-subtotal td');
+		if (!subtotalEl) {
+			return 0;
+		}
+		return parsePriceValue(subtotalEl.textContent || '');
+	}
+
+	function getRatesForItem(cartItemKey) {
+		if (!cartItemKey) {
+			return [];
+		}
+		const ratesInput = document.querySelector(`input[name="gstore_shipping_rates[${cartItemKey}]"]`);
+		if (!ratesInput || !ratesInput.value) {
+			return [];
+		}
+		try {
+			const parsed = JSON.parse(ratesInput.value);
+			return Array.isArray(parsed) ? parsed : [];
+		} catch (e) {
+			return [];
+		}
+	}
+
+	function resolveSelectedMode(shippingBlock, cartItemKey, rates) {
+		const selectedInput = shippingBlock.querySelector('input[type="radio"]:checked');
+		const hiddenMode = shippingBlock.querySelector(`input[type="hidden"][name="gstore_shipping_mode[${cartItemKey}]"]`);
+		const storedMode = getStoredShippingMode(cartItemKey);
+		let mode = selectedInput
+			? selectedInput.value
+			: (hiddenMode && hiddenMode.value) || storedMode || shippingBlock.dataset.lastSelectedMode || '';
+		mode = normalizeRateMode(mode);
+		const modes = (rates || []).map((rate) => normalizeRateMode(rate.mode)).filter(Boolean);
+		if (!mode || (modes.length && !modes.includes(mode))) {
+			mode = modes[0] || '';
+		}
+		return mode;
+	}
+
+	function ensureTotalsRow(table, className, label) {
+		if (!table) {
+			return null;
+		}
+		let row = table.querySelector(`tr.${className}`);
+		if (!row) {
+			row = document.createElement('tr');
+			row.className = className;
+			row.innerHTML = `
+				<th>${label}</th>
+				<td data-gstore-value="true">-</td>
+			`;
+			const subtotalRow = table.querySelector('.cart-subtotal');
+			if (subtotalRow && subtotalRow.parentNode) {
+				subtotalRow.parentNode.insertBefore(row, subtotalRow.nextSibling);
+			} else {
+				table.appendChild(row);
+			}
+		}
+		return row;
+	}
+
+	function updateCartTotalsSummary() {
+		const totalsTable = document.querySelector('.Gstore-cart-summary-card .cart_totals table, .cart_totals table');
+		if (!totalsTable) {
+			return;
+		}
+
+		const subtotalValue = getCartSubtotalValue();
+		const groundRow = ensureTotalsRow(totalsTable, 'gstore-shipping-ground', 'Frete terrestre');
+		const airRow = ensureTotalsRow(totalsTable, 'gstore-shipping-air', 'Frete aéreo');
+
+		const shippingBlocks = document.querySelectorAll('[data-gstore-shipping-item]');
+		let groundTotal = 0;
+		let airTotal = 0;
+		let selectedTotal = 0;
+		let hasGround = false;
+		let hasAir = false;
+
+		shippingBlocks.forEach((shippingBlock) => {
+			const itemEl = shippingBlock.closest('[data-cart-item-key]');
+			if (!itemEl) {
+				return;
+			}
+			const cartItemKey = itemEl.dataset.cartItemKey || itemEl.getAttribute('data-cart-item-key');
+			if (!cartItemKey) {
+				return;
+			}
+			const rates = getRatesForItem(cartItemKey);
+			if (!rates.length) {
+				return;
+			}
+
+			rates.forEach((rate) => {
+				const mode = normalizeRateMode(rate.mode);
+				const costValue = Number.isFinite(Number(rate.cost)) ? Number(rate.cost) : parsePriceValue(rate.cost_formatted || '');
+				if (!mode || !Number.isFinite(costValue)) {
+					return;
+				}
+				if (mode === 'land') {
+					groundTotal += costValue;
+					hasGround = true;
+				} else if (mode === 'air') {
+					airTotal += costValue;
+					hasAir = true;
+				}
+			});
+
+			const selectedMode = resolveSelectedMode(shippingBlock, cartItemKey, rates);
+			if (selectedMode) {
+				const selectedRate = rates.find((rate) => normalizeRateMode(rate.mode) === selectedMode);
+				if (selectedRate) {
+					const selectedCost = Number.isFinite(Number(selectedRate.cost))
+						? Number(selectedRate.cost)
+						: parsePriceValue(selectedRate.cost_formatted || '');
+					if (Number.isFinite(selectedCost)) {
+						selectedTotal += selectedCost;
+					}
+				}
+			}
+		});
+
+		if (groundRow) {
+			const valueCell = groundRow.querySelector('[data-gstore-value="true"]') || groundRow.querySelector('td');
+			if (valueCell) {
+				valueCell.innerHTML = hasGround ? formatCurrency(groundTotal) : '-';
+			}
+		}
+		if (airRow) {
+			const valueCell = airRow.querySelector('[data-gstore-value="true"]') || airRow.querySelector('td');
+			if (valueCell) {
+				valueCell.innerHTML = hasAir ? formatCurrency(airTotal) : '-';
+			}
+		}
+
+		const totalValue = subtotalValue + selectedTotal;
+		const orderTotalCell = totalsTable.querySelector('.order-total td .woocommerce-Price-amount, .order-total td');
+		if (orderTotalCell) {
+			orderTotalCell.innerHTML = formatCurrency(totalValue);
+		}
+	}
+
 	function normalizeRateMode(mode) {
 		const value = String(mode || '').toLowerCase();
 		if (value === 'air' || value === 'aereo') {
@@ -237,6 +408,7 @@
 		}
 
 		initShippingChoices();
+		updateCartTotalsSummary();
 	}
 
 	function ensureShippingBlocksExist() {
@@ -329,6 +501,7 @@
 
 		Promise.allSettled(requests).then(() => {
 			ratesSyncInProgress = false;
+			updateCartTotalsSummary();
 			if (shouldUpdateCart) {
 				scheduleCartUpdate();
 			}
@@ -389,6 +562,7 @@
 					setTimeout(() => {
 						initQuantitySelectors();
 						initShippingChoices();
+						updateCartTotalsSummary();
 					}, 100);
 				}
 
@@ -615,6 +789,7 @@
 			}
 			hiddenModeInput.value = target.value;
 
+			updateCartTotalsSummary();
 			scheduleCartUpdate();
 		});
 
@@ -637,6 +812,7 @@
 		initShippingChoices();
 		setupMutationObserver();
 		ensureShippingBlocksExist();
+		updateCartTotalsSummary();
 	}
 
 	if (document.readyState === 'loading') {
@@ -651,10 +827,12 @@
 			ensureShippingBlocksExist();
 			restoreCartCep();
 			calculateRatesForCart(false);
+			updateCartTotalsSummary();
 		});
 
 		jQuery(document).on('click', '.gstore-shipping-calculator__button', function () {
 			calculateRatesForCart(false);
+			updateCartTotalsSummary();
 		});
 
 		jQuery(document).on('input', '.gstore-shipping-calculator__cep', function () {
