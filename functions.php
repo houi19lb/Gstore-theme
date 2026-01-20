@@ -3279,7 +3279,7 @@ if ( ! defined( 'GSTORE_CORE_ACTIVE' ) ) {
  *
  * @param string $post_data Querystring enviada pelo WooCommerce.
  */
-function gstore_blu_capture_checkout_state( $post_data ) {
+function gstore_blu_theme_capture_checkout_state( $post_data ) {
 	if ( ! function_exists( 'WC' ) || ! WC()->session ) {
 		return;
 	}
@@ -3303,7 +3303,7 @@ function gstore_blu_capture_checkout_state( $post_data ) {
 	}
 }
 if ( ! defined( 'GSTORE_CORE_ACTIVE' ) ) {
-	add_action( 'woocommerce_checkout_update_order_review', 'gstore_blu_capture_checkout_state', 10, 1 );
+	add_action( 'woocommerce_checkout_update_order_review', 'gstore_blu_theme_capture_checkout_state', 10, 1 );
 }
 
 /**
@@ -3322,7 +3322,7 @@ function gstore_blu_get_selected_installments() {
 /**
  * Renderiza seletor de parcelas do cartão (pré-checkout) quando Blu Checkout estiver disponível.
  */
-function gstore_blu_render_installments_selector() {
+function gstore_blu_theme_render_installments_selector() {
 	if ( ! function_exists( 'WC' ) ) {
 		return;
 	}
@@ -3372,7 +3372,7 @@ function gstore_blu_render_installments_selector() {
 	<?php
 }
 if ( ! defined( 'GSTORE_CORE_ACTIVE' ) ) {
-	add_action( 'woocommerce_review_order_before_payment', 'gstore_blu_render_installments_selector', 12 );
+	add_action( 'woocommerce_review_order_before_payment', 'gstore_blu_theme_render_installments_selector', 12 );
 }
 
 /**
@@ -3380,7 +3380,7 @@ if ( ! defined( 'GSTORE_CORE_ACTIVE' ) ) {
  *
  * @param WC_Cart $cart Carrinho.
  */
-function gstore_blu_add_installment_fee( $cart ) {
+function gstore_blu_theme_add_installment_fee( $cart ) {
 	if ( is_admin() && ! defined( 'DOING_AJAX' ) ) {
 		return;
 	}
@@ -3570,13 +3570,13 @@ function gstore_blu_add_installment_fee( $cart ) {
 	$cart->add_fee( __( 'Taxa de parcelamento', 'gstore' ), $fee_value, false, '' );
 }
 if ( ! defined( 'GSTORE_CORE_ACTIVE' ) ) {
-	add_action( 'woocommerce_cart_calculate_fees', 'gstore_blu_add_installment_fee', 30, 1 );
+	add_action( 'woocommerce_cart_calculate_fees', 'gstore_blu_theme_add_installment_fee', 30, 1 );
 }
 
 /**
  * Valida parcelas quando o cliente escolhe Cartão Blu.
  */
-function gstore_blu_validate_installments() {
+function gstore_blu_theme_validate_installments() {
 	if ( empty( $_POST['payment_method'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Missing
 		return;
 	}
@@ -3602,7 +3602,7 @@ function gstore_blu_validate_installments() {
 	}
 }
 if ( ! defined( 'GSTORE_CORE_ACTIVE' ) ) {
-	add_action( 'woocommerce_checkout_process', 'gstore_blu_validate_installments', 12 );
+	add_action( 'woocommerce_checkout_process', 'gstore_blu_theme_validate_installments', 12 );
 }
 
 /**
@@ -3610,7 +3610,7 @@ if ( ! defined( 'GSTORE_CORE_ACTIVE' ) ) {
  *
  * @param int $order_id Order ID.
  */
-function gstore_blu_save_installments_meta( $order_id ) {
+function gstore_blu_theme_save_installments_meta( $order_id ) {
 	if ( ! $order_id || ! function_exists( 'WC' ) ) {
 		return;
 	}
@@ -3647,7 +3647,7 @@ function gstore_blu_save_installments_meta( $order_id ) {
 	}
 }
 if ( ! defined( 'GSTORE_CORE_ACTIVE' ) ) {
-	add_action( 'woocommerce_checkout_update_order_meta', 'gstore_blu_save_installments_meta', 20 );
+	add_action( 'woocommerce_checkout_update_order_meta', 'gstore_blu_theme_save_installments_meta', 20 );
 }
 
 /**

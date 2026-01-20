@@ -28,9 +28,9 @@ Estas funções estão localizadas principalmente no arquivo `functions.php` e g
 | Hook | Função | Descrição |
 | :--- | :--- | :--- |
 | `woocommerce_available_payment_gateways` | `gstore_blu_only_gateway` | Filtra para exibir apenas métodos Blu (Cartão e PIX). |
-| `woocommerce_review_order_before_payment` | `gstore_blu_render_installments` | Renderiza o seletor de parcelas customizado na UI. |
-| `woocommerce_cart_calculate_fees` | `gstore_blu_add_installment_fee` | Calcula e adiciona a taxa de juros do parcelamento ao total. |
-| `woocommerce_checkout_update_order_meta` | `gstore_blu_save_installments_meta` | Salva os dados de parcelamento e CPF nos metadados do pedido. |
+| `woocommerce_review_order_before_payment` | `gstore_blu_theme_render_installments_selector` | Renderiza o seletor de parcelas customizado na UI. |
+| `woocommerce_cart_calculate_fees` | `gstore_blu_theme_add_installment_fee` | Calcula e adiciona a taxa de juros do parcelamento ao total. |
+| `woocommerce_checkout_update_order_meta` | `gstore_blu_theme_save_installments_meta` | Salva os dados de parcelamento e CPF nos metadados do pedido. |
 
 ---
 
