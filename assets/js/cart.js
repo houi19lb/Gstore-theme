@@ -537,23 +537,28 @@
 		}
 
 		let cep = getCartCep();
+		let cepSource = 'input';
 		if (!cep) {
 			if (typeof window !== 'undefined' && window.localStorage) {
 				const saved = window.localStorage.getItem(CART_CEP_STORAGE_KEY) || '';
 				const digits = saved.replace(/\D/g, '');
 				if (digits.length === 8) {
 					cep = digits;
+					cepSource = 'storage';
 				}
 			}
 		}
 
 		if (!cep) {
+			// #region agent log
+			fetch('http://127.0.0.1:7247/ingest/cce9ccaa-d42e-4577-9651-ba22a488615c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'cart.js:535',message:'calculateRatesForCart: aborted (no cep)',data:{shouldUpdateCart},timestamp:Date.now(),sessionId:'debug-session',runId:'pre-fix',hypothesisId:'H6'})}).catch(()=>{});
+			// #endregion
 			return;
 		}
 
 		storeCartCep(cep);
 		// #region agent log
-		fetch('http://127.0.0.1:7247/ingest/cce9ccaa-d42e-4577-9651-ba22a488615c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'cart.js:539',message:'calculateRatesForCart: start',data:{shouldUpdateCart,cepPresent:Boolean(cep)},timestamp:Date.now(),sessionId:'debug-session',runId:'pre-fix',hypothesisId:'H3'})}).catch(()=>{});
+		fetch('http://127.0.0.1:7247/ingest/cce9ccaa-d42e-4577-9651-ba22a488615c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'cart.js:539',message:'calculateRatesForCart: start',data:{shouldUpdateCart,cepPresent:Boolean(cep),cepSource},timestamp:Date.now(),sessionId:'debug-session',runId:'pre-fix',hypothesisId:'H6'})}).catch(()=>{});
 		// #endregion
 
 		const shippingBlocks = document.querySelectorAll('[data-gstore-shipping-item]');
@@ -936,6 +941,9 @@
 
 	if (typeof jQuery !== 'undefined') {
 		jQuery(document).on('updated_wc_div updated_cart_totals', function () {
+			// #region agent log
+			fetch('http://127.0.0.1:7247/ingest/cce9ccaa-d42e-4577-9651-ba22a488615c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'cart.js:902',message:'updated_wc_div/updated_cart_totals fired',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'pre-fix',hypothesisId:'H6'})}).catch(()=>{});
+			// #endregion
 			setTimeout(init, 100);
 			ensureShippingBlocksExist();
 			restoreCartCep();
