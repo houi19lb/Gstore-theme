@@ -1151,6 +1151,8 @@
 		let selectedTotal = 0;
 		let groundTotal = 0;
 		let airTotal = 0;
+		let selectedLandTotal = 0;
+		let selectedAirTotal = 0;
 		const selectedModes = new Set();
 
 		if (hasItemRates && items.length) {
@@ -1183,6 +1185,11 @@
 						: parsePriceValue(selectedRate.cost_formatted || '');
 					if (Number.isFinite(selectedCost)) {
 						selectedTotal += selectedCost;
+						if (selectedModeForItem === 'air') {
+							selectedAirTotal += selectedCost;
+						} else {
+							selectedLandTotal += selectedCost;
+						}
 					}
 				}
 			});
@@ -1190,8 +1197,10 @@
 			selectedTotal = getSelectedShippingCost(rates, selectedMode);
 			if (selectedMode === 'air') {
 				airTotal = selectedTotal;
+				selectedAirTotal = selectedTotal;
 			} else {
 				groundTotal = selectedTotal;
+				selectedLandTotal = selectedTotal;
 			}
 			selectedModes.add(selectedMode);
 		}
@@ -1215,16 +1224,16 @@
 			totalsHtml += `
 				<div class="Gstore-checkout-shipping-totals__row">
 					<span>Frete terrestre</span>
-					<span>${groundTotal ? formatCurrency(groundTotal) : '-'}</span>
+					<span>${selectedLandTotal ? formatCurrency(selectedLandTotal) : '-'}</span>
 				</div>
 				<div class="Gstore-checkout-shipping-totals__row">
 					<span>Frete aéreo</span>
-					<span>${airTotal ? formatCurrency(airTotal) : '-'}</span>
+					<span>${selectedAirTotal ? formatCurrency(selectedAirTotal) : '-'}</span>
 				</div>
 			`;
 		} else {
 			const onlyMode = selectedModes.values().next().value || 'land';
-			const singleValue = onlyMode === 'air' ? airTotal : groundTotal;
+			const singleValue = onlyMode === 'air' ? selectedAirTotal : selectedLandTotal;
 			totalsHtml += `
 				<div class="Gstore-checkout-shipping-totals__row">
 					<span>${onlyMode === 'air' ? 'Frete aéreo' : 'Frete terrestre'}</span>
