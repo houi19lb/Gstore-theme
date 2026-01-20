@@ -27,11 +27,15 @@
 		}
 
 		if (typeof window === 'undefined' || !window.localStorage) {
+			const fallback = getCartPostcodeFieldValue();
+			if (fallback) {
+				cepInput.value = fallback.replace(/(\d{5})(\d{3})/, '$1-$2');
+			}
 			return;
 		}
 
 		const saved = window.localStorage.getItem(CART_CEP_STORAGE_KEY) || '';
-		const digits = saved.replace(/\D/g, '');
+		const digits = saved.replace(/\D/g, '') || getCartPostcodeFieldValue();
 		if (digits.length !== 8) {
 			return;
 		}
@@ -48,6 +52,28 @@
 		if (digits.length === 8) {
 			window.localStorage.setItem(CART_CEP_STORAGE_KEY, digits);
 		}
+	}
+
+	function getCartPostcodeField() {
+		return document.querySelector('input[data-gstore-shipping-postcode]');
+	}
+
+	function getCartPostcodeFieldValue() {
+		const field = getCartPostcodeField();
+		if (!field) {
+			return '';
+		}
+		const digits = String(field.value || '').replace(/\D/g, '');
+		return digits.length === 8 ? digits : '';
+	}
+
+	function syncCartPostcodeField(cep) {
+		const field = getCartPostcodeField();
+		if (!field) {
+			return;
+		}
+		const digits = String(cep || '').replace(/\D/g, '');
+		field.value = digits.length === 8 ? digits : '';
 	}
 
 	function getShippingAjaxUrl() {
@@ -222,6 +248,7 @@
 		}
 
 		storeCartCep(cep);
+		syncCartPostcodeField(cep);
 
 		const shippingBlocks = document.querySelectorAll('[data-gstore-shipping-item]');
 		if (!shippingBlocks.length) {
@@ -552,11 +579,12 @@
 		});
 
 		jQuery(document).on('click', '.gstore-shipping-calculator__button', function () {
-			calculateRatesForCart(false);
+			calculateRatesForCart(true);
 		});
 
 		jQuery(document).on('input', '.gstore-shipping-calculator__cep', function () {
 			storeCartCep(this.value || '');
+			syncCartPostcodeField(this.value || '');
 		});
 	}
 
