@@ -730,6 +730,15 @@
 								if ($newPrice.length > 0 && $currentPrice.length > 0) {
 									$currentPrice.html($newPrice.html());
 								}
+								// Subtotal do item (card)
+								const $newItemSubtotal = $newItem.find('.Gstore-cart-card__subtotal, .product-subtotal, .line-subtotal');
+								const $currentItemSubtotal = $currentItem.find('.Gstore-cart-card__subtotal, .product-subtotal, .line-subtotal');
+								if ($newItemSubtotal.length > 0 && $currentItemSubtotal.length > 0) {
+									$currentItemSubtotal.html($newItemSubtotal.html());
+								}
+								// #region agent log
+								fetch('http://127.0.0.1:7247/ingest/cce9ccaa-d42e-4577-9651-ba22a488615c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'cart.js:706',message:'updateCartAutomatically: item price/subtotal update',data:{key,hasNewPrice:$newPrice.length>0,hasCurrentPrice:$currentPrice.length>0,hasNewSubtotal:$newItemSubtotal.length>0,hasCurrentSubtotal:$currentItemSubtotal.length>0},timestamp:Date.now(),sessionId:'debug-session',runId:'pre-fix',hypothesisId:'H18'})}).catch(()=>{});
+								// #endregion
 								// Atualiza quantidade (validação do servidor)
 								const $newQty = $newItem.find('input.qty');
 								const $currentQty = $currentItem.find('input.qty');
