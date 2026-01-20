@@ -483,7 +483,7 @@
 			// Atualiza o carrinho automaticamente se o valor mudou
 			if (value !== oldValue) {
 				debouncedUpdateCart();
-				calculateRatesForCart(true);
+				// Não chamar calculateRatesForCart aqui - será chamado após updated_wc_div
 			}
 		};
 
@@ -516,7 +516,7 @@
 				updateButtons();
 				// Atualiza o carrinho automaticamente quando o valor é válido
 				debouncedUpdateCart();
-				calculateRatesForCart(true);
+				// Não chamar calculateRatesForCart aqui - será chamado após updated_wc_div
 			}
 		});
 
@@ -533,7 +533,7 @@
 			// Garante que o carrinho seja atualizado ao perder o foco
 			clearTimeout(updateTimeout);
 			scheduleCartUpdate();
-			calculateRatesForCart(true);
+			// Não chamar calculateRatesForCart aqui - será chamado após updated_wc_div
 		});
 
 		// Suporte para teclado
@@ -649,7 +649,7 @@
 				return;
 			}
 			restoreCartCep();
-			calculateRatesForCart(true);
+			calculateRatesForCart(false); // false = não fazer update do carrinho novamente
 		});
 	}
 
