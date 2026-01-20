@@ -709,11 +709,21 @@
 					const $cartContent = $response.find('.woocommerce-cart-form, .Gstore-cart-form');
 					const $cartTotals = $response.find('.cart_totals, .Gstore-cart-sidebar');
 
+					// #region agent log
+					fetch('http://127.0.0.1:7247/ingest/cce9ccaa-d42e-4577-9651-ba22a488615c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'cart.js:631',message:'updateCartAutomatically: replace targets',data:{cartContentCount:$cartContent.length,cartTotalsCount:$cartTotals.length},timestamp:Date.now(),sessionId:'debug-session',runId:'pre-fix',hypothesisId:'H12'})}).catch(()=>{});
+					// #endregion
+
 					if ($cartContent.length > 0) {
 						$form.replaceWith($cartContent);
+						// #region agent log
+						fetch('http://127.0.0.1:7247/ingest/cce9ccaa-d42e-4577-9651-ba22a488615c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'cart.js:635',message:'updateCartAutomatically: cartContent replaced',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'pre-fix',hypothesisId:'H12'})}).catch(()=>{});
+						// #endregion
 					}
 					if ($cartTotals.length > 0) {
 						jQuery('.cart_totals, .Gstore-cart-sidebar').replaceWith($cartTotals);
+						// #region agent log
+						fetch('http://127.0.0.1:7247/ingest/cce9ccaa-d42e-4577-9651-ba22a488615c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'cart.js:639',message:'updateCartAutomatically: cartTotals replaced',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'pre-fix',hypothesisId:'H12'})}).catch(()=>{});
+						// #endregion
 					}
 
 					setTimeout(() => {
