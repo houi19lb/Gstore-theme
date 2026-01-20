@@ -62,6 +62,7 @@
 	let checkoutShippingError = '';
 	let checkoutShippingRatesByItem = {};
 	let checkoutSelectedShippingByItem = {};
+	let lastSummaryTotals = null;
 	let lastCartSummaryData = null;
 	let lastNonEmptyCartSummaryData = null; // Mantém o último resumo com itens para não zerar o topo quando o Woo esvazia o carrinho
 	let installmentQuotes = null;
@@ -1226,6 +1227,15 @@
 			// #endregion agent log
 		}
 
+		lastSummaryTotals = {
+			subtotalValue,
+			selectedTotal,
+			totalValue,
+			selectedModes: Array.from(selectedModes),
+			selectedLandTotal,
+			selectedAirTotal,
+		};
+
 		let totalsHtml = `
 			<div class="Gstore-checkout-shipping-totals__row">
 				<span>Subtotal</span>
@@ -1288,6 +1298,55 @@
 		}
 
 		$totals.html(totalsHtml);
+	}
+
+	function updateOrderReviewTotals() {
+		if (!lastSummaryTotals) {
+			return;
+		}
+		const $orderReview = $('#order_review');
+		const $table = $orderReview.find('.shop_table').first();
+		if (!$table.length) {
+			return;
+		}
+		const $orderTotal = $table.find('.order-total .woocommerce-Price-amount').first();
+		const $subtotalRow = $table.find('.cart-subtotal').first();
+		const $existing = $table.find('.gstore-shipping-land, .gstore-shipping-air');
+		$existing.remove();
+
+		const modes = lastSummaryTotals.selectedModes || [];
+		let rowsHtml = '';
+		if (modes.length > 1) {
+			rowsHtml += `
+				<tr class="gstore-shipping-land">
+					<th>Frete terrestre</th>
+					<td>${formatCurrency(lastSummaryTotals.selectedLandTotal || 0)}</td>
+				</tr>
+				<tr class="gstore-shipping-air">
+					<th>Frete aéreo</th>
+					<td>${formatCurrency(lastSummaryTotals.selectedAirTotal || 0)}</td>
+				</tr>
+			`;
+		} else if (modes.length === 1) {
+			const onlyMode = modes[0] === 'air' ? 'aéreo' : 'terrestre';
+			const onlyValue = modes[0] === 'air' ? lastSummaryTotals.selectedAirTotal : lastSummaryTotals.selectedLandTotal;
+			rowsHtml += `
+				<tr class="gstore-shipping-${modes[0]}">
+					<th>Frete ${onlyMode}</th>
+					<td>${formatCurrency(onlyValue || 0)}</td>
+				</tr>
+			`;
+		}
+
+		if ($subtotalRow.length && rowsHtml) {
+			$subtotalRow.after(rowsHtml);
+		}
+		if ($orderTotal.length) {
+			$orderTotal.html(formatCurrency(lastSummaryTotals.totalValue || 0));
+		}
+		// #region agent log
+		fetch('http://127.0.0.1:7247/ingest/cce9ccaa-d42e-4577-9651-ba22a488615c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'checkout-steps.js:1315',message:'order review patched',data:{modes:modes,land:lastSummaryTotals.selectedLandTotal,air:lastSummaryTotals.selectedAirTotal,total:lastSummaryTotals.totalValue},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H18'})}).catch(()=>{});
+		// #endregion agent log
 	}
 
 	function calculateShipping(postcode) {
@@ -1562,6 +1621,7 @@
 		if (index === lastStepIndex) {
 			setTimeout(function() {
 				$(document.body).trigger('update_checkout');
+				setTimeout(updateOrderReviewTotals, 0);
 				// #region agent log
 				const $orderReview = $('#order_review');
 				const $orderTotals = $orderReview.find('.shop_table .order-total .woocommerce-Price-amount');
@@ -2020,6 +2080,7 @@
 			// O WooCommerce pode re-renderizar fragments; garante que o DOM continue dentro das etapas
 			setTimeout(organizeFields, 0);
 			setTimeout(ensureBluInstallmentsUI, 0);
+			setTimeout(updateOrderReviewTotals, 0);
 			// #region agent log
 			const $orderReview = $('#order_review');
 			const $orderTotals = $orderReview.find('.shop_table .order-total .woocommerce-Price-amount');
