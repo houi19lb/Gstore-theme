@@ -165,16 +165,16 @@ body.woocommerce-checkout .Gstore-checkout-steps-shell {
 }
 
 /* ===========================================
-   RESUMO DO PEDIDO - TOPO (STICKY)
+   RESUMO DO PEDIDO - TOPO
    =========================================== */
 .Gstore-checkout-summary-top {
 	background: var(--gstore-card-bg);
 	border: 1px solid var(--gstore-muted);
 	border-radius: var(--gstore-border-radius);
 	padding: 20px 24px;
-	position: sticky;
-	top: 16px;
-	z-index: 100;
+	position: static;
+	top: auto;
+	z-index: auto;
 	box-shadow: none;
 }
 
@@ -2644,6 +2644,8 @@ body.gstore-blu-checkout-modal-open {
 	font-size: var(--gstore-font-size-sm);
 	color: var(--gstore-foreground);
 	white-space: nowrap;
+	width: auto;
+	flex: 0 0 auto;
 }
 
 .Gstore-checkout-item-shipping-option input {

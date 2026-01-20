@@ -1212,6 +1212,12 @@
 		// #region agent log
 		fetch('http://127.0.0.1:7247/ingest/cce9ccaa-d42e-4577-9651-ba22a488615c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'checkout-steps.js:904',message:'totals display inputs',data:{subtotalRaw:data && data.totals ? data.totals.subtotal : null,subtotalValue:subtotalValue,discountRaw:data && data.totals ? data.totals.discount : null,discountValue:discountValue,totalValue:totalValue,selectedTotal:selectedTotal},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H13'})}).catch(()=>{});
 		// #endregion agent log
+		if (subtotalValue > 0) {
+			$('.Gstore-checkout-summary-top__total-amount').html(formatCurrency(totalValue));
+			// #region agent log
+			fetch('http://127.0.0.1:7247/ingest/cce9ccaa-d42e-4577-9651-ba22a488615c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'checkout-steps.js:909',message:'top total updated',data:{newTotal:formatCurrency(totalValue)},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H14'})}).catch(()=>{});
+			// #endregion agent log
+		}
 
 		let totalsHtml = `
 			<div class="Gstore-checkout-shipping-totals__row">
