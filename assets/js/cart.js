@@ -708,9 +708,10 @@
 					const $response = jQuery(response);
 					const $cartContent = $response.find('.woocommerce-cart-form, .Gstore-cart-form');
 					const $cartTotals = $response.find('.cart_totals, .Gstore-cart-sidebar');
+					const shouldPreserveTotals = hasCalculatedShippingFlag();
 
 					// #region agent log
-					fetch('http://127.0.0.1:7247/ingest/cce9ccaa-d42e-4577-9651-ba22a488615c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'cart.js:631',message:'updateCartAutomatically: replace targets',data:{cartContentCount:$cartContent.length,cartTotalsCount:$cartTotals.length},timestamp:Date.now(),sessionId:'debug-session',runId:'pre-fix',hypothesisId:'H12'})}).catch(()=>{});
+					fetch('http://127.0.0.1:7247/ingest/cce9ccaa-d42e-4577-9651-ba22a488615c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'cart.js:631',message:'updateCartAutomatically: replace targets',data:{cartContentCount:$cartContent.length,cartTotalsCount:$cartTotals.length,shouldPreserveTotals},timestamp:Date.now(),sessionId:'debug-session',runId:'pre-fix',hypothesisId:'H12'})}).catch(()=>{});
 					// #endregion
 
 					if ($cartContent.length > 0) {
@@ -720,10 +721,22 @@
 						// #endregion
 					}
 					if ($cartTotals.length > 0) {
-						jQuery('.cart_totals, .Gstore-cart-sidebar').replaceWith($cartTotals);
-						// #region agent log
-						fetch('http://127.0.0.1:7247/ingest/cce9ccaa-d42e-4577-9651-ba22a488615c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'cart.js:639',message:'updateCartAutomatically: cartTotals replaced',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'pre-fix',hypothesisId:'H12'})}).catch(()=>{});
-						// #endregion
+						if (shouldPreserveTotals) {
+							const newSubtotalEl = $response.find('.cart_totals .cart-subtotal .woocommerce-Price-amount, .cart_totals .cart-subtotal td').first();
+							const newSubtotalText = newSubtotalEl.length > 0 ? newSubtotalEl.text() : '';
+							const currentSubtotalEl = jQuery('.cart_totals .cart-subtotal .woocommerce-Price-amount, .cart_totals .cart-subtotal td').first();
+							if (currentSubtotalEl.length > 0 && newSubtotalText) {
+								currentSubtotalEl.text(newSubtotalText);
+							}
+							// #region agent log
+							fetch('http://127.0.0.1:7247/ingest/cce9ccaa-d42e-4577-9651-ba22a488615c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'cart.js:643',message:'updateCartAutomatically: preserved totals',data:{hasNewSubtotal:Boolean(newSubtotalText),hasCurrentSubtotal:currentSubtotalEl.length > 0},timestamp:Date.now(),sessionId:'debug-session',runId:'pre-fix',hypothesisId:'H13'})}).catch(()=>{});
+							// #endregion
+						} else {
+							jQuery('.cart_totals, .Gstore-cart-sidebar').replaceWith($cartTotals);
+							// #region agent log
+							fetch('http://127.0.0.1:7247/ingest/cce9ccaa-d42e-4577-9651-ba22a488615c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'cart.js:651',message:'updateCartAutomatically: cartTotals replaced',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'pre-fix',hypothesisId:'H12'})}).catch(()=>{});
+							// #endregion
+						}
 					}
 
 					setTimeout(() => {
