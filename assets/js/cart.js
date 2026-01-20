@@ -10,6 +10,7 @@
 	let shippingChoicesDelegated = false;
 	const CART_CEP_STORAGE_KEY = 'gstore_cart_cep';
 	const CART_MODE_STORAGE_KEY = 'gstore_cart_shipping_mode';
+	const CART_CALCULATED_STORAGE_KEY = 'gstore_cart_shipping_calculated';
 
 	function getCartCep() {
 		const cepInput = document.querySelector('.gstore-shipping-calculator__cep');
@@ -49,6 +50,26 @@
 		const digits = String(cep || '').replace(/\D/g, '');
 		if (digits.length === 8) {
 			window.localStorage.setItem(CART_CEP_STORAGE_KEY, digits);
+		} else {
+			window.localStorage.removeItem(CART_CALCULATED_STORAGE_KEY);
+		}
+	}
+
+	function hasCalculatedShippingFlag() {
+		if (typeof window === 'undefined' || !window.localStorage) {
+			return false;
+		}
+		return window.localStorage.getItem(CART_CALCULATED_STORAGE_KEY) === 'true';
+	}
+
+	function setCalculatedShippingFlag(value) {
+		if (typeof window === 'undefined' || !window.localStorage) {
+			return;
+		}
+		if (value) {
+			window.localStorage.setItem(CART_CALCULATED_STORAGE_KEY, 'true');
+		} else {
+			window.localStorage.removeItem(CART_CALCULATED_STORAGE_KEY);
 		}
 	}
 
@@ -603,6 +624,7 @@
 			// #region agent log
 			fetch('http://127.0.0.1:7247/ingest/cce9ccaa-d42e-4577-9651-ba22a488615c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'cart.js:579',message:'calculateRatesForCart: completed',data:{shouldUpdateCart},timestamp:Date.now(),sessionId:'debug-session',runId:'pre-fix',hypothesisId:'H5'})}).catch(()=>{});
 			// #endregion
+			setCalculatedShippingFlag(true);
 			updateCheckoutAvailability();
 			if (shouldUpdateCart) {
 				scheduleCartUpdate();
@@ -947,7 +969,11 @@
 			setTimeout(init, 100);
 			ensureShippingBlocksExist();
 			restoreCartCep();
-			calculateRatesForCart(false);
+			if (hasCalculatedShippingFlag()) {
+				calculateRatesForCart(false);
+			} else {
+				updateCheckoutAvailability();
+			}
 			updateCartTotalsSummary();
 			updateCheckoutAvailability();
 		});
@@ -956,6 +982,7 @@
 			// #region agent log
 			fetch('http://127.0.0.1:7247/ingest/cce9ccaa-d42e-4577-9651-ba22a488615c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'cart.js:910',message:'shipping calculator clicked',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'pre-fix',hypothesisId:'H5'})}).catch(()=>{});
 			// #endregion
+			setCalculatedShippingFlag(true);
 			calculateRatesForCart(false);
 			updateCartTotalsSummary();
 			updateCheckoutAvailability();
@@ -963,6 +990,9 @@
 
 		jQuery(document).on('input', '.gstore-shipping-calculator__cep', function () {
 			storeCartCep(this.value || '');
+			if (!getCartCep()) {
+				setCalculatedShippingFlag(false);
+			}
 			updateCheckoutAvailability();
 		});
 
