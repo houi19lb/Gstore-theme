@@ -149,6 +149,7 @@
 	function hasCalculatedShipping() {
 		const cep = getCartCep();
 		// #region agent log
+		console.log('gstore_debug', {location:'cart.js:149',message:'hasCalculatedShipping: start',data:{cepPresent:Boolean(cep)},timestamp:Date.now(),sessionId:'debug-session',runId:'pre-fix',hypothesisId:'H4'});
 		fetch('http://127.0.0.1:7247/ingest/cce9ccaa-d42e-4577-9651-ba22a488615c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'cart.js:149',message:'hasCalculatedShipping: start',data:{cepPresent:Boolean(cep)},timestamp:Date.now(),sessionId:'debug-session',runId:'pre-fix',hypothesisId:'H4'})}).catch(()=>{});
 		// #endregion
 		if (!cep) {
@@ -156,6 +157,7 @@
 		}
 		const rateInputs = document.querySelectorAll('input[name^="gstore_shipping_rates["]');
 		// #region agent log
+		console.log('gstore_debug', {location:'cart.js:154',message:'hasCalculatedShipping: rate inputs count',data:{count:rateInputs.length},timestamp:Date.now(),sessionId:'debug-session',runId:'pre-fix',hypothesisId:'H4'});
 		fetch('http://127.0.0.1:7247/ingest/cce9ccaa-d42e-4577-9651-ba22a488615c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'cart.js:154',message:'hasCalculatedShipping: rate inputs count',data:{count:rateInputs.length},timestamp:Date.now(),sessionId:'debug-session',runId:'pre-fix',hypothesisId:'H4'})}).catch(()=>{});
 		// #endregion
 		for (const input of rateInputs) {
@@ -163,6 +165,7 @@
 				const parsed = JSON.parse(input.value || '[]');
 				if (Array.isArray(parsed) && parsed.length) {
 					// #region agent log
+					console.log('gstore_debug', {location:'cart.js:158',message:'hasCalculatedShipping: found rates',data:{firstRateCount:parsed.length},timestamp:Date.now(),sessionId:'debug-session',runId:'pre-fix',hypothesisId:'H4'});
 					fetch('http://127.0.0.1:7247/ingest/cce9ccaa-d42e-4577-9651-ba22a488615c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'cart.js:158',message:'hasCalculatedShipping: found rates',data:{firstRateCount:parsed.length},timestamp:Date.now(),sessionId:'debug-session',runId:'pre-fix',hypothesisId:'H4'})}).catch(()=>{});
 					// #endregion
 					return true;
@@ -201,6 +204,7 @@
 
 		const canProceed = hasCalculatedShipping();
 		// #region agent log
+		console.log('gstore_debug', {location:'cart.js:193',message:'updateCheckoutAvailability',data:{canProceed},timestamp:Date.now(),sessionId:'debug-session',runId:'pre-fix',hypothesisId:'H4'});
 		fetch('http://127.0.0.1:7247/ingest/cce9ccaa-d42e-4577-9651-ba22a488615c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'cart.js:193',message:'updateCheckoutAvailability',data:{canProceed},timestamp:Date.now(),sessionId:'debug-session',runId:'pre-fix',hypothesisId:'H4'})}).catch(()=>{});
 		// #endregion
 		const notice = ensureShippingNotice(summaryCard);
@@ -550,6 +554,7 @@
 
 		storeCartCep(cep);
 		// #region agent log
+		console.log('gstore_debug', {location:'cart.js:539',message:'calculateRatesForCart: start',data:{shouldUpdateCart,cepPresent:Boolean(cep)},timestamp:Date.now(),sessionId:'debug-session',runId:'pre-fix',hypothesisId:'H3'});
 		fetch('http://127.0.0.1:7247/ingest/cce9ccaa-d42e-4577-9651-ba22a488615c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'cart.js:539',message:'calculateRatesForCart: start',data:{shouldUpdateCart,cepPresent:Boolean(cep)},timestamp:Date.now(),sessionId:'debug-session',runId:'pre-fix',hypothesisId:'H3'})}).catch(()=>{});
 		// #endregion
 
@@ -629,6 +634,7 @@
 
 		const actionUrl = form.action || (typeof wc_cart_params !== 'undefined' ? wc_cart_params.cart_url : null) || window.location.href;
 		// #region agent log
+		console.log('gstore_debug', {location:'cart.js:615',message:'updateCartAutomatically: start',data:{actionUrl},timestamp:Date.now(),sessionId:'debug-session',runId:'pre-fix',hypothesisId:'H1'});
 		fetch('http://127.0.0.1:7247/ingest/cce9ccaa-d42e-4577-9651-ba22a488615c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'cart.js:615',message:'updateCartAutomatically: start',data:{actionUrl},timestamp:Date.now(),sessionId:'debug-session',runId:'pre-fix',hypothesisId:'H1'})}).catch(()=>{});
 		// #endregion
 
@@ -639,6 +645,7 @@
 			dataType: 'html',
 			success: function (response) {
 				// #region agent log
+				console.log('gstore_debug', {location:'cart.js:622',message:'updateCartAutomatically: success',data:{hasUpdateWcDiv:typeof update_wc_div === 'function',responseLength:typeof response === 'string' ? response.length : null},timestamp:Date.now(),sessionId:'debug-session',runId:'pre-fix',hypothesisId:'H1'});
 				fetch('http://127.0.0.1:7247/ingest/cce9ccaa-d42e-4577-9651-ba22a488615c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'cart.js:622',message:'updateCartAutomatically: success',data:{hasUpdateWcDiv:typeof update_wc_div === 'function',responseLength:typeof response === 'string' ? response.length : null},timestamp:Date.now(),sessionId:'debug-session',runId:'pre-fix',hypothesisId:'H1'})}).catch(()=>{});
 				// #endregion
 				if (typeof update_wc_div === 'function') {
@@ -666,6 +673,7 @@
 			},
 			complete: function () {
 				// #region agent log
+				console.log('gstore_debug', {location:'cart.js:646',message:'updateCartAutomatically: complete',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'pre-fix',hypothesisId:'H1'});
 				fetch('http://127.0.0.1:7247/ingest/cce9ccaa-d42e-4577-9651-ba22a488615c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'cart.js:646',message:'updateCartAutomatically: complete',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'pre-fix',hypothesisId:'H1'})}).catch(()=>{});
 				// #endregion
 				if (form.contains(updateInput)) {
@@ -686,6 +694,7 @@
 	function scheduleCartUpdate() {
 		clearTimeout(cartUpdateTimeout);
 		// #region agent log
+		console.log('gstore_debug', {location:'cart.js:662',message:'scheduleCartUpdate',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'pre-fix',hypothesisId:'H1'});
 		fetch('http://127.0.0.1:7247/ingest/cce9ccaa-d42e-4577-9651-ba22a488615c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'cart.js:662',message:'scheduleCartUpdate',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'pre-fix',hypothesisId:'H1'})}).catch(()=>{});
 		// #endregion
 		cartUpdateTimeout = setTimeout(updateCartAutomatically, 400);
@@ -892,6 +901,7 @@
 			hiddenModeInput.value = target.value;
 
 			// #region agent log
+			console.log('gstore_debug', {location:'cart.js:867',message:'shipping mode changed',data:{cartItemKey,mode:target.value},timestamp:Date.now(),sessionId:'debug-session',runId:'pre-fix',hypothesisId:'H2'});
 			fetch('http://127.0.0.1:7247/ingest/cce9ccaa-d42e-4577-9651-ba22a488615c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'cart.js:867',message:'shipping mode changed',data:{cartItemKey,mode:target.value},timestamp:Date.now(),sessionId:'debug-session',runId:'pre-fix',hypothesisId:'H2'})}).catch(()=>{});
 			// #endregion
 			updateCartTotalsSummary();
