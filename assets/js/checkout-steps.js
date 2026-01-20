@@ -966,6 +966,9 @@
 	function renderShippingSummary(data) {
 		const $shippingSummary = $('[data-gstore-shipping-summary]');
 		if (!$shippingSummary.length) {
+			// #region agent log
+			fetch('http://127.0.0.1:7247/ingest/cce9ccaa-d42e-4577-9651-ba22a488615c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'checkout-steps.js:833',message:'renderShippingSummary skipped (no container)',data:{hasContainer:false},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H4'})}).catch(()=>{});
+			// #endregion agent log
 			return;
 		}
 		const $options = $shippingSummary.find('[data-gstore-shipping-options]');
@@ -977,6 +980,9 @@
 			selectedMode = resolveCheckoutShippingMode(rates, selectedMode);
 			checkoutSelectedShippingMode = selectedMode;
 		}
+		// #region agent log
+		fetch('http://127.0.0.1:7247/ingest/cce9ccaa-d42e-4577-9651-ba22a488615c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'checkout-steps.js:846',message:'renderShippingSummary state',data:{ratesCount:rates.length,selectedMode:selectedMode,status:checkoutShippingStatus},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H4'})}).catch(()=>{});
+		// #endregion agent log
 
 		const hasRates = rates.length > 0;
 		const optionsHtml = hasRates
@@ -1163,12 +1169,18 @@
 			showShippingError('Não foi possível calcular o frete para este destino.');
 			return;
 		}
+		// #region agent log
+		fetch('http://127.0.0.1:7247/ingest/cce9ccaa-d42e-4577-9651-ba22a488615c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'checkout-steps.js:919',message:'showShippingResult rates',data:{ratesCount:rates.length,firstRate:rates[0] ? {mode:rates[0].mode,label:rates[0].label,cost:rates[0].cost,cost_formatted:rates[0].cost_formatted} : null},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H3'})}).catch(()=>{});
+		// #endregion agent log
 		checkoutShippingStatus = 'ready';
 		checkoutShippingError = '';
 		checkoutShippingRates = getNormalizedRatesFromShippingData(data);
 		const storedMode = getStoredShippingModeFromStorage(getCartItemKeysFromSummary(lastCartSummaryData));
 		const preferredMode = storedMode || checkoutSelectedShippingMode || 'land';
 		checkoutSelectedShippingMode = resolveCheckoutShippingMode(checkoutShippingRates, preferredMode);
+		// #region agent log
+		fetch('http://127.0.0.1:7247/ingest/cce9ccaa-d42e-4577-9651-ba22a488615c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'checkout-steps.js:928',message:'resolved checkout mode',data:{preferredMode:preferredMode,resolved:checkoutSelectedShippingMode,normalizedRates:checkoutShippingRates.map(r=>({mode:r.mode,label:r.label,cost_formatted:r.cost_formatted}))},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H3'})}).catch(()=>{});
+		// #endregion agent log
 		renderShippingSummary(lastCartSummaryData);
 	}
 
@@ -1540,6 +1552,9 @@
 	 */
 	function renderSummary(data) {
 		lastCartSummaryData = data;
+		// #region agent log
+		fetch('http://127.0.0.1:7247/ingest/cce9ccaa-d42e-4577-9651-ba22a488615c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'checkout-steps.js:1350',message:'renderSummary data snapshot',data:{itemsCount:data && data.items_count,itemsArray:Array.isArray(data && data.items),itemKeys:getCartItemKeysFromSummary(data)},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H1'})}).catch(()=>{});
+		// #endregion agent log
 
 		// Se o Woo já esvaziou o carrinho (pedido Blu criado), não sobrescreve o topo com 0.
 		// Reusa o último resumo não-vazio para manter os dados corretos.
@@ -1555,6 +1570,9 @@
 
 		// Seleção inicial do frete baseada no carrinho/localStorage
 		const storedMode = getStoredShippingModeFromStorage(getCartItemKeysFromSummary(data));
+		// #region agent log
+		fetch('http://127.0.0.1:7247/ingest/cce9ccaa-d42e-4577-9651-ba22a488615c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'checkout-steps.js:1362',message:'stored mode from localStorage',data:{storedMode:storedMode,selectedBefore:checkoutSelectedShippingMode},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H2'})}).catch(()=>{});
+		// #endregion agent log
 		checkoutSelectedShippingMode = storedMode || checkoutSelectedShippingMode || 'land';
 
 		// Atualiza contagem de itens
@@ -1742,6 +1760,9 @@
 
 		// Seleção do frete no resumo
 		$(document).on('change', 'input[name="gstore_checkout_shipping_mode"]', function() {
+			// #region agent log
+			fetch('http://127.0.0.1:7247/ingest/cce9ccaa-d42e-4577-9651-ba22a488615c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'checkout-steps.js:1571',message:'shipping radio changed',data:{value:$(this).val()},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H5'})}).catch(()=>{});
+			// #endregion agent log
 			updateCheckoutShippingSelection($(this).val(), true);
 		});
 
