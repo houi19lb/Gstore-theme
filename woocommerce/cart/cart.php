@@ -285,21 +285,6 @@ if ( function_exists( 'wc_wp_theme_get_element_class_name' ) ) {
 				</div>
 
 				<aside class="Gstore-cart-sidebar">
-					<?php if ( wc_coupons_enabled() ) : ?>
-						<div class="Gstore-cart-card Gstore-cart-coupon">
-							<div class="Gstore-cart-card__title">
-								<h3><?php esc_html_e( 'Tem cupom de desconto?', 'gstore' ); ?></h3>
-								<p><?php esc_html_e( 'Ative sua condição especial e veja o total atualizar automaticamente.', 'gstore' ); ?></p>
-							</div>
-							<label class="Gstore-cart-coupon__label" for="coupon_code"><?php esc_html_e( 'Código do cupom', 'gstore' ); ?></label>
-							<div class="Gstore-cart-coupon__controls">
-								<input type="text" name="coupon_code" class="input-text" id="coupon_code" value="" placeholder="<?php esc_attr_e( 'INSIRA AQUI', 'gstore' ); ?>" />
-								<button type="submit" class="Gstore-cart-btn" name="apply_coupon" value="<?php esc_attr_e( 'Apply coupon', 'woocommerce' ); ?>"><?php esc_html_e( 'Aplicar', 'gstore' ); ?></button>
-							</div>
-							<?php do_action( 'woocommerce_cart_coupon' ); ?>
-						</div>
-					<?php endif; ?>
-
 					<div class="Gstore-cart-card Gstore-cart-summary-card">
 						<?php woocommerce_cart_totals(); ?>
 					</div>
@@ -317,6 +302,21 @@ if ( function_exists( 'wc_wp_theme_get_element_class_name' ) ) {
 							</a>
 						<?php endif; ?>
 					</div>
+
+					<?php if ( wc_coupons_enabled() ) : ?>
+						<div class="Gstore-cart-card Gstore-cart-coupon">
+							<div class="Gstore-cart-card__title">
+								<h3><?php esc_html_e( 'Tem cupom de desconto?', 'gstore' ); ?></h3>
+								<p><?php esc_html_e( 'Ative sua condição especial e veja o total atualizar automaticamente.', 'gstore' ); ?></p>
+							</div>
+							<label class="Gstore-cart-coupon__label" for="coupon_code"><?php esc_html_e( 'Código do cupom', 'gstore' ); ?></label>
+							<div class="Gstore-cart-coupon__controls">
+								<input type="text" name="coupon_code" class="input-text" id="coupon_code" value="" placeholder="<?php esc_attr_e( 'INSIRA AQUI', 'gstore' ); ?>" />
+								<button type="submit" class="Gstore-cart-btn" name="apply_coupon" value="<?php esc_attr_e( 'Apply coupon', 'woocommerce' ); ?>"><?php esc_html_e( 'Aplicar', 'gstore' ); ?></button>
+							</div>
+							<?php do_action( 'woocommerce_cart_coupon' ); ?>
+						</div>
+					<?php endif; ?>
 
 					<?php
 					$cart_totals_priority = has_action( 'woocommerce_cart_collaterals', 'woocommerce_cart_totals' );

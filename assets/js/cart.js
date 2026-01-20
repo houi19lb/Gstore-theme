@@ -10,7 +10,6 @@
 	let shippingChoicesDelegated = false;
 	const CART_CEP_STORAGE_KEY = 'gstore_cart_cep';
 	const CART_MODE_STORAGE_KEY = 'gstore_cart_shipping_mode';
-	let loadingReleaseTimer = null;
 
 	function getCartCep() {
 		const cepInput = document.querySelector('.gstore-shipping-calculator__cep');
@@ -107,32 +106,6 @@
 			return wc_checkout_params.ajax_url;
 		}
 		return '/wp-admin/admin-ajax.php';
-	}
-
-	function setCartLoadingState(isLoading) {
-		const cartContainer = document.querySelector('.Gstore-cart-container, .Gstore-cart-shell');
-		if (cartContainer) {
-			cartContainer.classList.toggle('is-loading', Boolean(isLoading));
-		}
-
-		const summaryCard = document.querySelector('.Gstore-cart-summary-card');
-		if (summaryCard) {
-			summaryCard.classList.toggle('is-loading', Boolean(isLoading));
-		}
-
-		const shippingBlocks = document.querySelectorAll('[data-gstore-shipping-item]');
-		shippingBlocks.forEach((block) => {
-			block.classList.toggle('is-loading', Boolean(isLoading));
-		});
-	}
-
-	function scheduleLoadingRelease(delay = 160) {
-		if (loadingReleaseTimer) {
-			clearTimeout(loadingReleaseTimer);
-		}
-		loadingReleaseTimer = setTimeout(() => {
-			setCartLoadingState(false);
-		}, delay);
 	}
 
 	function parsePriceValue(rawText) {
@@ -504,7 +477,6 @@
 		}
 
 		if (!cep) {
-			scheduleLoadingRelease(0);
 			return;
 		}
 
@@ -512,12 +484,10 @@
 
 		const shippingBlocks = document.querySelectorAll('[data-gstore-shipping-item]');
 		if (!shippingBlocks.length) {
-			scheduleLoadingRelease(0);
 			return;
 		}
 
 		ratesSyncInProgress = true;
-		setCartLoadingState(true);
 
 		const requests = [];
 		shippingBlocks.forEach((shippingBlock) => {
@@ -550,7 +520,6 @@
 
 		Promise.allSettled(requests).then(() => {
 			ratesSyncInProgress = false;
-			scheduleLoadingRelease(160);
 			updateCartTotalsSummary();
 			if (shouldUpdateCart) {
 				scheduleCartUpdate();
@@ -575,8 +544,6 @@
 		if (!form) {
 			return;
 		}
-
-		setCartLoadingState(true);
 
 		if (typeof block === 'function') {
 			block($form);
@@ -615,7 +582,6 @@
 						initQuantitySelectors();
 						initShippingChoices();
 						updateCartTotalsSummary();
-						scheduleLoadingRelease(160);
 					}, 100);
 				}
 
