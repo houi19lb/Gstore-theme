@@ -35,32 +35,6 @@ if ( function_exists( 'wc_wp_theme_get_element_class_name' ) ) {
 			<h1><?php esc_html_e( 'Revise seus itens antes de finalizar', 'gstore' ); ?></h1>
 		</header>
 
-		<div class="Gstore-cart-card gstore-shipping-calculator gstore-shipping-calculator--cart">
-			<h3 class="gstore-shipping-calculator__title">
-				<svg class="gstore-shipping-calculator__icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-					<path d="M3 7h11v10H3z" fill="currentColor" opacity="0.2"></path>
-					<path d="M14 7h4l3 4v6h-7V7z" fill="currentColor"></path>
-					<circle cx="7" cy="19" r="2" fill="currentColor"></circle>
-					<circle cx="17" cy="19" r="2" fill="currentColor"></circle>
-				</svg>
-				<?php esc_html_e( 'Calcular frete', 'gstore' ); ?>
-			</h3>
-			<div class="gstore-shipping-calculator__form">
-				<input
-					type="text"
-					class="gstore-shipping-calculator__cep"
-					placeholder="<?php esc_attr_e( '00000-000', 'gstore' ); ?>"
-					maxlength="9"
-					aria-label="<?php esc_attr_e( 'CEP para cálculo de frete', 'gstore' ); ?>"
-				/>
-				<button type="button" class="gstore-shipping-calculator__button">
-					<?php esc_html_e( 'Calcular frete', 'gstore' ); ?>
-				</button>
-			</div>
-			<div class="gstore-shipping-calculator__result" role="region" aria-live="polite"></div>
-			<div class="gstore-shipping-calculator__error" role="alert"></div>
-		</div>
-
 		<form class="woocommerce-cart-form Gstore-cart-form" action="<?php echo esc_url( $cart_url ); ?>" method="post">
 			<?php do_action( 'woocommerce_before_cart_table' ); ?>
 
@@ -285,6 +259,31 @@ if ( function_exists( 'wc_wp_theme_get_element_class_name' ) ) {
 				</div>
 
 				<aside class="Gstore-cart-sidebar">
+					<div class="Gstore-cart-card gstore-shipping-calculator gstore-shipping-calculator--cart">
+						<h3 class="gstore-shipping-calculator__title">
+							<svg class="gstore-shipping-calculator__icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+								<path d="M3 7h11v10H3z" fill="currentColor" opacity="0.2"></path>
+								<path d="M14 7h4l3 4v6h-7V7z" fill="currentColor"></path>
+								<circle cx="7" cy="19" r="2" fill="currentColor"></circle>
+								<circle cx="17" cy="19" r="2" fill="currentColor"></circle>
+							</svg>
+							<?php esc_html_e( 'Calcular frete', 'gstore' ); ?>
+						</h3>
+						<div class="gstore-shipping-calculator__form">
+							<input
+								type="text"
+								class="gstore-shipping-calculator__cep"
+								placeholder="<?php esc_attr_e( '00000-000', 'gstore' ); ?>"
+								maxlength="9"
+								aria-label="<?php esc_attr_e( 'CEP para cálculo de frete', 'gstore' ); ?>"
+							/>
+							<button type="button" class="gstore-shipping-calculator__button">
+								<?php esc_html_e( 'Calcular frete', 'gstore' ); ?>
+							</button>
+						</div>
+						<div class="gstore-shipping-calculator__result" role="region" aria-live="polite"></div>
+						<div class="gstore-shipping-calculator__error" role="alert"></div>
+					</div>
 					<div class="Gstore-cart-card Gstore-cart-summary-card">
 						<?php woocommerce_cart_totals(); ?>
 					</div>

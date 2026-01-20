@@ -798,6 +798,22 @@ div.woocommerce section.Gstore-cart-shell div.Gstore-cart-container {
 	transition: all 0.2s ease;
 }
 
+.Gstore-cart-summary-card .checkout-button.is-disabled,
+.Gstore-cart-summary-card .wc-proceed-to-checkout .button.is-disabled {
+	opacity: 0.5;
+	cursor: not-allowed;
+	pointer-events: none;
+}
+
+.gstore-cart-shipping-notice {
+	margin: 0 0 12px;
+	padding: 10px 12px;
+	border-radius: var(--gstore-cart-radius);
+	background: rgba(181, 166, 66, 0.12);
+	color: var(--gstore-cart-text);
+	font-size: var(--gstore-font-size-09);
+}
+
 .Gstore-cart-summary-card .wc-proceed-to-checkout .checkout-button:hover,
 .Gstore-cart-summary-card .wc-proceed-to-checkout .button:hover {
 	background: var(--gstore-cart-green-hover);

@@ -146,6 +146,62 @@
 		return parsePriceValue(subtotalEl.textContent || '');
 	}
 
+	function hasCalculatedShipping() {
+		const cep = getCartCep();
+		if (!cep) {
+			return false;
+		}
+		const rateInputs = document.querySelectorAll('input[name^="gstore_shipping_rates["]');
+		for (const input of rateInputs) {
+			try {
+				const parsed = JSON.parse(input.value || '[]');
+				if (Array.isArray(parsed) && parsed.length) {
+					return true;
+				}
+			} catch (e) {
+				// ignore malformed JSON
+			}
+		}
+		return false;
+	}
+
+	function ensureShippingNotice(summaryCard) {
+		if (!summaryCard) {
+			return null;
+		}
+		let notice = summaryCard.querySelector('[data-gstore-shipping-notice]');
+		if (!notice) {
+			notice = document.createElement('div');
+			notice.className = 'gstore-cart-shipping-notice';
+			notice.setAttribute('data-gstore-shipping-notice', 'true');
+			notice.textContent = 'Informe o CEP e calcule o frete para continuar.';
+			summaryCard.insertBefore(notice, summaryCard.firstChild);
+		}
+		return notice;
+	}
+
+	function updateCheckoutAvailability() {
+		const summaryCard = document.querySelector('.Gstore-cart-summary-card');
+		const checkoutButton = summaryCard
+			? summaryCard.querySelector('.checkout-button, .wc-proceed-to-checkout .button')
+			: document.querySelector('.checkout-button, .wc-proceed-to-checkout .button');
+
+		if (!checkoutButton) {
+			return;
+		}
+
+		const canProceed = hasCalculatedShipping();
+		const notice = ensureShippingNotice(summaryCard);
+
+		if (notice) {
+			notice.style.display = canProceed ? 'none' : 'block';
+		}
+
+		checkoutButton.classList.toggle('is-disabled', !canProceed);
+		checkoutButton.setAttribute('aria-disabled', canProceed ? 'false' : 'true');
+		checkoutButton.dataset.gstoreDisabled = canProceed ? 'false' : 'true';
+	}
+
 	function getRatesForItem(cartItemKey) {
 		if (!cartItemKey) {
 			return [];
@@ -832,6 +888,7 @@
 		setupMutationObserver();
 		ensureShippingBlocksExist();
 		updateCartTotalsSummary();
+		updateCheckoutAvailability();
 	}
 
 	if (document.readyState === 'loading') {
@@ -847,15 +904,26 @@
 			restoreCartCep();
 			calculateRatesForCart(false);
 			updateCartTotalsSummary();
+			updateCheckoutAvailability();
 		});
 
 		jQuery(document).on('click', '.gstore-shipping-calculator__button', function () {
 			calculateRatesForCart(false);
 			updateCartTotalsSummary();
+			updateCheckoutAvailability();
 		});
 
 		jQuery(document).on('input', '.gstore-shipping-calculator__cep', function () {
 			storeCartCep(this.value || '');
+			updateCheckoutAvailability();
+		});
+
+		jQuery(document).on('click', '.checkout-button, .wc-proceed-to-checkout .button', function (event) {
+			const target = event.currentTarget;
+			if (target && target.dataset.gstoreDisabled === 'true') {
+				event.preventDefault();
+				updateCheckoutAvailability();
+			}
 		});
 	}
 
