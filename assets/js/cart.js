@@ -669,6 +669,9 @@
 		}
 
 		if (typeof block === 'function') {
+			// #region agent log
+			fetch('http://127.0.0.1:7247/ingest/cce9ccaa-d42e-4577-9651-ba22a488615c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'cart.js:604',message:'updateCartAutomatically: block UI',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'pre-fix',hypothesisId:'H11'})}).catch(()=>{});
+			// #endregion
 			block($form);
 			block(jQuery('div.cart_totals'));
 		}
@@ -694,8 +697,14 @@
 				fetch('http://127.0.0.1:7247/ingest/cce9ccaa-d42e-4577-9651-ba22a488615c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'cart.js:622',message:'updateCartAutomatically: success',data:{hasUpdateWcDiv:typeof update_wc_div === 'function',responseLength:typeof response === 'string' ? response.length : null},timestamp:Date.now(),sessionId:'debug-session',runId:'pre-fix',hypothesisId:'H1'})}).catch(()=>{});
 				// #endregion
 				if (typeof update_wc_div === 'function') {
+					// #region agent log
+					fetch('http://127.0.0.1:7247/ingest/cce9ccaa-d42e-4577-9651-ba22a488615c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'cart.js:623',message:'updateCartAutomatically: using update_wc_div',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'pre-fix',hypothesisId:'H11'})}).catch(()=>{});
+					// #endregion
 					update_wc_div(response);
 				} else {
+					// #region agent log
+					fetch('http://127.0.0.1:7247/ingest/cce9ccaa-d42e-4577-9651-ba22a488615c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'cart.js:626',message:'updateCartAutomatically: manual replace',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'pre-fix',hypothesisId:'H11'})}).catch(()=>{});
+					// #endregion
 					const $response = jQuery(response);
 					const $cartContent = $response.find('.woocommerce-cart-form, .Gstore-cart-form');
 					const $cartTotals = $response.find('.cart_totals, .Gstore-cart-sidebar');
@@ -725,6 +734,9 @@
 				}
 
 				if (typeof unblock === 'function') {
+					// #region agent log
+					fetch('http://127.0.0.1:7247/ingest/cce9ccaa-d42e-4577-9651-ba22a488615c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'cart.js:651',message:'updateCartAutomatically: unblock UI',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'pre-fix',hypothesisId:'H11'})}).catch(()=>{});
+					// #endregion
 					unblock($form);
 					unblock(jQuery('div.cart_totals'));
 				}
