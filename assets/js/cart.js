@@ -9,6 +9,7 @@
 	let ratesSyncInProgress = false;
 	let shippingChoicesDelegated = false;
 	const CART_CEP_STORAGE_KEY = 'gstore_cart_cep';
+	const CART_MODE_STORAGE_KEY = 'gstore_cart_shipping_mode';
 
 	function getCartCep() {
 		const cepInput = document.querySelector('.gstore-shipping-calculator__cep');
@@ -48,6 +49,52 @@
 		const digits = String(cep || '').replace(/\D/g, '');
 		if (digits.length === 8) {
 			window.localStorage.setItem(CART_CEP_STORAGE_KEY, digits);
+		}
+	}
+
+	function getStoredShippingMode(cartItemKey) {
+		if (typeof window === 'undefined' || !window.localStorage || !cartItemKey) {
+			return '';
+		}
+
+		try {
+			const raw = window.localStorage.getItem(CART_MODE_STORAGE_KEY);
+			if (!raw) {
+				return '';
+			}
+			const parsed = JSON.parse(raw);
+			if (!parsed || typeof parsed !== 'object') {
+				return '';
+			}
+			return parsed[cartItemKey] || '';
+		} catch (e) {
+			return '';
+		}
+	}
+
+	function storeShippingMode(cartItemKey, mode) {
+		if (typeof window === 'undefined' || !window.localStorage || !cartItemKey) {
+			return;
+		}
+
+		const normalized = normalizeRateMode(mode);
+		if (!normalized) {
+			return;
+		}
+
+		let payload = {};
+		try {
+			const raw = window.localStorage.getItem(CART_MODE_STORAGE_KEY);
+			payload = raw ? JSON.parse(raw) : {};
+		} catch (e) {
+			payload = {};
+		}
+
+		payload[cartItemKey] = normalized;
+		try {
+			window.localStorage.setItem(CART_MODE_STORAGE_KEY, JSON.stringify(payload));
+		} catch (e) {
+			// ignore storage errors
 		}
 	}
 
@@ -130,12 +177,21 @@
 		}
 
 		const hasMultiple = normalizedRates.length > 1;
+		const modes = normalizedRates.map((rate) => rate.mode);
+		let resolvedMode = normalizeRateMode(selectedMode);
+		if (!resolvedMode || !modes.includes(resolvedMode)) {
+			resolvedMode = modes[0] || '';
+		}
+		if (resolvedMode) {
+			shippingBlock.dataset.lastSelectedMode = resolvedMode;
+			storeShippingMode(cartItemKey, resolvedMode);
+		}
 		const optionsHtml = hasMultiple
 			? normalizedRates.map((rate) => {
 					const mode = rate.mode;
 				const label = rate.label || (mode === 'air' ? 'Frete Aéreo' : 'Frete Terrestre');
 				const cost = rate.cost_formatted || '-';
-				const checked = selectedMode === mode ? 'checked' : '';
+				const checked = resolvedMode === mode ? 'checked' : '';
 				return `
 					<label class="Gstore-cart-card__shipping-option">
 						<input type="radio" name="gstore_shipping_mode[${cartItemKey}]" value="${mode}" ${checked} />
@@ -151,6 +207,7 @@
 				const onlyRate = normalizedRates[0];
 				const label = onlyRate.label || (onlyRate.mode === 'air' ? 'Frete Aéreo' : 'Frete Terrestre');
 				const cost = onlyRate.cost_formatted || '-';
+				storeShippingMode(cartItemKey, onlyRate.mode);
 				return `
 					<span class="Gstore-cart-card__shipping-text">${label}</span>
 					<span class="Gstore-cart-card__shipping-price">${cost}</span>
@@ -254,14 +311,17 @@
 			}
 
 			const selectedInput = shippingBlock.querySelector('input[type="radio"]:checked');
-			const selectedMode = selectedInput ? selectedInput.value : (shippingBlock.dataset.lastSelectedMode || 'land');
+			const hiddenMode = shippingBlock.querySelector(`input[type="hidden"][name="gstore_shipping_mode[${cartItemKey}]"]`);
+			const storedMode = getStoredShippingMode(cartItemKey);
+			const selectedMode = selectedInput
+				? selectedInput.value
+				: (hiddenMode && hiddenMode.value) || storedMode || shippingBlock.dataset.lastSelectedMode || 'land';
 
 			requests.push(
 				fetchRatesForItem(itemEl, cep).then((rates) => {
 					if (!rates) {
 						return;
 					}
-					shippingBlock.dataset.lastSelectedMode = selectedMode;
 					updateShippingBlock(shippingBlock, rates, cartItemKey, selectedMode);
 				})
 			);
@@ -543,6 +603,7 @@
 			}
 
 			shippingBlock.dataset.lastSelectedMode = target.value;
+			storeShippingMode(cartItemKey, target.value);
 
 			let hiddenModeInput = shippingBlock.querySelector(`input[data-gstore-mode-hidden="true"][name="gstore_shipping_mode[${cartItemKey}]"]`);
 			if (!hiddenModeInput) {
