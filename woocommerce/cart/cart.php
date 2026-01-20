@@ -63,21 +63,6 @@ if ( function_exists( 'wc_wp_theme_get_element_class_name' ) ) {
 
 		<form class="woocommerce-cart-form Gstore-cart-form" action="<?php echo esc_url( $cart_url ); ?>" method="post">
 			<?php do_action( 'woocommerce_before_cart_table' ); ?>
-			<?php
-			$cart_postcode = '';
-			if ( function_exists( 'WC' ) && WC()->customer ) {
-				$cart_postcode = WC()->customer->get_shipping_postcode();
-				if ( ! $cart_postcode ) {
-					$cart_postcode = WC()->customer->get_billing_postcode();
-				}
-			}
-			?>
-			<input
-				type="hidden"
-				name="gstore_shipping_postcode"
-				value="<?php echo esc_attr( $cart_postcode ); ?>"
-				data-gstore-shipping-postcode
-			/>
 
 			<div class="Gstore-cart-layout">
 				<div class="Gstore-cart-main">

@@ -27,15 +27,11 @@
 		}
 
 		if (typeof window === 'undefined' || !window.localStorage) {
-			const fallback = getCartPostcodeFieldValue();
-			if (fallback) {
-				cepInput.value = fallback.replace(/(\d{5})(\d{3})/, '$1-$2');
-			}
 			return;
 		}
 
 		const saved = window.localStorage.getItem(CART_CEP_STORAGE_KEY) || '';
-		const digits = saved.replace(/\D/g, '') || getCartPostcodeFieldValue();
+		const digits = saved.replace(/\D/g, '');
 		if (digits.length !== 8) {
 			return;
 		}
@@ -52,28 +48,6 @@
 		if (digits.length === 8) {
 			window.localStorage.setItem(CART_CEP_STORAGE_KEY, digits);
 		}
-	}
-
-	function getCartPostcodeField() {
-		return document.querySelector('input[data-gstore-shipping-postcode]');
-	}
-
-	function getCartPostcodeFieldValue() {
-		const field = getCartPostcodeField();
-		if (!field) {
-			return '';
-		}
-		const digits = String(field.value || '').replace(/\D/g, '');
-		return digits.length === 8 ? digits : '';
-	}
-
-	function syncCartPostcodeField(cep) {
-		const field = getCartPostcodeField();
-		if (!field) {
-			return;
-		}
-		const digits = String(cep || '').replace(/\D/g, '');
-		field.value = digits.length === 8 ? digits : '';
 	}
 
 	function getShippingAjaxUrl() {
@@ -97,8 +71,11 @@
 		return '';
 	}
 
-	function fetchRatesForCart(cep) {
-		if (!cep) {
+	function fetchRatesForItem(itemEl, cep) {
+		const productId = parseInt(itemEl.dataset.productId || '0', 10);
+		const quantity = parseInt(itemEl.dataset.quantity || '1', 10);
+
+		if (!productId || !quantity || !cep) {
 			return Promise.resolve(null);
 		}
 
@@ -107,15 +84,17 @@
 			type: 'POST',
 			dataType: 'json',
 			data: {
-				action: 'gstore_calculate_cart_item_rates',
+				action: 'gstore_calculate_shipping',
 				nonce: typeof gstoreShippingCalculator !== 'undefined' ? gstoreShippingCalculator.nonce : '',
 				postcode: cep,
+				product_id: productId,
+				quantity: quantity,
 			},
 		}).then((response) => {
-			if (!response || !response.success || !response.data || !response.data.items) {
+			if (!response || !response.success || !response.data || !Array.isArray(response.data.rates)) {
 				return null;
 			}
-			return response.data.items;
+			return response.data.rates;
 		}).catch(() => null);
 	}
 
@@ -144,10 +123,6 @@
 		if (!normalizedRates.length) {
 			return;
 		}
-
-	if (!normalizedRates.some((rate) => rate.mode === selectedMode)) {
-		selectedMode = normalizedRates[0].mode;
-	}
 
 		const hasMultiple = normalizedRates.length > 1;
 		const optionsHtml = hasMultiple
@@ -247,7 +222,6 @@
 		}
 
 		storeCartCep(cep);
-		syncCartPostcodeField(cep);
 
 		const shippingBlocks = document.querySelectorAll('[data-gstore-shipping-item]');
 		if (!shippingBlocks.length) {
@@ -255,18 +229,14 @@
 		}
 
 		ratesSyncInProgress = true;
-	fetchRatesForCart(cep).then((itemsRates) => {
-		if (!itemsRates) {
-			ratesSyncInProgress = false;
-			return;
-		}
 
+		const requests = [];
 		shippingBlocks.forEach((shippingBlock) => {
 			const itemEl = shippingBlock.closest('article.Gstore-cart-card, [data-cart-item-key]');
 			if (!itemEl) {
 				return;
 			}
-
+			
 			const cartItemKey = itemEl.dataset.cartItemKey || itemEl.getAttribute('data-cart-item-key');
 			if (!cartItemKey) {
 				return;
@@ -274,21 +244,24 @@
 
 			const selectedInput = shippingBlock.querySelector('input[type="radio"]:checked');
 			const selectedMode = selectedInput ? selectedInput.value : (shippingBlock.dataset.lastSelectedMode || 'land');
-			const itemRates = itemsRates[cartItemKey] ? itemsRates[cartItemKey].rates : null;
 
-			if (!itemRates) {
-				return;
-			}
-
-			shippingBlock.dataset.lastSelectedMode = selectedMode;
-			updateShippingBlock(shippingBlock, itemRates, cartItemKey, selectedMode);
+			requests.push(
+				fetchRatesForItem(itemEl, cep).then((rates) => {
+					if (!rates) {
+						return;
+					}
+					shippingBlock.dataset.lastSelectedMode = selectedMode;
+					updateShippingBlock(shippingBlock, rates, cartItemKey, selectedMode);
+				})
+			);
 		});
 
-		ratesSyncInProgress = false;
-		if (shouldUpdateCart) {
-			scheduleCartUpdate();
-		}
-	});
+		Promise.allSettled(requests).then(() => {
+			ratesSyncInProgress = false;
+			if (shouldUpdateCart) {
+				scheduleCartUpdate();
+			}
+		});
 	}
 
 	/**
@@ -579,12 +552,11 @@
 		});
 
 		jQuery(document).on('click', '.gstore-shipping-calculator__button', function () {
-			calculateRatesForCart(true);
+			calculateRatesForCart(false);
 		});
 
 		jQuery(document).on('input', '.gstore-shipping-calculator__cep', function () {
 			storeCartCep(this.value || '');
-			syncCartPostcodeField(this.value || '');
 		});
 	}
 

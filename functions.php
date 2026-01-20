@@ -4074,6 +4074,7 @@ if ( ! function_exists( 'gstore_sync_cart_shipping_modes' ) ) {
 		static $syncing = false;
 
 		if ( $syncing ) {
+			error_log( 'gstore_sync_cart_shipping_modes: Already syncing, returning' );
 			return;
 		}
 
@@ -4081,11 +4082,12 @@ if ( ! function_exists( 'gstore_sync_cart_shipping_modes' ) ) {
 			return;
 		}
 
-		$has_posted_modes    = ! empty( $_POST['gstore_shipping_mode'] ); // phpcs:ignore WordPress.Security.NonceVerification.Missing
-		$has_posted_rates    = ! empty( $_POST['gstore_shipping_rates'] ); // phpcs:ignore WordPress.Security.NonceVerification.Missing
-		$has_posted_postcode = ! empty( $_POST['gstore_shipping_postcode'] ); // phpcs:ignore WordPress.Security.NonceVerification.Missing
-
-		if ( ! $has_posted_modes && ! $has_posted_rates && ! $has_posted_postcode ) {
+		$has_posted_modes = ! empty( $_POST['gstore_shipping_mode'] ); // phpcs:ignore WordPress.Security.NonceVerification.Missing
+		$has_posted_rates = ! empty( $_POST['gstore_shipping_rates'] ); // phpcs:ignore WordPress.Security.NonceVerification.Missing
+		
+		error_log( 'gstore_sync_cart_shipping_modes: has_posted_modes=' . ( $has_posted_modes ? 'yes' : 'no' ) . ', has_posted_rates=' . ( $has_posted_rates ? 'yes' : 'no' ) );
+		
+		if ( ! $has_posted_modes && ! $has_posted_rates ) {
 			return;
 		}
 
@@ -4099,37 +4101,12 @@ if ( ! function_exists( 'gstore_sync_cart_shipping_modes' ) ) {
 		$posted_rates = $has_posted_rates
 			? wp_unslash( $_POST['gstore_shipping_rates'] ) // phpcs:ignore WordPress.Security.NonceVerification.Missing
 			: array();
-		$posted_postcode = $has_posted_postcode
-			? sanitize_text_field( wp_unslash( $_POST['gstore_shipping_postcode'] ) ) // phpcs:ignore WordPress.Security.NonceVerification.Missing
-			: '';
 
 		$posted_modes = is_array( $posted_modes ) ? $posted_modes : array();
 		$posted_rates = is_array( $posted_rates ) ? $posted_rates : array();
 
 		$syncing = true;
 		$dirty   = false;
-
-		if ( $posted_postcode && WC()->customer ) {
-			$clean_postcode = preg_replace( '/[^0-9]/', '', $posted_postcode );
-			if ( strlen( $clean_postcode ) === 8 ) {
-				$state = function_exists( 'gstore_get_state_from_postcode' )
-					? gstore_get_state_from_postcode( $clean_postcode )
-					: '';
-
-				WC()->customer->set_billing_postcode( $clean_postcode );
-				WC()->customer->set_shipping_postcode( $clean_postcode );
-				WC()->customer->set_billing_country( 'BR' );
-				WC()->customer->set_shipping_country( 'BR' );
-				WC()->customer->set_calculated_shipping( true );
-
-				if ( $state ) {
-					WC()->customer->set_billing_state( $state );
-					WC()->customer->set_shipping_state( $state );
-				}
-
-				WC()->customer->save();
-			}
-		}
 
 		foreach ( $posted_rates as $cart_item_key => $raw_rates ) {
 			$cart_item_key = (string) $cart_item_key;
@@ -4471,6 +4448,7 @@ function gstore_get_state_from_postcode( $postcode ) {
  * Retorna array de rates com modos permitidos (terrestre/aéreo) baseado na variação do produto.
  */
 function gstore_calculate_shipping_ajax() {
+	error_log('gstore_calculate_shipping_ajax called with product_id: ' . ( isset( $_POST['product_id'] ) ? $_POST['product_id'] : 'none' ) );
 	check_ajax_referer( 'gstore_shipping_calculator', 'nonce' );
 
 	$postcode   = isset( $_POST['postcode'] ) ? sanitize_text_field( $_POST['postcode'] ) : '';
@@ -4542,6 +4520,7 @@ function gstore_calculate_shipping_ajax() {
 			WC()->cart->calculate_totals();
 		}
 
+		error_log( 'Returning rates for product ' . $product_id . ': ' . wp_json_encode( $rates ) );
 		wp_send_json_success(
 			array(
 				'rates'       => $rates,
@@ -4643,25 +4622,9 @@ function gstore_calculate_shipping_ajax() {
 		)
 	);
 }
-
-if ( ! function_exists( 'gstore_register_theme_shipping_ajax' ) ) {
-	/**
-	 * Registra o handler do tema como fallback do AJAX de frete.
-	 */
-	function gstore_register_theme_shipping_ajax() {
-		// Se o plugin já registrou o endpoint, não sobrescreve.
-		if ( has_action( 'wp_ajax_gstore_calculate_shipping' ) ) {
-			return;
-		}
-		if ( has_action( 'wp_ajax_nopriv_gstore_calculate_shipping' ) ) {
-			return;
-		}
-
-		add_action( 'wp_ajax_gstore_calculate_shipping', 'gstore_calculate_shipping_ajax', 0 );
-		add_action( 'wp_ajax_nopriv_gstore_calculate_shipping', 'gstore_calculate_shipping_ajax', 0 );
-	}
-}
-add_action( 'init', 'gstore_register_theme_shipping_ajax', 999 );
+// Sempre registra o endpoint AJAX do tema para cálculo de frete
+add_action( 'wp_ajax_gstore_calculate_shipping', 'gstore_calculate_shipping_ajax' );
+add_action( 'wp_ajax_nopriv_gstore_calculate_shipping', 'gstore_calculate_shipping_ajax' );
 
 
 
