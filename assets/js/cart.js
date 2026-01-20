@@ -215,6 +215,7 @@
 		let selectedTotal = 0;
 		let hasGround = false;
 		let hasAir = false;
+		const selectedModes = new Set();
 
 		shippingBlocks.forEach((shippingBlock) => {
 			const itemEl = shippingBlock.closest('[data-cart-item-key]');
@@ -247,6 +248,7 @@
 
 			const selectedMode = resolveSelectedMode(shippingBlock, cartItemKey, rates);
 			if (selectedMode) {
+				selectedModes.add(selectedMode);
 				const selectedRate = rates.find((rate) => normalizeRateMode(rate.mode) === selectedMode);
 				if (selectedRate) {
 					const selectedCost = Number.isFinite(Number(selectedRate.cost))
@@ -269,6 +271,23 @@
 			const valueCell = airRow.querySelector('[data-gstore-value="true"]') || airRow.querySelector('td');
 			if (valueCell) {
 				valueCell.innerHTML = hasAir ? formatCurrency(airTotal) : '-';
+			}
+		}
+
+		if (selectedModes.size === 1) {
+			const [onlyMode] = Array.from(selectedModes);
+			if (groundRow) {
+				groundRow.style.display = onlyMode === 'land' ? '' : 'none';
+			}
+			if (airRow) {
+				airRow.style.display = onlyMode === 'air' ? '' : 'none';
+			}
+		} else {
+			if (groundRow) {
+				groundRow.style.display = '';
+			}
+			if (airRow) {
+				airRow.style.display = '';
 			}
 		}
 
