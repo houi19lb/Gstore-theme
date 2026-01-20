@@ -7,7 +7,6 @@
 
 	let cartUpdateTimeout = null;
 	let ratesSyncInProgress = false;
-	let suppressNextRatesRefresh = false;
 	const CART_CEP_STORAGE_KEY = 'gstore_cart_cep';
 
 	function getCartCep() {
@@ -644,10 +643,6 @@
 		jQuery(document).on('updated_wc_div updated_cart_totals', function () {
 			setTimeout(init, 100);
 			ensureShippingBlocksExist();
-			if (suppressNextRatesRefresh) {
-				suppressNextRatesRefresh = false;
-				return;
-			}
 			restoreCartCep();
 			calculateRatesForCart(false); // false = não fazer update do carrinho novamente
 		});
@@ -655,7 +650,7 @@
 
 	if (typeof jQuery !== 'undefined') {
 		jQuery(document).on('click', '.gstore-shipping-calculator__button', function () {
-			calculateRatesForCart(true);
+			calculateRatesForCart(false); // false = não fazer POST do carrinho
 		});
 	}
 
