@@ -226,6 +226,13 @@
 			return;
 		}
 
+		if (ratesSyncInProgress && hasCalculatedShippingFlag()) {
+			// #region agent log
+			fetch('http://127.0.0.1:7247/ingest/cce9ccaa-d42e-4577-9651-ba22a488615c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'cart.js:193',message:'updateCheckoutAvailability: skipped (ratesSyncInProgress)',data:{ratesSyncInProgress},timestamp:Date.now(),sessionId:'debug-session',runId:'pre-fix',hypothesisId:'H9'})}).catch(()=>{});
+			// #endregion
+			return;
+		}
+
 		const canProceed = hasCalculatedShipping();
 		// #region agent log
 		fetch('http://127.0.0.1:7247/ingest/cce9ccaa-d42e-4577-9651-ba22a488615c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'cart.js:193',message:'updateCheckoutAvailability',data:{canProceed},timestamp:Date.now(),sessionId:'debug-session',runId:'pre-fix',hypothesisId:'H4'})}).catch(()=>{});
