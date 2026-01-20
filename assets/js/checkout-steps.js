@@ -54,6 +54,11 @@
 	let lastCalculatedShippingCep = ''; // CEP (somente dígitos) do último frete calculado com sucesso
 	let lastRequestedShippingCep = ''; // CEP (somente dígitos) da última requisição de frete disparada
 	let lastCalculatedDestination = null; // Destino (cidade/UF) do último frete calculado
+	const CART_MODE_STORAGE_KEY = 'gstore_cart_shipping_mode';
+	let checkoutSelectedShippingMode = 'land';
+	let checkoutShippingRates = [];
+	let checkoutShippingStatus = 'idle';
+	let checkoutShippingError = '';
 	let lastCartSummaryData = null;
 	let lastNonEmptyCartSummaryData = null; // Mantém o último resumo com itens para não zerar o topo quando o Woo esvazia o carrinho
 	let installmentQuotes = null;
@@ -176,6 +181,11 @@
 				</div>
 				<div class="Gstore-checkout-summary-top__details">
 					<div class="Gstore-checkout-summary-top__items"></div>
+					<div class="Gstore-checkout-summary-top__shipping" data-gstore-shipping-summary>
+						<div class="Gstore-checkout-summary-top__shipping-title">Frete</div>
+						<div class="Gstore-checkout-summary-top__shipping-options" data-gstore-shipping-options></div>
+						<div class="Gstore-checkout-summary-top__shipping-totals" data-gstore-shipping-totals></div>
+					</div>
 					<div class="Gstore-checkout-summary-top__totals"></div>
 				</div>
 			</div>
@@ -716,13 +726,6 @@
 				if ($field.length) {
 					$contactStep.append($field.detach());
 					
-					// Se for o campo de CEP, move também o resultado do frete se existir
-					if (fieldId === 'billing_postcode') {
-						const $shippingResult = $('.Gstore-shipping-result');
-						if ($shippingResult.length) {
-							$contactStep.append($shippingResult.detach());
-						}
-					}
 				}
 			});
 		}
@@ -789,6 +792,276 @@
 		}
 
 		return { productId, quantity };
+	}
+
+	function normalizeRateMode(mode) {
+		const value = String(mode || '').toLowerCase();
+		if (value === 'air' || value === 'aereo' || value === 'aéreo') {
+			return 'air';
+		}
+		if (value === 'ground' || value === 'land' || value === 'terrestre') {
+			return 'land';
+		}
+		return '';
+	}
+
+	function parsePriceValue(rawText) {
+		if (!rawText) {
+			return 0;
+		}
+		const text = String(rawText).trim();
+		if (!text) {
+			return 0;
+		}
+		const normalized = text
+			.replace(/[^\d.,-]/g, '')
+			.replace(/\.(?=\d{3})/g, '')
+			.replace(',', '.');
+		const value = parseFloat(normalized);
+		return Number.isFinite(value) ? value : 0;
+	}
+
+	function formatCurrency(value) {
+		const amount = Number.isFinite(value) ? value : 0;
+		try {
+			return new Intl.NumberFormat('pt-BR', {
+				style: 'currency',
+				currency: 'BRL',
+				minimumFractionDigits: 2,
+				maximumFractionDigits: 2,
+			}).format(amount);
+		} catch (e) {
+			return `R$ ${amount.toFixed(2)}`.replace('.', ',');
+		}
+	}
+
+	function getCartItemKeysFromSummary(data) {
+		if (!data || !Array.isArray(data.items)) {
+			return [];
+		}
+		const keys = [];
+		data.items.forEach((item) => {
+			const key = item.cart_item_key || item.cartItemKey || item.key || item.cartKey || '';
+			if (key) {
+				keys.push(String(key));
+			}
+		});
+		return keys;
+	}
+
+	function getStoredShippingModeFromStorage(itemKeys) {
+		if (typeof window === 'undefined' || !window.localStorage) {
+			return '';
+		}
+		try {
+			const raw = window.localStorage.getItem(CART_MODE_STORAGE_KEY);
+			if (!raw) {
+				return '';
+			}
+			const parsed = JSON.parse(raw);
+			if (!parsed || typeof parsed !== 'object') {
+				return '';
+			}
+			const keys = Array.isArray(itemKeys) ? itemKeys : [];
+			if (keys.length) {
+				for (let i = 0; i < keys.length; i += 1) {
+					const mode = normalizeRateMode(parsed[keys[i]]);
+					if (mode) {
+						return mode;
+					}
+				}
+			}
+			const values = Object.keys(parsed).map((key) => normalizeRateMode(parsed[key]));
+			const firstValid = values.find((mode) => mode);
+			return firstValid || '';
+		} catch (e) {
+			return '';
+		}
+	}
+
+	function persistShippingModeToStorage(mode, itemKeys) {
+		if (typeof window === 'undefined' || !window.localStorage) {
+			return;
+		}
+		const normalized = normalizeRateMode(mode);
+		if (!normalized) {
+			return;
+		}
+		let payload = {};
+		try {
+			const raw = window.localStorage.getItem(CART_MODE_STORAGE_KEY);
+			payload = raw ? JSON.parse(raw) : {};
+		} catch (e) {
+			payload = {};
+		}
+		const keys = Array.isArray(itemKeys) ? itemKeys : [];
+		if (keys.length) {
+			keys.forEach((key) => {
+				payload[key] = normalized;
+			});
+		} else if (payload && typeof payload === 'object' && Object.keys(payload).length) {
+			Object.keys(payload).forEach((key) => {
+				payload[key] = normalized;
+			});
+		} else {
+			payload.default = normalized;
+		}
+		try {
+			window.localStorage.setItem(CART_MODE_STORAGE_KEY, JSON.stringify(payload));
+		} catch (e) {
+			// ignore storage errors
+		}
+	}
+
+	function resolveCheckoutShippingMode(rates, preferredMode) {
+		const normalizedPreferred = normalizeRateMode(preferredMode);
+		const modes = (rates || []).map((rate) => normalizeRateMode(rate.mode)).filter(Boolean);
+		if (normalizedPreferred && modes.includes(normalizedPreferred)) {
+			return normalizedPreferred;
+		}
+		if (modes.includes('land')) {
+			return 'land';
+		}
+		return modes[0] || 'land';
+	}
+
+	function getNormalizedRatesFromShippingData(data) {
+		const rates = data && Array.isArray(data.rates) ? data.rates : [];
+		return rates
+			.map((rate) => {
+				const mode = normalizeRateMode(rate.mode || rate.label || '');
+				const label = rate.label || (mode === 'air' ? 'Frete Aéreo' : 'Frete Terrestre');
+				return {
+					mode,
+					label,
+					cost: rate.cost,
+					cost_formatted: rate.cost_formatted || rate.costFormatted || '',
+				};
+			})
+			.filter((rate) => rate.mode);
+	}
+
+	function getSelectedShippingCost(rates, selectedMode) {
+		const normalized = normalizeRateMode(selectedMode);
+		const selectedRate = (rates || []).find((rate) => normalizeRateMode(rate.mode) === normalized);
+		if (!selectedRate) {
+			return 0;
+		}
+		if (Number.isFinite(Number(selectedRate.cost))) {
+			return Number(selectedRate.cost);
+		}
+		return parsePriceValue(selectedRate.cost_formatted || '');
+	}
+
+	function updateCheckoutShippingSelection(mode, shouldPersist) {
+		const normalized = normalizeRateMode(mode) || 'land';
+		checkoutSelectedShippingMode = normalized;
+		if (shouldPersist) {
+			const itemKeys = getCartItemKeysFromSummary(lastCartSummaryData);
+			persistShippingModeToStorage(normalized, itemKeys);
+		}
+		renderShippingSummary(lastCartSummaryData);
+	}
+
+	function renderShippingSummary(data) {
+		const $shippingSummary = $('[data-gstore-shipping-summary]');
+		if (!$shippingSummary.length) {
+			return;
+		}
+		const $options = $shippingSummary.find('[data-gstore-shipping-options]');
+		const $totals = $shippingSummary.find('[data-gstore-shipping-totals]');
+
+		const rates = checkoutShippingRates;
+		let selectedMode = checkoutSelectedShippingMode;
+		if (rates.length) {
+			selectedMode = resolveCheckoutShippingMode(rates, selectedMode);
+			checkoutSelectedShippingMode = selectedMode;
+		}
+
+		const hasRates = rates.length > 0;
+		const optionsHtml = hasRates
+			? rates.map((rate) => {
+					const label = rate.label || (rate.mode === 'air' ? 'Frete Aéreo' : 'Frete Terrestre');
+					const cost = rate.cost_formatted || '-';
+					const checked = normalizeRateMode(rate.mode) === selectedMode ? 'checked' : '';
+					return `
+						<label class="Gstore-checkout-shipping-option">
+							<input type="radio" name="gstore_checkout_shipping_mode" value="${rate.mode}" ${checked} />
+							<span class="Gstore-checkout-shipping-option__label">${label}</span>
+							<span class="Gstore-checkout-shipping-option__price">${cost}</span>
+						</label>
+					`;
+				}).join('')
+			: `
+				<label class="Gstore-checkout-shipping-option">
+					<input type="radio" name="gstore_checkout_shipping_mode" value="land" ${selectedMode === 'land' ? 'checked' : ''} />
+					<span class="Gstore-checkout-shipping-option__label">Frete Terrestre</span>
+					<span class="Gstore-checkout-shipping-option__price">-</span>
+				</label>
+				<label class="Gstore-checkout-shipping-option">
+					<input type="radio" name="gstore_checkout_shipping_mode" value="air" ${selectedMode === 'air' ? 'checked' : ''} />
+					<span class="Gstore-checkout-shipping-option__label">Frete Aéreo</span>
+					<span class="Gstore-checkout-shipping-option__price">-</span>
+				</label>
+			`;
+		$options.html(optionsHtml);
+
+		const subtotalValue = data && data.totals && data.totals.subtotal
+			? parsePriceValue(data.totals.subtotal)
+			: 0;
+		const discountValue = data && data.totals && data.totals.discount
+			? parsePriceValue(data.totals.discount)
+			: 0;
+		const shippingValue = hasRates ? getSelectedShippingCost(rates, selectedMode) : 0;
+		const totalValue = subtotalValue + shippingValue - discountValue;
+
+		const shippingLabel = selectedMode === 'air' ? 'Frete aéreo' : 'Frete terrestre';
+		const shippingText = hasRates ? formatCurrency(shippingValue) : '-';
+
+		let totalsHtml = `
+			<div class="Gstore-checkout-shipping-totals__row">
+				<span>Subtotal</span>
+				<span>${subtotalValue ? formatCurrency(subtotalValue) : (data && data.totals && data.totals.subtotal ? data.totals.subtotal : '-')}</span>
+			</div>
+			<div class="Gstore-checkout-shipping-totals__row">
+				<span>${shippingLabel}</span>
+				<span>${shippingText}</span>
+			</div>
+		`;
+
+		if (discountValue > 0) {
+			totalsHtml += `
+				<div class="Gstore-checkout-shipping-totals__row">
+					<span>Desconto</span>
+					<span>-${formatCurrency(discountValue)}</span>
+				</div>
+			`;
+		}
+
+		totalsHtml += `
+			<div class="Gstore-checkout-shipping-totals__row Gstore-checkout-shipping-totals__row--total">
+				<span>Total</span>
+				<span>${subtotalValue ? formatCurrency(totalValue) : (data && (data.base_total || data.total) ? (data.base_total || data.total) : '-')}</span>
+			</div>
+		`;
+
+		if (checkoutShippingStatus === 'loading') {
+			totalsHtml += `
+				<div class="Gstore-checkout-shipping-totals__hint">
+					<i class="fa-solid fa-spinner fa-spin"></i>
+					Calculando frete...
+				</div>
+			`;
+		} else if (checkoutShippingStatus === 'error') {
+			totalsHtml += `
+				<div class="Gstore-checkout-shipping-totals__error">
+					<i class="fa-solid fa-circle-exclamation"></i>
+					${checkoutShippingError || 'Erro ao calcular frete.'}
+				</div>
+			`;
+		}
+
+		$totals.html(totalsHtml);
 	}
 
 	function calculateShipping(postcode) {
@@ -876,124 +1149,47 @@
 	 * Mostra loading do cálculo de frete
 	 */
 	function showShippingLoading() {
-		const $postcodeField = $('#billing_postcode_field');
-		if (!$postcodeField.length) return;
-
-		// Remove qualquer resultado duplicado que possa ter ficado órfão
-		const $existingResults = $('.Gstore-shipping-result');
-		let $shippingResult;
-
-		if ($existingResults.length > 0) {
-			// Se existem resultados, usa o primeiro e remove os outros
-			$shippingResult = $($existingResults[0]);
-			if ($existingResults.length > 1) {
-				$existingResults.slice(1).remove();
-			}
-			// Garante que ele esteja após o campo de CEP (pode ter sido movido)
-			$postcodeField.after($shippingResult);
-		} else {
-			$shippingResult = $('<div class="Gstore-shipping-result"></div>');
-			$postcodeField.after($shippingResult);
-		}
-		
-		$shippingResult.html(`
-			<div class="Gstore-shipping-result__loading">
-				<i class="fa-solid fa-spinner fa-spin"></i>
-				<span>Calculando frete...</span>
-			</div>
-		`).addClass('is-visible');
+		checkoutShippingStatus = 'loading';
+		checkoutShippingError = '';
+		renderShippingSummary(lastCartSummaryData);
 	}
 
 	/**
 	 * Mostra resultado do frete calculado
 	 */
 	function showShippingResult(data) {
-		const $postcodeField = $('#billing_postcode_field');
-		if (!$postcodeField.length) return;
-
 		const rates = Array.isArray(data.rates) ? data.rates : [];
-		const destination = data.destination || {};
-		const city = destination.city ? String(destination.city).trim() : '';
-		const state = destination.state ? String(destination.state).trim() : '';
-		const destinationLabel = city && state ? `${city}/${state}` : (city || state);
-
 		if (!rates.length) {
 			showShippingError('Não foi possível calcular o frete para este destino.');
 			return;
 		}
-
-		const ratesHtml = rates.map((rate) => {
-			const label = rate.label || '';
-			let mode = rate.mode ? String(rate.mode).toLowerCase() : '';
-			if (!mode && label) {
-				mode = label.toLowerCase().includes('aéreo') ? 'air' : 'ground';
-			}
-			const labelText = label
-				? label
-				: (mode === 'air' ? 'Frete Aéreo' : 'Frete Terrestre');
-			return `
-				<div class="Gstore-shipping-result__row">
-					<i class="fa-solid fa-truck"></i>
-					<span class="Gstore-shipping-result__label">${labelText}:</span>
-					<strong class="Gstore-shipping-result__value">${rate.cost_formatted || '-'}</strong>
-				</div>
-			`;
-		}).join('');
-
-		// Busca por um resultado existente
-		let $shippingResult = $('.Gstore-shipping-result').first();
-		
-		if (!$shippingResult.length) {
-			$shippingResult = $('<div class="Gstore-shipping-result"></div>');
-			$postcodeField.after($shippingResult);
-		} else {
-			// Garante que ele esteja após o campo de CEP
-			$postcodeField.after($shippingResult);
-		}
-		
-		$shippingResult.html(`
-			<div class="Gstore-shipping-result__content">
-				${ratesHtml}
-				<div class="Gstore-shipping-result__row">
-					<i class="fa-solid fa-map-marker-alt"></i>
-					<span class="Gstore-shipping-result__label">Destino:</span>
-					<span class="Gstore-shipping-result__value">${destinationLabel || '-'}</span>
-				</div>
-			</div>
-		`).removeClass('has-error').addClass('is-visible');
+		checkoutShippingStatus = 'ready';
+		checkoutShippingError = '';
+		checkoutShippingRates = getNormalizedRatesFromShippingData(data);
+		const storedMode = getStoredShippingModeFromStorage(getCartItemKeysFromSummary(lastCartSummaryData));
+		const preferredMode = storedMode || checkoutSelectedShippingMode || 'land';
+		checkoutSelectedShippingMode = resolveCheckoutShippingMode(checkoutShippingRates, preferredMode);
+		renderShippingSummary(lastCartSummaryData);
 	}
 
 	/**
 	 * Mostra erro no cálculo de frete
 	 */
 	function showShippingError(message) {
-		const $postcodeField = $('#billing_postcode_field');
-		if (!$postcodeField.length) return;
-
-		// Busca por um resultado existente
-		let $shippingResult = $('.Gstore-shipping-result').first();
-		
-		if (!$shippingResult.length) {
-			$shippingResult = $('<div class="Gstore-shipping-result"></div>');
-			$postcodeField.after($shippingResult);
-		} else {
-			// Garante que ele esteja após o campo de CEP
-			$postcodeField.after($shippingResult);
-		}
-		
-		$shippingResult.html(`
-			<div class="Gstore-shipping-result__error">
-				<i class="fa-solid fa-exclamation-circle"></i>
-				<span>${message}</span>
-			</div>
-		`).removeClass('is-visible').addClass('has-error');
+		checkoutShippingStatus = 'error';
+		checkoutShippingError = message || 'Erro ao calcular frete.';
+		checkoutShippingRates = [];
+		renderShippingSummary(lastCartSummaryData);
 	}
 
 	/**
 	 * Esconde resultado do frete
 	 */
 	function hideShippingResult() {
-		$('.Gstore-shipping-result').removeClass('is-visible has-error').html('');
+		checkoutShippingStatus = 'idle';
+		checkoutShippingError = '';
+		checkoutShippingRates = [];
+		renderShippingSummary(lastCartSummaryData);
 	}
 
 	function getDestinationLabel(destination) {
@@ -1031,6 +1227,8 @@
 		setTimeout(function() {
 			loadCartSummary();
 		}, 1000);
+
+		renderShippingSummary(lastCartSummaryData);
 	}
 
 	/**
@@ -1355,6 +1553,10 @@
 		// O total real (com taxa) só aparece em "Você pagará" quando escolher parcelas.
 		const baseTotal = data.base_total || data.total;
 
+		// Seleção inicial do frete baseada no carrinho/localStorage
+		const storedMode = getStoredShippingModeFromStorage(getCartItemKeysFromSummary(data));
+		checkoutSelectedShippingMode = storedMode || checkoutSelectedShippingMode || 'land';
+
 		// Atualiza contagem de itens
 		$('.Gstore-summary-items-count').text(
 			`${data.items_count} ${data.items_count === 1 ? 'item' : 'itens'} no carrinho`
@@ -1382,12 +1584,7 @@
 		$('.Gstore-checkout-summary-top__items').html(itemsHtml);
 
 		// Renderiza totais
-		let totalsHtml = `
-			<div class="Gstore-summary-row">
-				<span>Subtotal</span>
-				<span>${data.totals.subtotal}</span>
-			</div>
-		`;
+		let totalsHtml = '';
 
 		// Método de pagamento selecionado (Pix, Cartão, etc.)
 		if (data.payment_method_title) {
@@ -1398,32 +1595,6 @@
 				</div>
 			`;
 		}
-
-		if (data.totals.shipping) {
-			totalsHtml += `
-				<div class="Gstore-summary-row">
-					<span>Frete</span>
-					<span>${data.totals.shipping}</span>
-				</div>
-			`;
-		}
-
-		if (data.totals.discount) {
-			totalsHtml += `
-				<div class="Gstore-summary-row">
-					<span>Desconto</span>
-					<span>-${data.totals.discount}</span>
-				</div>
-			`;
-		}
-
-		// Linha "Total" usa base_total (valor antes da taxa de parcelamento)
-		totalsHtml += `
-			<div class="Gstore-summary-row Gstore-summary-row--total">
-				<span>Total</span>
-				<span>${baseTotal}</span>
-			</div>
-		`;
 
 		// "Você pagará" só aparece quando cartão Blu e parcelas > 1, mostrando o total real com taxa
 		const selectedN = parseInt((data.installments && data.installments.selected) ? data.installments.selected : '1', 10) || 1;
@@ -1438,6 +1609,7 @@
 
 		$('.Gstore-checkout-summary-top__totals').html(totalsHtml);
 
+		renderShippingSummary(data);
 		updateInstallmentsPreview(data);
 		setTimeout(maybeFetchInstallmentQuotes, 0);
 	}
@@ -1520,6 +1692,8 @@
 				}
 			}
 		}
+
+		renderShippingSummary(lastCartSummaryData);
 	}
 
 	/**
@@ -1564,6 +1738,11 @@
 				(isOpen ? 'Ocultar detalhes' : 'Ver detalhes') +
 				' <i class="fa-solid fa-chevron-down"></i>'
 			);
+		});
+
+		// Seleção do frete no resumo
+		$(document).on('change', 'input[name="gstore_checkout_shipping_mode"]', function() {
+			updateCheckoutShippingSelection($(this).val(), true);
 		});
 
 		// Atualiza resumo quando checkout é atualizado
