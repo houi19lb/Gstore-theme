@@ -774,9 +774,10 @@
 							fetch('http://127.0.0.1:7247/ingest/cce9ccaa-d42e-4577-9651-ba22a488615c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'cart.js:643',message:'updateCartAutomatically: preserved totals',data:{hasNewSubtotal:Boolean(newSubtotalText),hasCurrentSubtotal:currentSubtotalEl.length > 0},timestamp:Date.now(),sessionId:'debug-session',runId:'pre-fix',hypothesisId:'H13'})}).catch(()=>{});
 							// #endregion
 						} else {
-							jQuery('.cart_totals, .Gstore-cart-sidebar').replaceWith($cartTotals);
+							const $currentTotals = jQuery('.cart_totals, .Gstore-cart-sidebar');
+							$currentTotals.html($cartTotals.html());
 							// #region agent log
-							fetch('http://127.0.0.1:7247/ingest/cce9ccaa-d42e-4577-9651-ba22a488615c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'cart.js:651',message:'updateCartAutomatically: cartTotals replaced',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'pre-fix',hypothesisId:'H12'})}).catch(()=>{});
+							fetch('http://127.0.0.1:7247/ingest/cce9ccaa-d42e-4577-9651-ba22a488615c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'cart.js:651',message:'updateCartAutomatically: cartTotals innerHTML updated',data:{hasCurrentTotals:$currentTotals.length > 0},timestamp:Date.now(),sessionId:'debug-session',runId:'pre-fix',hypothesisId:'H17'})}).catch(()=>{});
 							// #endregion
 						}
 					}
