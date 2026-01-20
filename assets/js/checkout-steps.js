@@ -577,6 +577,9 @@
 		const selected = (lastCartSummaryData.installments && lastCartSummaryData.installments.selected)
 			? String(lastCartSummaryData.installments.selected)
 			: $('#gstore_blu_installments').val() || '1';
+	// #region agent log
+	fetch('http://127.0.0.1:7247/ingest/cce9ccaa-d42e-4577-9651-ba22a488615c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'checkout-steps.js:1604',message:'installment quotes request context',data:{max:max,selected:selected,payment_method:lastCartSummaryData && lastCartSummaryData.payment_method,total:lastCartSummaryData && lastCartSummaryData.total,base_total:lastCartSummaryData && lastCartSummaryData.base_total,shipping_total:lastCartSummaryData && lastCartSummaryData.shipping_total},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H11'})}).catch(()=>{});
+	// #endregion agent log
 
 		// Assinatura simples para evitar spam de requests
 		const signature = `${max}|${selected}|${lastCartSummaryData.total || ''}`;
@@ -614,6 +617,9 @@
 		const $select = $('#gstore_blu_installments_select');
 		if (!$select.length) return;
 		if (!installmentQuotes) return;
+	// #region agent log
+	fetch('http://127.0.0.1:7247/ingest/cce9ccaa-d42e-4577-9651-ba22a488615c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'checkout-steps.js:1628',message:'installment quotes sample',data:{quoteKeys:Object.keys(installmentQuotes||{}).slice(0,3),sample:(function(){const keys=Object.keys(installmentQuotes||{});return keys.length?installmentQuotes[keys[0]]:null;})()},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H12'})}).catch(()=>{});
+	// #endregion agent log
 
 		$select.find('option').each(function() {
 			const $opt = $(this);
@@ -1859,6 +1865,9 @@
 		// Usa base_total (total sem taxa de parcelamento) para o topo e linha "Total".
 		// O total real (com taxa) só aparece em "Você pagará" quando escolher parcelas.
 		const baseTotal = data.base_total || data.total;
+	// #region agent log
+	fetch('http://127.0.0.1:7247/ingest/cce9ccaa-d42e-4577-9651-ba22a488615c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'checkout-steps.js:1360',message:'summary totals snapshot',data:{total:data && data.total,base_total:data && data.base_total,shipping_total:data && data.shipping_total,hasTotals:!!(data && data.totals),feesCount:(data && data.totals && Array.isArray(data.totals.fees)?data.totals.fees.length:0),payment_method:data && data.payment_method},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H10'})}).catch(()=>{});
+	// #endregion agent log
 
 		// Seleção inicial do frete baseada no carrinho/localStorage
 		const storedMode = getStoredShippingModeFromStorage(getCartItemKeysFromSummary(data));
@@ -1949,6 +1958,9 @@
 		}
 
 		const selected = parseInt(data.installments.selected, 10) || 1;
+	// #region agent log
+	fetch('http://127.0.0.1:7247/ingest/cce9ccaa-d42e-4577-9651-ba22a488615c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'checkout-steps.js:1975',message:'installments preview input',data:{selected:selected,per_installment:data.installments && data.installments.per_installment,total:data.total,base_total:data.base_total,shipping_total:data.shipping_total,hasFees:(data.totals && Array.isArray(data.totals.fees)?data.totals.fees.length:0)},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H13'})}).catch(()=>{});
+	// #endregion agent log
 		if (selected <= 1) {
 			$preview.html('');
 			return;
