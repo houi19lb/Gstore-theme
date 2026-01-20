@@ -147,29 +147,31 @@
 	}
 
 	function hasCalculatedShipping() {
-		// Considera CEP no input OU CEP salvo no localStorage (para não "resetar" no refresh AJAX)
-		let cep = getCartCep();
-		if (!cep && typeof window !== 'undefined' && window.localStorage) {
-			const saved = window.localStorage.getItem(CART_CEP_STORAGE_KEY) || '';
-			const digits = saved.replace(/\D/g, '');
-			if (digits.length === 8) {
-				cep = digits;
-			}
+		const cep = getCartCep();
+		// #region agent log
+		fetch('http://127.0.0.1:7247/ingest/cce9ccaa-d42e-4577-9651-ba22a488615c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'cart.js:149',message:'hasCalculatedShipping: start',data:{cepPresent:Boolean(cep)},timestamp:Date.now(),sessionId:'debug-session',runId:'pre-fix',hypothesisId:'H4'})}).catch(()=>{});
+		// #endregion
+		if (!cep) {
+			return false;
 		}
-
 		const rateInputs = document.querySelectorAll('input[name^="gstore_shipping_rates["]');
+		// #region agent log
+		fetch('http://127.0.0.1:7247/ingest/cce9ccaa-d42e-4577-9651-ba22a488615c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'cart.js:154',message:'hasCalculatedShipping: rate inputs count',data:{count:rateInputs.length},timestamp:Date.now(),sessionId:'debug-session',runId:'pre-fix',hypothesisId:'H4'})}).catch(()=>{});
+		// #endregion
 		for (const input of rateInputs) {
 			try {
 				const parsed = JSON.parse(input.value || '[]');
 				if (Array.isArray(parsed) && parsed.length) {
+					// #region agent log
+					fetch('http://127.0.0.1:7247/ingest/cce9ccaa-d42e-4577-9651-ba22a488615c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'cart.js:158',message:'hasCalculatedShipping: found rates',data:{firstRateCount:parsed.length},timestamp:Date.now(),sessionId:'debug-session',runId:'pre-fix',hypothesisId:'H4'})}).catch(()=>{});
+					// #endregion
 					return true;
 				}
 			} catch (e) {
 				// ignore malformed JSON
 			}
 		}
-		// Se não há rates ainda, só permite quando existe CEP informado/salvo
-		return Boolean(cep);
+		return false;
 	}
 
 	function ensureShippingNotice(summaryCard) {
@@ -198,6 +200,9 @@
 		}
 
 		const canProceed = hasCalculatedShipping();
+		// #region agent log
+		fetch('http://127.0.0.1:7247/ingest/cce9ccaa-d42e-4577-9651-ba22a488615c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'cart.js:193',message:'updateCheckoutAvailability',data:{canProceed},timestamp:Date.now(),sessionId:'debug-session',runId:'pre-fix',hypothesisId:'H4'})}).catch(()=>{});
+		// #endregion
 		const notice = ensureShippingNotice(summaryCard);
 
 		if (notice) {
@@ -491,7 +496,6 @@
 
 		initShippingChoices();
 		updateCartTotalsSummary();
-		updateCheckoutAvailability();
 	}
 
 	function ensureShippingBlocksExist() {
@@ -545,6 +549,9 @@
 		}
 
 		storeCartCep(cep);
+		// #region agent log
+		fetch('http://127.0.0.1:7247/ingest/cce9ccaa-d42e-4577-9651-ba22a488615c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'cart.js:539',message:'calculateRatesForCart: start',data:{shouldUpdateCart,cepPresent:Boolean(cep)},timestamp:Date.now(),sessionId:'debug-session',runId:'pre-fix',hypothesisId:'H3'})}).catch(()=>{});
+		// #endregion
 
 		const shippingBlocks = document.querySelectorAll('[data-gstore-shipping-item]');
 		if (!shippingBlocks.length) {
@@ -585,7 +592,6 @@
 		Promise.allSettled(requests).then(() => {
 			ratesSyncInProgress = false;
 			updateCartTotalsSummary();
-			updateCheckoutAvailability();
 			if (shouldUpdateCart) {
 				scheduleCartUpdate();
 			}
@@ -622,6 +628,9 @@
 		form.appendChild(updateInput);
 
 		const actionUrl = form.action || (typeof wc_cart_params !== 'undefined' ? wc_cart_params.cart_url : null) || window.location.href;
+		// #region agent log
+		fetch('http://127.0.0.1:7247/ingest/cce9ccaa-d42e-4577-9651-ba22a488615c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'cart.js:615',message:'updateCartAutomatically: start',data:{actionUrl},timestamp:Date.now(),sessionId:'debug-session',runId:'pre-fix',hypothesisId:'H1'})}).catch(()=>{});
+		// #endregion
 
 		jQuery.ajax({
 			type: form.method || 'POST',
@@ -629,6 +638,9 @@
 			data: jQuery(form).serialize(),
 			dataType: 'html',
 			success: function (response) {
+				// #region agent log
+				fetch('http://127.0.0.1:7247/ingest/cce9ccaa-d42e-4577-9651-ba22a488615c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'cart.js:622',message:'updateCartAutomatically: success',data:{hasUpdateWcDiv:typeof update_wc_div === 'function',responseLength:typeof response === 'string' ? response.length : null},timestamp:Date.now(),sessionId:'debug-session',runId:'pre-fix',hypothesisId:'H1'})}).catch(()=>{});
+				// #endregion
 				if (typeof update_wc_div === 'function') {
 					update_wc_div(response);
 				} else {
@@ -647,13 +659,15 @@
 						initQuantitySelectors();
 						initShippingChoices();
 						updateCartTotalsSummary();
-						updateCheckoutAvailability();
 					}, 100);
 				}
 
 				jQuery(document.body).trigger('updated_wc_div');
 			},
 			complete: function () {
+				// #region agent log
+				fetch('http://127.0.0.1:7247/ingest/cce9ccaa-d42e-4577-9651-ba22a488615c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'cart.js:646',message:'updateCartAutomatically: complete',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'pre-fix',hypothesisId:'H1'})}).catch(()=>{});
+				// #endregion
 				if (form.contains(updateInput)) {
 					form.removeChild(updateInput);
 				}
@@ -671,6 +685,9 @@
 	 */
 	function scheduleCartUpdate() {
 		clearTimeout(cartUpdateTimeout);
+		// #region agent log
+		fetch('http://127.0.0.1:7247/ingest/cce9ccaa-d42e-4577-9651-ba22a488615c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'cart.js:662',message:'scheduleCartUpdate',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'pre-fix',hypothesisId:'H1'})}).catch(()=>{});
+		// #endregion
 		cartUpdateTimeout = setTimeout(updateCartAutomatically, 400);
 	}
 
@@ -874,6 +891,9 @@
 			}
 			hiddenModeInput.value = target.value;
 
+			// #region agent log
+			fetch('http://127.0.0.1:7247/ingest/cce9ccaa-d42e-4577-9651-ba22a488615c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'cart.js:867',message:'shipping mode changed',data:{cartItemKey,mode:target.value},timestamp:Date.now(),sessionId:'debug-session',runId:'pre-fix',hypothesisId:'H2'})}).catch(()=>{});
+			// #endregion
 			updateCartTotalsSummary();
 			scheduleCartUpdate();
 		});
