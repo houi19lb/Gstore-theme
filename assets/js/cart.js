@@ -10,6 +10,11 @@
 	let shippingChoicesDelegated = false;
 	const CART_CEP_STORAGE_KEY = 'gstore_cart_cep';
 	const CART_MODE_STORAGE_KEY = 'gstore_cart_shipping_mode';
+	let cartUiCache = {
+		shippingHtml: {},
+		shippingMode: {},
+		totalsHtml: ''
+	};
 
 	function getCartCep() {
 		const cepInput = document.querySelector('.gstore-shipping-calculator__cep');
@@ -106,6 +111,72 @@
 			return wc_checkout_params.ajax_url;
 		}
 		return '/wp-admin/admin-ajax.php';
+	}
+
+	function captureCartUiCache() {
+		const shippingCache = {};
+		const modeCache = {};
+		const shippingBlocks = document.querySelectorAll('[data-gstore-shipping-item]');
+		shippingBlocks.forEach((shippingBlock) => {
+			const itemEl = shippingBlock.closest('[data-cart-item-key]');
+			if (!itemEl) {
+				return;
+			}
+			const cartItemKey = itemEl.dataset.cartItemKey || itemEl.getAttribute('data-cart-item-key');
+			if (!cartItemKey) {
+				return;
+			}
+			shippingCache[cartItemKey] = shippingBlock.innerHTML;
+			if (shippingBlock.dataset.lastSelectedMode) {
+				modeCache[cartItemKey] = shippingBlock.dataset.lastSelectedMode;
+			}
+		});
+
+		const totalsTable = document.querySelector('.Gstore-cart-summary-card .cart_totals table, .cart_totals table');
+		cartUiCache = {
+			shippingHtml: shippingCache,
+			shippingMode: modeCache,
+			totalsHtml: totalsTable ? totalsTable.innerHTML : ''
+		};
+	}
+
+	function restoreCartUiCache() {
+		const shippingBlocks = document.querySelectorAll('[data-gstore-shipping-item]');
+		shippingBlocks.forEach((shippingBlock) => {
+			const itemEl = shippingBlock.closest('[data-cart-item-key]');
+			if (!itemEl) {
+				return;
+			}
+			const cartItemKey = itemEl.dataset.cartItemKey || itemEl.getAttribute('data-cart-item-key');
+			if (!cartItemKey) {
+				return;
+			}
+			const cachedHtml = cartUiCache.shippingHtml[cartItemKey];
+			if (cachedHtml) {
+				shippingBlock.innerHTML = cachedHtml;
+			}
+			const cachedMode = cartUiCache.shippingMode[cartItemKey];
+			if (cachedMode) {
+				shippingBlock.dataset.lastSelectedMode = cachedMode;
+			}
+		});
+
+		const totalsTable = document.querySelector('.Gstore-cart-summary-card .cart_totals table, .cart_totals table');
+		if (totalsTable && cartUiCache.totalsHtml) {
+			totalsTable.innerHTML = cartUiCache.totalsHtml;
+		}
+	}
+
+	function setCartLoadingState(isLoading) {
+		const summaryCard = document.querySelector('.Gstore-cart-summary-card');
+		if (summaryCard) {
+			summaryCard.classList.toggle('is-loading', Boolean(isLoading));
+		}
+
+		const shippingBlocks = document.querySelectorAll('[data-gstore-shipping-item]');
+		shippingBlocks.forEach((block) => {
+			block.classList.toggle('is-loading', Boolean(isLoading));
+		});
 	}
 
 	function parsePriceValue(rawText) {
@@ -477,6 +548,7 @@
 		}
 
 		if (!cep) {
+			setCartLoadingState(false);
 			return;
 		}
 
@@ -484,10 +556,12 @@
 
 		const shippingBlocks = document.querySelectorAll('[data-gstore-shipping-item]');
 		if (!shippingBlocks.length) {
+			setCartLoadingState(false);
 			return;
 		}
 
 		ratesSyncInProgress = true;
+		setCartLoadingState(true);
 
 		const requests = [];
 		shippingBlocks.forEach((shippingBlock) => {
@@ -520,6 +594,7 @@
 
 		Promise.allSettled(requests).then(() => {
 			ratesSyncInProgress = false;
+			setCartLoadingState(false);
 			updateCartTotalsSummary();
 			if (shouldUpdateCart) {
 				scheduleCartUpdate();
@@ -544,6 +619,9 @@
 		if (!form) {
 			return;
 		}
+
+		captureCartUiCache();
+		setCartLoadingState(true);
 
 		if (typeof block === 'function') {
 			block($form);
@@ -577,6 +655,9 @@
 					if ($cartTotals.length > 0) {
 						jQuery('.cart_totals, .Gstore-cart-sidebar').replaceWith($cartTotals);
 					}
+
+					restoreCartUiCache();
+					setCartLoadingState(true);
 
 					setTimeout(() => {
 						initQuantitySelectors();
@@ -844,6 +925,7 @@
 		jQuery(document).on('updated_wc_div updated_cart_totals', function () {
 			setTimeout(init, 100);
 			ensureShippingBlocksExist();
+			restoreCartUiCache();
 			restoreCartCep();
 			calculateRatesForCart(false);
 			updateCartTotalsSummary();
