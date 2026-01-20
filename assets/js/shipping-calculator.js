@@ -341,8 +341,10 @@
 		}
 
 		// Carrinho
+		// No carrinho, o cálculo deve ser feito pelo cart.js (por item).
+		// Evita disparar cálculo global com product_id=0.
 		if ($('body').hasClass('woocommerce-cart')) {
-			initCart();
+			return;
 		}
 
 		// Checkout
