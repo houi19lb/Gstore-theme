@@ -1562,6 +1562,12 @@
 		if (index === lastStepIndex) {
 			setTimeout(function() {
 				$(document.body).trigger('update_checkout');
+				// #region agent log
+				const $orderReview = $('#order_review');
+				const $orderTotals = $orderReview.find('.shop_table .order-total .woocommerce-Price-amount');
+				const $subtotal = $orderReview.find('.shop_table .cart-subtotal .woocommerce-Price-amount');
+				fetch('http://127.0.0.1:7247/ingest/cce9ccaa-d42e-4577-9651-ba22a488615c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'checkout-steps.js:1136',message:'enter final step',data:{orderReviewFound:$orderReview.length>0,subtotal:$subtotal.first().text().trim(),orderTotal:$orderTotals.first().text().trim()},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H16'})}).catch(()=>{});
+				// #endregion agent log
 				
 				// Garante que o botão place_order esteja visível e clicável
 				const $placeOrderBtn = $('#place_order');
@@ -2011,6 +2017,12 @@
 			// O WooCommerce pode re-renderizar fragments; garante que o DOM continue dentro das etapas
 			setTimeout(organizeFields, 0);
 			setTimeout(ensureBluInstallmentsUI, 0);
+			// #region agent log
+			const $orderReview = $('#order_review');
+			const $orderTotals = $orderReview.find('.shop_table .order-total .woocommerce-Price-amount');
+			const $subtotal = $orderReview.find('.shop_table .cart-subtotal .woocommerce-Price-amount');
+			fetch('http://127.0.0.1:7247/ingest/cce9ccaa-d42e-4577-9651-ba22a488615c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'checkout-steps.js:1600',message:'updated_checkout totals',data:{orderReviewFound:$orderReview.length>0,subtotal:$subtotal.first().text().trim(),orderTotal:$orderTotals.first().text().trim()},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H16'})}).catch(()=>{});
+			// #endregion agent log
 			
 			// Garante que o botão "Finalizar pedido" esteja visível apenas na última etapa
 			const lastStepIndex = STEPS.length - 1;
