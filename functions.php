@@ -4184,6 +4184,7 @@ if ( ! function_exists( 'gstore_sync_cart_shipping_modes' ) ) {
 	}
 }
 add_action( 'woocommerce_cart_updated', 'gstore_sync_cart_shipping_modes', 20 );
+add_action( 'woocommerce_update_cart_action_cart_updated', 'gstore_sync_cart_shipping_modes', 20 );
 
 if ( ! function_exists( 'gstore_get_variation_shipping_cost' ) ) {
 	function gstore_get_variation_shipping_cost( $variation, $mode, $quantity ) {
