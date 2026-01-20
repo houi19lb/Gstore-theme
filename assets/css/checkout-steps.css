@@ -2623,6 +2623,40 @@ body.gstore-blu-checkout-modal-open {
 	color: var(--gstore-foreground);
 }
 
+.Gstore-summary-item__shipping {
+	margin-top: 8px;
+	padding: 10px 12px;
+	border: 1px dashed var(--gstore-muted);
+	border-radius: var(--gstore-border-radius);
+	background: #fff;
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+}
+
+.Gstore-checkout-item-shipping-option {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	font-size: var(--gstore-font-size-sm);
+	color: var(--gstore-foreground);
+}
+
+.Gstore-checkout-item-shipping-option input {
+	margin: 0;
+}
+
+.Gstore-checkout-item-shipping-option__label {
+	flex: 1;
+	color: var(--gstore-text-muted);
+	font-weight: var(--gstore-font-weight-medium);
+}
+
+.Gstore-checkout-item-shipping-option__price {
+	font-weight: var(--gstore-font-weight-semibold);
+	color: var(--gstore-foreground);
+}
+
 .Gstore-checkout-shipping-option input {
 	margin: 0;
 }

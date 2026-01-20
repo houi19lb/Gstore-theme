@@ -14,6 +14,7 @@
 	const CART_CEP_STORAGE_KEY = 'gstore_cart_cep';
 	const CART_MODE_STORAGE_KEY = 'gstore_cart_shipping_mode';
 	const CART_CALCULATED_SESSION_KEY = 'gstore_cart_shipping_calculated_session';
+	const CART_RATES_STORAGE_KEY = 'gstore_cart_shipping_rates';
 
 	function getCartCep() {
 		const cepInput = document.querySelector('.gstore-shipping-calculator__cep');
@@ -116,6 +117,25 @@
 		payload[cartItemKey] = normalized;
 		try {
 			window.localStorage.setItem(CART_MODE_STORAGE_KEY, JSON.stringify(payload));
+		} catch (e) {
+			// ignore storage errors
+		}
+	}
+
+	function storeShippingRates(cartItemKey, rates) {
+		if (typeof window === 'undefined' || !window.localStorage || !cartItemKey) {
+			return;
+		}
+		let payload = {};
+		try {
+			const raw = window.localStorage.getItem(CART_RATES_STORAGE_KEY);
+			payload = raw ? JSON.parse(raw) : {};
+		} catch (e) {
+			payload = {};
+		}
+		payload[cartItemKey] = Array.isArray(rates) ? rates : [];
+		try {
+			window.localStorage.setItem(CART_RATES_STORAGE_KEY, JSON.stringify(payload));
 		} catch (e) {
 			// ignore storage errors
 		}
@@ -439,6 +459,7 @@
 		// #region agent log
 		fetch('http://127.0.0.1:7247/ingest/cce9ccaa-d42e-4577-9651-ba22a488615c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'cart.js:431',message:'cart rates normalized',data:{cartItemKey:cartItemKey,ratesCount:normalizedRates.length,firstRate:normalizedRates[0] || null,selectedMode:selectedMode},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H8'})}).catch(()=>{});
 		// #endregion agent log
+		storeShippingRates(cartItemKey, normalizedRates);
 
 		if (!ratesInput) {
 			ratesInput = document.createElement('input');
