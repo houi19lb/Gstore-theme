@@ -6840,6 +6840,63 @@ function gstore_custom_footer_logo_block( $block_content, $block ) {
 add_filter( 'render_block', 'gstore_custom_footer_logo_block', 10, 2 );
 
 /**
+ * Filtro para modificar o bloco site-title no checkout header para usar a logo configurada.
+ * 
+ * @param string $block_content Conteúdo do bloco.
+ * @param array  $block         Dados do bloco.
+ * @return string
+ */
+function gstore_custom_checkout_header_logo_block( $block_content, $block ) {
+	// Verifica se é o bloco site-title
+	if ( empty( $block['blockName'] ) || 'core/site-title' !== $block['blockName'] ) {
+		return $block_content;
+	}
+	
+	// Verifica se está no checkout header (pela classe Gstore-checkout-header__logo)
+	$is_in_checkout_header = false;
+	if ( isset( $block['attrs']['className'] ) && strpos( $block['attrs']['className'], 'Gstore-checkout-header__logo' ) !== false ) {
+		$is_in_checkout_header = true;
+	}
+	
+	// Se não está no checkout header, não modifica
+	if ( ! $is_in_checkout_header ) {
+		return $block_content;
+	}
+	
+	// Evita processamento duplicado - se já contém a marca de logo customizada
+	if ( strpos( $block_content, 'data-gstore-checkout-logo="1"' ) !== false ) {
+		return $block_content;
+	}
+	
+	// Obtém a logo configurada
+	$logo_id = gstore_get_logo_id();
+	
+	if ( $logo_id > 0 ) {
+		$logo_url = gstore_get_image_url( $logo_id, 'full' );
+		$logo_alt = get_option( 'gstore_logo_alt', 'Logo CAC Armas' );
+		
+		// Valida se a URL é válida
+		if ( $logo_url && filter_var( $logo_url, FILTER_VALIDATE_URL ) ) {
+			// Substitui o conteúdo do bloco pela logo configurada
+			$home_url = esc_url( home_url( '/' ) );
+			$site_name = esc_attr( get_bloginfo( 'name' ) );
+			$logo_html = sprintf(
+				'<p class="Gstore-checkout-header__logo wp-block-site-title" data-gstore-checkout-logo="1"><a href="%s" rel="home" aria-label="%s"><img src="%s" alt="%s" style="max-height: 36px; max-width: 180px; width: auto; height: auto;" loading="eager" /></a></p>',
+				$home_url,
+				$site_name,
+				esc_url( $logo_url ),
+				esc_attr( $logo_alt )
+			);
+			
+			return $logo_html;
+		}
+	}
+	
+	return $block_content;
+}
+add_filter( 'render_block', 'gstore_custom_checkout_header_logo_block', 10, 2 );
+
+/**
  * Filtro para garantir que o logo do tema tenha prioridade sobre o Customizer.
  * 
  * Quando há uma logo configurada no tema, desabilita o site logo do Customizer.
