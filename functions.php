@@ -3274,13 +3274,12 @@ if ( ! defined( 'GSTORE_CORE_ACTIVE' ) ) {
  * ================================
  */
 
-if ( ! function_exists( 'gstore_blu_theme_capture_checkout_state' ) ) {
 /**
  * Captura estado do checkout (método + parcelas) a cada update_order_review e armazena na sessão.
  *
  * @param string $post_data Querystring enviada pelo WooCommerce.
  */
-function gstore_blu_theme_capture_checkout_state( $post_data ) {
+function gstore_blu_capture_checkout_state( $post_data ) {
 	if ( ! function_exists( 'WC' ) || ! WC()->session ) {
 		return;
 	}
@@ -3303,9 +3302,8 @@ function gstore_blu_theme_capture_checkout_state( $post_data ) {
 		WC()->session->set( 'gstore_blu_installments', $installments );
 	}
 }
-}
 if ( ! defined( 'GSTORE_CORE_ACTIVE' ) ) {
-	add_action( 'woocommerce_checkout_update_order_review', 'gstore_blu_theme_capture_checkout_state', 10, 1 );
+	add_action( 'woocommerce_checkout_update_order_review', 'gstore_blu_capture_checkout_state', 10, 1 );
 }
 
 /**
@@ -3321,11 +3319,10 @@ function gstore_blu_get_selected_installments() {
 	return $value >= 1 ? $value : 1;
 }
 
-if ( ! function_exists( 'gstore_blu_theme_render_installments_selector' ) ) {
 /**
  * Renderiza seletor de parcelas do cartão (pré-checkout) quando Blu Checkout estiver disponível.
  */
-function gstore_blu_theme_render_installments_selector() {
+function gstore_blu_render_installments_selector() {
 	if ( ! function_exists( 'WC' ) ) {
 		return;
 	}
@@ -3374,18 +3371,16 @@ function gstore_blu_theme_render_installments_selector() {
 	</div>
 	<?php
 }
-}
 if ( ! defined( 'GSTORE_CORE_ACTIVE' ) ) {
-	add_action( 'woocommerce_review_order_before_payment', 'gstore_blu_theme_render_installments_selector', 12 );
+	add_action( 'woocommerce_review_order_before_payment', 'gstore_blu_render_installments_selector', 12 );
 }
 
-if ( ! function_exists( 'gstore_blu_theme_add_installment_fee' ) ) {
 /**
  * Adiciona fee de parcelamento (configurável no gateway Blu) quando Cartão Blu estiver selecionado.
  *
  * @param WC_Cart $cart Carrinho.
  */
-function gstore_blu_theme_add_installment_fee( $cart ) {
+function gstore_blu_add_installment_fee( $cart ) {
 	if ( is_admin() && ! defined( 'DOING_AJAX' ) ) {
 		return;
 	}
@@ -3574,16 +3569,14 @@ function gstore_blu_theme_add_installment_fee( $cart ) {
 
 	$cart->add_fee( __( 'Taxa de parcelamento', 'gstore' ), $fee_value, false, '' );
 }
-}
 if ( ! defined( 'GSTORE_CORE_ACTIVE' ) ) {
-	add_action( 'woocommerce_cart_calculate_fees', 'gstore_blu_theme_add_installment_fee', 30, 1 );
+	add_action( 'woocommerce_cart_calculate_fees', 'gstore_blu_add_installment_fee', 30, 1 );
 }
 
-if ( ! function_exists( 'gstore_blu_theme_validate_installments' ) ) {
 /**
  * Valida parcelas quando o cliente escolhe Cartão Blu.
  */
-function gstore_blu_theme_validate_installments() {
+function gstore_blu_validate_installments() {
 	if ( empty( $_POST['payment_method'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Missing
 		return;
 	}
@@ -3608,18 +3601,16 @@ function gstore_blu_theme_validate_installments() {
 		wc_add_notice( __( 'Selecione um número válido de parcelas para continuar.', 'gstore' ), 'error' );
 	}
 }
-}
 if ( ! defined( 'GSTORE_CORE_ACTIVE' ) ) {
-	add_action( 'woocommerce_checkout_process', 'gstore_blu_theme_validate_installments', 12 );
+	add_action( 'woocommerce_checkout_process', 'gstore_blu_validate_installments', 12 );
 }
 
-if ( ! function_exists( 'gstore_blu_theme_save_installments_meta' ) ) {
 /**
  * Salva parcelas e taxa no pedido (meta) para travar no payload da Blu.
  *
  * @param int $order_id Order ID.
  */
-function gstore_blu_theme_save_installments_meta( $order_id ) {
+function gstore_blu_save_installments_meta( $order_id ) {
 	if ( ! $order_id || ! function_exists( 'WC' ) ) {
 		return;
 	}
@@ -3655,9 +3646,8 @@ function gstore_blu_theme_save_installments_meta( $order_id ) {
 		update_post_meta( $order_id, '_gstore_blu_installment_fee', (string) $fee_value );
 	}
 }
-}
 if ( ! defined( 'GSTORE_CORE_ACTIVE' ) ) {
-	add_action( 'woocommerce_checkout_update_order_meta', 'gstore_blu_theme_save_installments_meta', 20 );
+	add_action( 'woocommerce_checkout_update_order_meta', 'gstore_blu_save_installments_meta', 20 );
 }
 
 /**

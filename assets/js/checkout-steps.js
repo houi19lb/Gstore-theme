@@ -1853,11 +1853,16 @@ function getInstallmentDisplayTotals(summaryData) {
 	 * Carrega o resumo do carrinho via AJAX
 	 */
 	function loadCartSummary() {
+		const $selectedMethod = $('input[name="payment_method"]:checked');
+		const paymentMethod = $selectedMethod.length ? $selectedMethod.val() : '';
+		const installmentsValue = $('#gstore_blu_installments').val() || $('#gstore_blu_installments_select').val() || '';
 		$.ajax({
 			url: wc_checkout_params.ajax_url,
 			type: 'POST',
 			data: {
-				action: 'gstore_get_cart_summary'
+				action: 'gstore_get_cart_summary',
+				payment_method: paymentMethod,
+				gstore_blu_installments: installmentsValue
 			},
 			success: function(response) {
 				if (response.success) {
