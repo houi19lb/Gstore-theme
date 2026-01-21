@@ -2732,6 +2732,12 @@ body.gstore-blu-checkout-modal-open {
 	display: flex;
 	flex-direction: column;
 	gap: 12px;
+	transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+
+.Gstore-checkout-summary-top__shipping--error {
+	border-color: #dc2626;
+	background: #fef2f2;
 }
 
 .Gstore-checkout-summary-top__shipping-title {
