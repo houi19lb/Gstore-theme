@@ -1233,18 +1233,19 @@ body.woocommerce-checkout .Gstore-checkout-steps-shell {
 
 	/* Ajustar layout de frete no mobile - cada opção em uma linha */
 	.Gstore-summary-item .Gstore-summary-item__shipping {
-		flex-direction: column;
-		flex-wrap: wrap;
+		flex-direction: column !important;
+		flex-wrap: wrap !important;
 		gap: 8px;
 		align-items: stretch;
 	}
 
 	.Gstore-summary-item .Gstore-checkout-item-shipping-option {
-		width: 100%;
-		display: flex;
+		width: 100% !important;
+		min-width: 100% !important;
+		display: flex !important;
 		justify-content: space-between;
-		white-space: normal;
-		flex: 1 1 100%;
+		white-space: normal !important;
+		flex: 1 1 100% !important;
 	}
 }
 
