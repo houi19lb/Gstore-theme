@@ -3181,10 +3181,10 @@ function gstore_customize_checkout_fields( $fields ) {
 
     // Se gateway Blu está disponível, torna campos de endereço opcionais para pré-checkout
     // MAS: Se o método selecionado for blu_pix, mantém campos obrigatórios (checkout completo)
-    // IMPORTANTE: CEP sempre obrigatório para calcular todas as modalidades de frete (terrestre e aéreo)
     if ( $blu_gateway_available && $selected_payment_method !== 'blu_pix' ) {
-        // Campos de endereço tornam-se opcionais (exceto CEP que é obrigatório para frete)
+        // Campos de endereço tornam-se opcionais
         $address_fields = array(
+            'billing_postcode',
             'billing_address_1',
             'billing_number',
             'billing_address_2',
@@ -3197,11 +3197,6 @@ function gstore_customize_checkout_fields( $fields ) {
             if ( isset( $fields['billing'][ $field_key ] ) ) {
                 $fields['billing'][ $field_key ]['required'] = false;
             }
-        }
-        
-        // CEP sempre obrigatório para calcular todas as modalidades de frete
-        if ( isset( $fields['billing']['billing_postcode'] ) ) {
-            $fields['billing']['billing_postcode']['required'] = true;
         }
 
         // Campos de nome e CPF também opcionais (serão coletados na Blu)
