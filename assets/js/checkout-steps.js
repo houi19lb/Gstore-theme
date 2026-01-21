@@ -1916,6 +1916,32 @@ function getInstallmentDisplayTotals(summaryData) {
 		// #endregion agent log
 		checkoutSelectedShippingMode = storedMode || checkoutSelectedShippingMode || 'land';
 
+		// Sincroniza rates do backend (fluxo "Comprar Agora")
+		// Quando o usuário vem do "Comprar Agora", o backend já calculou o frete
+		// e retorna os dados em data.shipping - usamos esses dados para preencher
+		// checkoutShippingRates se ainda não temos rates locais
+		if (data.shipping && Array.isArray(data.shipping.rates) && data.shipping.rates.length > 0) {
+			// Se não temos rates locais ou se o backend retornou um valor de frete válido
+			if (checkoutShippingRates.length === 0 || (data.shipping.value && data.shipping.value > 0 && checkoutShippingStatus !== 'ready')) {
+				checkoutShippingRates = data.shipping.rates.map(function(rate) {
+					const isAir = rate.id && rate.id.toLowerCase().indexOf('air') !== -1;
+					return {
+						mode: isAir ? 'air' : 'land',
+						label: rate.label,
+						cost: rate.cost,
+						cost_formatted: formatCurrency(rate.cost)
+					};
+				});
+				checkoutShippingStatus = 'ready';
+				
+				// Define o modo selecionado baseado no chosen_method do backend
+				if (data.shipping.chosen_method) {
+					const isChosenAir = data.shipping.chosen_method.toLowerCase().indexOf('air') !== -1;
+					checkoutSelectedShippingMode = isChosenAir ? 'air' : 'land';
+				}
+			}
+		}
+
 		// Atualiza contagem de itens
 		$('.Gstore-summary-items-count').text(
 			`${data.items_count} ${data.items_count === 1 ? 'item' : 'itens'} no carrinho`
