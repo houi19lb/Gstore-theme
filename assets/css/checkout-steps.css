@@ -41,8 +41,8 @@
    HEADER MINIMALISTA DO CHECKOUT
    =========================================== */
 .Gstore-checkout-header {
-	background: var(--gstore-card-bg);
-	border-bottom: 1px solid var(--gstore-muted);
+	background: rgba(0, 0, 0, 1);
+	border-bottom: 1px solid rgba(214, 214, 214, 1);
 	padding: 16px 24px;
 	width: 100%;
 	max-width: 100%;
@@ -2293,6 +2293,23 @@ body.woocommerce-checkout .Gstore-checkout-steps-shell {
 	padding: 8px 10px;
 	font-size: var(--gstore-font-size-sm);
 	background: #fff;
+}
+
+@media (max-width: 768px) {
+	.Gstore-blu-installments__row {
+		flex-direction: column;
+		align-items: stretch;
+		gap: 8px;
+	}
+
+	.Gstore-blu-installments__label {
+		margin-bottom: 0;
+	}
+
+	.Gstore-blu-installments__select {
+		width: 100%;
+		min-width: unset;
+	}
 }
 
 .Gstore-blu-installments__hint {
