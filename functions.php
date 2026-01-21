@@ -2984,7 +2984,7 @@ function gstore_enqueue_checkout_assets() {
 			'gstore-checkout-steps',
 			get_theme_file_uri( 'assets/js/checkout-steps.js' ),
 			array( 'jquery' ),
-			$theme_version,
+			filemtime( get_theme_file_path( 'assets/js/checkout-steps.js' ) ),
 			true
 		);
 
