@@ -54,6 +54,7 @@
 	let lastCalculatedShippingCep = ''; // CEP (somente dígitos) do último frete calculado com sucesso
 	let lastRequestedShippingCep = ''; // CEP (somente dígitos) da última requisição de frete disparada
 	let lastCalculatedDestination = null; // Destino (cidade/UF) do último frete calculado
+	let cepAutoCalculateTimeout = null; // Timeout para debounce do cálculo automático
 	const CART_MODE_STORAGE_KEY = 'gstore_cart_shipping_mode';
 	const CART_RATES_STORAGE_KEY = 'gstore_cart_shipping_rates';
 	let checkoutSelectedShippingMode = 'land';
@@ -1391,6 +1392,13 @@ function getInstallmentDisplayTotals(summaryData) {
 		// Valida CEP (deve ter 8 dígitos)
 		if (cleanCep.length !== 8) {
 			hideShippingResult();
+			// Adiciona validação visual no campo CEP
+			const $postcodeField = $('#billing_postcode');
+			const $fieldWrapper = $postcodeField.closest('.form-row, .woocommerce-input-wrapper').parent();
+			if (cleanCep.length > 0) {
+				$fieldWrapper.addClass('woocommerce-invalid');
+				showShippingError('CEP inválido. Informe um CEP com 8 dígitos.');
+			}
 			return;
 		}
 
@@ -1398,6 +1406,11 @@ function getInstallmentDisplayTotals(summaryData) {
 		if (isCalculatingShipping) {
 			return;
 		}
+		
+		// Remove classes de erro do campo CEP quando começa a calcular
+		const $postcodeField = $('#billing_postcode');
+		const $fieldWrapper = $postcodeField.closest('.form-row, .woocommerce-input-wrapper').parent();
+		$fieldWrapper.removeClass('woocommerce-invalid woocommerce-invalid-required-field');
 
 		lastRequestedShippingCep = cleanCep;
 		isCalculatingShipping = true;
@@ -1433,12 +1446,22 @@ function getInstallmentDisplayTotals(summaryData) {
 					const rates = Array.isArray(response.data.rates) ? response.data.rates : [];
 
 					if (!rates.length) {
-						showShippingError('Não foi possível calcular o frete para este destino.');
+						const errorMsg = 'Não foi possível calcular o frete para este destino. Verifique se o CEP está correto.';
+						showShippingError(errorMsg);
+						// Adiciona validação visual no campo CEP
+						const $postcodeField = $('#billing_postcode');
+						const $fieldWrapper = $postcodeField.closest('.form-row, .woocommerce-input-wrapper').parent();
+						$fieldWrapper.addClass('woocommerce-invalid');
 						calculatedShipping = null;
 						lastCalculatedShippingCep = '';
 						lastCalculatedDestination = null;
 						return;
 					}
+
+					// Remove classes de erro quando frete é calculado com sucesso
+					const $postcodeField = $('#billing_postcode');
+					const $fieldWrapper = $postcodeField.closest('.form-row, .woocommerce-input-wrapper').parent();
+					$fieldWrapper.removeClass('woocommerce-invalid woocommerce-invalid-required-field');
 
 					calculatedShipping = response.data;
 					lastCalculatedShippingCep = cleanCep;
@@ -1450,6 +1473,10 @@ function getInstallmentDisplayTotals(summaryData) {
 						? response.data.message 
 						: 'Erro ao calcular frete. Tente novamente.';
 					showShippingError(message);
+					// Adiciona validação visual no campo CEP
+					const $postcodeField = $('#billing_postcode');
+					const $fieldWrapper = $postcodeField.closest('.form-row, .woocommerce-input-wrapper').parent();
+					$fieldWrapper.addClass('woocommerce-invalid');
 					calculatedShipping = null;
 					lastCalculatedShippingCep = '';
 					lastCalculatedDestination = null;
@@ -1457,7 +1484,12 @@ function getInstallmentDisplayTotals(summaryData) {
 			},
 			error: function() {
 				isCalculatingShipping = false;
-				showShippingError('Erro ao calcular frete. Tente novamente.');
+				const errorMsg = 'Erro ao calcular frete. Tente novamente.';
+				showShippingError(errorMsg);
+				// Adiciona validação visual no campo CEP
+				const $postcodeField = $('#billing_postcode');
+				const $fieldWrapper = $postcodeField.closest('.form-row, .woocommerce-input-wrapper').parent();
+				$fieldWrapper.addClass('woocommerce-invalid');
 				calculatedShipping = null;
 				lastCalculatedShippingCep = '';
 				lastCalculatedDestination = null;
@@ -1471,6 +1503,13 @@ function getInstallmentDisplayTotals(summaryData) {
 	function showShippingLoading() {
 		checkoutShippingStatus = 'loading';
 		checkoutShippingError = '';
+		
+		// Adiciona indicador visual no campo CEP quando está calculando
+		const $postcodeField = $('#billing_postcode');
+		const $fieldWrapper = $postcodeField.closest('.form-row, .woocommerce-input-wrapper').parent();
+		$fieldWrapper.removeClass('woocommerce-invalid woocommerce-invalid-required-field');
+		$fieldWrapper.addClass('gstore-calculating-shipping');
+		
 		renderShippingSummary(lastCartSummaryData);
 	}
 
@@ -1495,6 +1534,13 @@ function getInstallmentDisplayTotals(summaryData) {
 		// #region agent log
 		fetch('http://127.0.0.1:7247/ingest/cce9ccaa-d42e-4577-9651-ba22a488615c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'checkout-steps.js:928',message:'resolved checkout mode',data:{preferredMode:preferredMode,resolved:checkoutSelectedShippingMode,normalizedRates:checkoutShippingRates.map(r=>({mode:r.mode,label:r.label,cost_formatted:r.cost_formatted}))},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H3'})}).catch(()=>{});
 		// #endregion agent log
+		
+		// Remove classes de erro e loading quando frete é calculado com sucesso
+		const $postcodeField = $('#billing_postcode');
+		const $fieldWrapper = $postcodeField.closest('.form-row, .woocommerce-input-wrapper').parent();
+		$fieldWrapper.removeClass('woocommerce-invalid woocommerce-invalid-required-field gstore-calculating-shipping');
+		$fieldWrapper.addClass('gstore-shipping-calculated');
+		
 		renderShippingSummary(lastCartSummaryData);
 	}
 
@@ -1506,6 +1552,11 @@ function getInstallmentDisplayTotals(summaryData) {
 		checkoutShippingError = message || 'Erro ao calcular frete.';
 		checkoutShippingRates = [];
 		renderShippingSummary(lastCartSummaryData);
+	}
+	
+	// Expor função globalmente para uso em outros scripts
+	if (typeof window !== 'undefined') {
+		window.gstoreShowShippingError = showShippingError;
 	}
 
 	/**
@@ -1530,6 +1581,17 @@ function getInstallmentDisplayTotals(summaryData) {
 	 * Atualiza resumo com valor do frete
 	 */
 	function updateSummaryWithShipping(shippingData) {
+		// Só atualiza se houver dados válidos de frete
+		if (!shippingData || !calculatedShipping) {
+			return;
+		}
+		
+		// Verifica se há rates válidos
+		const rates = Array.isArray(shippingData.rates) ? shippingData.rates : [];
+		if (!rates.length) {
+			return;
+		}
+		
 		// Atualiza o endereço no WooCommerce para que ele calcule o frete oficialmente
 		const $postcodeField = $('#billing_postcode');
 		const $checkoutForm = $('form.checkout');
@@ -1546,13 +1608,19 @@ function getInstallmentDisplayTotals(summaryData) {
 			
 			// Dispara evento para atualizar checkout do WooCommerce
 			// Isso fará com que o WooCommerce calcule o frete oficialmente
-			$(document.body).trigger('update_checkout');
+			// Só dispara se não houver erro no cálculo
+			if (checkoutShippingStatus !== 'error') {
+				$(document.body).trigger('update_checkout');
+			}
 		}
 		
 		// Atualiza o resumo do topo após um delay maior para o WooCommerce processar
-		setTimeout(function() {
-			loadCartSummary();
-		}, 1000);
+		// Só atualiza se não houver erro
+		if (checkoutShippingStatus !== 'error') {
+			setTimeout(function() {
+				loadCartSummary();
+			}, 1000);
+		}
 
 		renderShippingSummary(lastCartSummaryData);
 	}
@@ -1753,6 +1821,9 @@ function getInstallmentDisplayTotals(summaryData) {
 
 			// Validação de CEP - só valida se for obrigatório ou se houver valor preenchido
 			if (fieldId === 'billing_postcode') {
+				// Remove classes visuais anteriores
+				$fieldWrapper.removeClass('gstore-calculating-shipping gstore-shipping-calculated');
+				
 				// Só valida se houver valor preenchido (se estiver vazio e não for obrigatório, não valida)
 				if (value && value.trim() !== '') {
 					const cep = value.replace(/\D/g, '');
@@ -1762,7 +1833,10 @@ function getInstallmentDisplayTotals(summaryData) {
 						if (!$firstError) $firstError = $input;
 					} else {
 						// CEP válido, verifica se frete foi calculado
-						if (!calculatedShipping) {
+						if (isCalculatingShipping) {
+							// Está calculando, adiciona classe de loading
+							$fieldWrapper.addClass('gstore-calculating-shipping');
+						} else if (!calculatedShipping) {
 							isValid = false;
 							$fieldWrapper.addClass('woocommerce-invalid');
 							if (!$firstError) $firstError = $input;
@@ -1776,6 +1850,10 @@ function getInstallmentDisplayTotals(summaryData) {
 								? `para ${destinationLabel}`
 								: 'para outro CEP';
 							showNotice(`O frete foi calculado ${destinationText}. Atualize o CEP para recalcular.`, 'error');
+						} else if (calculatedShipping && lastCalculatedShippingCep === cep) {
+							// CEP válido e frete calculado com sucesso
+							$fieldWrapper.removeClass('woocommerce-invalid');
+							$fieldWrapper.addClass('gstore-shipping-calculated');
 						}
 					}
 				} else if (isRequired) {
@@ -2203,12 +2281,38 @@ function getInstallmentDisplayTotals(summaryData) {
 			
 			$(this).val(value);
 			
+			const cleanCep = value.replace(/\D/g, '');
+			
 			// Limpa resultado anterior quando CEP muda
-			if (value.replace(/\D/g, '').length < 8) {
+			if (cleanCep.length < 8) {
 				hideShippingResult();
 				calculatedShipping = null;
 				lastCalculatedDestination = null;
 				lastCalculatedShippingCep = '';
+				
+				// Limpa timeout se CEP não estiver completo
+				if (cepAutoCalculateTimeout) {
+					clearTimeout(cepAutoCalculateTimeout);
+					cepAutoCalculateTimeout = null;
+				}
+				
+				// Remove classes de erro quando CEP está sendo editado
+				const $fieldWrapper = $(this).closest('.form-row, .woocommerce-input-wrapper').parent();
+				$fieldWrapper.removeClass('woocommerce-invalid');
+			} else if (cleanCep.length === 8) {
+				// CEP completo - calcula automaticamente após um pequeno delay (debounce)
+				// Limpa timeout anterior se existir
+				if (cepAutoCalculateTimeout) {
+					clearTimeout(cepAutoCalculateTimeout);
+				}
+				
+				// Só calcula se não for o mesmo CEP já calculado
+				if (cleanCep !== lastCalculatedShippingCep && cleanCep !== lastRequestedShippingCep) {
+					cepAutoCalculateTimeout = setTimeout(function() {
+						calculateShipping($('#billing_postcode').val());
+						cepAutoCalculateTimeout = null;
+					}, 500); // Delay de 500ms para evitar cálculos excessivos
+				}
 			}
 		});
 
