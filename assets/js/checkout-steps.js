@@ -1856,13 +1856,31 @@ function getInstallmentDisplayTotals(summaryData) {
 		const $selectedMethod = $('input[name="payment_method"]:checked');
 		const paymentMethod = $selectedMethod.length ? $selectedMethod.val() : '';
 		const installmentsValue = $('#gstore_blu_installments').val() || $('#gstore_blu_installments_select').val() || '';
+		let shippingRatesByItem = {};
+		let shippingModeByItem = {};
+		try {
+			shippingRatesByItem = getStoredRatesByItem() || {};
+		} catch (e) {
+			shippingRatesByItem = {};
+		}
+		try {
+			const raw = (typeof window !== 'undefined' && window.localStorage)
+				? window.localStorage.getItem(CART_MODE_STORAGE_KEY)
+				: '';
+			shippingModeByItem = raw ? JSON.parse(raw) : {};
+		} catch (e) {
+			shippingModeByItem = {};
+		}
 		$.ajax({
 			url: wc_checkout_params.ajax_url,
 			type: 'POST',
 			data: {
 				action: 'gstore_get_cart_summary',
 				payment_method: paymentMethod,
-				gstore_blu_installments: installmentsValue
+				gstore_blu_installments: installmentsValue,
+				// Envia snapshot do frete (por item) para o backend incluir na base de cálculo.
+				gstore_shipping_rates_json: JSON.stringify(shippingRatesByItem || {}),
+				gstore_shipping_mode_json: JSON.stringify(shippingModeByItem || {})
 			},
 			success: function(response) {
 				if (response.success) {
