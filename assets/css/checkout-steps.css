@@ -1152,6 +1152,19 @@ body.woocommerce-checkout .Gstore-checkout-steps-shell {
 		display: none;
 	}
 
+	/* Garantir que o resumo não fique sticky no mobile */
+	.Gstore-checkout-summary-top {
+		position: static !important;
+		top: auto !important;
+		z-index: auto !important;
+	}
+
+	/* Garantir que detalhes expandidos não causem sobreposição */
+	.Gstore-checkout-summary-top__details.is-visible {
+		max-height: none;
+		overflow: visible;
+	}
+
 	.Gstore-checkout-stepper {
 		flex-direction: row;
 		justify-content: space-between;
@@ -1217,6 +1230,22 @@ body.woocommerce-checkout .Gstore-checkout-steps-shell {
 		text-align: left;
 		margin-top: 4px;
 	}
+
+	/* Ajustar layout de frete no mobile - cada opção em uma linha */
+	.Gstore-summary-item .Gstore-summary-item__shipping {
+		flex-direction: column;
+		flex-wrap: wrap;
+		gap: 8px;
+		align-items: stretch;
+	}
+
+	.Gstore-summary-item .Gstore-checkout-item-shipping-option {
+		width: 100%;
+		display: flex;
+		justify-content: space-between;
+		white-space: normal;
+		flex: 1 1 100%;
+	}
 }
 
 @media (max-width: 480px) {
@@ -1253,6 +1282,19 @@ body.woocommerce-checkout .Gstore-checkout-steps-shell {
 
 	.Gstore-checkout-footer {
 		padding: 20px 16px;
+	}
+
+	/* Garantir que o resumo não fique sticky no mobile (telas menores) */
+	.Gstore-checkout-summary-top {
+		position: static !important;
+		top: auto !important;
+		z-index: auto !important;
+	}
+
+	/* Garantir que detalhes expandidos não causem sobreposição */
+	.Gstore-checkout-summary-top__details.is-visible {
+		max-height: none;
+		overflow: visible;
 	}
 }
 
