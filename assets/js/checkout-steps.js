@@ -825,6 +825,45 @@
 		return '';
 	}
 
+function inferRateModeFromRate(rate) {
+	const direct = normalizeRateMode(rate && rate.mode);
+	if (direct) return direct;
+	const label = String(rate && rate.label ? rate.label : '').toLowerCase();
+	if (label.includes('aéreo') || label.includes('aereo') || label.includes('air')) return 'air';
+	if (label.includes('terrestre') || label.includes('ground') || label.includes('land')) return 'land';
+	const id = String(rate && rate.id ? rate.id : '').toLowerCase();
+	if (id.includes('air')) return 'air';
+	if (id.includes('ground') || id.includes('land')) return 'land';
+	return '';
+}
+
+function normalizeBackendRates(rates) {
+	const list = Array.isArray(rates) ? rates : [];
+	return list.map((rate) => {
+		const mode = inferRateModeFromRate(rate);
+		if (!mode) return null;
+		const rawCost = Number(rate.cost);
+		const costValue = Number.isFinite(rawCost)
+			? rawCost
+			: parsePriceValue(rate.cost_formatted || rate.costFormatted || rate.cost || '');
+		const costFormatted = rate.cost_formatted
+			|| rate.costFormatted
+			|| (Number.isFinite(costValue) ? formatCurrency(costValue) : '');
+		return {
+			mode,
+			label: rate.label || (mode === 'air' ? 'Frete Aéreo' : 'Frete Terrestre'),
+			cost: Number.isFinite(costValue) ? costValue : rate.cost,
+			cost_formatted: costFormatted,
+		};
+	}).filter(Boolean);
+}
+
+function persistRatesByItem(ratesByItem) {
+	try {
+		window.localStorage.setItem(CART_RATES_STORAGE_KEY, JSON.stringify(ratesByItem || {}));
+	} catch (e) {}
+}
+
 	function parsePriceValue(rawText) {
 		if (!rawText) {
 			return 0;
@@ -1344,6 +1383,12 @@ function getInstallmentDisplayTotals(summaryData) {
 		if (!$table.length) {
 			return;
 		}
+	// Remove linha padrão de frete do Woo
+	$table.find('.shipping, tr.shipping').remove();
+	// Remove taxa de parcelamento
+	$table.find('tr.fee').filter(function () {
+		return $(this).text().toLowerCase().includes('taxa de parcelamento');
+	}).remove();
 		const $orderTotal = $table.find('.order-total .woocommerce-Price-amount').first();
 		const $subtotalRow = $table.find('.cart-subtotal').first();
 		const $existing = $table.find('.gstore-shipping-land, .gstore-shipping-air');
@@ -1537,11 +1582,20 @@ function getInstallmentDisplayTotals(summaryData) {
 		if ($postcodeField.length && $postcodeField.val()) {
 			// Garante que o campo de método de envio existe no formulário
 			let $shippingMethodField = $checkoutForm.find('input[name="shipping_method[0]"]');
+			const rates = Array.isArray(shippingData && shippingData.rates)
+				? shippingData.rates
+				: (lastCartSummaryData && lastCartSummaryData.shipping && lastCartSummaryData.shipping.rates
+					? lastCartSummaryData.shipping.rates
+					: []);
+			const selectedMode = checkoutSelectedShippingMode || 'land';
+			const resolved = rates.find(r => inferRateModeFromRate(r) === selectedMode) || rates[0];
+			const methodId = resolved && resolved.id ? String(resolved.id) : 'gstore_custom_shipping';
 			if (!$shippingMethodField.length) {
 				// Cria campo hidden para o método de envio
-				$checkoutForm.append('<input type="hidden" name="shipping_method[0]" value="gstore_custom_shipping" />');
+				$checkoutForm.append(`<input type="hidden" name="shipping_method[0]" value="${methodId}" />`);
+				$shippingMethodField = $checkoutForm.find('input[name="shipping_method[0]"]');
 			} else {
-				$shippingMethodField.val('gstore_custom_shipping');
+				$shippingMethodField.val(methodId);
 			}
 			
 			// Dispara evento para atualizar checkout do WooCommerce
@@ -1995,6 +2049,23 @@ function getInstallmentDisplayTotals(summaryData) {
 		}
 
 		$('.Gstore-checkout-summary-top__totals').html(totalsHtml);
+
+		const itemsList = Array.isArray(data.items) ? data.items : [];
+		const ratesByItem = {};
+		itemsList.forEach((item) => {
+			const cartItemKey = item.key || item.cart_item_key || item.cartItemKey || '';
+			if (!cartItemKey) return;
+			const itemRates = Array.isArray(item.gstore_shipping_rates) ? item.gstore_shipping_rates : [];
+			const normalized = normalizeBackendRates(
+				itemRates.length ? itemRates : (data.shipping && data.shipping.rates ? data.shipping.rates : [])
+			);
+			if (normalized.length) {
+				ratesByItem[cartItemKey] = normalized;
+			}
+		});
+		if (Object.keys(ratesByItem).length) {
+			persistRatesByItem(ratesByItem);
+		}
 
 		syncShippingFromStorage(data);
 		renderItemShippingOptions(data);
