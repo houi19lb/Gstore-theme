@@ -136,6 +136,377 @@ document.addEventListener('DOMContentLoaded', () => {
 	initLoadAllReviews();
 
 	/**
+	 * Parcelamento do produto (AJAX Blu).
+	 */
+	const initProductInstallmentQuotes = () => {
+		const targets = Array.from(document.querySelectorAll('[data-gstore-installment-target="1"]'));
+		// #region agent log
+		fetch('http://127.0.0.1:7242/ingest/2e9bdb26-956d-44fb-8061-6eba8efc208f',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'installments-init',hypothesisId:'INIT',location:'assets/js/single-product.js:initProductInstallmentQuotes',message:'[GStore Installments] Inicializando...',data:{targetsCount:targets.length,targetsData:targets.slice(0,3).map(t=>({hasProductId:!!t?.dataset?.productId,productId:t?.dataset?.productId||null,hasMaxInstallments:!!t?.dataset?.maxInstallments,maxInstallments:t?.dataset?.maxInstallments||null,hasInitialText:!!t?.dataset?.initialText,initialText:t?.dataset?.initialText||null})),gstoreSingleProductInstallments:typeof gstoreSingleProductInstallments!=='undefined'?{hasAjaxUrl:!!gstoreSingleProductInstallments?.ajaxUrl,hasAction:!!gstoreSingleProductInstallments?.action,hasProductId:!!gstoreSingleProductInstallments?.productId,hasMax:!!gstoreSingleProductInstallments?.max}:null},timestamp:Date.now()})}).catch(()=>{});
+		// #endregion
+		if (!targets.length) {
+			return;
+		}
+
+		const resolveAjaxUrl = () => {
+			if (typeof gstoreSingleProductInstallments !== 'undefined' && gstoreSingleProductInstallments?.ajaxUrl) {
+				return String(gstoreSingleProductInstallments.ajaxUrl);
+			}
+			// Preferência: config já presente no tema (favorites-core).
+			if (typeof gstoreFavoritesConfig !== 'undefined' && gstoreFavoritesConfig?.ajaxUrl) {
+				return String(gstoreFavoritesConfig.ajaxUrl);
+			}
+			if (typeof gstoreSettings !== 'undefined' && gstoreSettings?.ajax_url) {
+				return String(gstoreSettings.ajax_url);
+			}
+			if (typeof ajaxurl !== 'undefined' && ajaxurl) {
+				return String(ajaxurl);
+			}
+			return '/wp-admin/admin-ajax.php';
+		};
+
+		const resolveAction = () => {
+			if (typeof gstoreSingleProductInstallments !== 'undefined' && gstoreSingleProductInstallments?.action) {
+				return String(gstoreSingleProductInstallments.action);
+			}
+			return 'gstore_blu_get_product_installment_quotes';
+		};
+
+		const baseProductId =
+			String(targets[0]?.dataset?.productId || '') ||
+			String(gstoreSingleProductInstallments?.productId || '') ||
+			'';
+		let currentProductId = baseProductId;
+
+		const getQtyInput = () =>
+			document.querySelector('.Gstore-single-product__add-to-cart input.qty') ||
+			document.querySelector('form.cart input.qty') ||
+			document.querySelector('.cart input.qty');
+
+		const getQuantity = () => {
+			const input = getQtyInput();
+			if (!input) return 1;
+			const raw = parseFloat(String(input.value || '1'));
+			return Number.isFinite(raw) && raw > 0 ? raw : 1;
+		};
+
+		const getMaxInstallments = () => {
+			const targetWithMax = targets.find((target) => target?.dataset?.maxInstallments);
+			const raw =
+				targetWithMax?.dataset?.maxInstallments ||
+				gstoreSingleProductInstallments?.max ||
+				'21';
+			const parsed = parseInt(String(raw), 10);
+			const result = Number.isFinite(parsed) && parsed > 0 ? parsed : 21;
+			// #region agent log
+			fetch('http://127.0.0.1:7242/ingest/2e9bdb26-956d-44fb-8061-6eba8efc208f',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'installments-init',hypothesisId:'MAX',location:'assets/js/single-product.js:getMaxInstallments',message:'[GStore Installments] getMaxInstallments',data:{raw:String(raw),parsed,result,targetWithMaxFound:!!targetWithMax,gstoreMax:gstoreSingleProductInstallments?.max||null},timestamp:Date.now()})}).catch(()=>{});
+			// #endregion
+			return result;
+		};
+
+		const applyText = (text) => {
+			targets.forEach((target) => {
+				target.textContent = text;
+				target.hidden = !text;
+			});
+		};
+
+		const applyFallback = () => {
+			targets.forEach((target) => {
+				const fallback = String(target.dataset.initialText || '').trim();
+				if (fallback) {
+					target.textContent = fallback;
+					target.hidden = false;
+				} else {
+					target.hidden = true;
+				}
+			});
+		};
+
+		const cache = new Map();
+		const quotesCache = new Map();
+		const inFlight = new Map();
+
+		const chooseQuote = (quotes, preferred) => {
+			if (!quotes || typeof quotes !== 'object') return null;
+			if (quotes[preferred]) return quotes[preferred];
+			const keys = Object.keys(quotes)
+				.map((key) => parseInt(key, 10))
+				.filter((key) => Number.isFinite(key))
+				.sort((a, b) => b - a);
+			if (!keys.length) return null;
+			return quotes[String(keys[0])] || null;
+		};
+
+		const updateTargetsProductId = (productId) => {
+			targets.forEach((target) => {
+				target.dataset.productId = productId;
+			});
+		};
+
+		const formatCurrency = (value) => {
+			if (!Number.isFinite(value)) return '';
+			try {
+				return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
+			} catch (err) {
+				return `R$ ${value.toFixed(2).replace('.', ',')}`;
+			}
+		};
+
+		const populateInstallmentSelect = (quotes, selectedInstallments) => {
+			targets.forEach((target) => {
+				const wrapper = target.closest('[data-gstore-installment-wrapper]');
+				if (!wrapper) return;
+
+				const select = wrapper.querySelector('[data-gstore-installment-select]');
+				if (!select) return;
+
+				select.innerHTML = '';
+
+				if (!quotes || typeof quotes !== 'object') {
+					select.style.display = 'none';
+					return;
+				}
+
+				const quoteKeys = Object.keys(quotes)
+					.map((key) => parseInt(key, 10))
+					.filter((key) => Number.isFinite(key))
+					.sort((a, b) => b - a);
+
+				if (!quoteKeys.length) {
+					select.style.display = 'none';
+					return;
+				}
+
+				const defaultOption = document.createElement('option');
+				defaultOption.value = '';
+				defaultOption.textContent = 'Selecione as parcelas';
+				select.appendChild(defaultOption);
+
+				quoteKeys.forEach((installments) => {
+					const quote = quotes[String(installments)];
+					if (!quote || !quote.per_installment_text) return;
+
+					const option = document.createElement('option');
+					option.value = String(installments);
+
+					let optionText = `${installments}x de ${quote.per_installment_text}`;
+					const totalRaw = Number(quote.total_raw ?? quote.total);
+					const totalText = quote.total_text || quote.totalText || (Number.isFinite(totalRaw) ? formatCurrency(totalRaw) : '');
+					const originalTotal = Number(quote.original_total ?? quote.originalTotal);
+					const jurosValue = Number.isFinite(totalRaw) && Number.isFinite(originalTotal)
+						? totalRaw - originalTotal
+						: NaN;
+					const details = [];
+					if (totalText) {
+						details.push(`total: ${totalText}`);
+					}
+					if (Number.isFinite(jurosValue) && jurosValue > 0) {
+						const jurosText = formatCurrency(jurosValue);
+						if (jurosText) {
+							details.push(`juros: ${jurosText}`);
+						}
+					}
+					if (details.length) {
+						optionText += ` (${details.join(', ')})`;
+					}
+
+					option.textContent = optionText;
+					option.selected = Number(selectedInstallments) === installments;
+					select.appendChild(option);
+				});
+
+				select.style.display = 'block';
+			});
+		};
+
+		const setupInstallmentSelectListeners = () => {
+			targets.forEach((target) => {
+				const wrapper = target.closest('[data-gstore-installment-wrapper]');
+				if (!wrapper) return;
+
+				const select = wrapper.querySelector('[data-gstore-installment-select]');
+				if (!select) return;
+
+				select.onchange = () => {};
+			});
+		};
+
+		const requestQuotes = async () => {
+			// #region agent log
+			fetch('http://127.0.0.1:7242/ingest/2e9bdb26-956d-44fb-8061-6eba8efc208f',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'installments-request',hypothesisId:'REQ1',location:'assets/js/single-product.js:requestQuotes',message:'[GStore Installments] requestQuotes iniciado',data:{currentProductId:currentProductId||null,hasProductId:!!currentProductId},timestamp:Date.now()})}).catch(()=>{});
+			// #endregion
+			if (!currentProductId) {
+				// #region agent log
+				fetch('http://127.0.0.1:7242/ingest/2e9bdb26-956d-44fb-8061-6eba8efc208f',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'installments-request',hypothesisId:'REQ2',location:'assets/js/single-product.js:requestQuotes',message:'[GStore Installments] Aplicando fallback: sem productId',data:{reason:'no_product_id'},timestamp:Date.now()})}).catch(()=>{});
+				// #endregion
+				applyFallback();
+				return;
+			}
+
+			const max = getMaxInstallments();
+			const quantity = getQuantity();
+			const signature = `${currentProductId}|${quantity}|${max}`;
+			if (cache.has(signature)) {
+				const cachedText = cache.get(signature);
+				// #region agent log
+				fetch('http://127.0.0.1:7242/ingest/2e9bdb26-956d-44fb-8061-6eba8efc208f',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'installments-request',hypothesisId:'REQ3',location:'assets/js/single-product.js:requestQuotes',message:'[GStore Installments] Usando cache',data:{signature,cachedText},timestamp:Date.now()})}).catch(()=>{});
+				// #endregion
+				applyText(cachedText);
+				const cachedQuotes = quotesCache.get(signature);
+				if (cachedQuotes) {
+					populateInstallmentSelect(cachedQuotes);
+					setupInstallmentSelectListeners();
+				}
+				return;
+			}
+			if (inFlight.has(signature)) {
+				// #region agent log
+				fetch('http://127.0.0.1:7242/ingest/2e9bdb26-956d-44fb-8061-6eba8efc208f',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'installments-request',hypothesisId:'REQ4',location:'assets/js/single-product.js:requestQuotes',message:'[GStore Installments] Requisição já em andamento',data:{signature},timestamp:Date.now()})}).catch(()=>{});
+				// #endregion
+				return;
+			}
+
+			const ajaxUrl = resolveAjaxUrl();
+			const action = resolveAction();
+			// #region agent log
+			fetch('http://127.0.0.1:7242/ingest/2e9bdb26-956d-44fb-8061-6eba8efc208f',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'installments-request',hypothesisId:'REQ5',location:'assets/js/single-product.js:requestQuotes',message:'[GStore Installments] Fazendo requisição',data:{productId:currentProductId,quantity,max,action,ajaxUrl,hasAjaxUrl:!!ajaxUrl},timestamp:Date.now()})}).catch(()=>{});
+			// #endregion
+			if (!ajaxUrl) {
+				// #region agent log
+				fetch('http://127.0.0.1:7242/ingest/2e9bdb26-956d-44fb-8061-6eba8efc208f',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'installments-request',hypothesisId:'REQ6',location:'assets/js/single-product.js:requestQuotes',message:'[GStore Installments] Aplicando fallback: sem ajaxUrl',data:{reason:'no_ajax_url'},timestamp:Date.now()})}).catch(()=>{});
+				// #endregion
+				applyFallback();
+				return;
+			}
+
+			const body = new URLSearchParams();
+			body.set('action', action);
+			body.set('product_id', currentProductId);
+			body.set('quantity', String(quantity));
+			body.set('max', String(max));
+
+			const fetchPromise = fetch(ajaxUrl, {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+				},
+				credentials: 'same-origin',
+				body: body.toString(),
+			})
+				.then(async (response) => {
+					// #region agent log
+					fetch('http://127.0.0.1:7242/ingest/2e9bdb26-956d-44fb-8061-6eba8efc208f',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'installments-request',hypothesisId:'RESP1',location:'assets/js/single-product.js:requestQuotes',message:'[GStore Installments] Resposta recebida (antes do parse)',data:{status:response.status,statusText:response.statusText,ok:response.ok,contentType:response.headers.get('content-type')||null},timestamp:Date.now()})}).catch(()=>{});
+					// #endregion
+					let payload;
+					try {
+						payload = await response.json();
+					} catch (parseError) {
+						// #region agent log
+						fetch('http://127.0.0.1:7242/ingest/2e9bdb26-956d-44fb-8061-6eba8efc208f',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'installments-request',hypothesisId:'ERR1',location:'assets/js/single-product.js:requestQuotes',message:'[GStore Installments] Erro ao parsear JSON',data:{errorType:'parse_error',errorMessage:parseError?.message||String(parseError),status:response.status},timestamp:Date.now()})}).catch(()=>{});
+						// #endregion
+						throw new Error('Resposta inválida do servidor (JSON parse error).');
+					}
+					// #region agent log
+					fetch('http://127.0.0.1:7242/ingest/2e9bdb26-956d-44fb-8061-6eba8efc208f',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'installments-request',hypothesisId:'RESP2',location:'assets/js/single-product.js:requestQuotes',message:'[GStore Installments] Resposta recebida (payload completo)',data:{payload,hasData:!!payload?.data,hasQuotes:!!payload?.data?.quotes,quotesKeys:payload?.data?.quotes?Object.keys(payload.data.quotes):null,success:payload?.success,message:payload?.data?.message||null},timestamp:Date.now()})}).catch(()=>{});
+					// #endregion
+					if (!response.ok || !payload?.success) {
+						const errorMsg = payload?.data?.message || 'Falha ao obter parcelas.';
+						// #region agent log
+						fetch('http://127.0.0.1:7242/ingest/2e9bdb26-956d-44fb-8061-6eba8efc208f',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'installments-request',hypothesisId:'ERR2',location:'assets/js/single-product.js:requestQuotes',message:'[GStore Installments] Erro na resposta',data:{errorType:'response_error',errorMessage:errorMsg,status:response.status,ok:response.ok,success:payload?.success,payload},timestamp:Date.now()})}).catch(()=>{});
+						// #endregion
+						throw new Error(errorMsg);
+					}
+					if (!payload?.data || typeof payload.data !== 'object') {
+						// #region agent log
+						fetch('http://127.0.0.1:7242/ingest/2e9bdb26-956d-44fb-8061-6eba8efc208f',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'installments-request',hypothesisId:'ERR3',location:'assets/js/single-product.js:requestQuotes',message:'[GStore Installments] payload.data inválido',data:{errorType:'invalid_data',hasData:!!payload?.data,dataType:typeof payload?.data,payload},timestamp:Date.now()})}).catch(()=>{});
+						// #endregion
+						throw new Error('Dados de resposta inválidos.');
+					}
+					if (!payload.data.quotes || typeof payload.data.quotes !== 'object') {
+						// #region agent log
+						fetch('http://127.0.0.1:7242/ingest/2e9bdb26-956d-44fb-8061-6eba8efc208f',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'installments-request',hypothesisId:'ERR4',location:'assets/js/single-product.js:requestQuotes',message:'[GStore Installments] payload.data.quotes inválido',data:{errorType:'invalid_quotes',hasQuotes:!!payload?.data?.quotes,quotesType:typeof payload?.data?.quotes,payload},timestamp:Date.now()})}).catch(()=>{});
+						// #endregion
+						throw new Error('Quotes não encontrados na resposta.');
+					}
+					// Tenta usar o max da resposta, senão usa o max solicitado, senão 21
+					const preferredMax = payload.data.max || max || 21;
+					const quote = chooseQuote(payload.data.quotes, String(preferredMax));
+					// #region agent log
+					fetch('http://127.0.0.1:7242/ingest/2e9bdb26-956d-44fb-8061-6eba8efc208f',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'installments-request',hypothesisId:'QUOTE1',location:'assets/js/single-product.js:requestQuotes',message:'[GStore Installments] Quote selecionada',data:{quote,hasQuote:!!quote,installments:quote?.installments||null,perInstallmentText:quote?.per_installment_text||null},timestamp:Date.now()})}).catch(()=>{});
+					// #endregion
+					if (!quote || !quote.installments || !quote.per_installment_text) {
+						// #region agent log
+						fetch('http://127.0.0.1:7242/ingest/2e9bdb26-956d-44fb-8061-6eba8efc208f',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'installments-request',hypothesisId:'ERR5',location:'assets/js/single-product.js:requestQuotes',message:'[GStore Installments] Quote inválida ou incompleta',data:{errorType:'invalid_quote',quote,hasInstallments:!!quote?.installments,hasPerInstallmentText:!!quote?.per_installment_text},timestamp:Date.now()})}).catch(()=>{});
+						// #endregion
+						throw new Error('Parcelas indisponíveis.');
+					}
+					const text = `ou ${quote.installments}x de ${quote.per_installment_text}`;
+					cache.set(signature, text);
+					quotesCache.set(signature, payload.data.quotes);
+					// #region agent log
+					fetch('http://127.0.0.1:7242/ingest/2e9bdb26-956d-44fb-8061-6eba8efc208f',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'installments-request',hypothesisId:'SUCCESS',location:'assets/js/single-product.js:requestQuotes',message:'[GStore Installments] Sucesso - aplicando texto',data:{text,signature,installments:quote.installments,perInstallmentText:quote.per_installment_text},timestamp:Date.now()})}).catch(()=>{});
+					// #endregion
+					applyText(text);
+					populateInstallmentSelect(payload.data.quotes, quote.installments);
+					setupInstallmentSelectListeners();
+				})
+				.catch((error) => {
+					// #region agent log
+					const errorDetails = {
+						errorType: error instanceof TypeError ? 'network_error' : error instanceof Error ? 'general_error' : 'unknown_error',
+						errorMessage: error?.message || String(error),
+						errorName: error?.name || null,
+						errorStack: error?.stack || null
+					};
+					fetch('http://127.0.0.1:7242/ingest/2e9bdb26-956d-44fb-8061-6eba8efc208f',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'installments-request',hypothesisId:'ERR_CATCH',location:'assets/js/single-product.js:requestQuotes',message:'[GStore Installments] Erro capturado - aplicando fallback',data:errorDetails,timestamp:Date.now()})}).catch(()=>{});
+					// #endregion
+					applyFallback();
+				})
+				.finally(() => {
+					inFlight.delete(signature);
+				});
+
+			inFlight.set(signature, fetchPromise);
+		};
+
+		let qtyTimer = null;
+		const scheduleRequest = () => {
+			clearTimeout(qtyTimer);
+			qtyTimer = setTimeout(requestQuotes, 200);
+		};
+
+		const qtyInput = getQtyInput();
+		if (qtyInput) {
+			qtyInput.addEventListener('change', scheduleRequest);
+			qtyInput.addEventListener('input', scheduleRequest);
+		}
+
+		if (typeof jQuery !== 'undefined') {
+			const $form = jQuery('.variations_form');
+			if ($form.length) {
+				$form.on('found_variation', (event, variation) => {
+					const variationId = variation?.variation_id ? String(variation.variation_id) : '';
+					if (variationId) {
+						currentProductId = variationId;
+						updateTargetsProductId(variationId);
+						scheduleRequest();
+					}
+				});
+				$form.on('reset_data', () => {
+					currentProductId = baseProductId;
+					updateTargetsProductId(baseProductId);
+					scheduleRequest();
+				});
+			}
+		}
+
+		// #region agent log
+		fetch('http://127.0.0.1:7242/ingest/2e9bdb26-956d-44fb-8061-6eba8efc208f',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'installments-init',hypothesisId:'INIT_END',location:'assets/js/single-product.js:initProductInstallmentQuotes',message:'[GStore Installments] Chamando requestQuotes inicial',data:{baseProductId},timestamp:Date.now()})}).catch(()=>{});
+		// #endregion
+		requestQuotes();
+	};
+
+	/**
 	 * Tabs (Descrição / Especificações / Avaliações)
 	 */
 	const initTabs = () => {
@@ -537,6 +908,7 @@ document.addEventListener('DOMContentLoaded', () => {
 	};
 
 	initTabs();
+	initProductInstallmentQuotes();
 	initFavoriteButton();
 	initResetButton();
 	initVariationsState();

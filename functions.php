@@ -1100,6 +1100,16 @@ function gstore_enqueue_scripts() {
 				$single_product_js_version,
 				true
 			);
+
+			wp_localize_script(
+				'gstore-single-product',
+				'gstoreSingleProductInstallments',
+				array(
+					'ajaxUrl'   => admin_url( 'admin-ajax.php' ),
+					'action'    => 'gstore_blu_get_product_installment_quotes',
+					'productId' => (int) get_queried_object_id(),
+				)
+			);
 		}
 
 		// Script da página de favoritos
@@ -2033,6 +2043,77 @@ function gstore_get_blu_installment_rate_percent() {
 	$rate = gstore_get_blu_installment_rate();
 	return number_format( $rate * 100, 2, ',', '.' ) . '%';
 }
+
+/**
+ * Endpoint AJAX: Retorna quotes de parcelamento para um produto.
+ * 
+ * @return void
+ */
+function gstore_ajax_get_product_installment_quotes() {
+	// Verificar se WooCommerce está ativo
+	if ( ! function_exists( 'wc_get_product' ) ) {
+		wp_send_json_error( array( 'message' => 'WooCommerce não está disponível.' ) );
+		return;
+	}
+
+	// Obter parâmetros
+	$product_id = isset( $_POST['product_id'] ) ? absint( $_POST['product_id'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification.Missing
+	$quantity   = isset( $_POST['quantity'] ) ? max( 1, absint( $_POST['quantity'] ) ) : 1; // phpcs:ignore WordPress.Security.NonceVerification.Missing
+	$max        = isset( $_POST['max'] ) ? max( 1, min( 21, absint( $_POST['max'] ) ) ) : 21; // phpcs:ignore WordPress.Security.NonceVerification.Missing
+
+	if ( ! $product_id ) {
+		wp_send_json_error( array( 'message' => 'ID do produto não fornecido.' ) );
+		return;
+	}
+
+	// Obter produto
+	$product = wc_get_product( $product_id );
+	if ( ! $product ) {
+		wp_send_json_error( array( 'message' => 'Produto não encontrado.' ) );
+		return;
+	}
+
+	// Calcular preço total (considerando quantidade)
+	$price = (float) $product->get_price();
+	if ( $price <= 0 ) {
+		wp_send_json_error( array( 'message' => 'Produto sem preço válido.' ) );
+		return;
+	}
+
+	$total_price = $price * $quantity;
+
+	// Obter taxa de juros
+	$rate = gstore_get_blu_installment_rate();
+
+	// Gerar quotes de 1 até max parcelas
+	$quotes = array();
+	for ( $installments = 1; $installments <= $max; $installments++ ) {
+		$per_installment = gstore_calculate_installment_with_interest( $total_price, $installments, $rate );
+		
+		if ( $per_installment > 0 ) {
+			// Formatar valor da parcela
+			$per_installment_text = wc_price( $per_installment, array( 'decimals' => 2 ) );
+			// Remover tags HTML do wc_price para obter apenas o texto
+			$per_installment_text = wp_strip_all_tags( $per_installment_text );
+			
+			$quotes[ (string) $installments ] = array(
+				'installments'        => $installments,
+				'per_installment'     => $per_installment,
+				'per_installment_text' => $per_installment_text,
+				'total'              => $total_price,
+			);
+		}
+	}
+
+	if ( empty( $quotes ) ) {
+		wp_send_json_error( array( 'message' => 'Não foi possível calcular parcelas.' ) );
+		return;
+	}
+
+	wp_send_json_success( array( 'quotes' => $quotes ) );
+}
+add_action( 'wp_ajax_gstore_blu_get_product_installment_quotes', 'gstore_ajax_get_product_installment_quotes' );
+add_action( 'wp_ajax_nopriv_gstore_blu_get_product_installment_quotes', 'gstore_ajax_get_product_installment_quotes' );
 
 /**
  * Adiciona informações de pagamento ao bloco de preço.

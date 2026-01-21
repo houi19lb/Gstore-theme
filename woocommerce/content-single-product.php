@@ -77,18 +77,21 @@ if ( ! function_exists( 'gstore_get_hero_meta_cards' ) ) :
 				'label'      => __( 'Disponibilidade', 'gstore' ),
 				'text'       => $stock_label,
 				'allow_html' => true,
+				'is_installment' => false,
 			),
 			array(
 				'icon'       => 'fa-credit-card',
 				'label'      => __( 'Condições de pagamento', 'gstore' ),
 				'text'       => $formatted_installment ? $formatted_installment : __( 'Parcele no cartão ou finalize no PIX.', 'gstore' ),
 				'allow_html' => (bool) $formatted_installment,
+				'is_installment' => true,
 			),
 			array(
 				'icon'       => 'fa-truck-fast',
 				'label'      => __( 'Envio monitorado', 'gstore' ),
 				'text'       => __( 'Rastreamento atualizado em cada etapa.', 'gstore' ),
 				'allow_html' => false,
+				'is_installment' => false,
 			),
 		);
 	}
@@ -403,15 +406,12 @@ $current_price    = (float) $product->get_price();
 $has_discount     = $product->is_on_sale() && $regular_price > 0;
 $discount_percent = $has_discount ? round( ( ( $regular_price - $current_price ) / $regular_price ) * 100 ) : 0;
 $installments     = (int) apply_filters( 'armastore_single_product_installments', 21, $product );
-// Calcula parcela COM JUROS (taxa Blu: 2.99% a.m.)
-$installment_amt  = ( $current_price > 0 && $installments ) ? gstore_calculate_installment_with_interest( $current_price, $installments ) : 0;
-
-$formatted_installment = $installment_amt > 0
+// Placeholder para parcelamento (valor real vem via AJAX).
+$formatted_installment = $installments > 0
 	? sprintf(
-		/* translators: 1: número de parcelas, 2: valor da parcela */
-		__( 'ou %1$dx de %2$s', 'gstore' ),
-		$installments,
-		wc_price( $installment_amt )
+		/* translators: 1: número de parcelas */
+		__( 'ou em até %1$dx no cartão', 'gstore' ),
+		$installments
 	)
 	: '';
 
@@ -614,7 +614,15 @@ if ( $reviews_has_value ) {
 											<div class="Gstore-single-product__info-title">
 												<?php echo esc_html( $card['label'] ); ?>
 											</div>
-											<div class="Gstore-single-product__info-sub">
+											<div
+												class="Gstore-single-product__info-sub"
+												<?php if ( ! empty( $card['is_installment'] ) ) : ?>
+													data-gstore-installment-target="1"
+													data-product-id="<?php echo esc_attr( $product->get_id() ); ?>"
+													data-max-installments="<?php echo esc_attr( $installments ); ?>"
+													data-initial-text="<?php echo esc_attr( wp_strip_all_tags( (string) $card['text'] ) ); ?>"
+												<?php endif; ?>
+											>
 												<?php
 												if ( ! empty( $card['allow_html'] ) ) {
 													echo wp_kses_post( $card['text'] );
@@ -707,8 +715,24 @@ if ( $reviews_has_value ) {
 									<div class="price-sub"><?php esc_html_e( 'Preço muda conforme as opções', 'gstore' ); ?></div>
 								<?php endif; ?>
 								<?php if ( $formatted_installment ) : ?>
-									<div class="price-sub">
-										<?php echo wp_kses_post( $formatted_installment ); ?>
+									<div class="price-sub-wrapper" data-gstore-installment-wrapper>
+										<div
+											class="price-sub"
+											data-gstore-installment-target="1"
+											data-product-id="<?php echo esc_attr( $product->get_id() ); ?>"
+											data-max-installments="<?php echo esc_attr( $installments ); ?>"
+											data-initial-text="<?php echo esc_attr( wp_strip_all_tags( (string) $formatted_installment ) ); ?>"
+										>
+											<?php echo wp_kses_post( $formatted_installment ); ?>
+										</div>
+										<select
+											class="price-sub-installments-select"
+											data-gstore-installment-select
+											aria-label="<?php esc_attr_e( 'Selecione o número de parcelas', 'gstore' ); ?>"
+											style="display: none;"
+										>
+											<option value=""><?php esc_html_e( 'Carregando...', 'gstore' ); ?></option>
+										</select>
 									</div>
 								<?php endif; ?>
 							</div>

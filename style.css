@@ -2870,6 +2870,33 @@ body.single-product .onsale {
 	color: var(--gstore-color-text-gray-500);
 }
 
+.price-sub-wrapper {
+	position: relative;
+	margin-top: 6px;
+}
+
+.price-sub-installments-select {
+	width: 100%;
+	padding: 6px 8px;
+	font-size: var(--gstore-font-size-xs);
+	border: 1px solid var(--gstore-color-border-divider, #e5e7eb);
+	border-radius: 4px;
+	background: var(--gstore-color-bg-light);
+	color: var(--gstore-color-text-primary);
+	cursor: pointer;
+	transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.price-sub-installments-select:hover {
+	border-color: var(--gstore-color-border-input, #d0d5dd);
+}
+
+.price-sub-installments-select:focus {
+	outline: none;
+	border-color: var(--gstore-color-accent, #ff5c00);
+	box-shadow: 0 0 0 3px rgba(255, 92, 0, 0.15);
+}
+
 .buybox .btn-secondary {
 	height: 36px;
 	padding: 0 14px;
