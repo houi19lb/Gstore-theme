@@ -513,13 +513,14 @@
 			data: {
 				action: 'gstore_calculate_shipping',
 				nonce: typeof gstoreShippingCalculator !== 'undefined' ? gstoreShippingCalculator.nonce : '',
+				gstore_debug: 1,
 				postcode: cep,
 				product_id: productId,
 				quantity: quantity,
 			},
 		}).then((response) => {
 			// #region agent log
-			fetch('http://127.0.0.1:7242/ingest/2e9bdb26-956d-44fb-8061-6eba8efc208f',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'cart.js:fetchRatesForItem',message:'ajax response',data:{success:!!(response && response.success),hasRates:!!(response && response.data && Array.isArray(response.data.rates)),ratesCount:response && response.data && Array.isArray(response.data.rates) ? response.data.rates.length : 0,dataKeys:response && response.data ? Object.keys(response.data) : [],message:response && response.data ? (response.data.message || response.data.error || null) : null},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+			fetch('http://127.0.0.1:7242/ingest/2e9bdb26-956d-44fb-8061-6eba8efc208f',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'cart.js:fetchRatesForItem',message:'ajax response',data:{success:!!(response && response.success),hasRates:!!(response && response.data && Array.isArray(response.data.rates)),ratesCount:response && response.data && Array.isArray(response.data.rates) ? response.data.rates.length : 0,dataKeys:response && response.data ? Object.keys(response.data) : [],message:response && response.data ? (response.data.message || response.data.error || null) : null,debug:response && response.data ? (response.data.debug || null) : null},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
 			// #endregion agent log
 			if (!response || !response.success || !response.data || !Array.isArray(response.data.rates)) {
 				return null;

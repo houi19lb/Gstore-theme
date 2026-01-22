@@ -4544,15 +4544,17 @@ function gstore_calculate_shipping_ajax() {
 		);
 		@file_put_contents( $debug_log_path, wp_json_encode( $payload ) . PHP_EOL, FILE_APPEND );
 	};
+	$debug_enabled = isset( $_POST['gstore_debug'] );
+	$debug_base = array(
+		'product_id'     => isset( $_POST['product_id'] ) ? (int) $_POST['product_id'] : 0,
+		'quantity'       => isset( $_POST['quantity'] ) ? (int) $_POST['quantity'] : 0,
+		'postcodeLength' => isset( $_POST['postcode'] ) ? strlen( preg_replace( '/[^0-9]/', '', (string) $_POST['postcode'] ) ) : 0,
+	);
 
 	$debug_log(
 		'functions.php:gstore_calculate_shipping_ajax',
 		'ajax entry',
-		array(
-			'product_id'     => isset( $_POST['product_id'] ) ? (int) $_POST['product_id'] : 0,
-			'quantity'       => isset( $_POST['quantity'] ) ? (int) $_POST['quantity'] : 0,
-			'postcodeLength' => isset( $_POST['postcode'] ) ? strlen( preg_replace( '/[^0-9]/', '', (string) $_POST['postcode'] ) ) : 0,
-		),
+		$debug_base,
 		'P1'
 	);
 
@@ -4621,7 +4623,20 @@ function gstore_calculate_shipping_ajax() {
 				),
 				'P2'
 			);
-			wp_send_json_error( array( 'message' => __( 'Não foi possível calcular o frete para este produto.', 'gstore' ) ) );
+			$error_payload = array( 'message' => __( 'Não foi possível calcular o frete para este produto.', 'gstore' ) );
+			if ( $debug_enabled ) {
+				$error_payload['debug'] = array_merge(
+					$debug_base,
+					array(
+						'state'         => $state,
+						'branch'        => 'product',
+						'has_variation' => ! empty( $variation ),
+						'type'          => $type,
+						'options_count' => is_array( $options ) ? count( $options ) : 0,
+					)
+				);
+			}
+			wp_send_json_error( $error_payload );
 			return;
 		}
 
@@ -4645,15 +4660,26 @@ function gstore_calculate_shipping_ajax() {
 			WC()->cart->calculate_totals();
 		}
 
-		wp_send_json_success(
-			array(
-				'rates'       => $rates,
-				'destination' => array(
-					'city'  => '',
-					'state' => $state,
-				),
-			)
+		$success_payload = array(
+			'rates'       => $rates,
+			'destination' => array(
+				'city'  => '',
+				'state' => $state,
+			),
 		);
+		if ( $debug_enabled ) {
+			$success_payload['debug'] = array_merge(
+				$debug_base,
+				array(
+					'state'         => $state,
+					'branch'        => 'product',
+					'has_variation' => ! empty( $variation ),
+					'type'          => $type,
+					'options_count' => is_array( $options ) ? count( $options ) : 0,
+				)
+			);
+		}
+		wp_send_json_success( $success_payload );
 		return;
 	}
 
@@ -4756,7 +4782,24 @@ function gstore_calculate_shipping_ajax() {
 			),
 			'P3'
 		);
-		wp_send_json_error( array( 'message' => __( 'Não foi possível calcular o frete para este destino.', 'gstore' ) ) );
+		$error_payload = array( 'message' => __( 'Não foi possível calcular o frete para este destino.', 'gstore' ) );
+		if ( $debug_enabled ) {
+			$error_payload['debug'] = array_merge(
+				$debug_base,
+				array(
+					'state'                  => $state,
+					'branch'                 => 'cart',
+					'item_count'             => $item_count,
+					'items_with_options'     => $items_with_options,
+					'items_missing_variation'=> $items_missing_variation,
+					'items_missing_options'  => $items_missing_options,
+					'has_land'               => $has_land,
+					'has_air'                => $has_air,
+					'has_ammo'               => $has_ammo,
+				)
+			);
+		}
+		wp_send_json_error( $error_payload );
 		return;
 	}
 
@@ -4765,15 +4808,30 @@ function gstore_calculate_shipping_ajax() {
 	WC()->cart->calculate_shipping();
 	WC()->cart->calculate_totals();
 
-	wp_send_json_success(
-		array(
-			'rates'       => $rates,
-			'destination' => array(
-				'city'  => '',
-				'state' => $state,
-			),
-		)
+	$success_payload = array(
+		'rates'       => $rates,
+		'destination' => array(
+			'city'  => '',
+			'state' => $state,
+		),
 	);
+	if ( $debug_enabled ) {
+		$success_payload['debug'] = array_merge(
+			$debug_base,
+			array(
+				'state'                  => $state,
+				'branch'                 => 'cart',
+				'item_count'             => $item_count,
+				'items_with_options'     => $items_with_options,
+				'items_missing_variation'=> $items_missing_variation,
+				'items_missing_options'  => $items_missing_options,
+				'has_land'               => $has_land,
+				'has_air'                => $has_air,
+				'has_ammo'               => $has_ammo,
+			)
+		);
+	}
+	wp_send_json_success( $success_payload );
 }
 // Sempre registra o endpoint AJAX do tema para cálculo de frete
 add_action( 'wp_ajax_gstore_calculate_shipping', 'gstore_calculate_shipping_ajax' );
