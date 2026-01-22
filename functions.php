@@ -4540,7 +4540,7 @@ function gstore_calculate_shipping_ajax() {
 	$product_id = isset( $_POST['product_id'] ) ? intval( $_POST['product_id'] ) : 0;
 	$quantity   = isset( $_POST['quantity'] ) ? intval( $_POST['quantity'] ) : 1;
 	$debug_log_path = function_exists( 'get_theme_file_path' ) ? get_theme_file_path( '.cursor/debug.log' ) : '';
-	$debug_enabled = ! empty( $_POST['debug'] );
+	$debug_enabled = ! empty( $_REQUEST['debug'] ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 
 	// #region agent log
 	if ( $debug_log_path && function_exists( 'wp_json_encode' ) ) {
