@@ -55,7 +55,7 @@ if ( function_exists( 'wc_wp_theme_get_element_class_name' ) ) {
 								$cart_item_class   = implode( ' ', array_map( 'sanitize_html_class', explode( ' ', apply_filters( 'woocommerce_cart_item_class', 'cart_item', $cart_item, $cart_item_key ) ) ) );
 								?>
 
-								<article class="Gstore-cart-card <?php echo esc_attr( $cart_item_class ); ?>" role="listitem" data-cart-item-key="<?php echo esc_attr( $cart_item_key ); ?>" data-product-id="<?php echo esc_attr( $product_id ); ?>" data-variation-id="<?php echo esc_attr( isset( $cart_item['variation_id'] ) ? (int) $cart_item['variation_id'] : 0 ); ?>" data-quantity="<?php echo esc_attr( $cart_item['quantity'] ); ?>">
+								<article class="Gstore-cart-card <?php echo esc_attr( $cart_item_class ); ?>" role="listitem" data-cart-item-key="<?php echo esc_attr( $cart_item_key ); ?>" data-product-id="<?php echo esc_attr( $product_id ); ?>" data-quantity="<?php echo esc_attr( $cart_item['quantity'] ); ?>">
 									<div class="Gstore-cart-card__media">
 										<?php
 										if ( ! $product_permalink ) {

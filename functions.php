@@ -1126,13 +1126,11 @@ function gstore_enqueue_scripts() {
 		}
 
 		if ( function_exists( 'is_cart' ) && is_cart() ) {
-		$cart_js_path    = get_theme_file_path( 'assets/js/cart.js' );
-		$cart_js_version = file_exists( $cart_js_path ) ? (string) filemtime( $cart_js_path ) : wp_get_theme()->get( 'Version' );
 			wp_enqueue_script(
 				'gstore-cart',
 				get_theme_file_uri( 'assets/js/cart.js' ),
-			array( 'jquery' ),
-			$cart_js_version,
+				array(),
+				wp_get_theme()->get( 'Version' ),
 				true
 			);
 		}
@@ -4537,33 +4535,8 @@ function gstore_calculate_shipping_ajax() {
 	check_ajax_referer( 'gstore_shipping_calculator', 'nonce' );
 
 	$postcode   = isset( $_POST['postcode'] ) ? sanitize_text_field( $_POST['postcode'] ) : '';
-	$product_id = ! empty( $_POST['product_id'] ) ? intval( $_POST['product_id'] ) : ( ! empty( $_GET['product_id'] ) ? intval( $_GET['product_id'] ) : 0 );
-	if ( $product_id <= 0 && ! empty( $_SERVER['REQUEST_URI'] ) && preg_match( '/[?&]product_id=(\d+)/', $_SERVER['REQUEST_URI'], $m ) ) {
-		$product_id = intval( $m[1] );
-	}
+	$product_id = isset( $_POST['product_id'] ) ? intval( $_POST['product_id'] ) : 0;
 	$quantity   = isset( $_POST['quantity'] ) ? intval( $_POST['quantity'] ) : 1;
-	$debug_log_path = function_exists( 'get_theme_file_path' ) ? get_theme_file_path( '.cursor/debug.log' ) : '';
-	$debug_enabled = ! empty( $_REQUEST['debug'] ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-
-	// #region agent log
-	if ( $debug_log_path && function_exists( 'wp_json_encode' ) ) {
-		$log_payload = array(
-			'location'     => 'functions.php:gstore_calculate_shipping_ajax',
-			'message'      => 'request received',
-			'data'         => array(
-				'postcode'  => $postcode,
-				'productId' => $product_id,
-				'quantity'  => $quantity,
-				'isMobile'  => isset( $_SERVER['HTTP_USER_AGENT'] ) ? ( false !== stripos( $_SERVER['HTTP_USER_AGENT'], 'Mobile' ) ) : null,
-			),
-			'timestamp'    => (int) round( microtime( true ) * 1000 ),
-			'sessionId'    => 'debug-session',
-			'runId'        => 'run1',
-			'hypothesisId' => 'H2',
-		);
-		@file_put_contents( $debug_log_path, wp_json_encode( $log_payload ) . PHP_EOL, FILE_APPEND ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_read_file_system_write_file
-	}
-	// #endregion agent log
 
 	// Limpa o CEP
 	$postcode = preg_replace( '/[^0-9]/', '', $postcode );
@@ -4596,15 +4569,7 @@ function gstore_calculate_shipping_ajax() {
 	if ( $product_id > 0 ) {
 		$product = wc_get_product( $product_id );
 		if ( ! $product ) {
-			header( 'X-Gstore-Debug: branch=product;pid=' . $product_id . ';err=not_found' );
-			$payload = array( 'message' => __( 'Produto não encontrado.', 'gstore' ) );
-			if ( $debug_enabled ) {
-				$payload['debug'] = array(
-					'productId' => $product_id,
-					'error'     => 'product_not_found',
-				);
-			}
-			wp_send_json_error( $payload );
+			wp_send_json_error( array( 'message' => __( 'Produto não encontrado.', 'gstore' ) ) );
 			return;
 		}
 
@@ -4612,49 +4577,9 @@ function gstore_calculate_shipping_ajax() {
 		$variation = gstore_find_freight_variation( $product );
 		$type      = gstore_get_product_freight_type( $product );
 		$options   = gstore_get_freight_mode_options( $variation, $type );
-		$debug_payload = array(
-			'productId'     => $product_id,
-			'productType'   => $product->get_type(),
-			'productSlug'   => $product->get_slug(),
-			'parentId'      => method_exists( $product, 'get_parent_id' ) ? (int) $product->get_parent_id() : 0,
-			'type'          => $type,
-			'options'       => is_array( $options ) ? array_values( $options ) : array(),
-			'variationMatch'=> is_array( $variation ) ? array(
-				'allowLand' => isset( $variation['allowLand'] ) ? (bool) $variation['allowLand'] : null,
-				'allowAir'  => isset( $variation['allowAir'] ) ? (bool) $variation['allowAir'] : null,
-				'isAmmo'    => ! empty( $variation['isAmmo'] ),
-				'isGun'     => ! empty( $variation['isGun'] ),
-				'isAccessory' => ! empty( $variation['isAccessory'] ),
-			) : null,
-			'configVariationsCount' => (int) ( is_array( gstore_get_freight_config() ) && ! empty( gstore_get_freight_config()['variations'] ) ? count( gstore_get_freight_config()['variations'] ) : 0 ),
-		);
-
-		// #region agent log
-		if ( $debug_log_path && function_exists( 'wp_json_encode' ) ) {
-			$log_payload = array(
-				'location'     => 'functions.php:gstore_calculate_shipping_ajax',
-				'message'      => 'freight options resolved',
-				'data'         => array(
-					'variationId' => is_array( $variation ) && isset( $variation['variation_id'] ) ? (int) $variation['variation_id'] : 0,
-					'type'        => $type,
-					'options'     => is_array( $options ) ? array_values( $options ) : array(),
-				),
-				'timestamp'    => (int) round( microtime( true ) * 1000 ),
-				'sessionId'    => 'debug-session',
-				'runId'        => 'run1',
-				'hypothesisId' => 'H2',
-			);
-			@file_put_contents( $debug_log_path, wp_json_encode( $log_payload ) . PHP_EOL, FILE_APPEND ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_read_file_system_write_file
-		}
-		// #endregion agent log
 
 		if ( empty( $options ) ) {
-			header( 'X-Gstore-Debug: branch=product;pid=' . $product_id . ';err=no_options' );
-			$payload = array( 'message' => __( 'Não foi possível calcular o frete para este produto.', 'gstore' ) );
-			if ( $debug_enabled ) {
-				$payload['debug'] = $debug_payload;
-			}
-			wp_send_json_error( $payload );
+			wp_send_json_error( array( 'message' => __( 'Não foi possível calcular o frete para este produto.', 'gstore' ) ) );
 			return;
 		}
 
@@ -4671,23 +4596,6 @@ function gstore_calculate_shipping_ajax() {
 				'cost_formatted' => wc_price( $cost ),
 			);
 		}
-		// #region agent log
-		if ( $debug_log_path && function_exists( 'wp_json_encode' ) ) {
-			$log_payload = array(
-				'location'     => 'functions.php:gstore_calculate_shipping_ajax',
-				'message'      => 'rates computed',
-				'data'         => array(
-					'ratesCount' => count( $rates ),
-					'state'      => $state,
-				),
-				'timestamp'    => (int) round( microtime( true ) * 1000 ),
-				'sessionId'    => 'debug-session',
-				'runId'        => 'run1',
-				'hypothesisId' => 'H2',
-			);
-			@file_put_contents( $debug_log_path, wp_json_encode( $log_payload ) . PHP_EOL, FILE_APPEND ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_read_file_system_write_file
-		}
-		// #endregion agent log
 
 		// Recalcula totais do carrinho se disponível
 		if ( function_exists( 'WC' ) && WC()->cart ) {
@@ -4702,16 +4610,12 @@ function gstore_calculate_shipping_ajax() {
 					'city'  => '',
 					'state' => $state,
 				),
-				'debug'      => $debug_enabled ? $debug_payload : null,
 			)
 		);
 		return;
 	}
 
 	// ===== CÁLCULO PARA CARRINHO (product_id = 0) =====
-	// #region agent log
-	error_log( 'gstore_calculate_shipping_ajax: product_id=' . $product_id . ', branch=cart, postcode=' . $postcode );
-	// #endregion agent log
 	if ( ! function_exists( 'WC' ) || ! WC()->cart ) {
 		wp_send_json_error( array( 'message' => __( 'Carrinho não disponível.', 'gstore' ) ) );
 		return;
@@ -4729,7 +4633,6 @@ function gstore_calculate_shipping_ajax() {
 	$has_land   = false;
 	$has_air    = false;
 	$has_ammo   = false;
-	$debug_cart_items = array();
 
 	foreach ( $cart_contents as $cart_item ) {
 		$item_product  = isset( $cart_item['data'] ) ? $cart_item['data'] : null;
@@ -4742,24 +4645,6 @@ function gstore_calculate_shipping_ajax() {
 		$item_variation = gstore_find_freight_variation( $item_product );
 		$item_type      = gstore_get_product_freight_type( $item_product );
 		$item_options   = gstore_get_freight_mode_options( $item_variation, $item_type );
-		if ( $debug_enabled ) {
-			$debug_cart_items[] = array(
-				'productId'   => $item_product->get_id(),
-				'parentId'    => method_exists( $item_product, 'get_parent_id' ) ? (int) $item_product->get_parent_id() : 0,
-				'slug'        => $item_product->get_slug(),
-				'type'        => $item_product->get_type(),
-				'quantity'    => $item_quantity,
-				'freightType' => $item_type,
-				'options'     => is_array( $item_options ) ? array_values( $item_options ) : array(),
-				'variationMatch' => is_array( $item_variation ) ? array(
-					'allowLand' => isset( $item_variation['allowLand'] ) ? (bool) $item_variation['allowLand'] : null,
-					'allowAir'  => isset( $item_variation['allowAir'] ) ? (bool) $item_variation['allowAir'] : null,
-					'isAmmo'    => ! empty( $item_variation['isAmmo'] ),
-					'isGun'     => ! empty( $item_variation['isGun'] ),
-					'isAccessory' => ! empty( $item_variation['isAccessory'] ),
-				) : null,
-			);
-		}
 
 		if ( 'ammo' === $item_type ) {
 			$has_ammo = true;
@@ -4800,27 +4685,7 @@ function gstore_calculate_shipping_ajax() {
 	}
 
 	if ( empty( $rates ) ) {
-		header( 'X-Gstore-Debug: branch=cart;pid=' . $product_id . ';err=no_rates' );
-		$payload = array(
-			'message'     => __( 'Não foi possível calcular o frete para este destino.', 'gstore' ),
-			'destination' => array(
-				'state' => isset( $state ) ? $state : '',
-				'city'  => '',
-			),
-			'debug'       => array(
-				'received_product_id' => $product_id,
-				'branch'              => 'cart',
-				'hasLand'             => $has_land,
-				'hasAir'              => $has_air,
-				'hasAmmo'             => $has_ammo,
-			),
-		);
-		if ( $debug_enabled && ! empty( $debug_cart_items ) ) {
-			$payload['debug']['cartItems'] = $debug_cart_items;
-			$payload['debug']['totalLand'] = $total_land;
-			$payload['debug']['totalAir']  = $total_air;
-		}
-		wp_send_json_error( $payload );
+		wp_send_json_error( array( 'message' => __( 'Não foi possível calcular o frete para este destino.', 'gstore' ) ) );
 		return;
 	}
 
@@ -4836,14 +4701,6 @@ function gstore_calculate_shipping_ajax() {
 				'city'  => '',
 				'state' => $state,
 			),
-			'debug'      => $debug_enabled ? array(
-				'cartItems' => $debug_cart_items,
-				'totalLand' => $total_land,
-				'totalAir'  => $total_air,
-				'hasLand'   => $has_land,
-				'hasAir'    => $has_air,
-				'hasAmmo'   => $has_ammo,
-			) : null,
 		)
 	);
 }
