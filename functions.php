@@ -1126,11 +1126,13 @@ function gstore_enqueue_scripts() {
 		}
 
 		if ( function_exists( 'is_cart' ) && is_cart() ) {
+		$cart_js_path    = get_theme_file_path( 'assets/js/cart.js' );
+		$cart_js_version = file_exists( $cart_js_path ) ? (string) filemtime( $cart_js_path ) : wp_get_theme()->get( 'Version' );
 			wp_enqueue_script(
 				'gstore-cart',
 				get_theme_file_uri( 'assets/js/cart.js' ),
 			array( 'jquery' ),
-				wp_get_theme()->get( 'Version' ),
+			$cart_js_version,
 				true
 			);
 		}
