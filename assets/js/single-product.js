@@ -239,12 +239,13 @@ document.addEventListener('DOMContentLoaded', () => {
 			if (totalText) {
 				details.push(`total: ${totalText}`);
 			}
-			if (Number.isFinite(jurosValue) && jurosValue > 0) {
-				const jurosText = formatCurrency(jurosValue);
-				if (jurosText) {
-					details.push(`juros: ${jurosText}`);
-				}
-			}
+			// Removido: exibição de juros conforme solicitado
+			// if (Number.isFinite(jurosValue) && jurosValue > 0) {
+			// 	const jurosText = formatCurrency(jurosValue);
+			// 	if (jurosText) {
+			// 		details.push(`juros: ${jurosText}`);
+			// 	}
+			// }
 			if (details.length) {
 				optionText += ` (${details.join(', ')})`;
 			}
