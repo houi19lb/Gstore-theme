@@ -420,6 +420,7 @@
 	function fetchRatesForItem(itemEl, cep) {
 		const productId = parseInt(itemEl.dataset.productId || '0', 10);
 		const quantity = parseInt(itemEl.dataset.quantity || '1', 10);
+		const variationId = parseInt(itemEl.dataset.variationId || '0', 10);
 
 		if (!productId || !quantity || !cep) {
 			// #region agent log
@@ -429,7 +430,7 @@
 		}
 
 		// #region agent log
-		fetch('http://127.0.0.1:7247/ingest/cce9ccaa-d42e-4577-9651-ba22a488615c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'cart.js:fetchRatesForItem',message:'ajax request start',data:{productId:productId,quantity:quantity,cep:cep,ajaxUrl:getShippingAjaxUrl()},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+		fetch('http://127.0.0.1:7247/ingest/cce9ccaa-d42e-4577-9651-ba22a488615c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'cart.js:fetchRatesForItem',message:'ajax request start',data:{productId:productId,variationId:variationId,quantity:quantity,cep:cep,ajaxUrl:getShippingAjaxUrl()},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
 		// #endregion agent log
 		return jQuery.ajax({
 			url: getShippingAjaxUrl(),
@@ -636,6 +637,7 @@
 			return {
 				cartItemKey: itemEl.dataset.cartItemKey || itemEl.getAttribute('data-cart-item-key') || '',
 				productId: itemEl.dataset.productId || itemEl.getAttribute('data-product-id') || '',
+				variationId: itemEl.dataset.variationId || itemEl.getAttribute('data-variation-id') || '',
 				quantity: itemEl.dataset.quantity || itemEl.getAttribute('data-quantity') || '',
 			};
 		}).filter(Boolean);
