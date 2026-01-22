@@ -4537,7 +4537,7 @@ function gstore_calculate_shipping_ajax() {
 	check_ajax_referer( 'gstore_shipping_calculator', 'nonce' );
 
 	$postcode   = isset( $_POST['postcode'] ) ? sanitize_text_field( $_POST['postcode'] ) : '';
-	$product_id = isset( $_POST['product_id'] ) ? intval( $_POST['product_id'] ) : 0;
+	$product_id = ! empty( $_POST['product_id'] ) ? intval( $_POST['product_id'] ) : ( ! empty( $_GET['product_id'] ) ? intval( $_GET['product_id'] ) : 0 );
 	$quantity   = isset( $_POST['quantity'] ) ? intval( $_POST['quantity'] ) : 1;
 	$debug_log_path = function_exists( 'get_theme_file_path' ) ? get_theme_file_path( '.cursor/debug.log' ) : '';
 	$debug_enabled = ! empty( $_REQUEST['debug'] ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
@@ -4843,16 +4843,20 @@ function gstore_calculate_shipping_ajax() {
 	}
 
 	if ( empty( $rates ) ) {
-		$payload = array( 'message' => __( 'Não foi possível calcular o frete para este destino.', 'gstore' ) );
-		if ( $debug_enabled ) {
-			$payload['debug'] = array(
-				'cartItems' => $debug_cart_items,
-				'totalLand' => $total_land,
-				'totalAir'  => $total_air,
-				'hasLand'   => $has_land,
-				'hasAir'    => $has_air,
-				'hasAmmo'   => $has_ammo,
-			);
+		$payload = array(
+			'message' => __( 'Não foi possível calcular o frete para este destino.', 'gstore' ),
+			'debug'   => array(
+				'received_product_id' => $product_id,
+				'branch'              => 'cart',
+				'hasLand'             => $has_land,
+				'hasAir'              => $has_air,
+				'hasAmmo'              => $has_ammo,
+			),
+		);
+		if ( $debug_enabled && ! empty( $debug_cart_items ) ) {
+			$payload['debug']['cartItems'] = $debug_cart_items;
+			$payload['debug']['totalLand'] = $total_land;
+			$payload['debug']['totalAir']  = $total_air;
 		}
 		wp_send_json_error( $payload );
 		return;

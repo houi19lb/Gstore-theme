@@ -147,13 +147,21 @@
 		return '/wp-admin/admin-ajax.php';
 	}
 
-	function getShippingAjaxUrlWithDebug() {
+	function getShippingAjaxUrlWithDebug(productId) {
 		const url = getShippingAjaxUrl();
-		if (!url || url.indexOf('debug=1') !== -1) {
-			return url;
+		const base = !url ? '' : url;
+		const parts = [];
+		if (base.indexOf('debug=1') === -1) {
+			parts.push('debug=1');
 		}
-		const separator = url.indexOf('?') === -1 ? '?' : '&';
-		return `${url}${separator}debug=1`;
+		if (productId > 0) {
+			parts.push('product_id=' + encodeURIComponent(String(productId)));
+		}
+		if (parts.length === 0) {
+			return base;
+		}
+		const separator = base.indexOf('?') === -1 ? '?' : '&';
+		return base + separator + parts.join('&');
 	}
 
 	function parsePriceValue(rawText) {
@@ -439,10 +447,10 @@
 		}
 
 		// #region agent log
-		fetch('http://127.0.0.1:7247/ingest/cce9ccaa-d42e-4577-9651-ba22a488615c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'cart.js:fetchRatesForItem',message:'ajax request start',data:{productId:productId,variationId:variationId,quantity:quantity,cep:cep,ajaxUrl:getShippingAjaxUrlWithDebug(),debug:true},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+		fetch('http://127.0.0.1:7247/ingest/cce9ccaa-d42e-4577-9651-ba22a488615c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'cart.js:fetchRatesForItem',message:'ajax request start',data:{productId:productId,variationId:variationId,quantity:quantity,cep:cep,ajaxUrl:getShippingAjaxUrlWithDebug(productId),debug:true},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
 		// #endregion agent log
 		return jQuery.ajax({
-			url: getShippingAjaxUrlWithDebug(),
+			url: getShippingAjaxUrlWithDebug(productId),
 			type: 'POST',
 			dataType: 'json',
 			data: {
