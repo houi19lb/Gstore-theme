@@ -9,6 +9,7 @@
 
 	var FLOAT_ID = 'gstore-telegram-float';
 	var FLOAT_CLASS = 'Gstore-telegram-float';
+	var MINI_CART_DRAWER_SELECTOR = '.wc-block-mini-cart__drawer';
 
 	function normalizeText(str) {
 		return (str || '').toString().trim().toLowerCase();
@@ -99,6 +100,47 @@
 		return true;
 	}
 
+	function toggleTelegramFloatVisibility(floatAnchor) {
+		if (!floatAnchor) return;
+
+		var drawer = document.querySelector(MINI_CART_DRAWER_SELECTOR);
+		if (!drawer) {
+			floatAnchor.style.display = '';
+			return;
+		}
+
+		if (drawer.classList.contains('is-open')) {
+			floatAnchor.style.display = 'none';
+		} else {
+			floatAnchor.style.display = '';
+		}
+	}
+
+	function observeMiniCartDrawer(floatAnchor) {
+		if (!floatAnchor) return false;
+		if (floatAnchor.__gstoreMiniCartObserver) return true;
+
+		var drawer = document.querySelector(MINI_CART_DRAWER_SELECTOR);
+		if (!drawer) return false;
+
+		toggleTelegramFloatVisibility(floatAnchor);
+
+		try {
+			var obs = new MutationObserver(function (mutations) {
+				mutations.forEach(function (mutation) {
+					if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
+						toggleTelegramFloatVisibility(floatAnchor);
+					}
+				});
+			});
+			obs.observe(drawer, { attributes: true, attributeFilter: ['class'] });
+			floatAnchor.__gstoreMiniCartObserver = true;
+			return true;
+		} catch (e) {
+			return false;
+		}
+	}
+
 	function sync() {
 		var src = findTelegramAnchor();
 		if (!src) return false;
@@ -106,6 +148,9 @@
 		var floating = ensureFloatButton();
 		var ok = applyFromSource(src, floating);
 		if (!ok) return false;
+
+		toggleTelegramFloatVisibility(floating);
+		observeMiniCartDrawer(floating);
 
 		// Observa alterações no link fonte para manter o botão atualizado.
 		try {
