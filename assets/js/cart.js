@@ -442,11 +442,17 @@
 				postcode: cep,
 				product_id: productId,
 				quantity: quantity,
+				debug: 1,
 			},
 		}).then((response) => {
 			// #region agent log
 			fetch('http://127.0.0.1:7247/ingest/cce9ccaa-d42e-4577-9651-ba22a488615c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'cart.js:fetchRatesForItem',message:'ajax response received',data:{success:response && response.success,hasData:!!(response && response.data),ratesCount:response && response.data && Array.isArray(response.data.rates)?response.data.rates.length:0},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
 			// #endregion agent log
+			if (response && response.data && response.data.debug) {
+				// #region agent log
+				fetch('http://127.0.0.1:7247/ingest/cce9ccaa-d42e-4577-9651-ba22a488615c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'cart.js:fetchRatesForItem',message:'ajax debug payload',data:{debug:response.data.debug},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H2'})}).catch(()=>{});
+				// #endregion agent log
+			}
 			if (!response || !response.success) {
 				// #region agent log
 				fetch('http://127.0.0.1:7247/ingest/cce9ccaa-d42e-4577-9651-ba22a488615c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'cart.js:fetchRatesForItem',message:'ajax response error details',data:{message:response && response.data && response.data.message ? response.data.message : '',destination:response && response.data && response.data.destination ? response.data.destination : null},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H2'})}).catch(()=>{});

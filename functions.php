@@ -4538,6 +4538,7 @@ function gstore_calculate_shipping_ajax() {
 	$product_id = isset( $_POST['product_id'] ) ? intval( $_POST['product_id'] ) : 0;
 	$quantity   = isset( $_POST['quantity'] ) ? intval( $_POST['quantity'] ) : 1;
 	$debug_log_path = function_exists( 'get_theme_file_path' ) ? get_theme_file_path( '.cursor/debug.log' ) : '';
+	$debug_enabled = ! empty( $_POST['debug'] );
 
 	// #region agent log
 	if ( $debug_log_path && function_exists( 'wp_json_encode' ) ) {
@@ -4598,6 +4599,22 @@ function gstore_calculate_shipping_ajax() {
 		$variation = gstore_find_freight_variation( $product );
 		$type      = gstore_get_product_freight_type( $product );
 		$options   = gstore_get_freight_mode_options( $variation, $type );
+		$debug_payload = array(
+			'productId'     => $product_id,
+			'productType'   => $product->get_type(),
+			'productSlug'   => $product->get_slug(),
+			'parentId'      => method_exists( $product, 'get_parent_id' ) ? (int) $product->get_parent_id() : 0,
+			'type'          => $type,
+			'options'       => is_array( $options ) ? array_values( $options ) : array(),
+			'variationMatch'=> is_array( $variation ) ? array(
+				'allowLand' => isset( $variation['allowLand'] ) ? (bool) $variation['allowLand'] : null,
+				'allowAir'  => isset( $variation['allowAir'] ) ? (bool) $variation['allowAir'] : null,
+				'isAmmo'    => ! empty( $variation['isAmmo'] ),
+				'isGun'     => ! empty( $variation['isGun'] ),
+				'isAccessory' => ! empty( $variation['isAccessory'] ),
+			) : null,
+			'configVariationsCount' => (int) ( is_array( gstore_get_freight_config() ) && ! empty( gstore_get_freight_config()['variations'] ) ? count( gstore_get_freight_config()['variations'] ) : 0 ),
+		);
 
 		// #region agent log
 		if ( $debug_log_path && function_exists( 'wp_json_encode' ) ) {
@@ -4619,6 +4636,10 @@ function gstore_calculate_shipping_ajax() {
 		// #endregion agent log
 
 		if ( empty( $options ) ) {
+			if ( $debug_enabled ) {
+				wp_send_json_error( array( 'message' => __( 'Não foi possível calcular o frete para este produto.', 'gstore' ), 'debug' => $debug_payload ) );
+				return;
+			}
 			// #region agent log
 			if ( $debug_log_path && function_exists( 'wp_json_encode' ) ) {
 				$log_payload = array(
@@ -4685,6 +4706,7 @@ function gstore_calculate_shipping_ajax() {
 					'city'  => '',
 					'state' => $state,
 				),
+				'debug'      => $debug_enabled ? $debug_payload : null,
 			)
 		);
 		return;
