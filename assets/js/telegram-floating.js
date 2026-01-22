@@ -10,6 +10,7 @@
 	var FLOAT_ID = 'gstore-telegram-float';
 	var FLOAT_CLASS = 'Gstore-telegram-float';
 	var MINI_CART_DRAWER_SELECTOR = '.wc-block-mini-cart__drawer';
+	var MINI_CART_OVERLAY_SELECTOR = '.wc-block-components-drawer__screen-overlay';
 
 	function normalizeText(str) {
 		return (str || '').toString().trim().toLowerCase();
@@ -100,16 +101,42 @@
 		return true;
 	}
 
+	function isMiniCartDrawerOpen(drawer) {
+		if (!drawer) return false;
+
+		if (drawer.classList.contains('is-open')) return true;
+
+		var drawerAriaHidden = drawer.getAttribute('aria-hidden');
+		if (drawerAriaHidden === 'false') return true;
+		if (drawerAriaHidden === 'true') return false;
+		if (drawer.hasAttribute('hidden')) return false;
+
+		var overlay = document.querySelector(MINI_CART_OVERLAY_SELECTOR);
+		if (overlay) {
+			var overlayAriaHidden = overlay.getAttribute('aria-hidden');
+			if (overlayAriaHidden === 'false') return true;
+			if (overlayAriaHidden === 'true') return false;
+			if (overlay.hasAttribute('hidden')) return false;
+
+			var overlayStyle = window.getComputedStyle(overlay);
+			if (overlayStyle && overlayStyle.pointerEvents !== 'none' && overlayStyle.opacity !== '0') {
+				return true;
+			}
+		}
+
+		var drawerStyle = window.getComputedStyle(drawer);
+		if (drawerStyle && drawerStyle.display !== 'none' && drawerStyle.visibility !== 'hidden' && drawerStyle.pointerEvents !== 'none') {
+			return true;
+		}
+
+		return false;
+	}
+
 	function toggleTelegramFloatVisibility(floatAnchor) {
 		if (!floatAnchor) return;
 
 		var drawer = document.querySelector(MINI_CART_DRAWER_SELECTOR);
-		if (!drawer) {
-			floatAnchor.style.display = '';
-			return;
-		}
-
-		if (drawer.classList.contains('is-open')) {
+		if (isMiniCartDrawerOpen(drawer)) {
 			floatAnchor.style.display = 'none';
 		} else {
 			floatAnchor.style.display = '';
@@ -134,10 +161,32 @@
 				});
 			});
 			obs.observe(drawer, { attributes: true, attributeFilter: ['class'] });
+			var overlay = document.querySelector(MINI_CART_OVERLAY_SELECTOR);
+			if (overlay) {
+				obs.observe(overlay, { attributes: true, attributeFilter: ['class', 'style', 'aria-hidden'] });
+			}
 			floatAnchor.__gstoreMiniCartObserver = true;
 			return true;
 		} catch (e) {
 			return false;
+		}
+	}
+
+	function observeMiniCartMount(floatAnchor) {
+		if (!floatAnchor) return;
+		if (floatAnchor.__gstoreMiniCartMountObserver) return;
+
+		try {
+			var obs = new MutationObserver(function () {
+				if (observeMiniCartDrawer(floatAnchor)) {
+					obs.disconnect();
+					floatAnchor.__gstoreMiniCartMountObserver = true;
+				}
+			});
+			obs.observe(document.body, { childList: true, subtree: true });
+			floatAnchor.__gstoreMiniCartMountObserver = true;
+		} catch (e) {
+			// Silencioso: MutationObserver pode falhar em browsers muito antigos.
 		}
 	}
 
@@ -150,7 +199,9 @@
 		if (!ok) return false;
 
 		toggleTelegramFloatVisibility(floating);
-		observeMiniCartDrawer(floating);
+		if (!observeMiniCartDrawer(floating)) {
+			observeMiniCartMount(floating);
+		}
 
 		// Observa alterações no link fonte para manter o botão atualizado.
 		try {
