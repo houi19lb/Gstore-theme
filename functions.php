@@ -4596,6 +4596,7 @@ function gstore_calculate_shipping_ajax() {
 	if ( $product_id > 0 ) {
 		$product = wc_get_product( $product_id );
 		if ( ! $product ) {
+			header( 'X-Gstore-Debug: branch=product;pid=' . $product_id . ';err=not_found' );
 			$payload = array( 'message' => __( 'Produto não encontrado.', 'gstore' ) );
 			if ( $debug_enabled ) {
 				$payload['debug'] = array(
@@ -4648,6 +4649,7 @@ function gstore_calculate_shipping_ajax() {
 		// #endregion agent log
 
 		if ( empty( $options ) ) {
+			header( 'X-Gstore-Debug: branch=product;pid=' . $product_id . ';err=no_options' );
 			$payload = array( 'message' => __( 'Não foi possível calcular o frete para este produto.', 'gstore' ) );
 			if ( $debug_enabled ) {
 				$payload['debug'] = $debug_payload;
@@ -4798,6 +4800,7 @@ function gstore_calculate_shipping_ajax() {
 	}
 
 	if ( empty( $rates ) ) {
+		header( 'X-Gstore-Debug: branch=cart;pid=' . $product_id . ';err=no_rates' );
 		$payload = array(
 			'message'     => __( 'Não foi possível calcular o frete para este destino.', 'gstore' ),
 			'destination' => array(
