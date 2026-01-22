@@ -446,6 +446,11 @@
 			// #region agent log
 			fetch('http://127.0.0.1:7247/ingest/cce9ccaa-d42e-4577-9651-ba22a488615c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'cart.js:fetchRatesForItem',message:'ajax response received',data:{success:response && response.success,hasData:!!(response && response.data),ratesCount:response && response.data && Array.isArray(response.data.rates)?response.data.rates.length:0},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
 			// #endregion agent log
+			if (!response || !response.success) {
+				// #region agent log
+				fetch('http://127.0.0.1:7247/ingest/cce9ccaa-d42e-4577-9651-ba22a488615c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'cart.js:fetchRatesForItem',message:'ajax response error details',data:{message:response && response.data && response.data.message ? response.data.message : '',destination:response && response.data && response.data.destination ? response.data.destination : null},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H2'})}).catch(()=>{});
+				// #endregion agent log
+			}
 			if (!response || !response.success || !response.data || !Array.isArray(response.data.rates)) {
 				return null;
 			}
@@ -622,6 +627,20 @@
 			// #endregion agent log
 			return;
 		}
+		// #region agent log
+		const blocksSnapshot = Array.from(shippingBlocks).map((shippingBlock) => {
+			const itemEl = shippingBlock.closest('article.Gstore-cart-card, [data-cart-item-key]');
+			if (!itemEl) {
+				return null;
+			}
+			return {
+				cartItemKey: itemEl.dataset.cartItemKey || itemEl.getAttribute('data-cart-item-key') || '',
+				productId: itemEl.dataset.productId || itemEl.getAttribute('data-product-id') || '',
+				quantity: itemEl.dataset.quantity || itemEl.getAttribute('data-quantity') || '',
+			};
+		}).filter(Boolean);
+		fetch('http://127.0.0.1:7247/ingest/cce9ccaa-d42e-4577-9651-ba22a488615c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'cart.js:calculateRatesForCart',message:'shipping blocks snapshot',data:{cep:cep,blocksCount:shippingBlocks.length,blocks:blocksSnapshot},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H1'})}).catch(()=>{});
+		// #endregion agent log
 
 		ratesSyncInProgress = true;
 
@@ -1057,6 +1076,9 @@
 		jQuery(document).on('click', '.gstore-shipping-calculator__button', function () {
 			// #region agent log
 			fetch('http://127.0.0.1:7247/ingest/cce9ccaa-d42e-4577-9651-ba22a488615c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'cart.js:shippingButtonClick',message:'shipping calculator click handler',data:{cepValue:(document.querySelector('.gstore-shipping-calculator__cep')||{}).value || ''},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+			// #endregion agent log
+			// #region agent log
+			fetch('http://127.0.0.1:7247/ingest/cce9ccaa-d42e-4577-9651-ba22a488615c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'cart.js:shippingButtonClick',message:'client device info',data:{userAgent:(typeof navigator !== 'undefined' && navigator.userAgent) ? navigator.userAgent : '',viewport:{width:window.innerWidth,height:window.innerHeight}},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H1'})}).catch(()=>{});
 			// #endregion agent log
 			calculateRatesForCart(false);
 			updateCartTotalsSummary();
