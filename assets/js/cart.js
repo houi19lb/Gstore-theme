@@ -19,11 +19,17 @@
 	function getCartCep() {
 		const cepInput = document.querySelector('.gstore-shipping-calculator__cep');
 		if (!cepInput) {
+			// #region agent log
+			fetch('http://127.0.0.1:7242/ingest/2e9bdb26-956d-44fb-8061-6eba8efc208f',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'cart.js:getCartCep',message:'cep input missing',data:{hasCepInput:false},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+			// #endregion agent log
 			return '';
 		}
 
 		const raw = cepInput.value || '';
 		const digits = raw.replace(/\D/g, '');
+		// #region agent log
+		fetch('http://127.0.0.1:7242/ingest/2e9bdb26-956d-44fb-8061-6eba8efc208f',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'cart.js:getCartCep',message:'cep read',data:{rawLength:raw.length,digitsLength:digits.length},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+		// #endregion agent log
 		return digits.length === 8 ? digits : '';
 	}
 
@@ -141,6 +147,50 @@
 		}
 	}
 
+	function restoreShippingRatesFromStorage() {
+		if (typeof window === 'undefined' || !window.localStorage) {
+			return;
+		}
+
+		let storedRates = null;
+		try {
+			const raw = window.localStorage.getItem(CART_RATES_STORAGE_KEY);
+			if (!raw) {
+				return;
+			}
+			storedRates = JSON.parse(raw);
+		} catch (e) {
+			return;
+		}
+
+		if (!storedRates || typeof storedRates !== 'object') {
+			return;
+		}
+
+		Object.keys(storedRates).forEach((cartItemKey) => {
+			const rates = storedRates[cartItemKey];
+			if (!Array.isArray(rates) || rates.length === 0) {
+				return;
+			}
+
+			let ratesInput = document.querySelector(`input[name="gstore_shipping_rates[${cartItemKey}]"]`);
+			if (!ratesInput) {
+				const shippingBlock = document.querySelector(
+					`[data-cart-item-key="${cartItemKey}"] [data-gstore-shipping-item]`
+				);
+				if (!shippingBlock) {
+					return;
+				}
+				ratesInput = document.createElement('input');
+				ratesInput.type = 'hidden';
+				ratesInput.name = `gstore_shipping_rates[${cartItemKey}]`;
+				shippingBlock.appendChild(ratesInput);
+			}
+
+			ratesInput.value = JSON.stringify(rates);
+		});
+	}
+
 	function getShippingAjaxUrl() {
 		if (typeof gstoreShippingCalculator !== 'undefined' && gstoreShippingCalculator.ajaxUrl) {
 			return gstoreShippingCalculator.ajaxUrl;
@@ -190,11 +240,19 @@
 	}
 
 	function hasCalculatedShipping() {
+		const calculator = document.querySelector('.gstore-shipping-calculator--cart');
+		if (!calculator) {
+			return true;
+		}
+
 		const cep = getCartCep();
 		if (!cep) {
 			return false;
 		}
 		const rateInputs = document.querySelectorAll('input[name^="gstore_shipping_rates["]');
+		if (!rateInputs.length) {
+			return false;
+		}
 		for (const input of rateInputs) {
 			try {
 				const parsed = JSON.parse(input.value || '[]');
@@ -230,6 +288,24 @@
 			: document.querySelector('.checkout-button, .wc-proceed-to-checkout .button');
 
 		if (!checkoutButton) {
+			// #region agent log
+			fetch('http://127.0.0.1:7242/ingest/2e9bdb26-956d-44fb-8061-6eba8efc208f',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'cart.js:updateCheckoutAvailability',message:'checkout button missing',data:{hasSummaryCard:!!summaryCard},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
+			// #endregion agent log
+			return;
+		}
+
+		const hasCalculator = !!document.querySelector('.gstore-shipping-calculator--cart');
+		if (!hasCalculator) {
+			// #region agent log
+			fetch('http://127.0.0.1:7242/ingest/2e9bdb26-956d-44fb-8061-6eba8efc208f',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'cart.js:updateCheckoutAvailability',message:'no calculator branch',data:{hasCalculator:false},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
+			// #endregion agent log
+			const notice = ensureShippingNotice(summaryCard);
+			if (notice) {
+				notice.style.display = 'none';
+			}
+			checkoutButton.classList.remove('is-disabled');
+			checkoutButton.setAttribute('aria-disabled', 'false');
+			checkoutButton.dataset.gstoreDisabled = 'false';
 			return;
 		}
 
@@ -238,6 +314,9 @@
 		}
 
 		const canProceed = hasCalculatedShipping();
+		// #region agent log
+		fetch('http://127.0.0.1:7242/ingest/2e9bdb26-956d-44fb-8061-6eba8efc208f',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'cart.js:updateCheckoutAvailability',message:'checkout state',data:{canProceed:canProceed,ratesSyncInProgress:ratesSyncInProgress,hasCalculatedFlag:hasCalculatedShippingFlag()},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
+		// #endregion agent log
 		const notice = ensureShippingNotice(summaryCard);
 
 		if (notice) {
@@ -417,8 +496,15 @@
 		const quantity = parseInt(itemEl.dataset.quantity || '1', 10);
 
 		if (!productId || !quantity || !cep) {
+			// #region agent log
+			fetch('http://127.0.0.1:7242/ingest/2e9bdb26-956d-44fb-8061-6eba8efc208f',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'cart.js:fetchRatesForItem',message:'invalid params',data:{productId:productId,quantity:quantity,hasCep:!!cep},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+			// #endregion agent log
 			return Promise.resolve(null);
 		}
+
+		// #region agent log
+		fetch('http://127.0.0.1:7242/ingest/2e9bdb26-956d-44fb-8061-6eba8efc208f',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'cart.js:fetchRatesForItem',message:'request payload',data:{ajaxUrl:getShippingAjaxUrl(),hasNonce:typeof gstoreShippingCalculator !== 'undefined' && !!gstoreShippingCalculator.nonce,productId:productId,quantity:quantity},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'F'})}).catch(()=>{});
+		// #endregion agent log
 
 		return jQuery.ajax({
 			url: getShippingAjaxUrl(),
@@ -432,11 +518,19 @@
 				quantity: quantity,
 			},
 		}).then((response) => {
+			// #region agent log
+			fetch('http://127.0.0.1:7242/ingest/2e9bdb26-956d-44fb-8061-6eba8efc208f',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'cart.js:fetchRatesForItem',message:'ajax response',data:{success:!!(response && response.success),hasRates:!!(response && response.data && Array.isArray(response.data.rates)),ratesCount:response && response.data && Array.isArray(response.data.rates) ? response.data.rates.length : 0,dataKeys:response && response.data ? Object.keys(response.data) : [],message:response && response.data ? (response.data.message || response.data.error || null) : null},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+			// #endregion agent log
 			if (!response || !response.success || !response.data || !Array.isArray(response.data.rates)) {
 				return null;
 			}
 			return response.data.rates;
-		}).catch(() => null);
+		}).catch((err) => {
+			// #region agent log
+			fetch('http://127.0.0.1:7242/ingest/2e9bdb26-956d-44fb-8061-6eba8efc208f',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'cart.js:fetchRatesForItem',message:'ajax error',data:{status:err && err.status ? err.status : null,statusText:err && err.statusText ? err.statusText : null},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+			// #endregion agent log
+			return null;
+		});
 	}
 
 	function updateShippingBlock(shippingBlock, rates, cartItemKey, selectedMode) {
@@ -569,6 +663,9 @@
 
 	function calculateRatesForCart(shouldUpdateCart) {
 		if (ratesSyncInProgress) {
+			// #region agent log
+			fetch('http://127.0.0.1:7242/ingest/2e9bdb26-956d-44fb-8061-6eba8efc208f',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'cart.js:calculateRatesForCart',message:'skip due to ratesSyncInProgress',data:{ratesSyncInProgress:true},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+			// #endregion agent log
 			return;
 		}
 
@@ -586,6 +683,9 @@
 		}
 
 		if (!cep) {
+			// #region agent log
+			fetch('http://127.0.0.1:7242/ingest/2e9bdb26-956d-44fb-8061-6eba8efc208f',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'cart.js:calculateRatesForCart',message:'no cep available',data:{cep:'',cepSource:cepSource},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+			// #endregion agent log
 			return;
 		}
 		// #region agent log
@@ -596,6 +696,9 @@
 
 		const shippingBlocks = document.querySelectorAll('[data-gstore-shipping-item]');
 		if (!shippingBlocks.length) {
+			// #region agent log
+			fetch('http://127.0.0.1:7242/ingest/2e9bdb26-956d-44fb-8061-6eba8efc208f',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'cart.js:calculateRatesForCart',message:'no shipping blocks',data:{blocksCount:0},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+			// #endregion agent log
 			return;
 		}
 
@@ -1014,15 +1117,23 @@
 		jQuery(document).on('updated_wc_div updated_cart_totals', function () {
 			setTimeout(init, 100);
 			ensureShippingBlocksExist();
-			if (!hasCalculatedShipping()) {
-				setCalculatedShippingFlag(false);
-			}
-			restoreCartCep();
-			const shouldRecalculate = hasCalculatedShippingFlag();
-			if (shouldRecalculate) {
-				calculateRatesForCart(false);
+			const hasCalculator = !!document.querySelector('.gstore-shipping-calculator--cart');
+			if (hasCalculator) {
+				if (!hasCalculatedShipping()) {
+					setCalculatedShippingFlag(false);
+				}
+				restoreCartCep();
+				const shouldRecalculate = hasCalculatedShippingFlag();
+				if (shouldRecalculate) {
+					setTimeout(() => {
+						calculateRatesForCart(false);
+					}, 200);
+				} else {
+					restoreShippingRatesFromStorage();
+					updateCartTotalsSummary();
+					updateCheckoutAvailability();
+				}
 			} else {
-				updateCartTotalsSummary();
 				updateCheckoutAvailability();
 			}
 		});

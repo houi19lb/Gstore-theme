@@ -4531,7 +4531,31 @@ function gstore_get_state_from_postcode( $postcode ) {
  * Retorna array de rates com modos permitidos (terrestre/aéreo) baseado na variação do produto.
  */
 function gstore_calculate_shipping_ajax() {
-	error_log('gstore_calculate_shipping_ajax called with product_id: ' . ( isset( $_POST['product_id'] ) ? $_POST['product_id'] : 'none' ) );
+	$debug_log_path = __DIR__ . '/.cursor/debug.log';
+	$debug_log = function( $location, $message, $data, $hypothesis_id ) use ( $debug_log_path ) {
+		$payload = array(
+			'location'     => $location,
+			'message'      => $message,
+			'data'         => $data,
+			'timestamp'    => (int) round( microtime( true ) * 1000 ),
+			'sessionId'    => 'debug-session',
+			'runId'        => 'run1',
+			'hypothesisId' => $hypothesis_id,
+		);
+		@file_put_contents( $debug_log_path, wp_json_encode( $payload ) . PHP_EOL, FILE_APPEND );
+	};
+
+	$debug_log(
+		'functions.php:gstore_calculate_shipping_ajax',
+		'ajax entry',
+		array(
+			'product_id'     => isset( $_POST['product_id'] ) ? (int) $_POST['product_id'] : 0,
+			'quantity'       => isset( $_POST['quantity'] ) ? (int) $_POST['quantity'] : 0,
+			'postcodeLength' => isset( $_POST['postcode'] ) ? strlen( preg_replace( '/[^0-9]/', '', (string) $_POST['postcode'] ) ) : 0,
+		),
+		'P1'
+	);
+
 	check_ajax_referer( 'gstore_shipping_calculator', 'nonce' );
 
 	$postcode   = isset( $_POST['postcode'] ) ? sanitize_text_field( $_POST['postcode'] ) : '';
@@ -4548,6 +4572,14 @@ function gstore_calculate_shipping_ajax() {
 
 	// Identifica o estado do CEP
 	$state = gstore_get_state_from_postcode( $postcode );
+	$debug_log(
+		'functions.php:gstore_calculate_shipping_ajax',
+		'postcode state',
+		array(
+			'state' => $state,
+		),
+		'P1'
+	);
 
 	// ===== SINCRONIZA CEP COM SESSÃO DO WOOCOMMERCE =====
 	if ( function_exists( 'WC' ) && WC()->customer ) {
@@ -4579,6 +4611,16 @@ function gstore_calculate_shipping_ajax() {
 		$options   = gstore_get_freight_mode_options( $variation, $type );
 
 		if ( empty( $options ) ) {
+			$debug_log(
+				'functions.php:gstore_calculate_shipping_ajax',
+				'no options for product',
+				array(
+					'product_id'    => $product_id,
+					'has_variation' => ! empty( $variation ),
+					'type'          => $type,
+				),
+				'P2'
+			);
 			wp_send_json_error( array( 'message' => __( 'Não foi possível calcular o frete para este produto.', 'gstore' ) ) );
 			return;
 		}
@@ -4633,6 +4675,10 @@ function gstore_calculate_shipping_ajax() {
 	$has_land   = false;
 	$has_air    = false;
 	$has_ammo   = false;
+	$item_count = 0;
+	$items_with_options = 0;
+	$items_missing_variation = 0;
+	$items_missing_options = 0;
 
 	foreach ( $cart_contents as $cart_item ) {
 		$item_product  = isset( $cart_item['data'] ) ? $cart_item['data'] : null;
@@ -4642,9 +4688,20 @@ function gstore_calculate_shipping_ajax() {
 			continue;
 		}
 
+		$item_count++;
+
 		$item_variation = gstore_find_freight_variation( $item_product );
 		$item_type      = gstore_get_product_freight_type( $item_product );
 		$item_options   = gstore_get_freight_mode_options( $item_variation, $item_type );
+
+		if ( empty( $item_variation ) ) {
+			$items_missing_variation++;
+		}
+		if ( empty( $item_options ) ) {
+			$items_missing_options++;
+		} else {
+			$items_with_options++;
+		}
 
 		if ( 'ammo' === $item_type ) {
 			$has_ammo = true;
@@ -4685,6 +4742,20 @@ function gstore_calculate_shipping_ajax() {
 	}
 
 	if ( empty( $rates ) ) {
+		$debug_log(
+			'functions.php:gstore_calculate_shipping_ajax',
+			'no cart rates',
+			array(
+				'item_count'             => $item_count,
+				'items_with_options'     => $items_with_options,
+				'items_missing_variation'=> $items_missing_variation,
+				'items_missing_options'  => $items_missing_options,
+				'has_land'               => $has_land,
+				'has_air'                => $has_air,
+				'has_ammo'               => $has_ammo,
+			),
+			'P3'
+		);
 		wp_send_json_error( array( 'message' => __( 'Não foi possível calcular o frete para este destino.', 'gstore' ) ) );
 		return;
 	}
