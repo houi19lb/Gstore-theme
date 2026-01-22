@@ -25,3 +25,6 @@ woocommerce-products-categorias-pai-filho_COMMA(out).csv
 # API Visualizer (keep dist in repo; ignore deps)
 api-visualizer/node_modules/
 
+# Cursor temporary images
+assets/c__Users_*_AppData_Roaming_Cursor_User_workspaceStorage_*_images_*.png
+

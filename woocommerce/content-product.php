@@ -22,10 +22,19 @@ $current_price_amount  = $is_variable_product ? (float) $product->get_variation_
 $has_sale_value        = $product->is_on_sale() && $regular_price_amount > 0 && $sale_price_amount > 0;
 $display_price_amount  = $has_sale_value ? $sale_price_amount : ( $current_price_amount > 0 ? $current_price_amount : $regular_price_amount );
 // Calcula parcela COM JUROS (taxa Blu: 2.99% a.m.)
-$installment_amount    = $display_price_amount > 0 ? gstore_calculate_installment_with_interest( $display_price_amount, 12 ) : 0;
+$installments          = (int) apply_filters( 'armastore_single_product_installments', 21, $product );
+$installment_amount    = $display_price_amount > 0 ? gstore_calculate_installment_with_interest( $display_price_amount, $installments ) : 0;
 $regular_price_html    = $regular_price_amount > 0 ? wc_price( $regular_price_amount ) : '';
 $display_price_html    = $display_price_amount > 0 ? wc_price( $display_price_amount ) : $product->get_price_html();
 $installment_price_html = $installment_amount > 0 ? wc_price( $installment_amount ) : '';
+$installment_label       = $installment_price_html
+	? sprintf(
+		/* translators: 1: installments count, 2: installment value */
+		__( 'ou %1$dx de %2$s', 'gstore' ),
+		$installments,
+		$installment_price_html
+	)
+	: '';
 ?>
 <li <?php wc_product_class( 'Gstore-product-card', $product ); ?>>
 	<div class="Gstore-product-card__inner">
@@ -99,18 +108,29 @@ $installment_price_html = $installment_amount > 0 ? wc_price( $installment_amoun
 						<?php echo wp_kses_post( $display_price_html ); ?>
 					</div>
 				<?php endif; ?>
-				<?php if ( $installment_price_html ) : ?>
+				<?php if ( $installment_label ) : ?>
 					<div class="Gstore-product-card__price-details">
 						<strong class="Gstore-product-card__price-details-label"><?php esc_html_e( 'à vista no Pix', 'gstore' ); ?></strong>
-						<span class="Gstore-product-card__installments">
-							<?php
-							/* translators: %s: installment value */
-							printf(
-								wp_kses_post( __( 'ou 12x de %s', 'gstore' ) ),
-								wp_kses_post( $installment_price_html )
-							);
-							?>
-						</span>
+						<div class="Gstore-product-card__installments" data-gstore-installment-wrapper>
+							<span
+								class="Gstore-product-card__installments-text"
+								data-gstore-installment-target="1"
+								data-gstore-installment-scope="card"
+								data-product-id="<?php echo esc_attr( $product->get_id() ); ?>"
+								data-max-installments="<?php echo esc_attr( $installments ); ?>"
+								data-initial-text="<?php echo esc_attr( wp_strip_all_tags( (string) $installment_label ) ); ?>"
+							>
+								<?php echo wp_kses_post( $installment_label ); ?>
+							</span>
+							<select
+								class="price-sub-installments-select"
+								data-gstore-installment-select
+								aria-label="<?php esc_attr_e( 'Selecione o número de parcelas', 'gstore' ); ?>"
+								style="display: none;"
+							>
+								<option value=""><?php esc_html_e( 'Carregando...', 'gstore' ); ?></option>
+							</select>
+						</div>
 					</div>
 				<?php endif; ?>
 			</div>
