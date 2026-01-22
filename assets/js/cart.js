@@ -422,9 +422,15 @@
 		const quantity = parseInt(itemEl.dataset.quantity || '1', 10);
 
 		if (!productId || !quantity || !cep) {
+			// #region agent log
+			fetch('http://127.0.0.1:7247/ingest/cce9ccaa-d42e-4577-9651-ba22a488615c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'cart.js:fetchRatesForItem',message:'missing data for rates',data:{productId:productId,quantity:quantity,cep:cep},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+			// #endregion agent log
 			return Promise.resolve(null);
 		}
 
+		// #region agent log
+		fetch('http://127.0.0.1:7247/ingest/cce9ccaa-d42e-4577-9651-ba22a488615c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'cart.js:fetchRatesForItem',message:'ajax request start',data:{productId:productId,quantity:quantity,cep:cep,ajaxUrl:getShippingAjaxUrl()},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+		// #endregion agent log
 		return jQuery.ajax({
 			url: getShippingAjaxUrl(),
 			type: 'POST',
@@ -437,11 +443,19 @@
 				quantity: quantity,
 			},
 		}).then((response) => {
+			// #region agent log
+			fetch('http://127.0.0.1:7247/ingest/cce9ccaa-d42e-4577-9651-ba22a488615c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'cart.js:fetchRatesForItem',message:'ajax response received',data:{success:response && response.success,hasData:!!(response && response.data),ratesCount:response && response.data && Array.isArray(response.data.rates)?response.data.rates.length:0},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+			// #endregion agent log
 			if (!response || !response.success || !response.data || !Array.isArray(response.data.rates)) {
 				return null;
 			}
 			return response.data.rates;
-		}).catch(() => null);
+		}).catch((error) => {
+			// #region agent log
+			fetch('http://127.0.0.1:7247/ingest/cce9ccaa-d42e-4577-9651-ba22a488615c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'cart.js:fetchRatesForItem',message:'ajax request failed',data:{error:typeof error === 'string' ? error : (error && error.status ? error.status : 'unknown')},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+			// #endregion agent log
+			return null;
+		});
 	}
 
 	function updateShippingBlock(shippingBlock, rates, cartItemKey, selectedMode) {
@@ -461,6 +475,9 @@
 				cost_formatted: rate.cost_formatted || '',
 			}))
 			.filter((rate) => rate.mode);
+		// #region agent log
+		fetch('http://127.0.0.1:7247/ingest/cce9ccaa-d42e-4577-9651-ba22a488615c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'cart.js:updateShippingBlock',message:'rates normalized for item',data:{cartItemKey:cartItemKey,normalizedCount:normalizedRates.length,selectedMode:selectedMode},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+		// #endregion agent log
 		storeShippingRates(cartItemKey, normalizedRates);
 
 		if (!ratesInput) {
