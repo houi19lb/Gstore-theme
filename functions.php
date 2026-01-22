@@ -4541,37 +4541,6 @@ function gstore_calculate_shipping_ajax() {
 	$quantity   = isset( $_POST['quantity'] ) ? intval( $_POST['quantity'] ) : 1;
 	$debug_log_path = function_exists( 'get_theme_file_path' ) ? get_theme_file_path( '.cursor/debug.log' ) : '';
 	$debug_enabled = ! empty( $_REQUEST['debug'] ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-	// #region agent log
-	if ( function_exists( 'wp_json_encode' ) ) {
-		@file_put_contents( 'C:\\Users\\mathe\\Gstore-theme\\.cursor\\debug.log', wp_json_encode( array(
-			'location'     => 'functions.php:gstore_calculate_shipping_ajax',
-			'message'      => 'ajax handler invoked (absolute path)',
-			'data'         => array(
-				'requestKeys' => array_keys( $_REQUEST ),
-				'debugParam'  => isset( $_REQUEST['debug'] ) ? $_REQUEST['debug'] : null,
-			),
-			'timestamp'    => (int) round( microtime( true ) * 1000 ),
-			'sessionId'    => 'debug-session',
-			'runId'        => 'run1',
-			'hypothesisId' => 'H2',
-		) ) . PHP_EOL, FILE_APPEND ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_read_file_system_write_file
-	}
-	if ( $debug_log_path && function_exists( 'wp_json_encode' ) ) {
-		$log_payload = array(
-			'location'     => 'functions.php:gstore_calculate_shipping_ajax',
-			'message'      => 'ajax handler invoked',
-			'data'         => array(
-				'requestKeys' => array_keys( $_REQUEST ),
-				'debugParam'  => isset( $_REQUEST['debug'] ) ? $_REQUEST['debug'] : null,
-			),
-			'timestamp'    => (int) round( microtime( true ) * 1000 ),
-			'sessionId'    => 'debug-session',
-			'runId'        => 'run1',
-			'hypothesisId' => 'H2',
-		);
-		@file_put_contents( $debug_log_path, wp_json_encode( $log_payload ) . PHP_EOL, FILE_APPEND ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_read_file_system_write_file
-	}
-	// #endregion agent log
 
 	// #region agent log
 	if ( $debug_log_path && function_exists( 'wp_json_encode' ) ) {
@@ -4755,6 +4724,9 @@ function gstore_calculate_shipping_ajax() {
 	}
 
 	// ===== CÁLCULO PARA CARRINHO (product_id = 0) =====
+	// #region agent log
+	error_log( 'gstore_calculate_shipping_ajax: product_id=' . $product_id . ', branch=cart, postcode=' . $postcode );
+	// #endregion agent log
 	if ( ! function_exists( 'WC' ) || ! WC()->cart ) {
 		wp_send_json_error( array( 'message' => __( 'Carrinho não disponível.', 'gstore' ) ) );
 		return;
