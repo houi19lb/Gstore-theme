@@ -11,6 +11,9 @@
 	let cartUpdateTimeout = null;
 	let ratesSyncInProgress = false;
 	let shippingChoicesDelegated = false;
+	let jqueryHandlersBound = false;
+	let jqueryInitAttempts = 0;
+	const JQUERY_INIT_MAX_ATTEMPTS = 20;
 	const CART_CEP_STORAGE_KEY = 'gstore_cart_cep';
 	const CART_MODE_STORAGE_KEY = 'gstore_cart_shipping_mode';
 	const CART_CALCULATED_SESSION_KEY = 'gstore_cart_shipping_calculated_session';
@@ -1002,6 +1005,7 @@
 		ensureShippingBlocksExist();
 		updateCartTotalsSummary();
 		updateCheckoutAvailability();
+		ensureJqueryHandlers();
 	}
 
 	if (document.readyState === 'loading') {
@@ -1010,8 +1014,13 @@
 		init();
 	}
 
-	if (typeof jQuery !== 'undefined') {
-		jQuery(document).on('updated_wc_div updated_cart_totals', function () {
+	function bindJqueryHandlers() {
+		if (jqueryHandlersBound || typeof jQuery === 'undefined') {
+			return;
+		}
+
+		const $doc = jQuery(document);
+		$doc.on('updated_wc_div updated_cart_totals', function () {
 			setTimeout(init, 100);
 			ensureShippingBlocksExist();
 			if (!hasCalculatedShipping()) {
@@ -1027,13 +1036,13 @@
 			}
 		});
 
-		jQuery(document).on('click', '.gstore-shipping-calculator__button', function () {
+		$doc.on('click', '.gstore-shipping-calculator__button', function () {
 			calculateRatesForCart(false);
 			updateCartTotalsSummary();
 			updateCheckoutAvailability();
 		});
 
-		jQuery(document).on('input', '.gstore-shipping-calculator__cep', function () {
+		$doc.on('input', '.gstore-shipping-calculator__cep', function () {
 			storeCartCep(this.value || '');
 			if (!getCartCep()) {
 				setCalculatedShippingFlag(false);
@@ -1041,13 +1050,29 @@
 			updateCheckoutAvailability();
 		});
 
-		jQuery(document).on('click', '.checkout-button, .wc-proceed-to-checkout .button', function (event) {
+		$doc.on('click', '.checkout-button, .wc-proceed-to-checkout .button', function (event) {
 			const target = event.currentTarget;
 			if (target && target.dataset.gstoreDisabled === 'true') {
 				event.preventDefault();
 				updateCheckoutAvailability();
 			}
 		});
+
+		jqueryHandlersBound = true;
+	}
+
+	function ensureJqueryHandlers() {
+		if (jqueryHandlersBound) {
+			return;
+		}
+		if (typeof jQuery === 'undefined') {
+			jqueryInitAttempts += 1;
+			if (jqueryInitAttempts < JQUERY_INIT_MAX_ATTEMPTS) {
+				setTimeout(ensureJqueryHandlers, 250);
+			}
+			return;
+		}
+		bindJqueryHandlers();
 	}
 
 	if (document.readyState === 'loading') {
