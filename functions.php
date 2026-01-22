@@ -4538,6 +4538,9 @@ function gstore_calculate_shipping_ajax() {
 
 	$postcode   = isset( $_POST['postcode'] ) ? sanitize_text_field( $_POST['postcode'] ) : '';
 	$product_id = ! empty( $_POST['product_id'] ) ? intval( $_POST['product_id'] ) : ( ! empty( $_GET['product_id'] ) ? intval( $_GET['product_id'] ) : 0 );
+	if ( $product_id <= 0 && ! empty( $_SERVER['REQUEST_URI'] ) && preg_match( '/[?&]product_id=(\d+)/', $_SERVER['REQUEST_URI'], $m ) ) {
+		$product_id = intval( $m[1] );
+	}
 	$quantity   = isset( $_POST['quantity'] ) ? intval( $_POST['quantity'] ) : 1;
 	$debug_log_path = function_exists( 'get_theme_file_path' ) ? get_theme_file_path( '.cursor/debug.log' ) : '';
 	$debug_enabled = ! empty( $_REQUEST['debug'] ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
@@ -4650,26 +4653,6 @@ function gstore_calculate_shipping_ajax() {
 				$payload['debug'] = $debug_payload;
 			}
 			wp_send_json_error( $payload );
-			return;
-			// #region agent log
-			if ( $debug_log_path && function_exists( 'wp_json_encode' ) ) {
-				$log_payload = array(
-					'location'     => 'functions.php:gstore_calculate_shipping_ajax',
-					'message'      => 'no freight options for product',
-					'data'         => array(
-						'postcode'  => $postcode,
-						'productId' => $product_id,
-						'quantity'  => $quantity,
-					),
-					'timestamp'    => (int) round( microtime( true ) * 1000 ),
-					'sessionId'    => 'debug-session',
-					'runId'        => 'run1',
-					'hypothesisId' => 'H2',
-				);
-				@file_put_contents( $debug_log_path, wp_json_encode( $log_payload ) . PHP_EOL, FILE_APPEND ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_read_file_system_write_file
-			}
-			// #endregion agent log
-			wp_send_json_error( array( 'message' => __( 'Não foi possível calcular o frete para este produto.', 'gstore' ) ) );
 			return;
 		}
 
@@ -4816,13 +4799,17 @@ function gstore_calculate_shipping_ajax() {
 
 	if ( empty( $rates ) ) {
 		$payload = array(
-			'message' => __( 'Não foi possível calcular o frete para este destino.', 'gstore' ),
-			'debug'   => array(
+			'message'     => __( 'Não foi possível calcular o frete para este destino.', 'gstore' ),
+			'destination' => array(
+				'state' => isset( $state ) ? $state : '',
+				'city'  => '',
+			),
+			'debug'       => array(
 				'received_product_id' => $product_id,
 				'branch'              => 'cart',
 				'hasLand'             => $has_land,
 				'hasAir'              => $has_air,
-				'hasAmmo'              => $has_ammo,
+				'hasAmmo'             => $has_ammo,
 			),
 		);
 		if ( $debug_enabled && ! empty( $debug_cart_items ) ) {
