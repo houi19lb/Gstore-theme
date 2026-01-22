@@ -4537,6 +4537,27 @@ function gstore_calculate_shipping_ajax() {
 	$postcode   = isset( $_POST['postcode'] ) ? sanitize_text_field( $_POST['postcode'] ) : '';
 	$product_id = isset( $_POST['product_id'] ) ? intval( $_POST['product_id'] ) : 0;
 	$quantity   = isset( $_POST['quantity'] ) ? intval( $_POST['quantity'] ) : 1;
+	$debug_log_path = function_exists( 'get_theme_file_path' ) ? get_theme_file_path( '.cursor/debug.log' ) : '';
+
+	// #region agent log
+	if ( $debug_log_path && function_exists( 'wp_json_encode' ) ) {
+		$log_payload = array(
+			'location'     => 'functions.php:gstore_calculate_shipping_ajax',
+			'message'      => 'request received',
+			'data'         => array(
+				'postcode'  => $postcode,
+				'productId' => $product_id,
+				'quantity'  => $quantity,
+				'isMobile'  => isset( $_SERVER['HTTP_USER_AGENT'] ) ? ( false !== stripos( $_SERVER['HTTP_USER_AGENT'], 'Mobile' ) ) : null,
+			),
+			'timestamp'    => (int) round( microtime( true ) * 1000 ),
+			'sessionId'    => 'debug-session',
+			'runId'        => 'run1',
+			'hypothesisId' => 'H2',
+		);
+		@file_put_contents( $debug_log_path, wp_json_encode( $log_payload ) . PHP_EOL, FILE_APPEND ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_read_file_system_write_file
+	}
+	// #endregion agent log
 
 	// Limpa o CEP
 	$postcode = preg_replace( '/[^0-9]/', '', $postcode );
@@ -4578,7 +4599,44 @@ function gstore_calculate_shipping_ajax() {
 		$type      = gstore_get_product_freight_type( $product );
 		$options   = gstore_get_freight_mode_options( $variation, $type );
 
+		// #region agent log
+		if ( $debug_log_path && function_exists( 'wp_json_encode' ) ) {
+			$log_payload = array(
+				'location'     => 'functions.php:gstore_calculate_shipping_ajax',
+				'message'      => 'freight options resolved',
+				'data'         => array(
+					'variationId' => is_array( $variation ) && isset( $variation['variation_id'] ) ? (int) $variation['variation_id'] : 0,
+					'type'        => $type,
+					'options'     => is_array( $options ) ? array_values( $options ) : array(),
+				),
+				'timestamp'    => (int) round( microtime( true ) * 1000 ),
+				'sessionId'    => 'debug-session',
+				'runId'        => 'run1',
+				'hypothesisId' => 'H2',
+			);
+			@file_put_contents( $debug_log_path, wp_json_encode( $log_payload ) . PHP_EOL, FILE_APPEND ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_read_file_system_write_file
+		}
+		// #endregion agent log
+
 		if ( empty( $options ) ) {
+			// #region agent log
+			if ( $debug_log_path && function_exists( 'wp_json_encode' ) ) {
+				$log_payload = array(
+					'location'     => 'functions.php:gstore_calculate_shipping_ajax',
+					'message'      => 'no freight options for product',
+					'data'         => array(
+						'postcode'  => $postcode,
+						'productId' => $product_id,
+						'quantity'  => $quantity,
+					),
+					'timestamp'    => (int) round( microtime( true ) * 1000 ),
+					'sessionId'    => 'debug-session',
+					'runId'        => 'run1',
+					'hypothesisId' => 'H2',
+				);
+				@file_put_contents( $debug_log_path, wp_json_encode( $log_payload ) . PHP_EOL, FILE_APPEND ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_read_file_system_write_file
+			}
+			// #endregion agent log
 			wp_send_json_error( array( 'message' => __( 'Não foi possível calcular o frete para este produto.', 'gstore' ) ) );
 			return;
 		}
@@ -4596,6 +4654,23 @@ function gstore_calculate_shipping_ajax() {
 				'cost_formatted' => wc_price( $cost ),
 			);
 		}
+		// #region agent log
+		if ( $debug_log_path && function_exists( 'wp_json_encode' ) ) {
+			$log_payload = array(
+				'location'     => 'functions.php:gstore_calculate_shipping_ajax',
+				'message'      => 'rates computed',
+				'data'         => array(
+					'ratesCount' => count( $rates ),
+					'state'      => $state,
+				),
+				'timestamp'    => (int) round( microtime( true ) * 1000 ),
+				'sessionId'    => 'debug-session',
+				'runId'        => 'run1',
+				'hypothesisId' => 'H2',
+			);
+			@file_put_contents( $debug_log_path, wp_json_encode( $log_payload ) . PHP_EOL, FILE_APPEND ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_read_file_system_write_file
+		}
+		// #endregion agent log
 
 		// Recalcula totais do carrinho se disponível
 		if ( function_exists( 'WC' ) && WC()->cart ) {
