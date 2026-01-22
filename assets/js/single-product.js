@@ -1,3 +1,84 @@
+const formatCurrency = (value) => {
+	if (!Number.isFinite(value)) return '';
+	try {
+		return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
+	} catch (err) {
+		return `R$ ${value.toFixed(2).replace('.', ',')}`;
+	}
+};
+
+const chooseQuote = (quotes, preferred) => {
+	if (!quotes || typeof quotes !== 'object') return null;
+	if (quotes[preferred]) return quotes[preferred];
+	const keys = Object.keys(quotes)
+		.map((key) => parseInt(key, 10))
+		.filter((key) => Number.isFinite(key))
+		.sort((a, b) => b - a);
+	if (!keys.length) return null;
+	return quotes[String(keys[0])] || null;
+};
+
+const buildInstallmentSelect = (select, quotes, selectedInstallments) => {
+	if (!select) return;
+
+	select.innerHTML = '';
+
+	if (!quotes || typeof quotes !== 'object') {
+		select.style.display = 'none';
+		return;
+	}
+
+	const quoteKeys = Object.keys(quotes)
+		.map((key) => parseInt(key, 10))
+		.filter((key) => Number.isFinite(key))
+		.sort((a, b) => b - a);
+
+	if (!quoteKeys.length) {
+		select.style.display = 'none';
+		return;
+	}
+
+	const defaultOption = document.createElement('option');
+	defaultOption.value = '';
+	defaultOption.textContent = 'Selecione as parcelas';
+	select.appendChild(defaultOption);
+
+	quoteKeys.forEach((installments) => {
+		const quote = quotes[String(installments)];
+		if (!quote || !quote.per_installment_text) return;
+
+		const option = document.createElement('option');
+		option.value = String(installments);
+
+		let optionText = `${installments}x de ${quote.per_installment_text}`;
+		const totalRaw = Number(quote.total_raw ?? quote.total);
+		const totalText = quote.total_text || quote.totalText || (Number.isFinite(totalRaw) ? formatCurrency(totalRaw) : '');
+		const originalTotal = Number(quote.original_total ?? quote.originalTotal);
+		const jurosValue = Number.isFinite(totalRaw) && Number.isFinite(originalTotal)
+			? totalRaw - originalTotal
+			: NaN;
+		const details = [];
+		if (totalText) {
+			details.push(`total: ${totalText}`);
+		}
+		if (Number.isFinite(jurosValue) && jurosValue > 0) {
+			const jurosText = formatCurrency(jurosValue);
+			if (jurosText) {
+				details.push(`juros: ${jurosText}`);
+			}
+		}
+		if (details.length) {
+			optionText += ` (${details.join(', ')})`;
+		}
+
+		option.textContent = optionText;
+		option.selected = Number(selectedInstallments) === installments;
+		select.appendChild(option);
+	});
+
+	select.style.display = 'block';
+};
+
 document.addEventListener('DOMContentLoaded', () => {
 	const reviewTriggers = document.querySelectorAll('[data-gstore-tab-target="reviews"]');
 
@@ -138,6 +219,34 @@ document.addEventListener('DOMContentLoaded', () => {
 	/**
 	 * Parcelamento do produto (AJAX Blu).
 	 */
+	const gstoreInstallmentCache = new Map();
+	const gstoreInstallmentQuotesCache = new Map();
+	const gstoreInstallmentInFlight = new Map();
+
+	const resolveInstallmentAjaxUrl = () => {
+		if (typeof gstoreSingleProductInstallments !== 'undefined' && gstoreSingleProductInstallments?.ajaxUrl) {
+			return String(gstoreSingleProductInstallments.ajaxUrl);
+		}
+		// Preferência: config já presente no tema (favorites-core).
+		if (typeof gstoreFavoritesConfig !== 'undefined' && gstoreFavoritesConfig?.ajaxUrl) {
+			return String(gstoreFavoritesConfig.ajaxUrl);
+		}
+		if (typeof gstoreSettings !== 'undefined' && gstoreSettings?.ajax_url) {
+			return String(gstoreSettings.ajax_url);
+		}
+		if (typeof ajaxurl !== 'undefined' && ajaxurl) {
+			return String(ajaxurl);
+		}
+		return '/wp-admin/admin-ajax.php';
+	};
+
+	const resolveInstallmentAction = () => {
+		if (typeof gstoreSingleProductInstallments !== 'undefined' && gstoreSingleProductInstallments?.action) {
+			return String(gstoreSingleProductInstallments.action);
+		}
+		return 'gstore_blu_get_product_installment_quotes';
+	};
+
 	const initProductInstallmentQuotes = () => {
 		const targets = Array.from(document.querySelectorAll('[data-gstore-installment-target="1"]'));
 		// #region agent log
@@ -146,30 +255,6 @@ document.addEventListener('DOMContentLoaded', () => {
 		if (!targets.length) {
 			return;
 		}
-
-		const resolveAjaxUrl = () => {
-			if (typeof gstoreSingleProductInstallments !== 'undefined' && gstoreSingleProductInstallments?.ajaxUrl) {
-				return String(gstoreSingleProductInstallments.ajaxUrl);
-			}
-			// Preferência: config já presente no tema (favorites-core).
-			if (typeof gstoreFavoritesConfig !== 'undefined' && gstoreFavoritesConfig?.ajaxUrl) {
-				return String(gstoreFavoritesConfig.ajaxUrl);
-			}
-			if (typeof gstoreSettings !== 'undefined' && gstoreSettings?.ajax_url) {
-				return String(gstoreSettings.ajax_url);
-			}
-			if (typeof ajaxurl !== 'undefined' && ajaxurl) {
-				return String(ajaxurl);
-			}
-			return '/wp-admin/admin-ajax.php';
-		};
-
-		const resolveAction = () => {
-			if (typeof gstoreSingleProductInstallments !== 'undefined' && gstoreSingleProductInstallments?.action) {
-				return String(gstoreSingleProductInstallments.action);
-			}
-			return 'gstore_blu_get_product_installment_quotes';
-		};
 
 		const baseProductId =
 			String(targets[0]?.dataset?.productId || '') ||
@@ -222,36 +307,11 @@ document.addEventListener('DOMContentLoaded', () => {
 			});
 		};
 
-		const cache = new Map();
-		const quotesCache = new Map();
-		const inFlight = new Map();
-
-		const chooseQuote = (quotes, preferred) => {
-			if (!quotes || typeof quotes !== 'object') return null;
-			if (quotes[preferred]) return quotes[preferred];
-			const keys = Object.keys(quotes)
-				.map((key) => parseInt(key, 10))
-				.filter((key) => Number.isFinite(key))
-				.sort((a, b) => b - a);
-			if (!keys.length) return null;
-			return quotes[String(keys[0])] || null;
-		};
-
 		const updateTargetsProductId = (productId) => {
 			targets.forEach((target) => {
 				target.dataset.productId = productId;
 			});
 		};
-
-		const formatCurrency = (value) => {
-			if (!Number.isFinite(value)) return '';
-			try {
-				return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
-			} catch (err) {
-				return `R$ ${value.toFixed(2).replace('.', ',')}`;
-			}
-		};
-
 		const populateInstallmentSelect = (quotes, selectedInstallments) => {
 			targets.forEach((target) => {
 				const wrapper = target.closest('[data-gstore-installment-wrapper]');
@@ -260,62 +320,7 @@ document.addEventListener('DOMContentLoaded', () => {
 				const select = wrapper.querySelector('[data-gstore-installment-select]');
 				if (!select) return;
 
-				select.innerHTML = '';
-
-				if (!quotes || typeof quotes !== 'object') {
-					select.style.display = 'none';
-					return;
-				}
-
-				const quoteKeys = Object.keys(quotes)
-					.map((key) => parseInt(key, 10))
-					.filter((key) => Number.isFinite(key))
-					.sort((a, b) => b - a);
-
-				if (!quoteKeys.length) {
-					select.style.display = 'none';
-					return;
-				}
-
-				const defaultOption = document.createElement('option');
-				defaultOption.value = '';
-				defaultOption.textContent = 'Selecione as parcelas';
-				select.appendChild(defaultOption);
-
-				quoteKeys.forEach((installments) => {
-					const quote = quotes[String(installments)];
-					if (!quote || !quote.per_installment_text) return;
-
-					const option = document.createElement('option');
-					option.value = String(installments);
-
-					let optionText = `${installments}x de ${quote.per_installment_text}`;
-					const totalRaw = Number(quote.total_raw ?? quote.total);
-					const totalText = quote.total_text || quote.totalText || (Number.isFinite(totalRaw) ? formatCurrency(totalRaw) : '');
-					const originalTotal = Number(quote.original_total ?? quote.originalTotal);
-					const jurosValue = Number.isFinite(totalRaw) && Number.isFinite(originalTotal)
-						? totalRaw - originalTotal
-						: NaN;
-					const details = [];
-					if (totalText) {
-						details.push(`total: ${totalText}`);
-					}
-					if (Number.isFinite(jurosValue) && jurosValue > 0) {
-						const jurosText = formatCurrency(jurosValue);
-						if (jurosText) {
-							details.push(`juros: ${jurosText}`);
-						}
-					}
-					if (details.length) {
-						optionText += ` (${details.join(', ')})`;
-					}
-
-					option.textContent = optionText;
-					option.selected = Number(selectedInstallments) === installments;
-					select.appendChild(option);
-				});
-
-				select.style.display = 'block';
+				buildInstallmentSelect(select, quotes, selectedInstallments);
 			});
 		};
 
@@ -346,28 +351,28 @@ document.addEventListener('DOMContentLoaded', () => {
 			const max = getMaxInstallments();
 			const quantity = getQuantity();
 			const signature = `${currentProductId}|${quantity}|${max}`;
-			if (cache.has(signature)) {
-				const cachedText = cache.get(signature);
+			if (gstoreInstallmentCache.has(signature)) {
+				const cachedText = gstoreInstallmentCache.get(signature);
 				// #region agent log
 				fetch('http://127.0.0.1:7242/ingest/2e9bdb26-956d-44fb-8061-6eba8efc208f',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'installments-request',hypothesisId:'REQ3',location:'assets/js/single-product.js:requestQuotes',message:'[GStore Installments] Usando cache',data:{signature,cachedText},timestamp:Date.now()})}).catch(()=>{});
 				// #endregion
 				applyText(cachedText);
-				const cachedQuotes = quotesCache.get(signature);
+				const cachedQuotes = gstoreInstallmentQuotesCache.get(signature);
 				if (cachedQuotes) {
 					populateInstallmentSelect(cachedQuotes);
 					setupInstallmentSelectListeners();
 				}
 				return;
 			}
-			if (inFlight.has(signature)) {
+			if (gstoreInstallmentInFlight.has(signature)) {
 				// #region agent log
 				fetch('http://127.0.0.1:7242/ingest/2e9bdb26-956d-44fb-8061-6eba8efc208f',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'installments-request',hypothesisId:'REQ4',location:'assets/js/single-product.js:requestQuotes',message:'[GStore Installments] Requisição já em andamento',data:{signature},timestamp:Date.now()})}).catch(()=>{});
 				// #endregion
 				return;
 			}
 
-			const ajaxUrl = resolveAjaxUrl();
-			const action = resolveAction();
+			const ajaxUrl = resolveInstallmentAjaxUrl();
+			const action = resolveInstallmentAction();
 			// #region agent log
 			fetch('http://127.0.0.1:7242/ingest/2e9bdb26-956d-44fb-8061-6eba8efc208f',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'installments-request',hypothesisId:'REQ5',location:'assets/js/single-product.js:requestQuotes',message:'[GStore Installments] Fazendo requisição',data:{productId:currentProductId,quantity,max,action,ajaxUrl,hasAjaxUrl:!!ajaxUrl},timestamp:Date.now()})}).catch(()=>{});
 			// #endregion
@@ -441,8 +446,8 @@ document.addEventListener('DOMContentLoaded', () => {
 						throw new Error('Parcelas indisponíveis.');
 					}
 					const text = `ou ${quote.installments}x de ${quote.per_installment_text}`;
-					cache.set(signature, text);
-					quotesCache.set(signature, payload.data.quotes);
+					gstoreInstallmentCache.set(signature, text);
+					gstoreInstallmentQuotesCache.set(signature, payload.data.quotes);
 					// #region agent log
 					fetch('http://127.0.0.1:7242/ingest/2e9bdb26-956d-44fb-8061-6eba8efc208f',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'installments-request',hypothesisId:'SUCCESS',location:'assets/js/single-product.js:requestQuotes',message:'[GStore Installments] Sucesso - aplicando texto',data:{text,signature,installments:quote.installments,perInstallmentText:quote.per_installment_text},timestamp:Date.now()})}).catch(()=>{});
 					// #endregion
@@ -463,10 +468,10 @@ document.addEventListener('DOMContentLoaded', () => {
 					applyFallback();
 				})
 				.finally(() => {
-					inFlight.delete(signature);
+					gstoreInstallmentInFlight.delete(signature);
 				});
 
-			inFlight.set(signature, fetchPromise);
+			gstoreInstallmentInFlight.set(signature, fetchPromise);
 		};
 
 		let qtyTimer = null;
@@ -504,6 +509,148 @@ document.addEventListener('DOMContentLoaded', () => {
 		fetch('http://127.0.0.1:7242/ingest/2e9bdb26-956d-44fb-8061-6eba8efc208f',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'installments-init',hypothesisId:'INIT_END',location:'assets/js/single-product.js:initProductInstallmentQuotes',message:'[GStore Installments] Chamando requestQuotes inicial',data:{baseProductId},timestamp:Date.now()})}).catch(()=>{});
 		// #endregion
 		requestQuotes();
+	};
+
+	const initProductCardInstallmentQuotes = () => {
+		const targets = Array.from(document.querySelectorAll('[data-gstore-installment-scope="card"]'));
+		if (!targets.length) {
+			return;
+		}
+
+		const getMaxInstallments = (target) => {
+			const raw = target?.dataset?.maxInstallments || gstoreSingleProductInstallments?.max || '21';
+			const parsed = parseInt(String(raw), 10);
+			return Number.isFinite(parsed) && parsed > 0 ? parsed : 21;
+		};
+
+		const applyFallback = (target) => {
+			const fallback = String(target?.dataset?.initialText || '').trim();
+			if (fallback) {
+				target.textContent = fallback;
+				target.hidden = false;
+			} else {
+				target.hidden = true;
+			}
+		};
+
+		const applyText = (target, text) => {
+			target.textContent = text;
+			target.hidden = !text;
+		};
+
+		const populateTargetSelect = (target, quotes, selectedInstallments) => {
+			const wrapper = target.closest('[data-gstore-installment-wrapper]');
+			if (!wrapper) return;
+
+			const select = wrapper.querySelector('[data-gstore-installment-select]');
+			if (!select) return;
+
+			buildInstallmentSelect(select, quotes, selectedInstallments);
+		};
+
+		const requestTargetQuotes = (target) => {
+			const productId = String(target?.dataset?.productId || '');
+			if (!productId) {
+				applyFallback(target);
+				return;
+			}
+
+			const quantity = 1;
+			const max = getMaxInstallments(target);
+			const signature = `${productId}|${quantity}|${max}`;
+
+			if (gstoreInstallmentCache.has(signature)) {
+				const cachedText = gstoreInstallmentCache.get(signature);
+				applyText(target, cachedText);
+				const cachedQuotes = gstoreInstallmentQuotesCache.get(signature);
+				if (cachedQuotes) {
+					const preferred = chooseQuote(cachedQuotes, String(max));
+					populateTargetSelect(target, cachedQuotes, preferred?.installments);
+				}
+				return;
+			}
+
+			if (gstoreInstallmentInFlight.has(signature)) {
+				return;
+			}
+
+			const ajaxUrl = resolveInstallmentAjaxUrl();
+			const action = resolveInstallmentAction();
+			if (!ajaxUrl) {
+				applyFallback(target);
+				return;
+			}
+
+			const body = new URLSearchParams();
+			body.set('action', action);
+			body.set('product_id', productId);
+			body.set('quantity', String(quantity));
+			body.set('max', String(max));
+
+			const fetchPromise = fetch(ajaxUrl, {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+				},
+				credentials: 'same-origin',
+				body: body.toString(),
+			})
+				.then(async (response) => {
+					let payload;
+					try {
+						payload = await response.json();
+					} catch (parseError) {
+						throw new Error('Resposta inválida do servidor (JSON parse error).');
+					}
+					if (!response.ok || !payload?.success) {
+						throw new Error(payload?.data?.message || 'Falha ao obter parcelas.');
+					}
+					if (!payload?.data || typeof payload.data !== 'object') {
+						throw new Error('Dados de resposta inválidos.');
+					}
+					if (!payload.data.quotes || typeof payload.data.quotes !== 'object') {
+						throw new Error('Quotes não encontrados na resposta.');
+					}
+
+					const preferredMax = payload.data.max || max || 21;
+					const quote = chooseQuote(payload.data.quotes, String(preferredMax));
+					if (!quote || !quote.installments || !quote.per_installment_text) {
+						throw new Error('Parcelas indisponíveis.');
+					}
+
+					const text = `ou ${quote.installments}x de ${quote.per_installment_text}`;
+					gstoreInstallmentCache.set(signature, text);
+					gstoreInstallmentQuotesCache.set(signature, payload.data.quotes);
+					applyText(target, text);
+					populateTargetSelect(target, payload.data.quotes, quote.installments);
+				})
+				.catch(() => {
+					applyFallback(target);
+				})
+				.finally(() => {
+					gstoreInstallmentInFlight.delete(signature);
+				});
+
+			gstoreInstallmentInFlight.set(signature, fetchPromise);
+		};
+
+		if ('IntersectionObserver' in window) {
+			const observer = new IntersectionObserver(
+				(entries) => {
+					entries.forEach((entry) => {
+						if (!entry.isIntersecting) return;
+						const target = entry.target;
+						observer.unobserve(target);
+						requestTargetQuotes(target);
+					});
+				},
+				{ rootMargin: '120px 0px' }
+			);
+
+			targets.forEach((target) => observer.observe(target));
+		} else {
+			targets.forEach((target) => requestTargetQuotes(target));
+		}
 	};
 
 	/**
@@ -909,6 +1056,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 	initTabs();
 	initProductInstallmentQuotes();
+	initProductCardInstallmentQuotes();
 	initFavoriteButton();
 	initResetButton();
 	initVariationsState();
@@ -2023,3 +2171,11 @@ document.addEventListener('DOMContentLoaded', () => {
 		});
 	}
 });
+
+if (typeof module !== 'undefined' && module.exports) {
+	module.exports = {
+		formatCurrency,
+		chooseQuote,
+		buildInstallmentSelect,
+	};
+}
