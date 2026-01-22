@@ -4,10 +4,6 @@
  */
 (function () {
 	'use strict';
-	// #region agent log
-	fetch('http://127.0.0.1:7247/ingest/cce9ccaa-d42e-4577-9651-ba22a488615c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'cart.js:6',message:'cart script loaded',data:{url:typeof window!=='undefined'?window.location.href:'',hasLocalStorage:typeof window!=='undefined'&&!!window.localStorage},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H8'})}).catch(()=>{});
-	// #endregion agent log
-
 	let cartUpdateTimeout = null;
 	let ratesSyncInProgress = false;
 	let shippingChoicesDelegated = false;
@@ -456,9 +452,6 @@
 				cost_formatted: rate.cost_formatted || '',
 			}))
 			.filter((rate) => rate.mode);
-		// #region agent log
-		fetch('http://127.0.0.1:7247/ingest/cce9ccaa-d42e-4577-9651-ba22a488615c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'cart.js:431',message:'cart rates normalized',data:{cartItemKey:cartItemKey,ratesCount:normalizedRates.length,firstRate:normalizedRates[0] || null,selectedMode:selectedMode},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H8'})}).catch(()=>{});
-		// #endregion agent log
 		storeShippingRates(cartItemKey, normalizedRates);
 
 		if (!ratesInput) {
@@ -588,10 +581,6 @@
 		if (!cep) {
 			return;
 		}
-		// #region agent log
-		fetch('http://127.0.0.1:7247/ingest/cce9ccaa-d42e-4577-9651-ba22a488615c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'cart.js:565',message:'calculateRatesForCart called',data:{cep:cep,shouldUpdateCart:!!shouldUpdateCart,blocks:document.querySelectorAll('[data-gstore-shipping-item]').length},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H8'})}).catch(()=>{});
-		// #endregion agent log
-
 		storeCartCep(cep);
 
 		const shippingBlocks = document.querySelectorAll('[data-gstore-shipping-item]');
