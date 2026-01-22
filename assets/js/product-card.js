@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Funcionalidades dos cards de produto Gstore
  * 
  * @package Gstore

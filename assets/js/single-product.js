@@ -1,84 +1,3 @@
-const formatCurrency = (value) => {
-	if (!Number.isFinite(value)) return '';
-	try {
-		return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
-	} catch (err) {
-		return `R$ ${value.toFixed(2).replace('.', ',')}`;
-	}
-};
-
-const chooseQuote = (quotes, preferred) => {
-	if (!quotes || typeof quotes !== 'object') return null;
-	if (quotes[preferred]) return quotes[preferred];
-	const keys = Object.keys(quotes)
-		.map((key) => parseInt(key, 10))
-		.filter((key) => Number.isFinite(key))
-		.sort((a, b) => b - a);
-	if (!keys.length) return null;
-	return quotes[String(keys[0])] || null;
-};
-
-const buildInstallmentSelect = (select, quotes, selectedInstallments) => {
-	if (!select) return;
-
-	select.innerHTML = '';
-
-	if (!quotes || typeof quotes !== 'object') {
-		select.style.display = 'none';
-		return;
-	}
-
-	const quoteKeys = Object.keys(quotes)
-		.map((key) => parseInt(key, 10))
-		.filter((key) => Number.isFinite(key))
-		.sort((a, b) => b - a);
-
-	if (!quoteKeys.length) {
-		select.style.display = 'none';
-		return;
-	}
-
-	const defaultOption = document.createElement('option');
-	defaultOption.value = '';
-	defaultOption.textContent = 'Selecione as parcelas';
-	select.appendChild(defaultOption);
-
-	quoteKeys.forEach((installments) => {
-		const quote = quotes[String(installments)];
-		if (!quote || !quote.per_installment_text) return;
-
-		const option = document.createElement('option');
-		option.value = String(installments);
-
-		let optionText = `${installments}x de ${quote.per_installment_text}`;
-		const totalRaw = Number(quote.total_raw ?? quote.total);
-		const totalText = quote.total_text || quote.totalText || (Number.isFinite(totalRaw) ? formatCurrency(totalRaw) : '');
-		const originalTotal = Number(quote.original_total ?? quote.originalTotal);
-		const jurosValue = Number.isFinite(totalRaw) && Number.isFinite(originalTotal)
-			? totalRaw - originalTotal
-			: NaN;
-		const details = [];
-		if (totalText) {
-			details.push(`total: ${totalText}`);
-		}
-		if (Number.isFinite(jurosValue) && jurosValue > 0) {
-			const jurosText = formatCurrency(jurosValue);
-			if (jurosText) {
-				details.push(`juros: ${jurosText}`);
-			}
-		}
-		if (details.length) {
-			optionText += ` (${details.join(', ')})`;
-		}
-
-		option.textContent = optionText;
-		option.selected = Number(selectedInstallments) === installments;
-		select.appendChild(option);
-	});
-
-	select.style.display = 'block';
-};
-
 document.addEventListener('DOMContentLoaded', () => {
 	const reviewTriggers = document.querySelectorAll('[data-gstore-tab-target="reviews"]');
 
@@ -245,6 +164,97 @@ document.addEventListener('DOMContentLoaded', () => {
 			return String(gstoreSingleProductInstallments.action);
 		}
 		return 'gstore_blu_get_product_installment_quotes';
+	};
+
+	const formatCurrency = (value) => {
+		if (!Number.isFinite(value)) return '';
+		try {
+			return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
+		} catch (err) {
+			return `R$ ${value.toFixed(2).replace('.', ',')}`;
+		}
+	};
+
+	const chooseQuote = (quotes, preferred) => {
+		if (!quotes || typeof quotes !== 'object') return null;
+		if (quotes[preferred]) return quotes[preferred];
+		const keys = Object.keys(quotes)
+			.map((key) => parseInt(key, 10))
+			.filter((key) => Number.isFinite(key))
+			.sort((a, b) => b - a);
+		if (!keys.length) return null;
+		return quotes[String(keys[0])] || null;
+	};
+
+	const buildInstallmentSelect = (select, quotes, selectedInstallments) => {
+		if (!select) return;
+
+		// Verificar se o select está dentro de um card - não criar dropdown nos cards
+		const wrapper = select.closest('[data-gstore-installment-wrapper]');
+		if (wrapper) {
+			const scope = wrapper.querySelector('[data-gstore-installment-scope="card"]');
+			if (scope) {
+				select.style.display = 'none';
+				return; // Não criar dropdown nos cards
+			}
+		}
+
+		select.innerHTML = '';
+
+		if (!quotes || typeof quotes !== 'object') {
+			select.style.display = 'none';
+			return;
+		}
+
+		const quoteKeys = Object.keys(quotes)
+			.map((key) => parseInt(key, 10))
+			.filter((key) => Number.isFinite(key))
+			.sort((a, b) => b - a);
+
+		if (!quoteKeys.length) {
+			select.style.display = 'none';
+			return;
+		}
+
+		const defaultOption = document.createElement('option');
+		defaultOption.value = '';
+		defaultOption.textContent = 'Selecione as parcelas';
+		select.appendChild(defaultOption);
+
+		quoteKeys.forEach((installments) => {
+			const quote = quotes[String(installments)];
+			if (!quote || !quote.per_installment_text) return;
+
+			const option = document.createElement('option');
+			option.value = String(installments);
+
+			let optionText = `${installments}x de ${quote.per_installment_text}`;
+			const totalRaw = Number(quote.total_raw ?? quote.total);
+			const totalText = quote.total_text || quote.totalText || (Number.isFinite(totalRaw) ? formatCurrency(totalRaw) : '');
+			const originalTotal = Number(quote.original_total ?? quote.originalTotal);
+			const jurosValue = Number.isFinite(totalRaw) && Number.isFinite(originalTotal)
+				? totalRaw - originalTotal
+				: NaN;
+			const details = [];
+			if (totalText) {
+				details.push(`total: ${totalText}`);
+			}
+			if (Number.isFinite(jurosValue) && jurosValue > 0) {
+				const jurosText = formatCurrency(jurosValue);
+				if (jurosText) {
+					details.push(`juros: ${jurosText}`);
+				}
+			}
+			if (details.length) {
+				optionText += ` (${details.join(', ')})`;
+			}
+
+			option.textContent = optionText;
+			option.selected = Number(selectedInstallments) === installments;
+			select.appendChild(option);
+		});
+
+		select.style.display = 'block';
 	};
 
 	const initProductInstallmentQuotes = () => {
@@ -539,6 +549,12 @@ document.addEventListener('DOMContentLoaded', () => {
 		};
 
 		const populateTargetSelect = (target, quotes, selectedInstallments) => {
+			// Cards não devem ter dropdown de parcelas - sempre usar o máximo disponível
+			const scope = target?.dataset?.gstoreInstallmentScope;
+			if (scope === 'card') {
+				return; // Não criar dropdown nos cards
+			}
+
 			const wrapper = target.closest('[data-gstore-installment-wrapper]');
 			if (!wrapper) return;
 
@@ -559,13 +575,37 @@ document.addEventListener('DOMContentLoaded', () => {
 			const max = getMaxInstallments(target);
 			const signature = `${productId}|${quantity}|${max}`;
 
-			if (gstoreInstallmentCache.has(signature)) {
+			// Para cards, sempre recalcular com o máximo disponível (ignorar cache de texto)
+			const scope = target?.dataset?.gstoreInstallmentScope;
+			if (scope === 'card' && gstoreInstallmentQuotesCache.has(signature)) {
+				// Se temos quotes em cache, usar o máximo disponível delas
+				const cachedQuotes = gstoreInstallmentQuotesCache.get(signature);
+				if (cachedQuotes && typeof cachedQuotes === 'object') {
+					const quoteKeys = Object.keys(cachedQuotes)
+						.map((key) => parseInt(key, 10))
+						.filter((key) => Number.isFinite(key))
+						.sort((a, b) => b - a);
+					
+					if (quoteKeys.length > 0) {
+						const maxAvailable = quoteKeys[0];
+						const preferred = chooseQuote(cachedQuotes, String(maxAvailable));
+						if (preferred && preferred.installments && preferred.per_installment_text) {
+							const maxText = `ou ${preferred.installments}x de ${preferred.per_installment_text}`;
+							applyText(target, maxText);
+							populateTargetSelect(target, cachedQuotes, preferred.installments);
+							return;
+						}
+					}
+				}
+			}
+			
+			// Para página de produto, usar cache normal
+			if (scope !== 'card' && gstoreInstallmentCache.has(signature)) {
 				const cachedText = gstoreInstallmentCache.get(signature);
 				applyText(target, cachedText);
 				const cachedQuotes = gstoreInstallmentQuotesCache.get(signature);
 				if (cachedQuotes) {
-					const preferred = chooseQuote(cachedQuotes, String(max));
-					populateTargetSelect(target, cachedQuotes, preferred?.installments);
+					populateTargetSelect(target, cachedQuotes, null);
 				}
 				return;
 			}
@@ -612,15 +652,41 @@ document.addEventListener('DOMContentLoaded', () => {
 						throw new Error('Quotes não encontrados na resposta.');
 					}
 
-					const preferredMax = payload.data.max || max || 21;
+					// Para cards: sempre usar o máximo disponível retornado pela API
+					// Para página de produto: usar o preferredMax ou o máximo disponível
+					const scope = target?.dataset?.gstoreInstallmentScope;
+					
+					// Sempre pegar o máximo disponível das quotes retornadas
+					const quoteKeys = Object.keys(payload.data.quotes)
+						.map((key) => parseInt(key, 10))
+						.filter((key) => Number.isFinite(key))
+						.sort((a, b) => b - a);
+					
+					let preferredMax;
+					if (scope === 'card') {
+						// No card, sempre usar o máximo disponível retornado pela API (pode ser 12x, não 21x)
+						preferredMax = quoteKeys.length > 0 ? quoteKeys[0] : (payload.data.max || max || 21);
+					} else {
+						// Na página de produto, usar o preferredMax normal
+						preferredMax = payload.data.max || max || 21;
+					}
+					
+					// Escolher a quote com o máximo disponível
 					const quote = chooseQuote(payload.data.quotes, String(preferredMax));
 					if (!quote || !quote.installments || !quote.per_installment_text) {
 						throw new Error('Parcelas indisponíveis.');
 					}
 
 					const text = `ou ${quote.installments}x de ${quote.per_installment_text}`;
-					gstoreInstallmentCache.set(signature, text);
-					gstoreInstallmentQuotesCache.set(signature, payload.data.quotes);
+					
+					// Para cards, usar uma signature baseada no máximo real para evitar cache incorreto
+					const cacheSignature = scope === 'card' 
+						? `${productId}|${quantity}|${quote.installments}`
+						: signature;
+					
+					gstoreInstallmentCache.set(cacheSignature, text);
+					gstoreInstallmentQuotesCache.set(cacheSignature, payload.data.quotes);
+					
 					applyText(target, text);
 					populateTargetSelect(target, payload.data.quotes, quote.installments);
 				})
@@ -2171,11 +2237,3 @@ document.addEventListener('DOMContentLoaded', () => {
 		});
 	}
 });
-
-if (typeof module !== 'undefined' && module.exports) {
-	module.exports = {
-		formatCurrency,
-		chooseQuote,
-		buildInstallmentSelect,
-	};
-}

@@ -705,42 +705,44 @@ if ( $reviews_has_value ) {
 				<div class="Gstore-single-product__summary">
 					<div class="Gstore-single-product__summary-card Gstore-single-product__buybox buybox <?php echo esc_attr( $buybox_stock_class ); ?>">
 						<!-- Preço -->
-						<div class="buybox-header">
-							<div>
-								<div class="price-label"><?php esc_html_e( 'À vista no PIX', 'gstore' ); ?></div>
-								<div class="price" id="price" data-gstore-price>
-									<?php woocommerce_template_single_price(); ?>
-								</div>
-								<?php if ( $is_variable ) : ?>
-									<div class="price-sub"><?php esc_html_e( 'Preço muda conforme as opções', 'gstore' ); ?></div>
-								<?php endif; ?>
-								<?php if ( $formatted_installment ) : ?>
-									<div class="price-sub-wrapper" data-gstore-installment-wrapper>
-										<div
-											class="price-sub"
-											data-gstore-installment-target="1"
-											data-product-id="<?php echo esc_attr( $product->get_id() ); ?>"
-											data-max-installments="<?php echo esc_attr( $installments ); ?>"
-											data-initial-text="<?php echo esc_attr( wp_strip_all_tags( (string) $formatted_installment ) ); ?>"
-										>
-											<?php echo wp_kses_post( $formatted_installment ); ?>
-										</div>
-										<select
-											class="price-sub-installments-select"
-											data-gstore-installment-select
-											aria-label="<?php esc_attr_e( 'Selecione o número de parcelas', 'gstore' ); ?>"
-											style="display: none;"
-										>
-											<option value=""><?php esc_html_e( 'Carregando...', 'gstore' ); ?></option>
-										</select>
+						<?php if ( ! $is_out_of_stock ) : ?>
+							<div class="buybox-header">
+								<div>
+									<div class="price-label"><?php esc_html_e( 'À vista no PIX', 'gstore' ); ?></div>
+									<div class="price" id="price" data-gstore-price>
+										<?php woocommerce_template_single_price(); ?>
 									</div>
-								<?php endif; ?>
-							</div>
+									<?php if ( $is_variable ) : ?>
+										<div class="price-sub"><?php esc_html_e( 'Preço muda conforme as opções', 'gstore' ); ?></div>
+									<?php endif; ?>
+									<?php if ( $formatted_installment ) : ?>
+										<div class="price-sub-wrapper" data-gstore-installment-wrapper>
+											<div
+												class="price-sub"
+												data-gstore-installment-target="1"
+												data-product-id="<?php echo esc_attr( $product->get_id() ); ?>"
+												data-max-installments="<?php echo esc_attr( $installments ); ?>"
+												data-initial-text="<?php echo esc_attr( wp_strip_all_tags( (string) $formatted_installment ) ); ?>"
+											>
+												<?php echo wp_kses_post( $formatted_installment ); ?>
+											</div>
+											<select
+												class="price-sub-installments-select"
+												data-gstore-installment-select
+												aria-label="<?php esc_attr_e( 'Selecione o número de parcelas', 'gstore' ); ?>"
+												style="display: none;"
+											>
+												<option value=""><?php esc_html_e( 'Carregando...', 'gstore' ); ?></option>
+											</select>
+										</div>
+									<?php endif; ?>
+								</div>
 
-							<button type="button" class="btn-secondary" data-gstore-reset-purchase>
-								<?php esc_html_e( 'Limpar', 'gstore' ); ?>
-							</button>
-						</div>
+								<button type="button" class="btn-secondary" data-gstore-reset-purchase>
+									<?php esc_html_e( 'Limpar', 'gstore' ); ?>
+								</button>
+							</div>
+						<?php endif; ?>
 
 						<?php if ( ! empty( $hero_meta_cards ) ) : ?>
 							<div class="Gstore-single-product__buybox-meta-strip" aria-label="<?php esc_attr_e( 'Destaques', 'gstore' ); ?>">

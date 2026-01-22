@@ -16,6 +16,31 @@ if ( empty( $product ) || ! $product->is_visible() ) {
 }
 
 $is_variable_product   = $product->is_type( array( 'variable', 'variation' ) );
+$stock_status          = (string) $product->get_stock_status();
+
+// Para produtos variáveis, verificar se TODAS as variações estão sem estoque.
+$all_variations_out_of_stock = false;
+if ( $is_variable_product && method_exists( $product, 'get_children' ) ) {
+	$children = $product->get_children();
+	if ( ! empty( $children ) ) {
+		$all_variations_out_of_stock = true;
+		foreach ( $children as $child_id ) {
+			$child_stock_status = (string) get_post_meta( (int) $child_id, '_stock_status', true );
+			if ( 'instock' === $child_stock_status ) {
+				$all_variations_out_of_stock = false;
+				break;
+			}
+		}
+	}
+}
+
+// Para variáveis: se TODAS estão sem estoque, forçar outofstock.
+if ( $is_variable_product && $all_variations_out_of_stock ) {
+	$stock_status = 'outofstock';
+}
+
+$is_out_of_stock = 'outofstock' === $stock_status;
+
 $regular_price_amount  = $is_variable_product ? (float) $product->get_variation_regular_price( 'min', true ) : (float) $product->get_regular_price();
 $sale_price_amount     = $is_variable_product ? (float) $product->get_variation_sale_price( 'min', true ) : (float) $product->get_sale_price();
 $current_price_amount  = $is_variable_product ? (float) $product->get_variation_price( 'min', true ) : (float) $product->get_price();
@@ -93,47 +118,41 @@ $installment_label       = $installment_price_html
 					</a>
 				</h3>
 			</div>
-			<div class="Gstore-product-card__price-section">
-				<?php if ( $has_sale_value && $regular_price_html ) : ?>
-					<div class="Gstore-product-card__price-original">
-						<?php echo wp_kses_post( $regular_price_html ); ?>
-					</div>
-				<?php else : ?>
-					<div class="Gstore-product-card__price-original Gstore-product-card__price-original--placeholder" aria-hidden="true">
-						&nbsp;
-					</div>
-				<?php endif; ?>
-				<?php if ( $display_price_html ) : ?>
-					<div class="Gstore-product-card__price-row">
-						<?php echo wp_kses_post( $display_price_html ); ?>
-					</div>
-				<?php endif; ?>
-				<?php if ( $installment_label ) : ?>
-					<div class="Gstore-product-card__price-details">
-						<strong class="Gstore-product-card__price-details-label"><?php esc_html_e( 'à vista no Pix', 'gstore' ); ?></strong>
-						<div class="Gstore-product-card__installments" data-gstore-installment-wrapper>
-							<span
-								class="Gstore-product-card__installments-text"
-								data-gstore-installment-target="1"
-								data-gstore-installment-scope="card"
-								data-product-id="<?php echo esc_attr( $product->get_id() ); ?>"
-								data-max-installments="<?php echo esc_attr( $installments ); ?>"
-								data-initial-text="<?php echo esc_attr( wp_strip_all_tags( (string) $installment_label ) ); ?>"
-							>
-								<?php echo wp_kses_post( $installment_label ); ?>
-							</span>
-							<select
-								class="price-sub-installments-select"
-								data-gstore-installment-select
-								aria-label="<?php esc_attr_e( 'Selecione o número de parcelas', 'gstore' ); ?>"
-								style="display: none;"
-							>
-								<option value=""><?php esc_html_e( 'Carregando...', 'gstore' ); ?></option>
-							</select>
+			<?php if ( ! $is_out_of_stock ) : ?>
+				<div class="Gstore-product-card__price-section">
+					<?php if ( $has_sale_value && $regular_price_html ) : ?>
+						<div class="Gstore-product-card__price-original">
+							<?php echo wp_kses_post( $regular_price_html ); ?>
 						</div>
-					</div>
-				<?php endif; ?>
-			</div>
+					<?php else : ?>
+						<div class="Gstore-product-card__price-original Gstore-product-card__price-original--placeholder" aria-hidden="true">
+							&nbsp;
+						</div>
+					<?php endif; ?>
+					<?php if ( $display_price_html ) : ?>
+						<div class="Gstore-product-card__price-row">
+							<?php echo wp_kses_post( $display_price_html ); ?>
+						</div>
+					<?php endif; ?>
+					<?php if ( $installment_label ) : ?>
+						<div class="Gstore-product-card__price-details">
+							<strong class="Gstore-product-card__price-details-label"><?php esc_html_e( 'à vista no Pix', 'gstore' ); ?></strong>
+							<div class="Gstore-product-card__installments" data-gstore-installment-wrapper>
+								<span
+									class="Gstore-product-card__installments-text"
+									data-gstore-installment-target="1"
+									data-gstore-installment-scope="card"
+									data-product-id="<?php echo esc_attr( $product->get_id() ); ?>"
+									data-max-installments="<?php echo esc_attr( $installments ); ?>"
+									data-initial-text="<?php echo esc_attr( wp_strip_all_tags( (string) $installment_label ) ); ?>"
+								>
+									<?php echo wp_kses_post( $installment_label ); ?>
+								</span>
+							</div>
+						</div>
+					<?php endif; ?>
+				</div>
+			<?php endif; ?>
 		</div>
 		<div class="Gstore-product-card__footer">
 			<?php

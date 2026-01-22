@@ -5149,6 +5149,11 @@ main:not(.Gstore-blog-shell):not(.Gstore-blog-single-shell) {
 	color: var(--text-muted);
 }
 
+/* Ocultar select de parcelas nos cards - sempre usar o máximo disponível */
+.Gstore-product-card__installments .price-sub-installments-select {
+	display: none !important;
+}
+
 /* RODAPÉ - Card Footer com fundo cinza */
 .Gstore-product-card__footer {
 	padding: 20px;
