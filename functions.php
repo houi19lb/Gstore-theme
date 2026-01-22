@@ -4741,6 +4741,7 @@ function gstore_calculate_shipping_ajax() {
 	$has_land   = false;
 	$has_air    = false;
 	$has_ammo   = false;
+	$debug_cart_items = array();
 
 	foreach ( $cart_contents as $cart_item ) {
 		$item_product  = isset( $cart_item['data'] ) ? $cart_item['data'] : null;
@@ -4753,6 +4754,24 @@ function gstore_calculate_shipping_ajax() {
 		$item_variation = gstore_find_freight_variation( $item_product );
 		$item_type      = gstore_get_product_freight_type( $item_product );
 		$item_options   = gstore_get_freight_mode_options( $item_variation, $item_type );
+		if ( $debug_enabled ) {
+			$debug_cart_items[] = array(
+				'productId'   => $item_product->get_id(),
+				'parentId'    => method_exists( $item_product, 'get_parent_id' ) ? (int) $item_product->get_parent_id() : 0,
+				'slug'        => $item_product->get_slug(),
+				'type'        => $item_product->get_type(),
+				'quantity'    => $item_quantity,
+				'freightType' => $item_type,
+				'options'     => is_array( $item_options ) ? array_values( $item_options ) : array(),
+				'variationMatch' => is_array( $item_variation ) ? array(
+					'allowLand' => isset( $item_variation['allowLand'] ) ? (bool) $item_variation['allowLand'] : null,
+					'allowAir'  => isset( $item_variation['allowAir'] ) ? (bool) $item_variation['allowAir'] : null,
+					'isAmmo'    => ! empty( $item_variation['isAmmo'] ),
+					'isGun'     => ! empty( $item_variation['isGun'] ),
+					'isAccessory' => ! empty( $item_variation['isAccessory'] ),
+				) : null,
+			);
+		}
 
 		if ( 'ammo' === $item_type ) {
 			$has_ammo = true;
@@ -4793,7 +4812,18 @@ function gstore_calculate_shipping_ajax() {
 	}
 
 	if ( empty( $rates ) ) {
-		wp_send_json_error( array( 'message' => __( 'Não foi possível calcular o frete para este destino.', 'gstore' ) ) );
+		$payload = array( 'message' => __( 'Não foi possível calcular o frete para este destino.', 'gstore' ) );
+		if ( $debug_enabled ) {
+			$payload['debug'] = array(
+				'cartItems' => $debug_cart_items,
+				'totalLand' => $total_land,
+				'totalAir'  => $total_air,
+				'hasLand'   => $has_land,
+				'hasAir'    => $has_air,
+				'hasAmmo'   => $has_ammo,
+			);
+		}
+		wp_send_json_error( $payload );
 		return;
 	}
 
@@ -4809,6 +4839,14 @@ function gstore_calculate_shipping_ajax() {
 				'city'  => '',
 				'state' => $state,
 			),
+			'debug'      => $debug_enabled ? array(
+				'cartItems' => $debug_cart_items,
+				'totalLand' => $total_land,
+				'totalAir'  => $total_air,
+				'hasLand'   => $has_land,
+				'hasAir'    => $has_air,
+				'hasAmmo'   => $has_ammo,
+			) : null,
 		)
 	);
 }
