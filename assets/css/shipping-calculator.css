@@ -10,6 +10,11 @@
 	border-radius: 4px;
 }
 
+.gstore-shipping-calculator.has-error {
+	border-color: #f5a3a3;
+	background: #fff5f5;
+}
+
 .gstore-shipping-calculator__title {
 	margin: 0 0 1rem 0;
 	font-size: 1.125rem;
@@ -51,6 +56,11 @@ input.gstore-shipping-calculator__cep:focus {
 	outline: none;
 	border-color: var(--gstore-color-accent-secondary, #5a8900);
 	box-shadow: 0 0 0 3px var(--gstore-color-accent-secondary-12, rgba(90, 137, 0, 0.12));
+}
+
+input.gstore-shipping-calculator__cep.has-error {
+	border-color: #e57373;
+	box-shadow: 0 0 0 3px rgba(229, 115, 115, 0.2);
 }
 
 .gstore-shipping-calculator__button {
