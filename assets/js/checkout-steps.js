@@ -1471,13 +1471,6 @@ function getInstallmentDisplayTotals(summaryData) {
 	function showShippingLoading() {
 		checkoutShippingStatus = 'loading';
 		checkoutShippingError = '';
-		
-		// Remove classe de erro quando começa a calcular (novo cálculo)
-		const $shippingSummary = $('[data-gstore-shipping-summary]');
-		if ($shippingSummary.length) {
-			$shippingSummary.removeClass('Gstore-checkout-summary-top__shipping--error');
-		}
-		
 		renderShippingSummary(lastCartSummaryData);
 	}
 
@@ -1499,13 +1492,6 @@ function getInstallmentDisplayTotals(summaryData) {
 		const storedMode = getStoredShippingModeFromStorage(getCartItemKeysFromSummary(lastCartSummaryData));
 		const preferredMode = storedMode || checkoutSelectedShippingMode || 'land';
 		checkoutSelectedShippingMode = resolveCheckoutShippingMode(checkoutShippingRates, preferredMode);
-		
-		// Remove classe de erro da área do frete quando o cálculo for bem-sucedido
-		const $shippingSummary = $('[data-gstore-shipping-summary]');
-		if ($shippingSummary.length) {
-			$shippingSummary.removeClass('Gstore-checkout-summary-top__shipping--error');
-		}
-		
 		// #region agent log
 		fetch('http://127.0.0.1:7247/ingest/cce9ccaa-d42e-4577-9651-ba22a488615c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'checkout-steps.js:928',message:'resolved checkout mode',data:{preferredMode:preferredMode,resolved:checkoutSelectedShippingMode,normalizedRates:checkoutShippingRates.map(r=>({mode:r.mode,label:r.label,cost_formatted:r.cost_formatted}))},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H3'})}).catch(()=>{});
 		// #endregion agent log
@@ -1519,13 +1505,6 @@ function getInstallmentDisplayTotals(summaryData) {
 		checkoutShippingStatus = 'error';
 		checkoutShippingError = message || 'Erro ao calcular frete.';
 		checkoutShippingRates = [];
-		
-		// Adiciona classe de erro na área do frete para destacar visualmente
-		const $shippingSummary = $('[data-gstore-shipping-summary]');
-		if ($shippingSummary.length) {
-			$shippingSummary.addClass('Gstore-checkout-summary-top__shipping--error');
-		}
-		
 		renderShippingSummary(lastCartSummaryData);
 	}
 
@@ -1536,13 +1515,6 @@ function getInstallmentDisplayTotals(summaryData) {
 		checkoutShippingStatus = 'idle';
 		checkoutShippingError = '';
 		checkoutShippingRates = [];
-		
-		// Remove classe de erro da área do frete
-		const $shippingSummary = $('[data-gstore-shipping-summary]');
-		if ($shippingSummary.length) {
-			$shippingSummary.removeClass('Gstore-checkout-summary-top__shipping--error');
-		}
-		
 		renderShippingSummary(lastCartSummaryData);
 	}
 
@@ -2897,12 +2869,5 @@ function getInstallmentDisplayTotals(summaryData) {
 	$(document.body).on('payment_method_selected', function() {
 		setTimeout(ensureBluCardStyles, 100);
 	});
-
-	// Expõe funções globalmente para integração com outros scripts (ex: cep-autofill.js)
-	window.gstoreCheckoutSteps = {
-		showShippingError: showShippingError,
-		showShippingResult: showShippingResult,
-		hideShippingResult: hideShippingResult
-	};
 
 })(jQuery);

@@ -7,18 +7,6 @@ jQuery(document).ready(function ($) {
         $("#billing_state").val("").trigger("change");
     }
 
-    // Função para exibir erro de CEP no checkout (sem modal)
-    function showCepError(message) {
-        // Verifica se estamos no checkout com checkout-steps
-        if ($('body').hasClass('woocommerce-checkout') && typeof window.gstoreCheckoutSteps !== 'undefined' && window.gstoreCheckoutSteps.showShippingError) {
-            // Usa a função do checkout-steps.js para exibir o erro na área do frete
-            window.gstoreCheckoutSteps.showShippingError(message);
-        } else {
-            // Se não estiver no checkout, apenas limpa o formulário sem mostrar modal
-            // (comportamento silencioso para não interromper o fluxo)
-        }
-    }
-
     // Quando o campo cep perde o foco.
     $("#billing_postcode").blur(function () {
         // Nova variável "cep" somente com dígitos.
@@ -51,15 +39,13 @@ jQuery(document).ready(function ($) {
                     } else {
                         // CEP pesquisado não foi encontrado.
                         limpa_formulário_cep();
-                        // Em vez de alert, exibe erro na área do frete
-                        showCepError("CEP não encontrado.");
+                        alert("CEP não encontrado.");
                     }
                 });
             } else {
                 // cep é inválido.
                 limpa_formulário_cep();
-                // Em vez de alert, exibe erro na área do frete
-                showCepError("Formato de CEP inválido. Por favor, informe um CEP válido com 8 dígitos.");
+                alert("Formato de CEP inválido.");
             }
         } else {
             // cep sem valor, limpa formulário.
