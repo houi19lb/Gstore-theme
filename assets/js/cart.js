@@ -430,7 +430,7 @@
 		}
 
 		// #region agent log
-		fetch('http://127.0.0.1:7247/ingest/cce9ccaa-d42e-4577-9651-ba22a488615c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'cart.js:fetchRatesForItem',message:'ajax request start',data:{productId:productId,variationId:variationId,quantity:quantity,cep:cep,ajaxUrl:getShippingAjaxUrl()},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+		fetch('http://127.0.0.1:7247/ingest/cce9ccaa-d42e-4577-9651-ba22a488615c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'cart.js:fetchRatesForItem',message:'ajax request start',data:{productId:productId,variationId:variationId,quantity:quantity,cep:cep,ajaxUrl:getShippingAjaxUrl(),debug:true},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
 		// #endregion agent log
 		return jQuery.ajax({
 			url: getShippingAjaxUrl(),
@@ -442,7 +442,7 @@
 				postcode: cep,
 				product_id: productId,
 				quantity: quantity,
-				debug: 1,
+				debug: '1',
 			},
 		}).then((response) => {
 			// #region agent log

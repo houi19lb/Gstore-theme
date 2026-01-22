@@ -4591,7 +4591,14 @@ function gstore_calculate_shipping_ajax() {
 	if ( $product_id > 0 ) {
 		$product = wc_get_product( $product_id );
 		if ( ! $product ) {
-			wp_send_json_error( array( 'message' => __( 'Produto não encontrado.', 'gstore' ) ) );
+			$payload = array( 'message' => __( 'Produto não encontrado.', 'gstore' ) );
+			if ( $debug_enabled ) {
+				$payload['debug'] = array(
+					'productId' => $product_id,
+					'error'     => 'product_not_found',
+				);
+			}
+			wp_send_json_error( $payload );
 			return;
 		}
 
@@ -4636,10 +4643,12 @@ function gstore_calculate_shipping_ajax() {
 		// #endregion agent log
 
 		if ( empty( $options ) ) {
+			$payload = array( 'message' => __( 'Não foi possível calcular o frete para este produto.', 'gstore' ) );
 			if ( $debug_enabled ) {
-				wp_send_json_error( array( 'message' => __( 'Não foi possível calcular o frete para este produto.', 'gstore' ), 'debug' => $debug_payload ) );
-				return;
+				$payload['debug'] = $debug_payload;
 			}
+			wp_send_json_error( $payload );
+			return;
 			// #region agent log
 			if ( $debug_log_path && function_exists( 'wp_json_encode' ) ) {
 				$log_payload = array(
