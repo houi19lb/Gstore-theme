@@ -395,21 +395,6 @@
 				return;
 			}
 
-			rates.forEach((rate) => {
-				const mode = normalizeRateMode(rate.mode);
-				const costValue = Number.isFinite(Number(rate.cost)) ? Number(rate.cost) : parsePriceValue(rate.cost_formatted || '');
-				if (!mode || !Number.isFinite(costValue)) {
-					return;
-				}
-				if (mode === 'land') {
-					groundTotal += costValue;
-					hasGround = true;
-				} else if (mode === 'air') {
-					airTotal += costValue;
-					hasAir = true;
-				}
-			});
-
 			const selectedMode = resolveSelectedMode(shippingBlock, cartItemKey, rates);
 			if (selectedMode) {
 				selectedModes.add(selectedMode);
@@ -420,6 +405,14 @@
 						: parsePriceValue(selectedRate.cost_formatted || '');
 					if (Number.isFinite(selectedCost)) {
 						selectedTotal += selectedCost;
+						// Soma apenas o frete selecionado no total correspondente
+						if (selectedMode === 'land') {
+							groundTotal += selectedCost;
+							hasGround = true;
+						} else if (selectedMode === 'air') {
+							airTotal += selectedCost;
+							hasAir = true;
+						}
 					}
 				}
 			}
