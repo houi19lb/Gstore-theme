@@ -814,6 +814,13 @@ if ( $reviews_has_value ) {
 								$add_to_cart_markup = ob_get_clean();
 
 								if ( $add_to_cart_markup ) {
+									// Se o markup não contém um form válido, usa o fluxo padrão.
+									if ( false === stripos( $add_to_cart_markup, '<form' ) ) {
+										$add_to_cart_markup = '';
+									}
+								}
+
+								if ( $add_to_cart_markup ) {
 									// Aplica classe btn-main ao botão de adicionar ao carrinho (apenas uma vez).
 									if ( false === strpos( $add_to_cart_markup, 'single_add_to_cart_button btn-main' ) ) {
 										$add_to_cart_markup = preg_replace(

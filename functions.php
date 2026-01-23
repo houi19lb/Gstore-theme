@@ -1720,6 +1720,63 @@ function gstore_ensure_cart_events() {
 add_action( 'init', 'gstore_ensure_cart_events', 10 );
 
 /**
+ * Loga estado do carrinho/sessão para diagnóstico.
+ *
+ * @param string $context Contexto do log.
+ * @return void
+ */
+function gstore_log_cart_session_state( $context ) {
+	if ( ! defined( 'WP_DEBUG' ) || ! WP_DEBUG ) {
+		return;
+	}
+
+	if ( ! class_exists( 'WooCommerce' ) ) {
+		return;
+	}
+
+	$cart    = WC()->cart;
+	$session = WC()->session;
+
+	$data = array(
+		'context'       => $context,
+		'is_product'    => function_exists( 'is_product' ) && is_product(),
+		'has_session'   => ( $session && method_exists( $session, 'has_session' ) ) ? $session->has_session() : null,
+		'session_id'    => $session && method_exists( $session, 'get_customer_id' ) ? $session->get_customer_id() : null,
+		'cart_hash'     => $cart ? $cart->get_cart_hash() : null,
+		'items_count'   => $cart ? $cart->get_cart_contents_count() : null,
+		'request_uri'   => isset( $_SERVER['REQUEST_URI'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REQUEST_URI'] ) ) : null,
+		'request_method'=> isset( $_SERVER['REQUEST_METHOD'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REQUEST_METHOD'] ) ) : null,
+	);
+
+	error_log( '[Gstore Cart Debug] ' . wp_json_encode( $data ) );
+}
+
+/**
+ * Loga quando o carrinho é carregado da sessão.
+ */
+function gstore_log_cart_loaded_from_session() {
+	gstore_log_cart_session_state( 'cart_loaded_from_session' );
+}
+add_action( 'woocommerce_cart_loaded_from_session', 'gstore_log_cart_loaded_from_session', 5 );
+
+/**
+ * Loga e garante sessão no add-to-cart (produto único).
+ */
+function gstore_log_and_ensure_cart_session( $cart_item_key, $product_id, $quantity, $variation_id, $variation, $cart_item_data ) {
+	if ( is_admin() && ! wp_doing_ajax() ) {
+		return;
+	}
+
+	gstore_log_cart_session_state( 'add_to_cart' );
+
+	if ( function_exists( 'is_product' ) && is_product() && WC()->session && WC()->cart ) {
+		WC()->session->set_customer_session_cookie( true );
+		WC()->cart->set_session();
+	}
+}
+add_action( 'woocommerce_add_to_cart', 'gstore_log_and_ensure_cart_session', 5, 6 );
+
+/**
  * "Comprar agora" (produto único): redireciona para o checkout após adicionar ao carrinho.
  *
  * Implementado via botão submit no template do produto único (name="gstore_buy_now").

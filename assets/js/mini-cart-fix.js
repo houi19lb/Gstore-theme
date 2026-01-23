@@ -18,6 +18,7 @@
     // Estado
     let refreshTimer = null;
     let isRefreshing = false;
+    let lastAddToCartAt = 0;
 
     /**
      * Log de debug
@@ -232,6 +233,7 @@
      */
     function handleAddedToCart(event, fragments, cart_hash) {
         debugLog('Produto adicionado ao carrinho');
+        lastAddToCartAt = Date.now();
 
         if (document.body.classList.contains('single-product')) {
             const fragmentCount = getCountFromFragments(fragments);
@@ -257,6 +259,12 @@
      */
     function handleFragmentsRefreshed() {
         debugLog('Fragmentos atualizados');
+        if (document.body.classList.contains('single-product')) {
+            const elapsed = Date.now() - lastAddToCartAt;
+            if (elapsed < 1500) {
+                return;
+            }
+        }
         refreshMiniCart();
     }
 
