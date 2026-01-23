@@ -1920,6 +1920,9 @@ function gstore_log_cart_emptied() {
 	$cart = WC()->cart;
 	$action  = isset( $_REQUEST['action'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['action'] ) ) : null;
 	$wc_ajax = isset( $_REQUEST['wc-ajax'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['wc-ajax'] ) ) : null;
+	$trace = function_exists( 'wp_debug_backtrace_summary' )
+		? wp_debug_backtrace_summary( null, 0, false )
+		: '';
 	// #region agent log
 	gstore_write_debug_log(
 		array(
@@ -1934,6 +1937,7 @@ function gstore_log_cart_emptied() {
 				'action'      => $action,
 				'wc_ajax'     => $wc_ajax,
 				'is_ajax'     => wp_doing_ajax(),
+				'backtrace'   => $trace,
 			),
 			'timestamp'   => round( microtime( true ) * 1000 ),
 		)
@@ -2351,6 +2355,23 @@ function gstore_ajax_get_product_installment_quotes() {
 		return;
 	}
 
+	// #region agent log
+	gstore_write_debug_log(
+		array(
+			'sessionId'   => 'debug-session',
+			'runId'       => 'run1',
+			'hypothesisId'=> 'H',
+			'location'    => 'functions.php:gstore_ajax_get_product_installment_quotes',
+			'message'     => 'entry',
+			'data'        => array(
+				'items_count' => ( WC()->cart ) ? WC()->cart->get_cart_contents_count() : null,
+				'is_empty'    => ( WC()->cart ) ? WC()->cart->is_empty() : null,
+			),
+			'timestamp'   => round( microtime( true ) * 1000 ),
+		)
+	);
+	// #endregion
+
 	$cart_backup = array();
 	if ( function_exists( 'WC' ) && WC()->cart ) {
 		foreach ( WC()->cart->get_cart() as $item ) {
@@ -2454,6 +2475,23 @@ function gstore_ajax_get_product_installment_quotes() {
 		);
 		// #endregion
 	}
+
+	// #region agent log
+	gstore_write_debug_log(
+		array(
+			'sessionId'   => 'debug-session',
+			'runId'       => 'run1',
+			'hypothesisId'=> 'H',
+			'location'    => 'functions.php:gstore_ajax_get_product_installment_quotes',
+			'message'     => 'exit',
+			'data'        => array(
+				'items_count' => ( WC()->cart ) ? WC()->cart->get_cart_contents_count() : null,
+				'is_empty'    => ( WC()->cart ) ? WC()->cart->is_empty() : null,
+			),
+			'timestamp'   => round( microtime( true ) * 1000 ),
+		)
+	);
+	// #endregion
 
 	wp_send_json_success( array( 'quotes' => $quotes ) );
 }
