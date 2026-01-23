@@ -1912,6 +1912,91 @@ function gstore_log_cart_item_removed( $cart_item_key, $cart ) {
 add_action( 'woocommerce_cart_item_removed', 'gstore_log_cart_item_removed', 10, 2 );
 
 /**
+ * Loga quando o carrinho é esvaziado.
+ *
+ * @return void
+ */
+function gstore_log_cart_emptied() {
+	$cart = WC()->cart;
+	// #region agent log
+	gstore_write_debug_log(
+		array(
+			'sessionId'   => 'debug-session',
+			'runId'       => 'run1',
+			'hypothesisId'=> 'E',
+			'location'    => 'functions.php:gstore_log_cart_emptied',
+			'message'     => 'cart_emptied',
+			'data'        => array(
+				'items_count' => $cart ? $cart->get_cart_contents_count() : null,
+				'request_uri' => isset( $_SERVER['REQUEST_URI'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REQUEST_URI'] ) ) : null,
+			),
+			'timestamp'   => round( microtime( true ) * 1000 ),
+		)
+	);
+	// #endregion
+}
+add_action( 'woocommerce_cart_emptied', 'gstore_log_cart_emptied', 10 );
+
+/**
+ * Loga quando o carrinho é atualizado.
+ *
+ * @return void
+ */
+function gstore_log_cart_updated() {
+	$cart = WC()->cart;
+	// #region agent log
+	gstore_write_debug_log(
+		array(
+			'sessionId'   => 'debug-session',
+			'runId'       => 'run1',
+			'hypothesisId'=> 'F',
+			'location'    => 'functions.php:gstore_log_cart_updated',
+			'message'     => 'cart_updated',
+			'data'        => array(
+				'items_count' => $cart ? $cart->get_cart_contents_count() : null,
+				'cart_hash'   => $cart ? $cart->get_cart_hash() : null,
+				'request_uri' => isset( $_SERVER['REQUEST_URI'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REQUEST_URI'] ) ) : null,
+			),
+			'timestamp'   => round( microtime( true ) * 1000 ),
+		)
+	);
+	// #endregion
+}
+add_action( 'woocommerce_cart_updated', 'gstore_log_cart_updated', 10 );
+
+/**
+ * Loga estado final do carrinho no fim da requisição.
+ *
+ * @return void
+ */
+function gstore_log_cart_shutdown() {
+	if ( ! class_exists( 'WooCommerce' ) ) {
+		return;
+	}
+	$cart = WC()->cart;
+	// #region agent log
+	gstore_write_debug_log(
+		array(
+			'sessionId'   => 'debug-session',
+			'runId'       => 'run1',
+			'hypothesisId'=> 'G',
+			'location'    => 'functions.php:gstore_log_cart_shutdown',
+			'message'     => 'cart_shutdown',
+			'data'        => array(
+				'items_count'              => $cart ? $cart->get_cart_contents_count() : null,
+				'cart_hash'                => $cart ? $cart->get_cart_hash() : null,
+				'cookie_cart_hash_present' => isset( $_COOKIE['woocommerce_cart_hash'] ),
+				'cookie_items_present'     => isset( $_COOKIE['woocommerce_items_in_cart'] ),
+				'request_uri'              => isset( $_SERVER['REQUEST_URI'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REQUEST_URI'] ) ) : null,
+			),
+			'timestamp'   => round( microtime( true ) * 1000 ),
+		)
+	);
+	// #endregion
+}
+add_action( 'shutdown', 'gstore_log_cart_shutdown', 10 );
+
+/**
  * "Comprar agora" (produto único): redireciona para o checkout após adicionar ao carrinho.
  *
  * Implementado via botão submit no template do produto único (name="gstore_buy_now").
