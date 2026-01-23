@@ -1312,127 +1312,30 @@ document.addEventListener('DOMContentLoaded', () => {
 	initBuyNowRedirect();
 
 	/**
-	 * Add to cart via AJAX (produto único) para evitar POST e ERR_CACHE_MISS.
+	 * Remove parâmetros de add-to-cart da URL para evitar reprocessamento.
 	 */
-	const initAjaxAddToCart = () => {
-		const form = document.querySelector('form.cart');
-		if (!form || form.dataset.gstoreAjaxAtc === '1') {
+	const cleanAddToCartParams = () => {
+		const url = new URL(window.location.href);
+		const shouldClean =
+			url.searchParams.has('add-to-cart') ||
+			url.searchParams.has('gstore_buy_now');
+
+		if (!shouldClean) {
 			return;
 		}
 
-		form.dataset.gstoreAjaxAtc = '1';
+		url.searchParams.delete('add-to-cart');
+		url.searchParams.delete('quantity');
+		url.searchParams.delete('gstore_buy_now');
 
-		const addButton = form.querySelector('.single_add_to_cart_button');
-		const isVariable = form.classList.contains('variations_form');
+		if (!url.searchParams.toString()) {
+			url.search = '';
+		}
 
-		const resolveAjaxUrl = () => {
-			if (typeof wc_add_to_cart_params !== 'undefined' && wc_add_to_cart_params?.wc_ajax_url) {
-				return String(wc_add_to_cart_params.wc_ajax_url).replace('%%endpoint%%', 'add_to_cart');
-			}
-			return `${window.location.origin}/?wc-ajax=add_to_cart`;
-		};
-
-		const getSubmitter = (event) => {
-			if (event?.submitter) {
-				return event.submitter;
-			}
-			const active = document.activeElement;
-			return active && active.closest ? active.closest('button, input[type="submit"]') : null;
-		};
-
-		const canSubmitAjax = () => {
-			if (addButton?.disabled || addButton?.classList.contains('disabled')) {
-				return false;
-			}
-			if (isVariable) {
-				const variationId = form.querySelector('input[name="variation_id"]')?.value || '';
-				if (!variationId || variationId === '0') {
-					return false;
-				}
-			}
-			return true;
-		};
-
-		const updateFragments = (fragments) => {
-			if (!fragments || typeof fragments !== 'object') {
-				return;
-			}
-			Object.entries(fragments).forEach(([selector, html]) => {
-				const nodes = document.querySelectorAll(selector);
-				nodes.forEach((node) => {
-					node.outerHTML = html;
-				});
-			});
-		};
-
-		form.addEventListener('submit', async (event) => {
-			const submitter = getSubmitter(event);
-			if (submitter && submitter.name === 'gstore_buy_now') {
-				return;
-			}
-			if (!canSubmitAjax()) {
-				return;
-			}
-
-			event.preventDefault();
-
-			const ajaxUrl = resolveAjaxUrl();
-			if (!ajaxUrl) {
-				form.submit();
-				return;
-			}
-
-			const body = new URLSearchParams(new FormData(form));
-
-			if (!body.get('add-to-cart')) {
-				const fallbackId =
-					form.querySelector('input[name="add-to-cart"]')?.value ||
-					form.querySelector('input[name="product_id"]')?.value ||
-					addButton?.value ||
-					'';
-				if (fallbackId) {
-					body.set('add-to-cart', fallbackId);
-				}
-			}
-
-			addButton?.classList.add('loading');
-			if (addButton) {
-				addButton.disabled = true;
-			}
-
-			try {
-				const response = await fetch(ajaxUrl, {
-					method: 'POST',
-					headers: {
-						'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
-					},
-					credentials: 'same-origin',
-					body: body.toString(),
-				});
-
-				const payload = await response.json();
-				if (!response.ok || payload?.error) {
-					throw new Error(payload?.message || 'Falha ao adicionar ao carrinho.');
-				}
-
-				if (typeof jQuery !== 'undefined' && addButton) {
-					jQuery(document.body).trigger('added_to_cart', [payload?.fragments, payload?.cart_hash, jQuery(addButton)]);
-				} else {
-					updateFragments(payload?.fragments);
-				}
-			} catch (err) {
-				form.submit();
-				return;
-			} finally {
-				addButton?.classList.remove('loading');
-				if (addButton) {
-					addButton.disabled = false;
-				}
-			}
-		});
+		window.history.replaceState(null, document.title, url.toString());
 	};
 
-	initAjaxAddToCart();
+	cleanAddToCartParams();
 
 	const enhanceQuantityField = (field) => {
 		if (field.dataset.gstoreQtyEnhanced) {

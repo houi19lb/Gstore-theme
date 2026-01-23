@@ -1845,6 +1845,55 @@ function gstore_handle_buy_now_simple_product() {
 add_action( 'template_redirect', 'gstore_handle_buy_now_simple_product', 0 );
 
 /**
+ * PRG no produto único: evita reenvio do formulário ao voltar.
+ */
+function gstore_flag_single_product_add_to_cart_prg( $cart_item_key, $product_id, $quantity, $variation_id, $variation, $cart_item_data ) {
+	$GLOBALS['gstore_single_product_added_to_cart'] = true;
+}
+add_action( 'woocommerce_add_to_cart', 'gstore_flag_single_product_add_to_cart_prg', 10, 6 );
+
+function gstore_prg_single_product_add_to_cart() {
+	if ( wp_doing_ajax() || isset( $_REQUEST['wc-ajax'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		return;
+	}
+
+	if ( ! function_exists( 'is_product' ) || ! is_product() ) {
+		return;
+	}
+
+	// Não interfere com "Comprar agora".
+	// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+	if ( isset( $_REQUEST['gstore_buy_now'] ) ) {
+		return;
+	}
+
+	$method = isset( $_SERVER['REQUEST_METHOD'] ) ? strtoupper( (string) $_SERVER['REQUEST_METHOD'] ) : 'GET';
+	if ( 'POST' !== $method ) {
+		return;
+	}
+
+	if ( empty( $GLOBALS['gstore_single_product_added_to_cart'] ) ) {
+		return;
+	}
+
+	$request_uri = isset( $_SERVER['REQUEST_URI'] ) ? wp_unslash( $_SERVER['REQUEST_URI'] ) : '';
+	if ( ! $request_uri ) {
+		return;
+	}
+
+	$current_url = home_url( $request_uri );
+	$target      = remove_query_arg( array( 'add-to-cart', 'quantity', 'gstore_buy_now' ), $current_url );
+
+	if ( function_exists( 'nocache_headers' ) ) {
+		nocache_headers();
+	}
+
+	wp_safe_redirect( $target );
+	exit;
+}
+add_action( 'template_redirect', 'gstore_prg_single_product_add_to_cart', 9 );
+
+/**
  * Adiciona headers HTTP para evitar cache em requisições AJAX do carrinho.
  * 
  * Isso é crítico em ambientes de produção onde cache pode causar
