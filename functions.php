@@ -1882,6 +1882,36 @@ function gstore_log_set_cart_cookies( $set ) {
 add_action( 'woocommerce_set_cart_cookies', 'gstore_log_set_cart_cookies', 10, 1 );
 
 /**
+ * Loga quando um item é removido do carrinho.
+ *
+ * @param string $cart_item_key Chave do item removido.
+ * @param WC_Cart $cart Carrinho.
+ * @return void
+ */
+function gstore_log_cart_item_removed( $cart_item_key, $cart ) {
+	// #region agent log
+	gstore_write_debug_log(
+		array(
+			'sessionId'   => 'debug-session',
+			'runId'       => 'run1',
+			'hypothesisId'=> 'D',
+			'location'    => 'functions.php:gstore_log_cart_item_removed',
+			'message'     => 'cart_item_removed',
+			'data'        => array(
+				'cart_item_key' => (string) $cart_item_key,
+				'items_count'   => $cart instanceof WC_Cart ? $cart->get_cart_contents_count() : null,
+				'request_uri'   => isset( $_SERVER['REQUEST_URI'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REQUEST_URI'] ) ) : null,
+				'is_ajax'       => wp_doing_ajax(),
+				'wc_ajax'       => isset( $_REQUEST['wc-ajax'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['wc-ajax'] ) ) : null,
+			),
+			'timestamp'   => round( microtime( true ) * 1000 ),
+		)
+	);
+	// #endregion
+}
+add_action( 'woocommerce_cart_item_removed', 'gstore_log_cart_item_removed', 10, 2 );
+
+/**
  * "Comprar agora" (produto único): redireciona para o checkout após adicionar ao carrinho.
  *
  * Implementado via botão submit no template do produto único (name="gstore_buy_now").
