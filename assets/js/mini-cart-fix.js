@@ -60,6 +60,44 @@
     }
 
     /**
+     * Obtém o contador atual do DOM
+     */
+    function getCurrentCountFromDom() {
+        const counterEl =
+            document.querySelector('.Gstore-cart-count') ||
+            document.querySelector('.wc-block-mini-cart__badge');
+        if (!counterEl) {
+            return null;
+        }
+        const value = parseInt(counterEl.textContent || '0', 10);
+        return Number.isNaN(value) ? null : value;
+    }
+
+    /**
+     * Extrai contagem de itens a partir dos fragments do WooCommerce
+     */
+    function getCountFromFragments(fragments) {
+        if (!fragments) {
+            return null;
+        }
+
+        const fragmentHtml =
+            fragments['.Gstore-cart-count'] ||
+            fragments['.wc-block-mini-cart__badge'] ||
+            null;
+
+        if (!fragmentHtml) {
+            return null;
+        }
+
+        const wrapper = document.createElement('div');
+        wrapper.innerHTML = fragmentHtml;
+        const text = wrapper.textContent || '';
+        const value = parseInt(text, 10);
+        return Number.isNaN(value) ? null : value;
+    }
+
+    /**
      * Atualiza o carrinho via API REST e sincroniza o store
      */
     function refreshCart() {
@@ -92,6 +130,17 @@
             })
             .then(cartData => {
                 debugLog('Dados do carrinho recebidos:', cartData);
+
+                const currentCount = getCurrentCountFromDom();
+                if (
+                    typeof cartData.items_count === 'number' &&
+                    currentCount !== null &&
+                    cartData.items_count < currentCount
+                ) {
+                    debugLog('Ignorando refresh com contagem menor do que o DOM atual');
+                    resolve(cartData);
+                    return;
+                }
 
                 // Atualiza o store do WordPress se disponível
                 if (isStoreAvailable()) {
@@ -143,6 +192,10 @@
      * Função principal de refresh com debounce
      */
     function refreshMiniCart() {
+        if (!getNonce()) {
+            return Promise.resolve();
+        }
+
         // Limpa timer anterior
         if (refreshTimer) {
             clearTimeout(refreshTimer);
@@ -179,6 +232,15 @@
      */
     function handleAddedToCart(event, fragments, cart_hash) {
         debugLog('Produto adicionado ao carrinho');
+
+        if (document.body.classList.contains('single-product')) {
+            const fragmentCount = getCountFromFragments(fragments);
+            if (fragmentCount !== null) {
+                syncDOM(fragmentCount);
+            }
+            return;
+        }
+
         refreshMiniCart();
     }
 

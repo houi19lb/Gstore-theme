@@ -260,9 +260,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
 	const initProductInstallmentQuotes = () => {
 		const targets = Array.from(document.querySelectorAll('[data-gstore-installment-target="1"]'));
-		// #region agent log
-		fetch('http://127.0.0.1:7242/ingest/2e9bdb26-956d-44fb-8061-6eba8efc208f',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'installments-init',hypothesisId:'INIT',location:'assets/js/single-product.js:initProductInstallmentQuotes',message:'[GStore Installments] Inicializando...',data:{targetsCount:targets.length,targetsData:targets.slice(0,3).map(t=>({hasProductId:!!t?.dataset?.productId,productId:t?.dataset?.productId||null,hasMaxInstallments:!!t?.dataset?.maxInstallments,maxInstallments:t?.dataset?.maxInstallments||null,hasInitialText:!!t?.dataset?.initialText,initialText:t?.dataset?.initialText||null})),gstoreSingleProductInstallments:typeof gstoreSingleProductInstallments!=='undefined'?{hasAjaxUrl:!!gstoreSingleProductInstallments?.ajaxUrl,hasAction:!!gstoreSingleProductInstallments?.action,hasProductId:!!gstoreSingleProductInstallments?.productId,hasMax:!!gstoreSingleProductInstallments?.max}:null},timestamp:Date.now()})}).catch(()=>{});
-		// #endregion
 		if (!targets.length) {
 			return;
 		}
@@ -292,11 +289,7 @@ document.addEventListener('DOMContentLoaded', () => {
 				gstoreSingleProductInstallments?.max ||
 				'21';
 			const parsed = parseInt(String(raw), 10);
-			const result = Number.isFinite(parsed) && parsed > 0 ? parsed : 21;
-			// #region agent log
-			fetch('http://127.0.0.1:7242/ingest/2e9bdb26-956d-44fb-8061-6eba8efc208f',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'installments-init',hypothesisId:'MAX',location:'assets/js/single-product.js:getMaxInstallments',message:'[GStore Installments] getMaxInstallments',data:{raw:String(raw),parsed,result,targetWithMaxFound:!!targetWithMax,gstoreMax:gstoreSingleProductInstallments?.max||null},timestamp:Date.now()})}).catch(()=>{});
-			// #endregion
-			return result;
+			const result = Number.isFinite(parsed) && parsed > 0 ? parsed : 21;			return result;
 		};
 
 		const applyText = (text) => {
@@ -347,15 +340,7 @@ document.addEventListener('DOMContentLoaded', () => {
 			});
 		};
 
-		const requestQuotes = async () => {
-			// #region agent log
-			fetch('http://127.0.0.1:7242/ingest/2e9bdb26-956d-44fb-8061-6eba8efc208f',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'installments-request',hypothesisId:'REQ1',location:'assets/js/single-product.js:requestQuotes',message:'[GStore Installments] requestQuotes iniciado',data:{currentProductId:currentProductId||null,hasProductId:!!currentProductId},timestamp:Date.now()})}).catch(()=>{});
-			// #endregion
-			if (!currentProductId) {
-				// #region agent log
-				fetch('http://127.0.0.1:7242/ingest/2e9bdb26-956d-44fb-8061-6eba8efc208f',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'installments-request',hypothesisId:'REQ2',location:'assets/js/single-product.js:requestQuotes',message:'[GStore Installments] Aplicando fallback: sem productId',data:{reason:'no_product_id'},timestamp:Date.now()})}).catch(()=>{});
-				// #endregion
-				applyFallback();
+		const requestQuotes = async () => {			if (!currentProductId) {				applyFallback();
 				return;
 			}
 
@@ -363,11 +348,7 @@ document.addEventListener('DOMContentLoaded', () => {
 			const quantity = getQuantity();
 			const signature = `${currentProductId}|${quantity}|${max}`;
 			if (gstoreInstallmentCache.has(signature)) {
-				const cachedText = gstoreInstallmentCache.get(signature);
-				// #region agent log
-				fetch('http://127.0.0.1:7242/ingest/2e9bdb26-956d-44fb-8061-6eba8efc208f',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'installments-request',hypothesisId:'REQ3',location:'assets/js/single-product.js:requestQuotes',message:'[GStore Installments] Usando cache',data:{signature,cachedText},timestamp:Date.now()})}).catch(()=>{});
-				// #endregion
-				applyText(cachedText);
+				const cachedText = gstoreInstallmentCache.get(signature);				applyText(cachedText);
 				const cachedQuotes = gstoreInstallmentQuotesCache.get(signature);
 				if (cachedQuotes) {
 					populateInstallmentSelect(cachedQuotes);
@@ -375,23 +356,11 @@ document.addEventListener('DOMContentLoaded', () => {
 				}
 				return;
 			}
-			if (gstoreInstallmentInFlight.has(signature)) {
-				// #region agent log
-				fetch('http://127.0.0.1:7242/ingest/2e9bdb26-956d-44fb-8061-6eba8efc208f',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'installments-request',hypothesisId:'REQ4',location:'assets/js/single-product.js:requestQuotes',message:'[GStore Installments] Requisição já em andamento',data:{signature},timestamp:Date.now()})}).catch(()=>{});
-				// #endregion
-				return;
+			if (gstoreInstallmentInFlight.has(signature)) {				return;
 			}
 
 			const ajaxUrl = resolveInstallmentAjaxUrl();
-			const action = resolveInstallmentAction();
-			// #region agent log
-			fetch('http://127.0.0.1:7242/ingest/2e9bdb26-956d-44fb-8061-6eba8efc208f',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'installments-request',hypothesisId:'REQ5',location:'assets/js/single-product.js:requestQuotes',message:'[GStore Installments] Fazendo requisição',data:{productId:currentProductId,quantity,max,action,ajaxUrl,hasAjaxUrl:!!ajaxUrl},timestamp:Date.now()})}).catch(()=>{});
-			// #endregion
-			if (!ajaxUrl) {
-				// #region agent log
-				fetch('http://127.0.0.1:7242/ingest/2e9bdb26-956d-44fb-8061-6eba8efc208f',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'installments-request',hypothesisId:'REQ6',location:'assets/js/single-product.js:requestQuotes',message:'[GStore Installments] Aplicando fallback: sem ajaxUrl',data:{reason:'no_ajax_url'},timestamp:Date.now()})}).catch(()=>{});
-				// #endregion
-				applyFallback();
+			const action = resolveInstallmentAction();			if (!ajaxUrl) {				applyFallback();
 				return;
 			}
 
@@ -409,74 +378,28 @@ document.addEventListener('DOMContentLoaded', () => {
 				credentials: 'same-origin',
 				body: body.toString(),
 			})
-				.then(async (response) => {
-					// #region agent log
-					fetch('http://127.0.0.1:7242/ingest/2e9bdb26-956d-44fb-8061-6eba8efc208f',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'installments-request',hypothesisId:'RESP1',location:'assets/js/single-product.js:requestQuotes',message:'[GStore Installments] Resposta recebida (antes do parse)',data:{status:response.status,statusText:response.statusText,ok:response.ok,contentType:response.headers.get('content-type')||null},timestamp:Date.now()})}).catch(()=>{});
-					// #endregion
-					let payload;
+				.then(async (response) => {					let payload;
 					try {
 						payload = await response.json();
-					} catch (parseError) {
-						// #region agent log
-						fetch('http://127.0.0.1:7242/ingest/2e9bdb26-956d-44fb-8061-6eba8efc208f',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'installments-request',hypothesisId:'ERR1',location:'assets/js/single-product.js:requestQuotes',message:'[GStore Installments] Erro ao parsear JSON',data:{errorType:'parse_error',errorMessage:parseError?.message||String(parseError),status:response.status},timestamp:Date.now()})}).catch(()=>{});
-						// #endregion
-						throw new Error('Resposta inválida do servidor (JSON parse error).');
+					} catch (parseError) {						throw new Error('Resposta inválida do servidor (JSON parse error).');
+					}					if (!response.ok || !payload?.success) {
+						const errorMsg = payload?.data?.message || 'Falha ao obter parcelas.';						throw new Error(errorMsg);
 					}
-					// #region agent log
-					fetch('http://127.0.0.1:7242/ingest/2e9bdb26-956d-44fb-8061-6eba8efc208f',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'installments-request',hypothesisId:'RESP2',location:'assets/js/single-product.js:requestQuotes',message:'[GStore Installments] Resposta recebida (payload completo)',data:{payload,hasData:!!payload?.data,hasQuotes:!!payload?.data?.quotes,quotesKeys:payload?.data?.quotes?Object.keys(payload.data.quotes):null,success:payload?.success,message:payload?.data?.message||null},timestamp:Date.now()})}).catch(()=>{});
-					// #endregion
-					if (!response.ok || !payload?.success) {
-						const errorMsg = payload?.data?.message || 'Falha ao obter parcelas.';
-						// #region agent log
-						fetch('http://127.0.0.1:7242/ingest/2e9bdb26-956d-44fb-8061-6eba8efc208f',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'installments-request',hypothesisId:'ERR2',location:'assets/js/single-product.js:requestQuotes',message:'[GStore Installments] Erro na resposta',data:{errorType:'response_error',errorMessage:errorMsg,status:response.status,ok:response.ok,success:payload?.success,payload},timestamp:Date.now()})}).catch(()=>{});
-						// #endregion
-						throw new Error(errorMsg);
+					if (!payload?.data || typeof payload.data !== 'object') {						throw new Error('Dados de resposta inválidos.');
 					}
-					if (!payload?.data || typeof payload.data !== 'object') {
-						// #region agent log
-						fetch('http://127.0.0.1:7242/ingest/2e9bdb26-956d-44fb-8061-6eba8efc208f',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'installments-request',hypothesisId:'ERR3',location:'assets/js/single-product.js:requestQuotes',message:'[GStore Installments] payload.data inválido',data:{errorType:'invalid_data',hasData:!!payload?.data,dataType:typeof payload?.data,payload},timestamp:Date.now()})}).catch(()=>{});
-						// #endregion
-						throw new Error('Dados de resposta inválidos.');
-					}
-					if (!payload.data.quotes || typeof payload.data.quotes !== 'object') {
-						// #region agent log
-						fetch('http://127.0.0.1:7242/ingest/2e9bdb26-956d-44fb-8061-6eba8efc208f',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'installments-request',hypothesisId:'ERR4',location:'assets/js/single-product.js:requestQuotes',message:'[GStore Installments] payload.data.quotes inválido',data:{errorType:'invalid_quotes',hasQuotes:!!payload?.data?.quotes,quotesType:typeof payload?.data?.quotes,payload},timestamp:Date.now()})}).catch(()=>{});
-						// #endregion
-						throw new Error('Quotes não encontrados na resposta.');
+					if (!payload.data.quotes || typeof payload.data.quotes !== 'object') {						throw new Error('Quotes não encontrados na resposta.');
 					}
 					// Tenta usar o max da resposta, senão usa o max solicitado, senão 21
 					const preferredMax = payload.data.max || max || 21;
-					const quote = chooseQuote(payload.data.quotes, String(preferredMax));
-					// #region agent log
-					fetch('http://127.0.0.1:7242/ingest/2e9bdb26-956d-44fb-8061-6eba8efc208f',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'installments-request',hypothesisId:'QUOTE1',location:'assets/js/single-product.js:requestQuotes',message:'[GStore Installments] Quote selecionada',data:{quote,hasQuote:!!quote,installments:quote?.installments||null,perInstallmentText:quote?.per_installment_text||null},timestamp:Date.now()})}).catch(()=>{});
-					// #endregion
-					if (!quote || !quote.installments || !quote.per_installment_text) {
-						// #region agent log
-						fetch('http://127.0.0.1:7242/ingest/2e9bdb26-956d-44fb-8061-6eba8efc208f',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'installments-request',hypothesisId:'ERR5',location:'assets/js/single-product.js:requestQuotes',message:'[GStore Installments] Quote inválida ou incompleta',data:{errorType:'invalid_quote',quote,hasInstallments:!!quote?.installments,hasPerInstallmentText:!!quote?.per_installment_text},timestamp:Date.now()})}).catch(()=>{});
-						// #endregion
-						throw new Error('Parcelas indisponíveis.');
+					const quote = chooseQuote(payload.data.quotes, String(preferredMax));					if (!quote || !quote.installments || !quote.per_installment_text) {						throw new Error('Parcelas indisponíveis.');
 					}
 					const text = `ou ${quote.installments}x de ${quote.per_installment_text}`;
 					gstoreInstallmentCache.set(signature, text);
-					gstoreInstallmentQuotesCache.set(signature, payload.data.quotes);
-					// #region agent log
-					fetch('http://127.0.0.1:7242/ingest/2e9bdb26-956d-44fb-8061-6eba8efc208f',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'installments-request',hypothesisId:'SUCCESS',location:'assets/js/single-product.js:requestQuotes',message:'[GStore Installments] Sucesso - aplicando texto',data:{text,signature,installments:quote.installments,perInstallmentText:quote.per_installment_text},timestamp:Date.now()})}).catch(()=>{});
-					// #endregion
-					applyText(text);
+					gstoreInstallmentQuotesCache.set(signature, payload.data.quotes);					applyText(text);
 					populateInstallmentSelect(payload.data.quotes, quote.installments);
 					setupInstallmentSelectListeners();
 				})
-				.catch((error) => {
-					// #region agent log
-					const errorDetails = {
-						errorType: error instanceof TypeError ? 'network_error' : error instanceof Error ? 'general_error' : 'unknown_error',
-						errorMessage: error?.message || String(error),
-						errorName: error?.name || null,
-						errorStack: error?.stack || null
-					};
-					fetch('http://127.0.0.1:7242/ingest/2e9bdb26-956d-44fb-8061-6eba8efc208f',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'installments-request',hypothesisId:'ERR_CATCH',location:'assets/js/single-product.js:requestQuotes',message:'[GStore Installments] Erro capturado - aplicando fallback',data:errorDetails,timestamp:Date.now()})}).catch(()=>{});
-					// #endregion
-					applyFallback();
+				.catch((error) => {					applyFallback();
 				})
 				.finally(() => {
 					gstoreInstallmentInFlight.delete(signature);
@@ -514,12 +437,7 @@ document.addEventListener('DOMContentLoaded', () => {
 					scheduleRequest();
 				});
 			}
-		}
-
-		// #region agent log
-		fetch('http://127.0.0.1:7242/ingest/2e9bdb26-956d-44fb-8061-6eba8efc208f',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'installments-init',hypothesisId:'INIT_END',location:'assets/js/single-product.js:initProductInstallmentQuotes',message:'[GStore Installments] Chamando requestQuotes inicial',data:{baseProductId},timestamp:Date.now()})}).catch(()=>{});
-		// #endregion
-		requestQuotes();
+		}		requestQuotes();
 	};
 
 	const initProductCardInstallmentQuotes = () => {
@@ -1017,12 +935,6 @@ document.addEventListener('DOMContentLoaded', () => {
 		const addToCartButton = form.querySelector('.single_add_to_cart_button');
 		const priceEl = document.querySelector('[data-gstore-price]');
 		const initialPriceHtml = priceEl ? priceEl.innerHTML : '';
-		const dbgRunId = 'warn1';
-
-		// #region agent log
-		fetch('http://127.0.0.1:7242/ingest/2e9bdb26-956d-44fb-8061-6eba8efc208f',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:dbgRunId,hypothesisId:'W1',location:'assets/js/single-product.js:initVariationsState',message:'initVariationsState init (warning visibility)',data:{selectCount:selects.length,selectNames:selects.slice(0,6).map(s=>s.name||null),warningFound:!!warning,warningId:warning?.id||null,warningHidden:warning?warning.hidden:null,warningCountAll:document.querySelectorAll('[data-gstore-variation-warning]').length,warningCountInForm:form.querySelectorAll('[data-gstore-variation-warning]').length,atcContainerClass:form.querySelector('.woocommerce-variation-add-to-cart')?.className||null,addBtnFound:!!addToCartButton,addBtnDisabledProp:addToCartButton?addToCartButton.disabled:null,addBtnHasDisabledClass:addToCartButton?addToCartButton.classList.contains('disabled'):null,buyNowFound:!!buyNowButton,buyNowDisabled:buyNowButton?buyNowButton.disabled:null},timestamp:Date.now()})}).catch(()=>{});
-		// #endregion
-
 		const getPreviewText = () => {
 			const parts = selects
 				.map((select) => {
@@ -1036,8 +948,6 @@ document.addEventListener('DOMContentLoaded', () => {
 			return parts.length ? parts.join(' • ') : '—';
 		};
 
-		let dbgLastOk = null;
-		let dbgCount = 0;
 		const update = () => {
 			if (preview) {
 				preview.textContent = getPreviewText();
@@ -1056,27 +966,7 @@ document.addEventListener('DOMContentLoaded', () => {
 			}
 			if (warning) {
 				warning.hidden = isOos ? true : ok;
-			}
-
-			// #region agent log
-			if (dbgCount < 8 && (dbgLastOk === null || ok !== dbgLastOk || (warning && warning.hidden !== ok))) {
-				dbgCount += 1;
-				dbgLastOk = ok;
-				const warningCs = warning ? window.getComputedStyle(warning) : null;
-				const qtyRow = form.querySelector('.qty-row');
-				const qtyRowCs = qtyRow ? window.getComputedStyle(qtyRow) : null;
-				const atc = form.querySelector('.woocommerce-variation-add-to-cart');
-				const atcCs = atc ? window.getComputedStyle(atc) : null;
-				const singleWrap = form.querySelector('.single_variation_wrap');
-				const singleWrapCs = singleWrap ? window.getComputedStyle(singleWrap) : null;
-				const singleWrapRect = singleWrap ? singleWrap.getBoundingClientRect() : null;
-				const wooVariation = form.querySelector('.woocommerce-variation');
-				const wooVariationCs = wooVariation ? window.getComputedStyle(wooVariation) : null;
-				const wooVariationRect = wooVariation ? wooVariation.getBoundingClientRect() : null;
-				fetch('http://127.0.0.1:7242/ingest/2e9bdb26-956d-44fb-8061-6eba8efc208f',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:dbgRunId,hypothesisId:'W2',location:'assets/js/single-product.js:update',message:'variation warning update',data:{allSelected,selectValues:selects.slice(0,6).map(s=>({name:s.name||null,value:String(s.value||'')})),canAddProp,canAddClass,atcEnabled,addBtnDisabledProp:addToCartButton?addToCartButton.disabled:null,addBtnHasDisabledClass:addToCartButton?addToCartButton.classList.contains('disabled'):null,addBtnClass:addToCartButton?.className||null,buyNowDisabled:buyNowButton?buyNowButton.disabled:null,warningHidden:warning?warning.hidden:null,warningDisplay:warningCs?warningCs.display:null,warningMarginTop:warningCs?warningCs.marginTop:null,qtyRowFound:!!qtyRow,qtyRowMarginTop:qtyRowCs?qtyRowCs.marginTop:null,atcFound:!!atc,atcMarginTop:atcCs?atcCs.marginTop:null,singleWrapFound:!!singleWrap,singleWrapDisplay:singleWrapCs?singleWrapCs.display:null,singleWrapGap:singleWrapCs?(singleWrapCs.rowGap||singleWrapCs.gap):null,singleWrapMarginTop:singleWrapCs?singleWrapCs.marginTop:null,singleWrapHeight:singleWrapRect?singleWrapRect.height:null,wooVariationFound:!!wooVariation,wooVariationDisplay:wooVariationCs?wooVariationCs.display:null,wooVariationMarginTop:wooVariationCs?wooVariationCs.marginTop:null,wooVariationMarginBottom:wooVariationCs?wooVariationCs.marginBottom:null,wooVariationHeight:wooVariationRect?wooVariationRect.height:null},timestamp:Date.now()})}).catch(()=>{});
-			}
-			// #endregion
-		};
+			}		};
 
 		// Eventos nativos
 		selects.forEach((select) => {
@@ -1095,20 +985,12 @@ document.addEventListener('DOMContentLoaded', () => {
 		// Eventos do WooCommerce (se jQuery existir)
 		if (typeof jQuery !== 'undefined') {
 			const $form = jQuery(form);
-			$form.on('found_variation', (event, variation) => {
-				// #region agent log
-				fetch('http://127.0.0.1:7242/ingest/2e9bdb26-956d-44fb-8061-6eba8efc208f',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:dbgRunId,hypothesisId:'W3',location:'assets/js/single-product.js:found_variation',message:'found_variation fired',data:{atcContainerClass:form.querySelector('.woocommerce-variation-add-to-cart')?.className||null,addBtnClass:addToCartButton?.className||null,addBtnDisabledProp:addToCartButton?addToCartButton.disabled:null,addBtnHasDisabledClass:addToCartButton?addToCartButton.classList.contains('disabled'):null},timestamp:Date.now()})}).catch(()=>{});
-				// #endregion
-				if (priceEl && variation && typeof variation.price_html === 'string' && variation.price_html.trim().length) {
+			$form.on('found_variation', (event, variation) => {				if (priceEl && variation && typeof variation.price_html === 'string' && variation.price_html.trim().length) {
 					priceEl.innerHTML = variation.price_html;
 				}
 				setTimeout(update, 0);
 			});
-			$form.on('reset_data', () => {
-				// #region agent log
-				fetch('http://127.0.0.1:7242/ingest/2e9bdb26-956d-44fb-8061-6eba8efc208f',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:dbgRunId,hypothesisId:'W3',location:'assets/js/single-product.js:reset_data',message:'reset_data fired',data:{atcContainerClass:form.querySelector('.woocommerce-variation-add-to-cart')?.className||null},timestamp:Date.now()})}).catch(()=>{});
-				// #endregion
-				if (priceEl && initialPriceHtml) {
+			$form.on('reset_data', () => {				if (priceEl && initialPriceHtml) {
 					priceEl.innerHTML = initialPriceHtml;
 				}
 				setTimeout(update, 0);
@@ -1284,50 +1166,28 @@ document.addEventListener('DOMContentLoaded', () => {
 				return null;
 			};
 
-			// DEBUG: Log variações disponíveis
-			console.log('[GStore Debug] Variações disponíveis:', variations);
-			console.log('[GStore Debug] initiallyOos:', initiallyOos);
-
 			$form.on('found_variation', (event, variation) => {
-				console.log('[GStore Debug] found_variation disparado:', {
-					variation_id: variation?.variation_id,
-					is_in_stock: variation?.is_in_stock,
-					gstore_is_in_stock: variation?.gstore_is_in_stock,
-					is_purchasable: variation?.is_purchasable,
-					attributes: variation?.attributes
-				});
-
 				// Verificar se a variação selecionada está em estoque
 				const variationInStock = resolveVariationStock(variation);
-				console.log('[GStore Debug] variationInStock resolvido:', variationInStock);
 
 				if (variationInStock === null) {
-					console.log('[GStore Debug] variationInStock é null, ignorando');
 					return;
 				}
-				console.log('[GStore Debug] Chamando setOutOfStockState com:', !variationInStock);
 				setOutOfStockState(!variationInStock);
 			});
 
 			$form.on('reset_data', () => {
-				console.log('[GStore Debug] reset_data disparado, voltando para initiallyOos:', initiallyOos);
 				// Ao resetar, voltar ao estado inicial
 				setOutOfStockState(initiallyOos);
 			});
 
 			$form.on('hide_variation', () => {
-				console.log('[GStore Debug] hide_variation disparado');
-
 				// Verificar se há atributos selecionados
 				const selectedAttrs = getSelectedAttributes();
 				const selectedValues = Object.values(selectedAttrs);
 				const allEmpty = selectedValues.every((v) => !v || v.trim().length === 0);
 
-				console.log('[GStore Debug] selectedAttrs:', selectedAttrs);
-				console.log('[GStore Debug] allEmpty:', allEmpty);
-
 				if (allEmpty) {
-					console.log('[GStore Debug] Nenhuma seleção, voltando para initiallyOos:', initiallyOos);
 					// Nenhuma seleção -> voltar ao estado inicial
 					setOutOfStockState(initiallyOos);
 					return;
@@ -1335,23 +1195,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
 				// Alguma seleção existe -> verificar se existe variação correspondente
 				const matchedVariation = findMatchingVariation(selectedAttrs);
-				console.log('[GStore Debug] matchedVariation encontrada:', matchedVariation);
 
 				if (matchedVariation) {
 					// Variação existe mas WooCommerce ocultou (provavelmente sem estoque)
 					const inStock = resolveVariationStock(matchedVariation);
-					console.log('[GStore Debug] inStock da variação encontrada:', inStock);
 
 					if (inStock !== null) {
-						console.log('[GStore Debug] Chamando setOutOfStockState com:', !inStock);
 						setOutOfStockState(!inStock);
 					} else {
-						console.log('[GStore Debug] inStock é null, mostrando indisponível');
 						// Se não conseguimos determinar, mostrar indisponível (seguro)
 						setOutOfStockState(true);
 					}
 				} else {
-					console.log('[GStore Debug] Variação não encontrada, voltando para initiallyOos:', initiallyOos);
 					// Combinação inválida ou não encontrada -> voltar ao estado inicial
 					setOutOfStockState(initiallyOos);
 				}

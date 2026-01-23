@@ -11,19 +11,12 @@
  */
 
 const __GSTORE_TREE_RUN_ID = 'tree_' + Date.now() + '_' + Math.random().toString(16).slice(2);
-// #region agent log
-fetch('http://127.0.0.1:7242/ingest/2e9bdb26-956d-44fb-8061-6eba8efc208f',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:__GSTORE_TREE_RUN_ID,hypothesisId:'SCRIPT_LOAD',location:'catalog-categories-tree.js:TOP',message:'Script v2 loaded',data:{url:window.location.href},timestamp:Date.now()})}).catch(()=>{});
-// #endregion
 
 (function() {
 	'use strict';
 
 	// Evita dupla inicialização (script pode ser enfileirado mais de uma vez em alguns cenários)
-	if (window.__gstoreCategoriesTreeInit) {
-		// #region agent log
-		fetch('http://127.0.0.1:7242/ingest/2e9bdb26-956d-44fb-8061-6eba8efc208f',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:__GSTORE_TREE_RUN_ID,hypothesisId:'DUP_INIT',location:'catalog-categories-tree.js:guard',message:'Init skipped (already initialized)',data:{url:window.location.href},timestamp:Date.now()})}).catch(()=>{});
-		// #endregion
-		return;
+	if (window.__gstoreCategoriesTreeInit) {		return;
 	}
 	window.__gstoreCategoriesTreeInit = true;
 
@@ -35,20 +28,11 @@ fetch('http://127.0.0.1:7242/ingest/2e9bdb26-956d-44fb-8061-6eba8efc208f',{metho
 	}
 
 	function initCategoriesTree() {
-		// #region agent log
-		fetch('http://127.0.0.1:7242/ingest/2e9bdb26-956d-44fb-8061-6eba8efc208f',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:__GSTORE_TREE_RUN_ID,hypothesisId:'C',location:'catalog-categories-tree.js:initCategoriesTree',message:'initCategoriesTree v2 called',data:{readyState:document.readyState},timestamp:Date.now()})}).catch(()=>{});
-		// #endregion
-
 		// Seletores para ambos os formatos (bloco WooCommerce e widget padrão)
 		const categoryLists = document.querySelectorAll(
 			'.Gstore-catalog-shell--light ul.wc-block-product-categories-list--depth-0, ' +
 			'.Gstore-catalog-shell--light .product-categories'
 		);
-
-		// #region agent log
-		fetch('http://127.0.0.1:7242/ingest/2e9bdb26-956d-44fb-8061-6eba8efc208f',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:__GSTORE_TREE_RUN_ID,hypothesisId:'LISTS',location:'catalog-categories-tree.js:lists',message:'Category list candidates',data:{count:categoryLists.length,classes:Array.from(categoryLists).map(n=>n.className)},timestamp:Date.now()})}).catch(()=>{});
-		// #endregion
-
 		if (categoryLists.length === 0) {
 			return;
 		}
@@ -75,10 +59,6 @@ fetch('http://127.0.0.1:7242/ingest/2e9bdb26-956d-44fb-8061-6eba8efc208f',{metho
 	 * Busca categorias via REST API e reconstrói a árvore
 	 */
 	async function rebuildCategoryTreeFromAPI(list) {
-		// #region agent log
-		fetch('http://127.0.0.1:7242/ingest/2e9bdb26-956d-44fb-8061-6eba8efc208f',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:__GSTORE_TREE_RUN_ID,hypothesisId:'API',location:'catalog-categories-tree.js:rebuildFromAPI',message:'Fetching categories from API',data:{},timestamp:Date.now()})}).catch(()=>{});
-		// #endregion
-
 		try {
 			// Busca todas as categorias de produto via REST API do WooCommerce
 			const response = await fetch('/wp-json/wc/store/v1/products/categories?per_page=100');
@@ -86,50 +66,19 @@ fetch('http://127.0.0.1:7242/ingest/2e9bdb26-956d-44fb-8061-6eba8efc208f',{metho
 				throw new Error('Failed to fetch categories: ' + response.status);
 			}
 			const categories = await response.json();
-
-			// #region agent log
-			const parentStats = categories.reduce((acc, c) => {
-				const key = String(c.parent);
-				acc[key] = (acc[key] || 0) + 1;
-				return acc;
-			}, {});
-			fetch('http://127.0.0.1:7242/ingest/2e9bdb26-956d-44fb-8061-6eba8efc208f',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:__GSTORE_TREE_RUN_ID,hypothesisId:'API',location:'catalog-categories-tree.js:apiResponse',message:'Categories fetched',data:{count:categories.length,parentStats,sample:categories.slice(0,5).map(c=>({id:c.id,name:c.name,parent:c.parent,slug:c.slug,count:c.count}))},timestamp:Date.now()})}).catch(()=>{});
-			// #endregion
-
 			// Constrói a estrutura hierárquica
 			const tree = buildCategoryTree(categories);
-
-			// #region agent log
-			const treeHasChildrenCount = tree.reduce((acc, n) => acc + ((n.children && n.children.length) ? 1 : 0), 0);
-			fetch('http://127.0.0.1:7242/ingest/2e9bdb26-956d-44fb-8061-6eba8efc208f',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:__GSTORE_TREE_RUN_ID,hypothesisId:'API',location:'catalog-categories-tree.js:treeBuilt',message:'Tree structure built',data:{rootCategories:tree.length,rootNodesWithChildren:treeHasChildrenCount},timestamp:Date.now()})}).catch(()=>{});
-			// #endregion
-
 			// Substitui a lista original pela nova árvore
 			const newList = renderCategoryTree(tree);
 			list.innerHTML = '';
 			list.innerHTML = newList;
-
-			// #region agent log
-			const liCount = list.querySelectorAll('li').length;
-			const hasChildrenLiCount = list.querySelectorAll('li.has-children').length;
-			const toggleBtnCount = list.querySelectorAll('button.category-toggle').length;
-			const srVisibleSample = Array.from(list.querySelectorAll('button.category-toggle .screen-reader-text'))
-				.slice(0, 3)
-				.map(n => (n.textContent || '').trim());
-			fetch('http://127.0.0.1:7242/ingest/2e9bdb26-956d-44fb-8061-6eba8efc208f',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:__GSTORE_TREE_RUN_ID,hypothesisId:'UI',location:'catalog-categories-tree.js:domAfterRender',message:'DOM after render',data:{liCount,hasChildrenLiCount,toggleBtnCount,srTextSample:srVisibleSample},timestamp:Date.now()})}).catch(()=>{});
-			// #endregion
-
 			// Adiciona os event listeners para toggle
 			setupToggleListeners(list);
 
 			// Expande categorias ativas
 			expandActiveCategories(list);
 
-		} catch (error) {
-			// #region agent log
-			fetch('http://127.0.0.1:7242/ingest/2e9bdb26-956d-44fb-8061-6eba8efc208f',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:__GSTORE_TREE_RUN_ID,hypothesisId:'API',location:'catalog-categories-tree.js:apiError',message:'API error',data:{error:error.message},timestamp:Date.now()})}).catch(()=>{});
-			// #endregion
-			console.error('Erro ao buscar categorias:', error);
+		} catch (error) {			console.error('Erro ao buscar categorias:', error);
 		}
 	}
 
@@ -216,20 +165,11 @@ fetch('http://127.0.0.1:7242/ingest/2e9bdb26-956d-44fb-8061-6eba8efc208f',{metho
 	 * Adiciona event listeners para os botões toggle
 	 */
 	function setupToggleListeners(list) {
-		const toggleButtons = list.querySelectorAll('.category-toggle');
-		// #region agent log
-		fetch('http://127.0.0.1:7242/ingest/2e9bdb26-956d-44fb-8061-6eba8efc208f',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:__GSTORE_TREE_RUN_ID,hypothesisId:'CLICK',location:'catalog-categories-tree.js:setupToggleListeners',message:'Attaching toggle listeners',data:{toggleButtons:toggleButtons.length},timestamp:Date.now()})}).catch(()=>{});
-		// #endregion
-		toggleButtons.forEach(button => {
+		const toggleButtons = list.querySelectorAll('.category-toggle');		toggleButtons.forEach(button => {
 			button.addEventListener('click', function(e) {
 				e.preventDefault();
 				e.stopPropagation();
-				const item = button.closest('li');
-				// #region agent log
-				const children = item ? item.querySelector(':scope > ul.children') : null;
-				fetch('http://127.0.0.1:7242/ingest/2e9bdb26-956d-44fb-8061-6eba8efc208f',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:__GSTORE_TREE_RUN_ID,hypothesisId:'CLICK',location:'catalog-categories-tree.js:toggleClick',message:'Toggle clicked',data:{hasItem:!!item,hadExpanded:item?.classList?.contains('is-expanded')||false,hasChildrenEl:!!children,childrenScrollHeight:children?children.scrollHeight:null},timestamp:Date.now()})}).catch(()=>{});
-				// #endregion
-				toggleCategory(item, button);
+				const item = button.closest('li');				toggleCategory(item, button);
 			});
 		});
 	}
@@ -403,7 +343,6 @@ fetch('http://127.0.0.1:7242/ingest/2e9bdb26-956d-44fb-8061-6eba8efc208f',{metho
 			localStorage.setItem(storageKey, JSON.stringify(states));
 		} catch (e) {
 			// Ignora erros de localStorage (pode estar desabilitado)
-			console.debug('Não foi possível salvar estado da categoria:', e);
 		}
 	}
 
@@ -442,7 +381,6 @@ fetch('http://127.0.0.1:7242/ingest/2e9bdb26-956d-44fb-8061-6eba8efc208f',{metho
 			});
 		} catch (e) {
 			// Ignora erros de localStorage
-			console.debug('Não foi possível restaurar estados das categorias:', e);
 		}
 	}
 

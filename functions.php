@@ -1185,7 +1185,6 @@ function gstore_enqueue_scripts() {
 		*/
 	}
 	
-	// #region agent log - Script para árvore de categorias carregado sempre para debug
 	/*
 	wp_enqueue_script(
 		'gstore-catalog-categories-tree',
@@ -1695,14 +1694,28 @@ add_action( 'init', 'gstore_ensure_removal_fragments', 15 );
  * Adiciona suporte adicional para garantir que o evento added_to_cart
  * seja sempre disparado, mesmo em casos edge.
  */
+function gstore_filter_add_to_cart_redirect( $url ) {
+	// Mantém o redirect padrão no produto único
+	if ( function_exists( 'is_product' ) && is_product() ) {
+		return $url;
+	}
+
+	// Em chamadas AJAX, não redireciona para não quebrar a resposta
+	if ( wp_doing_ajax() || isset( $_REQUEST['wc-ajax'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		return false;
+	}
+
+	// Para páginas de catálogo e afins, evita redirect após add-to-cart
+	return false;
+}
+
 function gstore_ensure_cart_events() {
 	if ( ! class_exists( 'WooCommerce' ) ) {
 		return;
 	}
 
-	// Garante que o WooCommerce não está redirecionando após add to cart
-	// (isso desabilita o AJAX)
-	add_filter( 'woocommerce_add_to_cart_redirect', '__return_false' );
+	// Evita redirect em contextos que devem permanecer na mesma página
+	add_filter( 'woocommerce_add_to_cart_redirect', 'gstore_filter_add_to_cart_redirect', 5 );
 }
 add_action( 'init', 'gstore_ensure_cart_events', 10 );
 
@@ -2624,288 +2637,7 @@ function gstore_hide_empty_notices_wrapper( $output ) {
 }
 add_filter( 'woocommerce_output_all_notices', 'gstore_hide_empty_notices_wrapper', 999 );
 
-/**
- * Gera script de debug para analisar estrutura HTML do carrinho.
- */
-function gstore_get_cart_debug_script() {
-	return <<<'SCRIPT'
-(function() {
-    console.clear();
-    console.log('%c🛒 DIAGNÓSTICO DO CARRINHO GSTORE', 'font-size: 20px; font-weight: bold; color: #c9a43a;');
-    console.log('');
-    
-    // Função para mostrar computed styles
-    function getStyles(el, props) {
-        if (!el) return 'ELEMENTO NÃO ENCONTRADO';
-        const cs = getComputedStyle(el);
-        return props.map(p => `${p}: ${cs[p]}`).join(', ');
-    }
-    
-    // Função para mostrar árvore de elementos
-    function showTree(el, depth = 0) {
-        if (!el || depth > 6) return;
-        const indent = '  '.repeat(depth);
-        const tag = el.tagName?.toLowerCase() || 'text';
-        const classes = el.className ? `.${el.className.split(' ').join('.')}` : '';
-        const id = el.id ? `#${el.id}` : '';
-        console.log(`${indent}${tag}${id}${classes}`);
-    }
-    
-    console.log('%c📐 ESTRUTURA HTML:', 'font-size: 14px; font-weight: bold; color: #fff; background: #333; padding: 5px;');
-    
-    // Encontra elementos chave
-    const body = document.body;
-    const wpSiteBlocks = document.querySelector('.wp-site-blocks');
-    const main = document.querySelector('main');
-    const cartPage = document.querySelector('.gstore-cart-page, .Gstore-cart-page');
-    const cartShell = document.querySelector('.Gstore-cart-shell');
-    const cartContainer = document.querySelector('.Gstore-cart-container');
-    const cartHeader = document.querySelector('.Gstore-cart-header');
-    
-    console.log('%cBody classes:', 'color: #86efac;', body.className);
-    console.log('');
-    
-    // Mostra hierarquia
-    console.log('%c🌳 HIERARQUIA DE ELEMENTOS:', 'font-size: 14px; font-weight: bold; color: #fff; background: #333; padding: 5px;');
-    
-    if (cartContainer) {
-        let el = cartContainer;
-        let path = [];
-        while (el && el !== document.body) {
-            const tag = el.tagName.toLowerCase();
-            const cls = el.className ? '.' + el.className.split(' ').slice(0, 2).join('.') : '';
-            path.unshift(`${tag}${cls}`);
-            el = el.parentElement;
-        }
-        console.log('Caminho até .Gstore-cart-container:');
-        path.forEach((p, i) => console.log('  '.repeat(i) + '└─ ' + p));
-    }
-    
-    console.log('');
-    console.log('%c📏 ESTILOS COMPUTADOS:', 'font-size: 14px; font-weight: bold; color: #fff; background: #333; padding: 5px;');
-    
-    const propsToCheck = ['width', 'maxWidth', 'marginLeft', 'marginRight', 'paddingLeft', 'paddingRight'];
-    
-    const elements = {
-        'body': body,
-        '.wp-site-blocks': wpSiteBlocks,
-        'main': main,
-        '.gstore-cart-page': cartPage,
-        '.Gstore-cart-shell': cartShell,
-        '.Gstore-cart-container': cartContainer,
-        '.Gstore-cart-header': cartHeader
-    };
-    
-    Object.entries(elements).forEach(([name, el]) => {
-        if (el) {
-            const cs = getComputedStyle(el);
-            const rect = el.getBoundingClientRect();
-            console.log(`%c${name}:`, 'color: #fbbf24; font-weight: bold;');
-            console.log(`  Largura real: ${rect.width}px`);
-            console.log(`  max-width: ${cs.maxWidth}`);
-            console.log(`  width: ${cs.width}`);
-            console.log(`  margin: ${cs.marginTop} ${cs.marginRight} ${cs.marginBottom} ${cs.marginLeft}`);
-            console.log(`  padding: ${cs.paddingTop} ${cs.paddingRight} ${cs.paddingBottom} ${cs.paddingLeft}`);
-            console.log('');
-        } else {
-            console.log(`%c${name}: NÃO ENCONTRADO`, 'color: #f87171;');
-        }
-    });
-    
-    console.log('%c🔍 PROBLEMA DE CENTRALIZAÇÃO:', 'font-size: 14px; font-weight: bold; color: #fff; background: #dc2626; padding: 5px;');
-    
-    if (cartContainer) {
-        const cs = getComputedStyle(cartContainer);
-        const rect = cartContainer.getBoundingClientRect();
-        const parentRect = cartContainer.parentElement.getBoundingClientRect();
-        
-        console.log(`Container largura: ${rect.width}px`);
-        console.log(`Container max-width computado: ${cs.maxWidth}`);
-        console.log(`Container margin-left: ${cs.marginLeft}`);
-        console.log(`Container margin-right: ${cs.marginRight}`);
-        console.log(`Parent largura: ${parentRect.width}px`);
-        console.log(`Espaço à esquerda: ${rect.left}px`);
-        console.log(`Espaço à direita: ${window.innerWidth - rect.right}px`);
-        
-        if (cs.marginLeft === '0px' && cs.marginRight === '0px') {
-            console.log('%c⚠️ MARGIN AUTO NÃO ESTÁ FUNCIONANDO!', 'color: #f87171; font-weight: bold;');
-            console.log('O container tem margin 0 em vez de auto. Alguma regra CSS está sobrescrevendo.');
-        }
-        
-        if (rect.left < 50) {
-            console.log('%c⚠️ CONTAINER ESTÁ COLADO À ESQUERDA!', 'color: #f87171; font-weight: bold;');
-        }
-    }
-    
-    // Verifica regras CSS que podem estar causando problema
-    console.log('');
-    console.log('%c🎨 VERIFICANDO REGRAS CSS:', 'font-size: 14px; font-weight: bold; color: #fff; background: #333; padding: 5px;');
-    
-    if (cartContainer) {
-        // Tenta encontrar a regra que está aplicando margin
-        const sheets = document.styleSheets;
-        let foundRules = [];
-        
-        for (let sheet of sheets) {
-            try {
-                const rules = sheet.cssRules || sheet.rules;
-                for (let rule of rules) {
-                    if (rule.selectorText && rule.selectorText.includes('Gstore-cart')) {
-                        if (rule.style.marginLeft || rule.style.marginRight || rule.style.margin) {
-                            foundRules.push({
-                                selector: rule.selectorText,
-                                margin: rule.style.margin || `L:${rule.style.marginLeft} R:${rule.style.marginRight}`,
-                                source: sheet.href || 'inline'
-                            });
-                        }
-                    }
-                }
-            } catch(e) {}
-        }
-        
-        if (foundRules.length > 0) {
-            console.log('Regras CSS que afetam margin do carrinho:');
-            foundRules.forEach(r => {
-                console.log(`  ${r.selector}: margin ${r.margin}`);
-                console.log(`    Fonte: ${r.source}`);
-            });
-        }
-    }
-    
-    console.log('');
-    console.log('%c✅ FIM DO DIAGNÓSTICO', 'font-size: 14px; font-weight: bold; color: #86efac;');
-})();
-SCRIPT;
-}
 
-/**
- * Renderiza overlay de debug na página do carrinho.
- */
-function gstore_render_cart_debug_overlay() {
-	if ( ! isset( $_GET['gstore_cart_debug'] ) || ! current_user_can( 'manage_options' ) ) {
-		return;
-	}
-	
-	if ( ! function_exists( 'is_cart' ) || ! is_cart() ) {
-		return;
-	}
-	?>
-	<div id="gstore-cart-debug-overlay" style="
-		position: fixed;
-		top: 32px;
-		right: 20px;
-		width: 400px;
-		max-height: 80vh;
-		background: #1d2327;
-		color: #f0f0f1;
-		border-radius: 8px;
-		box-shadow: 0 10px 40px rgba(0,0,0,0.5);
-		z-index: 999999;
-		font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-		font-size: 13px;
-		overflow: hidden;
-	">
-		<div style="background: #c9a43a; color: #000; padding: 12px 16px; font-weight: bold; display: flex; justify-content: space-between; align-items: center;">
-			<span>🛒 Debug do Carrinho</span>
-			<button onclick="this.closest('#gstore-cart-debug-overlay').remove()" style="background: none; border: none; cursor: pointer; color: #000; display: flex; align-items: center; justify-content: center; padding: 4px;">
-				<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12"/></svg>
-			</button>
-		</div>
-		<div id="gstore-debug-content" style="padding: 16px; max-height: calc(80vh - 50px); overflow-y: auto;">
-			<p style="margin: 0;">Carregando...</p>
-		</div>
-	</div>
-	<script>
-	document.addEventListener('DOMContentLoaded', function() {
-		const content = document.getElementById('gstore-debug-content');
-		let html = '';
-		
-		function addSection(title) {
-			html += `<h4 style="color: #c9a43a; margin: 16px 0 8px; padding-bottom: 4px; border-bottom: 1px solid #3c434a;">${title}</h4>`;
-		}
-		
-		function addRow(label, value, isError = false) {
-			const color = isError ? '#f87171' : '#86efac';
-			html += `<div style="display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px solid #3c434a;">
-				<span style="color: #9ca3af;">${label}</span>
-				<span style="color: ${color}; font-family: monospace;">${value}</span>
-			</div>`;
-		}
-		
-		// Body classes
-		addSection('Body Classes');
-		const bodyClasses = document.body.className.split(' ').filter(c => c.includes('cart') || c.includes('gstore') || c.includes('woocommerce'));
-		html += `<code style="display: block; background: #000; padding: 8px; border-radius: 4px; word-break: break-all; font-size: 11px;">${bodyClasses.join(' ')}</code>`;
-		
-		// Elementos e seus estilos
-		const elements = [
-			{ name: '.Gstore-cart-shell', el: document.querySelector('.Gstore-cart-shell') },
-			{ name: '.Gstore-cart-container', el: document.querySelector('.Gstore-cart-container') },
-			{ name: '.Gstore-cart-header', el: document.querySelector('.Gstore-cart-header') },
-		];
-		
-		elements.forEach(({name, el}) => {
-			addSection(name);
-			if (el) {
-				const cs = getComputedStyle(el);
-				const rect = el.getBoundingClientRect();
-				addRow('Largura real', `${Math.round(rect.width)}px`);
-				addRow('max-width', cs.maxWidth);
-				addRow('margin-left', cs.marginLeft, cs.marginLeft === '0px');
-				addRow('margin-right', cs.marginRight, cs.marginRight === '0px');
-				addRow('padding-left', cs.paddingLeft);
-				addRow('padding-right', cs.paddingRight);
-				addRow('Posição X', `${Math.round(rect.left)}px`);
-			} else {
-				html += `<p style="color: #f87171;">Elemento não encontrado!</p>`;
-			}
-		});
-		
-		// Diagnóstico
-		addSection('🔍 Diagnóstico');
-		const container = document.querySelector('.Gstore-cart-container');
-		if (container) {
-			const cs = getComputedStyle(container);
-			const rect = container.getBoundingClientRect();
-			const isCentered = Math.abs((window.innerWidth - rect.width) / 2 - rect.left) < 50;
-			
-			if (isCentered) {
-				html += `<p style="color: #86efac;">✅ Container está centralizado!</p>`;
-			} else {
-				html += `<p style="color: #f87171;">❌ Container NÃO está centralizado!</p>`;
-				html += `<p style="color: #9ca3af; font-size: 12px;">Espaço esquerda: ${Math.round(rect.left)}px</p>`;
-				html += `<p style="color: #9ca3af; font-size: 12px;">Espaço direita: ${Math.round(window.innerWidth - rect.right)}px</p>`;
-				
-				if (cs.marginLeft === '0px') {
-					html += `<p style="color: #fbbf24;">⚠️ margin-left está 0px (deveria ser auto)</p>`;
-				}
-			}
-		}
-		
-		// Hierarquia
-		addSection('🌳 Hierarquia HTML');
-		if (container) {
-			let el = container;
-			let path = [];
-			while (el && el !== document.body) {
-				const tag = el.tagName.toLowerCase();
-				const cls = el.className ? '.' + el.className.split(' ')[0] : '';
-				path.unshift(`${tag}${cls}`);
-				el = el.parentElement;
-			}
-			html += `<code style="display: block; background: #000; padding: 8px; border-radius: 4px; font-size: 10px; line-height: 1.6;">`;
-			path.forEach((p, i) => {
-				html += `${'&nbsp;&nbsp;'.repeat(i)}└─ ${p}<br>`;
-			});
-			html += `</code>`;
-		}
-		
-		content.innerHTML = html;
-	});
-	</script>
-	<?php
-}
-add_action( 'wp_footer', 'gstore_render_cart_debug_overlay' );
 
 /**
  * Adiciona estilos críticos inline para garantir que os cards apareçam.
@@ -9389,17 +9121,10 @@ function gstore_generate_css_diagnostics_script() {
 (function() {
 	'use strict';
 	
-	console.log('%c🔍 Gstore CSS Diagnostics', 'font-size: 16px; font-weight: bold; color: #2271b1;');
-	console.log('Verificando regras CSS críticas...');
-	console.log('');
-	
 	var rules = {$rules_json};
 	var results = { passed: [], failed: [], notFound: [] };
 	var isMobile = window.innerWidth <= 900;
 	var isDesktop = window.innerWidth > 900;
-	
-	console.log('Viewport atual: ' + (isMobile ? 'Mobile (' + window.innerWidth + 'px)' : 'Desktop (' + window.innerWidth + 'px)'));
-	console.log('');
 	
 	Object.keys(rules).forEach(function(key) {
 		var rule = rules[key];
@@ -9408,7 +9133,6 @@ function gstore_generate_css_diagnostics_script() {
 		                  !rule.viewport;
 		
 		if (!shouldCheck) {
-			console.log('%c⏭️ ' + rule.name + ' - Ignorado (viewport diferente)', 'color: #666;');
 			return;
 		}
 		
@@ -9416,7 +9140,6 @@ function gstore_generate_css_diagnostics_script() {
 		
 		if (!element) {
 			results.notFound.push(rule);
-			console.log('%c❓ ' + rule.name + ' - Elemento não encontrado: ' + rule.selector, 'color: #dba617;');
 			return;
 		}
 		
@@ -9425,34 +9148,10 @@ function gstore_generate_css_diagnostics_script() {
 		
 		if (actualValue.trim() === rule.expected) {
 			results.passed.push(rule);
-			console.log('%c✅ ' + rule.name + ' - OK (' + rule.property + ': ' + actualValue + ')', 'color: #00a32a;');
 		} else {
 			results.failed.push({ rule: rule, actual: actualValue });
-			console.log('%c❌ ' + rule.name + ' - FALHOU', 'color: #d63638; font-weight: bold;');
-			console.log('   Esperado: ' + rule.property + ': ' + rule.expected);
-			console.log('   Atual: ' + rule.property + ': ' + actualValue);
-			console.log('   Arquivo: ' + rule.css_file + ' (linha ' + rule.css_line + ')');
-			console.log('   ' + rule.description);
 		}
 	});
-	
-	console.log('');
-	console.log('%c📊 Resumo do Diagnóstico', 'font-size: 14px; font-weight: bold;');
-	console.log('✅ Passou: ' + results.passed.length);
-	console.log('❌ Falhou: ' + results.failed.length);
-	console.log('❓ Não encontrado: ' + results.notFound.length);
-	
-	if (results.failed.length > 0) {
-		console.log('');
-		console.log('%c⚠️ Possíveis causas:', 'font-weight: bold; color: #dba617;');
-		console.log('1. Cache do navegador - Limpe o cache e recarregue');
-		console.log('2. Cache do servidor - Limpe cache do plugin de cache (LiteSpeed, WP Super Cache, etc.)');
-		console.log('3. CDN com cache - Faça purge do cache da CDN');
-		console.log('4. CSS não atualizado - Verifique se o deploy foi feito corretamente');
-		console.log('5. Plugin conflitante - Desative plugins de otimização CSS temporariamente');
-		console.log('');
-		console.log('%c💡 Dica: Compare a versão do style.css local vs produção', 'color: #2271b1;');
-	}
 	
 	// Retorna os resultados para uso programático
 	return results;
@@ -9551,27 +9250,12 @@ function gstore_frontend_diagnostics_panel() {
 					font-weight: 500;
 				">🔄 Executar Diagnóstico</button>
 				
-				<button onclick="console.log(gstoreGetDiagnosticsScript());" style="
-					width: 100%;
-					padding: 10px;
-					margin-top: 8px;
-					background: #3c434a;
-					color: #f0f0f1;
-					border: none;
-					border-radius: 4px;
-					cursor: pointer;
-					font-weight: 500;
-				">📋 Ver Script no Console</button>
 			</div>
 		</div>
 	</div>
 	
 	<script>
 	var gstoreDiagRules = <?php echo wp_json_encode( $rules ); ?>;
-	
-	function gstoreGetDiagnosticsScript() {
-		return <?php echo wp_json_encode( gstore_generate_css_diagnostics_script() ); ?>;
-	}
 	
 	function gstoreRunDiagnostics() {
 		var resultsContainer = document.getElementById('gstore-diag-results');
@@ -10161,22 +9845,6 @@ function gstore_render_setup_page() {
 			$cart_url = $cart_page ? get_permalink( $cart_page->ID ) : wc_get_cart_url();
 			?>
 			
-			<div class="gstore-setup-diagnostics__actions" style="margin-bottom: 20px;">
-				<a href="<?php echo esc_url( add_query_arg( 'gstore_cart_debug', '1', $cart_url ) ); ?>" target="_blank" class="button button-primary">
-					<span class="dashicons dashicons-visibility"></span>
-					<?php _e( 'Abrir Carrinho com Diagnóstico', 'gstore' ); ?>
-				</a>
-				
-				<button type="button" id="gstore-copy-cart-debug-script" class="button">
-					<span class="dashicons dashicons-clipboard"></span>
-					<?php _e( 'Copiar Script de Debug', 'gstore' ); ?>
-				</button>
-			</div>
-			
-			<div id="gstore-cart-debug-script" style="background: #1d2327; padding: 15px; border-radius: 6px; margin-top: 15px;">
-				<p style="color: #f0f0f1; margin: 0 0 10px; font-size: 13px;"><strong>Cole este código no Console do navegador (F12) na página do carrinho:</strong></p>
-				<pre style="color: #86efac; font-size: 12px; white-space: pre-wrap; word-break: break-all; margin: 0; max-height: 400px; overflow: auto;"><?php echo esc_html( gstore_get_cart_debug_script() ); ?></pre>
-			</div>
 		</div>
 	</div>
 	
@@ -11202,7 +10870,6 @@ function gstore_handle_import_store_info() {
 	// Tenta importar (passa o array já decodificado para evitar decodificar duas vezes)
 	$store_info = gstore_store_info();
 	
-	// Debug: verifica se o JSON foi decodificado corretamente
 	if ( ! is_array( $json_data ) ) {
 		wp_redirect( add_query_arg( array(
 			'page'    => 'gstore-settings',

@@ -814,16 +814,18 @@ if ( $reviews_has_value ) {
 								$add_to_cart_markup = ob_get_clean();
 
 								if ( $add_to_cart_markup ) {
-									// Aplica classe btn-main ao botão de adicionar ao carrinho.
-									$add_to_cart_markup = preg_replace(
-										'/(<button[^>]*class="[^"]*)single_add_to_cart_button([^"]*")/i',
-										'$1single_add_to_cart_button btn-main$2',
-										$add_to_cart_markup,
-										1
-									);
+									// Aplica classe btn-main ao botão de adicionar ao carrinho (apenas uma vez).
+									if ( false === strpos( $add_to_cart_markup, 'single_add_to_cart_button btn-main' ) ) {
+										$add_to_cart_markup = preg_replace(
+											'/(<button[^>]*class="[^"]*)single_add_to_cart_button([^"]*")/i',
+											'$1single_add_to_cart_button btn-main$2',
+											$add_to_cart_markup,
+											1
+										);
+									}
 
 									// Injeta o aviso ENTRE os selects e a área de quantidade/botões (produto variável).
-									if ( $is_variable ) {
+									if ( $is_variable && false === strpos( $add_to_cart_markup, 'data-gstore-variation-warning' ) ) {
 										if ( preg_match( '/<div class="single_variation_wrap"/i', $add_to_cart_markup ) ) {
 											$add_to_cart_markup = preg_replace(
 												'/(<div class="single_variation_wrap")/i',
@@ -833,21 +835,17 @@ if ( $reviews_has_value ) {
 											);
 										} elseif ( false !== strpos( $add_to_cart_markup, '</form>' ) ) {
 											$add_to_cart_markup = str_replace( '</form>', $warning_markup . '</form>', $add_to_cart_markup );
-										} else {
-											$add_to_cart_markup .= $warning_markup;
 										}
 									}
 
 									// Insere botão "Comprar agora" após o botão "Adicionar ao carrinho" (quando aplicável).
-									if ( $buy_now_button ) {
+									if ( $buy_now_button && false === strpos( $add_to_cart_markup, 'Gstore-single-product__buy-now' ) ) {
 										$button_pattern = '/(<button[^>]*single_add_to_cart_button[^>]*>.*?<\\/button>)/s';
 
 										if ( preg_match( $button_pattern, $add_to_cart_markup ) ) {
 											$add_to_cart_markup = preg_replace( $button_pattern, '$1' . $buy_now_button, $add_to_cart_markup, 1 );
 										} elseif ( false !== strpos( $add_to_cart_markup, '</form>' ) ) {
 											$add_to_cart_markup = str_replace( '</form>', $buy_now_button . '</form>', $add_to_cart_markup );
-										} else {
-											$add_to_cart_markup .= $buy_now_button;
 										}
 									}
 

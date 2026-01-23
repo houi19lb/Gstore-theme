@@ -577,9 +577,6 @@
 		const selected = (lastCartSummaryData.installments && lastCartSummaryData.installments.selected)
 			? String(lastCartSummaryData.installments.selected)
 			: $('#gstore_blu_installments').val() || '1';
-	// #region agent log
-	fetch('http://127.0.0.1:7247/ingest/cce9ccaa-d42e-4577-9651-ba22a488615c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'checkout-steps.js:1604',message:'installment quotes request context',data:{max:max,selected:selected,payment_method:lastCartSummaryData && lastCartSummaryData.payment_method,total:lastCartSummaryData && lastCartSummaryData.total,base_total:lastCartSummaryData && lastCartSummaryData.base_total,shipping_total:lastCartSummaryData && lastCartSummaryData.shipping_total},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H11'})}).catch(()=>{});
-	// #endregion agent log
 
 		// Assinatura simples para evitar spam de requests
 		const signature = `${max}|${selected}|${lastCartSummaryData.total || ''}`;
@@ -618,9 +615,6 @@
 		if (!$select.length) return;
 		if (!installmentQuotes) return;
 	const displayTotals = getInstallmentDisplayTotals(lastCartSummaryData);
-	// #region agent log
-	fetch('http://127.0.0.1:7247/ingest/cce9ccaa-d42e-4577-9651-ba22a488615c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'checkout-steps.js:1628',message:'installment quotes sample',data:{quoteKeys:Object.keys(installmentQuotes||{}).slice(0,3),sample:(function(){const keys=Object.keys(installmentQuotes||{});return keys.length?installmentQuotes[keys[0]]:null;})()},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H12'})}).catch(()=>{});
-	// #endregion agent log
 
 		$select.find('option').each(function() {
 			const $opt = $(this);
@@ -898,9 +892,6 @@ function getInstallmentDisplayTotals(summaryData) {
 		}
 		try {
 			const raw = window.localStorage.getItem(CART_MODE_STORAGE_KEY);
-			// #region agent log
-			fetch('http://127.0.0.1:7247/ingest/cce9ccaa-d42e-4577-9651-ba22a488615c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'checkout-steps.js:818',message:'localStorage shipping mode raw',data:{rawSize:raw ? raw.length : 0,hasRaw:!!raw},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H7'})}).catch(()=>{});
-			// #endregion agent log
 			if (!raw) {
 				return '';
 			}
@@ -1094,9 +1085,6 @@ function getInstallmentDisplayTotals(summaryData) {
 			const storedMode = getStoredShippingModeForItem(cartItemKey);
 			checkoutSelectedShippingByItem[cartItemKey] = storedMode || 'land';
 		});
-		// #region agent log
-		fetch('http://127.0.0.1:7247/ingest/cce9ccaa-d42e-4577-9651-ba22a488615c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'checkout-steps.js:910',message:'syncShippingFromStorage',data:{ratesKeys:Object.keys(checkoutShippingRatesByItem),selectedKeys:Object.keys(checkoutSelectedShippingByItem)},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H9'})}).catch(()=>{});
-		// #endregion agent log
 	}
 
 	function renderItemShippingOptions(data) {
@@ -1117,9 +1105,6 @@ function getInstallmentDisplayTotals(summaryData) {
 				selectedMode = resolveCheckoutShippingMode(rates, selectedMode);
 				checkoutSelectedShippingByItem[cartItemKey] = selectedMode;
 			}
-			// #region agent log
-			fetch('http://127.0.0.1:7247/ingest/cce9ccaa-d42e-4577-9651-ba22a488615c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'checkout-steps.js:943',message:'item shipping render',data:{cartItemKey:cartItemKey,ratesCount:rates.length,selectedMode:selectedMode},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H12'})}).catch(()=>{});
-			// #endregion agent log
 			const optionsHtml = rates.length
 				? rates.map((rate) => {
 						const label = rate.label || (rate.mode === 'air' ? 'Frete Aéreo' : 'Frete Terrestre');
@@ -1146,25 +1131,12 @@ function getInstallmentDisplayTotals(summaryData) {
 					</label>
 				`;
 			$slot.html(optionsHtml);
-			// #region agent log
-			const slotEl = $slot.get(0);
-			const firstOption = slotEl ? slotEl.querySelector('.Gstore-checkout-item-shipping-option') : null;
-			const slotStyles = slotEl ? window.getComputedStyle(slotEl) : null;
-			const optionStyles = firstOption ? window.getComputedStyle(firstOption) : null;
-			fetch('http://127.0.0.1:7247/ingest/cce9ccaa-d42e-4577-9651-ba22a488615c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'checkout-steps.js:1000',message:'shipping layout styles',data:{cartItemKey:cartItemKey,slotDisplay:slotStyles?slotStyles.display:null,slotFlexDirection:slotStyles?slotStyles.flexDirection:null,slotFlexWrap:slotStyles?slotStyles.flexWrap:null,slotWidth:slotEl?slotEl.getBoundingClientRect().width:null,optionDisplay:optionStyles?optionStyles.display:null,optionWidth:firstOption?firstOption.getBoundingClientRect().width:null},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H15'})}).catch(()=>{});
-			// #endregion agent log
 		});
-		// #region agent log
-		fetch('http://127.0.0.1:7247/ingest/cce9ccaa-d42e-4577-9651-ba22a488615c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'checkout-steps.js:965',message:'renderItemShippingOptions',data:{itemsCount:items.length,itemsWithRates:Object.keys(checkoutShippingRatesByItem).length},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H10'})}).catch(()=>{});
-		// #endregion agent log
 	}
 
 	function renderShippingSummary(data) {
 		const $shippingSummary = $('[data-gstore-shipping-summary]');
 		if (!$shippingSummary.length) {
-			// #region agent log
-			fetch('http://127.0.0.1:7247/ingest/cce9ccaa-d42e-4577-9651-ba22a488615c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'checkout-steps.js:833',message:'renderShippingSummary skipped (no container)',data:{hasContainer:false},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H4'})}).catch(()=>{});
-			// #endregion agent log
 			return;
 		}
 		const $options = $shippingSummary.find('[data-gstore-shipping-options]');
@@ -1179,9 +1151,6 @@ function getInstallmentDisplayTotals(summaryData) {
 			selectedMode = resolveCheckoutShippingMode(rates, selectedMode);
 			checkoutSelectedShippingMode = selectedMode;
 		}
-		// #region agent log
-		fetch('http://127.0.0.1:7247/ingest/cce9ccaa-d42e-4577-9651-ba22a488615c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'checkout-steps.js:846',message:'renderShippingSummary state',data:{ratesCount:rates.length,selectedMode:selectedMode,status:checkoutShippingStatus},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H4'})}).catch(()=>{});
-		// #endregion agent log
 
 		$options.html('');
 
@@ -1247,19 +1216,10 @@ function getInstallmentDisplayTotals(summaryData) {
 			}
 			selectedModes.add(selectedMode);
 		}
-		// #region agent log
-		fetch('http://127.0.0.1:7247/ingest/cce9ccaa-d42e-4577-9651-ba22a488615c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'checkout-steps.js:898',message:'shipping totals computed',data:{selectedTotal:selectedTotal,groundTotal:groundTotal,airTotal:airTotal,selectedModes:Array.from(selectedModes)},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H11'})}).catch(()=>{});
-		// #endregion agent log
 
 		const totalValue = subtotalValue + selectedTotal - discountValue;
-		// #region agent log
-		fetch('http://127.0.0.1:7247/ingest/cce9ccaa-d42e-4577-9651-ba22a488615c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'checkout-steps.js:904',message:'totals display inputs',data:{subtotalRaw:data && data.totals ? data.totals.subtotal : null,subtotalValue:subtotalValue,discountRaw:data && data.totals ? data.totals.discount : null,discountValue:discountValue,totalValue:totalValue,selectedTotal:selectedTotal},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H13'})}).catch(()=>{});
-		// #endregion agent log
 		if (subtotalValue > 0) {
 			$('.Gstore-checkout-summary-top__total-amount').html(formatCurrency(totalValue));
-			// #region agent log
-			fetch('http://127.0.0.1:7247/ingest/cce9ccaa-d42e-4577-9651-ba22a488615c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'checkout-steps.js:909',message:'top total updated',data:{newTotal:formatCurrency(totalValue)},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H14'})}).catch(()=>{});
-			// #endregion agent log
 		}
 
 		lastSummaryTotals = {
@@ -1379,9 +1339,6 @@ function getInstallmentDisplayTotals(summaryData) {
 		if ($orderTotal.length) {
 			$orderTotal.html(formatCurrency(lastSummaryTotals.totalValue || 0));
 		}
-		// #region agent log
-		fetch('http://127.0.0.1:7247/ingest/cce9ccaa-d42e-4577-9651-ba22a488615c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'checkout-steps.js:1315',message:'order review patched',data:{modes:modes,land:lastSummaryTotals.selectedLandTotal,air:lastSummaryTotals.selectedAirTotal,total:lastSummaryTotals.totalValue},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H18'})}).catch(()=>{});
-		// #endregion agent log
 	}
 
 	function calculateShipping(postcode) {
@@ -1483,18 +1440,12 @@ function getInstallmentDisplayTotals(summaryData) {
 			showShippingError('Não foi possível calcular o frete para este destino.');
 			return;
 		}
-		// #region agent log
-		fetch('http://127.0.0.1:7247/ingest/cce9ccaa-d42e-4577-9651-ba22a488615c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'checkout-steps.js:919',message:'showShippingResult rates',data:{ratesCount:rates.length,firstRate:rates[0] ? {mode:rates[0].mode,label:rates[0].label,cost:rates[0].cost,cost_formatted:rates[0].cost_formatted} : null},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H3'})}).catch(()=>{});
-		// #endregion agent log
 		checkoutShippingStatus = 'ready';
 		checkoutShippingError = '';
 		checkoutShippingRates = getNormalizedRatesFromShippingData(data);
 		const storedMode = getStoredShippingModeFromStorage(getCartItemKeysFromSummary(lastCartSummaryData));
 		const preferredMode = storedMode || checkoutSelectedShippingMode || 'land';
 		checkoutSelectedShippingMode = resolveCheckoutShippingMode(checkoutShippingRates, preferredMode);
-		// #region agent log
-		fetch('http://127.0.0.1:7247/ingest/cce9ccaa-d42e-4577-9651-ba22a488615c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'checkout-steps.js:928',message:'resolved checkout mode',data:{preferredMode:preferredMode,resolved:checkoutSelectedShippingMode,normalizedRates:checkoutShippingRates.map(r=>({mode:r.mode,label:r.label,cost_formatted:r.cost_formatted}))},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H3'})}).catch(()=>{});
-		// #endregion agent log
 		renderShippingSummary(lastCartSummaryData);
 	}
 
@@ -1657,15 +1608,6 @@ function getInstallmentDisplayTotals(summaryData) {
 			setTimeout(function() {
 				$(document.body).trigger('update_checkout');
 				setTimeout(updateOrderReviewTotals, 0);
-				// #region agent log
-				const $orderReview = $('#order_review');
-				const $orderTotals = $orderReview.find('.shop_table .order-total .woocommerce-Price-amount');
-				const $subtotal = $orderReview.find('.shop_table .cart-subtotal .woocommerce-Price-amount');
-				const $shippingRows = $orderReview.find('.shop_table .shipping');
-				fetch('http://127.0.0.1:7247/ingest/cce9ccaa-d42e-4577-9651-ba22a488615c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'checkout-steps.js:1136',message:'enter final step',data:{orderReviewFound:$orderReview.length>0,subtotal:$subtotal.first().text().trim(),orderTotal:$orderTotals.first().text().trim()},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H16'})}).catch(()=>{});
-				// #region agent log
-				fetch('http://127.0.0.1:7247/ingest/cce9ccaa-d42e-4577-9651-ba22a488615c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'checkout-steps.js:1140',message:'order review shipping rows',data:{shippingRowCount:$shippingRows.length,shippingText:$shippingRows.text().trim().slice(0,200)},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H17'})}).catch(()=>{});
-				// #endregion agent log
 				
 				// Garante que o botão place_order esteja visível e clicável
 				const $placeOrderBtn = $('#place_order');
@@ -1866,9 +1808,6 @@ function getInstallmentDisplayTotals(summaryData) {
 			},
 			success: function(response) {
 				if (response.success) {
-					// #region agent log
-					fetch('http://127.0.0.1:7247/ingest/cce9ccaa-d42e-4577-9651-ba22a488615c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'checkout-steps.js:1329',message:'cart summary response',data:{hasData:!!response.data,itemsCount:response.data && response.data.items_count,totalsKeys:response.data && response.data.totals ? Object.keys(response.data.totals) : []},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H6'})}).catch(()=>{});
-					// #endregion agent log
 					renderSummary(response.data);
 				}
 			},
@@ -1884,9 +1823,6 @@ function getInstallmentDisplayTotals(summaryData) {
 	 */
 	function renderSummary(data) {
 		lastCartSummaryData = data;
-		// #region agent log
-		fetch('http://127.0.0.1:7247/ingest/cce9ccaa-d42e-4577-9651-ba22a488615c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'checkout-steps.js:1350',message:'renderSummary data snapshot',data:{itemsCount:data && data.items_count,itemsArray:Array.isArray(data && data.items),itemKeys:getCartItemKeysFromSummary(data)},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H1'})}).catch(()=>{});
-		// #endregion agent log
 
 		// Se o Woo já esvaziou o carrinho (pedido Blu criado), não sobrescreve o topo com 0.
 		// Reusa o último resumo não-vazio para manter os dados corretos.
@@ -1899,21 +1835,9 @@ function getInstallmentDisplayTotals(summaryData) {
 		// Usa base_total (total sem taxa de parcelamento) para o topo e linha "Total".
 		// O total real (com taxa) só aparece em "Você pagará" quando escolher parcelas.
 		const baseTotal = data.base_total || data.total;
-	// #region agent log
-	fetch('http://127.0.0.1:7247/ingest/cce9ccaa-d42e-4577-9651-ba22a488615c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'checkout-steps.js:1360',message:'summary totals snapshot',data:{total:data && data.total,base_total:data && data.base_total,shipping_total:data && data.shipping_total,hasTotals:!!(data && data.totals),feesCount:(data && data.totals && Array.isArray(data.totals.fees)?data.totals.fees.length:0),payment_method:data && data.payment_method},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H10'})}).catch(()=>{});
-	// #endregion agent log
 
 		// Seleção inicial do frete baseada no carrinho/localStorage
 		const storedMode = getStoredShippingModeFromStorage(getCartItemKeysFromSummary(data));
-		// #region agent log
-		fetch('http://127.0.0.1:7247/ingest/cce9ccaa-d42e-4577-9651-ba22a488615c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'checkout-steps.js:1362',message:'stored mode from localStorage',data:{storedMode:storedMode,selectedBefore:checkoutSelectedShippingMode},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H2'})}).catch(()=>{});
-		// #endregion agent log
-		// #region agent log
-		fetch('http://127.0.0.1:7247/ingest/cce9ccaa-d42e-4577-9651-ba22a488615c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'checkout-steps.js:1365',message:'localStorage rates raw',data:{hasRatesRaw:!!(typeof window!=="undefined"&&window.localStorage&&window.localStorage.getItem("gstore_cart_shipping_rates")),ratesRawSize:(typeof window!=="undefined"&&window.localStorage&&window.localStorage.getItem("gstore_cart_shipping_rates")?window.localStorage.getItem("gstore_cart_shipping_rates").length:0)},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H9'})}).catch(()=>{});
-		// #endregion agent log
-		// #region agent log
-		fetch('http://127.0.0.1:7247/ingest/cce9ccaa-d42e-4577-9651-ba22a488615c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'checkout-steps.js:1367',message:'cart summary item schema',data:{itemsCount:data && data.items_count,itemsSchema:(Array.isArray(data && data.items)?data.items.map(item=>({keys:Object.keys(item||{}).slice(0,12),cart_item_key:item && (item.cart_item_key||item.cartItemKey||item.key||''),shipping_mode:item && (item.gstore_shipping_mode||item.shipping_mode||''),shipping_rates_count:Array.isArray(item && item.gstore_shipping_rates)?item.gstore_shipping_rates.length:(Array.isArray(item && item.shipping_rates)?item.shipping_rates.length:0)})):[])},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H6'})}).catch(()=>{});
-		// #endregion agent log
 		checkoutSelectedShippingMode = storedMode || checkoutSelectedShippingMode || 'land';
 
 		// Atualiza contagem de itens
@@ -1992,13 +1916,7 @@ function getInstallmentDisplayTotals(summaryData) {
 		}
 
 		const selected = parseInt(data.installments.selected, 10) || 1;
-	// #region agent log
-	fetch('http://127.0.0.1:7247/ingest/cce9ccaa-d42e-4577-9651-ba22a488615c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'checkout-steps.js:1975',message:'installments preview input',data:{selected:selected,per_installment:data.installments && data.installments.per_installment,total:data.total,base_total:data.base_total,shipping_total:data.shipping_total,hasFees:(data.totals && Array.isArray(data.totals.fees)?data.totals.fees.length:0)},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H13'})}).catch(()=>{});
-	// #endregion agent log
 	const displayTotals = getInstallmentDisplayTotals(data);
-	// #region agent log
-	fetch('http://127.0.0.1:7247/ingest/cce9ccaa-d42e-4577-9651-ba22a488615c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'checkout-steps.js:1978',message:'installments preview totals',data:{rawTotal:displayTotals.rawTotal,displayTotal:displayTotals.displayTotal,shippingTotal:displayTotals.shippingTotal,shouldAddShipping:displayTotals.shouldAddShipping,summaryTotal:displayTotals.summaryTotal},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H20'})}).catch(()=>{});
-	// #endregion agent log
 		if (selected <= 1) {
 			$preview.html('');
 			return;
@@ -2118,9 +2036,6 @@ function getInstallmentDisplayTotals(summaryData) {
 		$(document).on('change', 'input[name^="gstore_checkout_shipping_mode["]', function() {
 			const cartItemKey = $(this).data('cart-item-key') || String($(this).attr('name') || '').replace(/^gstore_checkout_shipping_mode\[|\]$/g, '');
 			const value = $(this).val();
-			// #region agent log
-			fetch('http://127.0.0.1:7247/ingest/cce9ccaa-d42e-4577-9651-ba22a488615c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'checkout-steps.js:1574',message:'shipping item radio changed',data:{value:value,cartItemKey:cartItemKey},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H10'})}).catch(()=>{});
-			// #endregion agent log
 			if (cartItemKey) {
 				checkoutSelectedShippingByItem[cartItemKey] = normalizeRateMode(value) || 'land';
 				persistShippingModeForItem(cartItemKey, value);
@@ -2135,15 +2050,6 @@ function getInstallmentDisplayTotals(summaryData) {
 			setTimeout(organizeFields, 0);
 			setTimeout(ensureBluInstallmentsUI, 0);
 			setTimeout(updateOrderReviewTotals, 0);
-			// #region agent log
-			const $orderReview = $('#order_review');
-			const $orderTotals = $orderReview.find('.shop_table .order-total .woocommerce-Price-amount');
-			const $subtotal = $orderReview.find('.shop_table .cart-subtotal .woocommerce-Price-amount');
-			const $shippingRows = $orderReview.find('.shop_table .shipping');
-			fetch('http://127.0.0.1:7247/ingest/cce9ccaa-d42e-4577-9651-ba22a488615c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'checkout-steps.js:1600',message:'updated_checkout totals',data:{orderReviewFound:$orderReview.length>0,subtotal:$subtotal.first().text().trim(),orderTotal:$orderTotals.first().text().trim()},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H16'})}).catch(()=>{});
-			// #region agent log
-			fetch('http://127.0.0.1:7247/ingest/cce9ccaa-d42e-4577-9651-ba22a488615c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'checkout-steps.js:1604',message:'updated_checkout shipping rows',data:{shippingRowCount:$shippingRows.length,shippingText:$shippingRows.text().trim().slice(0,200)},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H17'})}).catch(()=>{});
-			// #endregion agent log
 			
 			// Garante que o botão "Finalizar pedido" esteja visível apenas na última etapa
 			const lastStepIndex = STEPS.length - 1;

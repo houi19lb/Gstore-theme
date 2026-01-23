@@ -28,7 +28,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
 
         potentialDuplicates.forEach(duplicate => {
-            // console.log('Gstore: Removing redundant order summary element', duplicate);
             duplicate.remove();
         });
     }
