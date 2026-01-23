@@ -808,6 +808,118 @@
 		return { productId, quantity };
 	}
 
+	function getCheckoutShippingItemsFromSummary(data) {
+		const items = data && Array.isArray(data.items) ? data.items : [];
+		const output = [];
+		items.forEach((item) => {
+			const cartItemKey = item.key || item.cart_item_key || item.cartItemKey || '';
+			const rawProductId = item.product_id || item.productId || item.id;
+			const productId = parseInt(rawProductId, 10) || 0;
+			const quantity = parseInt(item.quantity, 10) || 1;
+			if (cartItemKey && productId) {
+				output.push({ cartItemKey, productId, quantity });
+			}
+		});
+		return output;
+	}
+
+	function createShippingRequest(ajaxUrl, nonce, postcode, itemPayload) {
+		const deferred = $.Deferred();
+		$.ajax({
+			url: ajaxUrl,
+			type: 'POST',
+			data: {
+				action: 'gstore_calculate_shipping',
+				nonce: nonce,
+				postcode: postcode,
+				product_id: itemPayload.productId,
+				quantity: itemPayload.quantity
+			},
+			dataType: 'json',
+			success: function(response) {
+				deferred.resolve({ itemPayload, response: response });
+			},
+			error: function() {
+				deferred.resolve({ itemPayload, response: null });
+			}
+		});
+		return deferred.promise();
+	}
+
+	function showShippingResultsByItem(results, cleanCep) {
+		const nextRatesByItem = {};
+		let firstSuccessData = null;
+		let hasAnyRates = false;
+
+		results.forEach((result) => {
+			const response = result && result.response ? result.response : null;
+			const cartItemKey = result && result.itemPayload ? result.itemPayload.cartItemKey : '';
+			if (!cartItemKey || !response || !response.success || !response.data) {
+				return;
+			}
+			const rates = Array.isArray(response.data.rates) ? response.data.rates : [];
+			if (!rates.length) {
+				return;
+			}
+			const normalizedRates = getNormalizedRatesFromShippingData(response.data);
+			if (normalizedRates.length) {
+				nextRatesByItem[cartItemKey] = normalizedRates;
+				hasAnyRates = true;
+				if (!firstSuccessData) {
+					firstSuccessData = response.data;
+				}
+			}
+		});
+
+		if (!hasAnyRates) {
+			showShippingError('Não foi possível calcular o frete para este destino.');
+			calculatedShipping = null;
+			lastCalculatedShippingCep = '';
+			lastCalculatedDestination = null;
+			return;
+		}
+
+		checkoutShippingStatus = 'ready';
+		checkoutShippingError = '';
+		checkoutShippingRates = [];
+		checkoutShippingRatesByItem = nextRatesByItem;
+		calculatedShipping = { rates_by_item: nextRatesByItem };
+		lastCalculatedShippingCep = cleanCep;
+		lastCalculatedDestination = firstSuccessData && firstSuccessData.destination
+			? firstSuccessData.destination
+			: null;
+
+		// Salva os rates no localStorage para cada item
+		if (typeof window !== 'undefined' && window.localStorage) {
+			try {
+				let payload = {};
+				const raw = window.localStorage.getItem(CART_RATES_STORAGE_KEY);
+				if (raw) {
+					payload = JSON.parse(raw);
+				}
+				Object.keys(nextRatesByItem).forEach((cartItemKey) => {
+					payload[cartItemKey] = nextRatesByItem[cartItemKey];
+				});
+				window.localStorage.setItem(CART_RATES_STORAGE_KEY, JSON.stringify(payload));
+			} catch (e) {
+				// Ignora erros de localStorage
+			}
+		}
+
+		// Renderiza as opções de frete por item ANTES de renderizar o resumo
+		if (lastCartSummaryData) {
+			renderItemShippingOptions(lastCartSummaryData);
+		}
+
+		renderShippingSummary(lastCartSummaryData);
+
+		if (firstSuccessData) {
+			updateSummaryWithShipping(firstSuccessData);
+		} else {
+			updateSummaryWithShipping({ rates: [] });
+		}
+	}
+
 	function normalizeRateMode(mode) {
 		const value = String(mode || '').toLowerCase();
 		if (value === 'air' || value === 'aereo' || value === 'aéreo') {
@@ -1368,7 +1480,21 @@ function getInstallmentDisplayTotals(summaryData) {
 		const nonce = typeof gstoreShippingCalculator !== 'undefined' && gstoreShippingCalculator.nonce
 			? gstoreShippingCalculator.nonce
 			: '';
-		
+
+		const checkoutItems = getCheckoutShippingItemsFromSummary(lastCartSummaryData);
+
+		if (checkoutItems.length > 0) {
+			const requests = checkoutItems.map((itemPayload) => createShippingRequest(ajaxUrl, nonce, cleanCep, itemPayload));
+			$.when.apply($, requests).done(function() {
+				isCalculatingShipping = false;
+				const results = requests.length === 1
+					? [arguments[0]]
+					: Array.prototype.slice.call(arguments);
+				showShippingResultsByItem(results, cleanCep);
+			});
+			return;
+		}
+
 		const checkoutItem = getCheckoutShippingItem();
 		const data = {
 			action: 'gstore_calculate_shipping',
