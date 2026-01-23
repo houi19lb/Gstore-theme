@@ -2046,11 +2046,9 @@ function gstore_restore_saved_cart_if_needed() {
 		return;
 	}
 
-	// Se o carrinho atual não está vazio, não restaura (cliente pode ter adicionado outros itens)
+	// Se o carrinho atual não está vazio, substitui pelo carrinho salvo
 	if ( ! WC()->cart->is_empty() ) {
-		// Limpa a flag para não tentar restaurar novamente
-		WC()->session->set( 'gstore_buy_now_active', false );
-		return;
+		WC()->cart->empty_cart();
 	}
 
 	// Restaura o carrinho salvo
