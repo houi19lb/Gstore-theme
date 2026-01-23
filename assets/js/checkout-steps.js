@@ -1443,9 +1443,51 @@ function getInstallmentDisplayTotals(summaryData) {
 		checkoutShippingStatus = 'ready';
 		checkoutShippingError = '';
 		checkoutShippingRates = getNormalizedRatesFromShippingData(data);
-		const storedMode = getStoredShippingModeFromStorage(getCartItemKeysFromSummary(lastCartSummaryData));
+		
+		// CORREÇÃO: Distribui os rates para cada item do carrinho
+		const itemKeys = getCartItemKeysFromSummary(lastCartSummaryData);
+		const normalizedRates = checkoutShippingRates;
+		
+		// Salva os rates para cada item em checkoutShippingRatesByItem
+		if (itemKeys.length > 0) {
+			itemKeys.forEach((cartItemKey) => {
+				if (cartItemKey) {
+					checkoutShippingRatesByItem[cartItemKey] = normalizedRates;
+				}
+			});
+		}
+		
+		// Salva os rates no localStorage para cada item
+		if (typeof window !== 'undefined' && window.localStorage && itemKeys.length > 0) {
+			try {
+				let payload = {};
+				const raw = window.localStorage.getItem(CART_RATES_STORAGE_KEY);
+				if (raw) {
+					payload = JSON.parse(raw);
+				}
+				
+				// Salva os mesmos rates para todos os itens
+				itemKeys.forEach((cartItemKey) => {
+					if (cartItemKey) {
+						payload[cartItemKey] = normalizedRates;
+					}
+				});
+				
+				window.localStorage.setItem(CART_RATES_STORAGE_KEY, JSON.stringify(payload));
+			} catch (e) {
+				// Ignora erros de localStorage
+			}
+		}
+		
+		const storedMode = getStoredShippingModeFromStorage(itemKeys);
 		const preferredMode = storedMode || checkoutSelectedShippingMode || 'land';
 		checkoutSelectedShippingMode = resolveCheckoutShippingMode(checkoutShippingRates, preferredMode);
+		
+		// CORREÇÃO: Renderiza as opções de frete por item ANTES de renderizar o resumo
+		if (lastCartSummaryData) {
+			renderItemShippingOptions(lastCartSummaryData);
+		}
+		
 		renderShippingSummary(lastCartSummaryData);
 	}
 
@@ -1485,6 +1527,14 @@ function getInstallmentDisplayTotals(summaryData) {
 		const $postcodeField = $('#billing_postcode');
 		const $checkoutForm = $('form.checkout');
 		
+		// CORREÇÃO: Preserva os rates calculados antes de recarregar o resumo
+		const preservedRates = checkoutShippingRates && checkoutShippingRates.length > 0 
+			? checkoutShippingRates.slice() 
+			: [];
+		const preservedRatesByItem = Object.keys(checkoutShippingRatesByItem).length > 0
+			? JSON.parse(JSON.stringify(checkoutShippingRatesByItem))
+			: {};
+		
 		if ($postcodeField.length && $postcodeField.val()) {
 			// Garante que o campo de método de envio existe no formulário
 			let $shippingMethodField = $checkoutForm.find('input[name="shipping_method[0]"]');
@@ -1502,6 +1552,14 @@ function getInstallmentDisplayTotals(summaryData) {
 		
 		// Atualiza o resumo do topo após um delay maior para o WooCommerce processar
 		setTimeout(function() {
+			// CORREÇÃO: Restaura os rates preservados após o reload
+			if (preservedRates.length > 0) {
+				checkoutShippingRates = preservedRates;
+			}
+			if (Object.keys(preservedRatesByItem).length > 0) {
+				checkoutShippingRatesByItem = preservedRatesByItem;
+			}
+			
 			loadCartSummary();
 		}, 1000);
 
@@ -1836,6 +1894,14 @@ function getInstallmentDisplayTotals(summaryData) {
 		// O total real (com taxa) só aparece em "Você pagará" quando escolher parcelas.
 		const baseTotal = data.base_total || data.total;
 
+		// CORREÇÃO: Preserva os rates calculados antes de sincronizar com storage
+		const preservedRatesByItem = Object.keys(checkoutShippingRatesByItem).length > 0
+			? JSON.parse(JSON.stringify(checkoutShippingRatesByItem))
+			: {};
+		const preservedRates = checkoutShippingRates && checkoutShippingRates.length > 0
+			? checkoutShippingRates.slice()
+			: [];
+
 		// Seleção inicial do frete baseada no carrinho/localStorage
 		const storedMode = getStoredShippingModeFromStorage(getCartItemKeysFromSummary(data));
 		checkoutSelectedShippingMode = storedMode || checkoutSelectedShippingMode || 'land';
@@ -1895,6 +1961,21 @@ function getInstallmentDisplayTotals(summaryData) {
 		$('.Gstore-checkout-summary-top__totals').html(totalsHtml);
 
 		syncShippingFromStorage(data);
+		
+		// CORREÇÃO: Restaura os rates preservados se ainda estiverem válidos
+		// Isso garante que os rates recém-calculados não sejam perdidos
+		if (Object.keys(preservedRatesByItem).length > 0) {
+			const itemKeys = getCartItemKeysFromSummary(data);
+			itemKeys.forEach((cartItemKey) => {
+				if (cartItemKey && preservedRatesByItem[cartItemKey]) {
+					checkoutShippingRatesByItem[cartItemKey] = preservedRatesByItem[cartItemKey];
+				}
+			});
+		}
+		if (preservedRates.length > 0) {
+			checkoutShippingRates = preservedRates;
+		}
+		
 		renderItemShippingOptions(data);
 		renderShippingSummary(data);
 		updateInstallmentsPreview(data);
