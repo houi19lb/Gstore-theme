@@ -4774,9 +4774,11 @@ function gstore_calculate_shipping_ajax() {
 		)
 	);
 }
-// Sempre registra o endpoint AJAX do tema para cálculo de frete
-add_action( 'wp_ajax_gstore_calculate_shipping', 'gstore_calculate_shipping_ajax' );
-add_action( 'wp_ajax_nopriv_gstore_calculate_shipping', 'gstore_calculate_shipping_ajax' );
+// O endpoint AJAX de cálculo de frete agora é gerenciado pelo plugin Gstore Core
+// para evitar conflitos e garantir consistência. As funções auxiliares abaixo
+// continuam disponíveis para uso interno do tema (carrinho, página de produto).
+// add_action( 'wp_ajax_gstore_calculate_shipping', 'gstore_calculate_shipping_ajax' );
+// add_action( 'wp_ajax_nopriv_gstore_calculate_shipping', 'gstore_calculate_shipping_ajax' );
 
 
 
