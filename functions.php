@@ -1737,18 +1737,56 @@ function gstore_log_cart_session_state( $context ) {
 	$cart    = WC()->cart;
 	$session = WC()->session;
 
+	$session_cart = $session && method_exists( $session, 'get' ) ? $session->get( 'cart' ) : null;
+	$session_cart_count = is_array( $session_cart ) ? count( $session_cart ) : null;
+
 	$data = array(
-		'context'       => $context,
-		'is_product'    => function_exists( 'is_product' ) && is_product(),
-		'has_session'   => ( $session && method_exists( $session, 'has_session' ) ) ? $session->has_session() : null,
-		'session_id'    => $session && method_exists( $session, 'get_customer_id' ) ? $session->get_customer_id() : null,
-		'cart_hash'     => $cart ? $cart->get_cart_hash() : null,
-		'items_count'   => $cart ? $cart->get_cart_contents_count() : null,
-		'request_uri'   => isset( $_SERVER['REQUEST_URI'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REQUEST_URI'] ) ) : null,
-		'request_method'=> isset( $_SERVER['REQUEST_METHOD'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REQUEST_METHOD'] ) ) : null,
+		'context'                  => $context,
+		'is_product'               => function_exists( 'is_product' ) && is_product(),
+		'has_session'              => ( $session && method_exists( $session, 'has_session' ) ) ? $session->has_session() : null,
+		'session_id'               => $session && method_exists( $session, 'get_customer_id' ) ? $session->get_customer_id() : null,
+		'cart_hash'                => $cart ? $cart->get_cart_hash() : null,
+		'items_count'              => $cart ? $cart->get_cart_contents_count() : null,
+		'session_cart_count'       => $session_cart_count,
+		'cookie_session_present'   => isset( $_COOKIE['wp_woocommerce_session_7e49f53796ca3742ebeb721e35e9fc79'] ),
+		'cookie_cart_hash_present' => isset( $_COOKIE['woocommerce_cart_hash'] ),
+		'cookie_items_present'     => isset( $_COOKIE['woocommerce_items_in_cart'] ),
+		'request_uri'              => isset( $_SERVER['REQUEST_URI'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REQUEST_URI'] ) ) : null,
+		'request_method'           => isset( $_SERVER['REQUEST_METHOD'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REQUEST_METHOD'] ) ) : null,
 	);
 
 	error_log( '[Gstore Cart Debug] ' . wp_json_encode( $data ) );
+
+	// #region agent log
+	if ( function_exists( 'gstore_write_debug_log' ) ) {
+		gstore_write_debug_log(
+			array(
+				'sessionId'   => 'debug-session',
+				'runId'       => 'run1',
+				'hypothesisId'=> 'A',
+				'location'    => 'functions.php:gstore_log_cart_session_state',
+				'message'     => 'cart_session_state',
+				'data'        => $data,
+				'timestamp'   => round( microtime( true ) * 1000 ),
+			)
+		);
+	}
+	// #endregion
+}
+
+/**
+ * Escreve logs NDJSON no arquivo de debug do Cursor.
+ *
+ * @param array $payload Dados do log.
+ * @return void
+ */
+function gstore_write_debug_log( array $payload ) {
+	$path = 'C:\\Users\\mathe\\Gstore-theme\\.cursor\\debug.log';
+	$line = wp_json_encode( $payload );
+	if ( ! $line ) {
+		return;
+	}
+	@file_put_contents( $path, $line . PHP_EOL, FILE_APPEND ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
 }
 
 /**
@@ -1772,9 +1810,70 @@ function gstore_log_and_ensure_cart_session( $cart_item_key, $product_id, $quant
 	if ( function_exists( 'is_product' ) && is_product() && WC()->session && WC()->cart ) {
 		WC()->session->set_customer_session_cookie( true );
 		WC()->cart->set_session();
+
+		// #region agent log
+		gstore_write_debug_log(
+			array(
+				'sessionId'   => 'debug-session',
+				'runId'       => 'run1',
+				'hypothesisId'=> 'B',
+				'location'    => 'functions.php:gstore_log_and_ensure_cart_session',
+				'message'     => 'after_set_session',
+				'data'        => array(
+					'cart_hash'   => WC()->cart->get_cart_hash(),
+					'items_count' => WC()->cart->get_cart_contents_count(),
+				),
+				'timestamp'   => round( microtime( true ) * 1000 ),
+			)
+		);
+		// #endregion
 	}
 }
 add_action( 'woocommerce_add_to_cart', 'gstore_log_and_ensure_cart_session', 5, 6 );
+
+/**
+ * Loga quando o WooCommerce tenta setar cookies do carrinho.
+ *
+ * @param bool $set Se deve setar cookies.
+ * @return void
+ */
+function gstore_log_set_cart_cookies( $set ) {
+	$headers = function_exists( 'headers_list' ) ? headers_list() : array();
+	$has_cart_hash_header = false;
+	$has_items_header = false;
+
+	foreach ( $headers as $header ) {
+		$lower = strtolower( $header );
+		if ( false !== strpos( $lower, 'woocommerce_cart_hash' ) ) {
+			$has_cart_hash_header = true;
+		}
+		if ( false !== strpos( $lower, 'woocommerce_items_in_cart' ) ) {
+			$has_items_header = true;
+		}
+	}
+
+	// #region agent log
+	gstore_write_debug_log(
+		array(
+			'sessionId'   => 'debug-session',
+			'runId'       => 'run1',
+			'hypothesisId'=> 'C',
+			'location'    => 'functions.php:gstore_log_set_cart_cookies',
+			'message'     => 'set_cart_cookies',
+			'data'        => array(
+				'set'                   => (bool) $set,
+				'has_cart_hash_header'  => $has_cart_hash_header,
+				'has_items_header'      => $has_items_header,
+				'cookie_cart_hash_present' => isset( $_COOKIE['woocommerce_cart_hash'] ),
+				'cookie_items_present'     => isset( $_COOKIE['woocommerce_items_in_cart'] ),
+				'request_uri'              => isset( $_SERVER['REQUEST_URI'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REQUEST_URI'] ) ) : null,
+			),
+			'timestamp'   => round( microtime( true ) * 1000 ),
+		)
+	);
+	// #endregion
+}
+add_action( 'woocommerce_set_cart_cookies', 'gstore_log_set_cart_cookies', 10, 1 );
 
 /**
  * "Comprar agora" (produto único): redireciona para o checkout após adicionar ao carrinho.
