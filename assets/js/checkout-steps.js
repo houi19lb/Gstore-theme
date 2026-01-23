@@ -1407,6 +1407,16 @@ function getInstallmentDisplayTotals(summaryData) {
 		// Se não há itens no resumo, usa abordagem fallback
 		if (!items.length) {
 			const checkoutItem = getCheckoutShippingItem();
+			
+			// Verifica se productId é válido
+			if (!checkoutItem.productId || checkoutItem.productId === 0) {
+				isCalculatingShipping = false;
+				showShippingError('Não foi possível identificar os itens do carrinho. Atualize a página.');
+				calculatedShipping = null;
+				lastCalculatedShippingCep = '';
+				return;
+			}
+			
 			fetchCheckoutRatesForItem(checkoutItem.productId, checkoutItem.quantity, cleanCep, nonce, ajaxUrl)
 				.then(function(rates) {
 					isCalculatingShipping = false;
@@ -1420,6 +1430,12 @@ function getInstallmentDisplayTotals(summaryData) {
 						calculatedShipping = null;
 						lastCalculatedShippingCep = '';
 					}
+				})
+				.catch(function(err) {
+					isCalculatingShipping = false;
+					showShippingError('Erro ao calcular frete. Tente novamente.');
+					calculatedShipping = null;
+					lastCalculatedShippingCep = '';
 				});
 			return;
 		}
@@ -1446,7 +1462,7 @@ function getInstallmentDisplayTotals(summaryData) {
 			checkoutShippingRatesByItem = {};
 			
 			// Processa cada resultado individualmente
-			results.forEach(function(result) {
+			results.forEach(function(result, index) {
 				if (result && result.rates && result.rates.length > 0) {
 					hasAnyRates = true;
 					const normalizedRates = result.rates.map(function(rate) {
@@ -1458,9 +1474,9 @@ function getInstallmentDisplayTotals(summaryData) {
 						};
 					}).filter(function(rate) { return rate.mode; });
 					
-					if (result.cartItemKey) {
-						checkoutShippingRatesByItem[result.cartItemKey] = normalizedRates;
-					}
+					// Usa cartItemKey ou gera uma chave baseada no productId/index
+					const key = result.cartItemKey || ('item_' + (result.productId || index));
+					checkoutShippingRatesByItem[key] = normalizedRates;
 				}
 			});
 			
