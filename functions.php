@@ -1787,6 +1787,12 @@ function gstore_write_debug_log( array $payload ) {
 		return;
 	}
 	@file_put_contents( $path, $line . PHP_EOL, FILE_APPEND ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
+
+	// Também grava no wp-content para facilitar coleta em produção.
+	if ( defined( 'WP_CONTENT_DIR' ) ) {
+		$wp_path = trailingslashit( WP_CONTENT_DIR ) . 'gstore-debug.ndjson';
+		@file_put_contents( $wp_path, $line . PHP_EOL, FILE_APPEND ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
+	}
 }
 
 /**
