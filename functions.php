@@ -1918,6 +1918,8 @@ add_action( 'woocommerce_cart_item_removed', 'gstore_log_cart_item_removed', 10,
  */
 function gstore_log_cart_emptied() {
 	$cart = WC()->cart;
+	$action  = isset( $_REQUEST['action'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['action'] ) ) : null;
+	$wc_ajax = isset( $_REQUEST['wc-ajax'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['wc-ajax'] ) ) : null;
 	// #region agent log
 	gstore_write_debug_log(
 		array(
@@ -1929,6 +1931,9 @@ function gstore_log_cart_emptied() {
 			'data'        => array(
 				'items_count' => $cart ? $cart->get_cart_contents_count() : null,
 				'request_uri' => isset( $_SERVER['REQUEST_URI'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REQUEST_URI'] ) ) : null,
+				'action'      => $action,
+				'wc_ajax'     => $wc_ajax,
+				'is_ajax'     => wp_doing_ajax(),
 			),
 			'timestamp'   => round( microtime( true ) * 1000 ),
 		)
