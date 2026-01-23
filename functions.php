@@ -2499,6 +2499,42 @@ add_action( 'wp_ajax_gstore_blu_get_product_installment_quotes', 'gstore_ajax_ge
 add_action( 'wp_ajax_nopriv_gstore_blu_get_product_installment_quotes', 'gstore_ajax_get_product_installment_quotes' );
 
 /**
+ * Garante que o AJAX de parcelas use o handler do tema.
+ *
+ * Remove callbacks de plugins que possam esvaziar o carrinho.
+ *
+ * @return void
+ */
+function gstore_override_blu_installment_ajax_handler() {
+	$action_priv  = 'wp_ajax_gstore_blu_get_product_installment_quotes';
+	$action_nopriv = 'wp_ajax_nopriv_gstore_blu_get_product_installment_quotes';
+
+	remove_all_actions( $action_priv );
+	remove_all_actions( $action_nopriv );
+
+	add_action( $action_priv, 'gstore_ajax_get_product_installment_quotes' );
+	add_action( $action_nopriv, 'gstore_ajax_get_product_installment_quotes' );
+
+	// #region agent log
+	gstore_write_debug_log(
+		array(
+			'sessionId'   => 'debug-session',
+			'runId'       => 'run1',
+			'hypothesisId'=> 'I',
+			'location'    => 'functions.php:gstore_override_blu_installment_ajax_handler',
+			'message'     => 'override_ajax_handler',
+			'data'        => array(
+				'action_priv'   => $action_priv,
+				'action_nopriv' => $action_nopriv,
+			),
+			'timestamp'   => round( microtime( true ) * 1000 ),
+		)
+	);
+	// #endregion
+}
+add_action( 'init', 'gstore_override_blu_installment_ajax_handler', 1 );
+
+/**
  * Adiciona informações de pagamento ao bloco de preço.
  *
  * @param string $html HTML do bloco de preço.
