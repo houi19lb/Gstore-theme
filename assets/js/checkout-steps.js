@@ -819,6 +819,36 @@
 		return '';
 	}
 
+	/**
+	 * Busca rates de frete para um item específico do carrinho
+	 * Similar ao fetchRatesForItem do cart.js
+	 */
+	function fetchCheckoutRatesForItem(productId, quantity, postcode, nonce, ajaxUrl) {
+		if (!productId || !postcode) {
+			return Promise.resolve(null);
+		}
+
+		return $.ajax({
+			url: ajaxUrl,
+			type: 'POST',
+			dataType: 'json',
+			data: {
+				action: 'gstore_calculate_shipping',
+				nonce: nonce,
+				postcode: postcode,
+				product_id: productId,
+				quantity: quantity || 1,
+			},
+		}).then(function(response) {
+			if (!response || !response.success || !response.data || !Array.isArray(response.data.rates)) {
+				return null;
+			}
+			return response.data.rates;
+		}).catch(function() {
+			return null;
+		});
+	}
+
 	function parsePriceValue(rawText) {
 		if (!rawText) {
 			return 0;
@@ -1174,6 +1204,20 @@ function getInstallmentDisplayTotals(summaryData) {
 					return;
 				}
 				const itemRates = ratesByItem[cartItemKey] || [];
+				itemRates.forEach((rate) => {
+					const mode = normalizeRateMode(rate.mode);
+					const costValue = Number.isFinite(Number(rate.cost))
+						? Number(rate.cost)
+						: parsePriceValue(rate.cost_formatted || '');
+					if (!mode || !Number.isFinite(costValue)) {
+						return;
+					}
+					if (mode === 'land') {
+						groundTotal += costValue;
+					} else if (mode === 'air') {
+						airTotal += costValue;
+					}
+				});
 				const selectedModeForItem = checkoutSelectedShippingByItem[cartItemKey] || resolveCheckoutShippingMode(itemRates, 'land');
 				selectedModes.add(selectedModeForItem);
 				const selectedRate = itemRates.find((rate) => normalizeRateMode(rate.mode) === selectedModeForItem);
@@ -1183,12 +1227,9 @@ function getInstallmentDisplayTotals(summaryData) {
 						: parsePriceValue(selectedRate.cost_formatted || '');
 					if (Number.isFinite(selectedCost)) {
 						selectedTotal += selectedCost;
-						// Soma apenas o frete selecionado no total correspondente
 						if (selectedModeForItem === 'air') {
-							airTotal += selectedCost;
 							selectedAirTotal += selectedCost;
 						} else {
-							groundTotal += selectedCost;
 							selectedLandTotal += selectedCost;
 						}
 					}
@@ -1358,56 +1399,103 @@ function getInstallmentDisplayTotals(summaryData) {
 			? gstoreShippingCalculator.nonce
 			: '';
 		
-		const checkoutItem = getCheckoutShippingItem();
-		const data = {
-			action: 'gstore_calculate_shipping',
-			nonce: nonce,
-			postcode: cleanCep,
-			product_id: checkoutItem.productId,
-			quantity: checkoutItem.quantity
-		};
-
-		$.ajax({
-			url: ajaxUrl,
-			type: 'POST',
-			data: data,
-			dataType: 'json',
-			success: function(response) {
-				isCalculatingShipping = false;
-				
-				if (response.success && response.data) {
-					const rates = Array.isArray(response.data.rates) ? response.data.rates : [];
-
-					if (!rates.length) {
+		// Pega todos os itens do carrinho para calcular individualmente
+		const items = lastCartSummaryData && Array.isArray(lastCartSummaryData.items) 
+			? lastCartSummaryData.items 
+			: [];
+		
+		// Se não há itens no resumo, usa abordagem fallback
+		if (!items.length) {
+			const checkoutItem = getCheckoutShippingItem();
+			fetchCheckoutRatesForItem(checkoutItem.productId, checkoutItem.quantity, cleanCep, nonce, ajaxUrl)
+				.then(function(rates) {
+					isCalculatingShipping = false;
+					if (rates && rates.length) {
+						calculatedShipping = { rates: rates };
+						lastCalculatedShippingCep = cleanCep;
+						showShippingResult({ rates: rates });
+						updateSummaryWithShipping({ rates: rates });
+					} else {
 						showShippingError('Não foi possível calcular o frete para este destino.');
 						calculatedShipping = null;
 						lastCalculatedShippingCep = '';
-						lastCalculatedDestination = null;
-						return;
 					}
-
-					calculatedShipping = response.data;
-					lastCalculatedShippingCep = cleanCep;
-					lastCalculatedDestination = response.data.destination || null;
-					showShippingResult(response.data);
-					updateSummaryWithShipping(response.data);
-				} else {
-					const message = response.data && response.data.message 
-						? response.data.message 
-						: 'Erro ao calcular frete. Tente novamente.';
-					showShippingError(message);
-					calculatedShipping = null;
-					lastCalculatedShippingCep = '';
-					lastCalculatedDestination = null;
+				});
+			return;
+		}
+		
+		// Faz chamadas AJAX individuais para cada item do carrinho
+		const requests = items.map(function(item) {
+			const cartItemKey = item.key || item.cart_item_key || item.cartItemKey || '';
+			const productId = parseInt(item.product_id || item.productId || item.id, 10) || 0;
+			const quantity = parseInt(item.quantity, 10) || 1;
+			
+			return fetchCheckoutRatesForItem(productId, quantity, cleanCep, nonce, ajaxUrl)
+				.then(function(rates) {
+					return { cartItemKey: cartItemKey, productId: productId, rates: rates };
+				});
+		});
+		
+		Promise.all(requests).then(function(results) {
+			isCalculatingShipping = false;
+			
+			let hasAnyRates = false;
+			let firstDestination = null;
+			
+			// Limpa rates anteriores
+			checkoutShippingRatesByItem = {};
+			
+			// Processa cada resultado individualmente
+			results.forEach(function(result) {
+				if (result && result.rates && result.rates.length > 0) {
+					hasAnyRates = true;
+					const normalizedRates = result.rates.map(function(rate) {
+						return {
+							mode: normalizeRateMode(rate.mode),
+							label: rate.label || '',
+							cost: rate.cost,
+							cost_formatted: rate.cost_formatted || '',
+						};
+					}).filter(function(rate) { return rate.mode; });
+					
+					if (result.cartItemKey) {
+						checkoutShippingRatesByItem[result.cartItemKey] = normalizedRates;
+					}
 				}
-			},
-			error: function() {
-				isCalculatingShipping = false;
-				showShippingError('Erro ao calcular frete. Tente novamente.');
+			});
+			
+			if (!hasAnyRates) {
+				showShippingError('Não foi possível calcular o frete para este destino.');
 				calculatedShipping = null;
 				lastCalculatedShippingCep = '';
 				lastCalculatedDestination = null;
+				return;
 			}
+			
+			// Salva os rates no localStorage para cada item
+			if (typeof window !== 'undefined' && window.localStorage) {
+				try {
+					window.localStorage.setItem(CART_RATES_STORAGE_KEY, JSON.stringify(checkoutShippingRatesByItem));
+				} catch (e) {
+					// Ignora erros de storage
+				}
+			}
+			
+			lastCalculatedShippingCep = cleanCep;
+			calculatedShipping = { ratesByItem: checkoutShippingRatesByItem };
+			
+			// Atualiza UI
+			checkoutShippingStatus = 'ready';
+			checkoutShippingError = '';
+			renderItemShippingOptions(lastCartSummaryData);
+			renderShippingSummary(lastCartSummaryData);
+			updateSummaryWithShipping({ ratesByItem: checkoutShippingRatesByItem });
+		}).catch(function() {
+			isCalculatingShipping = false;
+			showShippingError('Erro ao calcular frete. Tente novamente.');
+			calculatedShipping = null;
+			lastCalculatedShippingCep = '';
+			lastCalculatedDestination = null;
 		});
 	}
 
@@ -1432,51 +1520,9 @@ function getInstallmentDisplayTotals(summaryData) {
 		checkoutShippingStatus = 'ready';
 		checkoutShippingError = '';
 		checkoutShippingRates = getNormalizedRatesFromShippingData(data);
-		
-		// CORREÇÃO: Distribui os rates para cada item do carrinho
-		const itemKeys = getCartItemKeysFromSummary(lastCartSummaryData);
-		const normalizedRates = checkoutShippingRates;
-		
-		// Salva os rates para cada item em checkoutShippingRatesByItem
-		if (itemKeys.length > 0) {
-			itemKeys.forEach((cartItemKey) => {
-				if (cartItemKey) {
-					checkoutShippingRatesByItem[cartItemKey] = normalizedRates;
-				}
-			});
-		}
-		
-		// Salva os rates no localStorage para cada item
-		if (typeof window !== 'undefined' && window.localStorage && itemKeys.length > 0) {
-			try {
-				let payload = {};
-				const raw = window.localStorage.getItem(CART_RATES_STORAGE_KEY);
-				if (raw) {
-					payload = JSON.parse(raw);
-				}
-				
-				// Salva os mesmos rates para todos os itens
-				itemKeys.forEach((cartItemKey) => {
-					if (cartItemKey) {
-						payload[cartItemKey] = normalizedRates;
-					}
-				});
-				
-				window.localStorage.setItem(CART_RATES_STORAGE_KEY, JSON.stringify(payload));
-			} catch (e) {
-				// Ignora erros de localStorage
-			}
-		}
-		
-		const storedMode = getStoredShippingModeFromStorage(itemKeys);
+		const storedMode = getStoredShippingModeFromStorage(getCartItemKeysFromSummary(lastCartSummaryData));
 		const preferredMode = storedMode || checkoutSelectedShippingMode || 'land';
 		checkoutSelectedShippingMode = resolveCheckoutShippingMode(checkoutShippingRates, preferredMode);
-		
-		// CORREÇÃO: Renderiza as opções de frete por item ANTES de renderizar o resumo
-		if (lastCartSummaryData) {
-			renderItemShippingOptions(lastCartSummaryData);
-		}
-		
 		renderShippingSummary(lastCartSummaryData);
 	}
 
@@ -1516,14 +1562,6 @@ function getInstallmentDisplayTotals(summaryData) {
 		const $postcodeField = $('#billing_postcode');
 		const $checkoutForm = $('form.checkout');
 		
-		// CORREÇÃO: Preserva os rates calculados antes de recarregar o resumo
-		const preservedRates = checkoutShippingRates && checkoutShippingRates.length > 0 
-			? checkoutShippingRates.slice() 
-			: [];
-		const preservedRatesByItem = Object.keys(checkoutShippingRatesByItem).length > 0
-			? JSON.parse(JSON.stringify(checkoutShippingRatesByItem))
-			: {};
-		
 		if ($postcodeField.length && $postcodeField.val()) {
 			// Garante que o campo de método de envio existe no formulário
 			let $shippingMethodField = $checkoutForm.find('input[name="shipping_method[0]"]');
@@ -1541,14 +1579,6 @@ function getInstallmentDisplayTotals(summaryData) {
 		
 		// Atualiza o resumo do topo após um delay maior para o WooCommerce processar
 		setTimeout(function() {
-			// CORREÇÃO: Restaura os rates preservados após o reload
-			if (preservedRates.length > 0) {
-				checkoutShippingRates = preservedRates;
-			}
-			if (Object.keys(preservedRatesByItem).length > 0) {
-				checkoutShippingRatesByItem = preservedRatesByItem;
-			}
-			
 			loadCartSummary();
 		}, 1000);
 
@@ -1883,14 +1913,6 @@ function getInstallmentDisplayTotals(summaryData) {
 		// O total real (com taxa) só aparece em "Você pagará" quando escolher parcelas.
 		const baseTotal = data.base_total || data.total;
 
-		// CORREÇÃO: Preserva os rates calculados antes de sincronizar com storage
-		const preservedRatesByItem = Object.keys(checkoutShippingRatesByItem).length > 0
-			? JSON.parse(JSON.stringify(checkoutShippingRatesByItem))
-			: {};
-		const preservedRates = checkoutShippingRates && checkoutShippingRates.length > 0
-			? checkoutShippingRates.slice()
-			: [];
-
 		// Seleção inicial do frete baseada no carrinho/localStorage
 		const storedMode = getStoredShippingModeFromStorage(getCartItemKeysFromSummary(data));
 		checkoutSelectedShippingMode = storedMode || checkoutSelectedShippingMode || 'land';
@@ -1950,21 +1972,6 @@ function getInstallmentDisplayTotals(summaryData) {
 		$('.Gstore-checkout-summary-top__totals').html(totalsHtml);
 
 		syncShippingFromStorage(data);
-		
-		// CORREÇÃO: Restaura os rates preservados se ainda estiverem válidos
-		// Isso garante que os rates recém-calculados não sejam perdidos
-		if (Object.keys(preservedRatesByItem).length > 0) {
-			const itemKeys = getCartItemKeysFromSummary(data);
-			itemKeys.forEach((cartItemKey) => {
-				if (cartItemKey && preservedRatesByItem[cartItemKey]) {
-					checkoutShippingRatesByItem[cartItemKey] = preservedRatesByItem[cartItemKey];
-				}
-			});
-		}
-		if (preservedRates.length > 0) {
-			checkoutShippingRates = preservedRates;
-		}
-		
 		renderItemShippingOptions(data);
 		renderShippingSummary(data);
 		updateInstallmentsPreview(data);
