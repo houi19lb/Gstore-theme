@@ -1894,17 +1894,6 @@ function gstore_prg_single_product_add_to_cart() {
 add_action( 'template_redirect', 'gstore_prg_single_product_add_to_cart', 9 );
 
 /**
- * "Comprar agora" - Salva produtos existentes e processa apenas o produto clicado
- * 
- * Quando o cliente clica em "Comprar agora" no produto D:
- * 1. Salva os produtos A, B, C na sessão
- * 2. Limpa o carrinho
- * 3. Adiciona apenas o produto D (marcado com flag gstore_buy_now)
- * 4. No checkout, mostra apenas o produto D
- * 5. Após finalizar ou voltar, restaura os produtos A, B, C
- */
-
-/**
  * Salva o carrinho atual em sessão antes de limpar para "Comprar agora"
  * 
  * Permite restaurar os itens se o cliente voltar ou cancelar a compra rápida.
@@ -1960,6 +1949,44 @@ function gstore_save_cart_before_buy_now() {
 		WC()->session->set( 'gstore_saved_cart_before_buy_now', $saved_cart_data );
 		WC()->session->set( 'gstore_buy_now_active', true );
 	}
+
+	// Salva informações do produto que será adicionado via "Comprar agora"
+	// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+	$buy_now_product_id = isset( $_REQUEST['add-to-cart'] ) ? absint( $_REQUEST['add-to-cart'] ) : 0;
+	// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+	$buy_now_quantity = isset( $_REQUEST['quantity'] ) ? absint( $_REQUEST['quantity'] ) : 1;
+	$buy_now_quantity = max( 1, $buy_now_quantity );
+
+	// Para produtos variáveis, tenta pegar variation_id e atributos
+	$buy_now_variation_id = 0;
+	$buy_now_variation = array();
+	// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+	if ( isset( $_REQUEST['variation_id'] ) ) {
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$buy_now_variation_id = absint( $_REQUEST['variation_id'] );
+	}
+	
+	// Coleta atributos de variação se existirem
+	// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+	if ( ! empty( $_REQUEST ) ) {
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		foreach ( $_REQUEST as $key => $value ) {
+			if ( strpos( $key, 'attribute_' ) === 0 ) {
+				// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+				$buy_now_variation[ $key ] = wp_unslash( $value );
+			}
+		}
+	}
+
+	if ( $buy_now_product_id > 0 ) {
+		$buy_now_product_data = array(
+			'product_id'   => $buy_now_product_id,
+			'quantity'     => $buy_now_quantity,
+			'variation_id' => $buy_now_variation_id,
+			'variation'    => $buy_now_variation,
+		);
+		WC()->session->set( 'gstore_buy_now_product', $buy_now_product_data );
+	}
 }
 add_action( 'wp_loaded', 'gstore_save_cart_before_buy_now', 1 );
 
@@ -1996,124 +2023,9 @@ function gstore_clear_cart_before_buy_now() {
 add_action( 'wp_loaded', 'gstore_clear_cart_before_buy_now', 5 );
 
 /**
- * Marca o produto adicionado via "Comprar agora" com uma flag
+ * Restaura o carrinho salvo se o cliente voltar do checkout
  * 
- * Adiciona a flag diretamente nos dados do item quando ele é adicionado ao carrinho.
- * Isso permite identificar qual produto foi adicionado via "Comprar agora"
- * e filtrar o carrinho no checkout para mostrar apenas esse produto.
- */
-function gstore_mark_buy_now_product_data( $cart_item_data, $product_id, $variation_id ) {
-	// phpcs:ignore WordPress.Security.NonceVerification.Recommended
-	if ( isset( $_REQUEST['gstore_buy_now'] ) ) {
-		$cart_item_data['gstore_buy_now'] = true;
-	}
-	return $cart_item_data;
-}
-add_filter( 'woocommerce_add_cart_item_data', 'gstore_mark_buy_now_product_data', 10, 3 );
-
-/**
- * Filtra o carrinho no checkout para mostrar apenas produtos do "Comprar agora"
- * 
- * Remove temporariamente do carrinho os produtos que não foram adicionados via "Comprar agora".
- */
-function gstore_filter_cart_for_buy_now( $cart_contents ) {
-	if ( ! function_exists( 'is_checkout' ) || ! is_checkout() ) {
-		return $cart_contents;
-	}
-
-	if ( ! class_exists( 'WooCommerce' ) || ! WC()->session ) {
-		return $cart_contents;
-	}
-
-	// Só filtra se "Comprar agora" estiver ativo
-	$buy_now_active = WC()->session->get( 'gstore_buy_now_active' );
-	if ( ! $buy_now_active ) {
-		return $cart_contents;
-	}
-
-	// Filtra para manter apenas produtos marcados com gstore_buy_now
-	$filtered_contents = array();
-	foreach ( $cart_contents as $cart_item_key => $cart_item ) {
-		if ( isset( $cart_item['gstore_buy_now'] ) && $cart_item['gstore_buy_now'] ) {
-			$filtered_contents[ $cart_item_key ] = $cart_item;
-		}
-	}
-
-	// Se não encontrou nenhum produto marcado, retorna o carrinho original
-	// (pode acontecer se o cliente adicionou manualmente depois)
-	if ( empty( $filtered_contents ) ) {
-		return $cart_contents;
-	}
-
-	return $filtered_contents;
-}
-add_filter( 'woocommerce_get_cart_contents', 'gstore_filter_cart_for_buy_now', 10, 1 );
-
-/**
- * Restaura o carrinho salvo após finalizar o pedido ou voltar
- * 
- * Executa quando o cliente finaliza o pedido ou volta do checkout.
- */
-function gstore_restore_saved_cart_after_buy_now() {
-	if ( ! class_exists( 'WooCommerce' ) || ! WC()->cart ) {
-		return;
-	}
-
-	// Verifica se há carrinho salvo
-	$saved_cart = WC()->session->get( 'gstore_saved_cart_before_buy_now' );
-	$buy_now_active = WC()->session->get( 'gstore_buy_now_active' );
-
-	// Se não há carrinho salvo ou "Comprar agora" não está mais ativo, não faz nada
-	if ( empty( $saved_cart ) || ! $buy_now_active ) {
-		return;
-	}
-
-	// Limpa a flag primeiro para evitar loops
-	WC()->session->set( 'gstore_buy_now_active', false );
-
-	// Remove produtos do "Comprar agora" do carrinho atual
-	$cart_contents = WC()->cart->get_cart();
-	foreach ( $cart_contents as $cart_item_key => $cart_item ) {
-		if ( isset( $cart_item['gstore_buy_now'] ) && $cart_item['gstore_buy_now'] ) {
-			WC()->cart->remove_cart_item( $cart_item_key );
-		}
-	}
-
-	// Restaura o carrinho salvo
-	foreach ( $saved_cart as $cart_item_data ) {
-		$product_id = isset( $cart_item_data['product_id'] ) ? $cart_item_data['product_id'] : 0;
-		$quantity = isset( $cart_item_data['quantity'] ) ? $cart_item_data['quantity'] : 1;
-		$variation_id = isset( $cart_item_data['variation_id'] ) ? $cart_item_data['variation_id'] : 0;
-		$variation = isset( $cart_item_data['variation'] ) ? $cart_item_data['variation'] : array();
-		
-		if ( ! $product_id ) {
-			continue;
-		}
-		
-		$item_data = array();
-
-		// Preserva metadados customizados se existirem
-		if ( isset( $cart_item_data['gstore_shipping_rates'] ) ) {
-			$item_data['gstore_shipping_rates'] = $cart_item_data['gstore_shipping_rates'];
-		}
-		if ( isset( $cart_item_data['gstore_shipping_mode'] ) ) {
-			$item_data['gstore_shipping_mode'] = $cart_item_data['gstore_shipping_mode'];
-		}
-
-		WC()->cart->add_to_cart( $product_id, $quantity, $variation_id, $variation, $item_data );
-	}
-
-	// Limpa a sessão após restaurar
-	WC()->session->set( 'gstore_saved_cart_before_buy_now', null );
-}
-add_action( 'woocommerce_thankyou', 'gstore_restore_saved_cart_after_buy_now', 10 );
-add_action( 'woocommerce_checkout_order_processed', 'gstore_restore_saved_cart_after_buy_now', 10 );
-
-/**
- * Restaura o carrinho salvo se o cliente voltar do checkout sem finalizar
- * 
- * Executa quando o cliente acessa qualquer página após ter usado "Comprar agora",
- * mas não está mais no checkout.
+ * Executa quando o cliente acessa qualquer página após ter usado "Comprar agora".
  */
 function gstore_restore_saved_cart_if_needed() {
 	if ( ! class_exists( 'WooCommerce' ) || ! WC()->cart ) {
@@ -2134,15 +2046,11 @@ function gstore_restore_saved_cart_if_needed() {
 		return;
 	}
 
-	// Limpa a flag primeiro
-	WC()->session->set( 'gstore_buy_now_active', false );
-
-	// Remove produtos do "Comprar agora" do carrinho atual
-	$cart_contents = WC()->cart->get_cart();
-	foreach ( $cart_contents as $cart_item_key => $cart_item ) {
-		if ( isset( $cart_item['gstore_buy_now'] ) && $cart_item['gstore_buy_now'] ) {
-			WC()->cart->remove_cart_item( $cart_item_key );
-		}
+	// Se o carrinho atual não está vazio, não restaura (cliente pode ter adicionado outros itens)
+	if ( ! WC()->cart->is_empty() ) {
+		// Limpa a flag para não tentar restaurar novamente
+		WC()->session->set( 'gstore_buy_now_active', false );
+		return;
 	}
 
 	// Restaura o carrinho salvo
@@ -2169,10 +2077,78 @@ function gstore_restore_saved_cart_if_needed() {
 		WC()->cart->add_to_cart( $product_id, $quantity, $variation_id, $variation, $item_data );
 	}
 
+	// Adiciona o produto do "Comprar agora" ao carrinho restaurado
+	$buy_now_product = WC()->session->get( 'gstore_buy_now_product' );
+	if ( ! empty( $buy_now_product ) ) {
+		$buy_now_product_id = isset( $buy_now_product['product_id'] ) ? $buy_now_product['product_id'] : 0;
+		$buy_now_quantity = isset( $buy_now_product['quantity'] ) ? $buy_now_product['quantity'] : 1;
+		$buy_now_variation_id = isset( $buy_now_product['variation_id'] ) ? $buy_now_product['variation_id'] : 0;
+		$buy_now_variation = isset( $buy_now_product['variation'] ) ? $buy_now_product['variation'] : array();
+
+		if ( $buy_now_product_id > 0 ) {
+			WC()->cart->add_to_cart( $buy_now_product_id, $buy_now_quantity, $buy_now_variation_id, $buy_now_variation );
+		}
+	}
+
 	// Limpa a sessão após restaurar
 	WC()->session->set( 'gstore_saved_cart_before_buy_now', null );
+	WC()->session->set( 'gstore_buy_now_active', false );
+	WC()->session->set( 'gstore_buy_now_product', null );
 }
 add_action( 'template_redirect', 'gstore_restore_saved_cart_if_needed', 1 );
+
+/**
+ * Limpa a flag de "Comprar agora" após finalizar o pedido
+ * 
+ * Restaura o carrinho original antes de limpar a flag, para que o cliente
+ * tenha seus itens originais de volta após finalizar a compra rápida.
+ */
+function gstore_clear_buy_now_flag_after_order() {
+	if ( ! class_exists( 'WooCommerce' ) || ! WC()->cart ) {
+		return;
+	}
+
+	// Verifica se há carrinho salvo e se "Comprar agora" estava ativo
+	$saved_cart = WC()->session->get( 'gstore_saved_cart_before_buy_now' );
+	$buy_now_active = WC()->session->get( 'gstore_buy_now_active' );
+
+	// Se há carrinho salvo, restaura antes de limpar
+	if ( ! empty( $saved_cart ) && $buy_now_active ) {
+		// Limpa o carrinho atual (que contém apenas o produto do "Comprar agora")
+		WC()->cart->empty_cart();
+
+		// Restaura o carrinho original
+		foreach ( $saved_cart as $cart_item_data ) {
+			$product_id = isset( $cart_item_data['product_id'] ) ? $cart_item_data['product_id'] : 0;
+			$quantity = isset( $cart_item_data['quantity'] ) ? $cart_item_data['quantity'] : 1;
+			$variation_id = isset( $cart_item_data['variation_id'] ) ? $cart_item_data['variation_id'] : 0;
+			$variation = isset( $cart_item_data['variation'] ) ? $cart_item_data['variation'] : array();
+			
+			if ( ! $product_id ) {
+				continue;
+			}
+			
+			$item_data = array();
+
+			// Preserva metadados customizados se existirem
+			if ( isset( $cart_item_data['gstore_shipping_rates'] ) ) {
+				$item_data['gstore_shipping_rates'] = $cart_item_data['gstore_shipping_rates'];
+			}
+			if ( isset( $cart_item_data['gstore_shipping_mode'] ) ) {
+				$item_data['gstore_shipping_mode'] = $cart_item_data['gstore_shipping_mode'];
+			}
+
+			WC()->cart->add_to_cart( $product_id, $quantity, $variation_id, $variation, $item_data );
+		}
+	}
+
+	// Limpa a flag e dados salvos após restaurar
+	WC()->session->set( 'gstore_saved_cart_before_buy_now', null );
+	WC()->session->set( 'gstore_buy_now_active', false );
+	WC()->session->set( 'gstore_buy_now_product', null );
+}
+add_action( 'woocommerce_thankyou', 'gstore_clear_buy_now_flag_after_order', 10 );
+add_action( 'woocommerce_checkout_order_processed', 'gstore_clear_buy_now_flag_after_order', 10 );
 
 /**
  * Adiciona headers HTTP para evitar cache em requisições AJAX do carrinho.
