@@ -2351,6 +2351,19 @@ function gstore_ajax_get_product_installment_quotes() {
 		return;
 	}
 
+	$cart_backup = array();
+	if ( function_exists( 'WC' ) && WC()->cart ) {
+		foreach ( WC()->cart->get_cart() as $item ) {
+			$cart_backup[] = array(
+				'product_id'     => isset( $item['product_id'] ) ? (int) $item['product_id'] : 0,
+				'quantity'       => isset( $item['quantity'] ) ? (int) $item['quantity'] : 0,
+				'variation_id'   => isset( $item['variation_id'] ) ? (int) $item['variation_id'] : 0,
+				'variation'      => isset( $item['variation'] ) ? (array) $item['variation'] : array(),
+				'cart_item_data' => isset( $item['cart_item_data'] ) ? (array) $item['cart_item_data'] : array(),
+			);
+		}
+	}
+
 	// Obter parâmetros
 	$product_id = isset( $_POST['product_id'] ) ? absint( $_POST['product_id'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification.Missing
 	$quantity   = isset( $_POST['quantity'] ) ? max( 1, absint( $_POST['quantity'] ) ) : 1; // phpcs:ignore WordPress.Security.NonceVerification.Missing
@@ -2403,6 +2416,43 @@ function gstore_ajax_get_product_installment_quotes() {
 	if ( empty( $quotes ) ) {
 		wp_send_json_error( array( 'message' => 'Não foi possível calcular parcelas.' ) );
 		return;
+	}
+
+	if ( ! empty( $cart_backup ) && WC()->cart && WC()->cart->is_empty() ) {
+		foreach ( $cart_backup as $item ) {
+			if ( empty( $item['product_id'] ) || empty( $item['quantity'] ) ) {
+				continue;
+			}
+			WC()->cart->add_to_cart(
+				$item['product_id'],
+				$item['quantity'],
+				$item['variation_id'],
+				$item['variation'],
+				$item['cart_item_data']
+			);
+		}
+
+		if ( WC()->session ) {
+			WC()->session->set_customer_session_cookie( true );
+		}
+		WC()->cart->set_session();
+
+		// #region agent log
+		gstore_write_debug_log(
+			array(
+				'sessionId'   => 'debug-session',
+				'runId'       => 'run1',
+				'hypothesisId'=> 'H',
+				'location'    => 'functions.php:gstore_ajax_get_product_installment_quotes',
+				'message'     => 'cart_restored_after_ajax',
+				'data'        => array(
+					'restored_count' => count( $cart_backup ),
+					'items_count'    => WC()->cart->get_cart_contents_count(),
+				),
+				'timestamp'   => round( microtime( true ) * 1000 ),
+			)
+		);
+		// #endregion
 	}
 
 	wp_send_json_success( array( 'quotes' => $quotes ) );
