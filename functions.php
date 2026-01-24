@@ -3568,22 +3568,34 @@ function gstore_blu_add_installment_fee( $cart ) {
 		return;
 	}
 
-	// Base: total de produtos + todas as fees já adicionadas (frete, etc) - descontos
+	// Base: total de produtos + frete - descontos (sem incluir fees anteriores)
 	$cart_contents_total = (float) $cart->get_cart_contents_total();
+	$shipping_total      = (float) $cart->get_shipping_total();
 	$discount_total      = (float) $cart->get_discount_total();
 
-	// Soma todas as fees já adicionadas (exceto a própria taxa de parcelamento)
-	$fees_total = 0.0;
-	foreach ( $cart->get_fees() as $fee ) {
-		$fee_name = isset( $fee->name ) ? (string) $fee->name : '';
-		// Ignora a própria taxa de parcelamento para evitar recursão
-		if ( false !== stripos( $fee_name, 'taxa de parcelamento' ) ) {
-			continue;
+	// Neste tema, o frete pode entrar como "fee" (ex.: label "Frete") e não como shipping_total.
+	$shipping_fee_total = 0.0;
+	if ( $shipping_total <= 0 ) {
+		foreach ( $cart->get_fees() as $fee ) {
+			$fee_name = isset( $fee->name ) ? (string) $fee->name : '';
+			if ( '' === $fee_name ) {
+				continue;
+			}
+
+			// Ignora a própria taxa de parcelamento.
+			if ( false !== stripos( $fee_name, 'taxa de parcelamento' ) ) {
+				continue;
+			}
+
+			// Heurística: fee de frete normalmente é "Frete" (ou contém "frete").
+			if ( 'frete' === sanitize_title( $fee_name ) || false !== stripos( $fee_name, 'frete' ) ) {
+				$shipping_fee_total = isset( $fee->total ) ? (float) $fee->total : 0.0;
+				break;
+			}
 		}
-		$fees_total += isset( $fee->total ) ? (float) $fee->total : 0.0;
 	}
 
-	$base = $cart_contents_total + $fees_total - $discount_total;
+	$base = $cart_contents_total + ( $shipping_total > 0 ? $shipping_total : $shipping_fee_total ) - $discount_total;
 	if ( $base < 0 ) {
 		$base = 0;
 	}
