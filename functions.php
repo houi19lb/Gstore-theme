@@ -3516,13 +3516,12 @@ if ( ! defined( 'GSTORE_CORE_ACTIVE' ) ) {
  * Helper para logging de debug (apenas em desenvolvimento)
  */
 function gstore_debug_log( $location, $message, $data = array(), $hypothesis_id = '' ) {
-	$log_dir = get_stylesheet_directory() . '/.cursor';
-	$log_file = $log_dir . '/debug.log';
-	
-	// Garante que o diretório existe
-	if ( ! file_exists( $log_dir ) ) {
-		wp_mkdir_p( $log_dir );
-	}
+	// Tenta múltiplos caminhos possíveis
+	$possible_paths = array(
+		__DIR__ . '/.cursor/debug.log', // Caminho relativo ao arquivo functions.php
+		get_stylesheet_directory() . '/.cursor/debug.log', // Caminho do tema
+		WP_CONTENT_DIR . '/debug-gstore.log', // Fallback no wp-content
+	);
 	
 	$log_entry = array(
 		'location' => $location,
@@ -3534,12 +3533,25 @@ function gstore_debug_log( $location, $message, $data = array(), $hypothesis_id 
 		'hypothesisId' => $hypothesis_id,
 	);
 	
-	$result = @file_put_contents( $log_file, json_encode( $log_entry ) . "\n", FILE_APPEND | LOCK_EX );
+	$log_line = json_encode( $log_entry ) . "\n";
 	
-	// Se falhar, tenta criar o arquivo
-	if ( false === $result && ! file_exists( $log_file ) ) {
-		@file_put_contents( $log_file, json_encode( $log_entry ) . "\n", LOCK_EX );
+	// Tenta escrever em cada caminho até conseguir
+	$written = false;
+	foreach ( $possible_paths as $log_file ) {
+		$log_dir = dirname( $log_file );
+		if ( ! file_exists( $log_dir ) ) {
+			wp_mkdir_p( $log_dir );
+		}
+		
+		$result = @file_put_contents( $log_file, $log_line, FILE_APPEND | LOCK_EX );
+		if ( false !== $result ) {
+			$written = true;
+			break;
+		}
 	}
+	
+	// Fallback: sempre escreve no error_log do WordPress também
+	error_log( '[GSTORE DEBUG] ' . $location . ': ' . $message . ' | ' . json_encode( $data ) );
 }
 
 /**
@@ -4456,6 +4468,9 @@ if ( ! function_exists( 'gstore_get_cart_item_shipping_cost_display' ) ) {
 
 if ( ! function_exists( 'gstore_apply_cart_freight_fees' ) ) {
 	function gstore_apply_cart_freight_fees( $cart ) {
+	// #region agent log
+	error_log( '[GSTORE DEBUG TEST] gstore_apply_cart_freight_fees chamada!' );
+	// #endregion
 		if ( ! $cart instanceof WC_Cart ) {
 			return;
 		}
