@@ -3513,11 +3513,31 @@ if ( ! defined( 'GSTORE_CORE_ACTIVE' ) ) {
 }
 
 /**
+ * Helper para logging de debug (apenas em desenvolvimento)
+ */
+function gstore_debug_log( $location, $message, $data = array(), $hypothesis_id = '' ) {
+	$log_file = get_stylesheet_directory() . '/.cursor/debug.log';
+	$log_entry = array(
+		'location' => $location,
+		'message' => $message,
+		'data' => $data,
+		'timestamp' => time() * 1000,
+		'sessionId' => 'debug-session',
+		'runId' => 'run1',
+		'hypothesisId' => $hypothesis_id,
+	);
+	file_put_contents( $log_file, json_encode( $log_entry ) . "\n", FILE_APPEND | LOCK_EX );
+}
+
+/**
  * Adiciona fee de parcelamento (configurável no gateway Blu) quando Cartão Blu estiver selecionado.
  *
  * @param WC_Cart $cart Carrinho.
  */
 function gstore_blu_add_installment_fee( $cart ) {
+	// #region agent log
+	gstore_debug_log( 'gstore_blu_add_installment_fee:entry', 'Função iniciada', array( 'hook' => 'woocommerce_cart_calculate_fees' ), 'H1,H2,H3' );
+	// #endregion
 	if ( is_admin() && ! defined( 'DOING_AJAX' ) ) {
 		return;
 	}
@@ -3573,6 +3593,24 @@ function gstore_blu_add_installment_fee( $cart ) {
 	$fees_total           = (float) $cart->get_fees_total();
 	$shipping_total       = (float) $cart->get_shipping_total();
 	$discount_total       = (float) $cart->get_discount_total();
+	
+	// #region agent log
+	$all_fees = array();
+	foreach ( $cart->get_fees() as $fee ) {
+		$all_fees[] = array(
+			'name' => isset( $fee->name ) ? (string) $fee->name : '',
+			'total' => isset( $fee->total ) ? (float) $fee->total : 0.0,
+		);
+	}
+	gstore_debug_log( 'gstore_blu_add_installment_fee:totals_before', 'Totais iniciais do carrinho', array(
+		'cart_contents_total' => $cart_contents_total,
+		'fees_total' => $fees_total,
+		'shipping_total' => $shipping_total,
+		'discount_total' => $discount_total,
+		'all_fees' => $all_fees,
+		'fees_count' => count( $all_fees ),
+	), 'H1,H2,H3' );
+	// #endregion
 
 	// Remove a taxa de parcelamento das fees se ela já existir (de execuções anteriores)
 	$installment_fee_in_fees = 0.0;
@@ -3591,10 +3629,23 @@ function gstore_blu_add_installment_fee( $cart ) {
 	// Base = produtos + fees (incluindo frete) + shipping (se não estiver nas fees) - descontos
 	// Se shipping_total > 0, o frete não está nas fees, então soma shipping_total
 	// Se shipping_total = 0, o frete está nas fees (já incluído em fees_total)
-	$base = $cart_contents_total + $fees_total + ( $shipping_total > 0 ? $shipping_total : 0 ) - $discount_total;
+	$shipping_to_add = ( $shipping_total > 0 ? $shipping_total : 0 );
+	$base = $cart_contents_total + $fees_total + $shipping_to_add - $discount_total;
 	if ( $base < 0 ) {
 		$base = 0;
 	}
+	
+	// #region agent log
+	gstore_debug_log( 'gstore_blu_add_installment_fee:base_calculation', 'Cálculo da base', array(
+		'cart_contents_total' => $cart_contents_total,
+		'fees_total' => $fees_total,
+		'shipping_total' => $shipping_total,
+		'shipping_to_add' => $shipping_to_add,
+		'discount_total' => $discount_total,
+		'base' => $base,
+		'formula' => "{$cart_contents_total} + {$fees_total} + {$shipping_to_add} - {$discount_total} = {$base}",
+	), 'H1,H2,H3,H4' );
+	// #endregion
 
 	$fee_value = 0.0;
 
@@ -4429,6 +4480,19 @@ if ( ! function_exists( 'gstore_apply_cart_freight_fees' ) ) {
 
 		if ( $total_shipping > 0 ) {
 			$cart->add_fee( __( 'Frete', 'gstore' ), $total_shipping, true );
+			
+			// #region agent log
+			gstore_debug_log( 'gstore_apply_cart_freight_fees:frete_added', 'Frete adicionado como fee', array(
+				'total_shipping' => $total_shipping,
+				'hook_priority' => 20,
+			), 'H1,H3' );
+			// #endregion
+		} else {
+			// #region agent log
+			gstore_debug_log( 'gstore_apply_cart_freight_fees:no_frete', 'Nenhum frete calculado', array(
+				'total_shipping' => $total_shipping,
+			), 'H1,H3' );
+			// #endregion
 		}
 	}
 }
