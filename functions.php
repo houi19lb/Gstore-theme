@@ -3401,7 +3401,7 @@ function gstore_customize_checkout_fields( $fields ) {
 
     return $fields;
 }
-if ( ! defined( 'GSTORE_CORE_ACTIVE' ) ) {
+if ( ! defined( 'ARMASTORE_CUSTOM_ADMIN_ACTIVE' ) ) {
 	add_filter( 'woocommerce_checkout_fields', 'gstore_customize_checkout_fields', 1000 );
 }
 
@@ -3439,7 +3439,7 @@ function gstore_blu_capture_checkout_state( $post_data ) {
 		WC()->session->set( 'gstore_blu_installments', $installments );
 	}
 }
-if ( ! defined( 'GSTORE_CORE_ACTIVE' ) ) {
+if ( ! defined( 'ARMASTORE_CUSTOM_ADMIN_ACTIVE' ) ) {
 	add_action( 'woocommerce_checkout_update_order_review', 'gstore_blu_capture_checkout_state', 10, 1 );
 }
 
@@ -3508,7 +3508,7 @@ function gstore_blu_render_installments_selector() {
 	</div>
 	<?php
 }
-if ( ! defined( 'GSTORE_CORE_ACTIVE' ) ) {
+if ( ! defined( 'ARMASTORE_CUSTOM_ADMIN_ACTIVE' ) ) {
 	add_action( 'woocommerce_review_order_before_payment', 'gstore_blu_render_installments_selector', 12 );
 }
 
@@ -3706,7 +3706,7 @@ function gstore_blu_add_installment_fee( $cart ) {
 
 	$cart->add_fee( __( 'Taxa de parcelamento', 'gstore' ), $fee_value, false, '' );
 }
-if ( ! defined( 'GSTORE_CORE_ACTIVE' ) ) {
+if ( ! defined( 'ARMASTORE_CUSTOM_ADMIN_ACTIVE' ) ) {
 	add_action( 'woocommerce_cart_calculate_fees', 'gstore_blu_add_installment_fee', 30, 1 );
 }
 
@@ -3738,7 +3738,7 @@ function gstore_blu_validate_installments() {
 		wc_add_notice( __( 'Selecione um número válido de parcelas para continuar.', 'gstore' ), 'error' );
 	}
 }
-if ( ! defined( 'GSTORE_CORE_ACTIVE' ) ) {
+if ( ! defined( 'ARMASTORE_CUSTOM_ADMIN_ACTIVE' ) ) {
 	add_action( 'woocommerce_checkout_process', 'gstore_blu_validate_installments', 12 );
 }
 
@@ -3783,7 +3783,7 @@ function gstore_blu_save_installments_meta( $order_id ) {
 		update_post_meta( $order_id, '_gstore_blu_installment_fee', (string) $fee_value );
 	}
 }
-if ( ! defined( 'GSTORE_CORE_ACTIVE' ) ) {
+if ( ! defined( 'ARMASTORE_CUSTOM_ADMIN_ACTIVE' ) ) {
 	add_action( 'woocommerce_checkout_update_order_meta', 'gstore_blu_save_installments_meta', 20 );
 }
 
@@ -3823,7 +3823,7 @@ function gstore_validate_postcode_optional( $valid, $postcode, $country ) {
 	
 	return $valid;
 }
-if ( ! defined( 'GSTORE_CORE_ACTIVE' ) ) {
+if ( ! defined( 'ARMASTORE_CUSTOM_ADMIN_ACTIVE' ) ) {
 	add_filter( 'woocommerce_validate_postcode', 'gstore_validate_postcode_optional', 999, 3 );
 }
 

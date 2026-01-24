@@ -1579,19 +1579,14 @@ function getInstallmentDisplayTotals(summaryData) {
 		const $checkoutForm = $('form.checkout');
 		
 		if ($postcodeField.length && $postcodeField.val()) {
-			// Garante que o campo de método de envio existe no formulário (com índice válido).
-			const selectedMode = checkoutSelectedShippingMode || 'land';
-			const shippingRateId = `gstore_custom_shipping:${selectedMode}`;
+			// Garante que o campo de método de envio existe no formulário
 			let $shippingMethodField = $checkoutForm.find('input[name="shipping_method[0]"]');
 			if (!$shippingMethodField.length) {
-				// Cria campo hidden para o método de envio com índice 0.
-				$shippingMethodField = $('<input type="hidden" name="shipping_method[0]" />');
-				$checkoutForm.append($shippingMethodField);
+				// Cria campo hidden para o método de envio
+				$checkoutForm.append('<input type="hidden" name="shipping_method[0]" value="gstore_custom_shipping" />');
+			} else {
+				$shippingMethodField.val('gstore_custom_shipping');
 			}
-			$shippingMethodField
-				.val(shippingRateId)
-				.attr('data-index', '0')
-				.addClass('shipping_method');
 			
 			// Dispara evento para atualizar checkout do WooCommerce
 			// Isso fará com que o WooCommerce calcule o frete oficialmente
