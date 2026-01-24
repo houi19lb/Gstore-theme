@@ -1096,9 +1096,6 @@ function getInstallmentDisplayTotals(summaryData) {
 	function updateCheckoutShippingSelection(mode, shouldPersist) {
 		const normalized = normalizeRateMode(mode) || 'land';
 		checkoutSelectedShippingMode = normalized;
-		// #region agent log
-		fetch('http://127.0.0.1:7246/ingest/82530f36-f41c-4a9b-9141-c3c4bf366209',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'checkout-steps.js:updateCheckoutShippingSelection',message:'checkoutSelectedShippingMode atualizado',data:{mode,normalized,shouldPersist},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-		// #endregion
 		if (shouldPersist) {
 			const itemKeys = getCartItemKeysFromSummary(lastCartSummaryData);
 			persistShippingModeToStorage(normalized, itemKeys);
@@ -1184,9 +1181,6 @@ function getInstallmentDisplayTotals(summaryData) {
 			selectedMode = resolveCheckoutShippingMode(rates, selectedMode);
 			checkoutSelectedShippingMode = selectedMode;
 		}
-		// #region agent log
-		fetch('http://127.0.0.1:7246/ingest/82530f36-f41c-4a9b-9141-c3c4bf366209',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'checkout-steps.js:renderShippingSummary',message:'Resumo frete/seleção',data:{hasItemRates,ratesCount:rates.length,selectedMode,checkoutSelectedShippingMode,selectedModesCount:selectedModes.size},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-		// #endregion
 
 		$options.html('');
 
@@ -1588,9 +1582,6 @@ function getInstallmentDisplayTotals(summaryData) {
 			// Garante que o campo de método de envio existe no formulário (com índice válido).
 			const selectedMode = checkoutSelectedShippingMode || 'land';
 			const shippingRateId = `gstore_custom_shipping:${selectedMode}`;
-			// #region agent log
-			fetch('http://127.0.0.1:7246/ingest/82530f36-f41c-4a9b-9141-c3c4bf366209',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'checkout-steps.js:updateSummaryWithShipping:beforeField',message:'Preparando shipping_method',data:{selectedMode,checkoutSelectedShippingMode,shippingRateId,hasPostcode:!!$postcodeField.val()},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-			// #endregion
 			let $shippingMethodField = $checkoutForm.find('input[name="shipping_method[0]"]');
 			if (!$shippingMethodField.length) {
 				// Cria campo hidden para o método de envio com índice 0.
@@ -1601,9 +1592,6 @@ function getInstallmentDisplayTotals(summaryData) {
 				.val(shippingRateId)
 				.attr('data-index', '0')
 				.addClass('shipping_method');
-			// #region agent log
-			fetch('http://127.0.0.1:7246/ingest/82530f36-f41c-4a9b-9141-c3c4bf366209',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'checkout-steps.js:updateSummaryWithShipping:afterField',message:'shipping_method definido',data:{fieldCount:$checkoutForm.find('input[name=\"shipping_method[0]\"]').length,value:$checkoutForm.find('input[name=\"shipping_method[0]\"]').val()},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
-			// #endregion
 			
 			// Dispara evento para atualizar checkout do WooCommerce
 			// Isso fará com que o WooCommerce calcule o frete oficialmente
