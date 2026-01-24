@@ -3568,45 +3568,30 @@ function gstore_blu_add_installment_fee( $cart ) {
 		return;
 	}
 
-	// Base: total de produtos + frete - descontos (sem incluir fees anteriores)
+	// Base: usa os totais já calculados pelo WooCommerce (mais confiável)
 	$cart_contents_total = (float) $cart->get_cart_contents_total();
-	$shipping_total      = (float) $cart->get_shipping_total();
-	$discount_total      = (float) $cart->get_discount_total();
+	$fees_total           = (float) $cart->get_fees_total();
+	$shipping_total       = (float) $cart->get_shipping_total();
+	$discount_total       = (float) $cart->get_discount_total();
 
-	// Neste tema, o frete pode entrar como "fee" (ex.: label "Frete") e não como shipping_total.
-	// CORREÇÃO: Sempre procura o frete nas fees, não apenas quando shipping_total <= 0
-	$shipping_fee_total = 0.0;
+	// Remove a taxa de parcelamento das fees se ela já existir (de execuções anteriores)
+	$installment_fee_in_fees = 0.0;
 	foreach ( $cart->get_fees() as $fee ) {
 		$fee_name = isset( $fee->name ) ? (string) $fee->name : '';
 		if ( '' === $fee_name ) {
 			continue;
 		}
-
-		// Ignora a própria taxa de parcelamento.
 		if ( false !== stripos( $fee_name, 'taxa de parcelamento' ) ) {
-			continue;
-		}
-
-		// Heurística: fee de frete normalmente é "Frete" (ou contém "frete").
-		// Verifica tanto o nome sanitizado quanto o nome original
-		$fee_name_sanitized = sanitize_title( $fee_name );
-		if ( 'frete' === $fee_name_sanitized || false !== stripos( $fee_name, 'frete' ) ) {
-			$fee_total = isset( $fee->total ) ? (float) $fee->total : 0.0;
-			// Soma todas as fees de frete (pode haver múltiplas)
-			$shipping_fee_total += $fee_total;
+			$installment_fee_in_fees = isset( $fee->total ) ? (float) $fee->total : 0.0;
+			break;
 		}
 	}
+	$fees_total -= $installment_fee_in_fees;
 
-	// Usa o maior valor entre shipping_total e shipping_fee_total
-	// ou shipping_total se ambos existirem (preferência para shipping_total do WooCommerce)
-	$final_shipping = $shipping_total > 0 ? $shipping_total : $shipping_fee_total;
-	
-	// Se ambos existirem e forem diferentes, usa o maior (pode ser que ambos tenham valor)
-	if ( $shipping_total > 0 && $shipping_fee_total > 0 && abs( $shipping_total - $shipping_fee_total ) > 0.01 ) {
-		$final_shipping = max( $shipping_total, $shipping_fee_total );
-	}
-
-	$base = $cart_contents_total + $final_shipping - $discount_total;
+	// Base = produtos + fees (incluindo frete) + shipping (se não estiver nas fees) - descontos
+	// Se shipping_total > 0, o frete não está nas fees, então soma shipping_total
+	// Se shipping_total = 0, o frete está nas fees (já incluído em fees_total)
+	$base = $cart_contents_total + $fees_total + ( $shipping_total > 0 ? $shipping_total : 0 ) - $discount_total;
 	if ( $base < 0 ) {
 		$base = 0;
 	}
