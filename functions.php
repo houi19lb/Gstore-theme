@@ -3516,7 +3516,14 @@ if ( ! defined( 'GSTORE_CORE_ACTIVE' ) ) {
  * Helper para logging de debug (apenas em desenvolvimento)
  */
 function gstore_debug_log( $location, $message, $data = array(), $hypothesis_id = '' ) {
-	$log_file = get_stylesheet_directory() . '/.cursor/debug.log';
+	$log_dir = get_stylesheet_directory() . '/.cursor';
+	$log_file = $log_dir . '/debug.log';
+	
+	// Garante que o diretório existe
+	if ( ! file_exists( $log_dir ) ) {
+		wp_mkdir_p( $log_dir );
+	}
+	
 	$log_entry = array(
 		'location' => $location,
 		'message' => $message,
@@ -3526,7 +3533,13 @@ function gstore_debug_log( $location, $message, $data = array(), $hypothesis_id 
 		'runId' => 'run1',
 		'hypothesisId' => $hypothesis_id,
 	);
-	file_put_contents( $log_file, json_encode( $log_entry ) . "\n", FILE_APPEND | LOCK_EX );
+	
+	$result = @file_put_contents( $log_file, json_encode( $log_entry ) . "\n", FILE_APPEND | LOCK_EX );
+	
+	// Se falhar, tenta criar o arquivo
+	if ( false === $result && ! file_exists( $log_file ) ) {
+		@file_put_contents( $log_file, json_encode( $log_entry ) . "\n", LOCK_EX );
+	}
 }
 
 /**
@@ -3542,6 +3555,13 @@ function gstore_blu_add_installment_fee( $cart ) {
 		return;
 	}
 	if ( ! $cart instanceof WC_Cart || ! function_exists( 'WC' ) || ! WC()->session ) {
+		// #region agent log
+		gstore_debug_log( 'gstore_blu_add_installment_fee:exit_no_cart', 'Saindo porque cart/session não disponível', array(
+			'is_cart' => $cart instanceof WC_Cart,
+			'has_WC' => function_exists( 'WC' ),
+			'has_session' => function_exists( 'WC' ) && WC()->session ? true : false,
+		), 'H1,H2,H3' );
+		// #endregion
 		return;
 	}
 
@@ -3567,6 +3587,12 @@ function gstore_blu_add_installment_fee( $cart ) {
 
 	$gateway = function_exists( 'gstore_blu_get_gateway_instance' ) ? gstore_blu_get_gateway_instance() : null;
 	if ( ! $gateway || ! method_exists( $gateway, 'get_installment_fee_config' ) ) {
+		// #region agent log
+		gstore_debug_log( 'gstore_blu_add_installment_fee:exit_no_gateway', 'Saindo porque gateway não disponível', array(
+			'has_gateway' => ! is_null( $gateway ),
+			'has_method' => $gateway && method_exists( $gateway, 'get_installment_fee_config' ),
+		), 'H1,H2,H3' );
+		// #endregion
 		return;
 	}
 
@@ -3585,6 +3611,9 @@ function gstore_blu_add_installment_fee( $cart ) {
 	$fixed    = isset( $config['fixed'] ) ? (float) $config['fixed'] : 0.0;
 
 	if ( 'none' === $mode ) {
+		// #region agent log
+		gstore_debug_log( 'gstore_blu_add_installment_fee:exit_mode_none', 'Saindo porque modo é none', array( 'mode' => $mode ), 'H1,H2,H3' );
+		// #endregion
 		return;
 	}
 
