@@ -3574,28 +3574,39 @@ function gstore_blu_add_installment_fee( $cart ) {
 	$discount_total      = (float) $cart->get_discount_total();
 
 	// Neste tema, o frete pode entrar como "fee" (ex.: label "Frete") e não como shipping_total.
+	// CORREÇÃO: Sempre procura o frete nas fees, não apenas quando shipping_total <= 0
 	$shipping_fee_total = 0.0;
-	if ( $shipping_total <= 0 ) {
-		foreach ( $cart->get_fees() as $fee ) {
-			$fee_name = isset( $fee->name ) ? (string) $fee->name : '';
-			if ( '' === $fee_name ) {
-				continue;
-			}
+	foreach ( $cart->get_fees() as $fee ) {
+		$fee_name = isset( $fee->name ) ? (string) $fee->name : '';
+		if ( '' === $fee_name ) {
+			continue;
+		}
 
-			// Ignora a própria taxa de parcelamento.
-			if ( false !== stripos( $fee_name, 'taxa de parcelamento' ) ) {
-				continue;
-			}
+		// Ignora a própria taxa de parcelamento.
+		if ( false !== stripos( $fee_name, 'taxa de parcelamento' ) ) {
+			continue;
+		}
 
-			// Heurística: fee de frete normalmente é "Frete" (ou contém "frete").
-			if ( 'frete' === sanitize_title( $fee_name ) || false !== stripos( $fee_name, 'frete' ) ) {
-				$shipping_fee_total = isset( $fee->total ) ? (float) $fee->total : 0.0;
-				break;
-			}
+		// Heurística: fee de frete normalmente é "Frete" (ou contém "frete").
+		// Verifica tanto o nome sanitizado quanto o nome original
+		$fee_name_sanitized = sanitize_title( $fee_name );
+		if ( 'frete' === $fee_name_sanitized || false !== stripos( $fee_name, 'frete' ) ) {
+			$fee_total = isset( $fee->total ) ? (float) $fee->total : 0.0;
+			// Soma todas as fees de frete (pode haver múltiplas)
+			$shipping_fee_total += $fee_total;
 		}
 	}
 
-	$base = $cart_contents_total + ( $shipping_total > 0 ? $shipping_total : $shipping_fee_total ) - $discount_total;
+	// Usa o maior valor entre shipping_total e shipping_fee_total
+	// ou shipping_total se ambos existirem (preferência para shipping_total do WooCommerce)
+	$final_shipping = $shipping_total > 0 ? $shipping_total : $shipping_fee_total;
+	
+	// Se ambos existirem e forem diferentes, usa o maior (pode ser que ambos tenham valor)
+	if ( $shipping_total > 0 && $shipping_fee_total > 0 && abs( $shipping_total - $shipping_fee_total ) > 0.01 ) {
+		$final_shipping = max( $shipping_total, $shipping_fee_total );
+	}
+
+	$base = $cart_contents_total + $final_shipping - $discount_total;
 	if ( $base < 0 ) {
 		$base = 0;
 	}
