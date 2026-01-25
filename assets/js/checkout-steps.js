@@ -2193,6 +2193,23 @@ function getInstallmentDisplayTotals(summaryData) {
 				// Atualiza campo hidden no formulário de checkout para enviar ao backend
 				updateCheckoutShippingHiddenFields();
 				
+				// CORREÇÃO: Adiciona campo hidden global para garantir que o modo seja enviado
+				// mesmo quando rates por item não estão disponíveis
+				const $checkoutForm = $('form.checkout');
+				if ($checkoutForm.length) {
+					// Remove campo global antigo se existir
+					$checkoutForm.find('input[name="gstore_shipping_mode"]').remove();
+					// Adiciona novo campo global com o modo selecionado
+					$checkoutForm.append(
+						$('<input>', {
+							type: 'hidden',
+							name: 'gstore_shipping_mode',
+							value: normalizedMode
+						})
+					);
+					console.log('[Gstore] Modo de frete global atualizado:', normalizedMode);
+				}
+				
 				// Dispara update_checkout para enviar os dados ao backend e recalcular
 				$(document.body).trigger('update_checkout');
 				
