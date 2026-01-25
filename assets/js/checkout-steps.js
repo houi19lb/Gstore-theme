@@ -1156,6 +1156,10 @@ function getInstallmentDisplayTotals(summaryData) {
 				);
 			}
 		});
+
+		// #region agent log
+		fetch('http://127.0.0.1:7247/ingest/cce9ccaa-d42e-4577-9651-ba22a488615c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'checkout-steps.js:updateCheckoutShippingHiddenFields',message:'Campos hidden atualizados',data:{itemsCount:items.length,perItemModeInputs:$checkoutForm.find('input[name^="gstore_shipping_mode["]').length,perItemRatesInputs:$checkoutForm.find('input[name^="gstore_shipping_rates["]').length,globalModeInput:$checkoutForm.find('input[name="gstore_shipping_mode"]').length},timestamp:Date.now(),sessionId:'debug-session'})}).catch(()=>{});
+		// #endregion
 	}
 
 	function syncShippingFromStorage(data) {
@@ -2209,6 +2213,10 @@ function getInstallmentDisplayTotals(summaryData) {
 					);
 					console.log('[Gstore] Modo de frete global atualizado:', normalizedMode);
 				}
+
+			// #region agent log
+			fetch('http://127.0.0.1:7247/ingest/cce9ccaa-d42e-4577-9651-ba22a488615c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'checkout-steps.js:shippingModeChange',message:'Modo selecionado no checkout',data:{cartItemKey,normalizedMode,hasCheckoutForm:$checkoutForm.length > 0,globalModeInput:$checkoutForm.find('input[name="gstore_shipping_mode"]').length},timestamp:Date.now(),sessionId:'debug-session'})}).catch(()=>{});
+			// #endregion
 				
 				// Dispara update_checkout para enviar os dados ao backend e recalcular
 				$(document.body).trigger('update_checkout');
