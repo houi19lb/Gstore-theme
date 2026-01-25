@@ -1100,7 +1100,62 @@ function getInstallmentDisplayTotals(summaryData) {
 			const itemKeys = getCartItemKeysFromSummary(lastCartSummaryData);
 			persistShippingModeToStorage(normalized, itemKeys);
 		}
+		
+		// Atualiza campos hidden no formulário de checkout
+		updateCheckoutShippingHiddenFields();
+		
 		renderShippingSummary(lastCartSummaryData);
+	}
+
+	/**
+	 * Atualiza campos hidden no formulário de checkout com os dados de frete selecionados
+	 * Esses campos são enviados ao backend via update_order_review
+	 */
+	function updateCheckoutShippingHiddenFields() {
+		const $checkoutForm = $('form.checkout');
+		if (!$checkoutForm.length) {
+			return;
+		}
+
+		// Remove campos antigos
+		$checkoutForm.find('input[name^="gstore_shipping_mode["]').remove();
+		$checkoutForm.find('input[name^="gstore_shipping_rates["]').remove();
+
+		// Adiciona campos para cada item do carrinho com frete selecionado
+		const items = lastCartSummaryData && Array.isArray(lastCartSummaryData.items) ? lastCartSummaryData.items : [];
+		
+		items.forEach((item) => {
+			const cartItemKey = item.key || item.cart_item_key || item.cartItemKey || '';
+			if (!cartItemKey) {
+				return;
+			}
+
+			// Obtém o modo de frete selecionado para este item
+			const selectedMode = checkoutSelectedShippingByItem[cartItemKey] || 'land';
+			
+			// Obtém as rates disponíveis para este item
+			const rates = checkoutShippingRatesByItem[cartItemKey] || [];
+			
+			if (rates.length > 0) {
+				// Adiciona campo hidden com o modo selecionado
+				$checkoutForm.append(
+					$('<input>', {
+						type: 'hidden',
+						name: `gstore_shipping_mode[${cartItemKey}]`,
+						value: selectedMode
+					})
+				);
+
+				// Adiciona campo hidden com as rates (JSON)
+				$checkoutForm.append(
+					$('<input>', {
+						type: 'hidden',
+						name: `gstore_shipping_rates[${cartItemKey}]`,
+						value: JSON.stringify(rates)
+					})
+				);
+			}
+		});
 	}
 
 	function syncShippingFromStorage(data) {
@@ -1990,6 +2045,7 @@ function getInstallmentDisplayTotals(summaryData) {
 		syncShippingFromStorage(data);
 		renderItemShippingOptions(data);
 		renderShippingSummary(data);
+		updateCheckoutShippingHiddenFields();
 		updateInstallmentsPreview(data);
 		setTimeout(maybeFetchInstallmentQuotes, 0);
 	}
@@ -2130,8 +2186,16 @@ function getInstallmentDisplayTotals(summaryData) {
 			const cartItemKey = $(this).data('cart-item-key') || String($(this).attr('name') || '').replace(/^gstore_checkout_shipping_mode\[|\]$/g, '');
 			const value = $(this).val();
 			if (cartItemKey) {
-				checkoutSelectedShippingByItem[cartItemKey] = normalizeRateMode(value) || 'land';
+				const normalizedMode = normalizeRateMode(value) || 'land';
+				checkoutSelectedShippingByItem[cartItemKey] = normalizedMode;
 				persistShippingModeForItem(cartItemKey, value);
+				
+				// Atualiza campo hidden no formulário de checkout para enviar ao backend
+				updateCheckoutShippingHiddenFields();
+				
+				// Dispara update_checkout para enviar os dados ao backend e recalcular
+				$(document.body).trigger('update_checkout');
+				
 				renderShippingSummary(lastCartSummaryData);
 			}
 		});
@@ -2143,6 +2207,9 @@ function getInstallmentDisplayTotals(summaryData) {
 			setTimeout(organizeFields, 0);
 			setTimeout(ensureBluInstallmentsUI, 0);
 			setTimeout(updateOrderReviewTotals, 0);
+			
+			// Atualiza campos hidden de frete após o checkout ser atualizado
+			setTimeout(updateCheckoutShippingHiddenFields, 100);
 			
 			// Garante que o botão "Finalizar pedido" esteja visível apenas na última etapa
 			const lastStepIndex = STEPS.length - 1;

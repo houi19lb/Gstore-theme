@@ -4229,7 +4229,9 @@ if ( ! function_exists( 'gstore_sync_cart_shipping_modes' ) ) {
 		$is_update_cart_ajax = ( defined( 'DOING_AJAX' ) && DOING_AJAX )
 			&& ( ! empty( $_POST['update_cart'] )
 				|| ( ! empty( $_REQUEST['wc-ajax'] ) && 'update_cart' === $_REQUEST['wc-ajax'] ) );
-		if ( ! $is_cart_context && ! $is_update_cart_ajax ) {
+		$is_update_order_review = ( defined( 'DOING_AJAX' ) && DOING_AJAX )
+			&& ( ! empty( $_REQUEST['wc-ajax'] ) && 'update_order_review' === $_REQUEST['wc-ajax'] );
+		if ( ! $is_cart_context && ! $is_update_cart_ajax && ! $is_update_order_review ) {
 			return;
 		}
 
@@ -4322,6 +4324,7 @@ if ( ! function_exists( 'gstore_sync_cart_shipping_modes' ) ) {
 }
 add_action( 'woocommerce_cart_updated', 'gstore_sync_cart_shipping_modes', 20 );
 add_action( 'woocommerce_update_cart_action_cart_updated', 'gstore_sync_cart_shipping_modes', 20 );
+add_action( 'woocommerce_checkout_update_order_review', 'gstore_sync_cart_shipping_modes', 5 );
 
 if ( ! function_exists( 'gstore_get_variation_shipping_cost' ) ) {
 	function gstore_get_variation_shipping_cost( $variation, $mode, $quantity ) {
