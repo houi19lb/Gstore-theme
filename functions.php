@@ -4206,6 +4206,26 @@ if ( ! function_exists( 'gstore_restore_cart_item_shipping_mode' ) ) {
 }
 add_filter( 'woocommerce_get_cart_item_from_session', 'gstore_restore_cart_item_shipping_mode', 20, 2 );
 
+if ( ! function_exists( 'gstore_write_cursor_debug_log' ) ) {
+	function gstore_write_cursor_debug_log( $payload ) {
+		if ( ! is_array( $payload ) ) {
+			return;
+		}
+
+		if ( ! isset( $payload['timestamp'] ) ) {
+			$payload['timestamp'] = (int) round( microtime( true ) * 1000 );
+		}
+
+		$json = wp_json_encode( $payload );
+		if ( false === $json ) {
+			return;
+		}
+
+		$log_path = 'c:\\Users\\mathe\\Gstore-theme\\.cursor\\debug.log';
+		@file_put_contents( $log_path, $json . PHP_EOL, FILE_APPEND );
+	}
+}
+
 if ( ! function_exists( 'gstore_sync_cart_shipping_modes' ) ) {
 	function gstore_sync_cart_shipping_modes() {
 		static $syncing = false;
@@ -4220,8 +4240,52 @@ if ( ! function_exists( 'gstore_sync_cart_shipping_modes' ) ) {
 
 		$has_posted_modes = ! empty( $_POST['gstore_shipping_mode'] ); // phpcs:ignore WordPress.Security.NonceVerification.Missing
 		$has_posted_rates = ! empty( $_POST['gstore_shipping_rates'] ); // phpcs:ignore WordPress.Security.NonceVerification.Missing
+		$raw_post_data    = ! empty( $_POST['post_data'] ) ? wp_unslash( $_POST['post_data'] ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Missing
+
+		// #region agent log
+		gstore_write_cursor_debug_log(
+			array(
+				'sessionId'    => 'debug-session',
+				'runId'        => 'pre-fix',
+				'hypothesisId' => 'A',
+				'location'     => 'functions.php:gstore_sync_cart_shipping_modes:entry',
+				'message'      => 'Entrada sync cart shipping',
+				'data'         => array(
+					'has_posted_modes' => $has_posted_modes ? 1 : 0,
+					'has_posted_rates' => $has_posted_rates ? 1 : 0,
+					'has_post_data'    => '' !== $raw_post_data ? 1 : 0,
+					'wc_ajax'          => isset( $_REQUEST['wc-ajax'] ) ? (string) $_REQUEST['wc-ajax'] : '',
+					'post_keys'        => is_array( $_POST ) ? count( $_POST ) : 0,
+				),
+			)
+		);
+		// #endregion
 
 		if ( ! $has_posted_modes && ! $has_posted_rates ) {
+			if ( '' !== $raw_post_data ) {
+				parse_str( $raw_post_data, $parsed_post_data );
+				$parsed_rates = isset( $parsed_post_data['gstore_shipping_rates'] ) ? $parsed_post_data['gstore_shipping_rates'] : array();
+				$parsed_modes = isset( $parsed_post_data['gstore_shipping_mode'] ) ? $parsed_post_data['gstore_shipping_mode'] : array();
+
+				// #region agent log
+				gstore_write_cursor_debug_log(
+					array(
+						'sessionId'    => 'debug-session',
+						'runId'        => 'pre-fix',
+						'hypothesisId' => 'C',
+						'location'     => 'functions.php:gstore_sync_cart_shipping_modes:post_data',
+						'message'      => 'post_data detectado sem gstore_shipping_rates no $_POST',
+						'data'         => array(
+							'parsed_rates_is_array' => is_array( $parsed_rates ) ? 1 : 0,
+							'parsed_modes_is_array' => is_array( $parsed_modes ) ? 1 : 0,
+							'parsed_rates_keys'     => is_array( $parsed_rates ) ? array_slice( array_keys( $parsed_rates ), 0, 5 ) : array(),
+							'parsed_modes_keys'     => is_array( $parsed_modes ) ? array_slice( array_keys( $parsed_modes ), 0, 5 ) : array(),
+						),
+					)
+				);
+				// #endregion
+			}
+
 			return;
 		}
 
@@ -4245,6 +4309,34 @@ if ( ! function_exists( 'gstore_sync_cart_shipping_modes' ) ) {
 		$posted_modes = is_array( $posted_modes ) ? $posted_modes : array();
 		$posted_rates = is_array( $posted_rates ) ? $posted_rates : array();
 
+		$cart_item_keys        = is_array( WC()->cart->cart_contents ) ? array_keys( WC()->cart->cart_contents ) : array();
+		$posted_rates_keys     = array_keys( $posted_rates );
+		$items_with_rates_hint = 0;
+		foreach ( $cart_item_keys as $cart_item_key ) {
+			if ( isset( $posted_rates[ $cart_item_key ] ) ) {
+				$items_with_rates_hint++;
+			}
+		}
+
+		// #region agent log
+		gstore_write_cursor_debug_log(
+			array(
+				'sessionId'    => 'debug-session',
+				'runId'        => 'pre-fix',
+				'hypothesisId' => 'B',
+				'location'     => 'functions.php:gstore_sync_cart_shipping_modes:posted_rates',
+				'message'      => 'Chaves de rates vs carrinho',
+				'data'         => array(
+					'posted_rates_count' => count( $posted_rates ),
+					'posted_rates_keys'  => array_slice( $posted_rates_keys, 0, 5 ),
+					'cart_items_count'   => count( $cart_item_keys ),
+					'cart_item_keys'     => array_slice( $cart_item_keys, 0, 5 ),
+					'items_with_rates'   => $items_with_rates_hint,
+				),
+			)
+		);
+		// #endregion
+
 		$syncing = true;
 		$dirty   = false;
 
@@ -4258,6 +4350,24 @@ if ( ! function_exists( 'gstore_sync_cart_shipping_modes' ) ) {
 			$decoded_rates = $raw_rates;
 			if ( is_string( $raw_rates ) ) {
 				$decoded_rates = json_decode( wp_unslash( $raw_rates ), true );
+
+				// #region agent log
+				gstore_write_cursor_debug_log(
+					array(
+						'sessionId'    => 'debug-session',
+						'runId'        => 'pre-fix',
+						'hypothesisId' => 'D',
+						'location'     => 'functions.php:gstore_sync_cart_shipping_modes:decode_rates',
+						'message'      => 'Decodificacao JSON de gstore_shipping_rates',
+						'data'         => array(
+							'json_ok'        => is_array( $decoded_rates ) ? 1 : 0,
+							'json_last_err'  => function_exists( 'json_last_error' ) ? json_last_error() : -1,
+							'json_last_msg'  => function_exists( 'json_last_error_msg' ) ? json_last_error_msg() : '',
+							'cart_item_key'  => $cart_item_key,
+						),
+					)
+				);
+				// #endregion
 			}
 
 			$normalized_rates = gstore_normalize_cart_rates( $decoded_rates );
