@@ -578,8 +578,12 @@
 			? String(lastCartSummaryData.installments.selected)
 			: $('#gstore_blu_installments').val() || '1';
 
-		// Assinatura simples para evitar spam de requests
-		const signature = `${max}|${selected}|${lastCartSummaryData.total || ''}`;
+		// Assinatura incluindo frete para evitar spam de requests
+		// Inclui o frete selecionado na assinatura para recalcular quando o frete mudar
+		const shippingSignature = Object.keys(checkoutSelectedShippingByItem)
+			.map(key => `${key}:${checkoutSelectedShippingByItem[key]}`)
+			.join(',');
+		const signature = `${max}|${selected}|${lastCartSummaryData.total || ''}|${shippingSignature}`;
 		if (signature === lastInstallmentQuotesSignature) return;
 		if (isLoadingInstallmentQuotes) return;
 		lastInstallmentQuotesSignature = signature;
@@ -588,15 +592,37 @@
 			? wc_checkout_params.ajax_url
 			: '/wp-admin/admin-ajax.php';
 
+		// Prepara dados de frete para enviar no POST
+		const shippingData = {};
+		if (lastCartSummaryData && lastCartSummaryData.items && Array.isArray(lastCartSummaryData.items)) {
+			lastCartSummaryData.items.forEach((item) => {
+				const cartItemKey = item.key || item.cart_item_key || item.cartItemKey || '';
+				if (!cartItemKey) {
+					return;
+				}
+
+				// Obtém rates e modo selecionado para este item
+				const rates = checkoutShippingRatesByItem[cartItemKey] || [];
+				const selectedMode = checkoutSelectedShippingByItem[cartItemKey] || 'land';
+
+				if (rates.length > 0) {
+					// Adiciona rates (JSON stringificado)
+					shippingData[`gstore_shipping_rates[${cartItemKey}]`] = JSON.stringify(rates);
+					// Adiciona modo selecionado
+					shippingData[`gstore_shipping_mode[${cartItemKey}]`] = selectedMode;
+				}
+			});
+		}
+
 		isLoadingInstallmentQuotes = true;
 		$.ajax({
 			url: ajaxUrl,
 			type: 'POST',
 			dataType: 'json',
-			data: {
+			data: Object.assign({
 				action: 'gstore_blu_get_installment_quotes',
 				max: max
-			},
+			}, shippingData),
 			success: function(res) {
 				isLoadingInstallmentQuotes = false;
 				if (res && res.success && res.data && res.data.quotes) {

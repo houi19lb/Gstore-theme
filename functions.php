@@ -4391,14 +4391,21 @@ if ( ! function_exists( 'gstore_apply_cart_freight_fees' ) ) {
 			return;
 		}
 
-		if ( ! ( is_cart() || is_checkout() ) ) {
+		// Permite contexto AJAX para cálculo de parcelas
+		$is_ajax_installment_quotes = ( defined( 'DOING_AJAX' ) && DOING_AJAX )
+			&& ( ! empty( $_REQUEST['action'] ) && 'gstore_blu_get_installment_quotes' === $_REQUEST['action'] );
+
+		if ( ! ( is_cart() || is_checkout() || $is_ajax_installment_quotes ) ) {
 			return;
 		}
 
-		if ( function_exists( 'WC' ) && WC()->customer ) {
-			$shipping_postcode = WC()->customer->get_shipping_postcode();
-			if ( ! $shipping_postcode ) {
-				return;
+		// Em contexto AJAX, não requer CEP se os dados de frete já estão nos itens
+		if ( ! $is_ajax_installment_quotes ) {
+			if ( function_exists( 'WC' ) && WC()->customer ) {
+				$shipping_postcode = WC()->customer->get_shipping_postcode();
+				if ( ! $shipping_postcode ) {
+					return;
+				}
 			}
 		}
 
