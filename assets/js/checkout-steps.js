@@ -71,7 +71,8 @@
 	let lastBluOrderPaymentUrl = null; // URL do pagamento Blu do último pedido criado (para exibir aviso quando modal fecha)
 
 	/**
-	 * Função helper para enviar logs de debug para wp-content/debug.log via AJAX
+	 * Função helper para enviar logs de debug via AJAX
+	 * Usa o sistema Gstore_Debug_Logger que salva em wp-content/uploads/gstore-debug-logs/debug.log
 	 * 
 	 * @param {string} location - Localização do log (arquivo:função)
 	 * @param {string} message - Mensagem do log
@@ -80,23 +81,18 @@
 	 * @param {string} runId - ID da execução (opcional)
 	 */
 	function debugLog(location, message, data = {}, hypothesisId = '', runId = 'pre-fix') {
-		const logData = {
-			location: location,
-			message: message,
-			data: data,
-			timestamp: Date.now(),
-			sessionId: 'debug-session',
-			runId: runId,
-			hypothesisId: hypothesisId
-		};
-
 		// Resolve a URL do AJAX
 		const ajaxUrl = typeof ajaxurl !== 'undefined' ? ajaxurl : '/wp-admin/admin-ajax.php';
 		
-		// Envia via AJAX (não bloqueia a execução)
+		// Envia via AJAX no formato esperado pela classe Gstore_Debug_Logger
 		const formData = new FormData();
 		formData.append('action', 'gstore_debug_log');
-		formData.append('log_data', JSON.stringify(logData));
+		formData.append('location', location);
+		formData.append('message', message);
+		formData.append('data', JSON.stringify(data));
+		formData.append('sessionId', 'debug-session');
+		formData.append('runId', runId);
+		formData.append('hypothesisId', hypothesisId);
 
 		fetch(ajaxUrl, {
 			method: 'POST',
