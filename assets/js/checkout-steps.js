@@ -2278,6 +2278,38 @@ function getInstallmentDisplayTotals(summaryData) {
 				// Dispara update_checkout para enviar os dados ao backend e recalcular
 				$(document.body).trigger('update_checkout');
 				
+				// CORREÇÃO: Após o checkout ser atualizado, força recálculo das taxas de parcelamento
+				// porque o frete mudou e isso afeta a base de cálculo das taxas
+				$(document.body).one('updated_checkout', function() {
+					// #region agent log
+					debugLog('checkout-steps.js:shippingModeChange:updated_checkout', 'Checkout atualizado após mudança de frete, recalculando taxas', {
+						cartItemKey: cartItemKey,
+						normalizedMode: normalizedMode
+					}, 'H15');
+					// #endregion
+					
+					// Aguarda um momento para garantir que o carrinho foi atualizado
+					setTimeout(function() {
+						// Recarrega o resumo do carrinho para obter os novos totais com frete atualizado
+						loadCartSummary();
+						// Aguarda mais um momento para o AJAX completar e então atualiza as taxas
+						setTimeout(function() {
+							// Força atualização do preview de parcelas e busca novas quotes
+							if (lastCartSummaryData) {
+								updateInstallmentsPreview(lastCartSummaryData);
+							}
+							maybeFetchInstallmentQuotes();
+							
+							// #region agent log
+							debugLog('checkout-steps.js:shippingModeChange:recalc_complete', 'Recálculo de taxas concluído', {
+								hasLastCartSummaryData: !!lastCartSummaryData,
+								installmentsSelected: lastCartSummaryData && lastCartSummaryData.installments ? lastCartSummaryData.installments.selected : null
+							}, 'H15');
+							// #endregion
+						}, 200);
+					}, 300);
+				});
+				
 				renderShippingSummary(lastCartSummaryData);
 			}
 		});
