@@ -71,6 +71,42 @@
 	let lastBluOrderPaymentUrl = null; // URL do pagamento Blu do último pedido criado (para exibir aviso quando modal fecha)
 
 	/**
+	 * Função helper para enviar logs de debug para wp-content/debug.log via AJAX
+	 * 
+	 * @param {string} location - Localização do log (arquivo:função)
+	 * @param {string} message - Mensagem do log
+	 * @param {object} data - Dados adicionais
+	 * @param {string} hypothesisId - ID da hipótese (opcional)
+	 * @param {string} runId - ID da execução (opcional)
+	 */
+	function debugLog(location, message, data = {}, hypothesisId = '', runId = 'pre-fix') {
+		const logData = {
+			location: location,
+			message: message,
+			data: data,
+			timestamp: Date.now(),
+			sessionId: 'debug-session',
+			runId: runId,
+			hypothesisId: hypothesisId
+		};
+
+		// Resolve a URL do AJAX
+		const ajaxUrl = typeof ajaxurl !== 'undefined' ? ajaxurl : '/wp-admin/admin-ajax.php';
+		
+		// Envia via AJAX (não bloqueia a execução)
+		const formData = new FormData();
+		formData.append('action', 'gstore_debug_log');
+		formData.append('log_data', JSON.stringify(logData));
+
+		fetch(ajaxUrl, {
+			method: 'POST',
+			body: formData
+		}).catch(() => {
+			// Silenciosamente ignora erros de log
+		});
+	}
+
+	/**
 	 * Garante cálculo/validação do frete quando o CEP já está preenchido (sem precisar clicar/sair do campo).
 	 * Útil para sessão/autofill e para quando a etapa "Dados" fica ativa.
 	 */
@@ -1157,9 +1193,20 @@ function getInstallmentDisplayTotals(summaryData) {
 			}
 		});
 
-		// #region agent log
-		fetch('http://127.0.0.1:7247/ingest/cce9ccaa-d42e-4577-9651-ba22a488615c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'checkout-steps.js:updateCheckoutShippingHiddenFields',message:'Campos hidden atualizados',data:{itemsCount:items.length,perItemModeInputs:$checkoutForm.find('input[name^="gstore_shipping_mode["]').length,perItemRatesInputs:$checkoutForm.find('input[name^="gstore_shipping_rates["]').length,globalModeInput:$checkoutForm.find('input[name="gstore_shipping_mode"]').length},timestamp:Date.now(),sessionId:'debug-session'})}).catch(()=>{});
-		// #endregion
+			// #region agent log
+			const serializedData = $checkoutForm.serialize();
+			const hasModesInSerialized = serializedData.includes('gstore_shipping_mode');
+			const hasRatesInSerialized = serializedData.includes('gstore_shipping_rates');
+			debugLog('checkout-steps.js:updateCheckoutShippingHiddenFields', 'Campos hidden atualizados', {
+				itemsCount: items.length,
+				perItemModeInputs: $checkoutForm.find('input[name^="gstore_shipping_mode["]').length,
+				perItemRatesInputs: $checkoutForm.find('input[name^="gstore_shipping_rates["]').length,
+				globalModeInput: $checkoutForm.find('input[name="gstore_shipping_mode"]').length,
+				hasModesInSerialized: hasModesInSerialized,
+				hasRatesInSerialized: hasRatesInSerialized,
+				serializedLength: serializedData.length
+			}, 'H14');
+			// #endregion
 	}
 
 	function syncShippingFromStorage(data) {
@@ -2211,11 +2258,25 @@ function getInstallmentDisplayTotals(summaryData) {
 							value: normalizedMode
 						})
 					);
-					console.log('[Gstore] Modo de frete global atualizado:', normalizedMode);
+					const globalInputCount = $checkoutForm.find('input[name="gstore_shipping_mode"]').length;
+					console.log('[Gstore DEBUG] Modo de frete selecionado:', {
+						cartItemKey: cartItemKey,
+						normalizedMode: normalizedMode,
+						hasCheckoutForm: $checkoutForm.length > 0,
+						globalModeInputCount: globalInputCount,
+						formAction: $checkoutForm.attr('action') || 'N/A'
+					});
+				} else {
+					console.error('[Gstore DEBUG] ERRO: form.checkout não encontrado!');
 				}
 
 			// #region agent log
-			fetch('http://127.0.0.1:7247/ingest/cce9ccaa-d42e-4577-9651-ba22a488615c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'checkout-steps.js:shippingModeChange',message:'Modo selecionado no checkout',data:{cartItemKey,normalizedMode,hasCheckoutForm:$checkoutForm.length > 0,globalModeInput:$checkoutForm.find('input[name="gstore_shipping_mode"]').length},timestamp:Date.now(),sessionId:'debug-session'})}).catch(()=>{});
+			debugLog('checkout-steps.js:shippingModeChange', 'Modo selecionado no checkout', {
+				cartItemKey: cartItemKey,
+				normalizedMode: normalizedMode,
+				hasCheckoutForm: $checkoutForm.length > 0,
+				globalModeInput: $checkoutForm.find('input[name="gstore_shipping_mode"]').length
+			}, 'H14');
 			// #endregion
 				
 				// Dispara update_checkout para enviar os dados ao backend e recalcular
@@ -2225,6 +2286,7 @@ function getInstallmentDisplayTotals(summaryData) {
 			}
 		});
 
+
 		// Atualiza resumo quando checkout é atualizado
 		$(document.body).on('updated_checkout', function() {
 			loadCartSummary();
@@ -2233,7 +2295,7 @@ function getInstallmentDisplayTotals(summaryData) {
 			setTimeout(ensureBluInstallmentsUI, 0);
 			setTimeout(updateOrderReviewTotals, 0);
 			
-			// Atualiza campos hidden de frete após o checkout ser atualizado
+			// Atualiza campos hidden de frete após o checkout ser atualizado (para próxima vez)
 			setTimeout(updateCheckoutShippingHiddenFields, 100);
 			
 			// Garante que o botão "Finalizar pedido" esteja visível apenas na última etapa
@@ -2642,6 +2704,16 @@ function getInstallmentDisplayTotals(summaryData) {
 			// 7. Garante campos obrigatórios para o WooCommerce
 			formDataObj['woocommerce_checkout_place_order'] = '1';
 			
+			// #region agent log
+			const hasModesInFormData = Object.keys(formDataObj).some(k => k.includes('gstore_shipping_mode'));
+			const hasRatesInFormData = Object.keys(formDataObj).some(k => k.includes('gstore_shipping_rates'));
+			debugLog('checkout-steps.js:form_submit', 'Formulário sendo submetido', {
+				hasModesInFormData: hasModesInFormData,
+				hasRatesInFormData: hasRatesInFormData,
+				formDataKeys: Object.keys(formDataObj).filter(k => k.includes('gstore')).join(',')
+			}, 'H14');
+			// #endregion
+			
 			// Converte para query string
 			let formData = $.param(formDataObj);
 
@@ -2843,11 +2915,45 @@ function getInstallmentDisplayTotals(summaryData) {
 	// Variável para armazenar o método selecionado antes do update
 	let lastSelectedPaymentMethod = null;
 	
-	// Armazena a seleção antes do update
+	// Armazena a seleção antes do update e garante campos hidden de frete
 	$(document.body).on('update_checkout', function() {
 		const $selected = $('input[name="payment_method"]:checked');
 		if ($selected.length) {
 			lastSelectedPaymentMethod = $selected.val();
+		}
+		
+		// CORREÇÃO CRÍTICA: Garante que os campos de frete estejam no form
+		// ANTES do WooCommerce serializar o form para update_order_review
+		updateCheckoutShippingHiddenFields();
+		
+		const $checkoutForm = $('form.checkout');
+		if ($checkoutForm.length) {
+			// Se não existe campo global, tenta obter do último modo selecionado
+			if ($checkoutForm.find('input[name="gstore_shipping_mode"]').length === 0) {
+				// Tenta obter do último modo selecionado por item
+				const lastSelectedMode = Object.values(checkoutSelectedShippingByItem)[0] || 'land';
+				$checkoutForm.append(
+					$('<input>', {
+						type: 'hidden',
+						name: 'gstore_shipping_mode',
+						value: lastSelectedMode
+					})
+				);
+				console.log('[Gstore DEBUG] Campo global adicionado no update_checkout:', lastSelectedMode);
+			}
+			
+			// #region agent log
+			const serializedBefore = $checkoutForm.serialize();
+			const hasModesBefore = serializedBefore.includes('gstore_shipping_mode');
+			const hasRatesBefore = serializedBefore.includes('gstore_shipping_rates');
+			debugLog('checkout-steps.js:update_checkout_handler', 'Form serializado no update_checkout', {
+				hasModesBefore: hasModesBefore,
+				hasRatesBefore: hasRatesBefore,
+				perItemModeInputs: $checkoutForm.find('input[name^="gstore_shipping_mode["]').length,
+				perItemRatesInputs: $checkoutForm.find('input[name^="gstore_shipping_rates["]').length,
+				globalModeInput: $checkoutForm.find('input[name="gstore_shipping_mode"]').length
+			}, 'H14');
+			// #endregion
 		}
 	});
 	

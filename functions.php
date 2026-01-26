@@ -3913,6 +3913,27 @@ add_action( 'wp_footer', function() {
 require_once get_theme_file_path( 'inc/class-gstore-category-filter.php' );
 
 /**
+ * Sistema de Debug Logs.
+ */
+require_once get_theme_file_path( 'inc/class-gstore-debug-logger.php' );
+
+/**
+ * Função helper para fazer log de debug.
+ *
+ * @param string $location Localização (arquivo:linha).
+ * @param string $message Mensagem.
+ * @param array  $data Dados adicionais.
+ * @param string $session_id ID da sessão.
+ * @param string $run_id ID da execução.
+ * @param string $hypothesis_id ID da hipótese.
+ */
+function gstore_debug_log( $location, $message, $data = array(), $session_id = 'debug-session', $run_id = 'run1', $hypothesis_id = '' ) {
+	if ( isset( $GLOBALS['gstore_debug_logger'] ) ) {
+		$GLOBALS['gstore_debug_logger']->log( $location, $message, $data, $session_id, $run_id, $hypothesis_id );
+	}
+}
+
+/**
  * Gerenciador de informações da loja (JSON centralizado).
  */
 // Movido para o plugin gstore-core (persistência em wp_options).
@@ -11997,3 +12018,51 @@ function gstore_add_neighborhood_replacement( $replacements, $args ) {
 }
 
 // Ferramentas administrativas (thumbnails + updater via git) movidas para o plugin gstore-core.
+
+/**
+ * Endpoint AJAX para receber logs de debug e salvar em wp-content/debug.log
+ * 
+ * @return void
+ */
+function gstore_ajax_debug_log() {
+	$log_data = isset( $_POST['log_data'] ) ? $_POST['log_data'] : null; // phpcs:ignore WordPress.Security.NonceVerification.Missing
+	
+	if ( ! $log_data ) {
+		wp_send_json_error( array( 'message' => 'Dados de log não fornecidos.' ) );
+		return;
+	}
+
+	// Decodifica o JSON se necessário
+	if ( is_string( $log_data ) ) {
+		$log_data = json_decode( wp_unslash( $log_data ), true );
+	}
+
+	if ( ! is_array( $log_data ) ) {
+		wp_send_json_error( array( 'message' => 'Formato de log inválido.' ) );
+		return;
+	}
+
+	// Caminho do arquivo de log em wp-content
+	$log_file = WP_CONTENT_DIR . '/debug.log';
+
+	// Garante que o diretório existe
+	$log_dir = dirname( $log_file );
+	if ( ! file_exists( $log_dir ) ) {
+		wp_mkdir_p( $log_dir );
+	}
+
+	// Formata como NDJSON (uma linha JSON por entrada)
+	$log_line = wp_json_encode( $log_data ) . "\n";
+
+	// Adiciona ao arquivo (append mode)
+	$result = file_put_contents( $log_file, $log_line, FILE_APPEND | LOCK_EX );
+
+	if ( false === $result ) {
+		wp_send_json_error( array( 'message' => 'Erro ao salvar log.' ) );
+		return;
+	}
+
+	wp_send_json_success( array( 'message' => 'Log salvo com sucesso.' ) );
+}
+add_action( 'wp_ajax_gstore_debug_log', 'gstore_ajax_debug_log' );
+add_action( 'wp_ajax_nopriv_gstore_debug_log', 'gstore_ajax_debug_log' );
