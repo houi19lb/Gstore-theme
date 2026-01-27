@@ -3442,7 +3442,8 @@ body.single-product .onsale {
 	}
 
 	/* Mobile: manter só “Disponibilidade” */
-	.Gstore-single-product__buybox-meta-chip:nth-child(n + 2) {
+	/* Mobile: ocultar o primeiro chip de "Disponibilidade" (duplicado) */
+	.Gstore-single-product__buybox-meta-chip:first-child {
 		display: none;
 	}
 
