@@ -2444,27 +2444,30 @@ function gstore_ajax_get_product_installment_quotes() {
 		$per_installment = gstore_calculate_installment_with_interest( $total_price, $installments, $rate );
 		
 		if ( $per_installment > 0 ) {
+			// Calcular total com juros (parcela × número de parcelas)
+			$total_with_interest = $per_installment * $installments;
+			
 			// Formatar valor da parcela
 			$per_installment_text = wc_price( $per_installment, array( 'decimals' => 2 ) );
 			// Remover tags HTML do wc_price para obter apenas o texto
 			$per_installment_text = wp_strip_all_tags( $per_installment_text );
+			// Decodificar entidades HTML (ex: &#82;&#36; → R$)
+			$per_installment_text = html_entity_decode( $per_installment_text, ENT_QUOTES | ENT_HTML5, 'UTF-8' );
 			
-			// Calcular total com juros (parcela × número de parcelas)
-			$total_with_interest = $per_installment * $installments;
-			
-			// Formatar valor total com juros
-			$total_with_interest_text = wc_price( $total_with_interest, array( 'decimals' => 2 ) );
-			$total_with_interest_text = wp_strip_all_tags( $total_with_interest_text );
+			// Formatar total com juros
+			$total_text_formatted = wc_price( $total_with_interest, array( 'decimals' => 2 ) );
+			$total_text_formatted = wp_strip_all_tags( $total_text_formatted );
+			$total_text_formatted = html_entity_decode( $total_text_formatted, ENT_QUOTES | ENT_HTML5, 'UTF-8' );
 			
 			$quotes[ (string) $installments ] = array(
-				'installments'            => $installments,
-				'per_installment'         => $per_installment,
-				'per_installment_text'    => $per_installment_text,
-				'total'                   => $total_with_interest, // Total com juros (valor real pago)
-				'total_text'              => $total_with_interest_text,
-				'total_raw'               => $total_with_interest, // Para compatibilidade com JavaScript
-				'original_total'          => $total_price, // Valor original sem juros (para referência)
-				'original_total_text'     => wc_price( $total_price, array( 'decimals' => 2 ) ),
+				'installments'        => $installments,
+				'per_installment'     => $per_installment,
+				'per_installment_text' => $per_installment_text,
+				'total'              => $total_with_interest,  // Total com juros
+				'total_raw'          => $total_with_interest,  // Para o frontend
+				'total_text'         => $total_text_formatted, // Formatado sem entidades HTML
+				'original_total'    => $total_price,  // Preço à vista (sem juros)
+				'originalTotal'     => $total_price,  // Alternativo para compatibilidade
 			);
 		}
 	}
