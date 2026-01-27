@@ -3442,18 +3442,9 @@ body.single-product .onsale {
 	}
 
 	/* Mobile: manter só “Disponibilidade” */
-	/* Mobile: ocultar o primeiro chip de "Disponibilidade" (duplicado) */
-	.Gstore-single-product__buybox-meta-chip:first-child {
-		display: none;
-	}
-
+	/* Mobile: ocultar todos os chips (disponibilidade, condições de pagamento e envio monitorado) */
 	.Gstore-single-product__buybox-meta-chip {
-		flex: 0 0 auto;
-		min-width: 220px;
-		background: var(--gstore-color-bg-gray-50);
-		border: 1px solid var(--gstore-color-border-divider, #e5e7eb);
-		border-radius: 4px;
-		padding: 10px 12px;
+		display: none !important;
 	}
 
 	.Gstore-single-product__buybox-meta-chip-label {
