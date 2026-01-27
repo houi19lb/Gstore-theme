@@ -152,6 +152,61 @@ function gstore_available_variation_stock_payload( $data, $product, $variation )
 }
 add_filter( 'woocommerce_available_variation', 'gstore_available_variation_stock_payload', 10, 3 );
 
+/**
+ * SEO: título do documento na página single do produto.
+ * Usa meta _gstore_seo_title se preenchido; fallback = nome do produto.
+ *
+ * @param array $title_parts Partes do título (title, page, tagline).
+ * @return array
+ */
+function gstore_product_document_title_parts( $title_parts ) {
+	if ( ! function_exists( 'is_product' ) || ! is_product() ) {
+		return $title_parts;
+	}
+	$product_id = (int) get_queried_object_id();
+	if ( $product_id <= 0 ) {
+		return $title_parts;
+	}
+	$seo_title = get_post_meta( $product_id, '_gstore_seo_title', true );
+	$title_parts['title'] = is_string( $seo_title ) && trim( $seo_title ) !== ''
+		? trim( $seo_title )
+		: get_the_title( $product_id );
+	return $title_parts;
+}
+add_filter( 'document_title_parts', 'gstore_product_document_title_parts', 10, 1 );
+
+/**
+ * SEO: meta description na página single do produto.
+ * Usa meta _gstore_seo_meta_description se preenchido; fallback = resumo (descrição curta).
+ */
+function gstore_product_meta_description() {
+	if ( ! function_exists( 'is_product' ) || ! is_product() ) {
+		return;
+	}
+	$product_id = (int) get_queried_object_id();
+	if ( $product_id <= 0 ) {
+		return;
+	}
+	$product = function_exists( 'wc_get_product' ) ? wc_get_product( $product_id ) : null;
+	if ( ! $product || ! is_a( $product, 'WC_Product' ) ) {
+		return;
+	}
+	$desc = get_post_meta( $product_id, '_gstore_seo_meta_description', true );
+	if ( ! is_string( $desc ) || trim( $desc ) === '' ) {
+		$desc = $product->get_short_description();
+	}
+	$desc = wp_strip_all_tags( $desc );
+	$desc = trim( $desc );
+	if ( strlen( $desc ) > 160 ) {
+		$desc = substr( $desc, 0, 157 ) . '...';
+	}
+	if ( $desc === '' ) {
+		return;
+	}
+	echo '<meta name="description" content="' . esc_attr( $desc ) . '" />' . "\n";
+}
+add_action( 'wp_head', 'gstore_product_meta_description', 1 );
+
 // 5. Atualizar opções do banco de dados (executa apenas uma vez para garantir robustez)
 function gstore_force_woocommerce_image_options() {
 	// Executa apenas uma vez (ou quando necessário)
