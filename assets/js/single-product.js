@@ -229,12 +229,22 @@ document.addEventListener('DOMContentLoaded', () => {
 			option.value = String(installments);
 
 			let optionText = `${installments}x de ${quote.per_installment_text}`;
-			const totalRaw = Number(quote.total_raw ?? quote.total);
+			
+			// Priorizar total com juros (valor real pago)
+			// O PHP agora retorna total_raw como o valor com juros (parcela × número de parcelas)
+			const totalRaw = Number(quote.total_raw ?? quote.total ?? quote.total_with_interest);
+			
+			// Usar total_text se disponível, senão calcular a partir do totalRaw
 			const totalText = quote.total_text || quote.totalText || (Number.isFinite(totalRaw) ? formatCurrency(totalRaw) : '');
-			const originalTotal = Number(quote.original_total ?? quote.originalTotal);
-			const jurosValue = Number.isFinite(totalRaw) && Number.isFinite(originalTotal)
+			
+			// Valor original sem juros (para referência, se necessário)
+			const originalTotal = Number(quote.original_total ?? quote.originalTotal ?? 0);
+			
+			// Calcular juros (diferença entre total com juros e valor original)
+			const jurosValue = Number.isFinite(totalRaw) && Number.isFinite(originalTotal) && originalTotal > 0
 				? totalRaw - originalTotal
 				: NaN;
+			
 			const details = [];
 			if (totalText) {
 				details.push(`total: ${totalText}`);

@@ -2449,11 +2449,22 @@ function gstore_ajax_get_product_installment_quotes() {
 			// Remover tags HTML do wc_price para obter apenas o texto
 			$per_installment_text = wp_strip_all_tags( $per_installment_text );
 			
+			// Calcular total com juros (parcela × número de parcelas)
+			$total_with_interest = $per_installment * $installments;
+			
+			// Formatar valor total com juros
+			$total_with_interest_text = wc_price( $total_with_interest, array( 'decimals' => 2 ) );
+			$total_with_interest_text = wp_strip_all_tags( $total_with_interest_text );
+			
 			$quotes[ (string) $installments ] = array(
-				'installments'        => $installments,
-				'per_installment'     => $per_installment,
-				'per_installment_text' => $per_installment_text,
-				'total'              => $total_price,
+				'installments'            => $installments,
+				'per_installment'         => $per_installment,
+				'per_installment_text'    => $per_installment_text,
+				'total'                   => $total_with_interest, // Total com juros (valor real pago)
+				'total_text'              => $total_with_interest_text,
+				'total_raw'               => $total_with_interest, // Para compatibilidade com JavaScript
+				'original_total'          => $total_price, // Valor original sem juros (para referência)
+				'original_total_text'     => wc_price( $total_price, array( 'decimals' => 2 ) ),
 			);
 		}
 	}
