@@ -2398,6 +2398,117 @@ function gstore_get_blu_installment_rate_percent() {
 }
 
 /**
+ * Resolve taxa (percentual e fixo) para uma parcela específica baseado nas configurações do gateway.
+ *
+ * @param array $config Configuração do gateway (retornada por get_installment_fee_config).
+ * @param int   $installments Número de parcelas.
+ * @return array Array com 'percent' e 'fixed' resolvidos.
+ */
+function gstore_resolve_installment_fee_for_parcela( $config, $installments ) {
+	$mode     = isset( $config['mode'] ) ? (string) $config['mode'] : 'none';
+	$strategy = isset( $config['strategy'] ) ? (string) $config['strategy'] : 'flat';
+	$percent  = isset( $config['percent'] ) ? (float) $config['percent'] : 0.0;
+	$fixed    = isset( $config['fixed'] ) ? (float) $config['fixed'] : 0.0;
+	$min_installments = isset( $config['min_installments'] ) ? absint( $config['min_installments'] ) : 2;
+	$min_installments = max( 1, $min_installments );
+
+	if ( 'none' === $mode ) {
+		return array( 'percent' => 0.0, 'fixed' => 0.0, 'mode' => 'none' );
+	}
+
+	$resolved_percent = $percent;
+	$resolved_fixed   = $fixed;
+
+	if ( 'progressive' === $strategy ) {
+		$prog = isset( $config['progressive'] ) && is_array( $config['progressive'] ) ? $config['progressive'] : array();
+		$base_percent = isset( $prog['base_percent'] ) ? (float) $prog['base_percent'] : 0.0;
+		$step_percent = isset( $prog['step_percent'] ) ? (float) $prog['step_percent'] : 0.0;
+		$base_fixed   = isset( $prog['base_fixed'] ) ? (float) $prog['base_fixed'] : 0.0;
+		$step_fixed   = isset( $prog['step_fixed'] ) ? (float) $prog['step_fixed'] : 0.0;
+
+		$steps = max( 0, $installments - $min_installments );
+		$resolved_percent = $base_percent + ( $step_percent * $steps );
+		$resolved_fixed   = $base_fixed + ( $step_fixed * $steps );
+	} elseif ( 'table' === $strategy ) {
+		$rules_text = isset( $config['rules'] ) ? (string) $config['rules'] : '';
+		$lines = preg_split( "/\r\n|\n|\r/", $rules_text );
+		$rules = array(); // installments => [percent, fixed]
+
+		if ( is_array( $lines ) ) {
+			foreach ( $lines as $line ) {
+				$line = trim( (string) $line );
+				if ( '' === $line ) {
+					continue;
+				}
+				// Remove comentários
+				$line = preg_replace( '/\s*#.*$/', '', $line );
+				$line = trim( (string) $line );
+				if ( '' === $line ) {
+					continue;
+				}
+
+				// Formatos:
+				// 2=3.5
+				// 3=4%+2.90
+				// 6=+9.90
+				if ( preg_match( '/^(\d+)\s*=\s*(.+)$/', $line, $m ) ) {
+					$n = absint( $m[1] );
+					$expr = trim( (string) $m[2] );
+					if ( $n < 1 || $n > 21 || '' === $expr ) {
+						continue;
+					}
+
+					$p = 0.0;
+					$f = 0.0;
+
+					// only fixed: +9.90 or 9.90? (we require + for fixed-only to avoid ambiguity)
+					if ( preg_match( '/^\+\s*([0-9]+(?:[.,][0-9]+)?)$/', $expr, $mm ) ) {
+						$f = (float) str_replace( ',', '.', $mm[1] );
+					} else {
+						// percent or percent+fixed
+						if ( preg_match( '/^([0-9]+(?:[.,][0-9]+)?)\s*%?\s*(?:\+\s*([0-9]+(?:[.,][0-9]+)?))?$/', $expr, $mm ) ) {
+							$p = (float) str_replace( ',', '.', $mm[1] );
+							if ( isset( $mm[2] ) && '' !== $mm[2] ) {
+								$f = (float) str_replace( ',', '.', $mm[2] );
+							}
+						}
+					}
+
+					$rules[ $n ] = array( 'percent' => $p, 'fixed' => $f );
+				}
+			}
+		}
+
+		// Regra exata; se não existir, usa a mais próxima abaixo; se não, zero.
+		if ( isset( $rules[ $installments ] ) ) {
+			$resolved_percent = (float) $rules[ $installments ]['percent'];
+			$resolved_fixed   = (float) $rules[ $installments ]['fixed'];
+		} else {
+			$best = 0;
+			foreach ( array_keys( $rules ) as $n ) {
+				$n = (int) $n;
+				if ( $n <= $installments && $n > $best ) {
+					$best = $n;
+				}
+			}
+			if ( $best > 0 ) {
+				$resolved_percent = (float) $rules[ $best ]['percent'];
+				$resolved_fixed   = (float) $rules[ $best ]['fixed'];
+			} else {
+				$resolved_percent = 0.0;
+				$resolved_fixed   = 0.0;
+			}
+		}
+	}
+
+	return array(
+		'percent' => (float) $resolved_percent,
+		'fixed'   => (float) $resolved_fixed,
+		'mode'    => $mode,
+	);
+}
+
+/**
  * Endpoint AJAX: Retorna quotes de parcelamento para um produto.
  * 
  * @return void
@@ -2435,18 +2546,65 @@ function gstore_ajax_get_product_installment_quotes() {
 
 	$total_price = $price * $quantity;
 
-	// Obter taxa de juros
-	$rate = gstore_get_blu_installment_rate();
+	// Tentar obter configurações do gateway
+	$gateway = function_exists( 'gstore_blu_get_gateway_instance' ) ? gstore_blu_get_gateway_instance() : null;
+	$config  = null;
+	if ( $gateway && method_exists( $gateway, 'get_installment_fee_config' ) ) {
+		$config = (array) $gateway->get_installment_fee_config();
+		$mode   = isset( $config['mode'] ) ? (string) $config['mode'] : 'none';
+		// Se mode é 'none', não usar configurações do admin
+		if ( 'none' === $mode ) {
+			$config = null;
+		}
+	}
+
+	// Fallback: usar taxa de juros compostos se não houver configuração de taxa
+	$use_compound_interest = ( null === $config );
+	$rate = $use_compound_interest ? gstore_get_blu_installment_rate() : null;
 
 	// Gerar quotes de 1 até max parcelas
 	$quotes = array();
 	for ( $installments = 1; $installments <= $max; $installments++ ) {
-		$per_installment = gstore_calculate_installment_with_interest( $total_price, $installments, $rate );
-		
+		$per_installment = 0;
+		$total_with_fee  = $total_price;
+
+		if ( $use_compound_interest ) {
+			// Usar cálculo de juros compostos (comportamento original)
+			$per_installment = gstore_calculate_installment_with_interest( $total_price, $installments, $rate );
+			$total_with_fee  = $per_installment * $installments;
+		} else {
+			// Usar taxas configuradas no admin (taxa como fee)
+			$min_installments = isset( $config['min_installments'] ) ? absint( $config['min_installments'] ) : 2;
+			$min_installments = max( 1, $min_installments );
+
+			// Se o número de parcelas for menor que o mínimo, não aplicar taxa
+			if ( $installments < $min_installments ) {
+				$per_installment = $total_price / $installments;
+				$total_with_fee  = $total_price;
+			} else {
+				$fee_data = gstore_resolve_installment_fee_for_parcela( $config, $installments );
+				$mode_fee = $fee_data['mode'];
+				$percent  = $fee_data['percent'];
+				$fixed    = $fee_data['fixed'];
+
+				// Calcular total com taxa
+				if ( 'percent' === $mode_fee || 'percent_plus_fixed' === $mode_fee ) {
+					if ( $percent > 0 ) {
+						$total_with_fee += ( $total_price * ( $percent / 100 ) );
+					}
+				}
+				if ( 'fixed' === $mode_fee || 'percent_plus_fixed' === $mode_fee ) {
+					if ( $fixed > 0 ) {
+						$total_with_fee += $fixed;
+					}
+				}
+
+				// Dividir pelo número de parcelas
+				$per_installment = $total_with_fee / $installments;
+			}
+		}
+
 		if ( $per_installment > 0 ) {
-			// Calcular total com juros (parcela × número de parcelas)
-			$total_with_interest = $per_installment * $installments;
-			
 			// Formatar valor da parcela
 			$per_installment_text = wc_price( $per_installment, array( 'decimals' => 2 ) );
 			// Remover tags HTML do wc_price para obter apenas o texto
@@ -2454,8 +2612,8 @@ function gstore_ajax_get_product_installment_quotes() {
 			// Decodificar entidades HTML (ex: &#82;&#36; → R$)
 			$per_installment_text = html_entity_decode( $per_installment_text, ENT_QUOTES | ENT_HTML5, 'UTF-8' );
 			
-			// Formatar total com juros
-			$total_text_formatted = wc_price( $total_with_interest, array( 'decimals' => 2 ) );
+			// Formatar total com taxa/juros
+			$total_text_formatted = wc_price( $total_with_fee, array( 'decimals' => 2 ) );
 			$total_text_formatted = wp_strip_all_tags( $total_text_formatted );
 			$total_text_formatted = html_entity_decode( $total_text_formatted, ENT_QUOTES | ENT_HTML5, 'UTF-8' );
 			
@@ -2463,10 +2621,10 @@ function gstore_ajax_get_product_installment_quotes() {
 				'installments'        => $installments,
 				'per_installment'     => $per_installment,
 				'per_installment_text' => $per_installment_text,
-				'total'              => $total_with_interest,  // Total com juros
-				'total_raw'          => $total_with_interest,  // Para o frontend
+				'total'              => $total_with_fee,  // Total com taxa/juros
+				'total_raw'          => $total_with_fee,  // Para o frontend
 				'total_text'         => $total_text_formatted, // Formatado sem entidades HTML
-				'original_total'    => $total_price,  // Preço à vista (sem juros)
+				'original_total'    => $total_price,  // Preço à vista (sem taxa/juros)
 				'originalTotal'     => $total_price,  // Alternativo para compatibilidade
 			);
 		}
