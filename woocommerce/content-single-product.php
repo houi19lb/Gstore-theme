@@ -768,6 +768,7 @@ if ( $reviews_has_value ) {
 						<!-- Disponibilidade -->
 						<div class="stock <?php echo esc_attr( $buybox_stock_class ); ?>" 
 							data-gstore-stock-block
+							data-availability
 							data-default-class="<?php echo esc_attr( $buybox_stock_class ); ?>"
 							data-default-title="<?php echo esc_attr( $stock_title ); ?>"
 							data-default-subtitle="<?php echo esc_attr( $stock_subtitle ); ?>"

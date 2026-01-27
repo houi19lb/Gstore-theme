@@ -1090,6 +1090,8 @@ function gstore_enqueue_scripts() {
 		);
 
 		if ( function_exists( 'is_product' ) && is_product() ) {
+			$product_id = (int) get_queried_object_id();
+
 			$single_product_js_path = get_theme_file_path( 'assets/js/single-product.js' );
 			$single_product_js_version = file_exists( $single_product_js_path ) ? (string) filemtime( $single_product_js_path ) : wp_get_theme()->get( 'Version' );
 
@@ -1107,7 +1109,40 @@ function gstore_enqueue_scripts() {
 				array(
 					'ajaxUrl'   => admin_url( 'admin-ajax.php' ),
 					'action'    => 'gstore_blu_get_product_installment_quotes',
-					'productId' => (int) get_queried_object_id(),
+					'productId' => $product_id,
+				)
+			);
+
+			$custom_notice = (string) get_post_meta( $product_id, '_gstore_custom_notice', true );
+			$custom_notice = trim( $custom_notice );
+
+			$product_notice_js_path = get_theme_file_path( 'assets/js/gstore-product-notice.js' );
+			$product_notice_js_version = file_exists( $product_notice_js_path ) ? (string) filemtime( $product_notice_js_path ) : wp_get_theme()->get( 'Version' );
+
+			wp_enqueue_script(
+				'gstore-product-notice',
+				get_theme_file_uri( 'assets/js/gstore-product-notice.js' ),
+				array(),
+				$product_notice_js_version,
+				true
+			);
+
+			$product_notice_css_path = get_theme_file_path( 'assets/css/components/product-notice.css' );
+			$product_notice_css_version = file_exists( $product_notice_css_path ) ? (string) filemtime( $product_notice_css_path ) : wp_get_theme()->get( 'Version' );
+
+			wp_enqueue_style(
+				'gstore-product-notice-css',
+				get_theme_file_uri( 'assets/css/components/product-notice.css' ),
+				array( 'gstore-main' ),
+				$product_notice_css_version
+			);
+
+			wp_localize_script(
+				'gstore-product-notice',
+				'gstoreProductNotice',
+				array(
+					'active' => '' !== $custom_notice,
+					'text'   => $custom_notice,
 				)
 			);
 		}
