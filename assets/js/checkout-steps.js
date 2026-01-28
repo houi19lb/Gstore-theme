@@ -2894,7 +2894,17 @@ function getInstallmentDisplayTotals(summaryData) {
 				);
 				console.log('[Gstore DEBUG] Campo global adicionado no update_checkout:', lastSelectedMode);
 			}
-			
+
+			// Garante shipping_method[0] com rate ID completo para persistir frete ao fechar modal Blu.
+			let mode = checkoutSelectedShippingMode || (Object.values(checkoutSelectedShippingByItem)[0]) || 'land';
+			if (mode !== 'land' && mode !== 'air') mode = 'land';
+			const rateId = 'gstore_custom_shipping:' + mode;
+			const $sm = $checkoutForm.find('input[name="shipping_method[0]"]');
+			if ($sm.length) {
+				$sm.val(rateId);
+			} else {
+				$checkoutForm.append($('<input>', { type: 'hidden', name: 'shipping_method[0]', value: rateId }));
+			}
 		}
 	});
 	
