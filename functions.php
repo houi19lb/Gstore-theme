@@ -2190,9 +2190,20 @@ add_action( 'template_redirect', 'gstore_restore_saved_cart_if_needed', 1 );
  * 
  * Restaura o carrinho original antes de limpar a flag, para que o cliente
  * tenha seus itens originais de volta após finalizar a compra rápida.
+ * Para Blu (modal): não restaura; só limpa as flags, mantendo o produto "Comprar agora" no carrinho.
+ *
+ * @param int $order_id ID do pedido (passado por woocommerce_thankyou / woocommerce_checkout_order_processed).
  */
-function gstore_clear_buy_now_flag_after_order() {
+function gstore_clear_buy_now_flag_after_order( $order_id = 0 ) {
 	if ( ! class_exists( 'WooCommerce' ) || ! WC()->cart ) {
+		return;
+	}
+
+	$order = $order_id ? wc_get_order( $order_id ) : null;
+	if ( $order && $order->get_payment_method() === 'blu_checkout' ) {
+		WC()->session->set( 'gstore_saved_cart_before_buy_now', null );
+		WC()->session->set( 'gstore_buy_now_active', false );
+		WC()->session->set( 'gstore_buy_now_product', null );
 		return;
 	}
 
