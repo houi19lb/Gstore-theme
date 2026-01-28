@@ -2824,6 +2824,9 @@ function getInstallmentDisplayTotals(summaryData) {
 			$form.removeClass('processing').unblock();
 		}
 
+		// Atualiza o resumo do checkout (totais/parcelas) para refletir alterações antes do próximo submit.
+		$(document.body).trigger('update_checkout');
+
 		// Se havia um pedido Blu criado, mostra aviso com link para pagar
 		if (lastBluOrderPaymentUrl) {
 			const paymentUrl = lastBluOrderPaymentUrl;
