@@ -5478,6 +5478,26 @@ function gstore_add_refazer_compra_button_to_order_actions( $actions, $order ) {
 add_filter( 'woocommerce_my_account_my_orders_actions', 'gstore_add_refazer_compra_button_to_order_actions', 10, 2 );
 
 /**
+ * Exclui pedidos cancelados da lista "Meus pedidos".
+ * Mostra apenas a última tentativa (pendente) e pedidos ativos; tentativas canceladas somem.
+ *
+ * @param array $args Argumentos da query de pedidos do My Account.
+ * @return array Argumentos atualizados.
+ */
+function gstore_my_account_orders_exclude_cancelled( $args ) {
+	$args['status'] = array(
+		'wc-pending',
+		'wc-processing',
+		'wc-on-hold',
+		'wc-completed',
+		'wc-refunded',
+		'wc-failed',
+	);
+	return $args;
+}
+add_filter( 'woocommerce_my_account_my_orders_query', 'gstore_my_account_orders_exclude_cancelled', 10, 1 );
+
+/**
  * Valida estoque antes de adicionar produtos ao carrinho via "Order Again".
  *
  * Remove produtos sem estoque do array antes de adicionar ao carrinho.
