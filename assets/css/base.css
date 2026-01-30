@@ -48,6 +48,10 @@ p {
 	margin: 0;
 }
 
+bdi {
+	font-size: 18px;
+}
+
 a {
 	color: var(--gstore-color-accent);
 	text-decoration: none;
