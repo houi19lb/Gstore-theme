@@ -155,9 +155,9 @@
 }
 
 .Gstore-blog-single-image img {
-	width: fit-content;
-	height: fit-content;
-	object-fit: cover;
+	width: 100%;
+	height: 100%;
+	object-fit: contain;
 	display: flex;
 	flex-wrap: wrap;
 	justify-content: flex-start;
