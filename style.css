@@ -2884,13 +2884,13 @@ body.single-product .onsale {
 	text-decoration: line-through;
 }
 
-/* Valor da oferta ou preço real — linha de baixo, verde, negrito, maior */
+/* Valor da oferta ou preço real — linha de baixo, verde, negrito, mesmo tamanho de antes */
 .buybox .price ins,
 .buybox .price .price ins {
 	color: var(--green);
 	font-weight: 900;
-	font-size: var(--gstore-font-size-xl);
-	line-height: 1.2;
+	font-size: clamp(28px, 2vw + 12px, 32px);
+	line-height: 1.1;
 	text-decoration: none;
 }
 
@@ -2898,8 +2898,8 @@ body.single-product .onsale {
 .buybox .price .woocommerce-Price-amount {
 	color: var(--green);
 	font-weight: 900;
-	font-size: var(--gstore-font-size-xl);
-	line-height: 1.2;
+	font-size: clamp(28px, 2vw + 12px, 32px);
+	line-height: 1.1;
 }
 
 .buybox .price del .woocommerce-Price-amount {
