@@ -2867,10 +2867,10 @@ body.single-product .onsale {
 	align-items: flex-start;
 }
 
-/* Valor original (riscado) — linha de cima, menor, cinza */
+/* Valor original (riscado) — linha de cima, menor, cinza (~25% maior para equilibrar com o preço verde) */
 .buybox .price del,
 .buybox .price .price del {
-	font-size: var(--gstore-font-size-sm);
+	font-size: calc(var(--gstore-font-size-sm) * 1.25);
 	color: var(--text-muted);
 	text-decoration: line-through;
 	font-weight: 700;
