@@ -141,7 +141,8 @@ const __GSTORE_TREE_RUN_ID = 'tree_' + Date.now() + '_' + Math.random().toString
 				</button>`;
 			}
 
-			html += `<a href="/categoria-produto/${slug}/">
+			var categoryBase = (typeof gstoreAccountUrls !== 'undefined' && gstoreAccountUrls.homeUrl) ? gstoreAccountUrls.homeUrl : '/';
+			html += `<a href="${categoryBase}categoria-produto/${slug}/">
 				<span class="wc-block-product-categories-list-item__name">${cat.name}</span>
 			</a>`;
 			html += `<span class="wc-block-product-categories-list-item-count">

@@ -145,7 +145,21 @@
 	 * Inicializa funcionalidade de copiar código
 	 */
 	function initCopyButton() {
-		// Handler para novo formato (pix-box__copy)
+		// Handler para Pix Box v2 (.pix-box .btn[data-copy-target])
+		$(document).on('click', '.pix-box .btn[data-copy-target]', function() {
+			const $btn = $(this);
+			const selector = $btn.data('copy-target');
+			const $textarea = $(selector);
+			if (!$textarea.length) return;
+			const text = $textarea.val();
+			if (navigator.clipboard && navigator.clipboard.writeText) {
+				navigator.clipboard.writeText(text).then(function() { showCopySuccess($btn); }).catch(function() { fallbackCopy(text, $textarea, $btn); });
+			} else {
+				fallbackCopy(text, $textarea, $btn);
+			}
+		});
+
+		// Handler para formato (pix-box__copy)
 		$(document).on('click', '.pix-box__copy', function() {
 			const $btn = $(this);
 			const selector = $btn.data('copy-target');

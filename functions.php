@@ -1036,19 +1036,22 @@ function gstore_enqueue_scripts() {
 		true
 	);
 
-	// Passa URLs dinâmicas do WooCommerce para o JavaScript
-	// Isso corrige os links hardcoded nos templates FSE quando o idioma muda
+	// Passa URLs do tema para o JavaScript (respeitam subdiretório quando WP está em /subdir/)
+	$gstore_account_urls = array(
+		'homeUrl'        => home_url( '/' ),
+		'atendimentoUrl' => home_url( '/atendimento' ),
+		'favoritosUrl'   => home_url( '/favoritos/' ),
+	);
 	if ( class_exists( 'WooCommerce' ) ) {
 		$myaccount_url = wc_get_page_permalink( 'myaccount' );
-		wp_localize_script(
-			'gstore-header',
-			'gstoreAccountUrls',
-			array(
-				'myAccount' => $myaccount_url ? $myaccount_url : home_url( '/minha-conta/' ),
-				'orders'    => $myaccount_url ? wc_get_endpoint_url( 'orders', '', $myaccount_url ) : home_url( '/minha-conta/orders/' ),
-			)
-		);
+		$gstore_account_urls['myAccount'] = $myaccount_url ? $myaccount_url : home_url( '/minha-conta/' );
+		$gstore_account_urls['orders']    = $myaccount_url ? wc_get_endpoint_url( 'orders', '', $myaccount_url ) : home_url( '/minha-conta/orders/' );
 	}
+	wp_localize_script(
+		'gstore-header',
+		'gstoreAccountUrls',
+		$gstore_account_urls
+	);
 
 	if ( is_front_page() ) {
 		$home_hero_js_path    = get_theme_file_path( 'assets/js/home-hero.js' );
@@ -3398,12 +3401,13 @@ function gstore_enqueue_checkout_assets() {
 			true
 		);
 
-		// Fornece nonce correto para processar checkout (fallback do JS quando o input não existir no DOM).
+		// Fornece nonce e URLs para o checkout (URLs respeitam subdiretório do WP).
 		wp_localize_script(
 			'gstore-checkout-steps',
 			'gstoreCheckout',
 			array(
 				'processCheckoutNonce' => wp_create_nonce( 'woocommerce-process_checkout' ),
+				'homeUrl'             => home_url( '/' ),
 			)
 		);
 
@@ -3470,6 +3474,21 @@ function gstore_enqueue_checkout_assets() {
 				'ajaxUrl' => admin_url( 'admin-ajax.php' ),
 				'nonce'   => wp_create_nonce( 'gstore_pix_nonce' ),
 			)
+		);
+
+		// Pix Box v2 (countdown + barra) – carrega junto; funciona quando o plugin passar a gerar o novo HTML
+		wp_enqueue_style(
+			'gstore-pix-box-v2',
+			get_theme_file_uri( 'assets/css/components/pix-box.css' ),
+			array( 'gstore-style' ),
+			$theme_version
+		);
+		wp_enqueue_script(
+			'gstore-pix-box-countdown',
+			get_theme_file_uri( 'assets/js/pix-box-countdown.js' ),
+			array(),
+			$theme_version,
+			true
 		);
 	}
     
@@ -11706,6 +11725,31 @@ add_filter( 'render_block_core/template-part', function( $block_content, $block 
 	}
 	return $block_content;
 }, 15, 2 );
+
+/**
+ * Resolve links relativos à raiz (href="/path") para a URL completa do site.
+ * Necessário quando o WordPress está instalado em um subdiretório (ex.: dominio.com/subdir/).
+ *
+ * @param string $content Conteúdo HTML.
+ * @return string Conteúdo com href="/..." substituídos por href="{home_url}/...".
+ */
+function gstore_resolve_home_relative_urls( $content ) {
+	if ( empty( $content ) || strpos( $content, 'href="/' ) === false ) {
+		return $content;
+	}
+	$content = preg_replace_callback(
+		'/href="\/([^"]*)"/',
+		function ( $m ) {
+			return 'href="' . esc_url( home_url( '/' . $m[1] ) ) . '"';
+		},
+		$content
+	);
+	return $content;
+}
+
+add_filter( 'render_block_core/template-part', 'gstore_resolve_home_relative_urls', 20, 1 );
+add_filter( 'render_block_core/html', 'gstore_resolve_home_relative_urls', 20, 1 );
+add_filter( 'the_content', 'gstore_resolve_home_relative_urls', 25 );
 
 // ============================================
 // MIGRAÇÃO E INICIALIZAÇÃO AUTOMÁTICA

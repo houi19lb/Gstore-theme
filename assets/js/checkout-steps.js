@@ -755,7 +755,7 @@
 					</button>
 					<p class="Gstore-finalize-privacy">
 						Seus dados estão protegidos. Ao finalizar, você concorda com nossa 
-						<a href="/politica-de-privacidade" target="_blank">política de privacidade</a>.
+						<a href="${typeof gstoreCheckout !== 'undefined' && gstoreCheckout.homeUrl ? gstoreCheckout.homeUrl + 'politica-de-privacidade' : '/politica-de-privacidade'}" target="_blank">política de privacidade</a>.
 					</p>
 				</div>
 			`);
