@@ -4440,19 +4440,7 @@ main:not(.Gstore-blog-shell):not(.Gstore-blog-single-shell) {
 
 @media (max-width: 781px) {
 	.Gstore-hero-slider {
-		min-height: unset;
-	}
-
-	.Gstore-hero-slider__track {
-		height: auto;
-	}
-
-	.Gstore-hero-slider__slide {
-		align-self: flex-start;
-	}
-
-	.Gstore-hero-slider__slide img {
-		height: auto;
+		min-height: 260px;
 	}
 
 	.Gstore-hero-slider__control {
