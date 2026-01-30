@@ -2870,7 +2870,7 @@ body.single-product .onsale {
 /* Valor original (riscado) — linha de cima, menor, cinza */
 .buybox .price del,
 .buybox .price .price del {
-	font-size: var(--gstore-font-size-base);
+	font-size: var(--gstore-font-size-lg);
 	color: var(--text-muted);
 	text-decoration: line-through;
 	font-weight: 700;
@@ -2904,7 +2904,7 @@ body.single-product .onsale {
 
 .buybox .price del .woocommerce-Price-amount {
 	color: var(--text-muted);
-	font-size: var(--gstore-font-size-base);
+	font-size: var(--gstore-font-size-lg);
 	font-weight: 700;
 }
 
