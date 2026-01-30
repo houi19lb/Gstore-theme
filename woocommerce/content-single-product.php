@@ -89,7 +89,7 @@ if ( ! function_exists( 'gstore_get_hero_meta_cards' ) ) :
 			array(
 				'icon'       => 'fa-truck-fast',
 				'label'      => __( 'Envio monitorado', 'gstore' ),
-				'text'       => __( 'Envio 100% confiável.', 'gstore' ),
+				'text'       => __( 'Envio totalmente confiável.', 'gstore' ),
 				'allow_html' => false,
 				'is_installment' => false,
 			),
