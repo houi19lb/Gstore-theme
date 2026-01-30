@@ -2849,19 +2849,63 @@ body.single-product .onsale {
 	font-weight: var(--gstore-font-weight-semibold);
 }
 
+/* Bloco de preço: mesmo padrão do card — valor riscado em cima, oferta verde embaixo */
 .buybox .price {
 	margin-top: 4px;
-	font-size: clamp(28px, 2vw + 12px, 32px);
-	font-weight: 800;
-	color: var(--gstore-color-text-primary);
-	line-height: 1.1;
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+	align-items: flex-start;
 }
 
 .buybox .price .price,
 .buybox .price p.price {
 	margin: 0;
-	font: inherit;
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+	align-items: flex-start;
+}
+
+/* Valor original (riscado) — linha de cima, menor, cinza */
+.buybox .price del,
+.buybox .price .price del {
+	font-size: var(--gstore-font-size-sm);
+	color: var(--text-muted);
+	text-decoration: line-through;
+	font-weight: 700;
+	min-height: 18px;
+}
+
+.buybox .price del .woocommerce-Price-amount {
+	font-size: inherit;
 	color: inherit;
+	font-weight: inherit;
+	text-decoration: line-through;
+}
+
+/* Valor da oferta ou preço real — linha de baixo, verde, negrito, maior */
+.buybox .price ins,
+.buybox .price .price ins {
+	color: var(--green);
+	font-weight: 900;
+	font-size: var(--gstore-font-size-xl);
+	line-height: 1.2;
+	text-decoration: none;
+}
+
+.buybox .price ins .woocommerce-Price-amount,
+.buybox .price .woocommerce-Price-amount {
+	color: var(--green);
+	font-weight: 900;
+	font-size: var(--gstore-font-size-xl);
+	line-height: 1.2;
+}
+
+.buybox .price del .woocommerce-Price-amount {
+	color: var(--text-muted);
+	font-size: var(--gstore-font-size-sm);
+	font-weight: 700;
 }
 
 .buybox .price-sub {

@@ -135,8 +135,9 @@
 
 /* Logo no footer */
 .footer-column .footer-logo,
-.footer-column .wp-block-site-logo.footer-logo {
-	margin-bottom: 15px;
+.footer-column .wp-block-site-logo.footer-logo,
+.footer-column .wp-block-site-logo.Gstore-header__logo {
+	margin-bottom: 28px;
 	display: block;
 }
 
