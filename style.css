@@ -5914,33 +5914,6 @@ main.Gstore-support-shell .wp-block-group.is-layout-constrained {
 	color: var(--gstore-color-accent);
 }
 
-.Gstore-support-whatsapp {
-	position: fixed;
-	bottom: 32px;
-	right: 32px;
-	width: 64px;
-	height: 64px;
-	border-radius: var(--gstore-radius-base);
-	background: #25d366;
-	color: #fff;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	font-size: 2rem;
-	box-shadow: none;
-	transition: transform 0.2s ease, box-shadow 0.2s ease;
-	z-index: 30;
-}
-
-.Gstore-support-whatsapp:hover {
-	transform: scale(1.05);
-	box-shadow: none;
-}
-
-.Gstore-support-whatsapp i {
-	line-height: 1;
-}
-
 @media (max-width: 900px) {
 	.Gstore-support-shell {
 		padding: 24px 15px 80px !important;
@@ -5995,13 +5968,6 @@ main.Gstore-support-shell .wp-block-group.is-layout-constrained {
 		flex-direction: column;
 	}
 
-	.Gstore-support-whatsapp {
-		bottom: 20px;
-		right: 20px;
-		width: 56px;
-		height: 56px;
-		font-size: 1.6rem;
-	}
 }
 
 /* ========================================
