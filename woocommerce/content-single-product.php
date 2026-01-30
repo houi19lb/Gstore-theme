@@ -146,36 +146,6 @@ if ( ! function_exists( 'gstore_render_details_list' ) ) :
 	}
 endif;
 
-if ( ! function_exists( 'gstore_normalize_product_content' ) ) :
-	/**
-	 * Normaliza o HTML do produto para preservar quebras e linhas vazias no tema.
-	 *
-	 * - Se vier texto puro, aplica wpautop().
-	 * - Se vier HTML sem tags de bloco, converte quebras \n em <br> e \n\n em <p>&nbsp;</p>.
-	 *
-	 * @param string $content Conteúdo bruto do produto.
-	 * @return string
-	 */
-	function gstore_normalize_product_content( $content ) {
-		$content = is_string( $content ) ? $content : '';
-		if ( '' === trim( $content ) ) {
-			return '';
-		}
-		$has_html = false !== strpos( $content, '<' );
-		if ( ! $has_html ) {
-			return wpautop( $content );
-		}
-		$has_block_tags = preg_match( '/<(p|div|br|ul|ol|li|h[1-6]|blockquote|table|pre|hr)\b/i', $content );
-		if ( ! $has_block_tags ) {
-			$content = str_replace( array( "\r\n", "\r" ), "\n", $content );
-			$content = '<p>' . preg_replace( "/\n\n+/", "</p><p>&nbsp;</p><p>", $content ) . '</p>';
-			$content = str_replace( "\n", '<br>', $content );
-		}
-		$content = do_shortcode( $content );
-		return wp_kses_post( $content );
-	}
-endif;
-
 if ( ! function_exists( 'gstore_get_details_info_rows' ) ) :
 	/**
 	 * Retorna linhas de informação para a seção de detalhes.
@@ -360,9 +330,7 @@ if ( ! empty( $categories ) && ! is_wp_error( $categories ) ) {
 
 // Descrição e avaliações.
 $short_description = apply_filters( 'woocommerce_short_description', $product->get_short_description() );
-$full_description  = function_exists( 'gstore_normalize_product_content' )
-	? gstore_normalize_product_content( $product->get_description() )
-	: apply_filters( 'the_content', $product->get_description() );
+$full_description  = apply_filters( 'the_content', $product->get_description() );
 $review_count      = (int) $product->get_review_count();
 $stock_status      = (string) $product->get_stock_status();
 $is_variable       = $product->is_type( 'variable' );
