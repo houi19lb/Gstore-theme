@@ -4344,6 +4344,13 @@ main:not(.Gstore-blog-shell):not(.Gstore-blog-single-shell) {
 .Gstore-hero-slider__slide {
 	min-width: 100%;
 	height: 100%;
+	overflow: hidden;
+}
+
+.Gstore-hero-slider__slide a {
+	display: block;
+	width: 100%;
+	height: 100%;
 }
 
 .Gstore-hero-slider__slide img {

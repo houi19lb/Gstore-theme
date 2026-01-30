@@ -489,7 +489,16 @@ $gstore_has_tab_content = function ( $html ) {
 	$text = wp_strip_all_tags( (string) $html );
 	$text = html_entity_decode( $text, ENT_QUOTES, get_bloginfo( 'charset' ) ? get_bloginfo( 'charset' ) : 'UTF-8' );
 	$text = str_replace( array( "\xc2\xa0", "\xa0" ), ' ', $text ); // nbsp
-	$text = preg_replace( '/\s+/u', ' ', $text );
+	// preg_replace com /u pode retornar null se UTF-8 inválido; fallback para o original.
+	$text_normalized = preg_replace( '/\s+/u', ' ', $text );
+	if ( null === $text_normalized ) {
+		// UTF-8 inválido: tenta sem a flag /u ou considera que tem conteúdo se text não está vazio.
+		$text_normalized = preg_replace( '/\s+/', ' ', $text );
+		if ( null === $text_normalized ) {
+			$text_normalized = $text;
+		}
+	}
+	$text = $text_normalized;
 
 	return '' !== trim( (string) $text );
 };
@@ -502,8 +511,24 @@ $important_notes_raw      = $product_id ? (string) get_post_meta( $product_id, '
 $key_attributes_has_value = $gstore_has_tab_content( $key_attributes_raw );
 $important_notes_has_value = $gstore_has_tab_content( $important_notes_raw );
 
+// Debug: log para investigar problema de exibição de informações adicionais.
+if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+	error_log( sprintf( '[GStore Theme DEBUG] Product ID: %d', $product_id ) );
+	error_log( sprintf( '[GStore Theme DEBUG] key_attributes_raw length: %d bytes, has_value: %s', strlen( $key_attributes_raw ), $key_attributes_has_value ? 'YES' : 'NO' ) );
+	error_log( sprintf( '[GStore Theme DEBUG] important_notes_raw length: %d bytes, has_value: %s', strlen( $important_notes_raw ), $important_notes_has_value ? 'YES' : 'NO' ) );
+	if ( strlen( $key_attributes_raw ) > 0 && strlen( $key_attributes_raw ) < 2000 ) {
+		error_log( sprintf( '[GStore Theme DEBUG] key_attributes_raw content: %s', $key_attributes_raw ) );
+	}
+}
+
 $key_attributes_html  = $key_attributes_has_value ? apply_filters( 'the_content', $key_attributes_raw ) : '';
 $important_notes_html = $important_notes_has_value ? apply_filters( 'the_content', $important_notes_raw ) : '';
+
+// Debug: log após apply_filters para ver se o conteúdo foi perdido.
+if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+	error_log( sprintf( '[GStore Theme DEBUG] key_attributes_html length AFTER the_content: %d bytes, empty: %s', strlen( $key_attributes_html ), ( '' === trim( $key_attributes_html ) ? 'YES' : 'NO' ) ) );
+	error_log( sprintf( '[GStore Theme DEBUG] important_notes_html length AFTER the_content: %d bytes, empty: %s', strlen( $important_notes_html ), ( '' === trim( $important_notes_html ) ? 'YES' : 'NO' ) ) );
+}
 
 $reviews_has_value = comments_open();
 
