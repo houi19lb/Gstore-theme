@@ -801,12 +801,6 @@ if ( $reviews_has_value ) {
 								<button type="button" class="btn-secondary" data-gstore-reset-purchase>
 									<?php esc_html_e( 'Limpar', 'gstore' ); ?>
 								</button>
-								<?php if ( $is_out_of_stock && $show_price_oos ) : ?>
-									<div class="price-unavailable-notice">
-										<i class="fa-solid fa-circle-info" aria-hidden="true"></i>
-										<?php esc_html_e( 'Preço de referência (produto indisponível)', 'gstore' ); ?>
-									</div>
-								<?php endif; ?>
 							</div>
 						<?php endif; ?>
 
