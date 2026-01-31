@@ -7104,6 +7104,8 @@ function gstore_get_hero_slides( $device = 'desktop' ) {
 function gstore_render_hero_slider() {
 	$desktop_slides = gstore_get_hero_slides( 'desktop' );
 	$mobile_slides = gstore_get_hero_slides( 'mobile' );
+	$desktop_total = count( $desktop_slides );
+	$mobile_total = count( $mobile_slides );
 	
 	// Se não houver slides, retorna vazio
 	if ( empty( $desktop_slides ) && empty( $mobile_slides ) ) {
@@ -7157,7 +7159,7 @@ function gstore_render_hero_slider() {
 			?>
 		</div>
 		
-		<?php if ( count( $desktop_slides ) > 1 || count( $mobile_slides ) > 1 ) : ?>
+		<?php if ( $desktop_total > 1 || $mobile_total > 1 ) : ?>
 			<button class="Gstore-hero-slider__control Gstore-hero-slider__control--prev" type="button" aria-label="Slide anterior" data-gstore-hero-prev>
 				<span aria-hidden="true">
 					<i class="fa-solid fa-chevron-left"></i>
@@ -7171,20 +7173,32 @@ function gstore_render_hero_slider() {
 			</button>
 			
 			<!-- Desktop Dots -->
-			<?php if ( count( $desktop_slides ) > 1 ) : ?>
-				<div class="Gstore-hero-slider__dots Gstore-hero-slider__dots--desktop" role="tablist">
-					<?php for ( $i = 0; $i < count( $desktop_slides ); $i++ ) : ?>
-						<button class="Gstore-hero-slider__dot <?php echo $i === 0 ? 'is-active' : ''; ?>" type="button" role="tab" aria-label="Mostrar slide <?php echo $i + 1; ?>" aria-selected="<?php echo $i === 0 ? 'true' : 'false'; ?>" data-gstore-hero-dot="<?php echo $i; ?>"></button>
-					<?php endfor; ?>
+			<?php if ( $desktop_total > 1 ) : ?>
+				<div class="Gstore-hero-slider__dots Gstore-hero-slider__dots--desktop" role="tablist" data-gstore-hero-dots-total="<?php echo esc_attr( $desktop_total ); ?>">
+					<?php if ( $desktop_total <= 3 ) : ?>
+						<?php for ( $i = 0; $i < $desktop_total; $i++ ) : ?>
+							<button class="Gstore-hero-slider__dot <?php echo $i === 0 ? 'is-active' : ''; ?>" type="button" role="tab" aria-label="Mostrar slide <?php echo $i + 1; ?>" aria-selected="<?php echo $i === 0 ? 'true' : 'false'; ?>" data-gstore-hero-dot="<?php echo $i; ?>"></button>
+						<?php endfor; ?>
+					<?php else : ?>
+						<button class="Gstore-hero-slider__dot is-active" type="button" role="tab" aria-label="Mostrar slide 1" aria-selected="true" data-gstore-hero-dot="0"></button>
+						<button class="Gstore-hero-slider__dot" type="button" role="tab" aria-label="Mostrar slides do meio" aria-selected="false" data-gstore-hero-dot="middle"></button>
+						<button class="Gstore-hero-slider__dot" type="button" role="tab" aria-label="Mostrar último slide" aria-selected="false" data-gstore-hero-dot="<?php echo esc_attr( $desktop_total - 1 ); ?>"></button>
+					<?php endif; ?>
 				</div>
 			<?php endif; ?>
 			
 			<!-- Mobile Dots -->
-			<?php if ( count( $mobile_slides ) > 1 ) : ?>
-				<div class="Gstore-hero-slider__dots Gstore-hero-slider__dots--mobile" role="tablist">
-					<?php for ( $i = 0; $i < count( $mobile_slides ); $i++ ) : ?>
-						<button class="Gstore-hero-slider__dot <?php echo $i === 0 ? 'is-active' : ''; ?>" type="button" role="tab" aria-label="Mostrar slide <?php echo $i + 1; ?>" aria-selected="<?php echo $i === 0 ? 'true' : 'false'; ?>" data-gstore-hero-dot-mobile="<?php echo $i; ?>"></button>
-					<?php endfor; ?>
+			<?php if ( $mobile_total > 1 ) : ?>
+				<div class="Gstore-hero-slider__dots Gstore-hero-slider__dots--mobile" role="tablist" data-gstore-hero-dots-total-mobile="<?php echo esc_attr( $mobile_total ); ?>">
+					<?php if ( $mobile_total <= 3 ) : ?>
+						<?php for ( $i = 0; $i < $mobile_total; $i++ ) : ?>
+							<button class="Gstore-hero-slider__dot <?php echo $i === 0 ? 'is-active' : ''; ?>" type="button" role="tab" aria-label="Mostrar slide <?php echo $i + 1; ?>" aria-selected="<?php echo $i === 0 ? 'true' : 'false'; ?>" data-gstore-hero-dot-mobile="<?php echo $i; ?>"></button>
+						<?php endfor; ?>
+					<?php else : ?>
+						<button class="Gstore-hero-slider__dot is-active" type="button" role="tab" aria-label="Mostrar slide 1" aria-selected="true" data-gstore-hero-dot-mobile="0"></button>
+						<button class="Gstore-hero-slider__dot" type="button" role="tab" aria-label="Mostrar slides do meio" aria-selected="false" data-gstore-hero-dot-mobile="middle"></button>
+						<button class="Gstore-hero-slider__dot" type="button" role="tab" aria-label="Mostrar último slide" aria-selected="false" data-gstore-hero-dot-mobile="<?php echo esc_attr( $mobile_total - 1 ); ?>"></button>
+					<?php endif; ?>
 				</div>
 			<?php endif; ?>
 		<?php endif; ?>

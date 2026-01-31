@@ -20,6 +20,8 @@
 		const mobileTrack = slider.querySelector('[data-gstore-hero-track-mobile]');
 		const mobileSlides = Array.from(slider.querySelectorAll('[data-gstore-hero-slide-mobile]'));
 		const mobileDots = Array.from(slider.querySelectorAll('[data-gstore-hero-dot-mobile]'));
+		const desktopDotsContainer = slider.querySelector('.Gstore-hero-slider__dots--desktop');
+		const mobileDotsContainer = slider.querySelector('.Gstore-hero-slider__dots--mobile');
 		
 		// Controles compartilhados
 		const prevButton = slider.querySelector('[data-gstore-hero-prev]');
@@ -70,6 +72,51 @@
 			return elements.slides.length > 1 && (forceAutoplay || !prefersReducedMotion);
 		}
 
+		function getActiveDotIndex(total, slideIndex) {
+			if (total <= 3) {
+				return slideIndex;
+			}
+			if (slideIndex === 0) {
+				return 0;
+			}
+			if (slideIndex === total - 1) {
+				return 2;
+			}
+			return 1;
+		}
+
+		function getDotTargetIndex(dot, total, attributeName, fallbackIndex) {
+			const rawValue = dot.getAttribute(attributeName);
+			if (rawValue === 'middle') {
+				return Math.floor(total / 2);
+			}
+			if (rawValue !== null && rawValue !== '') {
+				const parsed = Number.parseInt(rawValue, 10);
+				if (!Number.isNaN(parsed)) {
+					return parsed;
+				}
+			}
+			if (total <= 3) {
+				return fallbackIndex;
+			}
+			if (fallbackIndex === 0) {
+				return 0;
+			}
+			if (fallbackIndex === 2) {
+				return total - 1;
+			}
+			return Math.floor(total / 2);
+		}
+
+		function syncDotsVisibility() {
+			if (desktopDotsContainer) {
+				desktopDotsContainer.setAttribute('aria-hidden', String(isMobile()));
+			}
+			if (mobileDotsContainer) {
+				mobileDotsContainer.setAttribute('aria-hidden', String(!isMobile()));
+			}
+		}
+
 		/**
 		 * Atualiza os dots do slider atual.
 		 */
@@ -79,8 +126,11 @@
 				return;
 			}
 
+			const total = elements.slides.length;
+			const activeDotIndex = getActiveDotIndex(total, index);
+
 			elements.dots.forEach(function (dot, dotIndex) {
-				const isActive = dotIndex === index;
+				const isActive = dotIndex === activeDotIndex;
 				dot.classList.toggle('is-active', isActive);
 				dot.setAttribute('aria-selected', String(isActive));
 			});
@@ -160,6 +210,7 @@
 			}
 			
 			// Atualiza dots do viewport atual
+			syncDotsVisibility();
 			updateDots(getCurrentSliderElements().getCurrentIndex());
 			
 			startAutoplay();
@@ -191,8 +242,10 @@
 			desktopDots.forEach(function (dot, index) {
 				dot.addEventListener('click', function () {
 					if (!isMobile()) {
-						desktopIndex = index;
-						goTo(index);
+						const total = desktopSlides.length;
+						const targetIndex = getDotTargetIndex(dot, total, 'data-gstore-hero-dot', index);
+						desktopIndex = targetIndex;
+						goTo(targetIndex);
 						if (canAutoplay()) {
 							stopAutoplay();
 							startAutoplay();
@@ -207,8 +260,10 @@
 			mobileDots.forEach(function (dot, index) {
 				dot.addEventListener('click', function () {
 					if (isMobile()) {
-						mobileIndex = index;
-						goTo(index);
+						const total = mobileSlides.length;
+						const targetIndex = getDotTargetIndex(dot, total, 'data-gstore-hero-dot-mobile', index);
+						mobileIndex = targetIndex;
+						goTo(targetIndex);
 						if (canAutoplay()) {
 							stopAutoplay();
 							startAutoplay();
@@ -232,6 +287,7 @@
 		});
 
 		// Inicialização
+		syncDotsVisibility();
 		updateDots(getCurrentSliderElements().getCurrentIndex());
 		startAutoplay();
 	}
