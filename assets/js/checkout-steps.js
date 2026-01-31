@@ -1303,7 +1303,20 @@ function getInstallmentDisplayTotals(summaryData) {
 			selectedModes.add(selectedMode);
 		}
 
-		const totalValue = subtotalValue + selectedTotal - discountValue;
+		const fees = (data && data.totals && data.totals.fees && Array.isArray(data.totals.fees)) ? data.totals.fees : [];
+		let feesTotal = 0;
+		const otherFees = [];
+		fees.forEach(function (fee) {
+			const label = (fee && (fee.label || fee.name)) ? String(fee.label || fee.name).trim() : '';
+			const total = fee && Number.isFinite(Number(fee.total)) ? Number(fee.total) : parsePriceValue((fee && fee.total) ? String(fee.total) : '0');
+			if (!label) return;
+			const isFrete = label.toLowerCase().indexOf('frete') !== -1;
+			if (isFrete) return;
+			otherFees.push({ label: label, total: total });
+			feesTotal += total;
+		});
+
+		const totalValue = subtotalValue + selectedTotal - discountValue + feesTotal;
 		if (subtotalValue > 0) {
 			$('.Gstore-checkout-summary-top__total-amount').html(formatCurrency(totalValue));
 		}
@@ -1345,6 +1358,15 @@ function getInstallmentDisplayTotals(summaryData) {
 				</div>
 			`;
 		}
+
+		otherFees.forEach(function (fee) {
+			totalsHtml += `
+				<div class="Gstore-checkout-shipping-totals__row">
+					<span>${fee.label}</span>
+					<span>${formatCurrency(fee.total)}</span>
+				</div>
+			`;
+		});
 
 		if (discountValue > 0) {
 			totalsHtml += `
