@@ -418,6 +418,12 @@
 				// Esconde/mostra parcelamento imediatamente (PIX não tem parcelamento)
 				$('.Gstore-blu-installments').toggle(isCheckout);
 
+				// CORREÇÃO: Reseta parcelas para 1 quando muda para PIX
+				if (!isCheckout) {
+					$('#gstore_blu_installments').val('1');
+					$('#gstore_blu_installments_select').val('1');
+				}
+
 				// Atualiza totais/sessão do WooCommerce
 				$(document.body).trigger('update_checkout');
 			}
