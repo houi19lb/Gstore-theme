@@ -1745,6 +1745,10 @@ function getInstallmentDisplayTotals(summaryData) {
 
 		currentStep = index;
 
+		// Atualiza campo enviado ao backend para só carregar taxa de parcelamento na etapa 3
+		const $stepInput = $('#gstore_checkout_step');
+		if ($stepInput.length) $stepInput.val(index);
+
 		// Atualiza painéis
 		$('.Gstore-checkout-step').removeClass('is-active')
 			.eq(index).addClass('is-active');
@@ -2925,6 +2929,14 @@ function getInstallmentDisplayTotals(summaryData) {
 		
 		const $checkoutForm = $('form.checkout');
 		if ($checkoutForm.length) {
+			// Etapa atual do checkout (0, 1, 2) para o backend só aplicar taxa de parcelamento na etapa 3
+			let $stepInput = $checkoutForm.find('input[name="gstore_checkout_step"]');
+			if (!$stepInput.length) {
+				$stepInput = $('<input>', { type: 'hidden', name: 'gstore_checkout_step', id: 'gstore_checkout_step' });
+				$checkoutForm.append($stepInput);
+			}
+			$stepInput.val(typeof currentStep !== 'undefined' ? currentStep : 0);
+
 			// Se não existe campo global, tenta obter do último modo selecionado
 			if ($checkoutForm.find('input[name="gstore_shipping_mode"]').length === 0) {
 				// Tenta obter do último modo selecionado por item
