@@ -1969,13 +1969,16 @@ function getInstallmentDisplayTotals(summaryData) {
 		const $selectedMethod = $('input[name="payment_method"]:checked');
 		const paymentMethod = $selectedMethod.length ? $selectedMethod.val() : '';
 		const installmentsValue = $('#gstore_blu_installments').val() || $('#gstore_blu_installments_select').val() || '';
+		const $form = $('form.checkout').first();
+		const postData = $form.length ? $form.serialize() : '';
 		$.ajax({
 			url: wc_checkout_params.ajax_url,
 			type: 'POST',
 			data: {
 				action: 'gstore_get_cart_summary',
 				payment_method: paymentMethod,
-				gstore_blu_installments: installmentsValue
+				gstore_blu_installments: installmentsValue,
+				post_data: postData
 			},
 			success: function(response) {
 				if (response.success) {
@@ -2039,6 +2042,12 @@ function getInstallmentDisplayTotals(summaryData) {
 		}
 		$('.Gstore-checkout-summary-top__items').html(itemsHtml);
 
+		// Sincroniza frete e renderiza resumo ANTES de montar totalsHtml
+		// para que lastSummaryTotals esteja disponível em getInstallmentDisplayTotals
+		syncShippingFromStorage(data);
+		renderItemShippingOptions(data);
+		renderShippingSummary(data);
+
 		// Renderiza totais
 		let totalsHtml = '';
 
@@ -2053,21 +2062,24 @@ function getInstallmentDisplayTotals(summaryData) {
 		}
 
 		// "Você pagará" só aparece quando cartão Blu e parcelas > 1, mostrando o total real com taxa
+		// Usa getInstallmentDisplayTotals para incluir frete quando o API retorna total sem frete
 		const selectedN = parseInt((data.installments && data.installments.selected) ? data.installments.selected : '1', 10) || 1;
 		if (data.payment_method === 'blu_checkout' && selectedN > 1) {
+			const displayTotals = getInstallmentDisplayTotals(data);
+			const totalToShow = displayTotals.displayTotal > 0 ? displayTotals.displayTotal : parsePriceValue(data.total || 0);
+			const perToShow = totalToShow / selectedN;
+			const perText = perToShow > 0 ? formatCurrency(perToShow) : (data.installments && data.installments.per_installment) || '';
+			const totalText = totalToShow > 0 ? formatCurrency(totalToShow) : (data.total || '');
 			totalsHtml += `
 				<div class="Gstore-summary-row Gstore-summary-row--payable">
 					<span>Você pagará</span>
-					<span><strong>${selectedN}x de ${data.installments.per_installment}</strong> — ${data.total}</span>
+					<span><strong>${selectedN}x de ${perText}</strong> — ${totalText}</span>
 				</div>
 			`;
 		}
 
 		$('.Gstore-checkout-summary-top__totals').html(totalsHtml);
 
-		syncShippingFromStorage(data);
-		renderItemShippingOptions(data);
-		renderShippingSummary(data);
 		updateCheckoutShippingHiddenFields();
 		updateInstallmentsPreview(data);
 		setTimeout(maybeFetchInstallmentQuotes, 0);
