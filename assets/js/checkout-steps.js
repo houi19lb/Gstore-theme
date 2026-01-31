@@ -113,7 +113,8 @@
 
 		buildStepsUI();
 		bindEvents();
-		loadCartSummary();
+		// O primeiro load vem do evento updated_checkout (não carregar aqui para evitar totais sem CEP/frete)
+		$(document.body).trigger('update_checkout');
 		// Se o CEP já veio preenchido (sessão/autofill), calcula o frete imediatamente
 		setTimeout(ensureShippingAutofilled, 0);
 		
@@ -1675,12 +1676,17 @@ function getInstallmentDisplayTotals(summaryData) {
 			// Dispara evento para atualizar checkout do WooCommerce
 			// Isso fará com que o WooCommerce calcule o frete oficialmente
 			$(document.body).trigger('update_checkout');
+			// loadCartSummary já é chamado pelo handler global de updated_checkout
+			// Após CEP/frete mudar, atualiza preview de parcelas e quotes
+			$(document.body).one('updated_checkout', function() {
+				setTimeout(function() {
+					if (lastCartSummaryData) {
+						updateInstallmentsPreview(lastCartSummaryData);
+					}
+					maybeFetchInstallmentQuotes();
+				}, 200);
+			});
 		}
-		
-		// Atualiza o resumo do topo após um delay maior para o WooCommerce processar
-		setTimeout(function() {
-			loadCartSummary();
-		}, 1000);
 
 		renderShippingSummary(lastCartSummaryData);
 	}
