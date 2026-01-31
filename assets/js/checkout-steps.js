@@ -890,22 +890,20 @@
 		}
 	}
 
+/**
+ * Retorna totais para exibição a partir dos dados do backend (resumo do carrinho).
+ * Não recalcula valores no frontend; usa apenas total/base_total enviados pelo plugin.
+ */
 function getInstallmentDisplayTotals(summaryData) {
 	const rawTotal = summaryData && summaryData.total ? parsePriceValue(summaryData.total) : 0;
-	const summaryTotal = lastSummaryTotals && Number.isFinite(lastSummaryTotals.totalValue)
-		? lastSummaryTotals.totalValue
-		: 0;
-	const shippingTotal = lastSummaryTotals && Number.isFinite(lastSummaryTotals.selectedTotal)
-		? lastSummaryTotals.selectedTotal
-		: 0;
-	const shouldAddShipping = shippingTotal > 0 && summaryTotal > 0 && rawTotal > 0 && rawTotal + 0.01 < summaryTotal;
-	const displayTotal = shouldAddShipping ? rawTotal + shippingTotal : rawTotal;
+	const baseTotal = summaryData && summaryData.base_total ? parsePriceValue(summaryData.base_total) : rawTotal;
 	return {
 		rawTotal,
-		displayTotal,
-		shippingTotal,
-		shouldAddShipping,
-		summaryTotal,
+		displayTotal: rawTotal,
+		baseTotal,
+		shippingTotal: (lastSummaryTotals && Number.isFinite(lastSummaryTotals.selectedTotal)) ? lastSummaryTotals.selectedTotal : 0,
+		shouldAddShipping: false,
+		summaryTotal: (lastSummaryTotals && Number.isFinite(lastSummaryTotals.totalValue)) ? lastSummaryTotals.totalValue : rawTotal,
 	};
 }
 

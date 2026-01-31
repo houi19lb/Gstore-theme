@@ -4752,7 +4752,9 @@ if ( ! function_exists( 'gstore_apply_cart_freight_fees' ) ) {
 		}
 	}
 }
-add_action( 'woocommerce_cart_calculate_fees', 'gstore_apply_cart_freight_fees', 20 );
+if ( ! defined( 'GSTORE_CORE_ACTIVE' ) ) {
+	add_action( 'woocommerce_cart_calculate_fees', 'gstore_apply_cart_freight_fees', 20 );
+}
 
 /**
  * Identifica a região de envio baseado no estado ou CEP.
