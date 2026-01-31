@@ -4404,7 +4404,6 @@ main:not(.Gstore-blog-shell):not(.Gstore-blog-single-shell) {
 	bottom: 16px;
 	left: 50%;
 	transform: translateX(-50%);
-	display: inline-flex;
 	gap: 10px;
 	background: rgba(0, 0, 0, 0.4);
 	padding: 6px 12px;
