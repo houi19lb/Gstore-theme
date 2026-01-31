@@ -375,8 +375,7 @@ function gstore_inline_critical_css() {
 		
 		.Gstore-hero-slider__slide img {
 			width: 100%;
-			height: 100%;
-			object-fit: cover;
+			height: auto;
 			display: block;
 		}
 	';
