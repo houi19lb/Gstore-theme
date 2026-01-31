@@ -133,10 +133,10 @@
 	font-size: var(--gstore-font-size-base);
 }
 
-/* Logo no footer */
+/* Logo no footer - 30px entre a imagem e o texto abaixo (sem alterar classes gerais de img) */
 .footer-column .footer-logo,
 .footer-column .wp-block-site-logo.footer-logo {
-	margin-bottom: 15px;
+	margin-bottom: 30px;
 	display: block;
 }
 
