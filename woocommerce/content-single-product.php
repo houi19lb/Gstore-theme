@@ -762,8 +762,11 @@ if ( $reviews_has_value ) {
 				<div class="Gstore-single-product__summary">
 					<div class="Gstore-single-product__summary-card Gstore-single-product__buybox buybox <?php echo esc_attr( $buybox_stock_class ); ?>">
 						<!-- Preço -->
-						<?php if ( ! $is_out_of_stock ) : ?>
-							<div class="buybox-header">
+						<?php
+						$show_price_oos = get_option( 'gstore_show_price_out_of_stock', 'no' ) === 'yes';
+						if ( ! $is_out_of_stock || $show_price_oos ) :
+							?>
+							<div class="buybox-header<?php echo ( $is_out_of_stock && $show_price_oos ) ? ' is-unavailable' : ''; ?>">
 								<div>
 									<div class="price-label"><?php esc_html_e( 'À vista no PIX', 'gstore' ); ?></div>
 									<div class="price" id="price" data-gstore-price>
@@ -798,6 +801,12 @@ if ( $reviews_has_value ) {
 								<button type="button" class="btn-secondary" data-gstore-reset-purchase>
 									<?php esc_html_e( 'Limpar', 'gstore' ); ?>
 								</button>
+								<?php if ( $is_out_of_stock && $show_price_oos ) : ?>
+									<div class="price-unavailable-notice">
+										<i class="fa-solid fa-circle-info" aria-hidden="true"></i>
+										<?php esc_html_e( 'Preço de referência (produto indisponível)', 'gstore' ); ?>
+									</div>
+								<?php endif; ?>
 							</div>
 						<?php endif; ?>
 

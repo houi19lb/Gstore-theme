@@ -3106,6 +3106,30 @@ body.single-product .onsale {
 	margin-bottom: 16px;
 }
 
+/* Preço em produtos indisponíveis (quando toggle ativo) */
+.buybox-header.is-unavailable {
+	opacity: 0.75;
+}
+
+.price-unavailable-notice {
+	background: #fef3c7;
+	border: 1px solid #fbbf24;
+	color: #92400e;
+	padding: 10px 14px;
+	border-radius: 6px;
+	font-size: 13px;
+	margin-top: 12px;
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	font-weight: 500;
+}
+
+.price-unavailable-notice i {
+	color: #d97706;
+	font-size: 16px;
+}
+
 /* Card: Produto indisponível */
 .buybox .Gstore-oos-card {
 	margin-top: 16px;
