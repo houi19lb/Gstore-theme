@@ -133,11 +133,16 @@
 	font-size: var(--gstore-font-size-base);
 }
 
-/* Logo no footer - 30px entre a imagem e o texto abaixo (sem alterar classes gerais de img) */
+/* Logo no footer - espaço só para baixo (bloco pode ter footer-logo ou Gstore-header__logo) */
 .footer-column .footer-logo,
-.footer-column .wp-block-site-logo.footer-logo {
-	margin-bottom: 30px;
+.footer-column .wp-block-site-logo.footer-logo,
+.footer-column .wp-block-site-logo.Gstore-header__logo {
 	display: block;
+}
+
+/* Só distância para baixo: padding-bottom no bloco da logo (evita empurrar para cima) */
+.footer-column .wp-block-site-logo.Gstore-header__logo {
+	padding-bottom: 30px;
 }
 
 .footer-column .footer-logo a,
