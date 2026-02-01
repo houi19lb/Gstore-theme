@@ -391,7 +391,6 @@
 			
 		// Handler para cliques nos labels de pagamento (sem disparar update_checkout)
 		function selectPaymentMethod(selectedMethod) {
-			if (selectedMethod) lastSelectedPaymentMethod = selectedMethod;
 			const $livePixRadio = $('input[name="payment_method"][value="blu_pix"]');
 			const $liveCheckoutRadio = $('input[name="payment_method"][value="blu_checkout"]');
 			
@@ -1326,10 +1325,7 @@ function getInstallmentDisplayTotals(summaryData) {
 		const otherFees = [];
 		const lastStepIndex = STEPS.length - 1;
 		const isOnLastStep = typeof currentStep !== 'undefined' && currentStep === lastStepIndex;
-		// Na etapa 2 usar lastSelectedPaymentMethod para PIX (DOM pode ter radio errado).
-		const currentPaymentMethod = (typeof currentStep !== 'undefined' && currentStep === 2)
-			? (lastSelectedPaymentMethod || ($('input[name="payment_method"]:checked').val() || ''))
-			: ($('input[name="payment_method"]:checked').val() || '');
+		const currentPaymentMethod = ($('input[name="payment_method"]:checked').val() || '');
 		// PIX não tem taxa de parcelamento: nunca exibir no resumo quando método é PIX.
 		fees.forEach(function (fee) {
 			const label = (fee && (fee.label || fee.name)) ? String(fee.label || fee.name).trim() : '';
@@ -1357,6 +1353,9 @@ function getInstallmentDisplayTotals(summaryData) {
 			selectedLandTotal,
 			selectedAirTotal,
 		};
+		// #region agent log
+		fetch('http://127.0.0.1:7246/ingest/82530f36-f41c-4a9b-9141-c3c4bf366209',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'renderShippingSummary:setLastSummaryTotals',message:'Set lastSummaryTotals',data:{totalValue,selectedTotal,subtotalValue,selectedModes:Array.from(selectedModes),feesTotal},timestamp:Date.now(),sessionId:'debug-session',runId:'v5',hypothesisId:'H6-H8'})}).catch(()=>{});
+		// #endregion
 
 		let totalsHtml = `
 			<div class="Gstore-checkout-shipping-totals__row">
@@ -1463,6 +1462,9 @@ function getInstallmentDisplayTotals(summaryData) {
 	}
 
 	function updateOrderReviewTotals() {
+		// #region agent log
+		fetch('http://127.0.0.1:7246/ingest/82530f36-f41c-4a9b-9141-c3c4bf366209',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'updateOrderReviewTotals:entry',message:'Called',data:{hasLastSummaryTotals:!!lastSummaryTotals,totalValue:lastSummaryTotals?lastSummaryTotals.totalValue:null,selectedTotal:lastSummaryTotals?lastSummaryTotals.selectedTotal:null,selectedModes:lastSummaryTotals?lastSummaryTotals.selectedModes:null,feesTotal:lastSummaryTotals?lastSummaryTotals.feesTotal:null},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix-v5',hypothesisId:'H6'})}).catch(()=>{});
+		// #endregion
 		if (!lastSummaryTotals) {
 			return;
 		}
@@ -1503,12 +1505,10 @@ function getInstallmentDisplayTotals(summaryData) {
 		if ($subtotalRow.length && rowsHtml) {
 			$subtotalRow.after(rowsHtml);
 		}
-		// Na etapa 2 usar lastSelectedPaymentMethod para não depender do DOM (que pode ter radio errado após fragments).
-		const effectivePaymentMethod = (typeof currentStep !== 'undefined' && currentStep === 2)
-			? (lastSelectedPaymentMethod || ($('input[name="payment_method"]:checked').val() || ''))
-			: ($('input[name="payment_method"]:checked').val() || '');
+		// Remove a linha "Taxa de parcelamento" quando não está na etapa final ou quando pagamento é PIX.
+		const currentPaymentMethod = ($('input[name="payment_method"]:checked').val() || '');
 		let feeRowsRemoved = 0;
-		const shouldHideFee = currentStep !== 2 || effectivePaymentMethod === 'blu_pix';
+		const shouldHideFee = currentStep !== 2 || currentPaymentMethod === 'blu_pix';
 		if (shouldHideFee) {
 			$table.find('tr').each(function() {
 				const $row = $(this);
@@ -1518,8 +1518,11 @@ function getInstallmentDisplayTotals(summaryData) {
 				}
 			});
 		}
+		// #region agent log
+		fetch('http://127.0.0.1:7246/ingest/82530f36-f41c-4a9b-9141-c3c4bf366209',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'updateOrderReviewTotals:afterFeeRemoval',message:'Fee row removal',data:{currentStep,feeRowsRemoved,currentPaymentMethod},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix-v5',hypothesisId:'H10'})}).catch(()=>{});
+		// #endregion
 		// Quando PIX: total exibido deve ser sem taxa (totalValue - feesTotal).
-		const displayTotal = (effectivePaymentMethod === 'blu_pix' && lastSummaryTotals.feesTotal)
+		const displayTotal = (currentPaymentMethod === 'blu_pix' && lastSummaryTotals.feesTotal)
 			? (lastSummaryTotals.totalValue || 0) - (lastSummaryTotals.feesTotal || 0)
 			: (lastSummaryTotals.totalValue || 0);
 		if ($orderTotal.length) {
@@ -1817,6 +1820,10 @@ function getInstallmentDisplayTotals(summaryData) {
 		if (index < 0 || index >= STEPS.length) return;
 
 		currentStep = index;
+		
+		// #region agent log
+		fetch('http://127.0.0.1:7246/ingest/82530f36-f41c-4a9b-9141-c3c4bf366209',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'setActiveStep',message:'Changing step',data:{newStep:index,stepName:STEPS[index]?STEPS[index].id:'unknown',lastSummaryTotals_before:lastSummaryTotals?{totalValue:lastSummaryTotals.totalValue,selectedTotal:lastSummaryTotals.selectedTotal}:null},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix-v5',hypothesisId:'H9'})}).catch(()=>{});
+		// #endregion
 
 		// Atualiza campo enviado ao backend para só carregar taxa de parcelamento na etapa 3
 		const $stepInput = $('#gstore_checkout_step');
@@ -2044,17 +2051,7 @@ function getInstallmentDisplayTotals(summaryData) {
 		if (!validateCurrentStep()) {
 			return;
 		}
-		// Ao sair da etapa 0, captura o método selecionado (preferir PIX se algum radio PIX estiver marcado).
-		if (currentStep === 0) {
-			const $checked = $('input[name="payment_method"]:checked');
-			if ($checked.length) {
-				let val = $checked.first().val();
-				$checked.each(function() {
-					if ($(this).val() === 'blu_pix') { val = 'blu_pix'; return false; }
-				});
-				lastSelectedPaymentMethod = val;
-			}
-		}
+
 		if (currentStep < STEPS.length - 1) {
 			setActiveStep(currentStep + 1);
 			$(document.body).trigger('update_checkout');
@@ -2075,9 +2072,7 @@ function getInstallmentDisplayTotals(summaryData) {
 	 */
 	function loadCartSummary() {
 		const $selectedMethod = $('input[name="payment_method"]:checked');
-		// Na etapa 2 não usar o DOM para método: painel de pagamento pode estar oculto/reordenado e retornar o radio errado (cartão). Usar só lastSelectedPaymentMethod.
-		const fromDom = (typeof currentStep !== 'undefined' && currentStep === 2) ? '' : ($selectedMethod.length ? $selectedMethod.val() : '');
-		const paymentMethod = fromDom || lastSelectedPaymentMethod || '';
+		const paymentMethod = $selectedMethod.length ? $selectedMethod.val() : '';
 		const installmentsValue = $('#gstore_blu_installments').val() || $('#gstore_blu_installments_select').val() || '';
 		const $form = $('form.checkout').first();
 		const postData = $form.length ? $form.serialize() : '';
@@ -2094,6 +2089,9 @@ function getInstallmentDisplayTotals(summaryData) {
 				post_data: postData
 			},
 			success: function(response) {
+				// #region agent log
+				fetch('http://127.0.0.1:7246/ingest/82530f36-f41c-4a9b-9141-c3c4bf366209',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'loadCartSummary:success',message:'AJAX completed',data:{success:response.success,hasData:!!response.data,total:response.data?response.data.total:null},timestamp:Date.now(),sessionId:'debug-session',runId:'v5',hypothesisId:'H6'})}).catch(()=>{});
+				// #endregion
 				if (response.success) {
 					renderSummary(response.data);
 				}
@@ -2400,6 +2398,9 @@ function getInstallmentDisplayTotals(summaryData) {
 
 		// Atualiza resumo quando checkout é atualizado
 		$(document.body).on('updated_checkout', function() {
+			// #region agent log
+			fetch('http://127.0.0.1:7246/ingest/82530f36-f41c-4a9b-9141-c3c4bf366209',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'updated_checkout:start',message:'Event fired',data:{currentStep,lastSummaryTotals_before:lastSummaryTotals?{totalValue:lastSummaryTotals.totalValue,selectedTotal:lastSummaryTotals.selectedTotal}:null},timestamp:Date.now(),sessionId:'debug-session',runId:'v5',hypothesisId:'H6-H7'})}).catch(()=>{});
+			// #endregion
 			loadCartSummary();
 			// O WooCommerce pode re-renderizar fragments; garante que o DOM continue dentro das etapas
 			setTimeout(organizeFields, 0);
@@ -3018,27 +3019,16 @@ function getInstallmentDisplayTotals(summaryData) {
 		setTimeout(init, 100);
 	});
 
-	// Variável para armazenar o método selecionado antes do update (usado em loadCartSummary quando o DOM não reflete a escolha, ex. etapa 2 com PIX).
+	// Variável para armazenar o método selecionado antes do update
 	let lastSelectedPaymentMethod = null;
-
-	// Atualiza lastSelectedPaymentMethod no clique para que loadCartSummary envie o método correto mesmo antes de update_checkout.
-	$(document.body).on('change', 'input[name="payment_method"]', function() {
-		const v = $(this).val();
-		if (v) lastSelectedPaymentMethod = v;
-	});
-
-	// Armazena a seleção antes do update apenas na etapa 0. Preferir PIX quando algum radio PIX estiver marcado (evita primeiro :checked no DOM ser cartão).
+	
+	// Armazena a seleção antes do update e garante campos hidden de frete
 	$(document.body).on('update_checkout', function() {
-		if (typeof currentStep !== 'undefined' && currentStep === 0) {
-			const $checked = $('input[name="payment_method"]:checked');
-			if ($checked.length) {
-				let val = $checked.first().val();
-				$checked.each(function() {
-					if ($(this).val() === 'blu_pix') { val = 'blu_pix'; return false; }
-				});
-				lastSelectedPaymentMethod = val;
-			}
+		const $selected = $('input[name="payment_method"]:checked');
+		if ($selected.length) {
+			lastSelectedPaymentMethod = $selected.val();
 		}
+		
 		// CORREÇÃO CRÍTICA: Garante que os campos de frete estejam no form
 		// ANTES do WooCommerce serializar o form para update_order_review
 		updateCheckoutShippingHiddenFields();
