@@ -423,10 +423,10 @@
 				// Ao escolher PIX: bloqueia taxas na hora (remove linha e atualiza totais sem esperar AJAX).
 				if (!isCheckout) {
 					applyPixTotalsImmediate();
+					// #region agent log
+					fetch('http://127.0.0.1:7246/ingest/82530f36-f41c-4a9b-9141-c3c4bf366209',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'selectPaymentMethod:PIX',message:'user selected PIX',data:{selectedMethod:'blu_pix',currentStep:typeof currentStep!=='undefined'?currentStep:null},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H3-H5'})}).catch(()=>{});
+					// #endregion
 				}
-
-				// Atualiza a linha "Pagamento" nos detalhes imediatamente (evita mostrar "Cartão" ao clicar em PIX)
-				updateSummaryPaymentRow();
 
 				// Atualiza totais/sessão do WooCommerce
 				$(document.body).trigger('update_checkout');
@@ -2071,40 +2071,6 @@ function getInstallmentDisplayTotals(summaryData) {
 	}
 
 	/**
-	 * Retorna o título do método de pagamento atualmente selecionado no formulário.
-	 * Usa o valor do radio (blu_pix/blu_checkout) para mapear quando o radio é o original oculto
-	 * (fora de .Gstore-blu-payment-option), evitando mostrar "Cartão" quando o usuário escolheu PIX.
-	 * @returns {string}
-	 */
-	function getPaymentTitleForDisplay() {
-		const $checked = $('input[name="payment_method"]:checked').first();
-		if (!$checked.length) return '';
-		const labelFromOption = $checked.closest('.Gstore-blu-payment-option').find('span').first().text().trim();
-		const labelFromLi = $checked.closest('li').find('label').first().text().trim();
-		if (labelFromOption) return labelFromOption;
-		if (labelFromLi) return labelFromLi;
-		const val = $checked.val();
-		if (val === 'blu_pix') return 'Pix';
-		if (val === 'blu_checkout') return 'Cartão (Link de Pagamento)';
-		return '';
-	}
-
-	/**
-	 * Atualiza apenas a linha "Pagamento" no resumo (detalhes) com o método atualmente selecionado.
-	 */
-	function updateSummaryPaymentRow() {
-		const title = getPaymentTitleForDisplay();
-		if (!title) return;
-		const $totals = $('.Gstore-checkout-summary-top__totals');
-		const $paymentRow = $totals.find('.Gstore-summary-row').filter(function() {
-			return $(this).find('span').first().text().trim() === 'Pagamento';
-		});
-		if ($paymentRow.length) {
-			$paymentRow.find('span').last().text(title);
-		}
-	}
-
-	/**
 	 * Carrega o resumo do carrinho via AJAX
 	 */
 	function loadCartSummary() {
@@ -2115,6 +2081,9 @@ function getInstallmentDisplayTotals(summaryData) {
 		const postData = $form.length ? $form.serialize() : '';
 		// Envia etapa atual explicitamente para o backend não aplicar taxa de parcelamento quando o usuário voltou de etapa
 		const stepValue = typeof currentStep !== 'undefined' ? currentStep : ( $('#gstore_checkout_step').val() || 0 );
+		// #region agent log
+		fetch('http://127.0.0.1:7246/ingest/82530f36-f41c-4a9b-9141-c3c4bf366209',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'loadCartSummary:request',message:'sending',data:{paymentMethod,stepValue,postDataHasPayment:postData.indexOf('payment_method')!==-1},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H3-H5'})}).catch(()=>{});
+		// #endregion
 		$.ajax({
 			url: wc_checkout_params.ajax_url,
 			type: 'POST',
@@ -2199,14 +2168,16 @@ function getInstallmentDisplayTotals(summaryData) {
 		// Renderiza totais
 		let totalsHtml = '';
 
-		// Método de pagamento: usa sempre o valor do formulário; mapeia por value quando o radio é o original oculto
-		// (fora de .Gstore-blu-payment-option), assim evita mostrar "Cartão" quando o usuário já clicou em PIX.
-		const paymentTitleToShow = getPaymentTitleForDisplay() || data.payment_method_title || '';
-		if (paymentTitleToShow) {
+		// Método de pagamento selecionado (Pix, Cartão, etc.)
+		const domPaymentMethod = ($('input[name="payment_method"]:checked').val() || '');
+		// #region agent log
+		fetch('http://127.0.0.1:7246/ingest/82530f36-f41c-4a9b-9141-c3c4bf366209',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'renderSummary:payment',message:'data vs DOM',data:{dataPaymentMethod:data.payment_method,dataTitle:data.payment_method_title,domPaymentMethod,currentStep:typeof currentStep!=='undefined'?currentStep:null},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H3'})}).catch(()=>{});
+		// #endregion
+		if (data.payment_method_title) {
 			totalsHtml += `
 				<div class="Gstore-summary-row">
 					<span>Pagamento</span>
-					<span>${paymentTitleToShow}</span>
+					<span>${data.payment_method_title}</span>
 				</div>
 			`;
 		}
@@ -2368,14 +2339,6 @@ function getInstallmentDisplayTotals(summaryData) {
 				(isOpen ? 'Ocultar detalhes' : 'Ver detalhes') +
 				' <i class="fa-solid fa-chevron-down"></i>'
 			);
-			if (isOpen) {
-				updateSummaryPaymentRow();
-			}
-		});
-
-		// Ao trocar o método de pagamento (PIX/Cartão), atualiza imediatamente a linha "Pagamento" nos detalhes
-		$(document.body).on('change', 'input[name="payment_method"]', function() {
-			updateSummaryPaymentRow();
 		});
 
 		// Seleção do frete por item no resumo
