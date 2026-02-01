@@ -418,12 +418,7 @@
 
 				// Esconde/mostra parcelamento imediatamente (PIX não tem parcelamento)
 				$('.Gstore-blu-installments').toggle(isCheckout);
-
-				// CORREÇÃO: Reseta parcelas para 1 quando muda para PIX
-				if (!isCheckout) {
-					$('#gstore_blu_installments').val('1');
-					$('#gstore_blu_installments_select').val('1');
-				}
+				// Não reseta parcelas ao trocar para PIX: mantém o valor no cartão para quando voltar.
 
 				// Atualiza totais/sessão do WooCommerce
 				$(document.body).trigger('update_checkout');
