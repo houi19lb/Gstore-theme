@@ -1323,12 +1323,17 @@ function getInstallmentDisplayTotals(summaryData) {
 		const fees = (data && data.totals && data.totals.fees && Array.isArray(data.totals.fees)) ? data.totals.fees : [];
 		let feesTotal = 0;
 		const otherFees = [];
+		const lastStepIndex = STEPS.length - 1;
+		const isOnLastStep = typeof currentStep !== 'undefined' && currentStep === lastStepIndex;
 		fees.forEach(function (fee) {
 			const label = (fee && (fee.label || fee.name)) ? String(fee.label || fee.name).trim() : '';
 			const total = fee && Number.isFinite(Number(fee.total)) ? Number(fee.total) : parsePriceValue((fee && fee.total) ? String(fee.total) : '0');
 			if (!label) return;
 			const isFrete = label.toLowerCase().indexOf('frete') !== -1;
 			if (isFrete) return;
+			// FALLBACK: não exibir taxa de parcelamento quando não está na etapa final (evita persistência ao voltar)
+			const isParcelamento = label.toLowerCase().indexOf('parcelamento') !== -1;
+			if (isParcelamento && !isOnLastStep) return;
 			otherFees.push({ label: label, total: total });
 			feesTotal += total;
 		});
@@ -1466,6 +1471,16 @@ function getInstallmentDisplayTotals(summaryData) {
 
 		if ($subtotalRow.length && rowsHtml) {
 			$subtotalRow.after(rowsHtml);
+		}
+		// Quando não está na etapa final (pagamento), remove a linha "Taxa de parcelamento" do Resumo do Pedido
+		// para evitar que a taxa persista visualmente ao voltar das etapas.
+		if (currentStep !== 2) {
+			$table.find('tr').each(function() {
+				const $row = $(this);
+				if ($row.text().indexOf('Taxa de parcelamento') !== -1) {
+					$row.remove();
+				}
+			});
 		}
 		if ($orderTotal.length) {
 			$orderTotal.html(formatCurrency(lastSummaryTotals.totalValue || 0));
