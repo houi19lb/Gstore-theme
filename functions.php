@@ -11763,8 +11763,7 @@ function gstore_resolve_home_relative_urls( $content ) {
 	return $content;
 }
 
-add_filter( 'render_block_core/template-part', 'gstore_resolve_home_relative_urls', 20, 1 );
-add_filter( 'render_block_core/html', 'gstore_resolve_home_relative_urls', 20, 1 );
+add_filter( 'render_block', 'gstore_resolve_home_relative_urls', 20, 1 );
 add_filter( 'the_content', 'gstore_resolve_home_relative_urls', 25 );
 
 // ============================================
