@@ -420,6 +420,11 @@
 				$('.Gstore-blu-installments').toggle(isCheckout);
 				// Não reseta parcelas ao trocar para PIX: mantém o valor no cartão para quando voltar.
 
+				// Ao escolher PIX: bloqueia taxas na hora (remove linha e atualiza totais sem esperar AJAX).
+				if (!isCheckout) {
+					applyPixTotalsImmediate();
+				}
+
 				// Atualiza totais/sessão do WooCommerce
 				$(document.body).trigger('update_checkout');
 			}
@@ -1320,15 +1325,17 @@ function getInstallmentDisplayTotals(summaryData) {
 		const otherFees = [];
 		const lastStepIndex = STEPS.length - 1;
 		const isOnLastStep = typeof currentStep !== 'undefined' && currentStep === lastStepIndex;
+		const currentPaymentMethod = ($('input[name="payment_method"]:checked').val() || '');
+		// PIX não tem taxa de parcelamento: nunca exibir no resumo quando método é PIX.
 		fees.forEach(function (fee) {
 			const label = (fee && (fee.label || fee.name)) ? String(fee.label || fee.name).trim() : '';
 			const total = fee && Number.isFinite(Number(fee.total)) ? Number(fee.total) : parsePriceValue((fee && fee.total) ? String(fee.total) : '0');
 			if (!label) return;
 			const isFrete = label.toLowerCase().indexOf('frete') !== -1;
 			if (isFrete) return;
-			// FALLBACK: não exibir taxa de parcelamento quando não está na etapa final (evita persistência ao voltar)
+			// Não exibir taxa de parcelamento quando não está na etapa final ou quando pagamento é PIX.
 			const isParcelamento = label.toLowerCase().indexOf('parcelamento') !== -1;
-			if (isParcelamento && !isOnLastStep) return;
+			if (isParcelamento && (!isOnLastStep || currentPaymentMethod === 'blu_pix')) return;
 			otherFees.push({ label: label, total: total });
 			feesTotal += total;
 		});
@@ -1423,6 +1430,37 @@ function getInstallmentDisplayTotals(summaryData) {
 		$totals.html(totalsHtml);
 	}
 
+	/**
+	 * Ao selecionar PIX: remove taxa de parcelamento e atualiza totais imediatamente (sem esperar AJAX).
+	 * Assim as taxas ficam bloqueadas no momento do clique.
+	 */
+	function applyPixTotalsImmediate() {
+		if (!lastSummaryTotals || !(lastSummaryTotals.feesTotal > 0)) {
+			return;
+		}
+		const feeValue = lastSummaryTotals.feesTotal || 0;
+		const newTotal = (lastSummaryTotals.totalValue || 0) - feeValue;
+		lastSummaryTotals = Object.assign({}, lastSummaryTotals, { feesTotal: 0, totalValue: newTotal });
+
+		const $orderReview = $('#order_review');
+		const $table = $orderReview.find('.shop_table').first();
+		if ($table.length) {
+			$table.find('tr').each(function() {
+				const $row = $(this);
+				if ($row.text().indexOf('Taxa de parcelamento') !== -1) {
+					$row.remove();
+				}
+			});
+			const $orderTotal = $table.find('.order-total .woocommerce-Price-amount').first();
+			if ($orderTotal.length) {
+				$orderTotal.html(formatCurrency(newTotal));
+			}
+		}
+		if (lastCartSummaryData) {
+			renderShippingSummary(lastCartSummaryData);
+		}
+	}
+
 	function updateOrderReviewTotals() {
 		// #region agent log
 		fetch('http://127.0.0.1:7246/ingest/82530f36-f41c-4a9b-9141-c3c4bf366209',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'updateOrderReviewTotals:entry',message:'Called',data:{hasLastSummaryTotals:!!lastSummaryTotals,totalValue:lastSummaryTotals?lastSummaryTotals.totalValue:null,selectedTotal:lastSummaryTotals?lastSummaryTotals.selectedTotal:null,selectedModes:lastSummaryTotals?lastSummaryTotals.selectedModes:null,feesTotal:lastSummaryTotals?lastSummaryTotals.feesTotal:null},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix-v5',hypothesisId:'H6'})}).catch(()=>{});
@@ -1467,10 +1505,11 @@ function getInstallmentDisplayTotals(summaryData) {
 		if ($subtotalRow.length && rowsHtml) {
 			$subtotalRow.after(rowsHtml);
 		}
-		// Quando não está na etapa final (pagamento), remove a linha "Taxa de parcelamento" do Resumo do Pedido
-		// para evitar que a taxa persista visualmente ao voltar das etapas.
+		// Remove a linha "Taxa de parcelamento" quando não está na etapa final ou quando pagamento é PIX.
+		const currentPaymentMethod = ($('input[name="payment_method"]:checked').val() || '');
 		let feeRowsRemoved = 0;
-		if (currentStep !== 2) {
+		const shouldHideFee = currentStep !== 2 || currentPaymentMethod === 'blu_pix';
+		if (shouldHideFee) {
 			$table.find('tr').each(function() {
 				const $row = $(this);
 				if ($row.text().indexOf('Taxa de parcelamento') !== -1) {
@@ -1480,10 +1519,14 @@ function getInstallmentDisplayTotals(summaryData) {
 			});
 		}
 		// #region agent log
-		fetch('http://127.0.0.1:7246/ingest/82530f36-f41c-4a9b-9141-c3c4bf366209',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'updateOrderReviewTotals:afterFeeRemoval',message:'Fee row removal',data:{currentStep,feeRowsRemoved},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix-v5',hypothesisId:'H10'})}).catch(()=>{});
+		fetch('http://127.0.0.1:7246/ingest/82530f36-f41c-4a9b-9141-c3c4bf366209',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'updateOrderReviewTotals:afterFeeRemoval',message:'Fee row removal',data:{currentStep,feeRowsRemoved,currentPaymentMethod},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix-v5',hypothesisId:'H10'})}).catch(()=>{});
 		// #endregion
+		// Quando PIX: total exibido deve ser sem taxa (totalValue - feesTotal).
+		const displayTotal = (currentPaymentMethod === 'blu_pix' && lastSummaryTotals.feesTotal)
+			? (lastSummaryTotals.totalValue || 0) - (lastSummaryTotals.feesTotal || 0)
+			: (lastSummaryTotals.totalValue || 0);
 		if ($orderTotal.length) {
-			$orderTotal.html(formatCurrency(lastSummaryTotals.totalValue || 0));
+			$orderTotal.html(formatCurrency(displayTotal));
 		}
 	}
 
