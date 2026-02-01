@@ -2013,6 +2013,8 @@ function getInstallmentDisplayTotals(summaryData) {
 		const installmentsValue = $('#gstore_blu_installments').val() || $('#gstore_blu_installments_select').val() || '';
 		const $form = $('form.checkout').first();
 		const postData = $form.length ? $form.serialize() : '';
+		// Envia etapa atual explicitamente para o backend não aplicar taxa de parcelamento quando o usuário voltou de etapa
+		const stepValue = typeof currentStep !== 'undefined' ? currentStep : ( $('#gstore_checkout_step').val() || 0 );
 		$.ajax({
 			url: wc_checkout_params.ajax_url,
 			type: 'POST',
@@ -2020,6 +2022,7 @@ function getInstallmentDisplayTotals(summaryData) {
 				action: 'gstore_get_cart_summary',
 				payment_method: paymentMethod,
 				gstore_blu_installments: installmentsValue,
+				gstore_checkout_step: stepValue,
 				post_data: postData
 			},
 			success: function(response) {
