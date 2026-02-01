@@ -1474,14 +1474,19 @@ function getInstallmentDisplayTotals(summaryData) {
 		}
 		// Quando não está na etapa final (pagamento), remove a linha "Taxa de parcelamento" do Resumo do Pedido
 		// para evitar que a taxa persista visualmente ao voltar das etapas.
+		let feeRowsRemoved = 0;
 		if (currentStep !== 2) {
 			$table.find('tr').each(function() {
 				const $row = $(this);
 				if ($row.text().indexOf('Taxa de parcelamento') !== -1) {
 					$row.remove();
+					feeRowsRemoved++;
 				}
 			});
 		}
+		// #region agent log
+		fetch('http://127.0.0.1:7246/ingest/82530f36-f41c-4a9b-9141-c3c4bf366209',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'updateOrderReviewTotals:afterFeeRemoval',message:'Fee row removal',data:{currentStep,feeRowsRemoved},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix-v5',hypothesisId:'H10'})}).catch(()=>{});
+		// #endregion
 		if ($orderTotal.length) {
 			$orderTotal.html(formatCurrency(lastSummaryTotals.totalValue || 0));
 		}
@@ -2356,14 +2361,15 @@ function getInstallmentDisplayTotals(summaryData) {
 		// Atualiza resumo quando checkout é atualizado
 		$(document.body).on('updated_checkout', function() {
 			// #region agent log
-			fetch('http://127.0.0.1:7246/ingest/82530f36-f41c-4a9b-9141-c3c4bf366209',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'updated_checkout:start',message:'Event fired',data:{lastSummaryTotals_before:lastSummaryTotals?{totalValue:lastSummaryTotals.totalValue,selectedTotal:lastSummaryTotals.selectedTotal}:null},timestamp:Date.now(),sessionId:'debug-session',runId:'v5',hypothesisId:'H6-H7'})}).catch(()=>{});
+			fetch('http://127.0.0.1:7246/ingest/82530f36-f41c-4a9b-9141-c3c4bf366209',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'updated_checkout:start',message:'Event fired',data:{currentStep,lastSummaryTotals_before:lastSummaryTotals?{totalValue:lastSummaryTotals.totalValue,selectedTotal:lastSummaryTotals.selectedTotal}:null},timestamp:Date.now(),sessionId:'debug-session',runId:'v5',hypothesisId:'H6-H7'})}).catch(()=>{});
 			// #endregion
 			loadCartSummary();
 			// O WooCommerce pode re-renderizar fragments; garante que o DOM continue dentro das etapas
 			setTimeout(organizeFields, 0);
 			setTimeout(ensureBluInstallmentsUI, 0);
-			// REMOVIDO: setTimeout(updateOrderReviewTotals, 0) - movido para dentro de renderSummary()
-			// para executar APÓS lastSummaryTotals ser definido pelo AJAX
+			// Reaplica totais e remoção da linha "Taxa de parcelamento" após fragments e possíveis respostas AJAX,
+			// para evitar que o fragment order_review do WC sobrescreva e traga a taxa de volta quando step !== 2.
+			setTimeout(updateOrderReviewTotals, 450);
 			
 			// Atualiza campos hidden de frete após o checkout ser atualizado (para próxima vez)
 			setTimeout(updateCheckoutShippingHiddenFields, 100);
