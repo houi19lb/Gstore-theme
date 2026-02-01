@@ -528,7 +528,7 @@ class Gstore_Blu_Payment_Gateway extends WC_Payment_Gateway {
 		$payload = $this->build_payload_from_order( $order );
 		$this->log_debug( 'Payload enviado à Blu', $payload );
 		
-		// #region agent log
+		// #region agent log — grava no mesmo arquivo do WP Admin (GStore Setup > Debug Logs)
 		$debug_data = array(
 			'sessionId'    => 'debug-session',
 			'runId'        => 'pre-fix',
@@ -547,17 +547,14 @@ class Gstore_Blu_Payment_Gateway extends WC_Payment_Gateway {
 			),
 			'timestamp'    => (int) round( microtime( true ) * 1000 ),
 		);
-		$log_line = wp_json_encode( $debug_data ) . PHP_EOL;
-		@file_put_contents( 'C:\\Users\\mathe\\GSTORE\\.cursor\\debug.log', $log_line, FILE_APPEND );
-		if ( function_exists( 'wp_upload_dir' ) ) {
-			$uploads = wp_upload_dir();
-			if ( ! empty( $uploads['basedir'] ) ) {
-				$log_dir = $uploads['basedir'] . '/gstore-debug-logs';
-				if ( ! file_exists( $log_dir ) ) {
-					wp_mkdir_p( $log_dir );
-				}
-				@file_put_contents( $log_dir . '/debug.log', $log_line, FILE_APPEND );
+		$log_line = wp_json_encode( $debug_data ) . "\n";
+		$uploads = function_exists( 'wp_upload_dir' ) ? wp_upload_dir() : array();
+		if ( ! empty( $uploads['basedir'] ) ) {
+			$log_dir = $uploads['basedir'] . '/gstore-debug-logs';
+			if ( ! file_exists( $log_dir ) ) {
+				wp_mkdir_p( $log_dir );
 			}
+			@file_put_contents( $log_dir . '/debug.log', $log_line, FILE_APPEND | LOCK_EX );
 		}
 		// #endregion
 
