@@ -2162,12 +2162,23 @@ function getInstallmentDisplayTotals(summaryData) {
 		// Renderiza totais
 		let totalsHtml = '';
 
-		// Método de pagamento selecionado (Pix, Cartão, etc.)
-		if (data.payment_method_title) {
+		// Método de pagamento: prioriza o radio selecionado no formulário (evita "piscar" Cartão quando o usuário escolheu PIX
+		// e a última resposta AJAX ainda trouxe método da sessão/fragment).
+		let paymentTitleToShow = data.payment_method_title || '';
+		const $checkedPayment = $('input[name="payment_method"]:checked');
+		if ($checkedPayment.length) {
+			const labelFromLi = $checkedPayment.closest('li').find('label').first().text().trim();
+			const labelFromOption = $checkedPayment.closest('.Gstore-blu-payment-option').find('span').first().text().trim();
+			const titleFromForm = labelFromOption || labelFromLi;
+			if (titleFromForm) {
+				paymentTitleToShow = titleFromForm;
+			}
+		}
+		if (paymentTitleToShow) {
 			totalsHtml += `
 				<div class="Gstore-summary-row">
 					<span>Pagamento</span>
-					<span>${data.payment_method_title}</span>
+					<span>${paymentTitleToShow}</span>
 				</div>
 			`;
 		}
@@ -2329,6 +2340,25 @@ function getInstallmentDisplayTotals(summaryData) {
 				(isOpen ? 'Ocultar detalhes' : 'Ver detalhes') +
 				' <i class="fa-solid fa-chevron-down"></i>'
 			);
+			// Ao abrir detalhes: atualiza a linha "Pagamento" com o método atualmente selecionado no formulário,
+			// evitando mostrar "Cartão" quando o usuário já escolheu PIX (race com resposta AJAX anterior).
+			if (isOpen) {
+				const $checkedPayment = $('input[name="payment_method"]:checked');
+				if ($checkedPayment.length) {
+					const labelFromOption = $checkedPayment.closest('.Gstore-blu-payment-option').find('span').first().text().trim();
+					const labelFromLi = $checkedPayment.closest('li').find('label').first().text().trim();
+					const paymentTitle = labelFromOption || labelFromLi;
+					if (paymentTitle) {
+						const $totals = $('.Gstore-checkout-summary-top__totals');
+						const $paymentRow = $totals.find('.Gstore-summary-row').filter(function() {
+							return $(this).find('span').first().text().trim() === 'Pagamento';
+						});
+						if ($paymentRow.length && $paymentRow.find('span').last().text().trim() !== paymentTitle) {
+							$paymentRow.find('span').last().text(paymentTitle);
+						}
+					}
+				}
+			}
 		});
 
 		// Seleção do frete por item no resumo
