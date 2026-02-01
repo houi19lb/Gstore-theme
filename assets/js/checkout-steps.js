@@ -2059,7 +2059,8 @@ function getInstallmentDisplayTotals(summaryData) {
 	 */
 	function loadCartSummary() {
 		const $selectedMethod = $('input[name="payment_method"]:checked');
-		const paymentMethod = $selectedMethod.length ? $selectedMethod.val() : '';
+		// Fallback para lastSelectedPaymentMethod quando na etapa 2 o painel de método pode estar oculto ou o DOM pode ter ordem/estado inesperado após fragments.
+		const paymentMethod = ($selectedMethod.length ? $selectedMethod.val() : '') || lastSelectedPaymentMethod || '';
 		const installmentsValue = $('#gstore_blu_installments').val() || $('#gstore_blu_installments_select').val() || '';
 		const $form = $('form.checkout').first();
 		const postData = $form.length ? $form.serialize() : '';
@@ -3000,9 +3001,15 @@ function getInstallmentDisplayTotals(summaryData) {
 		setTimeout(init, 100);
 	});
 
-	// Variável para armazenar o método selecionado antes do update
+	// Variável para armazenar o método selecionado antes do update (usado em loadCartSummary quando o DOM não reflete a escolha, ex. etapa 2 com PIX).
 	let lastSelectedPaymentMethod = null;
-	
+
+	// Atualiza lastSelectedPaymentMethod no clique para que loadCartSummary envie o método correto mesmo antes de update_checkout.
+	$(document.body).on('change', 'input[name="payment_method"]', function() {
+		const v = $(this).val();
+		if (v) lastSelectedPaymentMethod = v;
+	});
+
 	// Armazena a seleção antes do update e garante campos hidden de frete
 	$(document.body).on('update_checkout', function() {
 		const $selected = $('input[name="payment_method"]:checked');
