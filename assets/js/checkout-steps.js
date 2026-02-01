@@ -1828,11 +1828,16 @@ function getInstallmentDisplayTotals(summaryData) {
 				$checkoutForm.removeClass('processing');
 			}, 200);
 		} else {
-			// FIX: Ao sair da última etapa, força recálculo do resumo para remover taxa de parcelamento
-			// caso o usuário volte para etapas anteriores
+			// FIX: Ao sair da última etapa, recarrega o resumo IMEDIATAMENTE com o passo atual (0 ou 1)
+			// para remover a taxa de parcelamento antes que fragments do WooCommerce sobrescrevam a UI
+			loadCartSummary();
 			setTimeout(function() {
 				$(document.body).trigger('update_checkout');
 			}, 100);
+			// Se o WooCommerce aplicar fragments depois e sobrescrever a tabela, reaplica nossos totais
+			setTimeout(function() {
+				updateOrderReviewTotals();
+			}, 500);
 		}
 
 		// Ao entrar na etapa de dados, verifica/calcule o frete automaticamente se o CEP já estiver preenchido
