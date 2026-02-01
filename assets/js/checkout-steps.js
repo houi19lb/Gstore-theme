@@ -606,6 +606,18 @@
 			},
 			success: function(res) {
 				isLoadingInstallmentQuotes = false;
+				// #region agent log
+				if (typeof gstoreDebugLog === 'function') {
+					gstoreDebugLog('checkout-steps.js:maybeFetchInstallmentQuotes:success', 'Resposta do AJAX de parcelas', {
+						success: res && res.success,
+						quotesCount: res && res.data && res.data.quotes ? Object.keys(res.data.quotes).length : 0,
+						quotes1x: res && res.data && res.data.quotes && res.data.quotes['1'] ? res.data.quotes['1'] : null,
+						quotes2x: res && res.data && res.data.quotes && res.data.quotes['2'] ? res.data.quotes['2'] : null,
+						quotes3x: res && res.data && res.data.quotes && res.data.quotes['3'] ? res.data.quotes['3'] : null,
+						lastCartSummaryTotal: lastCartSummaryData && lastCartSummaryData.total,
+					}, 'debug-session', 'pre-fix', 'H1');
+				}
+				// #endregion
 				if (res && res.success && res.data && res.data.quotes) {
 					installmentQuotes = res.data.quotes;
 					applyInstallmentQuotesToSelect();
@@ -897,13 +909,30 @@
 function getInstallmentDisplayTotals(summaryData) {
 	const rawTotal = summaryData && summaryData.total ? parsePriceValue(summaryData.total) : 0;
 	const baseTotal = summaryData && summaryData.base_total ? parsePriceValue(summaryData.base_total) : rawTotal;
+	const shippingTotal = (lastSummaryTotals && Number.isFinite(lastSummaryTotals.selectedTotal)) ? lastSummaryTotals.selectedTotal : 0;
+	const summaryTotal = (lastSummaryTotals && Number.isFinite(lastSummaryTotals.totalValue)) ? lastSummaryTotals.totalValue : rawTotal;
+	
+	// #region agent log
+	if (typeof gstoreDebugLog === 'function') {
+		gstoreDebugLog('checkout-steps.js:getInstallmentDisplayTotals', 'Cálculo de totais para parcelas', {
+			rawTotal: rawTotal,
+			baseTotal: baseTotal,
+			shippingTotal: shippingTotal,
+			summaryTotal: summaryTotal,
+			lastSummaryTotals: lastSummaryTotals,
+			summaryDataTotal: summaryData && summaryData.total,
+			summaryDataBaseTotal: summaryData && summaryData.base_total,
+		}, 'debug-session', 'pre-fix', 'H2');
+	}
+	// #endregion
+	
 	return {
 		rawTotal,
 		displayTotal: rawTotal,
 		baseTotal,
-		shippingTotal: (lastSummaryTotals && Number.isFinite(lastSummaryTotals.selectedTotal)) ? lastSummaryTotals.selectedTotal : 0,
+		shippingTotal: shippingTotal,
 		shouldAddShipping: false,
-		summaryTotal: (lastSummaryTotals && Number.isFinite(lastSummaryTotals.totalValue)) ? lastSummaryTotals.totalValue : rawTotal,
+		summaryTotal: summaryTotal,
 	};
 }
 
