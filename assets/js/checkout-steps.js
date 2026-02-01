@@ -1425,7 +1425,7 @@ function getInstallmentDisplayTotals(summaryData) {
 
 	function updateOrderReviewTotals() {
 		// #region agent log
-		fetch('http://127.0.0.1:7246/ingest/82530f36-f41c-4a9b-9141-c3c4bf366209',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'updateOrderReviewTotals:entry',message:'Called',data:{hasLastSummaryTotals:!!lastSummaryTotals,totalValue:lastSummaryTotals?lastSummaryTotals.totalValue:null,selectedTotal:lastSummaryTotals?lastSummaryTotals.selectedTotal:null,selectedModes:lastSummaryTotals?lastSummaryTotals.selectedModes:null},timestamp:Date.now(),sessionId:'debug-session',runId:'v5',hypothesisId:'H6'})}).catch(()=>{});
+		fetch('http://127.0.0.1:7246/ingest/82530f36-f41c-4a9b-9141-c3c4bf366209',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'updateOrderReviewTotals:entry',message:'Called',data:{hasLastSummaryTotals:!!lastSummaryTotals,totalValue:lastSummaryTotals?lastSummaryTotals.totalValue:null,selectedTotal:lastSummaryTotals?lastSummaryTotals.selectedTotal:null,selectedModes:lastSummaryTotals?lastSummaryTotals.selectedModes:null,feesTotal:lastSummaryTotals?lastSummaryTotals.feesTotal:null},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix-v5',hypothesisId:'H6'})}).catch(()=>{});
 		// #endregion
 		if (!lastSummaryTotals) {
 			return;
@@ -2118,6 +2118,10 @@ function getInstallmentDisplayTotals(summaryData) {
 		updateCheckoutShippingHiddenFields();
 		updateInstallmentsPreview(data);
 		setTimeout(maybeFetchInstallmentQuotes, 0);
+		
+		// FIX: Chamar updateOrderReviewTotals AQUI, após lastSummaryTotals ser definido
+		// em vez de no evento updated_checkout com setTimeout(0) que executava antes do AJAX completar
+		updateOrderReviewTotals();
 	}
 
 	function updateInstallmentsPreview(data) {
@@ -2325,7 +2329,8 @@ function getInstallmentDisplayTotals(summaryData) {
 			// O WooCommerce pode re-renderizar fragments; garante que o DOM continue dentro das etapas
 			setTimeout(organizeFields, 0);
 			setTimeout(ensureBluInstallmentsUI, 0);
-			setTimeout(updateOrderReviewTotals, 0);
+			// REMOVIDO: setTimeout(updateOrderReviewTotals, 0) - movido para dentro de renderSummary()
+			// para executar APÓS lastSummaryTotals ser definido pelo AJAX
 			
 			// Atualiza campos hidden de frete após o checkout ser atualizado (para próxima vez)
 			setTimeout(updateCheckoutShippingHiddenFields, 100);
