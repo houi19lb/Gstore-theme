@@ -585,8 +585,9 @@
 			? String(lastCartSummaryData.installments.selected)
 			: $('#gstore_blu_installments').val() || '1';
 
-		// Assinatura simples para evitar spam de requests
-		const signature = `${max}|${selected}|${lastCartSummaryData.total || ''}`;
+		// Assinatura inclui total do resumo (que pode ter frete) para invalidar quando mudar
+		const summaryTotalForSig = (lastSummaryTotals && Number.isFinite(lastSummaryTotals.totalValue)) ? lastSummaryTotals.totalValue : (lastCartSummaryData && lastCartSummaryData.total ? parsePriceValue(lastCartSummaryData.total) : '');
+		const signature = `${max}|${selected}|${summaryTotalForSig}`;
 		if (signature === lastInstallmentQuotesSignature) return;
 		if (isLoadingInstallmentQuotes) return;
 		lastInstallmentQuotesSignature = signature;
@@ -595,6 +596,10 @@
 			? wc_checkout_params.ajax_url
 			: '/wp-admin/admin-ajax.php';
 
+		// Enviar post_data do formulário para o backend calcular frete e imposto no mesmo contexto do checkout
+		const $form = $('form.checkout').first();
+		const postData = $form.length ? $form.serialize() : '';
+
 		isLoadingInstallmentQuotes = true;
 		$.ajax({
 			url: ajaxUrl,
@@ -602,7 +607,8 @@
 			dataType: 'json',
 			data: {
 				action: 'gstore_blu_get_installment_quotes',
-				max: max
+				max: max,
+				post_data: postData
 			},
 			success: function(res) {
 				isLoadingInstallmentQuotes = false;
@@ -904,34 +910,23 @@
 
 /**
  * Retorna totais para exibição a partir dos dados do backend (resumo do carrinho).
- * Não recalcula valores no frontend; usa apenas total/base_total enviados pelo plugin.
+ * Inclui frete no total exibido quando lastSummaryTotals tem selectedTotal (frete escolhido).
  */
 function getInstallmentDisplayTotals(summaryData) {
 	const rawTotal = summaryData && summaryData.total ? parsePriceValue(summaryData.total) : 0;
 	const baseTotal = summaryData && summaryData.base_total ? parsePriceValue(summaryData.base_total) : rawTotal;
 	const shippingTotal = (lastSummaryTotals && Number.isFinite(lastSummaryTotals.selectedTotal)) ? lastSummaryTotals.selectedTotal : 0;
 	const summaryTotal = (lastSummaryTotals && Number.isFinite(lastSummaryTotals.totalValue)) ? lastSummaryTotals.totalValue : rawTotal;
-	
-	// #region agent log
-	if (typeof gstoreDebugLog === 'function') {
-		gstoreDebugLog('checkout-steps.js:getInstallmentDisplayTotals', 'Cálculo de totais para parcelas', {
-			rawTotal: rawTotal,
-			baseTotal: baseTotal,
-			shippingTotal: shippingTotal,
-			summaryTotal: summaryTotal,
-			lastSummaryTotals: lastSummaryTotals,
-			summaryDataTotal: summaryData && summaryData.total,
-			summaryDataBaseTotal: summaryData && summaryData.base_total,
-		}, 'debug-session', 'pre-fix', 'H2');
-	}
-	// #endregion
-	
+	// Quando há frete calculado no resumo, usar o total que já inclui frete e permitir somar frete nas parcelas
+	const shouldAddShipping = shippingTotal > 0;
+	const displayTotal = summaryTotal > 0 ? summaryTotal : rawTotal;
+
 	return {
 		rawTotal,
-		displayTotal: rawTotal,
+		displayTotal: displayTotal,
 		baseTotal,
 		shippingTotal: shippingTotal,
-		shouldAddShipping: false,
+		shouldAddShipping: shouldAddShipping,
 		summaryTotal: summaryTotal,
 	};
 }
