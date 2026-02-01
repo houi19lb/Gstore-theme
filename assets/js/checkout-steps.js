@@ -2044,7 +2044,17 @@ function getInstallmentDisplayTotals(summaryData) {
 		if (!validateCurrentStep()) {
 			return;
 		}
-
+		// Ao sair da etapa 0, captura o método selecionado (preferir PIX se algum radio PIX estiver marcado).
+		if (currentStep === 0) {
+			const $checked = $('input[name="payment_method"]:checked');
+			if ($checked.length) {
+				let val = $checked.first().val();
+				$checked.each(function() {
+					if ($(this).val() === 'blu_pix') { val = 'blu_pix'; return false; }
+				});
+				lastSelectedPaymentMethod = val;
+			}
+		}
 		if (currentStep < STEPS.length - 1) {
 			setActiveStep(currentStep + 1);
 			$(document.body).trigger('update_checkout');
@@ -3017,11 +3027,17 @@ function getInstallmentDisplayTotals(summaryData) {
 		if (v) lastSelectedPaymentMethod = v;
 	});
 
-	// Armazena a seleção antes do update apenas na etapa 0, para não sobrescrever com radio errado quando na etapa 2 o DOM tem ordem/visibilidade diferente.
+	// Armazena a seleção antes do update apenas na etapa 0. Preferir PIX quando algum radio PIX estiver marcado (evita primeiro :checked no DOM ser cartão).
 	$(document.body).on('update_checkout', function() {
 		if (typeof currentStep !== 'undefined' && currentStep === 0) {
-			const $selected = $('input[name="payment_method"]:checked');
-			if ($selected.length) lastSelectedPaymentMethod = $selected.val();
+			const $checked = $('input[name="payment_method"]:checked');
+			if ($checked.length) {
+				let val = $checked.first().val();
+				$checked.each(function() {
+					if ($(this).val() === 'blu_pix') { val = 'blu_pix'; return false; }
+				});
+				lastSelectedPaymentMethod = val;
+			}
 		}
 		// CORREÇÃO CRÍTICA: Garante que os campos de frete estejam no form
 		// ANTES do WooCommerce serializar o form para update_order_review
