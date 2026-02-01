@@ -2059,8 +2059,9 @@ function getInstallmentDisplayTotals(summaryData) {
 	 */
 	function loadCartSummary() {
 		const $selectedMethod = $('input[name="payment_method"]:checked');
-		// Fallback para lastSelectedPaymentMethod quando na etapa 2 o painel de método pode estar oculto ou o DOM pode ter ordem/estado inesperado após fragments.
-		const paymentMethod = ($selectedMethod.length ? $selectedMethod.val() : '') || lastSelectedPaymentMethod || '';
+		// Na etapa 2 não usar o DOM para método: painel de pagamento pode estar oculto/reordenado e retornar o radio errado (cartão). Usar só lastSelectedPaymentMethod.
+		const fromDom = (typeof currentStep !== 'undefined' && currentStep === 2) ? '' : ($selectedMethod.length ? $selectedMethod.val() : '');
+		const paymentMethod = fromDom || lastSelectedPaymentMethod || '';
 		const installmentsValue = $('#gstore_blu_installments').val() || $('#gstore_blu_installments_select').val() || '';
 		const $form = $('form.checkout').first();
 		const postData = $form.length ? $form.serialize() : '';
@@ -3010,11 +3011,11 @@ function getInstallmentDisplayTotals(summaryData) {
 		if (v) lastSelectedPaymentMethod = v;
 	});
 
-	// Armazena a seleção antes do update e garante campos hidden de frete
+	// Armazena a seleção antes do update apenas na etapa 0, para não sobrescrever com radio errado quando na etapa 2 o DOM tem ordem/visibilidade diferente.
 	$(document.body).on('update_checkout', function() {
-		const $selected = $('input[name="payment_method"]:checked');
-		if ($selected.length) {
-			lastSelectedPaymentMethod = $selected.val();
+		if (typeof currentStep !== 'undefined' && currentStep === 0) {
+			const $selected = $('input[name="payment_method"]:checked');
+			if ($selected.length) lastSelectedPaymentMethod = $selected.val();
 		}
 		// CORREÇÃO CRÍTICA: Garante que os campos de frete estejam no form
 		// ANTES do WooCommerce serializar o form para update_order_review
