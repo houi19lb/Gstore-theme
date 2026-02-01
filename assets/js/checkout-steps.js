@@ -1762,6 +1762,10 @@ function getInstallmentDisplayTotals(summaryData) {
 		if (index < 0 || index >= STEPS.length) return;
 
 		currentStep = index;
+		
+		// #region agent log
+		fetch('http://127.0.0.1:7246/ingest/82530f36-f41c-4a9b-9141-c3c4bf366209',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'setActiveStep',message:'Changing step',data:{newStep:index,stepName:STEPS[index]?STEPS[index].id:'unknown',lastSummaryTotals_before:lastSummaryTotals?{totalValue:lastSummaryTotals.totalValue,selectedTotal:lastSummaryTotals.selectedTotal}:null},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix-v5',hypothesisId:'H9'})}).catch(()=>{});
+		// #endregion
 
 		// Atualiza campo enviado ao backend para só carregar taxa de parcelamento na etapa 3
 		const $stepInput = $('#gstore_checkout_step');
@@ -1823,6 +1827,12 @@ function getInstallmentDisplayTotals(summaryData) {
 				// Remove class 'processing' se existir (pode ter ficado de tentativa anterior)
 				$checkoutForm.removeClass('processing');
 			}, 200);
+		} else {
+			// FIX: Ao sair da última etapa, força recálculo do resumo para remover taxa de parcelamento
+			// caso o usuário volte para etapas anteriores
+			setTimeout(function() {
+				$(document.body).trigger('update_checkout');
+			}, 100);
 		}
 
 		// Ao entrar na etapa de dados, verifica/calcule o frete automaticamente se o CEP já estiver preenchido
