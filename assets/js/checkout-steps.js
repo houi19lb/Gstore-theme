@@ -423,15 +423,13 @@
 				// Ao escolher PIX: bloqueia taxas na hora (remove linha e atualiza totais sem esperar AJAX).
 				if (!isCheckout) {
 					applyPixTotalsImmediate();
-					// #region agent log
-					fetch('http://127.0.0.1:7246/ingest/82530f36-f41c-4a9b-9141-c3c4bf366209',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'selectPaymentMethod:PIX',message:'user selected PIX',data:{selectedMethod:'blu_pix',currentStep:typeof currentStep!=='undefined'?currentStep:null},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H3-H5'})}).catch(()=>{});
-					// #endregion
-					// FIX: Reenvia resumo com payment_method=blu_pix para o backend recalcular sem taxa e "Exibir detalhes" mostrar Pix.
-					setTimeout(function() { loadCartSummary(); }, 150);
 				}
 
 				// Atualiza totais/sessão do WooCommerce
 				$(document.body).trigger('update_checkout');
+
+				// Atualiza o resumo (Ver detalhes) com o método selecionado para exibir "Pix" ou "Cartão" corretamente
+				loadCartSummary();
 			}
 			
 			$checkoutOption.find('label').on('click', function(e) {
@@ -2083,9 +2081,6 @@ function getInstallmentDisplayTotals(summaryData) {
 		const postData = $form.length ? $form.serialize() : '';
 		// Envia etapa atual explicitamente para o backend não aplicar taxa de parcelamento quando o usuário voltou de etapa
 		const stepValue = typeof currentStep !== 'undefined' ? currentStep : ( $('#gstore_checkout_step').val() || 0 );
-		// #region agent log
-		fetch('http://127.0.0.1:7246/ingest/82530f36-f41c-4a9b-9141-c3c4bf366209',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'loadCartSummary:request',message:'sending',data:{paymentMethod,stepValue,postDataHasPayment:postData.indexOf('payment_method')!==-1},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H3-H5'})}).catch(()=>{});
-		// #endregion
 		$.ajax({
 			url: wc_checkout_params.ajax_url,
 			type: 'POST',
@@ -2171,25 +2166,19 @@ function getInstallmentDisplayTotals(summaryData) {
 		let totalsHtml = '';
 
 		// Método de pagamento selecionado (Pix, Cartão, etc.)
-		// FIX: Prioriza o método atual do DOM para "Exibir detalhes" refletir o clique em PIX imediatamente (sem esperar novo request).
-		const domPaymentMethod = ($('input[name="payment_method"]:checked').val() || '');
-		const paymentTitleToShow = (domPaymentMethod === 'blu_pix') ? 'Pix' : ((domPaymentMethod === 'blu_checkout') ? (data.payment_method_title || 'Cartão') : (data.payment_method_title || ''));
-		// #region agent log
-		fetch('http://127.0.0.1:7246/ingest/82530f36-f41c-4a9b-9141-c3c4bf366209',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'renderSummary:payment',message:'data vs DOM',data:{dataPaymentMethod:data.payment_method,dataTitle:data.payment_method_title,domPaymentMethod,paymentTitleToShow,currentStep:typeof currentStep!=='undefined'?currentStep:null},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H3'})}).catch(()=>{});
-		// #endregion
-		if (paymentTitleToShow) {
+		if (data.payment_method_title) {
 			totalsHtml += `
 				<div class="Gstore-summary-row">
 					<span>Pagamento</span>
-					<span>${paymentTitleToShow}</span>
+					<span>${data.payment_method_title}</span>
 				</div>
 			`;
 		}
 
 		// "Você pagará" só aparece quando cartão Blu e parcelas > 1, mostrando o total real com taxa
-		// Usa o método do DOM para não mostrar parcelas quando o usuário já clicou em PIX.
+		// Usa getInstallmentDisplayTotals para incluir frete quando o API retorna total sem frete
 		const selectedN = parseInt((data.installments && data.installments.selected) ? data.installments.selected : '1', 10) || 1;
-		if (domPaymentMethod === 'blu_checkout' && selectedN > 1) {
+		if (data.payment_method === 'blu_checkout' && selectedN > 1) {
 			const displayTotals = getInstallmentDisplayTotals(data);
 			const totalToShow = displayTotals.displayTotal > 0 ? displayTotals.displayTotal : parsePriceValue(data.total || 0);
 			const perToShow = totalToShow / selectedN;
