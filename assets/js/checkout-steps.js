@@ -416,21 +416,17 @@
 					$content.append($box);
 				}
 
-			// Esconde/mostra parcelamento imediatamente (PIX não tem parcelamento)
-			$('.Gstore-blu-installments').toggle(isCheckout);
+				// Esconde/mostra parcelamento imediatamente (PIX não tem parcelamento)
+				$('.Gstore-blu-installments').toggle(isCheckout);
 
-			// CORREÇÃO: Reseta parcelas para 1 quando muda para PIX
-			if (!isCheckout) {
-				$('#gstore_blu_installments').val('1');
-				$('#gstore_blu_installments_select').val('1');
-			}
+				// CORREÇÃO: Reseta parcelas para 1 quando muda para PIX
+				if (!isCheckout) {
+					$('#gstore_blu_installments').val('1');
+					$('#gstore_blu_installments_select').val('1');
+				}
 
-			// #region agent log
-			fetch('http://127.0.0.1:7246/ingest/82530f36-f41c-4a9b-9141-c3c4bf366209',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'selectPaymentMethod',message:'Payment method changed',data:{selectedMethod:selectedMethod,isCheckout:isCheckout,installmentsValue:$('#gstore_blu_installments').val()},timestamp:Date.now(),sessionId:'debug-session',runId:'v6-pix',hypothesisId:'H11-H12-H13'})}).catch(()=>{});
-			// #endregion
-
-			// Atualiza totais/sessão do WooCommerce
-			$(document.body).trigger('update_checkout');
+				// Atualiza totais/sessão do WooCommerce
+				$(document.body).trigger('update_checkout');
 			}
 			
 			$checkoutOption.find('label').on('click', function(e) {
@@ -1350,11 +1346,9 @@ function getInstallmentDisplayTotals(summaryData) {
 			selectedLandTotal,
 			selectedAirTotal,
 		};
-	// #region agent log
-	const $selectedPayment = $('input[name="payment_method"]:checked');
-	const currentPaymentMethod = $selectedPayment.length ? $selectedPayment.val() : '';
-	fetch('http://127.0.0.1:7246/ingest/82530f36-f41c-4a9b-9141-c3c4bf366209',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'renderShippingSummary:setLastSummaryTotals',message:'Set lastSummaryTotals',data:{totalValue,selectedTotal,subtotalValue,selectedModes:Array.from(selectedModes),feesTotal,currentPaymentMethod},timestamp:Date.now(),sessionId:'debug-session',runId:'v6-pix',hypothesisId:'H14-H15'})}).catch(()=>{});
-	// #endregion
+		// #region agent log
+		fetch('http://127.0.0.1:7246/ingest/82530f36-f41c-4a9b-9141-c3c4bf366209',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'renderShippingSummary:setLastSummaryTotals',message:'Set lastSummaryTotals',data:{totalValue,selectedTotal,subtotalValue,selectedModes:Array.from(selectedModes),feesTotal},timestamp:Date.now(),sessionId:'debug-session',runId:'v5',hypothesisId:'H6-H8'})}).catch(()=>{});
+		// #endregion
 
 		let totalsHtml = `
 			<div class="Gstore-checkout-shipping-totals__row">
@@ -2017,6 +2011,8 @@ function getInstallmentDisplayTotals(summaryData) {
 		const $selectedMethod = $('input[name="payment_method"]:checked');
 		const paymentMethod = $selectedMethod.length ? $selectedMethod.val() : '';
 		const installmentsValue = $('#gstore_blu_installments').val() || $('#gstore_blu_installments_select').val() || '';
+		const stepValue = $('#gstore_checkout_step').val();
+		const checkoutStep = typeof currentStep !== 'undefined' ? currentStep : (stepValue !== undefined && stepValue !== '' ? parseInt(stepValue, 10) : 0);
 		const $form = $('form.checkout').first();
 		const postData = $form.length ? $form.serialize() : '';
 		$.ajax({
@@ -2026,6 +2022,7 @@ function getInstallmentDisplayTotals(summaryData) {
 				action: 'gstore_get_cart_summary',
 				payment_method: paymentMethod,
 				gstore_blu_installments: installmentsValue,
+				gstore_checkout_step: checkoutStep,
 				post_data: postData
 			},
 			success: function(response) {
