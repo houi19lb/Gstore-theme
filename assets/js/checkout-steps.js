@@ -1346,6 +1346,9 @@ function getInstallmentDisplayTotals(summaryData) {
 			selectedLandTotal,
 			selectedAirTotal,
 		};
+		// #region agent log
+		fetch('http://127.0.0.1:7246/ingest/82530f36-f41c-4a9b-9141-c3c4bf366209',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'renderShippingSummary:setLastSummaryTotals',message:'Set lastSummaryTotals',data:{totalValue,selectedTotal,subtotalValue,selectedModes:Array.from(selectedModes),feesTotal},timestamp:Date.now(),sessionId:'debug-session',runId:'v5',hypothesisId:'H6-H8'})}).catch(()=>{});
+		// #endregion
 
 		let totalsHtml = `
 			<div class="Gstore-checkout-shipping-totals__row">
@@ -1421,6 +1424,9 @@ function getInstallmentDisplayTotals(summaryData) {
 	}
 
 	function updateOrderReviewTotals() {
+		// #region agent log
+		fetch('http://127.0.0.1:7246/ingest/82530f36-f41c-4a9b-9141-c3c4bf366209',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'updateOrderReviewTotals:entry',message:'Called',data:{hasLastSummaryTotals:!!lastSummaryTotals,totalValue:lastSummaryTotals?lastSummaryTotals.totalValue:null,selectedTotal:lastSummaryTotals?lastSummaryTotals.selectedTotal:null,selectedModes:lastSummaryTotals?lastSummaryTotals.selectedModes:null},timestamp:Date.now(),sessionId:'debug-session',runId:'v5',hypothesisId:'H6'})}).catch(()=>{});
+		// #endregion
 		if (!lastSummaryTotals) {
 			return;
 		}
@@ -2007,6 +2013,9 @@ function getInstallmentDisplayTotals(summaryData) {
 				post_data: postData
 			},
 			success: function(response) {
+				// #region agent log
+				fetch('http://127.0.0.1:7246/ingest/82530f36-f41c-4a9b-9141-c3c4bf366209',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'loadCartSummary:success',message:'AJAX completed',data:{success:response.success,hasData:!!response.data,total:response.data?response.data.total:null},timestamp:Date.now(),sessionId:'debug-session',runId:'v5',hypothesisId:'H6'})}).catch(()=>{});
+				// #endregion
 				if (response.success) {
 					renderSummary(response.data);
 				}
@@ -2309,6 +2318,9 @@ function getInstallmentDisplayTotals(summaryData) {
 
 		// Atualiza resumo quando checkout é atualizado
 		$(document.body).on('updated_checkout', function() {
+			// #region agent log
+			fetch('http://127.0.0.1:7246/ingest/82530f36-f41c-4a9b-9141-c3c4bf366209',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'updated_checkout:start',message:'Event fired',data:{lastSummaryTotals_before:lastSummaryTotals?{totalValue:lastSummaryTotals.totalValue,selectedTotal:lastSummaryTotals.selectedTotal}:null},timestamp:Date.now(),sessionId:'debug-session',runId:'v5',hypothesisId:'H6-H7'})}).catch(()=>{});
+			// #endregion
 			loadCartSummary();
 			// O WooCommerce pode re-renderizar fragments; garante que o DOM continue dentro das etapas
 			setTimeout(organizeFields, 0);
