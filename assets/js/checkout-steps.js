@@ -425,6 +425,9 @@
 					applyPixTotalsImmediate();
 				}
 
+				// Atualiza a linha "Pagamento" nos detalhes imediatamente (evita mostrar "Cartão" ao clicar em PIX)
+				updateSummaryPaymentRow();
+
 				// Atualiza totais/sessão do WooCommerce
 				$(document.body).trigger('update_checkout');
 			}
@@ -2068,6 +2071,40 @@ function getInstallmentDisplayTotals(summaryData) {
 	}
 
 	/**
+	 * Retorna o título do método de pagamento atualmente selecionado no formulário.
+	 * Usa o valor do radio (blu_pix/blu_checkout) para mapear quando o radio é o original oculto
+	 * (fora de .Gstore-blu-payment-option), evitando mostrar "Cartão" quando o usuário escolheu PIX.
+	 * @returns {string}
+	 */
+	function getPaymentTitleForDisplay() {
+		const $checked = $('input[name="payment_method"]:checked').first();
+		if (!$checked.length) return '';
+		const labelFromOption = $checked.closest('.Gstore-blu-payment-option').find('span').first().text().trim();
+		const labelFromLi = $checked.closest('li').find('label').first().text().trim();
+		if (labelFromOption) return labelFromOption;
+		if (labelFromLi) return labelFromLi;
+		const val = $checked.val();
+		if (val === 'blu_pix') return 'Pix';
+		if (val === 'blu_checkout') return 'Cartão (Link de Pagamento)';
+		return '';
+	}
+
+	/**
+	 * Atualiza apenas a linha "Pagamento" no resumo (detalhes) com o método atualmente selecionado.
+	 */
+	function updateSummaryPaymentRow() {
+		const title = getPaymentTitleForDisplay();
+		if (!title) return;
+		const $totals = $('.Gstore-checkout-summary-top__totals');
+		const $paymentRow = $totals.find('.Gstore-summary-row').filter(function() {
+			return $(this).find('span').first().text().trim() === 'Pagamento';
+		});
+		if ($paymentRow.length) {
+			$paymentRow.find('span').last().text(title);
+		}
+	}
+
+	/**
 	 * Carrega o resumo do carrinho via AJAX
 	 */
 	function loadCartSummary() {
@@ -2162,18 +2199,9 @@ function getInstallmentDisplayTotals(summaryData) {
 		// Renderiza totais
 		let totalsHtml = '';
 
-		// Método de pagamento: prioriza o radio selecionado no formulário (evita "piscar" Cartão quando o usuário escolheu PIX
-		// e a última resposta AJAX ainda trouxe método da sessão/fragment).
-		let paymentTitleToShow = data.payment_method_title || '';
-		const $checkedPayment = $('input[name="payment_method"]:checked');
-		if ($checkedPayment.length) {
-			const labelFromLi = $checkedPayment.closest('li').find('label').first().text().trim();
-			const labelFromOption = $checkedPayment.closest('.Gstore-blu-payment-option').find('span').first().text().trim();
-			const titleFromForm = labelFromOption || labelFromLi;
-			if (titleFromForm) {
-				paymentTitleToShow = titleFromForm;
-			}
-		}
+		// Método de pagamento: usa sempre o valor do formulário; mapeia por value quando o radio é o original oculto
+		// (fora de .Gstore-blu-payment-option), assim evita mostrar "Cartão" quando o usuário já clicou em PIX.
+		const paymentTitleToShow = getPaymentTitleForDisplay() || data.payment_method_title || '';
 		if (paymentTitleToShow) {
 			totalsHtml += `
 				<div class="Gstore-summary-row">
@@ -2340,25 +2368,14 @@ function getInstallmentDisplayTotals(summaryData) {
 				(isOpen ? 'Ocultar detalhes' : 'Ver detalhes') +
 				' <i class="fa-solid fa-chevron-down"></i>'
 			);
-			// Ao abrir detalhes: atualiza a linha "Pagamento" com o método atualmente selecionado no formulário,
-			// evitando mostrar "Cartão" quando o usuário já escolheu PIX (race com resposta AJAX anterior).
 			if (isOpen) {
-				const $checkedPayment = $('input[name="payment_method"]:checked');
-				if ($checkedPayment.length) {
-					const labelFromOption = $checkedPayment.closest('.Gstore-blu-payment-option').find('span').first().text().trim();
-					const labelFromLi = $checkedPayment.closest('li').find('label').first().text().trim();
-					const paymentTitle = labelFromOption || labelFromLi;
-					if (paymentTitle) {
-						const $totals = $('.Gstore-checkout-summary-top__totals');
-						const $paymentRow = $totals.find('.Gstore-summary-row').filter(function() {
-							return $(this).find('span').first().text().trim() === 'Pagamento';
-						});
-						if ($paymentRow.length && $paymentRow.find('span').last().text().trim() !== paymentTitle) {
-							$paymentRow.find('span').last().text(paymentTitle);
-						}
-					}
-				}
+				updateSummaryPaymentRow();
 			}
+		});
+
+		// Ao trocar o método de pagamento (PIX/Cartão), atualiza imediatamente a linha "Pagamento" nos detalhes
+		$(document.body).on('change', 'input[name="payment_method"]', function() {
+			updateSummaryPaymentRow();
 		});
 
 		// Seleção do frete por item no resumo
