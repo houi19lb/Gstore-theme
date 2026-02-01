@@ -1325,7 +1325,10 @@ function getInstallmentDisplayTotals(summaryData) {
 		const otherFees = [];
 		const lastStepIndex = STEPS.length - 1;
 		const isOnLastStep = typeof currentStep !== 'undefined' && currentStep === lastStepIndex;
-		const currentPaymentMethod = ($('input[name="payment_method"]:checked').val() || '');
+		// Na etapa 2 usar lastSelectedPaymentMethod para PIX (DOM pode ter radio errado).
+		const currentPaymentMethod = (typeof currentStep !== 'undefined' && currentStep === 2)
+			? (lastSelectedPaymentMethod || ($('input[name="payment_method"]:checked').val() || ''))
+			: ($('input[name="payment_method"]:checked').val() || '');
 		// PIX não tem taxa de parcelamento: nunca exibir no resumo quando método é PIX.
 		fees.forEach(function (fee) {
 			const label = (fee && (fee.label || fee.name)) ? String(fee.label || fee.name).trim() : '';
@@ -1499,10 +1502,12 @@ function getInstallmentDisplayTotals(summaryData) {
 		if ($subtotalRow.length && rowsHtml) {
 			$subtotalRow.after(rowsHtml);
 		}
-		// Remove a linha "Taxa de parcelamento" quando não está na etapa final ou quando pagamento é PIX.
-		const currentPaymentMethod = ($('input[name="payment_method"]:checked').val() || '');
+		// Na etapa 2 usar lastSelectedPaymentMethod para não depender do DOM (que pode ter radio errado após fragments).
+		const effectivePaymentMethod = (typeof currentStep !== 'undefined' && currentStep === 2)
+			? (lastSelectedPaymentMethod || ($('input[name="payment_method"]:checked').val() || ''))
+			: ($('input[name="payment_method"]:checked').val() || '');
 		let feeRowsRemoved = 0;
-		const shouldHideFee = currentStep !== 2 || currentPaymentMethod === 'blu_pix';
+		const shouldHideFee = currentStep !== 2 || effectivePaymentMethod === 'blu_pix';
 		if (shouldHideFee) {
 			$table.find('tr').each(function() {
 				const $row = $(this);
@@ -1513,7 +1518,7 @@ function getInstallmentDisplayTotals(summaryData) {
 			});
 		}
 		// Quando PIX: total exibido deve ser sem taxa (totalValue - feesTotal).
-		const displayTotal = (currentPaymentMethod === 'blu_pix' && lastSummaryTotals.feesTotal)
+		const displayTotal = (effectivePaymentMethod === 'blu_pix' && lastSummaryTotals.feesTotal)
 			? (lastSummaryTotals.totalValue || 0) - (lastSummaryTotals.feesTotal || 0)
 			: (lastSummaryTotals.totalValue || 0);
 		if ($orderTotal.length) {
