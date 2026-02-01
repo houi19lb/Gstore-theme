@@ -527,36 +527,6 @@ class Gstore_Blu_Payment_Gateway extends WC_Payment_Gateway {
 	protected function create_payment_link( WC_Order $order ) {
 		$payload = $this->build_payload_from_order( $order );
 		$this->log_debug( 'Payload enviado à Blu', $payload );
-		
-		// #region agent log — grava no mesmo arquivo do WP Admin (GStore Setup > Debug Logs)
-		$debug_data = array(
-			'sessionId'    => 'debug-session',
-			'runId'        => 'pre-fix',
-			'hypothesisId' => 'H5',
-			'location'     => 'create_payment_link',
-			'message'      => 'Payload sendo enviado para a Blu',
-			'data'         => array(
-				'order_id'         => $order->get_id(),
-				'order_total'      => $order->get_total(),
-				'order_subtotal'   => $order->get_subtotal(),
-				'order_shipping'   => $order->get_shipping_total(),
-				'order_tax'        => $order->get_total_tax(),
-				'payload_amount'   => isset( $payload['amount'] ) ? $payload['amount'] : 'N/A',
-				'payload_full'     => $payload,
-				'installments_meta'=> $order->get_meta( self::META_SELECTED_INSTALLMENTS ),
-			),
-			'timestamp'    => (int) round( microtime( true ) * 1000 ),
-		);
-		$log_line = wp_json_encode( $debug_data ) . "\n";
-		$uploads = function_exists( 'wp_upload_dir' ) ? wp_upload_dir() : array();
-		if ( ! empty( $uploads['basedir'] ) ) {
-			$log_dir = $uploads['basedir'] . '/gstore-debug-logs';
-			if ( ! file_exists( $log_dir ) ) {
-				wp_mkdir_p( $log_dir );
-			}
-			@file_put_contents( $log_dir . '/debug.log', $log_line, FILE_APPEND | LOCK_EX );
-		}
-		// #endregion
 
 		return $this->remote_request( 'POST', '', $payload );
 	}

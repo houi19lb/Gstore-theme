@@ -612,18 +612,6 @@
 			},
 			success: function(res) {
 				isLoadingInstallmentQuotes = false;
-				// #region agent log
-				if (typeof gstoreDebugLog === 'function') {
-					gstoreDebugLog('checkout-steps.js:maybeFetchInstallmentQuotes:success', 'Resposta do AJAX de parcelas', {
-						success: res && res.success,
-						quotesCount: res && res.data && res.data.quotes ? Object.keys(res.data.quotes).length : 0,
-						quotes1x: res && res.data && res.data.quotes && res.data.quotes['1'] ? res.data.quotes['1'] : null,
-						quotes2x: res && res.data && res.data.quotes && res.data.quotes['2'] ? res.data.quotes['2'] : null,
-						quotes3x: res && res.data && res.data.quotes && res.data.quotes['3'] ? res.data.quotes['3'] : null,
-						lastCartSummaryTotal: lastCartSummaryData && lastCartSummaryData.total,
-					}, 'debug-session', 'pre-fix', 'H1');
-				}
-				// #endregion
 				if (res && res.success && res.data && res.data.quotes) {
 					installmentQuotes = res.data.quotes;
 					applyInstallmentQuotesToSelect();
