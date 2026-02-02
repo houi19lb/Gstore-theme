@@ -3414,8 +3414,8 @@ function gstore_enqueue_checkout_assets() {
 		);
 
 		// Fix inline: (1) Garante que o AJAX do resumo envie o método que o usuário escolheu (PIX/Cartão).
-		// (2) Ao abrir "Ver detalhes", corrige a linha Pagamento. Não depende de JS em cache.
-		wp_register_script( 'gstore-checkout-payment-fix', false, array( 'jquery', 'gstore-checkout-steps' ) );
+		// (2) Ao abrir "Ver detalhes", corrige a linha Pagamento. Só depende de jQuery para rodar mesmo com checkout-steps em cache.
+		wp_register_script( 'gstore-checkout-payment-fix', false, array( 'jquery' ) );
 		wp_enqueue_script( 'gstore-checkout-payment-fix' );
 		wp_add_inline_script(
 			'gstore-checkout-payment-fix',
@@ -3443,6 +3443,9 @@ function gstore_enqueue_checkout_assets() {
 						var before = settings.data.payment_method;
 						if (stored === "blu_pix" || stored === "blu_checkout") {
 							settings.data.payment_method = stored;
+						} else {
+							var fromDom = ($("input[name=\'payment_method\']:checked").val() || "").trim();
+							if (fromDom === "blu_pix" || fromDom === "blu_checkout") settings.data.payment_method = fromDom;
 						}
 						// #region agent log
 						fetch("http://127.0.0.1:7246/ingest/82530f36-f41c-4a9b-9141-c3c4bf366209",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({location:"gstore-fix-inline:ajaxSend",message:"Before send",data:{stored:stored,before:before,patched:settings.data.payment_method},timestamp:Date.now(),sessionId:"debug-session",runId:"fix-diag",hypothesisId:"H4"})}).catch(function(){});
