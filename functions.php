@@ -3440,9 +3440,13 @@ function gstore_enqueue_checkout_assets() {
 				$(document).ajaxSend(function(e, xhr, settings) {
 					if (settings.data && typeof settings.data === "object" && settings.data.action === "gstore_get_cart_summary") {
 						var stored = window.__gstorePaymentMethod;
+						var before = settings.data.payment_method;
 						if (stored === "blu_pix" || stored === "blu_checkout") {
 							settings.data.payment_method = stored;
 						}
+						// #region agent log
+						fetch("http://127.0.0.1:7246/ingest/82530f36-f41c-4a9b-9141-c3c4bf366209",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({location:"gstore-fix-inline:ajaxSend",message:"Before send",data:{stored:stored,before:before,patched:settings.data.payment_method},timestamp:Date.now(),sessionId:"debug-session",runId:"fix-diag",hypothesisId:"H4"})}).catch(function(){});
+						// #endregion
 					}
 				});
 				$(document).on("click", ".Gstore-checkout-summary-top__toggle", function() {
