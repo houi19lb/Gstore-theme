@@ -3392,14 +3392,12 @@ function gstore_enqueue_checkout_assets() {
 			true
 		);
 
-		// JavaScript do checkout em 3 etapas (versão = tema + mtime para cache bust quando o JS muda)
-		$checkout_steps_path = get_theme_file_path( 'assets/js/checkout-steps.js' );
-		$checkout_steps_ver  = $theme_version . '.' . ( file_exists( $checkout_steps_path ) ? (string) filemtime( $checkout_steps_path ) : time() );
+		// JavaScript do checkout em 3 etapas
 		wp_enqueue_script(
 			'gstore-checkout-steps',
 			get_theme_file_uri( 'assets/js/checkout-steps.js' ),
 			array( 'jquery' ),
-			$checkout_steps_ver,
+			filemtime( get_theme_file_path( 'assets/js/checkout-steps.js' ) ),
 			true
 		);
 
@@ -3412,62 +3410,6 @@ function gstore_enqueue_checkout_assets() {
 				'homeUrl'             => home_url( '/' ),
 			)
 		);
-
-		// Fix inline: (1) Garante que o AJAX do resumo envie o método que o usuário escolheu (PIX/Cartão).
-		// (2) Ao abrir "Ver detalhes", corrige a linha Pagamento. Também anexado ao jQuery para rodar mesmo se gstore-checkout-payment-fix não carregar.
-		$gstore_checkout_payment_fix_js = '(function() {
-				var $ = jQuery;
-				window.__gstorePaymentMethod = ($("input[name=\'payment_method\']:checked").val() || "").trim() || null;
-				$(document).on("change", "input[name=\'payment_method\']", function() {
-					window.__gstorePaymentMethod = ($(this).val() || "").trim() || null;
-				});
-				document.addEventListener("click", function(e) {
-					var el = e.target;
-					if (!el || !el.closest) return;
-					var opt = el.closest && el.closest(".Gstore-blu-payment-option");
-					if (opt) {
-						var $opt = $(opt);
-						if ($opt.find("input[value=\'blu_pix\']").length) window.__gstorePaymentMethod = "blu_pix";
-						else if ($opt.find("input[value=\'blu_checkout\']").length) window.__gstorePaymentMethod = "blu_checkout";
-					} else if (el.name === "payment_method" && el.type === "radio" && el.value) {
-						window.__gstorePaymentMethod = el.value;
-					}
-				}, true);
-				$(document).ajaxSend(function(e, xhr, settings) {
-					if (settings.data && typeof settings.data === "object" && settings.data.action === "gstore_get_cart_summary") {
-						var stored = window.__gstorePaymentMethod;
-						var before = settings.data.payment_method;
-						if (stored === "blu_pix" || stored === "blu_checkout") {
-							settings.data.payment_method = stored;
-						} else {
-							var fromDom = ($("input[name=\'payment_method\']:checked").val() || "").trim();
-							if (fromDom === "blu_pix" || fromDom === "blu_checkout") settings.data.payment_method = fromDom;
-						}
-						// #region agent log
-						fetch("http://127.0.0.1:7246/ingest/82530f36-f41c-4a9b-9141-c3c4bf366209",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({location:"gstore-fix-inline:ajaxSend",message:"Before send",data:{stored:stored,before:before,patched:settings.data.payment_method},timestamp:Date.now(),sessionId:"debug-session",runId:"fix-diag",hypothesisId:"H4"})}).catch(function(){});
-						// #endregion
-					}
-				});
-				$(document).on("click", ".Gstore-checkout-summary-top__toggle", function() {
-					var $t = $(this);
-					setTimeout(function() {
-						if (!$t.hasClass("is-open")) return;
-						var m = ($("input[name=\'payment_method\']:checked").val() || "").trim();
-						var label = m === "blu_pix" ? "Pix" : (m === "blu_checkout" ? "Cartão" : "");
-						if (label) {
-							$(".Gstore-checkout-summary-top__totals .Gstore-summary-row").each(function() {
-								if ($(this).find("span").first().text().trim() === "Pagamento") {
-									$(this).find("span").last().text(label);
-								}
-							});
-						}
-					}, 50);
-				});
-			})();';
-		wp_register_script( 'gstore-checkout-payment-fix', false, array( 'jquery' ) );
-		wp_enqueue_script( 'gstore-checkout-payment-fix' );
-		wp_add_inline_script( 'gstore-checkout-payment-fix', $gstore_checkout_payment_fix_js );
-		wp_add_inline_script( 'jquery', $gstore_checkout_payment_fix_js, 'after' );
 
 		// CSS do Pix
 		wp_enqueue_style(

@@ -69,7 +69,6 @@
 	let isLoadingInstallmentQuotes = false;
 	let lastInstallmentQuotesSignature = '';
 	let lastBluOrderPaymentUrl = null; // URL do pagamento Blu do último pedido criado (para exibir aviso quando modal fecha)
-	let lastSelectedPaymentMethodForDisplay = null; // Último método escolhido (PIX/Cartão) para exibir em "Ver detalhes" mesmo quando o AJAX ainda retorna o anterior
 
 	/**
 	 * Garante cálculo/validação do frete quando o CEP já está preenchido (sem precisar clicar/sair do campo).
@@ -392,7 +391,6 @@
 			
 		// Handler para cliques nos labels de pagamento (sem disparar update_checkout)
 		function selectPaymentMethod(selectedMethod) {
-			lastSelectedPaymentMethodForDisplay = selectedMethod;
 			const $livePixRadio = $('input[name="payment_method"][value="blu_pix"]');
 			const $liveCheckoutRadio = $('input[name="payment_method"][value="blu_checkout"]');
 			
@@ -401,6 +399,11 @@
 			// Atualiza os radios originais
 			$liveCheckoutRadio.prop('checked', isCheckout);
 			$livePixRadio.prop('checked', !isCheckout);
+				
+				// Guarda a seleção explícita do usuário para loadCartSummary (evita que fragment WooCommerce envie blu_checkout)
+				if (typeof lastSelectedPaymentMethod !== 'undefined') {
+					lastSelectedPaymentMethod = selectedMethod;
+				}
 				
 				// Atualiza os clones visuais
 				if ($checkoutRadioClone) $checkoutRadioClone.prop('checked', isCheckout);
@@ -420,22 +423,15 @@
 
 				// Esconde/mostra parcelamento imediatamente (PIX não tem parcelamento)
 				$('.Gstore-blu-installments').toggle(isCheckout);
-				// Não reseta parcelas ao trocar para PIX: mantém o valor no cartão para quando voltar.
 
-				// Ao escolher PIX: bloqueia taxas na hora (remove linha e atualiza totais sem esperar AJAX).
+				// CORREÇÃO: Reseta parcelas para 1 quando muda para PIX
 				if (!isCheckout) {
-					applyPixTotalsImmediate();
+					$('#gstore_blu_installments').val('1');
+					$('#gstore_blu_installments_select').val('1');
 				}
 
 				// Atualiza totais/sessão do WooCommerce
 				$(document.body).trigger('update_checkout');
-
-				// #region agent log
-				const $checkedAtClick = $('input[name="payment_method"]:checked');
-				fetch('http://127.0.0.1:7246/ingest/82530f36-f41c-4a9b-9141-c3c4bf366209',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'selectPaymentMethod:beforeLoadCartSummary',message:'Payment method selected',data:{selectedMethod,domCheckedVal:$checkedAtClick.val(),domCheckedLen:$checkedAtClick.length},timestamp:Date.now(),sessionId:'debug-session',runId:'payment-details',hypothesisId:'H1'})}).catch(()=>{});
-				// #endregion
-				// Atualiza o resumo (Ver detalhes) com o método selecionado para exibir "Pix" ou "Cartão" corretamente
-				loadCartSummary(selectedMethod);
 			}
 			
 			$checkoutOption.find('label').on('click', function(e) {
@@ -1332,19 +1328,12 @@ function getInstallmentDisplayTotals(summaryData) {
 		const fees = (data && data.totals && data.totals.fees && Array.isArray(data.totals.fees)) ? data.totals.fees : [];
 		let feesTotal = 0;
 		const otherFees = [];
-		const lastStepIndex = STEPS.length - 1;
-		const isOnLastStep = typeof currentStep !== 'undefined' && currentStep === lastStepIndex;
-		const currentPaymentMethod = ($('input[name="payment_method"]:checked').val() || '');
-		// PIX não tem taxa de parcelamento: nunca exibir no resumo quando método é PIX.
 		fees.forEach(function (fee) {
 			const label = (fee && (fee.label || fee.name)) ? String(fee.label || fee.name).trim() : '';
 			const total = fee && Number.isFinite(Number(fee.total)) ? Number(fee.total) : parsePriceValue((fee && fee.total) ? String(fee.total) : '0');
 			if (!label) return;
 			const isFrete = label.toLowerCase().indexOf('frete') !== -1;
 			if (isFrete) return;
-			// Não exibir taxa de parcelamento quando não está na etapa final ou quando pagamento é PIX.
-			const isParcelamento = label.toLowerCase().indexOf('parcelamento') !== -1;
-			if (isParcelamento && (!isOnLastStep || currentPaymentMethod === 'blu_pix')) return;
 			otherFees.push({ label: label, total: total });
 			feesTotal += total;
 		});
@@ -1362,6 +1351,9 @@ function getInstallmentDisplayTotals(summaryData) {
 			selectedLandTotal,
 			selectedAirTotal,
 		};
+		// #region agent log
+		fetch('http://127.0.0.1:7246/ingest/82530f36-f41c-4a9b-9141-c3c4bf366209',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'renderShippingSummary:setLastSummaryTotals',message:'Set lastSummaryTotals',data:{totalValue,selectedTotal,subtotalValue,selectedModes:Array.from(selectedModes),feesTotal},timestamp:Date.now(),sessionId:'debug-session',runId:'v5',hypothesisId:'H6-H8'})}).catch(()=>{});
+		// #endregion
 
 		let totalsHtml = `
 			<div class="Gstore-checkout-shipping-totals__row">
@@ -1436,38 +1428,10 @@ function getInstallmentDisplayTotals(summaryData) {
 		$totals.html(totalsHtml);
 	}
 
-	/**
-	 * Ao selecionar PIX: remove taxa de parcelamento e atualiza totais imediatamente (sem esperar AJAX).
-	 * Assim as taxas ficam bloqueadas no momento do clique.
-	 */
-	function applyPixTotalsImmediate() {
-		if (!lastSummaryTotals || !(lastSummaryTotals.feesTotal > 0)) {
-			return;
-		}
-		const feeValue = lastSummaryTotals.feesTotal || 0;
-		const newTotal = (lastSummaryTotals.totalValue || 0) - feeValue;
-		lastSummaryTotals = Object.assign({}, lastSummaryTotals, { feesTotal: 0, totalValue: newTotal });
-
-		const $orderReview = $('#order_review');
-		const $table = $orderReview.find('.shop_table').first();
-		if ($table.length) {
-			$table.find('tr').each(function() {
-				const $row = $(this);
-				if ($row.text().indexOf('Taxa de parcelamento') !== -1) {
-					$row.remove();
-				}
-			});
-			const $orderTotal = $table.find('.order-total .woocommerce-Price-amount').first();
-			if ($orderTotal.length) {
-				$orderTotal.html(formatCurrency(newTotal));
-			}
-		}
-		if (lastCartSummaryData) {
-			renderShippingSummary(lastCartSummaryData);
-		}
-	}
-
 	function updateOrderReviewTotals() {
+		// #region agent log
+		fetch('http://127.0.0.1:7246/ingest/82530f36-f41c-4a9b-9141-c3c4bf366209',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'updateOrderReviewTotals:entry',message:'Called',data:{hasLastSummaryTotals:!!lastSummaryTotals,totalValue:lastSummaryTotals?lastSummaryTotals.totalValue:null,selectedTotal:lastSummaryTotals?lastSummaryTotals.selectedTotal:null,selectedModes:lastSummaryTotals?lastSummaryTotals.selectedModes:null,feesTotal:lastSummaryTotals?lastSummaryTotals.feesTotal:null},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix-v5',hypothesisId:'H6'})}).catch(()=>{});
+		// #endregion
 		if (!lastSummaryTotals) {
 			return;
 		}
@@ -1508,25 +1472,8 @@ function getInstallmentDisplayTotals(summaryData) {
 		if ($subtotalRow.length && rowsHtml) {
 			$subtotalRow.after(rowsHtml);
 		}
-		// Remove a linha "Taxa de parcelamento" quando não está na etapa final ou quando pagamento é PIX.
-		const currentPaymentMethod = ($('input[name="payment_method"]:checked').val() || '');
-		let feeRowsRemoved = 0;
-		const shouldHideFee = currentStep !== 2 || currentPaymentMethod === 'blu_pix';
-		if (shouldHideFee) {
-			$table.find('tr').each(function() {
-				const $row = $(this);
-				if ($row.text().indexOf('Taxa de parcelamento') !== -1) {
-					$row.remove();
-					feeRowsRemoved++;
-				}
-			});
-		}
-		// Quando PIX: total exibido deve ser sem taxa (totalValue - feesTotal).
-		const displayTotal = (currentPaymentMethod === 'blu_pix' && lastSummaryTotals.feesTotal)
-			? (lastSummaryTotals.totalValue || 0) - (lastSummaryTotals.feesTotal || 0)
-			: (lastSummaryTotals.totalValue || 0);
 		if ($orderTotal.length) {
-			$orderTotal.html(formatCurrency(displayTotal));
+			$orderTotal.html(formatCurrency(lastSummaryTotals.totalValue || 0));
 		}
 	}
 
@@ -1881,17 +1828,6 @@ function getInstallmentDisplayTotals(summaryData) {
 				// Remove class 'processing' se existir (pode ter ficado de tentativa anterior)
 				$checkoutForm.removeClass('processing');
 			}, 200);
-		} else {
-			// FIX: Ao sair da última etapa, recarrega o resumo IMEDIATAMENTE com o passo atual (0 ou 1)
-			// para remover a taxa de parcelamento antes que fragments do WooCommerce sobrescrevam a UI
-			loadCartSummary();
-			setTimeout(function() {
-				$(document.body).trigger('update_checkout');
-			}, 100);
-			// Se o WooCommerce aplicar fragments depois e sobrescrever a tabela, reaplica nossos totais
-			setTimeout(function() {
-				updateOrderReviewTotals();
-			}, 500);
 		}
 
 		// Ao entrar na etapa de dados, verifica/calcule o frete automaticamente se o CEP já estiver preenchido
@@ -2065,19 +2001,17 @@ function getInstallmentDisplayTotals(summaryData) {
 
 	/**
 	 * Carrega o resumo do carrinho via AJAX
-	 * @param {string} [overridePaymentMethod] - Se informado, usa este método em vez do valor do DOM (evita race com fragmentos WC).
 	 */
-	function loadCartSummary(overridePaymentMethod) {
+	function loadCartSummary() {
 		const $selectedMethod = $('input[name="payment_method"]:checked');
-		const paymentMethod = (overridePaymentMethod !== undefined && overridePaymentMethod !== '') ? overridePaymentMethod : ($selectedMethod.length ? $selectedMethod.val() : '');
-		// #region agent log
-		fetch('http://127.0.0.1:7246/ingest/82530f36-f41c-4a9b-9141-c3c4bf366209',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'loadCartSummary:entry',message:'Sending AJAX',data:{paymentMethod,overridePaymentMethod:overridePaymentMethod!==undefined},timestamp:Date.now(),sessionId:'debug-session',runId:'payment-details',hypothesisId:'H3'})}).catch(()=>{});
-		// #endregion
+		// Preferir última seleção explícita (PIX/Cartão em "Ver detalhes") sobre o DOM, pois
+		// o fragment do WooCommerce pode ter reposto o bloco e o radio voltou para blu_checkout
+		const paymentMethod = (typeof lastSelectedPaymentMethod !== 'undefined' && lastSelectedPaymentMethod) 
+			? lastSelectedPaymentMethod 
+			: ($selectedMethod.length ? $selectedMethod.val() : '');
 		const installmentsValue = $('#gstore_blu_installments').val() || $('#gstore_blu_installments_select').val() || '';
 		const $form = $('form.checkout').first();
 		const postData = $form.length ? $form.serialize() : '';
-		// Envia etapa atual explicitamente para o backend não aplicar taxa de parcelamento quando o usuário voltou de etapa
-		const stepValue = typeof currentStep !== 'undefined' ? currentStep : ( $('#gstore_checkout_step').val() || 0 );
 		$.ajax({
 			url: wc_checkout_params.ajax_url,
 			type: 'POST',
@@ -2085,12 +2019,11 @@ function getInstallmentDisplayTotals(summaryData) {
 				action: 'gstore_get_cart_summary',
 				payment_method: paymentMethod,
 				gstore_blu_installments: installmentsValue,
-				gstore_checkout_step: stepValue,
 				post_data: postData
 			},
 			success: function(response) {
 				// #region agent log
-				fetch('http://127.0.0.1:7246/ingest/82530f36-f41c-4a9b-9141-c3c4bf366209',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'loadCartSummary:success',message:'AJAX completed',data:{success:response.success,payment_method:response.data?response.data.payment_method:null,payment_method_title:response.data?response.data.payment_method_title:null},timestamp:Date.now(),sessionId:'debug-session',runId:'payment-details',hypothesisId:'H2'})}).catch(()=>{});
+				fetch('http://127.0.0.1:7246/ingest/82530f36-f41c-4a9b-9141-c3c4bf366209',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'loadCartSummary:success',message:'AJAX completed',data:{success:response.success,hasData:!!response.data,total:response.data?response.data.total:null},timestamp:Date.now(),sessionId:'debug-session',runId:'v5',hypothesisId:'H6'})}).catch(()=>{});
 				// #endregion
 				if (response.success) {
 					renderSummary(response.data);
@@ -2162,18 +2095,12 @@ function getInstallmentDisplayTotals(summaryData) {
 		// Renderiza totais
 		let totalsHtml = '';
 
-		// Método de pagamento: prioriza a seleção atual (clique em PIX/Cartão) para "Ver detalhes" refletir corretamente
-		const currentMethod = lastSelectedPaymentMethodForDisplay || (typeof lastSelectedPaymentMethod !== 'undefined' ? lastSelectedPaymentMethod : null) || ($('input[name="payment_method"]:checked').val() || '') || data.payment_method || '';
-		const paymentTitles = { blu_pix: 'Pix', blu_checkout: 'Cartão' };
-		const paymentTitle = (currentMethod && paymentTitles[currentMethod]) ? paymentTitles[currentMethod] : (data.payment_method_title || '');
-		// #region agent log
-		fetch('http://127.0.0.1:7246/ingest/82530f36-f41c-4a9b-9141-c3c4bf366209',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'renderSummary:paymentRow',message:'Payment display',data:{currentMethod,paymentTitle,lastSelectedPaymentMethodForDisplay:lastSelectedPaymentMethodForDisplay||null,data_payment_method:data.payment_method||null,data_payment_method_title:data.payment_method_title||null},timestamp:Date.now(),sessionId:'debug-session',runId:'payment-details',hypothesisId:'payment'})}).catch(()=>{});
-		// #endregion
-		if (paymentTitle) {
+		// Método de pagamento selecionado (Pix, Cartão, etc.)
+		if (data.payment_method_title) {
 			totalsHtml += `
 				<div class="Gstore-summary-row">
 					<span>Pagamento</span>
-					<span>${paymentTitle}</span>
+					<span>${data.payment_method_title}</span>
 				</div>
 			`;
 		}
@@ -2335,20 +2262,6 @@ function getInstallmentDisplayTotals(summaryData) {
 				(isOpen ? 'Ocultar detalhes' : 'Ver detalhes') +
 				' <i class="fa-solid fa-chevron-down"></i>'
 			);
-
-			// Ao abrir "Ver detalhes", corrige a linha Pagamento com a seleção atual do DOM (evita mostrar Cartão quando PIX está selecionado)
-			if (isOpen) {
-				const method = ($('input[name="payment_method"]:checked').val() || '').trim();
-				const label = method === 'blu_pix' ? 'Pix' : (method === 'blu_checkout' ? 'Cartão' : '');
-				if (label) {
-					const $totals = $('.Gstore-checkout-summary-top__totals');
-					$totals.find('.Gstore-summary-row').each(function() {
-						if ($(this).find('span').first().text().trim() === 'Pagamento') {
-							$(this).find('span').last().text(label);
-						}
-					});
-				}
-			}
 		});
 
 		// Seleção do frete por item no resumo
@@ -2418,14 +2331,15 @@ function getInstallmentDisplayTotals(summaryData) {
 
 		// Atualiza resumo quando checkout é atualizado
 		$(document.body).on('updated_checkout', function() {
-			// Usa último método selecionado (ex.: PIX) para não sobrescrever com Cartão quando o fragment WC substitui o DOM
-			loadCartSummary(lastSelectedPaymentMethod || undefined);
+			// #region agent log
+			fetch('http://127.0.0.1:7246/ingest/82530f36-f41c-4a9b-9141-c3c4bf366209',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'updated_checkout:start',message:'Event fired',data:{lastSummaryTotals_before:lastSummaryTotals?{totalValue:lastSummaryTotals.totalValue,selectedTotal:lastSummaryTotals.selectedTotal}:null},timestamp:Date.now(),sessionId:'debug-session',runId:'v5',hypothesisId:'H6-H7'})}).catch(()=>{});
+			// #endregion
+			loadCartSummary();
 			// O WooCommerce pode re-renderizar fragments; garante que o DOM continue dentro das etapas
 			setTimeout(organizeFields, 0);
 			setTimeout(ensureBluInstallmentsUI, 0);
-			// Reaplica totais e remoção da linha "Taxa de parcelamento" após fragments e possíveis respostas AJAX,
-			// para evitar que o fragment order_review do WC sobrescreva e traga a taxa de volta quando step !== 2.
-			setTimeout(updateOrderReviewTotals, 450);
+			// REMOVIDO: setTimeout(updateOrderReviewTotals, 0) - movido para dentro de renderSummary()
+			// para executar APÓS lastSummaryTotals ser definido pelo AJAX
 			
 			// Atualiza campos hidden de frete após o checkout ser atualizado (para próxima vez)
 			setTimeout(updateCheckoutShippingHiddenFields, 100);
