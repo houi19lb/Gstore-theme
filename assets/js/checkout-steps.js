@@ -1331,12 +1331,15 @@ function getInstallmentDisplayTotals(summaryData) {
 		const fees = (data && data.totals && data.totals.fees && Array.isArray(data.totals.fees)) ? data.totals.fees : [];
 		let feesTotal = 0;
 		const otherFees = [];
+		const isPix = (data && data.payment_method) === 'blu_pix';
 		fees.forEach(function (fee) {
 			const label = (fee && (fee.label || fee.name)) ? String(fee.label || fee.name).trim() : '';
 			const total = fee && Number.isFinite(Number(fee.total)) ? Number(fee.total) : parsePriceValue((fee && fee.total) ? String(fee.total) : '0');
 			if (!label) return;
 			const isFrete = label.toLowerCase().indexOf('frete') !== -1;
 			if (isFrete) return;
+			// PIX não tem taxa de parcelamento: não exibir nem somar
+			if (isPix && label.toLowerCase().indexOf('parcelamento') !== -1) return;
 			otherFees.push({ label: label, total: total });
 			feesTotal += total;
 		});
@@ -1436,6 +1439,18 @@ function getInstallmentDisplayTotals(summaryData) {
 		const $table = $orderReview.find('.shop_table').first();
 		if (!$table.length) {
 			return;
+		}
+		// PIX: esconde linha "Taxa de parcelamento" no resumo do pedido (etapa 3)
+		if (lastCartSummaryData && lastCartSummaryData.payment_method === 'blu_pix') {
+			$table.find('tr').each(function() {
+				const $row = $(this);
+				const text = ($row.find('th').text() || '').toLowerCase();
+				if (text.indexOf('parcelamento') !== -1) {
+					$row.addClass('gstore-hidden-for-pix').hide();
+				}
+			});
+		} else {
+			$table.find('tr.gstore-hidden-for-pix').removeClass('gstore-hidden-for-pix').show();
 		}
 		const $orderTotal = $table.find('.order-total .woocommerce-Price-amount').first();
 		const $subtotalRow = $table.find('.cart-subtotal').first();
@@ -3044,6 +3059,20 @@ function getInstallmentDisplayTotals(summaryData) {
 			setTimeout(init, 100);
 		}
 	});
+
+	// Ao voltar para a aba: restaura método de pagamento e dispara update para o servidor
+	// receber o valor correto (evita resumo voltar a "Cartão" quando o usuário sai e volta)
+	if (typeof document.addEventListener === 'function') {
+		document.addEventListener('visibilitychange', function() {
+			if (document.visibilityState !== 'visible') return;
+			if (!lastSelectedPaymentMethod) return;
+			const $radio = $(`input[name="payment_method"][value="${lastSelectedPaymentMethod}"]`);
+			if ($radio.length && !$radio.is(':checked')) {
+				$radio.prop('checked', true);
+				$(document.body).trigger('update_checkout');
+			}
+		});
+	}
 
 	// Intercepta a resposta do checkout para garantir redirect
 	$(document).ajaxComplete(function(event, xhr, settings) {
