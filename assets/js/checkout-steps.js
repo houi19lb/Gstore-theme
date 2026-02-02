@@ -400,11 +400,6 @@
 			$liveCheckoutRadio.prop('checked', isCheckout);
 			$livePixRadio.prop('checked', !isCheckout);
 				
-				// Guarda a seleção explícita do usuário para loadCartSummary (evita que fragment WooCommerce envie blu_checkout)
-				if (typeof lastSelectedPaymentMethod !== 'undefined') {
-					lastSelectedPaymentMethod = selectedMethod;
-				}
-				
 				// Atualiza os clones visuais
 				if ($checkoutRadioClone) $checkoutRadioClone.prop('checked', isCheckout);
 				if ($pixRadioClone) $pixRadioClone.prop('checked', !isCheckout);
@@ -443,6 +438,9 @@
 		$pixOption.find('label').on('click', function(e) {
 			e.preventDefault();
 			e.stopPropagation();
+			// #region agent log
+			fetch('http://127.0.0.1:7246/ingest/82530f36-f41c-4a9b-9141-c3c4bf366209',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'pix-option:click',message:'User clicked PIX',data:{beforeCheck:($('input[name="payment_method"]:checked').val()||'')},timestamp:Date.now(),sessionId:'debug-session',runId:'pix-trace',hypothesisId:'PIX2'})}).catch(()=>{});
+			// #endregion
 			selectPaymentMethod('blu_pix');
 		});
 			
@@ -2004,14 +2002,14 @@ function getInstallmentDisplayTotals(summaryData) {
 	 */
 	function loadCartSummary() {
 		const $selectedMethod = $('input[name="payment_method"]:checked');
-		// Preferir última seleção explícita (PIX/Cartão em "Ver detalhes") sobre o DOM, pois
-		// o fragment do WooCommerce pode ter reposto o bloco e o radio voltou para blu_checkout
-		const paymentMethod = (typeof lastSelectedPaymentMethod !== 'undefined' && lastSelectedPaymentMethod) 
-			? lastSelectedPaymentMethod 
-			: ($selectedMethod.length ? $selectedMethod.val() : '');
+		const paymentMethod = $selectedMethod.length ? $selectedMethod.val() : '';
 		const installmentsValue = $('#gstore_blu_installments').val() || $('#gstore_blu_installments_select').val() || '';
 		const $form = $('form.checkout').first();
 		const postData = $form.length ? $form.serialize() : '';
+		// #region agent log
+		const $allRadios = $('input[name="payment_method"]');
+		fetch('http://127.0.0.1:7246/ingest/82530f36-f41c-4a9b-9141-c3c4bf366209',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'loadCartSummary:request',message:'Sending',data:{paymentMethodSent:paymentMethod,checkedCount:$selectedMethod.length,allRadiosCount:$allRadios.length,checkedValue:$selectedMethod.length?$selectedMethod.val():null,postDataHasPayment:postData.indexOf('payment_method')!==-1},timestamp:Date.now(),sessionId:'debug-session',runId:'pix-trace',hypothesisId:'PIX2'})}).catch(()=>{});
+		// #endregion
 		$.ajax({
 			url: wc_checkout_params.ajax_url,
 			type: 'POST',
@@ -2023,7 +2021,7 @@ function getInstallmentDisplayTotals(summaryData) {
 			},
 			success: function(response) {
 				// #region agent log
-				fetch('http://127.0.0.1:7246/ingest/82530f36-f41c-4a9b-9141-c3c4bf366209',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'loadCartSummary:success',message:'AJAX completed',data:{success:response.success,hasData:!!response.data,total:response.data?response.data.total:null},timestamp:Date.now(),sessionId:'debug-session',runId:'v5',hypothesisId:'H6'})}).catch(()=>{});
+				fetch('http://127.0.0.1:7246/ingest/82530f36-f41c-4a9b-9141-c3c4bf366209',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'loadCartSummary:success',message:'AJAX completed',data:{success:response.success,payment_method:response.data?response.data.payment_method:null,payment_method_title:response.data?response.data.payment_method_title:null,total:response.data?response.data.total:null},timestamp:Date.now(),sessionId:'debug-session',runId:'pix-trace',hypothesisId:'PIX2'})}).catch(()=>{});
 				// #endregion
 				if (response.success) {
 					renderSummary(response.data);
@@ -2097,6 +2095,9 @@ function getInstallmentDisplayTotals(summaryData) {
 
 		// Método de pagamento selecionado (Pix, Cartão, etc.)
 		if (data.payment_method_title) {
+			// #region agent log
+			fetch('http://127.0.0.1:7246/ingest/82530f36-f41c-4a9b-9141-c3c4bf366209',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'renderSummary:payment_display',message:'Displaying in Ver detalhes',data:{payment_method:data.payment_method,payment_method_title:data.payment_method_title},timestamp:Date.now(),sessionId:'debug-session',runId:'pix-trace',hypothesisId:'PIX2'})}).catch(()=>{});
+			// #endregion
 			totalsHtml += `
 				<div class="Gstore-summary-row">
 					<span>Pagamento</span>
