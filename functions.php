@@ -3414,12 +3414,8 @@ function gstore_enqueue_checkout_assets() {
 		);
 
 		// Fix inline: (1) Garante que o AJAX do resumo envie o método que o usuário escolheu (PIX/Cartão).
-		// (2) Ao abrir "Ver detalhes", corrige a linha Pagamento. Só depende de jQuery para rodar mesmo com checkout-steps em cache.
-		wp_register_script( 'gstore-checkout-payment-fix', false, array( 'jquery' ) );
-		wp_enqueue_script( 'gstore-checkout-payment-fix' );
-		wp_add_inline_script(
-			'gstore-checkout-payment-fix',
-			'(function() {
+		// (2) Ao abrir "Ver detalhes", corrige a linha Pagamento. Também anexado ao jQuery para rodar mesmo se gstore-checkout-payment-fix não carregar.
+		$gstore_checkout_payment_fix_js = '(function() {
 				var $ = jQuery;
 				window.__gstorePaymentMethod = ($("input[name=\'payment_method\']:checked").val() || "").trim() || null;
 				$(document).on("change", "input[name=\'payment_method\']", function() {
@@ -3467,8 +3463,11 @@ function gstore_enqueue_checkout_assets() {
 						}
 					}, 50);
 				});
-			})();'
-		);
+			})();';
+		wp_register_script( 'gstore-checkout-payment-fix', false, array( 'jquery' ) );
+		wp_enqueue_script( 'gstore-checkout-payment-fix' );
+		wp_add_inline_script( 'gstore-checkout-payment-fix', $gstore_checkout_payment_fix_js );
+		wp_add_inline_script( 'jquery', $gstore_checkout_payment_fix_js, 'after' );
 
 		// CSS do Pix
 		wp_enqueue_style(
