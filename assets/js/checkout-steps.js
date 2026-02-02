@@ -113,7 +113,8 @@
 
 		buildStepsUI();
 		bindEvents();
-		loadCartSummary();
+		// O primeiro load vem do evento updated_checkout (não carregar aqui para evitar totais sem CEP/frete)
+		$(document.body).trigger('update_checkout');
 		// Se o CEP já veio preenchido (sessão/autofill), calcula o frete imediatamente
 		setTimeout(ensureShippingAutofilled, 0);
 		
@@ -388,16 +389,16 @@
 				}
 			}
 			
-		// Handler para cliques nos labels de pagamento (sem disparar update_checkout)
-		function selectPaymentMethod(selectedMethod) {
-			const $livePixRadio = $('input[name="payment_method"][value="blu_pix"]');
-			const $liveCheckoutRadio = $('input[name="payment_method"][value="blu_checkout"]');
-			
-			const isCheckout = selectedMethod === 'blu_checkout';
-			
-			// Atualiza os radios originais
-			$liveCheckoutRadio.prop('checked', isCheckout);
-			$livePixRadio.prop('checked', !isCheckout);
+	// Handler para cliques nos labels de pagamento (sem disparar update_checkout)
+	function selectPaymentMethod(selectedMethod) {
+		const $livePixRadio = $('input[name="payment_method"][value="blu_pix"]');
+		const $liveCheckoutRadio = $('input[name="payment_method"][value="blu_checkout"]');
+		
+		const isCheckout = selectedMethod === 'blu_checkout';
+		
+		// Atualiza os radios originais
+		$liveCheckoutRadio.prop('checked', isCheckout);
+		$livePixRadio.prop('checked', !isCheckout);
 				
 				// Atualiza os clones visuais
 				if ($checkoutRadioClone) $checkoutRadioClone.prop('checked', isCheckout);
@@ -417,6 +418,12 @@
 
 				// Esconde/mostra parcelamento imediatamente (PIX não tem parcelamento)
 				$('.Gstore-blu-installments').toggle(isCheckout);
+
+				// CORREÇÃO: Reseta parcelas para 1 quando muda para PIX
+				if (!isCheckout) {
+					$('#gstore_blu_installments').val('1');
+					$('#gstore_blu_installments_select').val('1');
+				}
 
 				// Atualiza totais/sessão do WooCommerce
 				$(document.body).trigger('update_checkout');
@@ -578,8 +585,9 @@
 			? String(lastCartSummaryData.installments.selected)
 			: $('#gstore_blu_installments').val() || '1';
 
-		// Assinatura simples para evitar spam de requests
-		const signature = `${max}|${selected}|${lastCartSummaryData.total || ''}`;
+		// Assinatura inclui total do resumo (que pode ter frete) para invalidar quando mudar
+		const summaryTotalForSig = (lastSummaryTotals && Number.isFinite(lastSummaryTotals.totalValue)) ? lastSummaryTotals.totalValue : (lastCartSummaryData && lastCartSummaryData.total ? parsePriceValue(lastCartSummaryData.total) : '');
+		const signature = `${max}|${selected}|${summaryTotalForSig}`;
 		if (signature === lastInstallmentQuotesSignature) return;
 		if (isLoadingInstallmentQuotes) return;
 		lastInstallmentQuotesSignature = signature;
@@ -588,6 +596,10 @@
 			? wc_checkout_params.ajax_url
 			: '/wp-admin/admin-ajax.php';
 
+		// Enviar post_data do formulário para o backend calcular frete e imposto no mesmo contexto do checkout
+		const $form = $('form.checkout').first();
+		const postData = $form.length ? $form.serialize() : '';
+
 		isLoadingInstallmentQuotes = true;
 		$.ajax({
 			url: ajaxUrl,
@@ -595,7 +607,8 @@
 			dataType: 'json',
 			data: {
 				action: 'gstore_blu_get_installment_quotes',
-				max: max
+				max: max,
+				post_data: postData
 			},
 			success: function(res) {
 				isLoadingInstallmentQuotes = false;
@@ -883,22 +896,26 @@
 		}
 	}
 
+/**
+ * Retorna totais para exibição a partir dos dados do backend (resumo do carrinho).
+ * Inclui frete no total exibido quando lastSummaryTotals tem selectedTotal (frete escolhido).
+ */
 function getInstallmentDisplayTotals(summaryData) {
 	const rawTotal = summaryData && summaryData.total ? parsePriceValue(summaryData.total) : 0;
-	const summaryTotal = lastSummaryTotals && Number.isFinite(lastSummaryTotals.totalValue)
-		? lastSummaryTotals.totalValue
-		: 0;
-	const shippingTotal = lastSummaryTotals && Number.isFinite(lastSummaryTotals.selectedTotal)
-		? lastSummaryTotals.selectedTotal
-		: 0;
-	const shouldAddShipping = shippingTotal > 0 && summaryTotal > 0 && rawTotal > 0 && rawTotal + 0.01 < summaryTotal;
-	const displayTotal = shouldAddShipping ? rawTotal + shippingTotal : rawTotal;
+	const baseTotal = summaryData && summaryData.base_total ? parsePriceValue(summaryData.base_total) : rawTotal;
+	const shippingTotal = (lastSummaryTotals && Number.isFinite(lastSummaryTotals.selectedTotal)) ? lastSummaryTotals.selectedTotal : 0;
+	const summaryTotal = (lastSummaryTotals && Number.isFinite(lastSummaryTotals.totalValue)) ? lastSummaryTotals.totalValue : rawTotal;
+	// Quando há frete calculado no resumo, usar o total que já inclui frete e permitir somar frete nas parcelas
+	const shouldAddShipping = shippingTotal > 0;
+	const displayTotal = summaryTotal > 0 ? summaryTotal : rawTotal;
+
 	return {
 		rawTotal,
-		displayTotal,
-		shippingTotal,
-		shouldAddShipping,
-		summaryTotal,
+		displayTotal: displayTotal,
+		baseTotal,
+		shippingTotal: shippingTotal,
+		shouldAddShipping: shouldAddShipping,
+		summaryTotal: summaryTotal,
 	};
 }
 
@@ -1669,12 +1686,17 @@ function getInstallmentDisplayTotals(summaryData) {
 			// Dispara evento para atualizar checkout do WooCommerce
 			// Isso fará com que o WooCommerce calcule o frete oficialmente
 			$(document.body).trigger('update_checkout');
+			// loadCartSummary já é chamado pelo handler global de updated_checkout
+			// Após CEP/frete mudar, atualiza preview de parcelas e quotes
+			$(document.body).one('updated_checkout', function() {
+				setTimeout(function() {
+					if (lastCartSummaryData) {
+						updateInstallmentsPreview(lastCartSummaryData);
+					}
+					maybeFetchInstallmentQuotes();
+				}, 200);
+			});
 		}
-		
-		// Atualiza o resumo do topo após um delay maior para o WooCommerce processar
-		setTimeout(function() {
-			loadCartSummary();
-		}, 1000);
 
 		renderShippingSummary(lastCartSummaryData);
 	}
@@ -1734,6 +1756,10 @@ function getInstallmentDisplayTotals(summaryData) {
 		if (index < 0 || index >= STEPS.length) return;
 
 		currentStep = index;
+
+		// Atualiza campo enviado ao backend para só carregar taxa de parcelamento na etapa 3
+		const $stepInput = $('#gstore_checkout_step');
+		if ($stepInput.length) $stepInput.val(index);
 
 		// Atualiza painéis
 		$('.Gstore-checkout-step').removeClass('is-active')
@@ -1969,13 +1995,19 @@ function getInstallmentDisplayTotals(summaryData) {
 		const $selectedMethod = $('input[name="payment_method"]:checked');
 		const paymentMethod = $selectedMethod.length ? $selectedMethod.val() : '';
 		const installmentsValue = $('#gstore_blu_installments').val() || $('#gstore_blu_installments_select').val() || '';
+		const $form = $('form.checkout').first();
+		const postData = $form.length ? $form.serialize() : '';
+		// #region agent log
+		fetch('http://127.0.0.1:7246/ingest/82530f36-f41c-4a9b-9141-c3c4bf366209',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'checkout-steps.js:loadCartSummary:entry',message:'loadCartSummary called',data:{paymentMethod:paymentMethod,installmentsValue:installmentsValue,postDataHasPayment:postData.indexOf('payment_method')>-1,postDataPaymentMatch:(postData.match(/payment_method=([^&]*)/)||[])[1]||'not-found',checkoutStep:$('#gstore_checkout_step').val()||''},timestamp:Date.now(),sessionId:'debug-session',runId:'v6',hypothesisId:'H1'})}).catch(()=>{});
+		// #endregion
 		$.ajax({
 			url: wc_checkout_params.ajax_url,
 			type: 'POST',
 			data: {
 				action: 'gstore_get_cart_summary',
 				payment_method: paymentMethod,
-				gstore_blu_installments: installmentsValue
+				gstore_blu_installments: installmentsValue,
+				post_data: postData
 			},
 			success: function(response) {
 				if (response.success) {
@@ -1993,6 +2025,9 @@ function getInstallmentDisplayTotals(summaryData) {
 	 * Renderiza o resumo do carrinho
 	 */
 	function renderSummary(data) {
+		// #region agent log
+		fetch('http://127.0.0.1:7246/ingest/82530f36-f41c-4a9b-9141-c3c4bf366209',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'checkout-steps.js:renderSummary:entry',message:'renderSummary called',data:{paymentMethod:data?.payment_method,paymentMethodTitle:data?.payment_method_title,feesCount:data?.totals?.fees?.length||0,baseTotal:data?.base_total,total:data?.total,checkoutStep:$('#gstore_checkout_step').val()||''},timestamp:Date.now(),sessionId:'debug-session',runId:'v6',hypothesisId:'H2'})}).catch(()=>{});
+		// #endregion
 		lastCartSummaryData = data;
 
 		// Se o Woo já esvaziou o carrinho (pedido Blu criado), não sobrescreve o topo com 0.
@@ -2039,6 +2074,12 @@ function getInstallmentDisplayTotals(summaryData) {
 		}
 		$('.Gstore-checkout-summary-top__items').html(itemsHtml);
 
+		// Sincroniza frete e renderiza resumo ANTES de montar totalsHtml
+		// para que lastSummaryTotals esteja disponível em getInstallmentDisplayTotals
+		syncShippingFromStorage(data);
+		renderItemShippingOptions(data);
+		renderShippingSummary(data);
+
 		// Renderiza totais
 		let totalsHtml = '';
 
@@ -2053,24 +2094,31 @@ function getInstallmentDisplayTotals(summaryData) {
 		}
 
 		// "Você pagará" só aparece quando cartão Blu e parcelas > 1, mostrando o total real com taxa
+		// Usa getInstallmentDisplayTotals para incluir frete quando o API retorna total sem frete
 		const selectedN = parseInt((data.installments && data.installments.selected) ? data.installments.selected : '1', 10) || 1;
 		if (data.payment_method === 'blu_checkout' && selectedN > 1) {
+			const displayTotals = getInstallmentDisplayTotals(data);
+			const totalToShow = displayTotals.displayTotal > 0 ? displayTotals.displayTotal : parsePriceValue(data.total || 0);
+			const perToShow = totalToShow / selectedN;
+			const perText = perToShow > 0 ? formatCurrency(perToShow) : (data.installments && data.installments.per_installment) || '';
+			const totalText = totalToShow > 0 ? formatCurrency(totalToShow) : (data.total || '');
 			totalsHtml += `
 				<div class="Gstore-summary-row Gstore-summary-row--payable">
 					<span>Você pagará</span>
-					<span><strong>${selectedN}x de ${data.installments.per_installment}</strong> — ${data.total}</span>
+					<span><strong>${selectedN}x de ${perText}</strong> — ${totalText}</span>
 				</div>
 			`;
 		}
 
 		$('.Gstore-checkout-summary-top__totals').html(totalsHtml);
 
-		syncShippingFromStorage(data);
-		renderItemShippingOptions(data);
-		renderShippingSummary(data);
 		updateCheckoutShippingHiddenFields();
 		updateInstallmentsPreview(data);
 		setTimeout(maybeFetchInstallmentQuotes, 0);
+		
+		// FIX: Chamar updateOrderReviewTotals AQUI, após lastSummaryTotals ser definido
+		// em vez de no evento updated_checkout com setTimeout(0) que executava antes do AJAX completar
+		updateOrderReviewTotals();
 	}
 
 	function updateInstallmentsPreview(data) {
@@ -2188,6 +2236,13 @@ function getInstallmentDisplayTotals(summaryData) {
 			}
 		});
 
+		// Quando a aba volta ao foco, recarrega o resumo para sincronizar método/totais
+		document.addEventListener('visibilitychange', function() {
+			if (!document.hidden) {
+				loadCartSummary();
+			}
+		});
+
 		// Toggle do resumo
 		$(document).on('click', '.Gstore-checkout-summary-top__toggle', function() {
 			const $toggle = $(this);
@@ -2275,7 +2330,8 @@ function getInstallmentDisplayTotals(summaryData) {
 			// O WooCommerce pode re-renderizar fragments; garante que o DOM continue dentro das etapas
 			setTimeout(organizeFields, 0);
 			setTimeout(ensureBluInstallmentsUI, 0);
-			setTimeout(updateOrderReviewTotals, 0);
+			// REMOVIDO: setTimeout(updateOrderReviewTotals, 0) - movido para dentro de renderSummary()
+			// para executar APÓS lastSummaryTotals ser definido pelo AJAX
 			
 			// Atualiza campos hidden de frete após o checkout ser atualizado (para próxima vez)
 			setTimeout(updateCheckoutShippingHiddenFields, 100);
@@ -2903,6 +2959,14 @@ function getInstallmentDisplayTotals(summaryData) {
 		
 		const $checkoutForm = $('form.checkout');
 		if ($checkoutForm.length) {
+			// Etapa atual do checkout (0, 1, 2) para o backend só aplicar taxa de parcelamento na etapa 3
+			let $stepInput = $checkoutForm.find('input[name="gstore_checkout_step"]');
+			if (!$stepInput.length) {
+				$stepInput = $('<input>', { type: 'hidden', name: 'gstore_checkout_step', id: 'gstore_checkout_step' });
+				$checkoutForm.append($stepInput);
+			}
+			$stepInput.val(typeof currentStep !== 'undefined' ? currentStep : 0);
+
 			// Se não existe campo global, tenta obter do último modo selecionado
 			if ($checkoutForm.find('input[name="gstore_shipping_mode"]').length === 0) {
 				// Tenta obter do último modo selecionado por item
