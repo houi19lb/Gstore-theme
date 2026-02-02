@@ -1316,11 +1316,15 @@ body.single-product .onsale {
 	letter-spacing: normal;
 }
 
-.Gstore-single-product__details-info-content {
+.Gstore-single-product__details-info-content,
+.Gstore-single-product__details-info-content p,
+.Gstore-single-product__details-info-content li,
+.Gstore-single-product__details-info-content span,
+.Gstore-single-product__details-info-content div {
 	font-size: var(--gstore-font-size-sm);
 	color: var(--gstore-color-text-gray-600-alt);
 	line-height: var(--gstore-line-height-relaxed);
-	font-family: var(--gstore-font-family-content, "Hind Guntur", sans-serif);
+	font-family: var(--gstore-font-family-content, "Hind Guntur", sans-serif) !important;
 }
 
 /* Estilos para conteúdo retrátil na seção de detalhes */
@@ -2550,9 +2554,13 @@ body.single-product .onsale {
 	color: var(--gstore-color-text-primary);
 }
 
-.Gstore-single-product__tab-content {
+.Gstore-single-product__tab-content,
+.Gstore-single-product__tab-content p,
+.Gstore-single-product__tab-content li,
+.Gstore-single-product__tab-content span,
+.Gstore-single-product__tab-content div {
 	color: var(--gstore-color-text-gray-600);
-	font-family: var(--gstore-font-family-content, "Hind Guntur", sans-serif);
+	font-family: var(--gstore-font-family-content, "Hind Guntur", sans-serif) !important;
 }
 
 /* Accordion header/content existe no DOM (JS), mas só aparece no mobile */
