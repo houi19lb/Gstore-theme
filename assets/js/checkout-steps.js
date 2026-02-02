@@ -1362,9 +1362,6 @@ function getInstallmentDisplayTotals(summaryData) {
 			selectedLandTotal,
 			selectedAirTotal,
 		};
-		// #region agent log
-		fetch('http://127.0.0.1:7246/ingest/82530f36-f41c-4a9b-9141-c3c4bf366209',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'renderShippingSummary:setLastSummaryTotals',message:'Set lastSummaryTotals',data:{totalValue,selectedTotal,subtotalValue,selectedModes:Array.from(selectedModes),feesTotal},timestamp:Date.now(),sessionId:'debug-session',runId:'v5',hypothesisId:'H6-H8'})}).catch(()=>{});
-		// #endregion
 
 		let totalsHtml = `
 			<div class="Gstore-checkout-shipping-totals__row">
@@ -1471,9 +1468,6 @@ function getInstallmentDisplayTotals(summaryData) {
 	}
 
 	function updateOrderReviewTotals() {
-		// #region agent log
-		fetch('http://127.0.0.1:7246/ingest/82530f36-f41c-4a9b-9141-c3c4bf366209',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'updateOrderReviewTotals:entry',message:'Called',data:{hasLastSummaryTotals:!!lastSummaryTotals,totalValue:lastSummaryTotals?lastSummaryTotals.totalValue:null,selectedTotal:lastSummaryTotals?lastSummaryTotals.selectedTotal:null,selectedModes:lastSummaryTotals?lastSummaryTotals.selectedModes:null,feesTotal:lastSummaryTotals?lastSummaryTotals.feesTotal:null},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix-v5',hypothesisId:'H6'})}).catch(()=>{});
-		// #endregion
 		if (!lastSummaryTotals) {
 			return;
 		}
@@ -1527,9 +1521,6 @@ function getInstallmentDisplayTotals(summaryData) {
 				}
 			});
 		}
-		// #region agent log
-		fetch('http://127.0.0.1:7246/ingest/82530f36-f41c-4a9b-9141-c3c4bf366209',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'updateOrderReviewTotals:afterFeeRemoval',message:'Fee row removal',data:{currentStep,feeRowsRemoved,currentPaymentMethod},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix-v5',hypothesisId:'H10'})}).catch(()=>{});
-		// #endregion
 		// Quando PIX: total exibido deve ser sem taxa (totalValue - feesTotal).
 		const displayTotal = (currentPaymentMethod === 'blu_pix' && lastSummaryTotals.feesTotal)
 			? (lastSummaryTotals.totalValue || 0) - (lastSummaryTotals.feesTotal || 0)
@@ -1829,10 +1820,6 @@ function getInstallmentDisplayTotals(summaryData) {
 		if (index < 0 || index >= STEPS.length) return;
 
 		currentStep = index;
-		
-		// #region agent log
-		fetch('http://127.0.0.1:7246/ingest/82530f36-f41c-4a9b-9141-c3c4bf366209',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'setActiveStep',message:'Changing step',data:{newStep:index,stepName:STEPS[index]?STEPS[index].id:'unknown',lastSummaryTotals_before:lastSummaryTotals?{totalValue:lastSummaryTotals.totalValue,selectedTotal:lastSummaryTotals.selectedTotal}:null},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix-v5',hypothesisId:'H9'})}).catch(()=>{});
-		// #endregion
 
 		// Atualiza campo enviado ao backend para só carregar taxa de parcelamento na etapa 3
 		const $stepInput = $('#gstore_checkout_step');
@@ -2179,6 +2166,9 @@ function getInstallmentDisplayTotals(summaryData) {
 		const currentMethod = lastSelectedPaymentMethodForDisplay || (typeof lastSelectedPaymentMethod !== 'undefined' ? lastSelectedPaymentMethod : null) || ($('input[name="payment_method"]:checked').val() || '') || data.payment_method || '';
 		const paymentTitles = { blu_pix: 'Pix', blu_checkout: 'Cartão' };
 		const paymentTitle = (currentMethod && paymentTitles[currentMethod]) ? paymentTitles[currentMethod] : (data.payment_method_title || '');
+		// #region agent log
+		fetch('http://127.0.0.1:7246/ingest/82530f36-f41c-4a9b-9141-c3c4bf366209',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'renderSummary:paymentRow',message:'Payment display',data:{currentMethod,paymentTitle,lastSelectedPaymentMethodForDisplay:lastSelectedPaymentMethodForDisplay||null,data_payment_method:data.payment_method||null,data_payment_method_title:data.payment_method_title||null},timestamp:Date.now(),sessionId:'debug-session',runId:'payment-details',hypothesisId:'payment'})}).catch(()=>{});
+		// #endregion
 		if (paymentTitle) {
 			totalsHtml += `
 				<div class="Gstore-summary-row">
@@ -2414,9 +2404,6 @@ function getInstallmentDisplayTotals(summaryData) {
 
 		// Atualiza resumo quando checkout é atualizado
 		$(document.body).on('updated_checkout', function() {
-			// #region agent log
-			fetch('http://127.0.0.1:7246/ingest/82530f36-f41c-4a9b-9141-c3c4bf366209',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'updated_checkout:start',message:'Event fired',data:{currentStep,lastSummaryTotals_before:lastSummaryTotals?{totalValue:lastSummaryTotals.totalValue,selectedTotal:lastSummaryTotals.selectedTotal}:null},timestamp:Date.now(),sessionId:'debug-session',runId:'v5',hypothesisId:'H6-H7'})}).catch(()=>{});
-			// #endregion
 			// Usa último método selecionado (ex.: PIX) para não sobrescrever com Cartão quando o fragment WC substitui o DOM
 			loadCartSummary(lastSelectedPaymentMethod || undefined);
 			// O WooCommerce pode re-renderizar fragments; garante que o DOM continue dentro das etapas
