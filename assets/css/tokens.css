@@ -118,6 +118,7 @@
 	--gstore-font-family-base: "Inter", "Helvetica Neue", Helvetica, Arial, sans-serif;
 	--gstore-font-family-system: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, sans-serif;
 	--gstore-font-family: var(--gstore-font-family-system); /* Alias para compatibilidade */
+	--gstore-font-family-content: "Hind Guntur", sans-serif;
 	
 	/* Tamanhos de Fonte */
 	--gstore-font-size-xs: 0.75rem;    /* 12px */

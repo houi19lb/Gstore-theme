@@ -884,12 +884,20 @@ function gstore_enqueue_styles() {
 		'6.5.1'
 	);
 
+	// Google Fonts - Hind Guntur (tipografia das descricoes)
+	wp_enqueue_style(
+		'gstore-google-fonts',
+		'https://fonts.googleapis.com/css2?family=Hind+Guntur:wght@400;500;600;700&display=swap',
+		array(),
+		null
+	);
+
 	// Sistema modular Gstore (tokens, base, utilities, components, layouts)
 	// Usa versão com timestamp para forçar recarregamento quando tokens são atualizados
 	wp_enqueue_style(
 		'gstore-main',
 		get_theme_file_uri( 'assets/css/gstore-main.css' ),
-		array( $parent_handle, 'gstore-fontawesome' ),
+		array( $parent_handle, 'gstore-fontawesome', 'gstore-google-fonts' ),
 		$gstore_version
 	);
 
