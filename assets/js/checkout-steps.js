@@ -428,8 +428,12 @@
 				// Atualiza totais/sessão do WooCommerce
 				$(document.body).trigger('update_checkout');
 
+				// #region agent log
+				const $checkedAtClick = $('input[name="payment_method"]:checked');
+				fetch('http://127.0.0.1:7246/ingest/82530f36-f41c-4a9b-9141-c3c4bf366209',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'selectPaymentMethod:beforeLoadCartSummary',message:'Payment method selected',data:{selectedMethod,domCheckedVal:$checkedAtClick.val(),domCheckedLen:$checkedAtClick.length},timestamp:Date.now(),sessionId:'debug-session',runId:'payment-details',hypothesisId:'H1'})}).catch(()=>{});
+				// #endregion
 				// Atualiza o resumo (Ver detalhes) com o método selecionado para exibir "Pix" ou "Cartão" corretamente
-				loadCartSummary();
+				loadCartSummary(selectedMethod);
 			}
 			
 			$checkoutOption.find('label').on('click', function(e) {
@@ -2072,10 +2076,14 @@ function getInstallmentDisplayTotals(summaryData) {
 
 	/**
 	 * Carrega o resumo do carrinho via AJAX
+	 * @param {string} [overridePaymentMethod] - Se informado, usa este método em vez do valor do DOM (evita race com fragmentos WC).
 	 */
-	function loadCartSummary() {
+	function loadCartSummary(overridePaymentMethod) {
 		const $selectedMethod = $('input[name="payment_method"]:checked');
-		const paymentMethod = $selectedMethod.length ? $selectedMethod.val() : '';
+		const paymentMethod = (overridePaymentMethod !== undefined && overridePaymentMethod !== '') ? overridePaymentMethod : ($selectedMethod.length ? $selectedMethod.val() : '');
+		// #region agent log
+		fetch('http://127.0.0.1:7246/ingest/82530f36-f41c-4a9b-9141-c3c4bf366209',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'loadCartSummary:entry',message:'Sending AJAX',data:{paymentMethod,overridePaymentMethod:overridePaymentMethod!==undefined},timestamp:Date.now(),sessionId:'debug-session',runId:'payment-details',hypothesisId:'H3'})}).catch(()=>{});
+		// #endregion
 		const installmentsValue = $('#gstore_blu_installments').val() || $('#gstore_blu_installments_select').val() || '';
 		const $form = $('form.checkout').first();
 		const postData = $form.length ? $form.serialize() : '';
@@ -2093,7 +2101,7 @@ function getInstallmentDisplayTotals(summaryData) {
 			},
 			success: function(response) {
 				// #region agent log
-				fetch('http://127.0.0.1:7246/ingest/82530f36-f41c-4a9b-9141-c3c4bf366209',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'loadCartSummary:success',message:'AJAX completed',data:{success:response.success,hasData:!!response.data,total:response.data?response.data.total:null},timestamp:Date.now(),sessionId:'debug-session',runId:'v5',hypothesisId:'H6'})}).catch(()=>{});
+				fetch('http://127.0.0.1:7246/ingest/82530f36-f41c-4a9b-9141-c3c4bf366209',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'loadCartSummary:success',message:'AJAX completed',data:{success:response.success,payment_method:response.data?response.data.payment_method:null,payment_method_title:response.data?response.data.payment_method_title:null},timestamp:Date.now(),sessionId:'debug-session',runId:'payment-details',hypothesisId:'H2'})}).catch(()=>{});
 				// #endregion
 				if (response.success) {
 					renderSummary(response.data);
