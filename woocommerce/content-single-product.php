@@ -504,7 +504,6 @@ $gstore_has_tab_content = function ( $html ) {
 	// Remove caracteres invisíveis (BOM, zero-width, soft hyphen) para não contar como conteúdo.
 	$next = preg_replace( '/[\x{FEFF}\x{200B}\x{200C}\x{200D}\x{2060}\x{AD}]/u', '', $text );
 	$text = ( null === $next ) ? $text : $next;
-	// preg_replace com /u pode retornar null se UTF-8 inválido; fallback para o original.
 	$next = preg_replace( '/\s+/u', ' ', $text );
 	$text = ( null === $next ) ? $text : $next;
 
@@ -523,12 +522,6 @@ $key_attributes_has_value   = $gstore_has_tab_content( $key_attributes_html );
 $important_notes_has_value  = $gstore_has_tab_content( $important_notes_html );
 $key_attributes_html  = $key_attributes_has_value ? $key_attributes_html : '';
 $important_notes_html = $important_notes_has_value ? $important_notes_html : '';
-
-// Debug: log após apply_filters para ver se o conteúdo foi perdido.
-if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
-	error_log( sprintf( '[GStore Theme DEBUG] key_attributes_html length AFTER the_content: %d bytes, empty: %s', strlen( $key_attributes_html ), ( '' === trim( $key_attributes_html ) ? 'YES' : 'NO' ) ) );
-	error_log( sprintf( '[GStore Theme DEBUG] important_notes_html length AFTER the_content: %d bytes, empty: %s', strlen( $important_notes_html ), ( '' === trim( $important_notes_html ) ? 'YES' : 'NO' ) ) );
-}
 
 $reviews_has_value = comments_open();
 
@@ -762,11 +755,8 @@ if ( $reviews_has_value ) {
 				<div class="Gstore-single-product__summary">
 					<div class="Gstore-single-product__summary-card Gstore-single-product__buybox buybox <?php echo esc_attr( $buybox_stock_class ); ?>">
 						<!-- Preço -->
-						<?php
-						$show_price_oos = get_option( 'gstore_show_price_out_of_stock', 'no' ) === 'yes';
-						if ( ! $is_out_of_stock || $show_price_oos ) :
-							?>
-							<div class="buybox-header<?php echo ( $is_out_of_stock && $show_price_oos ) ? ' is-unavailable' : ''; ?>">
+						<?php if ( ! $is_out_of_stock ) : ?>
+							<div class="buybox-header">
 								<div>
 									<div class="price-label"><?php esc_html_e( 'À vista no PIX', 'gstore' ); ?></div>
 									<div class="price" id="price" data-gstore-price>
