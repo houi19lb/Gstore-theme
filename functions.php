@@ -52,6 +52,14 @@ function gstore_after_setup_theme() {
 	// Tamanho de imagem específico para banners (alta qualidade, sem crop)
 	// Usa dimensões grandes mas sem forçar crop, permitindo que a imagem original seja usada
 	add_image_size( 'gstore-banner-full', 2560, 1440, false );
+
+	// Locais de menu para barra desktop e mobile (atribuição em Loja > Navegação)
+	register_nav_menus(
+		array(
+			'gstore_desktop' => __( 'Barra de navegação (Desktop)', 'gstore' ),
+			'gstore_mobile'  => __( 'Barra de navegação (Mobile)', 'gstore' ),
+		)
+	);
 }
 add_action( 'after_setup_theme', 'gstore_after_setup_theme' );
 
@@ -4208,6 +4216,11 @@ require_once get_theme_file_path( 'inc/class-gstore-category-filter.php' );
  * Sistema de Debug Logs.
  */
 require_once get_theme_file_path( 'inc/class-gstore-debug-logger.php' );
+
+/**
+ * Navegação do header: locais desktop/mobile e substituição do bloco Navigation.
+ */
+require_once get_theme_file_path( 'inc/class-gstore-nav-menu.php' );
 
 /**
  * Função helper para fazer log de debug.

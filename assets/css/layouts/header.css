@@ -425,12 +425,6 @@ body:has(.Gstore-header-shell) {
 		padding: 6px 10px !important;
 	}
 	
-	/* Navegação mobile - esconde navegação desktop no mobile */
-	.Gstore-nav-shell {
-		display: none;
-	}
-
-	
 	.Gstore-nav__mobile-link .Gstore-icon {
 		width: 18px;
 		height: 18px;
@@ -442,15 +436,28 @@ body:has(.Gstore-header-shell) {
    MOBILE DRAWER MENU
    ======================================== */
 
-/* Drawer Container - Escondido por padrão */
+/* Drawer Container - Escondido no desktop; visível apenas no mobile */
 .Gstore-mobile-drawer {
-	display: none;
+	display: none !important;
+}
+
+@media (min-width: 768px) {
+	/* Garante que o drawer nunca apareça no desktop */
+	.Gstore-mobile-drawer {
+		display: none !important;
+	}
 }
 
 @media (max-width: 767px) {
+	/* Barra de navegação desktop: sempre escondida no mobile */
+	.Gstore-nav-shell,
+	header.Gstore-header-shell .Gstore-nav-shell {
+		display: none !important;
+	}
+
 	/* Mostra drawer apenas no mobile */
 	.Gstore-mobile-drawer {
-		display: block;
+		display: block !important;
 		position: fixed;
 		top: 0;
 		left: 0;

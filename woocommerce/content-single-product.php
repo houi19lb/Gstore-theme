@@ -358,11 +358,9 @@ if ( ! empty( $categories ) && ! is_wp_error( $categories ) ) {
 	$category_label = $categories[0]->name;
 }
 
-// Descrição e avaliações.
+// Descrição e avaliações. Usar the_content para que filtros do plugin (normalização) rodem na descrição.
 $short_description = apply_filters( 'woocommerce_short_description', $product->get_short_description() );
-$full_description  = function_exists( 'gstore_normalize_product_content' )
-	? gstore_normalize_product_content( $product->get_description() )
-	: apply_filters( 'the_content', $product->get_description() );
+$full_description  = apply_filters( 'the_content', $product->get_description() );
 $review_count      = (int) $product->get_review_count();
 $stock_status      = (string) $product->get_stock_status();
 $is_variable       = $product->is_type( 'variable' );
@@ -485,20 +483,30 @@ $contact_entries   = gstore_get_contact_entries();
 $guarantee_badges  = gstore_get_guarantee_badges();
 
 // Conteúdo das abas (dinâmico): só renderiza se tiver valor.
+// Seguro para UTF-8: converte Latin-1/Windows-1252 antes de strip para preservar à, às, ç, etc.; trata preg_replace retornando null.
 $gstore_has_tab_content = function ( $html ) {
 	$text = wp_strip_all_tags( (string) $html );
 	$text = html_entity_decode( $text, ENT_QUOTES, get_bloginfo( 'charset' ) ? get_bloginfo( 'charset' ) : 'UTF-8' );
 	$text = str_replace( array( "\xc2\xa0", "\xa0" ), ' ', $text ); // nbsp
-	// preg_replace com /u pode retornar null se UTF-8 inválido; fallback para o original.
-	$text_normalized = preg_replace( '/\s+/u', ' ', $text );
-	if ( null === $text_normalized ) {
-		// UTF-8 inválido: tenta sem a flag /u ou considera que tem conteúdo se text não está vazio.
-		$text_normalized = preg_replace( '/\s+/', ' ', $text );
-		if ( null === $text_normalized ) {
-			$text_normalized = $text;
+	// Converte Latin-1/Windows-1252 para UTF-8 antes de strip, para não perder à, às, ç.
+	if ( function_exists( 'mb_check_encoding' ) && ! mb_check_encoding( $text, 'UTF-8' ) && function_exists( 'mb_convert_encoding' ) ) {
+		foreach ( array( 'Windows-1252', 'ISO-8859-1' ) as $enc ) {
+			$converted = @mb_convert_encoding( $text, 'UTF-8', $enc );
+			if ( is_string( $converted ) && mb_check_encoding( $converted, 'UTF-8' ) ) {
+				$text = $converted;
+				break;
+			}
 		}
 	}
-	$text = $text_normalized;
+	if ( function_exists( 'wp_check_invalid_utf8' ) ) {
+		$text = wp_check_invalid_utf8( $text, true );
+	}
+	// Remove caracteres invisíveis (BOM, zero-width, soft hyphen) para não contar como conteúdo.
+	$next = preg_replace( '/[\x{FEFF}\x{200B}\x{200C}\x{200D}\x{2060}\x{AD}]/u', '', $text );
+	$text = ( null === $next ) ? $text : $next;
+	// preg_replace com /u pode retornar null se UTF-8 inválido; fallback para o original.
+	$next = preg_replace( '/\s+/u', ' ', $text );
+	$text = ( null === $next ) ? $text : $next;
 
 	return '' !== trim( (string) $text );
 };
@@ -506,23 +514,15 @@ $gstore_has_tab_content = function ( $html ) {
 $short_description_has_value = $gstore_has_tab_content( $short_description );
 $full_description_has_value  = $gstore_has_tab_content( $full_description );
 
-$key_attributes_raw       = $product_id ? (string) get_post_meta( $product_id, '_gstore_key_attributes', true ) : '';
-$important_notes_raw      = $product_id ? (string) get_post_meta( $product_id, '_gstore_important_notes', true ) : '';
-$key_attributes_has_value = $gstore_has_tab_content( $key_attributes_raw );
-$important_notes_has_value = $gstore_has_tab_content( $important_notes_raw );
-
-// Debug: log para investigar problema de exibição de informações adicionais.
-if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
-	error_log( sprintf( '[GStore Theme DEBUG] Product ID: %d', $product_id ) );
-	error_log( sprintf( '[GStore Theme DEBUG] key_attributes_raw length: %d bytes, has_value: %s', strlen( $key_attributes_raw ), $key_attributes_has_value ? 'YES' : 'NO' ) );
-	error_log( sprintf( '[GStore Theme DEBUG] important_notes_raw length: %d bytes, has_value: %s', strlen( $important_notes_raw ), $important_notes_has_value ? 'YES' : 'NO' ) );
-	if ( strlen( $key_attributes_raw ) > 0 && strlen( $key_attributes_raw ) < 2000 ) {
-		error_log( sprintf( '[GStore Theme DEBUG] key_attributes_raw content: %s', $key_attributes_raw ) );
-	}
-}
-
-$key_attributes_html  = $key_attributes_has_value ? apply_filters( 'the_content', $key_attributes_raw ) : '';
-$important_notes_html = $important_notes_has_value ? apply_filters( 'the_content', $important_notes_raw ) : '';
+$key_attributes_raw   = $product_id ? (string) get_post_meta( $product_id, '_gstore_key_attributes', true ) : '';
+$important_notes_raw  = $product_id ? (string) get_post_meta( $product_id, '_gstore_important_notes', true ) : '';
+// Normaliza primeiro; usa o resultado para decidir se tem valor e para exibir (evita esconder aba quando o bruto está “sujo”).
+$key_attributes_html  = apply_filters( 'the_content', $key_attributes_raw );
+$important_notes_html = apply_filters( 'the_content', $important_notes_raw );
+$key_attributes_has_value   = $gstore_has_tab_content( $key_attributes_html );
+$important_notes_has_value  = $gstore_has_tab_content( $important_notes_html );
+$key_attributes_html  = $key_attributes_has_value ? $key_attributes_html : '';
+$important_notes_html = $important_notes_has_value ? $important_notes_html : '';
 
 // Debug: log após apply_filters para ver se o conteúdo foi perdido.
 if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
