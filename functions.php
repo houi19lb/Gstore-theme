@@ -3392,12 +3392,14 @@ function gstore_enqueue_checkout_assets() {
 			true
 		);
 
-		// JavaScript do checkout em 3 etapas
+		// JavaScript do checkout em 3 etapas (versão = tema + mtime para cache bust quando o JS muda)
+		$checkout_steps_path = get_theme_file_path( 'assets/js/checkout-steps.js' );
+		$checkout_steps_ver  = $theme_version . '.' . ( file_exists( $checkout_steps_path ) ? (string) filemtime( $checkout_steps_path ) : time() );
 		wp_enqueue_script(
 			'gstore-checkout-steps',
 			get_theme_file_uri( 'assets/js/checkout-steps.js' ),
 			array( 'jquery' ),
-			filemtime( get_theme_file_path( 'assets/js/checkout-steps.js' ) ),
+			$checkout_steps_ver,
 			true
 		);
 
