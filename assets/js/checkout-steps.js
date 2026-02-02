@@ -391,9 +391,9 @@
 			
 		// Handler para cliques nos labels de pagamento (sem disparar update_checkout)
 		function selectPaymentMethod(selectedMethod) {
-			// #region agent log
-			fetch('http://127.0.0.1:7246/ingest/82530f36-f41c-4a9b-9141-c3c4bf366209',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'checkout-steps.js:selectPaymentMethod:entry',message:'selectPaymentMethod called',data:{selectedMethod:selectedMethod},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H1-H4'})}).catch(function(){});
-			// #endregion
+			if (typeof window.gstoreDebugLog === 'function') {
+				window.gstoreDebugLog('selectPaymentMethod:entry', 'Payment method selected', { selectedMethod: selectedMethod }, 'debug-session', 'pix-debug', 'PIX-H1');
+			}
 			const $livePixRadio = $('input[name="payment_method"][value="blu_pix"]');
 			const $liveCheckoutRadio = $('input[name="payment_method"][value="blu_checkout"]');
 			
@@ -428,10 +428,9 @@
 					$('#gstore_blu_installments_select').val('1');
 				}
 
-				// #region agent log
-				var _checkedAfter = $('input[name="payment_method"]:checked').val();
-				fetch('http://127.0.0.1:7246/ingest/82530f36-f41c-4a9b-9141-c3c4bf366209',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'checkout-steps.js:selectPaymentMethod:beforeTrigger',message:'DOM checked after set',data:{checkedValue:_checkedAfter,selectedMethod:selectedMethod},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H1-H4'})}).catch(function(){});
-				// #endregion
+				if (typeof window.gstoreDebugLog === 'function') {
+					window.gstoreDebugLog('selectPaymentMethod:beforeTrigger', 'DOM checked', { checkedValue: $('input[name="payment_method"]:checked').val(), selectedMethod: selectedMethod }, 'debug-session', 'pix-debug', 'PIX-H1');
+				}
 				// Atualiza totais/sessão do WooCommerce
 				$(document.body).trigger('update_checkout');
 				// Atualiza "Ver detalhes" imediatamente com o método escolhido (PIX ou cartão)
@@ -2003,10 +2002,9 @@ function getInstallmentDisplayTotals(summaryData) {
 	function loadCartSummary() {
 		const $selectedMethod = $('input[name="payment_method"]:checked');
 		const paymentMethod = $selectedMethod.length ? $selectedMethod.val() : '';
-		// #region agent log
-		var _callId = 'lc_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6);
-		fetch('http://127.0.0.1:7246/ingest/82530f36-f41c-4a9b-9141-c3c4bf366209',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'checkout-steps.js:loadCartSummary',message:'loadCartSummary called',data:{paymentMethod:paymentMethod,callId:_callId,stack:new Error().stack?new Error().stack.split('\n').slice(1,4).join('|'):''},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H3-H4'})}).catch(function(){});
-		// #endregion
+		if (typeof window.gstoreDebugLog === 'function') {
+			window.gstoreDebugLog('loadCartSummary:entry', 'loadCartSummary called', { paymentMethod: paymentMethod }, 'debug-session', 'pix-debug', 'PIX-H3');
+		}
 		const installmentsValue = $('#gstore_blu_installments').val() || $('#gstore_blu_installments_select').val() || '';
 		const $form = $('form.checkout').first();
 		const postData = $form.length ? $form.serialize() : '';
@@ -2021,9 +2019,9 @@ function getInstallmentDisplayTotals(summaryData) {
 			},
 			success: function(response) {
 				if (response.success) {
-					// #region agent log
-					fetch('http://127.0.0.1:7246/ingest/82530f36-f41c-4a9b-9141-c3c4bf366209',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'checkout-steps.js:loadCartSummary:success',message:'renderSummary will receive',data:{payment_method:response.data&&response.data.payment_method,payment_method_title:response.data&&response.data.payment_method_title,callId:_callId},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H3-H5'})}).catch(function(){});
-					// #endregion
+					if (typeof window.gstoreDebugLog === 'function') {
+						window.gstoreDebugLog('loadCartSummary:success', 'AJAX completed', { payment_method: response.data && response.data.payment_method, payment_method_title: response.data && response.data.payment_method_title }, 'debug-session', 'pix-debug', 'PIX-H3');
+					}
 					renderSummary(response.data);
 				}
 			},
@@ -2038,9 +2036,9 @@ function getInstallmentDisplayTotals(summaryData) {
 	 * Renderiza o resumo do carrinho
 	 */
 	function renderSummary(data) {
-		// #region agent log
-		fetch('http://127.0.0.1:7246/ingest/82530f36-f41c-4a9b-9141-c3c4bf366209',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'checkout-steps.js:renderSummary',message:'renderSummary painting UI',data:{payment_method:data&&data.payment_method,payment_method_title:data&&data.payment_method_title},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H3-H5'})}).catch(function(){});
-		// #endregion
+		if (typeof window.gstoreDebugLog === 'function') {
+			window.gstoreDebugLog('renderSummary', 'Set payment in UI', { payment_method: data && data.payment_method, payment_method_title: data && data.payment_method_title }, 'debug-session', 'pix-debug', 'PIX-H3');
+		}
 		lastCartSummaryData = data;
 
 		// Se o Woo já esvaziou o carrinho (pedido Blu criado), não sobrescreve o topo com 0.
@@ -2332,12 +2330,10 @@ function getInstallmentDisplayTotals(summaryData) {
 
 		// Atualiza resumo quando checkout é atualizado
 		$(document.body).on('updated_checkout', function() {
-			// #region agent log
-			var _checkedBefore = $('input[name="payment_method"]:checked').val();
-			var _countPix = $('input[name="payment_method"][value="blu_pix"]').length;
-			var _countCheckout = $('input[name="payment_method"][value="blu_checkout"]').length;
-			fetch('http://127.0.0.1:7246/ingest/82530f36-f41c-4a9b-9141-c3c4bf366209',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'checkout-steps.js:updated_checkout:beforeRestore',message:'before restore',data:{lastSelectedPaymentMethod:lastSelectedPaymentMethod,checkedBefore:_checkedBefore,countPixRadios:_countPix,countCheckoutRadios:_countCheckout},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H2-H3-H4'})}).catch(function(){});
-			// #endregion
+			var checkedBefore = $('input[name="payment_method"]:checked').val();
+			if (typeof window.gstoreDebugLog === 'function') {
+				window.gstoreDebugLog('updated_checkout:beforeRestore', 'Before restore', { lastSelectedPaymentMethod: lastSelectedPaymentMethod, checkedBefore: checkedBefore }, 'debug-session', 'pix-debug', 'PIX-H2');
+			}
 			// Restaurar método de pagamento ANTES de carregar o resumo, para o "Ver detalhes"
 			// refletir PIX ou cartão corretamente (evita ficar travado em cartão ao escolher PIX)
 			if (lastSelectedPaymentMethod) {
@@ -2346,10 +2342,10 @@ function getInstallmentDisplayTotals(summaryData) {
 					$radio.prop('checked', true);
 				}
 			}
-			// #region agent log
-			var _checkedAfter = $('input[name="payment_method"]:checked').val();
-			fetch('http://127.0.0.1:7246/ingest/82530f36-f41c-4a9b-9141-c3c4bf366209',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'checkout-steps.js:updated_checkout:afterRestore',message:'after restore',data:{lastSelectedPaymentMethod:lastSelectedPaymentMethod,checkedAfter:_checkedAfter},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H2'})}).catch(function(){});
-			// #endregion
+			var checkedAfter = $('input[name="payment_method"]:checked').val();
+			if (typeof window.gstoreDebugLog === 'function') {
+				window.gstoreDebugLog('updated_checkout:afterRestore', 'After restore', { lastSelectedPaymentMethod: lastSelectedPaymentMethod, checkedAfter: checkedAfter }, 'debug-session', 'pix-debug', 'PIX-H2');
+			}
 			loadCartSummary();
 			// O WooCommerce pode re-renderizar fragments; garante que o DOM continue dentro das etapas
 			setTimeout(organizeFields, 0);
@@ -2976,9 +2972,10 @@ function getInstallmentDisplayTotals(summaryData) {
 		if ($selected.length) {
 			lastSelectedPaymentMethod = $selected.val();
 		}
-		// #region agent log
-		fetch('http://127.0.0.1:7246/ingest/82530f36-f41c-4a9b-9141-c3c4bf366209',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'checkout-steps.js:update_checkout',message:'stored lastSelectedPaymentMethod',data:{lastSelectedPaymentMethod:lastSelectedPaymentMethod,checkedVal:$selected.length?$selected.val():null},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H1'})}).catch(function(){});
-		// #endregion
+		if (typeof window.gstoreDebugLog === 'function') {
+			window.gstoreDebugLog('update_checkout', 'Stored payment method', { lastSelectedPaymentMethod: lastSelectedPaymentMethod, checkedVal: $selected.length ? $selected.val() : null }, 'debug-session', 'pix-debug', 'PIX-H1');
+		}
+
 		// CORREÇÃO CRÍTICA: Garante que os campos de frete estejam no form
 		// ANTES do WooCommerce serializar o form para update_order_review
 		updateCheckoutShippingHiddenFields();
