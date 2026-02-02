@@ -152,4 +152,6 @@ function gstore_render_navigation_block_by_location( $block_content, $block ) {
 	return '<nav class="' . esc_attr( $nav_class ) . '" aria-label="' . esc_attr__( 'Menu principal', 'gstore' ) . '">' . $menu_html . '</nav>';
 }
 
-add_filter( 'render_block', 'gstore_render_navigation_block_by_location', 10, 2 );
+if ( ! class_exists( 'GStore\\Frontend\\Navigation_Menu_Renderer' ) ) {
+	add_filter( 'render_block', 'gstore_render_navigation_block_by_location', 10, 2 );
+}

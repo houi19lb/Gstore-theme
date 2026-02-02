@@ -394,9 +394,10 @@
 		var fallbackNav = fallbackContainer
 			? fallbackContainer.querySelector('.wp-block-navigation__container')
 			: null;
-		var existingNav = fallbackNav ||
-			document.querySelector('.Gstore-nav .wp-block-navigation__container') ||
-			document.querySelector('.Gstore-nav__menu .wp-block-navigation__container');
+		var mobileNav = document.querySelector('.Gstore-nav--mobile .wp-block-navigation__container');
+		var desktopNav = document.querySelector('.Gstore-nav .wp-block-navigation__container');
+		var alternativeNav = document.querySelector('.Gstore-nav__menu .wp-block-navigation__container');
+		var existingNav = fallbackNav || mobileNav || desktopNav || alternativeNav;
 		var drawerNav = document.querySelector('.Gstore-mobile-drawer__nav');
 		
 		if (existingNav && drawerNav) {
