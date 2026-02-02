@@ -2412,7 +2412,8 @@ function getInstallmentDisplayTotals(summaryData) {
 			// #region agent log
 			fetch('http://127.0.0.1:7246/ingest/82530f36-f41c-4a9b-9141-c3c4bf366209',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'updated_checkout:start',message:'Event fired',data:{currentStep,lastSummaryTotals_before:lastSummaryTotals?{totalValue:lastSummaryTotals.totalValue,selectedTotal:lastSummaryTotals.selectedTotal}:null},timestamp:Date.now(),sessionId:'debug-session',runId:'v5',hypothesisId:'H6-H7'})}).catch(()=>{});
 			// #endregion
-			loadCartSummary();
+			// Usa último método selecionado (ex.: PIX) para não sobrescrever com Cartão quando o fragment WC substitui o DOM
+			loadCartSummary(lastSelectedPaymentMethod || undefined);
 			// O WooCommerce pode re-renderizar fragments; garante que o DOM continue dentro das etapas
 			setTimeout(organizeFields, 0);
 			setTimeout(ensureBluInstallmentsUI, 0);
