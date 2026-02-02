@@ -391,9 +391,6 @@
 			
 		// Handler para cliques nos labels de pagamento (sem disparar update_checkout)
 		function selectPaymentMethod(selectedMethod) {
-			if (typeof window.gstoreDebugLog === 'function') {
-				window.gstoreDebugLog('selectPaymentMethod:entry', 'Payment method selected', { selectedMethod: selectedMethod }, 'debug-session', 'pix-debug', 'PIX-H1');
-			}
 			const $livePixRadio = $('input[name="payment_method"][value="blu_pix"]');
 			const $liveCheckoutRadio = $('input[name="payment_method"][value="blu_checkout"]');
 			
@@ -428,13 +425,8 @@
 					$('#gstore_blu_installments_select').val('1');
 				}
 
-				if (typeof window.gstoreDebugLog === 'function') {
-					window.gstoreDebugLog('selectPaymentMethod:beforeTrigger', 'DOM checked', { checkedValue: $('input[name="payment_method"]:checked').val(), selectedMethod: selectedMethod }, 'debug-session', 'pix-debug', 'PIX-H1');
-				}
 				// Atualiza totais/sessão do WooCommerce
 				$(document.body).trigger('update_checkout');
-				// Atualiza "Ver detalhes" imediatamente com o método escolhido (PIX ou cartão)
-				loadCartSummary();
 			}
 			
 			$checkoutOption.find('label').on('click', function(e) {
@@ -1331,15 +1323,12 @@ function getInstallmentDisplayTotals(summaryData) {
 		const fees = (data && data.totals && data.totals.fees && Array.isArray(data.totals.fees)) ? data.totals.fees : [];
 		let feesTotal = 0;
 		const otherFees = [];
-		const isPix = (data && data.payment_method) === 'blu_pix';
 		fees.forEach(function (fee) {
 			const label = (fee && (fee.label || fee.name)) ? String(fee.label || fee.name).trim() : '';
 			const total = fee && Number.isFinite(Number(fee.total)) ? Number(fee.total) : parsePriceValue((fee && fee.total) ? String(fee.total) : '0');
 			if (!label) return;
 			const isFrete = label.toLowerCase().indexOf('frete') !== -1;
 			if (isFrete) return;
-			// PIX não tem taxa de parcelamento: não exibir nem somar
-			if (isPix && label.toLowerCase().indexOf('parcelamento') !== -1) return;
 			otherFees.push({ label: label, total: total });
 			feesTotal += total;
 		});
@@ -1439,18 +1428,6 @@ function getInstallmentDisplayTotals(summaryData) {
 		const $table = $orderReview.find('.shop_table').first();
 		if (!$table.length) {
 			return;
-		}
-		// PIX: esconde linha "Taxa de parcelamento" no resumo do pedido (etapa 3)
-		if (lastCartSummaryData && lastCartSummaryData.payment_method === 'blu_pix') {
-			$table.find('tr').each(function() {
-				const $row = $(this);
-				const text = ($row.find('th').text() || '').toLowerCase();
-				if (text.indexOf('parcelamento') !== -1) {
-					$row.addClass('gstore-hidden-for-pix').hide();
-				}
-			});
-		} else {
-			$table.find('tr.gstore-hidden-for-pix').removeClass('gstore-hidden-for-pix').show();
 		}
 		const $orderTotal = $table.find('.order-total .woocommerce-Price-amount').first();
 		const $subtotalRow = $table.find('.cart-subtotal').first();
@@ -2017,9 +1994,6 @@ function getInstallmentDisplayTotals(summaryData) {
 	function loadCartSummary() {
 		const $selectedMethod = $('input[name="payment_method"]:checked');
 		const paymentMethod = $selectedMethod.length ? $selectedMethod.val() : '';
-		if (typeof window.gstoreDebugLog === 'function') {
-			window.gstoreDebugLog('loadCartSummary:entry', 'loadCartSummary called', { paymentMethod: paymentMethod }, 'debug-session', 'pix-debug', 'PIX-H3');
-		}
 		const installmentsValue = $('#gstore_blu_installments').val() || $('#gstore_blu_installments_select').val() || '';
 		const $form = $('form.checkout').first();
 		const postData = $form.length ? $form.serialize() : '';
@@ -2034,9 +2008,6 @@ function getInstallmentDisplayTotals(summaryData) {
 			},
 			success: function(response) {
 				if (response.success) {
-					if (typeof window.gstoreDebugLog === 'function') {
-						window.gstoreDebugLog('loadCartSummary:success', 'AJAX completed', { payment_method: response.data && response.data.payment_method, payment_method_title: response.data && response.data.payment_method_title }, 'debug-session', 'pix-debug', 'PIX-H3');
-					}
 					renderSummary(response.data);
 				}
 			},
@@ -2051,9 +2022,6 @@ function getInstallmentDisplayTotals(summaryData) {
 	 * Renderiza o resumo do carrinho
 	 */
 	function renderSummary(data) {
-		if (typeof window.gstoreDebugLog === 'function') {
-			window.gstoreDebugLog('renderSummary', 'Set payment in UI', { payment_method: data && data.payment_method, payment_method_title: data && data.payment_method_title }, 'debug-session', 'pix-debug', 'PIX-H3');
-		}
 		lastCartSummaryData = data;
 
 		// Se o Woo já esvaziou o carrinho (pedido Blu criado), não sobrescreve o topo com 0.
@@ -2262,6 +2230,13 @@ function getInstallmentDisplayTotals(summaryData) {
 			}
 		});
 
+		// Quando a aba volta ao foco, recarrega o resumo para sincronizar método/totais
+		document.addEventListener('visibilitychange', function() {
+			if (!document.hidden) {
+				loadCartSummary();
+			}
+		});
+
 		// Toggle do resumo
 		$(document).on('click', '.Gstore-checkout-summary-top__toggle', function() {
 			const $toggle = $(this);
@@ -2345,22 +2320,6 @@ function getInstallmentDisplayTotals(summaryData) {
 
 		// Atualiza resumo quando checkout é atualizado
 		$(document.body).on('updated_checkout', function() {
-			var checkedBefore = $('input[name="payment_method"]:checked').val();
-			if (typeof window.gstoreDebugLog === 'function') {
-				window.gstoreDebugLog('updated_checkout:beforeRestore', 'Before restore', { lastSelectedPaymentMethod: lastSelectedPaymentMethod, checkedBefore: checkedBefore }, 'debug-session', 'pix-debug', 'PIX-H2');
-			}
-			// Restaurar método de pagamento ANTES de carregar o resumo, para o "Ver detalhes"
-			// refletir PIX ou cartão corretamente (evita ficar travado em cartão ao escolher PIX)
-			if (lastSelectedPaymentMethod) {
-				const $radio = $(`input[name="payment_method"][value="${lastSelectedPaymentMethod}"]`);
-				if ($radio.length && !$radio.is(':checked')) {
-					$radio.prop('checked', true);
-				}
-			}
-			var checkedAfter = $('input[name="payment_method"]:checked').val();
-			if (typeof window.gstoreDebugLog === 'function') {
-				window.gstoreDebugLog('updated_checkout:afterRestore', 'After restore', { lastSelectedPaymentMethod: lastSelectedPaymentMethod, checkedAfter: checkedAfter }, 'debug-session', 'pix-debug', 'PIX-H2');
-			}
 			loadCartSummary();
 			// O WooCommerce pode re-renderizar fragments; garante que o DOM continue dentro das etapas
 			setTimeout(organizeFields, 0);
@@ -2987,10 +2946,7 @@ function getInstallmentDisplayTotals(summaryData) {
 		if ($selected.length) {
 			lastSelectedPaymentMethod = $selected.val();
 		}
-		if (typeof window.gstoreDebugLog === 'function') {
-			window.gstoreDebugLog('update_checkout', 'Stored payment method', { lastSelectedPaymentMethod: lastSelectedPaymentMethod, checkedVal: $selected.length ? $selected.val() : null }, 'debug-session', 'pix-debug', 'PIX-H1');
-		}
-
+		
 		// CORREÇÃO CRÍTICA: Garante que os campos de frete estejam no form
 		// ANTES do WooCommerce serializar o form para update_order_review
 		updateCheckoutShippingHiddenFields();
@@ -3059,20 +3015,6 @@ function getInstallmentDisplayTotals(summaryData) {
 			setTimeout(init, 100);
 		}
 	});
-
-	// Ao voltar para a aba: restaura método de pagamento e dispara update para o servidor
-	// receber o valor correto (evita resumo voltar a "Cartão" quando o usuário sai e volta)
-	if (typeof document.addEventListener === 'function') {
-		document.addEventListener('visibilitychange', function() {
-			if (document.visibilityState !== 'visible') return;
-			if (!lastSelectedPaymentMethod) return;
-			const $radio = $(`input[name="payment_method"][value="${lastSelectedPaymentMethod}"]`);
-			if ($radio.length && !$radio.is(':checked')) {
-				$radio.prop('checked', true);
-				$(document.body).trigger('update_checkout');
-			}
-		});
-	}
 
 	// Intercepta a resposta do checkout para garantir redirect
 	$(document).ajaxComplete(function(event, xhr, settings) {
