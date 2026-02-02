@@ -3413,26 +3413,42 @@ function gstore_enqueue_checkout_assets() {
 			)
 		);
 
-		// Fix inline: ao abrir "Ver detalhes", corrige a linha Pagamento com a seleção atual (PIX/Cartão). Não depende de JS em cache.
+		// Fix inline: (1) Garante que o AJAX do resumo envie o método que o usuário escolheu (PIX/Cartão).
+		// (2) Ao abrir "Ver detalhes", corrige a linha Pagamento. Não depende de JS em cache.
 		wp_register_script( 'gstore-checkout-payment-fix', false, array( 'jquery', 'gstore-checkout-steps' ) );
 		wp_enqueue_script( 'gstore-checkout-payment-fix' );
 		wp_add_inline_script(
 			'gstore-checkout-payment-fix',
-			'jQuery(document).on("click", ".Gstore-checkout-summary-top__toggle", function() {
-				var $t = jQuery(this);
-				setTimeout(function() {
-					if (!$t.hasClass("is-open")) return;
-					var m = (jQuery("input[name=\'payment_method\']:checked").val() || "").trim();
-					var label = m === "blu_pix" ? "Pix" : (m === "blu_checkout" ? "Cartão" : "");
-					if (label) {
-						jQuery(".Gstore-checkout-summary-top__totals .Gstore-summary-row").each(function() {
-							if (jQuery(this).find("span").first().text().trim() === "Pagamento") {
-								jQuery(this).find("span").last().text(label);
-							}
-						});
+			'(function() {
+				var $ = jQuery;
+				window.__gstorePaymentMethod = ($("input[name=\'payment_method\']:checked").val() || "").trim() || null;
+				$(document).on("change", "input[name=\'payment_method\']", function() {
+					window.__gstorePaymentMethod = ($(this).val() || "").trim() || null;
+				});
+				$(document).ajaxSend(function(e, xhr, settings) {
+					if (settings.data && typeof settings.data === "object" && settings.data.action === "gstore_get_cart_summary") {
+						var stored = window.__gstorePaymentMethod;
+						if (stored === "blu_pix" || stored === "blu_checkout") {
+							settings.data.payment_method = stored;
+						}
 					}
-				}, 50);
-			});'
+				});
+				$(document).on("click", ".Gstore-checkout-summary-top__toggle", function() {
+					var $t = $(this);
+					setTimeout(function() {
+						if (!$t.hasClass("is-open")) return;
+						var m = ($("input[name=\'payment_method\']:checked").val() || "").trim();
+						var label = m === "blu_pix" ? "Pix" : (m === "blu_checkout" ? "Cartão" : "");
+						if (label) {
+							$(".Gstore-checkout-summary-top__totals .Gstore-summary-row").each(function() {
+								if ($(this).find("span").first().text().trim() === "Pagamento") {
+									$(this).find("span").last().text(label);
+								}
+							});
+						}
+					}, 50);
+				});
+			})();'
 		);
 
 		// CSS do Pix
