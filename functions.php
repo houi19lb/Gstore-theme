@@ -3425,6 +3425,13 @@ function gstore_enqueue_checkout_assets() {
 				$(document).on("change", "input[name=\'payment_method\']", function() {
 					window.__gstorePaymentMethod = ($(this).val() || "").trim() || null;
 				});
+				$(document).on("click", ".Gstore-blu-payment-option, input[name=\'payment_method\']", function() {
+					var $t = $(this);
+					setTimeout(function() {
+						var v = $("input[name=\'payment_method\']:checked").val();
+						if (v === "blu_pix" || v === "blu_checkout") window.__gstorePaymentMethod = v;
+					}, 0);
+				});
 				$(document).ajaxSend(function(e, xhr, settings) {
 					if (settings.data && typeof settings.data === "object" && settings.data.action === "gstore_get_cart_summary") {
 						var stored = window.__gstorePaymentMethod;
