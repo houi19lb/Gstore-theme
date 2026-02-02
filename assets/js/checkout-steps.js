@@ -2335,6 +2335,20 @@ function getInstallmentDisplayTotals(summaryData) {
 				(isOpen ? 'Ocultar detalhes' : 'Ver detalhes') +
 				' <i class="fa-solid fa-chevron-down"></i>'
 			);
+
+			// Ao abrir "Ver detalhes", corrige a linha Pagamento com a seleção atual do DOM (evita mostrar Cartão quando PIX está selecionado)
+			if (isOpen) {
+				const method = ($('input[name="payment_method"]:checked').val() || '').trim();
+				const label = method === 'blu_pix' ? 'Pix' : (method === 'blu_checkout' ? 'Cartão' : '');
+				if (label) {
+					const $totals = $('.Gstore-checkout-summary-top__totals');
+					$totals.find('.Gstore-summary-row').each(function() {
+						if ($(this).find('span').first().text().trim() === 'Pagamento') {
+							$(this).find('span').last().text(label);
+						}
+					});
+				}
+			}
 		});
 
 		// Seleção do frete por item no resumo

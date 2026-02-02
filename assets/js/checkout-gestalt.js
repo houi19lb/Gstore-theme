@@ -48,4 +48,21 @@ document.addEventListener('DOMContentLoaded', function () {
     jQuery(document.body).on('updated_checkout', function () {
         injectCheckoutTitles();
     });
+
+    // Corrige a linha "Pagamento" em "Ver detalhes" ao abrir o painel: usa a seleção atual (PIX/Cartão) do DOM
+    jQuery(document).on('click', '.Gstore-checkout-summary-top__toggle', function () {
+        var $toggle = jQuery(this);
+        setTimeout(function () {
+            if (!$toggle.hasClass('is-open')) return;
+            var method = (jQuery('input[name="payment_method"]:checked').val() || '').trim();
+            var label = method === 'blu_pix' ? 'Pix' : (method === 'blu_checkout' ? 'Cartão' : '');
+            if (label) {
+                jQuery('.Gstore-checkout-summary-top__totals').find('.Gstore-summary-row').each(function () {
+                    if (jQuery(this).find('span').first().text().trim() === 'Pagamento') {
+                        jQuery(this).find('span').last().text(label);
+                    }
+                });
+            }
+        }, 0);
+    });
 });
