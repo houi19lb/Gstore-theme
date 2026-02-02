@@ -389,16 +389,22 @@
 				}
 			}
 			
-		// Handler para cliques nos labels de pagamento (sem disparar update_checkout)
-		function selectPaymentMethod(selectedMethod) {
-			const $livePixRadio = $('input[name="payment_method"][value="blu_pix"]');
-			const $liveCheckoutRadio = $('input[name="payment_method"][value="blu_checkout"]');
-			
-			const isCheckout = selectedMethod === 'blu_checkout';
-			
-			// Atualiza os radios originais
-			$liveCheckoutRadio.prop('checked', isCheckout);
-			$livePixRadio.prop('checked', !isCheckout);
+	// Handler para cliques nos labels de pagamento (sem disparar update_checkout)
+	function selectPaymentMethod(selectedMethod) {
+		// #region agent log
+		fetch('http://127.0.0.1:7246/ingest/82530f36-f41c-4a9b-9141-c3c4bf366209',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'checkout-steps.js:selectPaymentMethod:entry',message:'selectPaymentMethod called',data:{selectedMethod:selectedMethod},timestamp:Date.now(),sessionId:'debug-session',runId:'v1',hypothesisId:'H2'})}).catch(()=>{});
+		// #endregion
+		const $livePixRadio = $('input[name="payment_method"][value="blu_pix"]');
+		const $liveCheckoutRadio = $('input[name="payment_method"][value="blu_checkout"]');
+		
+		const isCheckout = selectedMethod === 'blu_checkout';
+		
+		// Atualiza os radios originais
+		$liveCheckoutRadio.prop('checked', isCheckout);
+		$livePixRadio.prop('checked', !isCheckout);
+		// #region agent log
+		fetch('http://127.0.0.1:7246/ingest/82530f36-f41c-4a9b-9141-c3c4bf366209',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'checkout-steps.js:selectPaymentMethod:after-radios',message:'Radios updated',data:{pixChecked:$livePixRadio.filter(':checked').length,checkoutChecked:$liveCheckoutRadio.filter(':checked').length,pixCount:$livePixRadio.length,checkoutCount:$liveCheckoutRadio.length},timestamp:Date.now(),sessionId:'debug-session',runId:'v1',hypothesisId:'H2'})}).catch(()=>{});
+		// #endregion
 				
 				// Atualiza os clones visuais
 				if ($checkoutRadioClone) $checkoutRadioClone.prop('checked', isCheckout);
@@ -1997,6 +2003,9 @@ function getInstallmentDisplayTotals(summaryData) {
 		const installmentsValue = $('#gstore_blu_installments').val() || $('#gstore_blu_installments_select').val() || '';
 		const $form = $('form.checkout').first();
 		const postData = $form.length ? $form.serialize() : '';
+		// #region agent log
+		fetch('http://127.0.0.1:7246/ingest/82530f36-f41c-4a9b-9141-c3c4bf366209',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'checkout-steps.js:loadCartSummary:entry',message:'loadCartSummary called',data:{paymentMethod:paymentMethod,installmentsValue:installmentsValue,postDataHasPayment:postData.indexOf('payment_method')>-1,postDataPaymentMatch:postData.match(/payment_method=([^&]*)/)?.[1]||'not-found'},timestamp:Date.now(),sessionId:'debug-session',runId:'v1',hypothesisId:'H1-H3'})}).catch(()=>{});
+		// #endregion
 		$.ajax({
 			url: wc_checkout_params.ajax_url,
 			type: 'POST',
@@ -2007,6 +2016,9 @@ function getInstallmentDisplayTotals(summaryData) {
 				post_data: postData
 			},
 			success: function(response) {
+				// #region agent log
+				fetch('http://127.0.0.1:7246/ingest/82530f36-f41c-4a9b-9141-c3c4bf366209',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'checkout-steps.js:loadCartSummary:success',message:'AJAX response received',data:{success:response.success,paymentMethod:response.data?.payment_method,paymentMethodTitle:response.data?.payment_method_title,hasFees:!!(response.data?.totals?.fees),feesCount:response.data?.totals?.fees?.length||0},timestamp:Date.now(),sessionId:'debug-session',runId:'v1',hypothesisId:'H1-H4'})}).catch(()=>{});
+				// #endregion
 				if (response.success) {
 					renderSummary(response.data);
 				}
@@ -2232,6 +2244,9 @@ function getInstallmentDisplayTotals(summaryData) {
 
 		// Quando a aba volta ao foco, recarrega o resumo para sincronizar método/totais
 		document.addEventListener('visibilitychange', function() {
+			// #region agent log
+			fetch('http://127.0.0.1:7246/ingest/82530f36-f41c-4a9b-9141-c3c4bf366209',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'checkout-steps.js:visibilitychange',message:'visibilitychange fired',data:{hidden:document.hidden},timestamp:Date.now(),sessionId:'debug-session',runId:'v1',hypothesisId:'H5'})}).catch(()=>{});
+			// #endregion
 			if (!document.hidden) {
 				loadCartSummary();
 			}
