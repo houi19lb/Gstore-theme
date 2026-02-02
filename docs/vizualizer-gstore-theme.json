@@ -13,7 +13,7 @@
   "project": {
     "name": "CAC Armas Gstore",
     "type": "theme",
-    "version": "1.5.0",
+    "version": "1.5.1",
     "description": "Tema personalizado da CAC Armas otimizado para WooCommerce (inclui gateways Blu, frete customizado, store-info.json, setup/admin e integrações de frontend)."
   },
   "entities": [
@@ -23,7 +23,7 @@
       "kind": "file",
       "title": "style.css (Theme Header)",
       "path": "style.css",
-      "summary": "Metadados do tema + estilos legados (versão 1.5.0).",
+      "summary": "Metadados do tema + estilos legados (versão 1.5.1).",
       "tags": ["theme", "css"]
     },
     {
@@ -1234,7 +1234,7 @@
     "scope": "theme",
     "schema": "VizualizerDocumentation (draft-07)",
     "notes": [
-      "Tema: CAC Armas Gstore (versão 1.5.0).",
+      "Tema: CAC Armas Gstore (versão 1.5.1).",
       "Pagamentos: gateways Blu (checkout link + Pix) com webhooks REST em gstore-blu/v1.",
       "Frete: método customizado gstore_custom_shipping + admin para editar assets/json/shipping-rates.json.",
       "Store Info: store-info.json com export/import via admin-post e placeholders {{...}} processados via output buffer e render_block.",
