@@ -1,5 +1,9 @@
 # Documentação de Hooks: Checkout Gstore (Finalizar Compra)
 
+## Contexto rápido (LLMs/novos devs)
+- Lista de hooks usados no checkout (tema e integrações).
+- Útil para encontrar pontos de extensão e conflitos.
+
 Este documento detalha os hooks (ações e filtros) utilizados na página de checkout do tema Gstore, incluindo as customizações específicas do tema e os pontos de ancoragem padrão do WooCommerce.
 
 ---

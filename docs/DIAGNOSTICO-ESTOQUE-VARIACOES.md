@@ -1,5 +1,9 @@
 # Diagnóstico: estoque em produtos variáveis (WooCommerce) exibindo botões mesmo sem estoque
 
+## Contexto rápido (LLMs/novos devs)
+- Documento de diagnóstico de **estoque em variações**.
+- A correção envolve o payload de variações no backend.
+
 ## Contexto / Sintoma
 
 Na página de produto variável (ex.: [`/produto/teste/`](https://cacarmas.kivodigital.com.br/produto/teste/)), as variações **branco** e **preto** estavam com **estoque 0** no painel, mas no front-end:

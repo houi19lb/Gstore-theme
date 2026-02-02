@@ -1,5 +1,10 @@
 ## Checkout Blu – Link de Pagamento
 
+### Contexto rápido (LLMs/novos devs)
+- Documento do fluxo **Blu Checkout (link de pagamento)**.
+- Gateway roda no **plugin**; o tema apenas exibe UI/avisos.
+- Endpoint de webhook: `/wp-json/gstore-blu/v1/webhook`.
+
 ### Visão geral
 - O método `Pagamento via Link Blu` cria um link na API da Blu (`/b2b/payment_links`) durante o `process_payment`.
 - O cliente é **redirecionado automaticamente** para o checkout da Blu.

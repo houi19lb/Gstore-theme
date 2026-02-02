@@ -1,5 +1,9 @@
 # Cálculo de frete no carrinho e persistência do radio
 
+## Contexto rápido (LLMs/novos devs)
+- Documento do frete **no carrinho** (UI do tema).
+- Integra com endpoints AJAX/REST do plugin.
+
 Este documento descreve os ajustes feitos para o cálculo de frete no carrinho, persistência do modo selecionado e estabilidade da UI durante atualizações AJAX.
 
 ## Objetivo

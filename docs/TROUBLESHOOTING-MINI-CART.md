@@ -1,5 +1,9 @@
 # Troubleshooting: Mini Cart Fix - Guia de Diagnóstico
 
+## Contexto rápido (LLMs/novos devs)
+- Guia de diagnóstico do mini‑cart fix.
+- Usa checagens de nonces, fragments e REST do WooCommerce.
+
 **Versão do Fix**: v1.2.0  
 **Última Atualização**: Implementação de força estratégia híbrida quando nonce global ausente  
 **Data**: 2024

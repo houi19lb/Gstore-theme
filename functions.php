@@ -892,20 +892,12 @@ function gstore_enqueue_styles() {
 		'6.5.1'
 	);
 
-	// Google Fonts - Hind Guntur (tipografia das descricoes)
-	wp_enqueue_style(
-		'gstore-google-fonts',
-		'https://fonts.googleapis.com/css2?family=Hind+Guntur:wght@400;500;600;700&display=swap',
-		array(),
-		null
-	);
-
 	// Sistema modular Gstore (tokens, base, utilities, components, layouts)
 	// Usa versão com timestamp para forçar recarregamento quando tokens são atualizados
 	wp_enqueue_style(
 		'gstore-main',
 		get_theme_file_uri( 'assets/css/gstore-main.css' ),
-		array( $parent_handle, 'gstore-fontawesome', 'gstore-google-fonts' ),
+		array( $parent_handle, 'gstore-fontawesome' ),
 		$gstore_version
 	);
 
@@ -4773,9 +4765,7 @@ if ( ! function_exists( 'gstore_apply_cart_freight_fees' ) ) {
 		}
 	}
 }
-if ( ! defined( 'GSTORE_CORE_ACTIVE' ) ) {
-	add_action( 'woocommerce_cart_calculate_fees', 'gstore_apply_cart_freight_fees', 20 );
-}
+add_action( 'woocommerce_cart_calculate_fees', 'gstore_apply_cart_freight_fees', 20 );
 
 /**
  * Identifica a região de envio baseado no estado ou CEP.
@@ -11784,7 +11774,8 @@ function gstore_resolve_home_relative_urls( $content ) {
 	return $content;
 }
 
-add_filter( 'render_block', 'gstore_resolve_home_relative_urls', 20, 1 );
+add_filter( 'render_block_core/template-part', 'gstore_resolve_home_relative_urls', 20, 1 );
+add_filter( 'render_block_core/html', 'gstore_resolve_home_relative_urls', 20, 1 );
 add_filter( 'the_content', 'gstore_resolve_home_relative_urls', 25 );
 
 // ============================================
@@ -12304,6 +12295,48 @@ function gstore_age_verification_modal() {
 	<?php
 }
 add_action( 'wp_footer', 'gstore_age_verification_modal', 999 );
+
+/**
+ * Fallback do menu mobile no footer para uso pelo JS quando o drawer não existir no template.
+ */
+function gstore_render_mobile_menu_fallback() {
+	if ( is_admin() ) {
+		return;
+	}
+
+	$theme_location = '';
+	if ( has_nav_menu( 'gstore_mobile' ) ) {
+		$theme_location = 'gstore_mobile';
+	} elseif ( has_nav_menu( 'gstore_desktop' ) ) {
+		$theme_location = 'gstore_desktop';
+	}
+
+	if ( ! $theme_location ) {
+		return;
+	}
+
+	$walker = class_exists( 'Gstore_Nav_Menu_Walker' ) ? new Gstore_Nav_Menu_Walker() : '';
+	$menu_html = wp_nav_menu(
+		array(
+			'theme_location' => $theme_location,
+			'menu_class'     => 'wp-block-navigation__container',
+			'container'      => false,
+			'echo'           => false,
+			'fallback_cb'    => false,
+			'walker'         => $walker,
+		)
+	);
+
+	if ( empty( $menu_html ) ) {
+		return;
+	}
+
+	echo '<div id="gstore-mobile-menu-fallback" style="display:none;">';
+	echo '<nav class="wp-block-navigation Gstore-nav Gstore-nav--mobile" aria-label="' . esc_attr__( 'Menu principal', 'gstore' ) . '">';
+	echo $menu_html;
+	echo '</nav></div>';
+}
+add_action( 'wp_footer', 'gstore_render_mobile_menu_fallback', 5 );
 
 /**
  * Customiza a exibição do endereço na página Minha Conta para incluir rótulos.

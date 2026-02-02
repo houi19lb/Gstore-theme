@@ -1,5 +1,9 @@
 ## Schema JSON — Vizualizer (Grafo)
 
+### Contexto rápido (LLMs/novos devs)
+- Documento do schema JSON usado pelo Vizualizer.
+- Define entidades, conexões e metadata do grafo.
+
 Este documento define o **formato padrão** dos arquivos JSON consumidos pelo **Vizualizer** (visualização em mind map/grafo).
 
 A ideia é representar um sistema como um **grafo normalizado**:

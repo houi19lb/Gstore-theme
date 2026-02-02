@@ -106,8 +106,12 @@ function gstore_render_navigation_block_by_location( $block_content, $block ) {
 	}
 
 	$class_name = isset( $block['attrs']['className'] ) ? (string) $block['attrs']['className'] : '';
-	$is_mobile  = ( false !== strpos( $class_name, 'Gstore-nav--mobile' ) );
-	$is_desktop = ( false !== strpos( $class_name, 'Gstore-nav' ) );
+	$has_mobile_class = ( false !== strpos( $class_name, 'Gstore-nav--mobile' ) ) || ( false !== strpos( $block_content, 'Gstore-nav--mobile' ) );
+	$has_desktop_class = ( false !== strpos( $class_name, 'Gstore-nav' ) )
+		|| ( false !== strpos( $block_content, 'Gstore-nav__menu' ) )
+		|| ( false !== strpos( $block_content, 'Gstore-nav' ) );
+	$is_mobile  = $has_mobile_class;
+	$is_desktop = $has_desktop_class;
 
 	if ( $is_mobile ) {
 		$theme_location = 'gstore_mobile';

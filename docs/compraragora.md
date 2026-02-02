@@ -1,4 +1,8 @@
 Correção: Frete não atualiza no "Comprar Agora"
+
+Contexto rápido (LLMs/novos devs)
+- Documento de correção do fluxo “Comprar Agora”.
+- Foco em frete/checkout direto e persistência de sessão.
 Problema Original
 Quando o cliente usa "Comprar Agora" (pula o carrinho e vai direto para checkout), o CEP digitado na Etapa 2 não atualiza o "ver detalhes" do frete.
 

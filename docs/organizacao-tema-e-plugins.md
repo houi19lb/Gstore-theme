@@ -20,6 +20,10 @@ Se amanhã trocarmos o tema (ou criarmos um tema novo), o site deve continuar ve
 - **`style.css`**: CSS do tema.
 - **`assets/css/`, `assets/js/`**: scripts e estilos do frontend (UI).
 - **`theme.json`**: configurações do tema (tipografia, cores, presets).
+- **Navegação (tema + plugin)**:
+  - O **tema** controla o HTML/CSS/JS do header e do drawer.
+  - O **plugin** controla a seleção de menus (Loja → Navegação).
+  - Documentação específica: `docs/NAVEGACAO-VARIAVEL.md`.
 
 ### Pastas/arquivos de “core” (hoje estão no tema, mas deveriam ser plugin)
 

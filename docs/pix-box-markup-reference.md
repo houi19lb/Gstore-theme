@@ -1,5 +1,9 @@
 # Pix Box v2 – markup de referência (countdown + barra com curva)
 
+## Contexto rápido (LLMs/novos devs)
+- Referência de markup do box Pix (checkout).
+- Útil para alinhar CSS/JS com o HTML esperado.
+
 Design: card com cabeçalho, countdown “Seu Pix expira em”, barra de progresso com curva (queda rápida no início) e código copia e cola.
 
 **CSS:** `assets/css/components/pix-box.css`  

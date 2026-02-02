@@ -1,5 +1,9 @@
 # Refatoração do Sistema de Estilos - Gstore Theme
 
+## Contexto rápido (LLMs/novos devs)
+- Documento de refatoração de CSS do tema.
+- Útil para entender estrutura modular de estilos.
+
 ## 📋 Visão Geral
 
 Este documento descreve a refatoração do sistema de estilos do tema Gstore, organizando o código CSS em uma estrutura modular, reutilizável e responsiva.

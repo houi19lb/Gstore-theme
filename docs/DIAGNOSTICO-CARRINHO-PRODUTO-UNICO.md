@@ -1,5 +1,9 @@
 # Diagnóstico: Carrinho esvaziando no produto único
 
+## Contexto rápido (LLMs/novos devs)
+- Diagnóstico do carrinho esvaziando após add‑to‑cart no produto único.
+- Causa envolvia AJAX de parcelas Blu.
+
 ## Contexto do problema
 Ao clicar em **"Adicionar ao carrinho"** na página de produto único, o item aparecia no mini‑cart e logo era removido. No catálogo isso não ocorria.
 

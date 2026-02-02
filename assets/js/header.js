@@ -390,7 +390,12 @@
 		document.body.insertAdjacentHTML('beforeend', drawerHTML);
 		
 		// Copiar navegação existente para o drawer
-		var existingNav = document.querySelector('.Gstore-nav .wp-block-navigation__container') ||
+		var fallbackContainer = document.getElementById('gstore-mobile-menu-fallback');
+		var fallbackNav = fallbackContainer
+			? fallbackContainer.querySelector('.wp-block-navigation__container')
+			: null;
+		var existingNav = fallbackNav ||
+			document.querySelector('.Gstore-nav .wp-block-navigation__container') ||
 			document.querySelector('.Gstore-nav__menu .wp-block-navigation__container');
 		var drawerNav = document.querySelector('.Gstore-mobile-drawer__nav');
 		

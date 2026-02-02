@@ -1,5 +1,9 @@
 # Diagnóstico: Bugs do Carrinho de Bandeja em Produção (Hostinger)
 
+## Contexto rápido (LLMs/novos devs)
+- Documento focado em **produção** (Hostinger) e cache/CDN.
+- Trata do mini‑cart, fragments e AJAX.
+
 ## Problemas Identificados
 
 ### 1. **Cache/CDN Interferindo em Requisições AJAX**

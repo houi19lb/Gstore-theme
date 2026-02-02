@@ -1,5 +1,10 @@
 # README — Configuração de Frete (GStore)
 
+## Contexto rápido (LLMs/novos devs)
+- Esta documentação é da **tela Loja → Frete** (admin do plugin).
+- A UI é React (`src/loja/frete/*`) e persiste via REST (`gstore/v1`).
+- Dados vivem em `wp_options` (`gstore_freight_config`, `gstore_freight_cities`).
+
 Documento técnico da página **Loja → Frete**. Descreve UI, fluxos, persistência e pontos críticos de lógica.
 
 ## Onde a tela aparece

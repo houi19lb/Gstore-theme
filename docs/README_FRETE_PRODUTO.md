@@ -1,5 +1,9 @@
 # Frete na Página de Produto — Implementação no Tema
 
+## Contexto rápido (LLMs/novos devs)
+- Documento do frete na **página de produto**.
+- Tema chama endpoint AJAX do plugin `gstore_calculate_shipping`.
+
 Este documento descreve o que foi feito no tema para o cálculo e exibição de frete na **página de produto**.
 
 ## Objetivo

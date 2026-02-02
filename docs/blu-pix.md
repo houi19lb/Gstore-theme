@@ -1,5 +1,10 @@
 # Pix Blu – Gateway de Pagamento
 
+## Contexto rápido (LLMs/novos devs)
+- Documento do **gateway Pix Blu** (plugin).
+- O tema só renderiza UI; a lógica/REST/webhook é do plugin.
+- Ver também `DOCUMENTACAO_PRODUCAO.md` para requisitos de deploy.
+
 ## Visão geral
 
 O gateway **Pix Blu** permite que clientes paguem pedidos via Pix diretamente no checkout, com QR Code e código copia e cola exibidos na página de obrigado e no checkout.

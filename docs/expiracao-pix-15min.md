@@ -1,5 +1,9 @@
 # Onde e como a expiração do Pix (15 min) é configurada e renderizada
 
+## Contexto rápido (LLMs/novos devs)
+- Documento comparando **tema vs plugin** para expiração do Pix.
+- O gateway ativo é do plugin; o tema apenas referencia IDs/labels.
+
 **Repositório:** Este documento está no diretório do **tema** gstore (`wp-content/themes/gstore/`). A **seção 1** refere-se ao código do tema (este workspace); a **seção 2** ao plugin GStore White Label (outro diretório, ex.: `wp-content/plugins/gstore-core/`). Assim fica claro ao abrir só o tema ou só o plugin qual parte da doc se aplica a cada um.
 
 Validação da documentação sobre onde e como a expiração do Pix (15 min) é configurada e renderizada, confrontando com o código do tema gstore e esclarecendo a divisão plugin vs tema.

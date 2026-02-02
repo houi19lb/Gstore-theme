@@ -1,5 +1,9 @@
 # Sistema de Imagens da Biblioteca - Gstore Theme
 
+## Contexto rápido (LLMs/novos devs)
+- Guia para carregar imagens da biblioteca no tema.
+- Evita URLs hardcoded e problemas entre ambientes.
+
 Este documento explica como usar as funções helper para carregar imagens da biblioteca de mídia do WordPress nos templates do tema.
 
 ## 📋 Visão Geral

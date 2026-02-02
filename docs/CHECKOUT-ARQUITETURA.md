@@ -1,5 +1,9 @@
 # Arquitetura do Checkout - Gstore
 
+## Contexto rápido (LLMs/novos devs)
+- Documento de arquitetura do checkout (tema + plugin).
+- **Tema** = UI/fluxo visual; **Plugin** = regras de negócio e integrações.
+
 ## Visão Geral
 
 O checkout do Gstore é um sistema híbrido que combina **componentes do tema** (UI/UX) com **componentes do plugin** (lógica de negócio). Este documento explica como ambos trabalham juntos para fornecer uma experiência de checkout completa.

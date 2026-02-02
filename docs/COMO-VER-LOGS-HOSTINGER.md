@@ -1,5 +1,9 @@
 # Como Ver Logs de Erro na Hostinger
 
+## Contexto rápido (LLMs/novos devs)
+- Guia para localizar logs de erro na Hostinger.
+- Útil para diagnósticos de produção.
+
 ## Método 1: Via Painel hPanel da Hostinger
 
 1. **Acesse o hPanel**

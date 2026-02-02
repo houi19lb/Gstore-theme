@@ -1,5 +1,9 @@
 # 🐛 Debug do Checkout Blu - Guia de Solução
 
+## Contexto rápido (LLMs/novos devs)
+- Guia de troubleshooting para **redirecionamento Blu** no checkout.
+- Afeta JS do tema e handlers do plugin.
+
 ## Problema Relatado
 O botão de "Finalizar Pedido" no checkout não está redirecionando para o link da Blu.
 

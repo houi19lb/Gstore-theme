@@ -1,5 +1,9 @@
 # Melhorias no Mini-Cart Fix para Produção (Hostinger)
 
+## Contexto rápido (LLMs/novos devs)
+- Documento focado em mini‑cart na Hostinger.
+- Trata de fragments, badges duplicados e comportamento do drawer.
+
 ## Problema Identificado
 
 Pelos logs do console, identificamos que:
