@@ -69,6 +69,7 @@
 	let isLoadingInstallmentQuotes = false;
 	let lastInstallmentQuotesSignature = '';
 	let lastBluOrderPaymentUrl = null; // URL do pagamento Blu do último pedido criado (para exibir aviso quando modal fecha)
+	let lastSelectedPaymentMethodForDisplay = null; // Último método escolhido (PIX/Cartão) para exibir em "Ver detalhes" mesmo quando o AJAX ainda retorna o anterior
 
 	/**
 	 * Garante cálculo/validação do frete quando o CEP já está preenchido (sem precisar clicar/sair do campo).
@@ -391,6 +392,7 @@
 			
 		// Handler para cliques nos labels de pagamento (sem disparar update_checkout)
 		function selectPaymentMethod(selectedMethod) {
+			lastSelectedPaymentMethodForDisplay = selectedMethod;
 			const $livePixRadio = $('input[name="payment_method"][value="blu_pix"]');
 			const $liveCheckoutRadio = $('input[name="payment_method"][value="blu_checkout"]');
 			
@@ -2173,12 +2175,15 @@ function getInstallmentDisplayTotals(summaryData) {
 		// Renderiza totais
 		let totalsHtml = '';
 
-		// Método de pagamento selecionado (Pix, Cartão, etc.)
-		if (data.payment_method_title) {
+		// Método de pagamento: prioriza a seleção atual (clique em PIX/Cartão) para "Ver detalhes" refletir corretamente
+		const currentMethod = lastSelectedPaymentMethodForDisplay || (typeof lastSelectedPaymentMethod !== 'undefined' ? lastSelectedPaymentMethod : null) || ($('input[name="payment_method"]:checked').val() || '') || data.payment_method || '';
+		const paymentTitles = { blu_pix: 'Pix', blu_checkout: 'Cartão' };
+		const paymentTitle = (currentMethod && paymentTitles[currentMethod]) ? paymentTitles[currentMethod] : (data.payment_method_title || '');
+		if (paymentTitle) {
 			totalsHtml += `
 				<div class="Gstore-summary-row">
 					<span>Pagamento</span>
-					<span>${data.payment_method_title}</span>
+					<span>${paymentTitle}</span>
 				</div>
 			`;
 		}
