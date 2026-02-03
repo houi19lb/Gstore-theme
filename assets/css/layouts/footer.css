@@ -48,11 +48,6 @@
 	text-decoration: underline;
 }
 
-/* Logo no topo do footer (antes do footer-container) */
-.armastore-footer .footer-logo-link {
-	display: block;
-}
-
 /* Newsletter Wrapper - Seção separada com cinza mais claro, full width */
 .newsletter-wrapper {
 	background-color: #1e1e1e;
@@ -157,15 +152,13 @@
 }
 
 .footer-column .footer-logo img,
-.footer-column .wp-block-site-logo.footer-logo img,
-.footer-column .wp-block-site-logo.Gstore-header__logo img {
+.footer-column .wp-block-site-logo.footer-logo img {
 	max-height: 50px;
 	max-width: 200px;
 	width: auto;
 	height: auto;
 	display: block;
 	object-fit: contain;
-	margin-bottom: 15px;
 }
 
 .footer-column p,

@@ -6420,33 +6420,43 @@ function gstore_replace_footer_logo_html( $content ) {
 	$home_url = esc_url( home_url( '/' ) );
 	$site_name = esc_attr( get_bloginfo( 'name' ) );
 	
-	// Logo no topo do footer (filho direto do footer, antes do footer-container)
-	$logo_standalone = sprintf(
-		'<a href="%s" rel="home" aria-label="%s" class="footer-logo-link" data-gstore-footer-logo="1"><img src="%s" alt="%s" style="max-height: 36px; max-width: 180px; width: auto; height: auto; margin-bottom: 15px;" loading="eager" /></a>',
+	// HTML da logo com imagem para o footer
+	$logo_html = sprintf(
+		'<div class="wp-block-site-logo footer-logo" data-gstore-footer-logo="1"><a href="%s" rel="home" aria-label="%s"><img src="%s" alt="%s" style="max-height: 50px; max-width: 200px; width: auto; height: auto;" loading="lazy" /></a></div>',
 		$home_url,
 		$site_name,
 		esc_url( $logo_url ),
 		esc_attr( $logo_alt )
 	);
-	// Injetar logo antes do footer-container (ordem no DOM: newsletter-wrapper, logo, footer-container)
-	$content = preg_replace(
-		'/(<div\s+[^>]*class="[^"]*footer-container[^"]*"[^>]*>)/',
-		$logo_standalone . "\n\t$1",
-		$content,
-		1
-	);
-	// Remover o bloco site-logo da primeira footer-column (logo foi movido para o topo)
+	
+	// Padrão 1: Substitui o bloco site-logo renderizado pelo WordPress no footer
+	// Procura especificamente dentro do primeiro footer-column (onde está a logo)
+	// Usa uma regex mais específica para capturar apenas o primeiro footer-column dentro do footer-main
 	if ( preg_match( '/(<div[^>]*class="[^"]*footer-main[^"]*"[^>]*>)(.*?)(<\/div>)/is', $content, $footer_main_match ) ) {
 		$footer_main_content = $footer_main_match[2];
+		
+		// Captura o primeiro footer-column
 		if ( preg_match( '/(<div[^>]*class="[^"]*footer-column[^"]*"[^>]*>)(.*?)(<\/div>)/is', $footer_main_content, $footer_column_match ) ) {
 			$footer_column_content = $footer_column_match[2];
-			$footer_column_content_new = preg_replace( '/<div\s+[^>]*class="[^"]*wp-block-site-logo[^"]*footer-logo[^"]*"[^>]*>.*?<\/div>\s*/is', '', $footer_column_content, 1 );
+			
+			// Substitui o bloco site-logo se existir
+			$pattern1 = '/<div\s+[^>]*class="[^"]*wp-block-site-logo[^"]*footer-logo[^"]*"[^>]*>.*?<\/div>/is';
+			$footer_column_content_new = preg_replace( $pattern1, $logo_html, $footer_column_content, 1 );
+			
+			// Se não encontrou o bloco site-logo, tenta substituir um h3 com texto "CAC" no início
+			if ( $footer_column_content_new === $footer_column_content ) {
+				$pattern2 = '/<h3[^>]*>CAC\s*<span[^>]*>.*?<\/span><\/h3>/is';
+				$footer_column_content_new = preg_replace( $pattern2, $logo_html, $footer_column_content, 1 );
+			}
+			
+			// Se houve substituição, atualiza o conteúdo
 			if ( $footer_column_content_new !== $footer_column_content ) {
 				$footer_main_content_new = str_replace( $footer_column_match[0], $footer_column_match[1] . $footer_column_content_new . $footer_column_match[3], $footer_main_content );
 				$content = str_replace( $footer_main_match[0], $footer_main_match[1] . $footer_main_content_new . $footer_main_match[3], $content );
 			}
 		}
 	}
+	
 	return $content;
 }
 add_filter( 'render_block_core/template-part', 'gstore_replace_footer_logo_html', 10, 1 );
