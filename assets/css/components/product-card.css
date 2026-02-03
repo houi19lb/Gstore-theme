@@ -156,8 +156,8 @@
 	display: flex;
 	flex-direction: column;
 	gap: var(--gstore-spacing-2);
-	height: 7.5em;
-	min-height: 7.5em;
+	height: 7em;
+	min-height: 7em;
 	box-sizing: border-box;
 }
 
@@ -254,8 +254,8 @@
 	}
 
 	.Gstore-product-card__meta {
-		height: 7.5em;
-		min-height: 7.5em;
+		height: 7em;
+		min-height: 7em;
 		padding: var(--gstore-spacing-3);
 	}
 
