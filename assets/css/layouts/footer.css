@@ -48,6 +48,11 @@
 	text-decoration: underline;
 }
 
+/* Logo no topo do footer (antes do footer-container) */
+.armastore-footer .footer-logo-link {
+	display: block;
+}
+
 /* Newsletter Wrapper - Seção separada com cinza mais claro, full width */
 .newsletter-wrapper {
 	background-color: #1e1e1e;
