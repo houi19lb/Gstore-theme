@@ -58,7 +58,6 @@ class Gstore_Theme_Git_Updater {
 		add_filter( 'theme_action_links', array( $this, 'add_theme_action_link' ), 10, 2 );
 		add_action( 'admin_footer-themes.php', array( $this, 'print_inline_script' ) );
 		add_action( 'admin_footer-appearance_page_gstore-settings', array( $this, 'print_inline_script' ) );
-		add_action( 'admin_footer-appearance_page_gstore-media', array( $this, 'print_inline_script' ) );
 		add_action( 'wp_ajax_gstore_theme_git_pull', array( $this, 'ajax_git_pull' ) );
 	}
 
@@ -100,41 +99,8 @@ class Gstore_Theme_Git_Updater {
 			return;
 		}
 		?>
-		<div id="gstore-git-pull-error-modal" class="gstore-git-modal" style="display: none; position: fixed; z-index: 100000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); align-items: center; justify-content: center;">
-			<div class="gstore-git-modal-content" style="background: #fff; max-width: 560px; width: 90%; max-height: 80vh; overflow: hidden; border-radius: 4px; box-shadow: 0 4px 20px rgba(0,0,0,0.2);">
-				<div style="padding: 16px 20px; border-bottom: 1px solid #c3c4c7;">
-					<h2 style="margin: 0; font-size: 18px; color: #d63638;">
-						<span class="dashicons dashicons-warning" style="vertical-align: middle; margin-right: 6px;"></span>
-						<?php esc_html_e( 'Git pull não realizado', 'gstore' ); ?>
-					</h2>
-				</div>
-				<div class="gstore-git-modal-body" style="padding: 20px; overflow-y: auto; max-height: 50vh; font-family: monospace; white-space: pre-wrap; word-break: break-all; font-size: 13px; color: #1d2327;"></div>
-				<div style="padding: 12px 20px; border-top: 1px solid #c3c4c7; text-align: right;">
-					<button type="button" class="button button-primary gstore-git-modal-close"><?php esc_html_e( 'Fechar', 'gstore' ); ?></button>
-				</div>
-			</div>
-		</div>
-		<style>
-			.gstore-git-modal { align-items: center; justify-content: center; }
-			.gstore-git-modal-content { display: flex; flex-direction: column; }
-		</style>
 		<script>
 		(function($){
-			var $modal = $('#gstore-git-pull-error-modal');
-			var $body = $modal.find('.gstore-git-modal-body');
-
-			function showGitError(msg) {
-				$body.text(msg || 'Erro desconhecido.');
-				$modal.css('display', 'flex').show();
-			}
-
-			$modal.find('.gstore-git-modal-close').on('click', function() {
-				$modal.hide();
-			});
-			$modal.on('click', function(e) {
-				if (e.target === $modal[0]) $modal.hide();
-			});
-
 			$(document).on('click', '.gstore-theme-git-update', function(e){
 				e.preventDefault();
 
@@ -143,7 +109,7 @@ class Gstore_Theme_Git_Updater {
 				var nonce = $link.data('nonce');
 
 				if (!nonce) {
-					showGitError('Nonce inválido. Recarregue a página e tente novamente.');
+					alert('Nonce inválido. Recarregue a página e tente novamente.');
 					return;
 				}
 
@@ -162,20 +128,11 @@ class Gstore_Theme_Git_Updater {
 						location.reload();
 						return;
 					}
-					var msg = (resp && resp.data) ? (typeof resp.data === 'string' ? resp.data : (resp.data.message || JSON.stringify(resp.data))) : 'Erro desconhecido.';
-					showGitError('Não foi possível realizar o git pull.\n\n' + msg);
+					var msg = (resp && resp.data) ? resp.data : 'Erro desconhecido.';
+					alert('Falha ao atualizar: ' + msg);
 				})
-				.fail(function(xhr, status, err){
-					var msg = 'Erro de conexão.';
-					if (xhr && xhr.responseText) {
-						try {
-							var j = JSON.parse(xhr.responseText);
-							if (j && j.data) msg = typeof j.data === 'string' ? j.data : (j.data.message || xhr.responseText);
-						} catch (e) {
-							msg = xhr.responseText || msg;
-						}
-					}
-					showGitError('Não foi possível realizar o git pull.\n\n' + msg);
+				.fail(function(){
+					alert('Falha ao atualizar: erro de conexão.');
 				})
 				.always(function(){
 					$link.text(originalText).css({pointerEvents: '', opacity: ''});
