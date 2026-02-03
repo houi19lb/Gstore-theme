@@ -152,13 +152,15 @@
 }
 
 .footer-column .footer-logo img,
-.footer-column .wp-block-site-logo.footer-logo img {
+.footer-column .wp-block-site-logo.footer-logo img,
+.footer-column .wp-block-site-logo.Gstore-header__logo img {
 	max-height: 50px;
 	max-width: 200px;
 	width: auto;
 	height: auto;
 	display: block;
 	object-fit: contain;
+	margin-bottom: 15px;
 }
 
 .footer-column p,
