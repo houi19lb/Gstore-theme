@@ -5075,14 +5075,16 @@ main:not(.Gstore-blog-shell):not(.Gstore-blog-single-shell) {
 	gap: 0;
 }
 
-/* Bloco meta (rating + título) */
+/* Bloco meta (rating + título) - altura fixa para 2 linhas de título */
 .Gstore-product-card__meta {
 	background: var(--card-meta-bg);
 	padding: 10px 20px 10px 20px;
 	border-bottom: 1px solid var(--gray-border);
 	display: flex;
 	flex-direction: column;
-	min-height: 5.5em;
+	height: 6em;
+	min-height: 6em;
+	box-sizing: border-box;
 }
 
 /* Área de Meta (Avaliação + Título) - Fundo mais escuro */
@@ -5322,7 +5324,8 @@ main:not(.Gstore-blog-shell):not(.Gstore-blog-single-shell) {
 	}
 
 	.Gstore-product-card__meta {
-		min-height: 5.5em;
+		height: 6em;
+		min-height: 6em;
 	}
 
 	.Gstore-product-card__title {
