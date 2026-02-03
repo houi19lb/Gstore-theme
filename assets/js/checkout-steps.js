@@ -757,11 +757,30 @@
 			});
 		}
 
-		// Etapa 3: Adiciona botão de finalizar
+		// Etapa 3: Adiciona checkbox de contrato (se habilitado) e botão de finalizar
 		const $finalizeStep = $('[data-step="payment"] .Gstore-checkout-step__payment-container');
 		if ($finalizeStep.length && !$finalizeStep.find('#place_order').length) {
+			// Verifica se contratos estão habilitados
+			const contractEnabled = typeof gstoreCheckout !== 'undefined' && gstoreCheckout.contractSettings && gstoreCheckout.contractSettings.enabled;
+			const contractText = contractEnabled && gstoreCheckout.contractSettings.checkboxText 
+				? gstoreCheckout.contractSettings.checkboxText 
+				: 'Li e concordo com os termos do contrato';
+
+			let contractCheckboxHtml = '';
+			if (contractEnabled) {
+				contractCheckboxHtml = `
+					<div class="gstore-contract-terms woocommerce-terms-and-conditions-wrapper" style="margin-bottom:16px;">
+						<label class="woocommerce-form__label woocommerce-form__label-for-checkbox checkbox" style="display:flex;align-items:flex-start;gap:8px;cursor:pointer;">
+							<input type="checkbox" class="woocommerce-form__input woocommerce-form__input-checkbox input-checkbox" name="gstore_contract_terms" id="gstore_contract_terms" value="1" required style="margin-top:3px;" />
+							<span>${contractText}</span>
+						</label>
+					</div>
+				`;
+			}
+
 			$finalizeStep.append(`
 				<div class="Gstore-finalize-container">
+					${contractCheckboxHtml}
 					<button type="submit" class="Gstore-btn Gstore-btn--submit" name="woocommerce_checkout_place_order" id="place_order" value="Finalizar pedido" data-value="Finalizar pedido">
 						<i class="fa-solid fa-lock"></i>
 						Finalizar pedido
@@ -2269,6 +2288,13 @@ function getInstallmentDisplayTotals(summaryData) {
 			);
 		});
 
+		// Remove erro do checkbox de contrato quando marcado
+		$(document).on('change', '#gstore_contract_terms', function() {
+			if ($(this).is(':checked')) {
+				$(this).closest('.gstore-contract-terms').removeClass('woocommerce-invalid');
+			}
+		});
+
 		// Seleção do frete por item no resumo
 		$(document).on('change', 'input[name^="gstore_checkout_shipping_mode["]', function() {
 			const cartItemKey = $(this).data('cart-item-key') || String($(this).attr('name') || '').replace(/^gstore_checkout_shipping_mode\[|\]$/g, '');
@@ -2456,6 +2482,16 @@ function getInstallmentDisplayTotals(summaryData) {
 			if (!$paymentMethod.length) {
 				e.preventDefault();
 				showNotice('Por favor, selecione um método de pagamento.', 'error');
+				return false;
+			}
+
+			// Valida aceite do contrato quando o checkbox estiver presente
+			const $terms = $('#gstore_contract_terms');
+			if ($terms.length && !$terms.is(':checked')) {
+				e.preventDefault();
+				showNotice('Você precisa aceitar os termos do contrato para finalizar o pedido.', 'error');
+				$terms.closest('.gstore-contract-terms').addClass('woocommerce-invalid');
+				$terms.focus();
 				return false;
 			}
 			
