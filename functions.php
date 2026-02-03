@@ -3410,23 +3410,12 @@ function gstore_enqueue_checkout_assets() {
 		);
 
 		// Fornece nonce e URLs para o checkout (URLs respeitam subdiretório do WP).
-		$contract_settings = array(
-			'enabled'      => false,
-			'checkboxText' => 'Li e concordo com os termos do contrato',
-		);
-		if ( class_exists( '\GStore\Services\Contract_Service' ) ) {
-			$contract_settings = \GStore\Services\Contract_Service::get_settings();
-		}
 		wp_localize_script(
 			'gstore-checkout-steps',
 			'gstoreCheckout',
 			array(
 				'processCheckoutNonce' => wp_create_nonce( 'woocommerce-process_checkout' ),
 				'homeUrl'              => home_url( '/' ),
-				'contractSettings'     => array(
-					'enabled'      => ! empty( $contract_settings['enabled'] ),
-					'checkboxText' => isset( $contract_settings['checkboxText'] ) ? $contract_settings['checkboxText'] : 'Li e concordo com os termos do contrato',
-				),
 			)
 		);
 
@@ -3590,7 +3579,7 @@ function gstore_enqueue_checkout_assets() {
 		);
 	}
 }
-add_action( 'wp_enqueue_scripts', 'gstore_enqueue_checkout_assets', 40 );
+add_action( 'wp', 'gstore_enqueue_checkout_assets', 40 );
 
 /**
  * Move o texto de privacidade para baixo do botão de finalizar compra.
