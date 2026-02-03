@@ -6351,6 +6351,7 @@ add_filter( 'option_page_capability_gstore_settings', 'gstore_settings_option_pa
 /**
  * Retorna o último commit do Git no diretório do tema (hash curto + mensagem).
  * Usado na seção Sincronização GitHub para exibir "Último commit puxado".
+ * Usa "git -C" para funcionar no Windows (ex.: C:\Users\mathe\Gstore-theme).
  *
  * @return string|null Ex.: "a1b2c3d Mensagem do commit" ou null se indisponível.
  */
@@ -6359,14 +6360,19 @@ function gstore_get_last_git_commit() {
 		return null;
 	}
 	$theme_dir = get_stylesheet_directory();
-	if ( ! is_dir( $theme_dir . DIRECTORY_SEPARATOR . '.git' ) ) {
+	$git_dir   = $theme_dir . DIRECTORY_SEPARATOR . '.git';
+	if ( ! is_dir( $git_dir ) ) {
 		return null;
 	}
-	$is_win = defined( 'PHP_OS_FAMILY' ) && 'Windows' === PHP_OS_FAMILY;
-	$path    = $is_win ? '"' . str_replace( '"', '\\"', $theme_dir ) . '"' : escapeshellarg( $theme_dir );
-	$cd      = $is_win ? 'cd /d ' . $path : 'cd ' . $path;
-	$cmd     = $cd . ' && git log -1 --format="%h %s" 2>&1';
-	$out     = shell_exec( $cmd ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.system_calls_shell_exec
+	// git -C <path> evita "cd" e funciona bem no Windows com caminhos tipo C:\Users\mathe\Gstore-theme
+	$path = str_replace( array( '\\', '"' ), array( '/', '\"' ), $theme_dir );
+	if ( defined( 'PHP_OS_FAMILY' ) && 'Windows' === PHP_OS_FAMILY ) {
+		$path = '"' . $path . '"';
+	} else {
+		$path = escapeshellarg( $theme_dir );
+	}
+	$cmd = 'git -C ' . $path . ' log -1 --format="%h %s" 2>&1';
+	$out = shell_exec( $cmd ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.system_calls_shell_exec
 	if ( ! is_string( $out ) || '' === trim( $out ) ) {
 		return null;
 	}

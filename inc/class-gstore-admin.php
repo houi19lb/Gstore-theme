@@ -86,10 +86,22 @@ class Gstore_Admin {
 	 * Renderiza a página de administração.
 	 */
 	public function render_admin_page() {
+		$last_commit = function_exists( 'gstore_get_last_git_commit' ) ? gstore_get_last_git_commit() : null;
 		?>
 		<div class="wrap">
 			<h1>GStore Media Tools</h1>
 			<p>Ferramentas para manutenção de mídia do tema GStore.</p>
+
+			<div class="card" id="gstore-theme-git-card" style="margin-bottom: 20px;">
+				<h2><?php esc_html_e( 'Sincronização GitHub', 'gstore' ); ?></h2>
+				<p><?php esc_html_e( 'Mantenha os arquivos do tema atualizados diretamente do repositório GitHub.', 'gstore' ); ?></p>
+				<p><strong><?php esc_html_e( 'Último commit puxado:', 'gstore' ); ?></strong> <code style="display:inline-block;margin-left:6px;padding:2px 6px;background:#f0f0f1;border-radius:3px;"><?php echo esc_html( $last_commit ? $last_commit : '—' ); ?></code></p>
+				<div class="gstore-theme-git-actions" style="margin-top:14px;display:flex;align-items:center;gap:10px;">
+					<button type="button" class="button button-primary gstore-theme-git-update" id="gstore-theme-git-sync-btn" data-nonce="<?php echo esc_attr( wp_create_nonce( 'gstore_theme_git_pull' ) ); ?>"><?php esc_html_e( 'Sincronizar Agora', 'gstore' ); ?></button>
+					<span class="gstore-theme-git-status" id="gstore-theme-git-sync-status" aria-live="polite" style="font-weight:600;"></span>
+				</div>
+				<p style="margin-top:10px;font-size:12px;color:#50575e;"><?php esc_html_e( 'Atenção: quaisquer alterações locais não commitadas no tema serão perdidas (git reset --hard + git clean).', 'gstore' ); ?></p>
+			</div>
 
 			<div class="card">
 				<h2>Regenerar Miniaturas (Thumbnails)</h2>
