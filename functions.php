@@ -6755,6 +6755,10 @@ function gstore_render_settings_page() {
 					<span class="dashicons dashicons-cloud-upload" style="margin-right: 5px; vertical-align: middle;"></span>
 					<?php _e( 'Sincronizar Agora', 'gstore' ); ?>
 				</button>
+				<button type="button" class="button gstore-theme-git-status" data-nonce="<?php echo esc_attr( wp_create_nonce( 'gstore_theme_git_pull' ) ); ?>" style="margin-left: 8px;">
+					<span class="dashicons dashicons-info" style="margin-right: 5px; vertical-align: middle;"></span>
+					<?php _e( 'Ver versão e status do Git', 'gstore' ); ?>
+				</button>
 				<p class="description" style="margin-top: 10px;">
 					<?php _e( 'Atenção: Quaisquer alterações locais não commitadas serão perdidas.', 'gstore' ); ?>
 				</p>
