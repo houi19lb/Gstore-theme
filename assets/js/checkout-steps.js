@@ -2018,7 +2018,8 @@ function getInstallmentDisplayTotals(summaryData) {
 	}
 
 	/**
-	 * Carrega o resumo do carrinho via AJAX
+	 * Carrega o resumo do carrinho via AJAX.
+	 * Preferência: window.gstoreCartSummary (plugin) para URL e nonce corretos do endpoint gstore_get_cart_summary.
 	 */
 	function loadCartSummary() {
 		const $selectedMethod = $('input[name="payment_method"]:checked');
@@ -2026,12 +2027,15 @@ function getInstallmentDisplayTotals(summaryData) {
 		const installmentsValue = $('#gstore_blu_installments').val() || $('#gstore_blu_installments_select').val() || '';
 		const $form = $('form.checkout').first();
 		const postData = $form.length ? $form.serialize() : '';
+		const cartSummaryConfig = window.gstoreCartSummary;
+		const ajaxUrl = (cartSummaryConfig && cartSummaryConfig.ajaxUrl) || (typeof wc_checkout_params !== 'undefined' && wc_checkout_params.ajax_url) || '/wp-admin/admin-ajax.php';
+		const nonce = (cartSummaryConfig && cartSummaryConfig.nonce) || (window.gstoreCheckout && window.gstoreCheckout.cartSummaryNonce) || '';
 		$.ajax({
-			url: wc_checkout_params.ajax_url,
+			url: ajaxUrl,
 			type: 'POST',
 			data: {
 				action: 'gstore_get_cart_summary',
-				nonce: window.gstoreCheckout?.cartSummaryNonce || '',
+				nonce: nonce,
 				payment_method: paymentMethod,
 				gstore_blu_installments: installmentsValue,
 				post_data: postData
