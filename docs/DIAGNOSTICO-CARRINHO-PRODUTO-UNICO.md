@@ -18,14 +18,12 @@ O carrinho era esvaziado por um **AJAX** chamado logo após o add‑to‑cart:
 Isso limpava os cookies do carrinho (`woocommerce_cart_hash` e `woocommerce_items_in_cart`) e deixava o carrinho vazio quando o usuário abria `/carrinho/`.
 
 ## O que foi feito (mudanças permanentes)
-### 1) Forçar o handler do tema para o AJAX de parcelas
-Para evitar que o handler do plugin continue esvaziando o carrinho, a ação AJAX foi **sobrescrita** no tema:
+### 1) Consolidar o handler no plugin (sem override do tema)
+O AJAX de parcelas voltou a ser **responsabilidade do plugin**, mas agora com fluxo seguro:
 
-- **Arquivo:** `functions.php`
-- **Função:** `gstore_override_blu_installment_ajax_handler()`
-- **Resultado:** os callbacks do plugin para `gstore_blu_get_product_installment_quotes` são removidos e o handler do tema é registrado novamente.
-
-Com isso, o AJAX de parcelas passa a executar `gstore_ajax_get_product_installment_quotes()` (tema), que **não** chama `empty_cart()`.
+- **Arquivo:** `includes/blu/class-gstore-blu-checkout-handler.php`
+- **Método:** `ajax_product_installment_quotes()`
+- **Resultado:** o plugin cria um carrinho temporário, calcula as parcelas e **restaura** o carrinho original, evitando limpar cookies do carrinho real.
 
 ## O erro que estava sendo contornado no AJAX
 O AJAX de parcelas serve apenas para **calcular preços parcelados** na página de produto. Ele **não deveria** alterar o carrinho.  
@@ -41,12 +39,11 @@ Porém, o handler do plugin (`Gstore_Core_Blu_Checkout_Handler->ajax_product_ins
 3. O plugin esvaziava o carrinho e o mini‑cart “zerava”.
 
 ## Arquivos e mudanças específicas
-- **`functions.php`**
-  - `gstore_override_blu_installment_ajax_handler()`:
-    - remove callbacks do plugin para `gstore_blu_get_product_installment_quotes`;
-    - registra novamente o handler do tema.
-  - Handler que permanece ativo:
-    - `gstore_ajax_get_product_installment_quotes()` (tema) — apenas calcula parcelas, **não altera o carrinho**.
+- **`includes/blu/class-gstore-blu-checkout-handler.php`**
+  - `ajax_product_installment_quotes()`:
+    - usa carrinho temporário;
+    - restaura o carrinho original ao final;
+    - mantém cookies consistentes.
 
 ## Observação sobre o mini‑cart
 O mini‑cart atualiza com fragments e Store API. Quando o carrinho era esvaziado pelo AJAX do plugin, os cookies eram limpos e a Store API passava a devolver carrinho vazio.

@@ -2026,14 +2026,12 @@ function getInstallmentDisplayTotals(summaryData) {
 		const installmentsValue = $('#gstore_blu_installments').val() || $('#gstore_blu_installments_select').val() || '';
 		const $form = $('form.checkout').first();
 		const postData = $form.length ? $form.serialize() : '';
-		// #region agent log
-		fetch('http://127.0.0.1:7246/ingest/82530f36-f41c-4a9b-9141-c3c4bf366209',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'checkout-steps.js:loadCartSummary:entry',message:'loadCartSummary called',data:{paymentMethod:paymentMethod,installmentsValue:installmentsValue,postDataHasPayment:postData.indexOf('payment_method')>-1,postDataPaymentMatch:(postData.match(/payment_method=([^&]*)/)||[])[1]||'not-found',checkoutStep:$('#gstore_checkout_step').val()||''},timestamp:Date.now(),sessionId:'debug-session',runId:'v6',hypothesisId:'H1'})}).catch(()=>{});
-		// #endregion
 		$.ajax({
 			url: wc_checkout_params.ajax_url,
 			type: 'POST',
 			data: {
 				action: 'gstore_get_cart_summary',
+				nonce: window.gstoreCheckout?.cartSummaryNonce || '',
 				payment_method: paymentMethod,
 				gstore_blu_installments: installmentsValue,
 				post_data: postData
@@ -2054,9 +2052,6 @@ function getInstallmentDisplayTotals(summaryData) {
 	 * Renderiza o resumo do carrinho
 	 */
 	function renderSummary(data) {
-		// #region agent log
-		fetch('http://127.0.0.1:7246/ingest/82530f36-f41c-4a9b-9141-c3c4bf366209',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'checkout-steps.js:renderSummary:entry',message:'renderSummary called',data:{paymentMethod:data?.payment_method,paymentMethodTitle:data?.payment_method_title,feesCount:data?.totals?.fees?.length||0,baseTotal:data?.base_total,total:data?.total,checkoutStep:$('#gstore_checkout_step').val()||''},timestamp:Date.now(),sessionId:'debug-session',runId:'v6',hypothesisId:'H2'})}).catch(()=>{});
-		// #endregion
 		lastCartSummaryData = data;
 
 		// Se o Woo já esvaziou o carrinho (pedido Blu criado), não sobrescreve o topo com 0.

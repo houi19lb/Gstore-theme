@@ -2,7 +2,7 @@
 
 ## Contexto
 
-O sistema de parcelamento foi implementado com dropdown interativo que mostra todas as opções de parcelamento com juros e total a pagar. A função `initProductInstallmentQuotes()` em `assets/js/single-product.js` gerencia as requisições AJAX e popula o dropdown.
+O sistema de parcelamento usa dropdown interativo no produto, com cálculo **sem juros** no tema e aplicação de taxa **somente no checkout** (regra `fee_only`). A função `initProductInstallmentQuotes()` em `assets/js/single-product.js` gerencia as requisições AJAX e popula o dropdown.
 
 ## Problemas Identificados
 
@@ -21,7 +21,7 @@ O sistema de parcelamento foi implementado com dropdown interativo que mostra to
 
 **Ação necessária:**
 1. Verificar se `initProductInstallmentQuotes()` está sendo chamada mesmo quando produto está indisponível
-2. Verificar se o endpoint `gstore_ajax_get_product_installment_quotes()` em `functions.php` (linha ~2052) trata produtos indisponíveis corretamente
+2. Verificar se o endpoint `Gstore_Core_Blu_Checkout_Handler->ajax_product_installment_quotes()` (plugin) trata produtos indisponíveis corretamente
 3. Garantir que o dropdown funcione mesmo quando `buybox` tem classe `is-out-of-stock`
 4. Testar com produto sem estoque e verificar se as quotes são calculadas corretamente (mesmo sem estoque, o preço e parcelamento devem ser calculáveis)
 
@@ -60,9 +60,9 @@ O sistema de parcelamento foi implementado com dropdown interativo que mostra to
    - Template com wrapper e select dropdown
    - Atributos `data-gstore-installment-target="1"`, `data-product-id`, etc.
 
-3. **`functions.php`** (linha ~2052-2116)
-   - Endpoint AJAX `gstore_ajax_get_product_installment_quotes()`
-   - Calcula quotes de parcelamento
+3. **`includes/blu/class-gstore-blu-checkout-handler.php`**
+   - Endpoint AJAX `ajax_product_installment_quotes()`
+   - Calcula quotes de parcelamento via plugin
 
 4. **`woocommerce/content-product.php`** (linha ~24-28)
    - Cálculo estático de parcelamento nos cards
@@ -72,9 +72,9 @@ O sistema de parcelamento foi implementado com dropdown interativo que mostra to
 
 ### Para Problema 1 (Produto Indisponível):
 
-1. **Verificar endpoint PHP:**
+1. **Verificar endpoint PHP (plugin):**
    ```php
-   // Em functions.php, função gstore_ajax_get_product_installment_quotes()
+   // Em includes/blu/class-gstore-blu-checkout-handler.php, método ajax_product_installment_quotes()
    // Garantir que funciona mesmo quando:
    // - $product->is_in_stock() === false
    // - $product->get_stock_status() === 'outofstock'
@@ -141,14 +141,13 @@ O sistema de parcelamento foi implementado com dropdown interativo que mostra to
 
 ## Notas Adicionais
 
-- Manter todos os logs de debug existentes (regiões `#region agent log`)
 - Manter compatibilidade com sistema existente
 - Testar em diferentes cenários: produtos simples, variáveis, com/sem estoque
 - Verificar responsividade do dropdown em mobile
 
 ## Referências
 
-- Endpoint AJAX: `functions.php` linha ~2052
+- Endpoint AJAX: `includes/blu/class-gstore-blu-checkout-handler.php`
 - Função JavaScript: `assets/js/single-product.js` linha ~141
 - Template Single: `woocommerce/content-single-product.php` linha ~717
 - Template Cards: `woocommerce/content-product.php` linha ~24

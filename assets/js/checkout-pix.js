@@ -10,143 +10,76 @@
 	'use strict';
 
 	/**
-	 * Inicializa o checkout Pix
+	 * Inicializa countdown do Pix Box.
 	 */
-	function initCheckoutPix() {
-		// Verifica se estamos na página de checkout
-		if (!$('body').hasClass('woocommerce-checkout')) {
-			return;
-		}
+	function initPixCountdown() {
+		document.querySelectorAll('.pix-box[data-expires-at]').forEach(function(root) {
+			if (root.getAttribute('data-pix-countdown-init') === '1') {
+				return;
+			}
+			root.setAttribute('data-pix-countdown-init', '1');
 
-		// Verifica se o gateway Pix está selecionado
-		if (!isPixGatewaySelected()) {
-			return;
-		}
+			const expiresAt = parseInt(root.getAttribute('data-expires-at'), 10);
+			const orderStatus = String(root.getAttribute('data-order-status') || '').toLowerCase();
+			const countdownEl = root.querySelector('[data-role="pix-countdown"]');
+			const expiredMessageEl = root.querySelector('[data-role="pix-expired-message"]');
 
-		// Aguarda o pedido ser processado
-		$(document.body).on('checkout_place_order', function() {
-			// O pedido será processado, mas não podemos exibir o Pix aqui
-			// porque os dados só estarão disponíveis após o process_payment
-			// O Pix será exibido na página de obrigado
-		});
+			if (!expiresAt || !countdownEl) {
+				return;
+			}
+			if (['cancelled', 'failed', 'refunded', 'completed', 'processing'].includes(orderStatus)) {
+				return;
+			}
 
-		// Se já existe um pedido na URL (thankyou page), tenta carregar o Pix
-		const urlParams = new URLSearchParams(window.location.search);
-		const orderId = urlParams.get('order-received');
-		if (orderId) {
-			loadPixData(orderId);
-		}
-	}
+			let timer = null;
 
-	/**
-	 * Verifica se o gateway Pix está selecionado
-	 */
-	function isPixGatewaySelected() {
-		const $pixRadio = $('input[name="payment_method"][value="blu_pix"]:checked');
-		return $pixRadio.length > 0;
-	}
+			function updateCountdown() {
+				const now = Math.floor(Date.now() / 1000);
+				let diff = expiresAt - now;
 
-	/**
-	 * Carrega dados do Pix via AJAX
-	 */
-	function loadPixData(orderId) {
-		if (!orderId) {
-			return;
-		}
-
-		// Verifica se o objeto gstorePix está disponível
-		if (typeof gstorePix === 'undefined') {
-			console.warn('Gstore Pix: Objeto gstorePix não está disponível');
-			return;
-		}
-
-		$.ajax({
-			url: gstorePix.ajaxUrl,
-			type: 'POST',
-			data: {
-				action: 'gstore_get_pix_data',
-				order_id: orderId,
-				nonce: gstorePix.nonce
-			},
-			success: function(response) {
-				if (response.success && response.data) {
-					displayPixInstructions(response.data);
+				if (diff <= 0) {
+					root.classList.add('pix-box--client-expired');
+					countdownEl.textContent = 'PIX expirado';
+					countdownEl.classList.remove('pix-box__countdown--warning', 'pix-box__countdown--critical');
+					if (expiredMessageEl) {
+						expiredMessageEl.style.display = 'block';
+					}
+					if (timer) {
+						clearInterval(timer);
+						timer = null;
+					}
+					return;
 				}
-			},
-			error: function() {
-				console.error('Erro ao carregar dados do Pix');
+
+				const minutes = Math.floor(diff / 60);
+				const seconds = diff % 60;
+				countdownEl.textContent = 'Expira em: ' + minutes + ':' + String(seconds).padStart(2, '0');
+
+				countdownEl.classList.remove('pix-box__countdown--warning', 'pix-box__countdown--critical');
+				if (diff <= 60) {
+					countdownEl.classList.add('pix-box__countdown--critical');
+				} else if (diff <= 180) {
+					countdownEl.classList.add('pix-box__countdown--warning');
+				}
 			}
+
+			updateCountdown();
+			timer = setInterval(updateCountdown, 1000);
 		});
-	}
-
-	/**
-	 * Exibe instruções do Pix na página
-	 */
-	function displayPixInstructions(data) {
-		// Remove instruções existentes se houver
-		$('.Gstore-pix-checkout-instructions').remove();
-
-		let html = '<div class="woocommerce-info Gstore-pix-instructions Gstore-pix-checkout-instructions">';
-		html += '<h3>Pagamento via Pix</h3>';
-		html += '<p>Escaneie o QR Code ou copie o código abaixo para realizar o pagamento.</p>';
-
-		// QR Code
-		if (data.qr_code_base64) {
-			html += '<div class="Gstore-pix-qr-code">';
-			html += '<img src="data:image/png;base64,' + data.qr_code_base64 + '" alt="QR Code Pix" />';
-			html += '</div>';
-		}
-
-		// Código EMV
-		if (data.emv) {
-			html += '<div class="Gstore-pix-emv">';
-			html += '<label><strong>Código Pix (copia e cola):</strong></label>';
-			html += '<div class="Gstore-pix-emv-wrapper">';
-			html += '<textarea id="gstore-pix-emv-checkout" class="Gstore-pix-emv-code" readonly>' + data.emv + '</textarea>';
-			html += '<button type="button" class="button Gstore-pix-copy-btn" data-target="gstore-pix-emv-checkout">Copiar</button>';
-			html += '</div>';
-			html += '</div>';
-		}
-
-		// Informações
-		html += '<ul class="Gstore-pix-info">';
-		if (data.transaction_token) {
-			html += '<li>Token: ' + data.transaction_token + '</li>';
-		}
-		if (data.expires_at) {
-			html += '<li>Válido até: ' + data.expires_at + '</li>';
-		}
-		if (data.status) {
-			html += '<li>Status: ' + data.status + '</li>';
-		}
-		html += '</ul>';
-		html += '</div>';
-
-		// Insere antes do botão de finalizar pedido ou após o método de pagamento
-		const $paymentMethod = $('.payment_method_blu_pix');
-		if ($paymentMethod.length) {
-			$paymentMethod.after(html);
-		} else {
-			// Tenta inserir antes do botão de finalizar
-			const $placeOrder = $('button[name="woocommerce_checkout_place_order"]');
-			if ($placeOrder.length) {
-				$placeOrder.before(html);
-			} else {
-				// Fallback: insere no final do formulário
-				$('form.checkout').append(html);
-			}
-		}
-
-		// Inicializa botão de copiar
-		initCopyButton();
 	}
 
 	/**
 	 * Inicializa funcionalidade de copiar código
 	 */
 	function initCopyButton() {
+		const $doc = $(document);
+		if ($doc.data('gstorePixCopyInit')) {
+			return;
+		}
+		$doc.data('gstorePixCopyInit', true);
+
 		// Handler para Pix Box v2 (.pix-box .btn[data-copy-target])
-		$(document).on('click', '.pix-box .btn[data-copy-target]', function() {
+		$doc.on('click', '.pix-box .btn[data-copy-target]', function() {
 			const $btn = $(this);
 			const selector = $btn.data('copy-target');
 			const $textarea = $(selector);
@@ -160,7 +93,7 @@
 		});
 
 		// Handler para formato (pix-box__copy)
-		$(document).on('click', '.pix-box__copy', function() {
+		$doc.on('click', '.pix-box__copy', function() {
 			const $btn = $(this);
 			const selector = $btn.data('copy-target');
 			const $textarea = $(selector);
@@ -184,7 +117,7 @@
 		});
 
 		// Handler para formato antigo (Gstore-pix-copy-btn) - compatibilidade
-		$(document).on('click', '.Gstore-pix-copy-btn', function() {
+		$doc.on('click', '.Gstore-pix-copy-btn', function() {
 			const $btn = $(this);
 			const targetId = $btn.data('target');
 			const $textarea = $('#' + targetId);
@@ -246,14 +179,14 @@
 		
 		// Aguarda um pouco para garantir que tudo está carregado
 		setTimeout(function() {
-			initCheckoutPix();
 			initCopyButton();
+			initPixCountdown();
 		}, 100);
 	});
 
 	// Também inicializa após atualização do checkout (AJAX)
 	$(document.body).on('updated_checkout', function() {
-		initCheckoutPix();
+		initPixCountdown();
 	});
 
 })(jQuery);

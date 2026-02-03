@@ -270,6 +270,50 @@
 	color: var(--pix-muted);
 }
 
+/* Countdown Pix */
+.pix-box__countdown {
+	font-weight: 600;
+	margin-top: 8px;
+}
+
+.pix-box__countdown--warning {
+	color: #b45309;
+}
+
+.pix-box__countdown--critical {
+	color: #b91c1c;
+	animation: pixPulse 1s infinite;
+}
+
+.pix-box__expired-message {
+	display: none;
+	margin-top: 12px;
+	color: #b91c1c;
+	font-weight: 600;
+}
+
+.pix-box--client-expired .pix-box__expired-message {
+	display: block;
+}
+
+.pix-box--client-expired .pix-box__qr,
+.pix-box--client-expired .pix-box__code-group,
+.pix-box--client-expired .pix-box__copy {
+	display: none !important;
+}
+
+@keyframes pixPulse {
+	0% {
+		opacity: 1;
+	}
+	50% {
+		opacity: 0.5;
+	}
+	100% {
+		opacity: 1;
+	}
+}
+
 /* Compatibilidade */
 .Gstore-pix-emv {
 	display: flex;

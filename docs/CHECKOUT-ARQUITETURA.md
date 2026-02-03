@@ -31,6 +31,15 @@ O checkout do Gstore é um sistema híbrido que combina **componentes do tema** 
 
 ---
 
+## Atualizações pós-refactor (2026-02)
+
+- **Parcelamento:** endpoint e cálculo ficam no plugin (`ajax_product_installment_quotes` + fee_only). O tema não sobrescreve o AJAX; no produto o parcelamento é divisão simples (sem juros).
+- **Pix:** o plugin entrega o markup `.pix-box`; countdown/cópia são tratados no tema por `assets/js/checkout-pix.js` com estilos em `assets/css/checkout-pix.css`.
+- **JS do checkout:** removido `checkout-gestalt.js`; `checkout-steps.js` é o único orquestrador do fluxo.
+- **Segurança:** resumo do carrinho (`gstore_get_cart_summary`) agora valida nonce `gstore_cart_summary`.
+
+---
+
 ## Fluxo do Checkout em 3 Etapas
 
 ### Etapa 1: Escolha do Método de Pagamento

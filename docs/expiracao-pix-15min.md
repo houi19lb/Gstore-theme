@@ -100,5 +100,5 @@ Arquivos do plugin (não estão no diretório do tema): `includes/blu/class-gsto
 
 ### Opcional (melhorias)
 
-- **Tema:** Se o tema fizer override dos templates de thank-you / view-order e remover ou alterar o bloco do Pix, o countdown do plugin pode quebrar. Para o "Expira em" seguir funcionando, manter no HTML a estrutura que o plugin espera: `.pix-box`, `data-expires-at` e `[data-role="pix-countdown"]`. Se o tema substituir o bloco pela nova estrutura (Pix Box v2 com `.pix-urgency`, etc.), é preciso que o plugin passe a gerar esse HTML ou que o tema injete o bloco com `data-expires-at` e use [assets/js/pix-box-countdown.js](../assets/js/pix-box-countdown.js).
+- **Tema:** Se o tema fizer override dos templates de thank-you / view-order e remover ou alterar o bloco do Pix, o countdown pode quebrar. Para o "Expira em" seguir funcionando, manter no HTML a estrutura que o plugin entrega: `.pix-box`, `data-expires-at` e `[data-role="pix-countdown"]`. O countdown/cópia é tratado pelo `assets/js/checkout-pix.js` e os estilos ficam em `assets/css/checkout-pix.css`.
 - **Plugin:** `current_time( 'timestamp' )` está deprecado desde o WordPress 5.3+. Nos arquivos do Pix (gateway e handler) ainda é usado. Trocar por `time()` ou `current_datetime()->getTimestamp()` conforme o uso (UTC vs fuso do site).
