@@ -15,6 +15,7 @@
 .woocommerce-checkout main,
 main.woocommerce-checkout {
 	background: var(--gstore-color-white) !important;
+	margin-top: 0 !important;
 }
 
 .Gstore-checkout-shell .is-layout-constrained,

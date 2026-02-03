@@ -38,30 +38,11 @@
 }
 
 /* ===========================================
-   ESCONDE HEADER/NAV DO SITE NO CHECKOUT
-   Evita borda cinza da "tentativa de carregamento da NAV"
-   (template-part ou wrapper do header do site).
-   =========================================== */
-body.woocommerce-checkout .Gstore-header-shell,
-body.woocommerce-checkout .Gstore-nav-shell,
-body.woocommerce-checkout .Gstore-top-bar,
-body.woocommerce-checkout header:not(.Gstore-checkout-header) {
-	display: none !important;
-}
-
-/* Remove borda de qualquer wrapper do template-part no checkout */
-body.woocommerce-checkout .wp-block-template-part,
-body.woocommerce-checkout .wp-block-template-part.has-placeholder {
-	border: none !important;
-	display: none !important;
-}
-
-/* ===========================================
    HEADER MINIMALISTA DO CHECKOUT
    =========================================== */
 .Gstore-checkout-header {
 	background: rgba(0, 0, 0, 1);
-	border-bottom: 1px solid rgba(0, 0, 0, 1);
+	border-bottom: 1px solid rgba(214, 214, 214, 1);
 	padding: 16px 24px;
 	width: 100%;
 	max-width: 100%;
