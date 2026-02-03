@@ -3410,14 +3410,10 @@ function gstore_enqueue_checkout_assets() {
 		);
 
 		// Fornece nonce e URLs para o checkout (URLs respeitam subdiretório do WP).
-		wp_localize_script(
-			'gstore-checkout-steps',
-			'gstoreCheckout',
-			array(
-				'processCheckoutNonce' => wp_create_nonce( 'woocommerce-process_checkout' ),
-				'homeUrl'              => home_url( '/' ),
-			)
-		);
+		$checkout_inline  = 'window.gstoreCheckout = window.gstoreCheckout || {};';
+		$checkout_inline .= 'window.gstoreCheckout.processCheckoutNonce = ' . wp_json_encode( wp_create_nonce( 'woocommerce-process_checkout' ) ) . ';';
+		$checkout_inline .= 'window.gstoreCheckout.homeUrl = ' . wp_json_encode( home_url( '/' ) ) . ';';
+		wp_add_inline_script( 'gstore-checkout-steps', $checkout_inline, 'before' );
 
 		// CSS do Pix
 		wp_enqueue_style(
