@@ -8543,31 +8543,6 @@ function gstore_force_blog_block_template( $template ) {
 add_filter( 'block_template_loader', 'gstore_force_blog_block_template', 10, 1 );
 
 /**
- * Força o uso do template page-checkout.html na página de checkout.
- *
- * O template page-checkout não inclui a barra de navegação (template-part header),
- * apenas o header mínimo com logo e "Compra Segura". Assim evitamos que a nav
- * apareça na área de finalização de compra.
- *
- * @param WP_Block_Template|null $template Template atual.
- * @return WP_Block_Template|null Template a ser usado.
- */
-function gstore_force_checkout_block_template( $template ) {
-	if ( ! function_exists( 'is_checkout' ) || ! is_checkout() ) {
-		return $template;
-	}
-	if ( ! function_exists( 'get_block_template' ) ) {
-		return $template;
-	}
-	$block_template = get_block_template( get_stylesheet() . '//page-checkout', 'wp_template' );
-	if ( $block_template ) {
-		return $block_template;
-	}
-	return $template;
-}
-add_filter( 'block_template_loader', 'gstore_force_checkout_block_template', 10, 1 );
-
-/**
  * Cria todas as páginas do tema.
  * 
  * @param bool $force Se true, recria todas as páginas.
