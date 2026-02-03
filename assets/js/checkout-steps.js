@@ -1846,6 +1846,16 @@ function getInstallmentDisplayTotals(summaryData) {
 			return true;
 		}
 
+		// Etapa final: valida aceite do contrato quando o checkbox estiver presente
+		if (step.id === 'payment') {
+			const $terms = $('#gstore_contract_terms');
+			if ($terms.length && !$terms.is(':checked')) {
+				showNotice('Você precisa aceitar os termos do contrato para finalizar o pedido.', 'error');
+				$terms.focus();
+				return false;
+			}
+		}
+
 		step.fields.forEach(fieldId => {
 			const $fieldWrapper = $(`#${fieldId}_field`);
 			const $input = $fieldWrapper.find('input, select, textarea');
