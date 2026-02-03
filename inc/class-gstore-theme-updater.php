@@ -59,7 +59,6 @@ class Gstore_Theme_Git_Updater {
 		add_action( 'admin_footer-themes.php', array( $this, 'print_inline_script' ) );
 		add_action( 'admin_footer-appearance_page_gstore-settings', array( $this, 'print_inline_script' ) );
 		add_action( 'wp_ajax_gstore_theme_git_pull', array( $this, 'ajax_git_pull' ) );
-		add_action( 'wp_ajax_gstore_theme_git_status', array( $this, 'ajax_git_status' ) );
 	}
 
 	/**
@@ -102,7 +101,7 @@ class Gstore_Theme_Git_Updater {
 		?>
 		<div id="gstore-git-pull-error-modal" class="gstore-git-modal" style="display: none; position: fixed; z-index: 100000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); align-items: center; justify-content: center;">
 			<div class="gstore-git-modal-content" style="background: #fff; max-width: 560px; width: 90%; max-height: 80vh; overflow: hidden; border-radius: 4px; box-shadow: 0 4px 20px rgba(0,0,0,0.2);">
-				<div class="gstore-git-modal-header" style="padding: 16px 20px; border-bottom: 1px solid #c3c4c7;">
+				<div style="padding: 16px 20px; border-bottom: 1px solid #c3c4c7;">
 					<h2 style="margin: 0; font-size: 18px; color: #d63638;">
 						<span class="dashicons dashicons-warning" style="vertical-align: middle; margin-right: 6px;"></span>
 						<?php esc_html_e( 'Git pull não realizado', 'gstore' ); ?>
@@ -121,32 +120,10 @@ class Gstore_Theme_Git_Updater {
 		<script>
 		(function($){
 			var $modal = $('#gstore-git-pull-error-modal');
-			var $header = $modal.find('.gstore-git-modal-header h2');
 			var $body = $modal.find('.gstore-git-modal-body');
 
 			function showGitError(msg) {
-				$header.css('color', '#d63638').html('<span class="dashicons dashicons-warning" style="vertical-align: middle; margin-right: 6px;"></span><?php echo esc_js( __( 'Git pull não realizado', 'gstore' ) ); ?>');
 				$body.text(msg || 'Erro desconhecido.');
-				$modal.css('display', 'flex').show();
-			}
-
-			function showGitStatus(data) {
-				var lines = [
-					'Tema: ' + (data.theme_name || '—'),
-					'Versão: ' + (data.version || '—'),
-					'Branch: ' + (data.branch || '—'),
-					'Commit local: ' + (data.git_hash || '—'),
-					'Commit remoto: ' + (data.remote_hash || '—')
-				];
-				if (data.error) {
-					lines.push('', 'Aviso: ' + data.error);
-				} else if (data.is_up_to_date === true) {
-					lines.push('', '✓ Atualizado com o Git (remoto).');
-				} else if (data.is_up_to_date === false) {
-					lines.push('', '⚠ Não está atualizado com o Git. Use "Sincronizar Agora" para puxar as alterações.');
-				}
-				$header.css('color', '#1d2327').html('<span class="dashicons dashicons-info" style="vertical-align: middle; margin-right: 6px;"></span><?php echo esc_js( __( 'Versão e status do Git', 'gstore' ) ); ?>');
-				$body.text(lines.join('\n'));
 				$modal.css('display', 'flex').show();
 			}
 
@@ -155,21 +132,6 @@ class Gstore_Theme_Git_Updater {
 			});
 			$modal.on('click', function(e) {
 				if (e.target === $modal[0]) $modal.hide();
-			});
-
-			$(document).on('click', '.gstore-theme-git-status', function(e) {
-				e.preventDefault();
-				var nonce = $(this).data('nonce');
-				if (!nonce) return;
-				$.post(ajaxurl, { action: 'gstore_theme_git_status', nonce: nonce })
-					.done(function(resp) {
-						if (resp && resp.success && resp.data) showGitStatus(resp.data);
-						else showGitError(resp && resp.data ? (resp.data.message || JSON.stringify(resp.data)) : 'Resposta inválida.');
-					})
-					.fail(function(xhr) {
-						var msg = (xhr && xhr.responseText) ? xhr.responseText : 'Erro de conexão.';
-						showGitError(msg);
-					});
 			});
 
 			$(document).on('click', '.gstore-theme-git-update', function(e){
@@ -380,61 +342,6 @@ class Gstore_Theme_Git_Updater {
 					: $masked,
 			)
 		);
-	}
-
-	/**
-	 * Endpoint AJAX que retorna versão do tema e status do Git (se está atualizado com o remoto).
-	 */
-	public function ajax_git_status() {
-		if ( ! isset( $_POST['nonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['nonce'] ) ), 'gstore_theme_git_pull' ) ) {
-			wp_send_json_error( array( 'message' => 'Nonce inválido.' ) );
-		}
-		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_send_json_error( array( 'message' => 'Sem permissão.' ) );
-		}
-
-		$theme   = wp_get_theme( $this->stylesheet );
-		$version = $theme->get( 'Version' );
-		if ( ! $version ) {
-			$version = '0.0.0';
-		}
-
-		$theme_dir = get_stylesheet_directory();
-		$data = array(
-			'version'        => $version,
-			'theme_name'     => $theme->get( 'Name' ),
-			'git_hash'       => null,
-			'remote_hash'    => null,
-			'is_up_to_date'  => null,
-			'branch'         => $this->sanitize_branch( $this->branch ) ?: 'main',
-			'git_available'  => false,
-			'error'          => null,
-		);
-
-		if ( ! is_dir( $theme_dir . DIRECTORY_SEPARATOR . '.git' ) ) {
-			$data['error'] = __( 'Diretório .git não encontrado. O tema não está sob controle Git.', 'gstore' );
-			wp_send_json_success( $data );
-		}
-
-		$local = $this->run_in_dir( 'git rev-parse HEAD 2>&1', $theme_dir );
-		if ( false === $local || '' === trim( (string) $local ) || $this->looks_like_git_error( $local ) ) {
-			$data['error'] = trim( (string) $local ) ?: __( 'Não foi possível obter o commit local.', 'gstore' );
-			wp_send_json_success( $data );
-		}
-		$data['git_hash']      = trim( (string) $local );
-		$data['git_available'] = true;
-
-		$branch = $data['branch'];
-		$this->run_in_dir( 'git fetch origin ' . $branch . ' 2>&1', $theme_dir );
-		$remote = $this->run_in_dir( 'git rev-parse origin/' . $branch . ' 2>&1', $theme_dir );
-		if ( false === $remote || '' === trim( (string) $remote ) || $this->looks_like_git_error( $remote ) ) {
-			$data['error'] = sprintf( __( 'Não foi possível obter o commit remoto (origin/%s). Verifique o remote e a rede.', 'gstore' ), $branch );
-			wp_send_json_success( $data );
-		}
-		$data['remote_hash']   = trim( (string) $remote );
-		$data['is_up_to_date'] = ( $data['git_hash'] === $data['remote_hash'] );
-
-		wp_send_json_success( $data );
 	}
 
 	/**
