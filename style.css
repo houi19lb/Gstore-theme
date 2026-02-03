@@ -4992,13 +4992,15 @@ main:not(.Gstore-blog-shell):not(.Gstore-blog-single-shell) {
 	display: flex;
 	justify-content: center;
 	align-items: center;
-	min-height: 200px;
+	height: 220px;
 	position: relative;
 	border-bottom: 2px solid #f0f0f0;
+	overflow: hidden;
 }
 
 .Gstore-product-card__image {
 	width: 100%;
+	height: 180px;
 	display: flex;
 	justify-content: center;
 	align-items: center;
@@ -5013,8 +5015,9 @@ main:not(.Gstore-blog-shell):not(.Gstore-blog-single-shell) {
 }
 
 .Gstore-product-card__image img {
-	width: 100%;
-	max-width: 200px;
+	width: auto;
+	max-width: 100%;
+	max-height: 100%;
 	border-radius: var(--gstore-radius-base);
 	object-fit: contain;
 }
@@ -5079,6 +5082,7 @@ main:not(.Gstore-blog-shell):not(.Gstore-blog-single-shell) {
 	border-bottom: 1px solid var(--gray-border);
 	display: flex;
 	flex-direction: column;
+	min-height: 5.5em;
 }
 
 /* Área de Meta (Avaliação + Título) - Fundo mais escuro */
@@ -5305,8 +5309,20 @@ main:not(.Gstore-blog-shell):not(.Gstore-blog-single-shell) {
 		gap: 16px !important;
 	}
 
+	.Gstore-product-card__top {
+		height: 200px;
+	}
+
+	.Gstore-product-card__image {
+		height: 160px;
+	}
+
 	.Gstore-product-card__image img {
-		max-width: 160px !important;
+		max-width: 100% !important;
+	}
+
+	.Gstore-product-card__meta {
+		min-height: 5.5em;
 	}
 
 	.Gstore-product-card__title {
