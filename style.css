@@ -5082,8 +5082,8 @@ main:not(.Gstore-blog-shell):not(.Gstore-blog-single-shell) {
 	border-bottom: 1px solid var(--gray-border);
 	display: flex;
 	flex-direction: column;
-	height: 6em;
-	min-height: 6em;
+	height: 7.5em;
+	min-height: 7.5em;
 	box-sizing: border-box;
 }
 
@@ -5324,8 +5324,8 @@ main:not(.Gstore-blog-shell):not(.Gstore-blog-single-shell) {
 	}
 
 	.Gstore-product-card__meta {
-		height: 6em;
-		min-height: 6em;
+		height: 7.5em;
+		min-height: 7.5em;
 	}
 
 	.Gstore-product-card__title {
