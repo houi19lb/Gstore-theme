@@ -1,3 +1,12 @@
+/* Checkout – na área de checkout não deve aparecer a barra de navegação do site.
+   Esconde o header/nav completo caso o template errado seja carregado (ex.: cache). */
+body.woocommerce-checkout .Gstore-header-shell,
+body.woocommerce-checkout .Gstore-top-bar,
+body.woocommerce-checkout .Gstore-nav-shell,
+body.woocommerce-checkout .Gstore-mobile-drawer {
+	display: none !important;
+}
+
 /* Checkout – blocos WooCommerce dentro do wrapper .Gstore-checkout-shell */
 .Gstore-checkout-shell,
 .Gstore-checkout-shell * {
