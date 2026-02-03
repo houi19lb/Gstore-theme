@@ -375,6 +375,7 @@
 				
 				if ($checkoutRadioClone) $checkoutRadioClone.prop('checked', isCheckoutSelected);
 				if ($pixRadioClone) $pixRadioClone.prop('checked', isPixSelected);
+				persistSelectedPaymentMethod(isCheckoutSelected ? 'blu_checkout' : 'blu_pix');
 				
 				$content.empty();
 				
@@ -395,6 +396,7 @@
 		const $liveCheckoutRadio = $('input[name="payment_method"][value="blu_checkout"]');
 		
 		const isCheckout = selectedMethod === 'blu_checkout';
+		persistSelectedPaymentMethod(selectedMethod);
 		
 		// Atualiza os radios originais
 		$liveCheckoutRadio.prop('checked', isCheckout);
@@ -427,6 +429,7 @@
 
 				// Atualiza totais/sessão do WooCommerce
 				$(document.body).trigger('update_checkout');
+				setTimeout(loadCartSummary, 150);
 			}
 			
 			$checkoutOption.find('label').on('click', function(e) {
@@ -1704,6 +1707,7 @@ function getInstallmentDisplayTotals(summaryData) {
 			
 			// Dispara evento para atualizar checkout do WooCommerce
 			// Isso fará com que o WooCommerce calcule o frete oficialmente
+			persistSelectedPaymentMethod(resolveSelectedPaymentMethod($checkoutForm));
 			$(document.body).trigger('update_checkout');
 			// loadCartSummary já é chamado pelo handler global de updated_checkout
 			// Após CEP/frete mudar, atualiza preview de parcelas e quotes
@@ -1779,6 +1783,9 @@ function getInstallmentDisplayTotals(summaryData) {
 		// Atualiza campo enviado ao backend para só carregar taxa de parcelamento na etapa 3
 		const $stepInput = $('#gstore_checkout_step');
 		if ($stepInput.length) $stepInput.val(index);
+
+		// Garante que o método de pagamento persista entre etapas
+		persistSelectedPaymentMethod(resolveSelectedPaymentMethod($checkoutForm));
 
 		// Atualiza painéis
 		$('.Gstore-checkout-step').removeClass('is-active')
@@ -2018,14 +2025,57 @@ function getInstallmentDisplayTotals(summaryData) {
 	}
 
 	/**
+	 * Resolve o método de pagamento selecionado, com fallbacks seguros
+	 * para casos em que o rádio ainda não existe/foi desmarcado no DOM.
+	 */
+	function resolveSelectedPaymentMethod($form) {
+		if ($form && $form.length) {
+			const $hidden = $form.find('input[name="payment_method"][type="hidden"]').first();
+			if ($hidden.length && $hidden.val()) return $hidden.val();
+		}
+
+		const $selected = $('input[name="payment_method"]:checked');
+		if ($selected.length) return $selected.val();
+		
+		if (lastSelectedPaymentMethod) return lastSelectedPaymentMethod;
+		return '';
+	}
+
+	function persistSelectedPaymentMethod(method) {
+		if (!method) return;
+		lastSelectedPaymentMethod = method;
+		const $checkoutForm = $('form.checkout');
+		if (!$checkoutForm.length) return;
+		const $hidden = $checkoutForm.find('input[name="payment_method"][type="hidden"]');
+		const $radio = $checkoutForm
+			.find('input[name="payment_method"]')
+			.filter(function() {
+				return $(this).val() === method;
+			});
+		if ($radio.length) $radio.prop('checked', true);
+		if ($hidden.length) {
+			$hidden.val(method);
+		} else {
+			$checkoutForm.append(
+				$('<input>', {
+					type: 'hidden',
+					name: 'payment_method',
+					id: 'gstore_payment_method_fallback',
+					'data-gstore-fallback': '1',
+					value: method
+				})
+			);
+		}
+	}
+
+	/**
 	 * Carrega o resumo do carrinho via AJAX.
 	 * Preferência: window.gstoreCartSummary (plugin) para URL e nonce corretos do endpoint gstore_get_cart_summary.
 	 */
 	function loadCartSummary() {
-		const $selectedMethod = $('input[name="payment_method"]:checked');
-		const paymentMethod = $selectedMethod.length ? $selectedMethod.val() : '';
 		const installmentsValue = $('#gstore_blu_installments').val() || $('#gstore_blu_installments_select').val() || '';
 		const $form = $('form.checkout').first();
+		const paymentMethod = resolveSelectedPaymentMethod($form);
 		const postData = $form.length ? $form.serialize() : '';
 		const cartSummaryConfig = window.gstoreCartSummary;
 		const ajaxUrl = (cartSummaryConfig && cartSummaryConfig.ajaxUrl) || (typeof wc_checkout_params !== 'undefined' && wc_checkout_params.ajax_url) || '/wp-admin/admin-ajax.php';
@@ -2361,6 +2411,21 @@ function getInstallmentDisplayTotals(summaryData) {
 
 		// Atualiza resumo quando checkout é atualizado
 		$(document.body).on('updated_checkout', function() {
+			// Restaura seleção antes de carregar o resumo (evita default do Woo após fragments)
+			if (lastSelectedPaymentMethod) {
+				const $radio = $('input[name="payment_method"]').filter(function() {
+					return $(this).val() === lastSelectedPaymentMethod;
+				});
+				if ($radio.length && !$radio.is(':checked')) {
+					$radio.prop('checked', true);
+				}
+				const $hiddenPayment = $('form.checkout')
+					.find('input[name="payment_method"][type="hidden"]')
+					.first();
+				if ($hiddenPayment.length && $hiddenPayment.val() !== lastSelectedPaymentMethod) {
+					$hiddenPayment.val(lastSelectedPaymentMethod);
+				}
+			}
 			loadCartSummary();
 			// O WooCommerce pode re-renderizar fragments; garante que o DOM continue dentro das etapas
 			setTimeout(organizeFields, 0);
@@ -2988,6 +3053,15 @@ function getInstallmentDisplayTotals(summaryData) {
 		setTimeout(init, 100);
 	});
 
+	// Persistência do método de pagamento em qualquer troca (fallback geral)
+	$(document).on('change', 'input[name="payment_method"]', function() {
+		const method = $(this).val();
+		if (method) {
+			persistSelectedPaymentMethod(method);
+			setTimeout(loadCartSummary, 150);
+		}
+	});
+
 	// Variável para armazenar o método selecionado antes do update
 	let lastSelectedPaymentMethod = null;
 	
@@ -3004,6 +3078,28 @@ function getInstallmentDisplayTotals(summaryData) {
 		
 		const $checkoutForm = $('form.checkout');
 		if ($checkoutForm.length) {
+			// Garante que o método de pagamento esteja presente no POST,
+			// mesmo quando o rádio não está disponível/selecionado.
+			const $selectedRadio = $checkoutForm.find('input[name="payment_method"]:checked');
+			const $hiddenPayment = $checkoutForm.find('input[name="payment_method"][type="hidden"]');
+			if ($selectedRadio.length) {
+				persistSelectedPaymentMethod($selectedRadio.val());
+			} else if (lastSelectedPaymentMethod) {
+				if ($hiddenPayment.length) {
+					$hiddenPayment.val(lastSelectedPaymentMethod);
+				} else {
+					$checkoutForm.append(
+						$('<input>', {
+							type: 'hidden',
+							name: 'payment_method',
+							id: 'gstore_payment_method_fallback',
+							'data-gstore-fallback': '1',
+							value: lastSelectedPaymentMethod
+						})
+					);
+				}
+			}
+
 			// Etapa atual do checkout (0, 1, 2) para o backend só aplicar taxa de parcelamento na etapa 3
 			let $stepInput = $checkoutForm.find('input[name="gstore_checkout_step"]');
 			if (!$stepInput.length) {
@@ -3049,7 +3145,9 @@ function getInstallmentDisplayTotals(summaryData) {
 		// Restaura a seleção após o update
 		if (lastSelectedPaymentMethod) {
 			setTimeout(function() {
-				const $radio = $(`input[name="payment_method"][value="${lastSelectedPaymentMethod}"]`);
+				const $radio = $('input[name="payment_method"]').filter(function() {
+					return $(this).val() === lastSelectedPaymentMethod;
+				});
 				if ($radio.length && !$radio.is(':checked')) {
 					// Não dispara change para evitar loops
 					$radio.prop('checked', true);
