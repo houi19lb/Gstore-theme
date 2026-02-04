@@ -535,8 +535,8 @@
 		}
 
 		const allow = $installments.data('allow') === 1 || $installments.data('allow') === '1';
-		const $liveCheckoutRadio = $('input[name="payment_method"][value="blu_checkout"]');
-		const isCheckoutSelected = $liveCheckoutRadio.filter(':checked').length > 0;
+		const currentMethod = resolveSelectedPaymentMethod($('form.checkout').first());
+		const isCheckoutSelected = currentMethod === 'blu_checkout';
 
 		// Só faz sentido mostrar quando cartão estiver selecionado
 		$installments.toggle(allow && isCheckoutSelected);
@@ -559,6 +559,14 @@
 					$(document.body).trigger('update_checkout');
 				});
 			}
+		}
+
+		// Se Pix estiver ativo, reseta parcelas e esconde preview
+		if (!isCheckoutSelected) {
+			if ($hidden.length) $hidden.val('1');
+			if ($select.length) $select.val('1');
+			const $preview = $installments.find('.Gstore-blu-installments__preview');
+			if ($preview.length) $preview.html('');
 		}
 
 		// Atualiza labels das opções (Nx de R$ ...) quando disponível
@@ -2029,14 +2037,14 @@ function getInstallmentDisplayTotals(summaryData) {
 	 * para casos em que o rádio ainda não existe/foi desmarcado no DOM.
 	 */
 	function resolveSelectedPaymentMethod($form) {
+		const $selected = $('input[name="payment_method"]:checked');
+		if ($selected.length) return $selected.val();
+		
 		if ($form && $form.length) {
 			const $hidden = $form.find('input[name="payment_method"][type="hidden"]').first();
 			if ($hidden.length && $hidden.val()) return $hidden.val();
 		}
 
-		const $selected = $('input[name="payment_method"]:checked');
-		if ($selected.length) return $selected.val();
-		
 		if (lastSelectedPaymentMethod) return lastSelectedPaymentMethod;
 		return '';
 	}
@@ -2111,7 +2119,12 @@ function getInstallmentDisplayTotals(summaryData) {
 		// Se o Woo já esvaziou o carrinho (pedido Blu criado), não sobrescreve o topo com 0.
 		// Reusa o último resumo não-vazio para manter os dados corretos.
 		if (data && data.items_count === 0 && lastNonEmptyCartSummaryData) {
-			data = lastNonEmptyCartSummaryData;
+			const currentMethod = resolveSelectedPaymentMethod($('form.checkout').first());
+			if (!currentMethod || currentMethod === lastNonEmptyCartSummaryData.payment_method) {
+				data = lastNonEmptyCartSummaryData;
+			} else {
+				lastNonEmptyCartSummaryData = null;
+			}
 		} else if (data && data.items_count > 0) {
 			lastNonEmptyCartSummaryData = data;
 		}
@@ -2208,7 +2221,9 @@ function getInstallmentDisplayTotals(summaryData) {
 			return;
 		}
 
-		if (data.payment_method !== 'blu_checkout') {
+		const currentMethod = resolveSelectedPaymentMethod($('form.checkout').first());
+		const effectiveMethod = currentMethod || (data ? data.payment_method : '');
+		if (effectiveMethod !== 'blu_checkout') {
 			$preview.html('');
 			return;
 		}
@@ -2411,21 +2426,42 @@ function getInstallmentDisplayTotals(summaryData) {
 
 		// Atualiza resumo quando checkout é atualizado
 		$(document.body).on('updated_checkout', function() {
-			// Restaura seleção antes de carregar o resumo (evita default do Woo após fragments)
-			if (lastSelectedPaymentMethod) {
-				const $radio = $('input[name="payment_method"]').filter(function() {
-					return $(this).val() === lastSelectedPaymentMethod;
-				});
-				if ($radio.length && !$radio.is(':checked')) {
-					$radio.prop('checked', true);
-				}
-				const $hiddenPayment = $('form.checkout')
-					.find('input[name="payment_method"][type="hidden"]')
-					.first();
-				if ($hiddenPayment.length && $hiddenPayment.val() !== lastSelectedPaymentMethod) {
-					$hiddenPayment.val(lastSelectedPaymentMethod);
-				}
+	// Restaura seleção antes de carregar o resumo (evita default do Woo após fragments)
+	const $selectedRadio = $('input[name="payment_method"]:checked');
+	const $hiddenPayment = $('form.checkout')
+		.find('input[name="payment_method"][type="hidden"]')
+		.first();
+	const preferredMethod = ($hiddenPayment.length && $hiddenPayment.val()) ? $hiddenPayment.val() : lastSelectedPaymentMethod;
+	if ($selectedRadio.length) {
+		const selectedVal = $selectedRadio.val();
+		if (preferredMethod && selectedVal && selectedVal !== preferredMethod) {
+			const $radio = $('input[name="payment_method"]').filter(function() {
+				return $(this).val() === preferredMethod;
+			});
+			if ($radio.length) {
+				$radio.prop('checked', true);
 			}
+			lastSelectedPaymentMethod = preferredMethod;
+			if ($hiddenPayment.length && $hiddenPayment.val() !== preferredMethod) {
+				$hiddenPayment.val(preferredMethod);
+			}
+		} else if (selectedVal) {
+			lastSelectedPaymentMethod = selectedVal;
+			if ($hiddenPayment.length && $hiddenPayment.val() !== selectedVal) {
+				$hiddenPayment.val(selectedVal);
+			}
+		}
+	} else if (preferredMethod) {
+		const $radio = $('input[name="payment_method"]').filter(function() {
+			return $(this).val() === preferredMethod;
+		});
+		if ($radio.length && !$radio.is(':checked')) {
+			$radio.prop('checked', true);
+		}
+		if ($hiddenPayment.length && $hiddenPayment.val() !== preferredMethod) {
+			$hiddenPayment.val(preferredMethod);
+		}
+	}
 			loadCartSummary();
 			// O WooCommerce pode re-renderizar fragments; garante que o DOM continue dentro das etapas
 			setTimeout(organizeFields, 0);
@@ -2917,7 +2953,7 @@ function getInstallmentDisplayTotals(summaryData) {
 	 * Se o embed for bloqueado (X-Frame-Options/CSP), o botão "Abrir em nova aba" funciona como fallback.
 	 */
 	function isBluCheckoutSelected() {
-		const selected = $('input[name="payment_method"]:checked').val();
+		const selected = resolveSelectedPaymentMethod($('form.checkout').first());
 		return selected === 'blu_checkout';
 	}
 
@@ -3067,16 +3103,26 @@ function getInstallmentDisplayTotals(summaryData) {
 	
 	// Armazena a seleção antes do update e garante campos hidden de frete
 	$(document.body).on('update_checkout', function() {
+		const $checkoutForm = $('form.checkout');
+		const $hiddenPayment = $checkoutForm.find('input[name="payment_method"][type="hidden"]').first();
+		const hiddenVal = $hiddenPayment.length ? $hiddenPayment.val() : '';
+		const hasFallback = $hiddenPayment.length && ($hiddenPayment.data('gstore-fallback') || $hiddenPayment.attr('data-gstore-fallback'));
 		const $selected = $('input[name="payment_method"]:checked');
 		if ($selected.length) {
-			lastSelectedPaymentMethod = $selected.val();
+			const selectedVal = $selected.val();
+			if (hasFallback && hiddenVal && selectedVal && hiddenVal !== selectedVal) {
+				lastSelectedPaymentMethod = hiddenVal;
+			} else if (selectedVal) {
+				lastSelectedPaymentMethod = selectedVal;
+			}
+		} else if (hiddenVal) {
+			lastSelectedPaymentMethod = hiddenVal;
 		}
 		
 		// CORREÇÃO CRÍTICA: Garante que os campos de frete estejam no form
 		// ANTES do WooCommerce serializar o form para update_order_review
 		updateCheckoutShippingHiddenFields();
 		
-		const $checkoutForm = $('form.checkout');
 		if ($checkoutForm.length) {
 			// Garante que o método de pagamento esteja presente no POST,
 			// mesmo quando o rádio não está disponível/selecionado.
