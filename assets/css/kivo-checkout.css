@@ -1,0 +1,121 @@
+.kivo-checkout-footer {
+  --kivo-green: #5a8b00;
+  --kivo-orange: #ff7a00;
+  --kivo-text: #111827;
+  --kivo-muted: #6b7280;
+  --kivo-border: var(--gstore-muted, #e5e7eb);
+  --kivo-bg: #ffffff;
+
+  background: var(--kivo-bg);
+  border: 1px solid var(--gstore-muted, var(--kivo-border));
+  border-radius: var(--gstore-border-radius, 4px);
+  padding: 16px;
+  display: grid;
+  gap: 14px;
+}
+
+.kivo-helper {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 12px;
+  color: var(--kivo-muted);
+}
+
+.kivo-lock {
+  width: 16px;
+  height: 16px;
+  opacity: 0.75;
+}
+
+/* Parcelamento dentro do card: espaçamento pelo grid do card, sem borda superior extra */
+.kivo-checkout-footer .Gstore-blu-installments {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: none;
+}
+
+.kivo-terms {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  border: 1px solid var(--gstore-muted, var(--kivo-border));
+  border-radius: var(--gstore-border-radius, 4px);
+  padding: 12px;
+  cursor: pointer;
+}
+
+.kivo-terms input {
+  margin-top: 3px;
+  width: 16px;
+  height: 16px;
+}
+
+.kivo-terms__text {
+  font-size: 14px;
+  line-height: 1.35;
+  color: var(--kivo-text);
+}
+
+.kivo-terms__sub {
+  display: block;
+  margin-top: 6px;
+  font-size: 12px;
+  color: var(--kivo-muted);
+}
+
+.kivo-link {
+  color: var(--kivo-orange);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.kivo-cta {
+  width: 100%;
+  border: 0;
+  border-radius: var(--gstore-border-radius, 4px);
+  padding: 16px 18px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  background: var(--kivo-green);
+  color: #fff;
+  transition: filter 0.15s ease, opacity 0.15s ease;
+}
+
+.kivo-cta:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.kivo-cta:not(:disabled):hover {
+  filter: brightness(0.97);
+}
+
+.kivo-cta:not(:disabled):active {
+  filter: brightness(0.93);
+}
+
+.kivo-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.kivo-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--gstore-muted, var(--kivo-border));
+  border-radius: var(--gstore-border-radius, 4px);
+  padding: 10px 14px;
+  font-size: 14px;
+  color: var(--kivo-text);
+  text-decoration: none;
+  background: #fff;
+}
+
+.kivo-bottom__hint {
+  font-size: 12px;
+  color: var(--kivo-muted);
+}

@@ -260,7 +260,7 @@
 				</div>
 				<div class="Gstore-checkout-step__fields"></div>
 				${actionsHtml}
-				${isLast ? '<div class="Gstore-checkout-step__payment-container"><div class="Gstore-checkout-step__order-review-slot"></div><div class="Gstore-blu-installments-slot"></div></div>' : ''}
+				${isLast ? '<div class="Gstore-checkout-step__payment-container"><div class="Gstore-checkout-step__order-review-slot"></div></div>' : ''}
 			</div>
 		`;
 	}
@@ -768,40 +768,51 @@
 			});
 		}
 
-		// Etapa 3: Adiciona checkbox de contrato (se habilitado) e botão de finalizar
+		// Etapa 3: Footer Kivo (termos, privacidade, CTA) + botão oculto place_order
 		const $finalizeStep = $('[data-step="payment"] .Gstore-checkout-step__payment-container');
 		if ($finalizeStep.length && !$finalizeStep.find('#place_order').length) {
-			// Verifica se contratos estão habilitados
-			const contractEnabled = typeof gstoreCheckout !== 'undefined' && gstoreCheckout.contractSettings && gstoreCheckout.contractSettings.enabled;
-			const contractText = contractEnabled && gstoreCheckout.contractSettings.checkboxText 
-				? gstoreCheckout.contractSettings.checkboxText 
-				: 'Li e concordo com os termos do contrato';
-
-			let contractCheckboxHtml = '';
-			if (contractEnabled) {
-				contractCheckboxHtml = `
-					<div class="gstore-contract-terms woocommerce-terms-and-conditions-wrapper" style="margin-bottom:16px;">
-						<label class="woocommerce-form__label woocommerce-form__label-for-checkbox checkbox" style="display:flex;align-items:flex-start;gap:8px;cursor:pointer;">
-							<input type="checkbox" class="woocommerce-form__input woocommerce-form__input-checkbox input-checkbox" name="gstore_contract_terms" id="gstore_contract_terms" value="1" required style="margin-top:3px;" />
-							<span>${contractText}</span>
-						</label>
-					</div>
-				`;
-			}
-
+			const termsUrl = (typeof gstoreCheckout !== 'undefined' && gstoreCheckout.termsUrl) ? gstoreCheckout.termsUrl : '/termos-de-uso/';
+			const privacyUrl = (typeof gstoreCheckout !== 'undefined' && gstoreCheckout.privacyUrl) ? gstoreCheckout.privacyUrl : '/politica-de-privacidade/';
 			$finalizeStep.append(`
-				<div class="Gstore-finalize-container">
-					${contractCheckboxHtml}
-					<button type="submit" class="Gstore-btn Gstore-btn--submit" name="woocommerce_checkout_place_order" id="place_order" value="Finalizar pedido" data-value="Finalizar pedido">
-						<i class="fa-solid fa-lock"></i>
-						Finalizar pedido
+				<div class="kivo-checkout-footer kivo-v1c">
+					<div class="kivo-helper">
+						<svg viewBox="0 0 24 24" class="kivo-lock" fill="none" xmlns="http://www.w3.org/2000/svg">
+							<path d="M7 11V8a5 5 0 0110 0v3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+							<path d="M6 11h12a2 2 0 012 2v7a2 2 0 01-2 2H6a2 2 0 01-2-2v-7a2 2 0 012-2z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+						</svg>
+						<span>Dados sensíveis não ficam armazenados neste site.</span>
+					</div>
+					<div class="Gstore-blu-installments-slot"></div>
+					<label class="kivo-terms">
+						<input id="kivo_terms" type="checkbox" />
+						<span class="kivo-terms__text">
+							Li e concordo com os
+							<a class="kivo-link" href="${termsUrl}" target="_blank" rel="noopener">termos do contrato</a>
+							e com a
+							<a class="kivo-link" href="${privacyUrl}" target="_blank" rel="noopener">política de privacidade</a>
+							<span class="kivo-terms__sub">Ao finalizar, você confirma que leu e aceita esses termos.</span>
+						</span>
+					</label>
+					<button id="kivo_place_order" class="kivo-cta" type="button" disabled>
+						FINALIZAR PEDIDO
 					</button>
-					<p class="Gstore-finalize-privacy">
-						Seus dados estão protegidos. Ao finalizar, você concorda com nossa 
-						<a href="${typeof gstoreCheckout !== 'undefined' && gstoreCheckout.homeUrl ? gstoreCheckout.homeUrl + 'politica-de-privacidade' : '/politica-de-privacidade'}" target="_blank">política de privacidade</a>.
-					</p>
+					<div class="kivo-bottom">
+						<a class="kivo-back" href="#" role="button" aria-label="Voltar para a etapa anterior">← VOLTAR</a>
+						<span class="kivo-bottom__hint">Dúvidas? Veja os termos antes de concluir.</span>
+					</div>
 				</div>
+				<button type="submit" name="woocommerce_checkout_place_order" id="place_order" value="1" style="display:none;" aria-hidden="true"></button>
 			`);
+			// Sincroniza estado do botão Kivo com o checkbox (já no DOM)
+			const cb = document.getElementById('kivo_terms');
+			const btn = document.getElementById('kivo_place_order');
+			if (cb && btn) {
+				function syncKivoPlaceOrder() {
+					btn.disabled = !cb.checked;
+				}
+				syncKivoPlaceOrder();
+				cb.addEventListener('change', syncKivoPlaceOrder);
+			}
 		}
 
 		// Etapa 3: Move o resumo do pedido (order review) para dentro do container principal da última etapa
@@ -2353,6 +2364,29 @@ function getInstallmentDisplayTotals(summaryData) {
 		});
 
 		// Remove erro do checkbox de contrato quando marcado
+		// Footer Kivo: sincroniza habilitação do botão com o checkbox de termos
+		$(document).on('change', '#kivo_terms', function() {
+			const btn = document.getElementById('kivo_place_order');
+			if (btn) btn.disabled = !this.checked;
+		});
+
+		// Footer Kivo: ao clicar no CTA, dispara o place_order do WooCommerce
+		$(document).on('click', '#kivo_place_order', function(e) {
+			const cb = document.getElementById('kivo_terms');
+			if (cb && !cb.checked) return;
+			const wooBtn = document.querySelector('#place_order');
+			if (wooBtn) {
+				e.preventDefault();
+				wooBtn.click();
+			}
+		});
+
+		// Footer Kivo: "Voltar" volta para a etapa anterior (mesmo comportamento do botão VOLTAR das etapas)
+		$(document).on('click', '.kivo-back', function(e) {
+			e.preventDefault();
+			$('[data-action="prev"]').first().trigger('click');
+		});
+
 		$(document).on('change', '#gstore_contract_terms', function() {
 			if ($(this).is(':checked')) {
 				$(this).closest('.gstore-contract-terms').removeClass('woocommerce-invalid');
@@ -2585,7 +2619,15 @@ function getInstallmentDisplayTotals(summaryData) {
 				return false;
 			}
 
-			// Valida aceite do contrato quando o checkbox estiver presente
+			// Valida aceite dos termos (Kivo ou contrato do tema)
+			const $kivoTerms = $('#kivo_terms');
+			if ($kivoTerms.length && !$kivoTerms.is(':checked')) {
+				e.preventDefault();
+				showNotice('Você precisa aceitar os termos e a política de privacidade para finalizar o pedido.', 'error');
+				$kivoTerms.closest('.kivo-terms').addClass('woocommerce-invalid');
+				$kivoTerms.focus();
+				return false;
+			}
 			const $terms = $('#gstore_contract_terms');
 			if ($terms.length && !$terms.is(':checked')) {
 				e.preventDefault();

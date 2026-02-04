@@ -772,6 +772,9 @@ body.woocommerce-checkout .Gstore-checkout-steps-shell {
 
 /* Container de pagamento (observações + métodos) */
 .Gstore-checkout-step[data-step="payment"] .Gstore-checkout-step__payment-container {
+	display: flex;
+	flex-direction: column;
+	gap: 24px;
 	order: 3;
 }
 
@@ -868,6 +871,11 @@ body.woocommerce-checkout .Gstore-checkout-steps-shell {
 	margin-top: 16px;
 	padding-top: 0;
 	border-top: none;
+}
+
+/* Na etapa de pagamento o "Voltar" fica só no footer Kivo; esconde o botão da barra de ações */
+.Gstore-checkout-step[data-step="payment"] .Gstore-checkout-step__actions--payment .Gstore-btn--back {
+	display: none !important;
 }
 
 /* Garantias vão por último */

@@ -3089,6 +3089,14 @@ function gstore_enqueue_checkout_assets() {
 			$theme_version
 		);
 
+		// CSS do footer Kivo no checkout
+		wp_enqueue_style(
+			'gstore-kivo-checkout',
+			get_theme_file_uri( 'assets/css/kivo-checkout.css' ),
+			array( 'gstore-checkout-steps' ),
+			$theme_version
+		);
+
 		wp_enqueue_script(
 			'gstore-checkout-cleanup',
 			get_theme_file_uri( 'assets/js/checkout-cleanup.js' ),
@@ -3107,10 +3115,23 @@ function gstore_enqueue_checkout_assets() {
 		);
 
 		// Fornece nonce e URLs para o checkout (URLs respeitam subdiretório do WP).
+		$terms_page_id = function_exists( 'wc_get_page_id' ) ? wc_get_page_id( 'terms' ) : 0;
+		$terms_url     = ( $terms_page_id > 0 ) ? get_permalink( $terms_page_id ) : '';
+		if ( ! $terms_url ) {
+			$terms_page = get_page_by_path( 'termos-de-uso' );
+			$terms_url  = $terms_page ? get_permalink( $terms_page ) : home_url( '/termos-de-uso/' );
+		}
+		$privacy_url = get_privacy_policy_url();
+		if ( ! $privacy_url ) {
+			$privacy_page = get_page_by_path( 'politica-de-privacidade' );
+			$privacy_url  = $privacy_page ? get_permalink( $privacy_page ) : home_url( '/politica-de-privacidade/' );
+		}
 		$checkout_inline  = 'window.gstoreCheckout = window.gstoreCheckout || {};';
 		$checkout_inline .= 'window.gstoreCheckout.processCheckoutNonce = ' . wp_json_encode( wp_create_nonce( 'woocommerce-process_checkout' ) ) . ';';
 		$checkout_inline .= 'window.gstoreCheckout.cartSummaryNonce = ' . wp_json_encode( wp_create_nonce( 'gstore_cart_summary' ) ) . ';';
 		$checkout_inline .= 'window.gstoreCheckout.homeUrl = ' . wp_json_encode( home_url( '/' ) ) . ';';
+		$checkout_inline .= 'window.gstoreCheckout.termsUrl = ' . wp_json_encode( $terms_url ) . ';';
+		$checkout_inline .= 'window.gstoreCheckout.privacyUrl = ' . wp_json_encode( $privacy_url ) . ';';
 		// Garante gstoreCartSummary (resumo do carrinho) com nonce válido para evitar 403 no admin-ajax.
 		$cart_summary_nonce = wp_create_nonce( 'gstore_cart_summary' );
 		$checkout_inline .= 'window.gstoreCartSummary = window.gstoreCartSummary || { ajaxUrl: ' . wp_json_encode( admin_url( 'admin-ajax.php' ) ) . ', nonce: ' . wp_json_encode( $cart_summary_nonce ) . ' };';
