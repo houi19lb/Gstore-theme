@@ -193,6 +193,16 @@
 	outline: none;
 }
 
+/* Produtos relacionados: título sem altura fixa nem corte, para exibir o nome completo */
+.related.products .Gstore-product-card__title {
+	display: block;
+	max-height: none;
+	-webkit-line-clamp: unset;
+	line-clamp: unset;
+	-webkit-box-orient: unset;
+	overflow: visible;
+}
+
 /* ========================================
    BLOCO DE PREÇO
    ======================================== */
