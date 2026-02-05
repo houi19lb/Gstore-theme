@@ -112,6 +112,15 @@
 				}
 			});
 		});
+
+		// Reescreve todos os links relativos à raiz (ex.: /catalogo/?filter=on_sale) para a URL base do site (respeita subpasta)
+		if (gstoreAccountUrls.homeUrl) {
+			var base = gstoreAccountUrls.homeUrl.replace(/\/$/, '');
+			document.querySelectorAll('a[href^="/"]').forEach(function(link) {
+				var href = link.getAttribute('href');
+				link.setAttribute('href', base + href);
+			});
+		}
 	}
 
 	/**
