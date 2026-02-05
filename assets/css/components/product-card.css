@@ -149,14 +149,13 @@
 	flex-direction: column;
 }
 
-/* Área de Meta (Avaliação + Título) - altura fixa para 2 linhas de título */
+/* Área de Meta (Avaliação + Título) - altura mínima 7em, variável conforme o texto */
 .Gstore-product-card__meta {
 	background: var(--gstore-color-bg-card-meta);
 	padding: var(--gstore-spacing-4);
 	display: flex;
 	flex-direction: column;
 	gap: var(--gstore-spacing-2);
-	height: 7em;
 	min-height: 7em;
 	box-sizing: border-box;
 }
@@ -236,15 +235,6 @@
 }
 
 /* ========================================
-   SINGLE PRODUCT (RELATED / UPSELLS)
-   ======================================== */
-
-.Gstore-single-product__upsells .Gstore-product-card__meta {
-	height: auto;
-	min-height: 8.5em;
-}
-
-/* ========================================
    RESPONSIVIDADE
    ======================================== */
 
@@ -263,14 +253,8 @@
 	}
 
 	.Gstore-product-card__meta {
-		height: 7em;
 		min-height: 7em;
 		padding: var(--gstore-spacing-3);
-	}
-
-	.Gstore-single-product__upsells .Gstore-product-card__meta {
-		height: auto;
-		min-height: 8.5em;
 	}
 
 	.Gstore-product-card__price {

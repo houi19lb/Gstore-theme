@@ -2099,12 +2099,6 @@ body.single-product .onsale {
 	box-sizing: border-box;
 }
 
-.Gstore-single-product__upsells .related.products .Gstore-product-card__meta,
-.Gstore-single-product__upsells .upsells.products .Gstore-product-card__meta {
-	height: auto;
-	min-height: 8.5em;
-}
-
 /* =========================================
  * Single Product (Layout v2 - baseado no mock)
  * ========================================= */
@@ -5081,14 +5075,13 @@ main:not(.Gstore-blog-shell):not(.Gstore-blog-single-shell) {
 	gap: 0;
 }
 
-/* Bloco meta (rating + título) - altura fixa para 2 linhas de título */
+/* Bloco meta (rating + título) - altura mínima 7em, variável conforme o texto */
 .Gstore-product-card__meta {
 	background: var(--card-meta-bg);
 	padding: 10px 20px 10px 20px;
 	border-bottom: 1px solid var(--gray-border);
 	display: flex;
 	flex-direction: column;
-	height: 7em;
 	min-height: 7em;
 	box-sizing: border-box;
 }
@@ -5330,7 +5323,6 @@ main:not(.Gstore-blog-shell):not(.Gstore-blog-single-shell) {
 	}
 
 	.Gstore-product-card__meta {
-		height: 7em;
 		min-height: 7em;
 	}
 
