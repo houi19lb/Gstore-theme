@@ -38,7 +38,7 @@ if ( ! function_exists( 'gstore_get_product_attributes' ) ) :
 
 			if ( $attribute->is_taxonomy() ) {
 				$values = wc_get_product_terms(
-					$product->get_id(),
+					gstore_get_product_id( $product ),
 					$attribute->get_name(),
 					array( 'fields' => 'names' )
 				);
@@ -352,7 +352,7 @@ if ( post_password_required() ) {
 
 // Categoria do produto.
 $category_label = __( 'Linha destaque CAC Armas', 'gstore' );
-$categories     = get_the_terms( $product->get_id(), 'product_cat' );
+$categories     = get_the_terms( gstore_get_product_id( $product ), 'product_cat' );
 
 if ( ! empty( $categories ) && ! is_wp_error( $categories ) ) {
 	$category_label = $categories[0]->name;
@@ -632,7 +632,7 @@ if ( $reviews_has_value ) {
 									type="button"
 									class="btn-secondary Gstore-single-product__favorite"
 									aria-pressed="false"
-									data-gstore-favorite-product="<?php echo esc_attr( $product->get_id() ); ?>"
+									data-gstore-favorite-product="<?php echo esc_attr( (string) gstore_get_product_id( $product ) ); ?>"
 								>
 									<?php esc_html_e( 'Favoritar', 'gstore' ); ?>
 								</button>
@@ -668,7 +668,7 @@ if ( $reviews_has_value ) {
 												class="Gstore-single-product__info-sub"
 												<?php if ( ! empty( $card['is_installment'] ) ) : ?>
 													data-gstore-installment-target="1"
-													data-product-id="<?php echo esc_attr( $product->get_id() ); ?>"
+													data-product-id="<?php echo esc_attr( (string) gstore_get_product_id( $product ) ); ?>"
 													data-max-installments="<?php echo esc_attr( $installments ); ?>"
 													data-initial-text="<?php echo esc_attr( wp_strip_all_tags( (string) $card['text'] ) ); ?>"
 												<?php endif; ?>
@@ -770,7 +770,7 @@ if ( $reviews_has_value ) {
 											<div
 												class="price-sub"
 												data-gstore-installment-target="1"
-												data-product-id="<?php echo esc_attr( $product->get_id() ); ?>"
+												data-product-id="<?php echo esc_attr( (string) gstore_get_product_id( $product ) ); ?>"
 												data-max-installments="<?php echo esc_attr( $installments ); ?>"
 												data-initial-text="<?php echo esc_attr( wp_strip_all_tags( (string) $formatted_installment ) ); ?>"
 											>

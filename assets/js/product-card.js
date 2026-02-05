@@ -140,7 +140,12 @@
 	const gstoreInstallmentQuotesCache = new Map();
 	const gstoreInstallmentInFlight = new Map();
 
-	function resolveInstallmentAjaxUrl() {
+	function resolveInstallmentAjaxUrl(target) {
+		// 1. URL vinda diretamente do atributo data-ajax-url do elemento (mais confiável para subdiretórios)
+		if (target && target.dataset && target.dataset.ajaxUrl) {
+			return String(target.dataset.ajaxUrl);
+		}
+		// 2. Variáveis globais localizadas pelo WordPress
 		if (typeof gstoreFavoritesConfig !== 'undefined' && gstoreFavoritesConfig?.ajaxUrl) {
 			return String(gstoreFavoritesConfig.ajaxUrl);
 		}
@@ -153,7 +158,8 @@
 		if (typeof ajaxurl !== 'undefined' && ajaxurl) {
 			return String(ajaxurl);
 		}
-		return '/wp-admin/admin-ajax.php';
+		// 3. Sem fallback hardcoded – evita caminhos errados em subdiretórios
+		return null;
 	}
 
 	function resolveInstallmentAction() {
@@ -244,7 +250,7 @@
 				return;
 			}
 
-			const ajaxUrl = resolveInstallmentAjaxUrl();
+			const ajaxUrl = resolveInstallmentAjaxUrl(target);
 			const action = resolveInstallmentAction();
 			if (!ajaxUrl) {
 				applyFallback(target);
