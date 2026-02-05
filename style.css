@@ -2099,6 +2099,12 @@ body.single-product .onsale {
 	box-sizing: border-box;
 }
 
+.Gstore-single-product__upsells .related.products .Gstore-product-card__meta,
+.Gstore-single-product__upsells .upsells.products .Gstore-product-card__meta {
+	height: auto;
+	min-height: 8.5em;
+}
+
 /* =========================================
  * Single Product (Layout v2 - baseado no mock)
  * ========================================= */

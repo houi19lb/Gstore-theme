@@ -236,6 +236,15 @@
 }
 
 /* ========================================
+   SINGLE PRODUCT (RELATED / UPSELLS)
+   ======================================== */
+
+.Gstore-single-product__upsells .Gstore-product-card__meta {
+	height: auto;
+	min-height: 8.5em;
+}
+
+/* ========================================
    RESPONSIVIDADE
    ======================================== */
 
@@ -257,6 +266,11 @@
 		height: 7em;
 		min-height: 7em;
 		padding: var(--gstore-spacing-3);
+	}
+
+	.Gstore-single-product__upsells .Gstore-product-card__meta {
+		height: auto;
+		min-height: 8.5em;
 	}
 
 	.Gstore-product-card__price {
