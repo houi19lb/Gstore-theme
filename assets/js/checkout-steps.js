@@ -945,7 +945,7 @@
 						FINALIZAR PEDIDO
 					</button>
 					<div class="kivo-bottom">
-						<a class="kivo-back" href="javascript:history.back()">← VOLTAR</a>
+						<button type="button" class="Gstore-btn Gstore-btn--back" data-action="prev"><i class="fa-solid fa-arrow-left"></i> Voltar</button>
 						<span class="kivo-bottom__hint">Dúvidas? Veja os termos antes de concluir.</span>
 					</div>
 				</div>
