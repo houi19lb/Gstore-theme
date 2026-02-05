@@ -1155,6 +1155,15 @@ function gstore_enqueue_scripts() {
 			true
 		);
 
+		wp_localize_script(
+			'gstore-product-card',
+			'gstoreProductCardConfig',
+			array(
+				'ajaxUrl' => admin_url( 'admin-ajax.php' ),
+				'action'  => 'gstore_blu_get_product_installment_quotes',
+			)
+		);
+
 		if ( function_exists( 'is_product' ) && is_product() ) {
 			$product_id = (int) get_queried_object_id();
 
@@ -3206,7 +3215,7 @@ function gstore_enqueue_checkout_assets() {
 		if ( function_exists( 'is_cart' ) && is_cart() ) {
 			$product_id = 0;
 			$quantity   = 1;
-		} elseif ( is_product() && $product && is_a( $product, 'WC_Product' ) ) {
+		} elseif ( is_product() && $product ) {
 			$product_id = $product->get_id();
 		}
 

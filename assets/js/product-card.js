@@ -141,6 +141,9 @@
 	const gstoreInstallmentInFlight = new Map();
 
 	function resolveInstallmentAjaxUrl() {
+		if (typeof gstoreProductCardConfig !== 'undefined' && gstoreProductCardConfig?.ajaxUrl) {
+			return String(gstoreProductCardConfig.ajaxUrl);
+		}
 		if (typeof gstoreFavoritesConfig !== 'undefined' && gstoreFavoritesConfig?.ajaxUrl) {
 			return String(gstoreFavoritesConfig.ajaxUrl);
 		}
@@ -153,10 +156,21 @@
 		if (typeof ajaxurl !== 'undefined' && ajaxurl) {
 			return String(ajaxurl);
 		}
+		// Fallback: detecta base path a partir do link REST API do WP.
+		var base = document.querySelector('link[rel="https://api.w.org/"]');
+		if (base) {
+			try {
+				var restUrl = new URL(base.getAttribute('href'));
+				return restUrl.origin + restUrl.pathname.replace(/wp-json\/?.*$/, 'wp-admin/admin-ajax.php');
+			} catch (e) { /* ignora */ }
+		}
 		return '/wp-admin/admin-ajax.php';
 	}
 
 	function resolveInstallmentAction() {
+		if (typeof gstoreProductCardConfig !== 'undefined' && gstoreProductCardConfig?.action) {
+			return String(gstoreProductCardConfig.action);
+		}
 		if (typeof gstoreSingleProductInstallments !== 'undefined' && gstoreSingleProductInstallments?.action) {
 			return String(gstoreSingleProductInstallments.action);
 		}
