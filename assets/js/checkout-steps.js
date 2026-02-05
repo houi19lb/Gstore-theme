@@ -260,9 +260,40 @@
 				</div>
 				<div class="Gstore-checkout-step__fields"></div>
 				${actionsHtml}
-				${isLast ? '<div class="Gstore-checkout-step__payment-container"><div class="Gstore-checkout-step__order-review-slot"></div></div>' : ''}
+				${isLast ? '<div class="Gstore-checkout-step__payment-container"><div class="Gstore-checkout-step__order-review-slot"></div><div class="Gstore-blu-installments-slot"></div></div>' : ''}
 			</div>
 		`;
+	}
+
+	function escapeHtml(value) {
+		const text = value === null || value === undefined ? '' : String(value);
+		return text
+			.replace(/&/g, '&amp;')
+			.replace(/</g, '&lt;')
+			.replace(/>/g, '&gt;')
+			.replace(/"/g, '&quot;')
+			.replace(/'/g, '&#39;');
+	}
+
+	function buildContractTermsHtml(contractText, termsUrl, privacyUrl) {
+		const safeText = escapeHtml(contractText || 'Li e concordo com os termos do contrato');
+		const termsLink = `<a class="kivo-link" href="${termsUrl}" target="_blank" rel="noopener">termos do contrato</a>`;
+		let termsHtml = safeText;
+
+		if (/termos do contrato/i.test(termsHtml)) {
+			termsHtml = termsHtml.replace(/termos do contrato/gi, termsLink);
+		} else {
+			termsHtml = `${termsHtml} ${termsLink}`;
+		}
+
+		return `${termsHtml} e com a <a class="kivo-link" href="${privacyUrl}" target="_blank" rel="noopener">política de privacidade</a><span class="kivo-terms__sub">Ao finalizar, você confirma que leu e aceita esses termos.</span>`;
+	}
+
+	function syncKivoTermsButton() {
+		const btn = document.getElementById('kivo_place_order');
+		if (!btn) return;
+		const cb = document.getElementById('gstore_contract_terms');
+		btn.disabled = cb ? !cb.checked : false;
 	}
 
 	/**
@@ -528,8 +559,15 @@
 		const $installments = $('.Gstore-blu-installments').first();
 		if (!$installments.length) return;
 
-		// Move para dentro da Etapa 3 (Finalizar)
-		const $slot = $('.Gstore-blu-installments-slot').first();
+		// Move para o slot correto (prioriza dentro do card Kivo)
+		const $kivoSlot = $('.kivo-checkout-footer .Gstore-blu-installments-slot').first();
+		const $defaultSlot = $('.Gstore-checkout-step__payment-container > .Gstore-blu-installments-slot').first();
+		const $slot = $kivoSlot.length ? $kivoSlot : $defaultSlot;
+
+		if ($kivoSlot.length && $defaultSlot.length && !$defaultSlot.is($kivoSlot)) {
+			$defaultSlot.remove();
+		}
+
 		if ($slot.length && !$slot.find('.Gstore-blu-installments').length) {
 			$slot.append($installments.detach());
 		}
@@ -771,8 +809,17 @@
 		// Etapa 3: Footer Kivo (termos, privacidade, CTA) + botão oculto place_order
 		const $finalizeStep = $('[data-step="payment"] .Gstore-checkout-step__payment-container');
 		if ($finalizeStep.length && !$finalizeStep.find('#place_order').length) {
+			// Verifica se contratos estão habilitados
+			const contractEnabled = typeof gstoreCheckout !== 'undefined' && gstoreCheckout.contractSettings && gstoreCheckout.contractSettings.enabled;
+			const contractText = contractEnabled && gstoreCheckout.contractSettings.checkboxText 
+				? gstoreCheckout.contractSettings.checkboxText 
+				: 'Li e concordo com os termos do contrato';
 			const termsUrl = (typeof gstoreCheckout !== 'undefined' && gstoreCheckout.termsUrl) ? gstoreCheckout.termsUrl : '/termos-de-uso/';
 			const privacyUrl = (typeof gstoreCheckout !== 'undefined' && gstoreCheckout.privacyUrl) ? gstoreCheckout.privacyUrl : '/politica-de-privacidade/';
+			const termsHtml = contractEnabled ? buildContractTermsHtml(contractText, termsUrl, privacyUrl) : '';
+
+			$finalizeStep.find('.gstore-contract-terms').remove();
+
 			$finalizeStep.append(`
 				<div class="kivo-checkout-footer kivo-v1c">
 					<div class="kivo-helper">
@@ -783,38 +830,26 @@
 						<span>Dados sensíveis não ficam armazenados neste site.</span>
 					</div>
 					<div class="Gstore-blu-installments-slot"></div>
-					<label class="kivo-terms">
-						<input id="kivo_terms" type="checkbox" />
-						<span class="kivo-terms__text">
-							Li e concordo com os
-							<a class="kivo-link" href="${termsUrl}" target="_blank" rel="noopener">termos do contrato</a>
-							e com a
-							<a class="kivo-link" href="${privacyUrl}" target="_blank" rel="noopener">política de privacidade</a>
-							<span class="kivo-terms__sub">Ao finalizar, você confirma que leu e aceita esses termos.</span>
-						</span>
-					</label>
-					<button id="kivo_place_order" class="kivo-cta" type="button" disabled>
+					${contractEnabled ? `
+						<label class="kivo-terms">
+							<input id="gstore_contract_terms" name="gstore_contract_terms" type="checkbox" />
+							<span class="kivo-terms__text">
+								${termsHtml}
+							</span>
+						</label>
+					` : ''}
+					<button id="kivo_place_order" class="kivo-cta" type="button" ${contractEnabled ? 'disabled' : ''}>
 						FINALIZAR PEDIDO
 					</button>
 					<div class="kivo-bottom">
-						<a class="kivo-back" href="#" role="button" aria-label="Voltar para a etapa anterior">← VOLTAR</a>
+						<a class="kivo-back" href="javascript:history.back()">← VOLTAR</a>
 						<span class="kivo-bottom__hint">Dúvidas? Veja os termos antes de concluir.</span>
 					</div>
 				</div>
 				<button type="submit" name="woocommerce_checkout_place_order" id="place_order" value="1" style="display:none;" aria-hidden="true"></button>
 			`);
-			// Remove o checkbox duplicado do WooCommerce (mantém apenas o do card Kivo)
-			$finalizeStep.find('.gstore-contract-terms').remove();
-			// Sincroniza estado do botão Kivo com o checkbox (já no DOM)
-			const cb = document.getElementById('kivo_terms');
-			const btn = document.getElementById('kivo_place_order');
-			if (cb && btn) {
-				function syncKivoPlaceOrder() {
-					btn.disabled = !cb.checked;
-				}
-				syncKivoPlaceOrder();
-				cb.addEventListener('change', syncKivoPlaceOrder);
-			}
+
+			syncKivoTermsButton();
 		}
 
 		// Etapa 3: Move o resumo do pedido (order review) para dentro do container principal da última etapa
@@ -2366,33 +2401,19 @@ function getInstallmentDisplayTotals(summaryData) {
 		});
 
 		// Remove erro do checkbox de contrato quando marcado
-		// Footer Kivo: sincroniza habilitação do botão com o checkbox de termos
-		$(document).on('change', '#kivo_terms', function() {
-			const btn = document.getElementById('kivo_place_order');
-			if (btn) btn.disabled = !this.checked;
+		$(document).on('change', '#gstore_contract_terms', function() {
+			if ($(this).is(':checked')) {
+				$(this).closest('.gstore-contract-terms, .kivo-terms').removeClass('woocommerce-invalid');
+			}
+			syncKivoTermsButton();
 		});
 
 		// Footer Kivo: ao clicar no CTA, dispara o place_order do WooCommerce
-		$(document).on('click', '#kivo_place_order', function(e) {
-			const cb = document.getElementById('kivo_terms');
+		$(document).on('click', '#kivo_place_order', function() {
+			const cb = document.getElementById('gstore_contract_terms');
 			if (cb && !cb.checked) return;
 			const wooBtn = document.querySelector('#place_order');
-			if (wooBtn) {
-				e.preventDefault();
-				wooBtn.click();
-			}
-		});
-
-		// Footer Kivo: "Voltar" volta para a etapa anterior (mesmo comportamento do botão VOLTAR das etapas)
-		$(document).on('click', '.kivo-back', function(e) {
-			e.preventDefault();
-			$('[data-action="prev"]').first().trigger('click');
-		});
-
-		$(document).on('change', '#gstore_contract_terms', function() {
-			if ($(this).is(':checked')) {
-				$(this).closest('.gstore-contract-terms').removeClass('woocommerce-invalid');
-			}
+			if (wooBtn) wooBtn.click();
 		});
 
 		// Seleção do frete por item no resumo
@@ -2621,15 +2642,7 @@ function getInstallmentDisplayTotals(summaryData) {
 				return false;
 			}
 
-			// Valida aceite dos termos (Kivo ou contrato do tema)
-			const $kivoTerms = $('#kivo_terms');
-			if ($kivoTerms.length && !$kivoTerms.is(':checked')) {
-				e.preventDefault();
-				showNotice('Você precisa aceitar os termos e a política de privacidade para finalizar o pedido.', 'error');
-				$kivoTerms.closest('.kivo-terms').addClass('woocommerce-invalid');
-				$kivoTerms.focus();
-				return false;
-			}
+			// Valida aceite do contrato quando o checkbox estiver presente
 			const $terms = $('#gstore_contract_terms');
 			if ($terms.length && !$terms.is(':checked')) {
 				e.preventDefault();
