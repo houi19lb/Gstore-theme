@@ -3206,7 +3206,7 @@ function gstore_enqueue_checkout_assets() {
 		if ( function_exists( 'is_cart' ) && is_cart() ) {
 			$product_id = 0;
 			$quantity   = 1;
-		} elseif ( is_product() && $product ) {
+		} elseif ( is_product() && $product && is_a( $product, 'WC_Product' ) ) {
 			$product_id = $product->get_id();
 		}
 
