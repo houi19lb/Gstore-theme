@@ -138,14 +138,15 @@ $installment_label       = $installment_price_html
 						<div class="Gstore-product-card__price-details">
 							<strong class="Gstore-product-card__price-details-label"><?php esc_html_e( 'à vista no Pix', 'gstore' ); ?></strong>
 							<div class="Gstore-product-card__installments" data-gstore-installment-wrapper>
-								<span
-									class="Gstore-product-card__installments-text"
-									data-gstore-installment-target="1"
-									data-gstore-installment-scope="card"
-									data-product-id="<?php echo esc_attr( $product->get_id() ); ?>"
-									data-max-installments="<?php echo esc_attr( $installments ); ?>"
-									data-initial-text="<?php echo esc_attr( wp_strip_all_tags( (string) $installment_label ) ); ?>"
-								>
+							<span
+								class="Gstore-product-card__installments-text"
+								data-gstore-installment-target="1"
+								data-gstore-installment-scope="card"
+								data-product-id="<?php echo esc_attr( (string) gstore_get_product_id( $product ) ); ?>"
+								data-max-installments="<?php echo esc_attr( $installments ); ?>"
+								data-ajax-url="<?php echo esc_attr( admin_url( 'admin-ajax.php' ) ); ?>"
+								data-initial-text="<?php echo esc_attr( wp_strip_all_tags( (string) $installment_label ) ); ?>"
+							>
 									<?php echo wp_kses_post( $installment_label ); ?>
 								</span>
 							</div>

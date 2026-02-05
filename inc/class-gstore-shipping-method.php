@@ -145,6 +145,9 @@ class Gstore_Shipping_Method extends WC_Shipping_Method {
 	 * @return bool
 	 */
 	protected function is_weapon( $product ) {
+		if ( ! is_object( $product ) || ! ( $product instanceof \WC_Product ) ) {
+			return false;
+		}
 		// Verifica se o produto tem peso >= 100kg (peso tático configurado)
 		$weight = $product->get_weight();
 		if ( $weight && floatval( $weight ) >= 100 ) {
@@ -152,7 +155,7 @@ class Gstore_Shipping_Method extends WC_Shipping_Method {
 		}
 
 		// Verifica por categoria
-		$categories = wp_get_post_terms( $product->get_id(), 'product_cat', array( 'fields' => 'slugs' ) );
+		$categories = wp_get_post_terms( gstore_get_product_id( $product ), 'product_cat', array( 'fields' => 'slugs' ) );
 		if ( ! is_array( $categories ) || is_wp_error( $categories ) ) {
 			$categories = array();
 		}

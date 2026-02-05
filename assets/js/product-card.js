@@ -140,7 +140,12 @@
 	const gstoreInstallmentQuotesCache = new Map();
 	const gstoreInstallmentInFlight = new Map();
 
-	function resolveInstallmentAjaxUrl() {
+	function resolveInstallmentAjaxUrl(target) {
+		// 1. URL vinda diretamente do atributo data-ajax-url do elemento (mais confiável para subdiretórios)
+		if (target && target.dataset && target.dataset.ajaxUrl) {
+			return String(target.dataset.ajaxUrl);
+		}
+		// 2. Variáveis globais localizadas pelo WordPress
 		if (typeof gstoreProductCardConfig !== 'undefined' && gstoreProductCardConfig?.ajaxUrl) {
 			return String(gstoreProductCardConfig.ajaxUrl);
 		}
@@ -156,15 +161,8 @@
 		if (typeof ajaxurl !== 'undefined' && ajaxurl) {
 			return String(ajaxurl);
 		}
-		// Fallback: detecta base path a partir do link REST API do WP.
-		var base = document.querySelector('link[rel="https://api.w.org/"]');
-		if (base) {
-			try {
-				var restUrl = new URL(base.getAttribute('href'));
-				return restUrl.origin + restUrl.pathname.replace(/wp-json\/?.*$/, 'wp-admin/admin-ajax.php');
-			} catch (e) { /* ignora */ }
-		}
-		return '/wp-admin/admin-ajax.php';
+		// 3. Sem fallback hardcoded – evita caminhos errados em subdiretórios
+		return null;
 	}
 
 	function resolveInstallmentAction() {
@@ -258,7 +256,7 @@
 				return;
 			}
 
-			const ajaxUrl = resolveInstallmentAjaxUrl();
+			const ajaxUrl = resolveInstallmentAjaxUrl(target);
 			const action = resolveInstallmentAction();
 			if (!ajaxUrl) {
 				applyFallback(target);

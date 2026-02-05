@@ -108,6 +108,26 @@ function gstore_single_size( $size ) {
 add_filter( 'woocommerce_get_image_size_single', 'gstore_single_size' );
 
 /**
+ * Obtém o ID do produto de forma segura.
+ * Evita "Call to a member function get_id() on string" quando $product
+ * vem como ID (int/string) em vez de objeto WC_Product.
+ *
+ * @param WC_Product|WC_Product_Variation|int|string|null $product Produto, variação ou ID.
+ * @return int ID do produto ou 0 se inválido.
+ */
+if ( ! function_exists( 'gstore_get_product_id' ) ) {
+	function gstore_get_product_id( $product ) {
+		if ( is_numeric( $product ) ) {
+			return (int) $product;
+		}
+		if ( is_object( $product ) && is_a( $product, 'WC_Product' ) ) {
+			return (int) $product->get_id();
+		}
+		return 0;
+	}
+}
+
+/**
  * Ajusta disponibilidade de variações para estoque.
  *
  * Garante que variações sem estoque não sejam consideradas compráveis e
@@ -3216,7 +3236,7 @@ function gstore_enqueue_checkout_assets() {
 			$product_id = 0;
 			$quantity   = 1;
 		} elseif ( is_product() && $product ) {
-			$product_id = $product->get_id();
+			$product_id = gstore_get_product_id( $product );
 		}
 
 		if ( function_exists( 'is_checkout' ) && is_checkout() && function_exists( 'WC' ) && WC()->cart ) {
@@ -3448,12 +3468,13 @@ if ( ! function_exists( 'gstore_get_product_slug_candidates' ) ) {
 			$slugs[] = $product_slug;
 		}
 
-		$categories = wp_get_post_terms( $product->get_id(), 'product_cat', array( 'fields' => 'slugs' ) );
+		$product_id = gstore_get_product_id( $product );
+		$categories = wp_get_post_terms( $product_id, 'product_cat', array( 'fields' => 'slugs' ) );
 		if ( is_array( $categories ) && ! is_wp_error( $categories ) ) {
 			$slugs = array_merge( $slugs, array_map( 'sanitize_title', $categories ) );
 		}
 
-		$tags = wp_get_post_terms( $product->get_id(), 'product_tag', array( 'fields' => 'slugs' ) );
+		$tags = wp_get_post_terms( $product_id, 'product_tag', array( 'fields' => 'slugs' ) );
 		if ( is_array( $tags ) && ! is_wp_error( $tags ) ) {
 			$slugs = array_merge( $slugs, array_map( 'sanitize_title', $tags ) );
 		}

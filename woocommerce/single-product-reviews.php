@@ -41,7 +41,7 @@ $reviews_subtitle = $review_count
 $average_display = $average_rating ? number_format_i18n( $average_rating, 1 ) : '0';
 
 $initial_reviews_limit = 4;
-$product_id            = (int) $product->get_id();
+$product_id            = gstore_get_product_id( $product );
 $initial_reviews       = get_comments(
 	array(
 		'post_id' => $product_id,
@@ -205,7 +205,7 @@ $load_more_nonce       = wp_create_nonce( 'gstore_load_reviews_' . $product_id )
 						?>
 					</p>
 
-					<?php if ( get_option( 'woocommerce_review_rating_verification_required' ) === 'no' || wc_customer_bought_product( '', get_current_user_id(), $product->get_id() ) ) : ?>
+					<?php if ( get_option( 'woocommerce_review_rating_verification_required' ) === 'no' || wc_customer_bought_product( '', get_current_user_id(), gstore_get_product_id( $product ) ) ) : ?>
 						<div id="review_form_wrapper" class="Gstore-review-form-wrapper">
 						<?php
 						$commenter          = wp_get_current_commenter();
