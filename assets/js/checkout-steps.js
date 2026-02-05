@@ -803,6 +803,8 @@
 				</div>
 				<button type="submit" name="woocommerce_checkout_place_order" id="place_order" value="1" style="display:none;" aria-hidden="true"></button>
 			`);
+			// Remove o checkbox duplicado do WooCommerce (mantém apenas o do card Kivo)
+			$finalizeStep.find('.gstore-contract-terms').remove();
 			// Sincroniza estado do botão Kivo com o checkbox (já no DOM)
 			const cb = document.getElementById('kivo_terms');
 			const btn = document.getElementById('kivo_place_order');

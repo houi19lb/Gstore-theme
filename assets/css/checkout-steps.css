@@ -2863,7 +2863,7 @@ body.gstore-blu-checkout-modal-open {
 
 .gstore-contract-terms label {
 	display: flex;
-	align-items: flex-start;
+	align-items: center;
 	gap: 10px;
 	cursor: pointer;
 	font-size: var(--gstore-font-size-sm);
@@ -2876,7 +2876,7 @@ body.gstore-blu-checkout-modal-open {
 	width: 18px;
 	height: 18px;
 	margin: 0;
-	margin-top: 2px;
+	align-self: center;
 	accent-color: var(--gstore-green);
 	cursor: pointer;
 }
