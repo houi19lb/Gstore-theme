@@ -1155,6 +1155,15 @@ function gstore_enqueue_scripts() {
 			true
 		);
 
+		wp_localize_script(
+			'gstore-product-card',
+			'gstoreCardInstallments',
+			array(
+				'ajaxUrl' => admin_url( 'admin-ajax.php' ),
+				'action'  => 'gstore_blu_get_product_installment_quotes',
+			)
+		);
+
 		if ( function_exists( 'is_product' ) && is_product() ) {
 			$product_id = (int) get_queried_object_id();
 
