@@ -146,6 +146,9 @@
 			return String(target.dataset.ajaxUrl);
 		}
 		// 2. Variáveis globais localizadas pelo WordPress
+		if (typeof gstoreProductCardConfig !== 'undefined' && gstoreProductCardConfig?.ajaxUrl) {
+			return String(gstoreProductCardConfig.ajaxUrl);
+		}
 		if (typeof gstoreFavoritesConfig !== 'undefined' && gstoreFavoritesConfig?.ajaxUrl) {
 			return String(gstoreFavoritesConfig.ajaxUrl);
 		}
@@ -163,6 +166,9 @@
 	}
 
 	function resolveInstallmentAction() {
+		if (typeof gstoreProductCardConfig !== 'undefined' && gstoreProductCardConfig?.action) {
+			return String(gstoreProductCardConfig.action);
+		}
 		if (typeof gstoreSingleProductInstallments !== 'undefined' && gstoreSingleProductInstallments?.action) {
 			return String(gstoreSingleProductInstallments.action);
 		}
