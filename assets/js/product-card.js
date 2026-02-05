@@ -7,160 +7,6 @@
 (function() {
 	'use strict';
 
-	/* =========================================================================
-	 * Parcelamento AJAX dos cards (mesma lógica da página de produto)
-	 * ========================================================================= */
-
-	const installmentCache = new Map();
-	const installmentInFlight = new Map();
-
-	const resolveAjaxUrl = () => {
-		if (typeof gstoreCardInstallments !== 'undefined' && gstoreCardInstallments?.ajaxUrl) {
-			return String(gstoreCardInstallments.ajaxUrl);
-		}
-		if (typeof gstoreSingleProductInstallments !== 'undefined' && gstoreSingleProductInstallments?.ajaxUrl) {
-			return String(gstoreSingleProductInstallments.ajaxUrl);
-		}
-		if (typeof gstoreFavoritesConfig !== 'undefined' && gstoreFavoritesConfig?.ajaxUrl) {
-			return String(gstoreFavoritesConfig.ajaxUrl);
-		}
-		if (typeof ajaxurl !== 'undefined') {
-			return String(ajaxurl);
-		}
-		return '/wp-admin/admin-ajax.php';
-	};
-
-	const resolveAction = () => {
-		if (typeof gstoreCardInstallments !== 'undefined' && gstoreCardInstallments?.action) {
-			return String(gstoreCardInstallments.action);
-		}
-		if (typeof gstoreSingleProductInstallments !== 'undefined' && gstoreSingleProductInstallments?.action) {
-			return String(gstoreSingleProductInstallments.action);
-		}
-		return 'gstore_blu_get_product_installment_quotes';
-	};
-
-	const formatCurrency = (value) => {
-		if (!Number.isFinite(value)) return '';
-		try {
-			return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-		} catch (e) {
-			return 'R$\u00a0' + value.toFixed(2).replace('.', ',');
-		}
-	};
-
-	const chooseQuote = (quotes, preferredMax) => {
-		if (!quotes || typeof quotes !== 'object') return null;
-		const preferred = quotes[String(preferredMax)];
-		if (preferred) return preferred;
-		const keys = Object.keys(quotes)
-			.map((k) => parseInt(k, 10))
-			.filter((k) => Number.isFinite(k))
-			.sort((a, b) => b - a);
-		if (!keys.length) return null;
-		return quotes[String(keys[0])] || null;
-	};
-
-	/**
-	 * Busca as cotações de parcelamento via AJAX e atualiza o texto do card.
-	 */
-	function fetchCardInstallmentQuotes(target) {
-		// Evita processar o mesmo target duas vezes (ex.: single-product.js também roda nos cards)
-		if (target.dataset.gstoreInstallmentLoaded === '1') return;
-		target.dataset.gstoreInstallmentLoaded = '1';
-
-		const productId = String(target?.dataset?.productId || '');
-		if (!productId) return;
-
-		const maxRaw = parseInt(String(target?.dataset?.maxInstallments || '21'), 10);
-		const max = Number.isFinite(maxRaw) && maxRaw > 0 ? maxRaw : 21;
-		const signature = productId + '|1|' + max;
-
-		if (installmentCache.has(signature)) {
-			target.textContent = installmentCache.get(signature);
-			return;
-		}
-
-		if (installmentInFlight.has(signature)) return;
-
-		const ajaxUrl = resolveAjaxUrl();
-		const action = resolveAction();
-		if (!ajaxUrl) return;
-
-		const body = new URLSearchParams();
-		body.set('action', action);
-		body.set('product_id', productId);
-		body.set('quantity', '1');
-		body.set('max', String(max));
-
-		const fetchPromise = fetch(ajaxUrl, {
-			method: 'POST',
-			credentials: 'same-origin',
-			headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
-			body: body.toString(),
-		})
-			.then((r) => r.json())
-			.then((payload) => {
-				if (!payload?.success || !payload?.data?.quotes) {
-					throw new Error('Quotes não encontrados.');
-				}
-
-				const quoteKeys = Object.keys(payload.data.quotes)
-					.map((k) => parseInt(k, 10))
-					.filter((k) => Number.isFinite(k))
-					.sort((a, b) => b - a);
-
-				const preferredMax = quoteKeys.length > 0 ? quoteKeys[0] : (payload.data.max || max);
-				const quote = chooseQuote(payload.data.quotes, String(preferredMax));
-
-				if (!quote || !quote.installments || !quote.per_installment_text) {
-					throw new Error('Parcelas indisponíveis.');
-				}
-
-				const text = 'ou ' + quote.installments + 'x de ' + quote.per_installment_text;
-				installmentCache.set(signature, text);
-				target.textContent = text;
-			})
-			.catch(() => {
-				// Em caso de erro, manter o texto server-side original (fallback)
-			})
-			.finally(() => {
-				installmentInFlight.delete(signature);
-			});
-
-		installmentInFlight.set(signature, fetchPromise);
-	}
-
-	/**
-	 * Inicializa o parcelamento AJAX para todos os cards visíveis.
-	 * Usa IntersectionObserver para carregar sob demanda.
-	 */
-	function initCardInstallments() {
-		const targets = Array.from(document.querySelectorAll('[data-gstore-installment-scope="card"]'));
-		if (!targets.length) return;
-
-		if ('IntersectionObserver' in window) {
-			const observer = new IntersectionObserver(
-				(entries) => {
-					entries.forEach((entry) => {
-						if (entry.isIntersecting) {
-							observer.unobserve(entry.target);
-							fetchCardInstallmentQuotes(entry.target);
-						}
-					});
-				},
-				{ rootMargin: '200px' }
-			);
-			targets.forEach((target) => observer.observe(target));
-		} else {
-			targets.forEach((target) => fetchCardInstallmentQuotes(target));
-		}
-	}
-
-	/* =========================================================================
-	 * Normalização de títulos e preços
-	 * ========================================================================= */
-
 	/**
 	 * Remove quebras de linha indesejadas dos títulos dos produtos
 	 */
@@ -203,10 +49,6 @@
 			});
 		});
 	}
-
-	/* =========================================================================
-	 * Favoritos
-	 * ========================================================================= */
 
 	/**
 	 * Inicializa os botões de favorito
@@ -290,6 +132,199 @@
 		}
 		return null;
 	}
+
+	/**
+	 * Parcelamento nos cards (AJAX Blu) – mesma lógica da página de produto.
+	 */
+	const gstoreInstallmentCache = new Map();
+	const gstoreInstallmentQuotesCache = new Map();
+	const gstoreInstallmentInFlight = new Map();
+
+	function resolveInstallmentAjaxUrl() {
+		if (typeof gstoreFavoritesConfig !== 'undefined' && gstoreFavoritesConfig?.ajaxUrl) {
+			return String(gstoreFavoritesConfig.ajaxUrl);
+		}
+		if (typeof gstoreSingleProductInstallments !== 'undefined' && gstoreSingleProductInstallments?.ajaxUrl) {
+			return String(gstoreSingleProductInstallments.ajaxUrl);
+		}
+		if (typeof gstoreSettings !== 'undefined' && gstoreSettings?.ajax_url) {
+			return String(gstoreSettings.ajax_url);
+		}
+		if (typeof ajaxurl !== 'undefined' && ajaxurl) {
+			return String(ajaxurl);
+		}
+		return '/wp-admin/admin-ajax.php';
+	}
+
+	function resolveInstallmentAction() {
+		if (typeof gstoreSingleProductInstallments !== 'undefined' && gstoreSingleProductInstallments?.action) {
+			return String(gstoreSingleProductInstallments.action);
+		}
+		return 'gstore_blu_get_product_installment_quotes';
+	}
+
+	function formatCurrency(value) {
+		if (!Number.isFinite(value)) return '';
+		try {
+			return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
+		} catch (err) {
+			return 'R$ ' + value.toFixed(2).replace('.', ',');
+		}
+	}
+
+	function chooseQuote(quotes, preferred) {
+		if (!quotes || typeof quotes !== 'object') return null;
+		if (quotes[preferred]) return quotes[preferred];
+		const keys = Object.keys(quotes)
+			.map((key) => parseInt(key, 10))
+			.filter((key) => Number.isFinite(key))
+			.sort((a, b) => b - a);
+		if (!keys.length) return null;
+		return quotes[String(keys[0])] || null;
+	}
+
+	function initProductCardInstallmentQuotes() {
+		const targets = Array.from(document.querySelectorAll('[data-gstore-installment-scope="card"]'));
+		if (!targets.length) {
+			return;
+		}
+
+		function getMaxInstallments(target) {
+			const raw = target?.dataset?.maxInstallments || (typeof gstoreSingleProductInstallments !== 'undefined' && gstoreSingleProductInstallments?.max) || '21';
+			const parsed = parseInt(String(raw), 10);
+			return Number.isFinite(parsed) && parsed > 0 ? parsed : 21;
+		}
+
+		function applyFallback(target) {
+			const fallback = String(target?.dataset?.initialText || '').trim();
+			if (fallback) {
+				target.textContent = fallback;
+				target.hidden = false;
+			} else {
+				target.hidden = true;
+			}
+		}
+
+		function applyText(target, text) {
+			target.textContent = text;
+			target.hidden = !text;
+		}
+
+		function requestTargetQuotes(target) {
+			const productId = String(target?.dataset?.productId || '');
+			if (!productId) {
+				applyFallback(target);
+				return;
+			}
+
+			const quantity = 1;
+			const max = getMaxInstallments(target);
+			const signature = productId + '|' + quantity + '|' + max;
+
+			if (gstoreInstallmentQuotesCache.has(signature)) {
+				const cachedQuotes = gstoreInstallmentQuotesCache.get(signature);
+				if (cachedQuotes && typeof cachedQuotes === 'object') {
+					const quoteKeys = Object.keys(cachedQuotes)
+						.map((key) => parseInt(key, 10))
+						.filter((key) => Number.isFinite(key))
+						.sort((a, b) => b - a);
+					if (quoteKeys.length > 0) {
+						const maxAvailable = quoteKeys[0];
+						const preferred = chooseQuote(cachedQuotes, String(maxAvailable));
+						if (preferred && preferred.installments && preferred.per_installment_text) {
+							const maxText = 'ou ' + preferred.installments + 'x de ' + preferred.per_installment_text;
+							applyText(target, maxText);
+							return;
+						}
+					}
+				}
+			}
+
+			if (gstoreInstallmentInFlight.has(signature)) {
+				return;
+			}
+
+			const ajaxUrl = resolveInstallmentAjaxUrl();
+			const action = resolveInstallmentAction();
+			if (!ajaxUrl) {
+				applyFallback(target);
+				return;
+			}
+
+			const body = new URLSearchParams();
+			body.set('action', action);
+			body.set('product_id', productId);
+			body.set('quantity', String(quantity));
+			body.set('max', String(max));
+
+			const fetchPromise = fetch(ajaxUrl, {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+				},
+				credentials: 'same-origin',
+				body: body.toString(),
+			})
+				.then(async (response) => {
+					let payload;
+					try {
+						payload = await response.json();
+					} catch (parseError) {
+						throw new Error('Resposta inválida do servidor (JSON parse error).');
+					}
+					if (!response.ok || !payload?.success) {
+						throw new Error(payload?.data?.message || 'Falha ao obter parcelas.');
+					}
+					if (!payload?.data || typeof payload.data !== 'object') {
+						throw new Error('Dados de resposta inválidos.');
+					}
+					if (!payload.data.quotes || typeof payload.data.quotes !== 'object') {
+						throw new Error('Quotes não encontrados na resposta.');
+					}
+
+					const quoteKeys = Object.keys(payload.data.quotes)
+						.map((key) => parseInt(key, 10))
+						.filter((key) => Number.isFinite(key))
+						.sort((a, b) => b - a);
+					const preferredMax = quoteKeys.length > 0 ? quoteKeys[0] : (payload.data.max || max || 21);
+					const quote = chooseQuote(payload.data.quotes, String(preferredMax));
+					if (!quote || !quote.installments || !quote.per_installment_text) {
+						throw new Error('Parcelas indisponíveis.');
+					}
+
+					const text = 'ou ' + quote.installments + 'x de ' + quote.per_installment_text;
+					const cacheSignature = productId + '|' + quantity + '|' + quote.installments;
+					gstoreInstallmentCache.set(cacheSignature, text);
+					gstoreInstallmentQuotesCache.set(cacheSignature, payload.data.quotes);
+					applyText(target, text);
+				})
+				.catch(function() {
+					applyFallback(target);
+				})
+				.finally(function() {
+					gstoreInstallmentInFlight.delete(signature);
+				});
+
+			gstoreInstallmentInFlight.set(signature, fetchPromise);
+		}
+
+		if ('IntersectionObserver' in window) {
+			const observer = new IntersectionObserver(
+				function(entries) {
+					entries.forEach(function(entry) {
+						if (!entry.isIntersecting) return;
+						const target = entry.target;
+						observer.unobserve(target);
+						requestTargetQuotes(target);
+					});
+				},
+				{ rootMargin: '120px 0px' }
+			);
+			targets.forEach(function(target) { observer.observe(target); });
+		} else {
+			targets.forEach(function(target) { requestTargetQuotes(target); });
+		}
+	}
 	
 	/**
 	 * Inicializa quando o DOM estiver pronto
@@ -298,7 +333,7 @@
 		initFavoriteButtons();
 		normalizeProductTitles();
 		normalizePriceDetails();
-		initCardInstallments();
+		initProductCardInstallmentQuotes();
 	}
 
 	if (document.readyState === 'loading') {
