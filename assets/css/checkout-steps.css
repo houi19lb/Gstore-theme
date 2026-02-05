@@ -2889,3 +2889,226 @@ body.gstore-blu-checkout-modal-open {
 .gstore-contract-terms.woocommerce-invalid label {
 	color: #991b1b;
 }
+
+/* ===========================================
+   MODAL DO CONTRATO (PRÉVIA)
+   =========================================== */
+.gstore-contract-modal {
+	position: fixed;
+	inset: 0;
+	z-index: 9999;
+	display: none;
+	align-items: center;
+	justify-content: center;
+}
+
+.gstore-contract-modal.is-open {
+	display: flex;
+}
+
+.gstore-contract-modal__overlay {
+	position: absolute;
+	inset: 0;
+	background: var(--gstore-color-black-60);
+}
+
+.gstore-contract-modal__dialog {
+	position: relative;
+	width: min(980px, 92vw);
+	max-height: 90vh;
+	background: var(--gstore-color-bg-light);
+	border-radius: var(--gstore-border-radius);
+	box-shadow: 0 24px 60px rgba(0, 0, 0, 0.25);
+	display: flex;
+	flex-direction: column;
+	overflow: hidden;
+}
+
+.gstore-contract-modal__header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 16px 20px;
+	background: var(--gstore-color-bg-dark);
+	color: var(--gstore-color-text-light);
+}
+
+.gstore-contract-modal__title {
+	font-size: var(--gstore-font-size-base);
+	font-weight: var(--gstore-font-weight-semibold);
+	letter-spacing: var(--gstore-letter-spacing-04);
+}
+
+.gstore-contract-modal__close {
+	border: 0;
+	background: transparent;
+	color: var(--gstore-color-text-light);
+	font-size: 20px;
+	line-height: 1;
+	cursor: pointer;
+}
+
+.gstore-contract-modal__body {
+	padding: 16px;
+	background: var(--gstore-color-bg-muted);
+	overflow: auto;
+}
+
+.gstore-contract-modal__loading,
+.gstore-contract-modal__error {
+	padding: 24px;
+	text-align: center;
+	font-size: var(--gstore-font-size-sm);
+	color: var(--gstore-color-text-secondary);
+}
+
+.gstore-contract-modal__error {
+	color: var(--gstore-color-error);
+}
+
+body.gstore-contract-modal-open {
+	overflow: hidden;
+}
+
+/* Documento dentro do modal */
+.gstore-contract-document {
+	display: flex;
+	flex-direction: column;
+	gap: 24px;
+	font-family: var(--gstore-font-family-base);
+	color: var(--gstore-color-text-primary);
+}
+
+.gstore-contract-page {
+	background: var(--gstore-color-bg-light);
+	border-radius: 4px;
+	box-shadow: 0 6px 24px rgba(0, 0, 0, 0.08);
+	overflow: hidden;
+}
+
+.gstore-contract-page__inner {
+	padding: 40px 48px;
+}
+
+.gstore-contract-page__footer {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	padding: 12px 48px 20px;
+	border-top: 1px solid var(--gstore-color-border-divider);
+	font-size: var(--gstore-font-size-xs);
+	color: var(--gstore-color-text-muted);
+}
+
+.gstore-contract-header {
+	background: var(--gstore-color-bg-dark);
+	color: var(--gstore-color-text-light);
+	padding: 20px 24px;
+	border-radius: 4px;
+}
+
+.gstore-contract-header__title {
+	font-size: var(--gstore-font-size-lg);
+	font-weight: var(--gstore-font-weight-semibold);
+	letter-spacing: var(--gstore-letter-spacing-04);
+	text-transform: uppercase;
+}
+
+.gstore-contract-header__meta {
+	margin-top: 8px;
+	display: flex;
+	flex-wrap: wrap;
+	gap: 12px;
+	font-size: var(--gstore-font-size-xs);
+	color: var(--gstore-color-white-80);
+}
+
+.gstore-contract-chip {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	border-radius: 4px;
+	padding: 6px 10px;
+	font-size: var(--gstore-font-size-xs);
+	font-weight: var(--gstore-font-weight-semibold);
+	border: 1px solid var(--gstore-color-border-divider);
+	background: var(--gstore-color-bg-light);
+	color: var(--gstore-color-text-primary);
+}
+
+.gstore-contract-chip--draft {
+	background: var(--gstore-color-accent-10);
+	border-color: var(--gstore-color-accent-20);
+	color: var(--gstore-color-accent-dark);
+}
+
+.gstore-contract-chip--final {
+	background: var(--gstore-color-success-bg);
+	border-color: var(--gstore-color-success-border);
+	color: var(--gstore-color-success-text);
+}
+
+.gstore-contract-section-title {
+	margin-top: 24px;
+	font-size: var(--gstore-font-size-sm);
+	font-weight: var(--gstore-font-weight-bold);
+	letter-spacing: var(--gstore-letter-spacing-04);
+	text-transform: uppercase;
+}
+
+.gstore-contract-paragraph {
+	margin-top: 12px;
+	font-size: var(--gstore-font-size-sm);
+	line-height: var(--gstore-line-height-relaxed);
+	color: var(--gstore-color-text-primary);
+}
+
+.gstore-contract-table {
+	margin-top: 12px;
+	border: 1px solid var(--gstore-color-border-divider);
+	border-collapse: collapse;
+	width: 100%;
+	font-size: var(--gstore-font-size-xs);
+}
+
+.gstore-contract-table td {
+	padding: 10px 12px;
+	border-bottom: 1px solid var(--gstore-color-border-divider);
+	border-right: 1px solid var(--gstore-color-border-divider);
+	vertical-align: top;
+}
+
+.gstore-contract-table tr:nth-child(even) td {
+	background: var(--gstore-color-bg-gray-50);
+}
+
+.gstore-contract-table td:first-child {
+	width: 200px;
+	font-weight: var(--gstore-font-weight-semibold);
+	color: var(--gstore-color-text-secondary);
+}
+
+.gstore-contract-signatures {
+	margin-top: 24px;
+	display: grid;
+	gap: 16px;
+	grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.gstore-contract-signature {
+	border: 1px solid var(--gstore-color-border-divider);
+	border-radius: 4px;
+	padding: 12px 14px;
+}
+
+.gstore-contract-signature__label {
+	font-size: var(--gstore-font-size-xs);
+	color: var(--gstore-color-text-muted);
+}
+
+.gstore-contract-signature__line {
+	margin-top: 24px;
+	border-top: 1px solid var(--gstore-color-border-divider);
+	padding-top: 8px;
+	font-size: var(--gstore-font-size-sm);
+}

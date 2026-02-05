@@ -8,7 +8,7 @@
 
   background: var(--kivo-bg);
   border: 1px solid var(--gstore-muted, var(--kivo-border));
-  border-radius: var(--gstore-border-radius, 4px);
+  border-radius: 16px;
   padding: 16px;
   display: grid;
   gap: 14px;
@@ -40,7 +40,7 @@
   gap: 12px;
   align-items: flex-start;
   border: 1px solid var(--gstore-muted, var(--kivo-border));
-  border-radius: var(--gstore-border-radius, 4px);
+  border-radius: 14px;
   padding: 12px;
   cursor: pointer;
 }
@@ -70,10 +70,14 @@
   text-underline-offset: 3px;
 }
 
+.kivo-link.gstore-contract-modal-trigger {
+  cursor: pointer;
+}
+
 .kivo-cta {
   width: 100%;
   border: 0;
-  border-radius: var(--gstore-border-radius, 4px);
+  border-radius: 14px;
   padding: 16px 18px;
   font-weight: 700;
   letter-spacing: 0.02em;
@@ -107,7 +111,7 @@
   align-items: center;
   gap: 6px;
   border: 1px solid var(--gstore-muted, var(--kivo-border));
-  border-radius: var(--gstore-border-radius, 4px);
+  border-radius: 12px;
   padding: 10px 14px;
   font-size: 14px;
   color: var(--kivo-text);
