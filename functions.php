@@ -3089,14 +3089,6 @@ function gstore_enqueue_checkout_assets() {
 			$theme_version
 		);
 
-		// CSS do footer Kivo no checkout
-		wp_enqueue_style(
-			'gstore-kivo-checkout',
-			get_theme_file_uri( 'assets/css/kivo-checkout.css' ),
-			array( 'gstore-checkout-steps' ),
-			$theme_version
-		);
-
 		wp_enqueue_script(
 			'gstore-checkout-cleanup',
 			get_theme_file_uri( 'assets/js/checkout-cleanup.js' ),
@@ -3115,23 +3107,10 @@ function gstore_enqueue_checkout_assets() {
 		);
 
 		// Fornece nonce e URLs para o checkout (URLs respeitam subdiretório do WP).
-		$terms_page_id = function_exists( 'wc_get_page_id' ) ? wc_get_page_id( 'terms' ) : 0;
-		$terms_url     = ( $terms_page_id > 0 ) ? get_permalink( $terms_page_id ) : '';
-		if ( ! $terms_url ) {
-			$terms_page = get_page_by_path( 'termos-de-uso' );
-			$terms_url  = $terms_page ? get_permalink( $terms_page ) : home_url( '/termos-de-uso/' );
-		}
-		$privacy_url = get_privacy_policy_url();
-		if ( ! $privacy_url ) {
-			$privacy_page = get_page_by_path( 'politica-de-privacidade' );
-			$privacy_url  = $privacy_page ? get_permalink( $privacy_page ) : home_url( '/politica-de-privacidade/' );
-		}
 		$checkout_inline  = 'window.gstoreCheckout = window.gstoreCheckout || {};';
 		$checkout_inline .= 'window.gstoreCheckout.processCheckoutNonce = ' . wp_json_encode( wp_create_nonce( 'woocommerce-process_checkout' ) ) . ';';
 		$checkout_inline .= 'window.gstoreCheckout.cartSummaryNonce = ' . wp_json_encode( wp_create_nonce( 'gstore_cart_summary' ) ) . ';';
 		$checkout_inline .= 'window.gstoreCheckout.homeUrl = ' . wp_json_encode( home_url( '/' ) ) . ';';
-		$checkout_inline .= 'window.gstoreCheckout.termsUrl = ' . wp_json_encode( $terms_url ) . ';';
-		$checkout_inline .= 'window.gstoreCheckout.privacyUrl = ' . wp_json_encode( $privacy_url ) . ';';
 		// Garante gstoreCartSummary (resumo do carrinho) com nonce válido para evitar 403 no admin-ajax.
 		$cart_summary_nonce = wp_create_nonce( 'gstore_cart_summary' );
 		$checkout_inline .= 'window.gstoreCartSummary = window.gstoreCartSummary || { ajaxUrl: ' . wp_json_encode( admin_url( 'admin-ajax.php' ) ) . ', nonce: ' . wp_json_encode( $cart_summary_nonce ) . ' };';
@@ -3227,7 +3206,7 @@ function gstore_enqueue_checkout_assets() {
 		if ( function_exists( 'is_cart' ) && is_cart() ) {
 			$product_id = 0;
 			$quantity   = 1;
-		} elseif ( is_product() && $product && is_object( $product ) && method_exists( $product, 'get_id' ) ) {
+		} elseif ( is_product() && $product ) {
 			$product_id = $product->get_id();
 		}
 
@@ -4417,6 +4396,76 @@ function gstore_add_refazer_compra_button_to_order_actions( $actions, $order ) {
 	return $actions;
 }
 add_filter( 'woocommerce_my_account_my_orders_actions', 'gstore_add_refazer_compra_button_to_order_actions', 10, 2 );
+
+/**
+ * Adiciona ação "Ver contrato" nos pedidos quando o PDF existe.
+ *
+ * @param array    $actions Ações disponíveis.
+ * @param WC_Order $order   Pedido.
+ * @return array
+ */
+function gstore_add_contract_button_to_order_actions( $actions, $order ) {
+	if ( ! $order instanceof WC_Order ) {
+		return $actions;
+	}
+	if ( ! class_exists( '\GStore\Services\Contract_Service' ) ) {
+		return $actions;
+	}
+
+	$contract = $order->get_meta( \GStore\Services\Contract_Service::META_CONTRACT_DATA, true );
+	$contract = is_array( $contract ) ? $contract : array();
+	$url = isset( $contract['url'] ) ? (string) $contract['url'] : '';
+
+	if ( $url ) {
+		$actions['gstore-contract'] = array(
+			'url'  => $url,
+			'name' => __( 'Ver contrato', 'gstore' ),
+		);
+	}
+
+	return $actions;
+}
+add_filter( 'woocommerce_my_account_my_orders_actions', 'gstore_add_contract_button_to_order_actions', 20, 2 );
+
+/**
+ * Exibe preview do contrato na página de visualização do pedido.
+ *
+ * @param WC_Order $order Pedido.
+ * @return void
+ */
+function gstore_render_contract_preview_on_order( $order ) {
+	if ( ! $order instanceof WC_Order ) {
+		return;
+	}
+	if ( ! class_exists( '\GStore\Services\Contract_Service' ) ) {
+		return;
+	}
+
+	$contract = $order->get_meta( \GStore\Services\Contract_Service::META_CONTRACT_DATA, true );
+	$contract = is_array( $contract ) ? $contract : array();
+	$url = isset( $contract['url'] ) ? (string) $contract['url'] : '';
+
+	echo '<div class="gstore-account-contract">';
+	echo '<div class="gstore-account-contract__header">';
+	echo '<div class="gstore-account-contract__title">' . esc_html__( 'Contrato', 'gstore' ) . '</div>';
+	if ( $url ) {
+		echo '<a class="button" href="' . esc_url( $url ) . '" target="_blank" rel="noopener">' . esc_html__( 'Abrir PDF', 'gstore' ) . '</a>';
+	}
+	echo '</div>';
+
+	if ( $url ) {
+		echo '<div class="gstore-account-contract__preview">';
+		echo '<object data="' . esc_url( $url ) . '" type="application/pdf">';
+		echo '<p>' . esc_html__( 'Seu navegador não suporta PDF embutido. ', 'gstore' ) . '<a href="' . esc_url( $url ) . '" target="_blank" rel="noopener">' . esc_html__( 'Abrir contrato', 'gstore' ) . '</a></p>';
+		echo '</object>';
+		echo '</div>';
+	} else {
+		echo '<div class="gstore-account-contract__status">' . esc_html__( 'Contrato disponível após confirmação de pagamento.', 'gstore' ) . '</div>';
+	}
+
+	echo '</div>';
+}
+add_action( 'woocommerce_order_details_after_order_table', 'gstore_render_contract_preview_on_order', 10, 1 );
 
 /**
  * Exclui pedidos cancelados da lista "Meus pedidos".

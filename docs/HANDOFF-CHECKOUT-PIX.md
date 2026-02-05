@@ -4,7 +4,7 @@
 O checkout em 3 etapas do tema `gstore` usa `checkout-steps.js` para UI e o plugin para regras de negocio. O resumo do pedido e taxas dependem do `payment_method` enviado no `update_checkout` e no AJAX `gstore_get_cart_summary`.
 
 ### Problema atual (ainda ocorre)
-Ao selecionar **Pix** na etapa 1 e avancar para a etapa 2, os detalhes volta a exibir **Cartao**. O usuario reporta que o problema persiste mesmo apos ajustes.
+Ao selecionar **Pix** na etapa 1 os detalhes voltam a exibir **Cartao** em 'pagamento'. O usuario reporta que o problema persiste mesmo apos ajustes.
 
 Exemplo de trecho fornecido:
 - DOM path: `main#wp--skip-link--target` (shell do checkout com resumo)

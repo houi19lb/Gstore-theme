@@ -2036,3 +2036,65 @@ form.woocommerce-form {
 		min-height: 70px;
 	}
 }
+
+/* ========================================
+   CONTRATO - MINHA CONTA
+   ======================================== */
+.gstore-account-contract {
+	margin-top: 24px;
+	padding: 20px;
+	border: 1px solid var(--gstore-color-border, #e6e6e6);
+	border-radius: var(--gstore-radius-base, 4px);
+	background: var(--gstore-color-bg-light, #fff);
+}
+
+.gstore-account-contract__header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+	margin-bottom: 16px;
+}
+
+.gstore-account-contract__title {
+	font-size: var(--gstore-font-size-base, 1rem);
+	font-weight: var(--gstore-font-weight-semibold, 600);
+	color: var(--gstore-color-text-primary, #1a1a1a);
+}
+
+.gstore-account-contract__status {
+	font-size: var(--gstore-font-size-sm, 0.875rem);
+	color: var(--gstore-color-text-secondary, #6b6b6b);
+}
+
+.gstore-account-contract__preview {
+	border: 1px solid var(--gstore-color-border, #e6e6e6);
+	border-radius: 4px;
+	overflow: hidden;
+	background: var(--gstore-color-bg-muted, #f0f2f5);
+}
+
+.gstore-account-contract__preview object,
+.gstore-account-contract__preview iframe {
+	width: 100%;
+	min-height: 520px;
+	border: 0;
+	display: block;
+	background: #fff;
+}
+
+@media (max-width: 768px) {
+	.gstore-account-contract {
+		padding: 16px;
+	}
+
+	.gstore-account-contract__header {
+		flex-direction: column;
+		align-items: flex-start;
+	}
+
+	.gstore-account-contract__preview object,
+	.gstore-account-contract__preview iframe {
+		min-height: 420px;
+	}
+}

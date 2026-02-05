@@ -277,7 +277,7 @@
 
 	function buildContractTermsHtml(contractText, termsUrl, privacyUrl) {
 		const safeText = escapeHtml(contractText || 'Li e concordo com os termos do contrato');
-		const termsLink = `<a class="kivo-link" href="${termsUrl}" target="_blank" rel="noopener">termos do contrato</a>`;
+		const termsLink = `<a class="kivo-link gstore-contract-modal-trigger" data-gstore-contract-modal href="${termsUrl}" rel="noopener">termos do contrato</a>`;
 		let termsHtml = safeText;
 
 		if (/termos do contrato/i.test(termsHtml)) {
@@ -287,6 +287,109 @@
 		}
 
 		return `${termsHtml} e com a <a class="kivo-link" href="${privacyUrl}" target="_blank" rel="noopener">política de privacidade</a><span class="kivo-terms__sub">Ao finalizar, você confirma que leu e aceita esses termos.</span>`;
+	}
+
+	function getContractPreviewConfig() {
+		const config = (typeof gstoreCheckout !== 'undefined' && gstoreCheckout.contractPreview) ? gstoreCheckout.contractPreview : {};
+		const ajaxUrl = config.ajaxUrl || (window.gstoreCartSummary && window.gstoreCartSummary.ajaxUrl) || '';
+		return {
+			ajaxUrl,
+			nonce: config.nonce || '',
+			action: config.action || 'gstore_contract_preview'
+		};
+	}
+
+	function getCheckoutPostData() {
+		if ($checkoutForm && $checkoutForm.length) {
+			return $checkoutForm.serialize();
+		}
+		const $form = $('form.checkout');
+		return $form.length ? $form.serialize() : '';
+	}
+
+	function ensureContractModal() {
+		if (document.querySelector('.gstore-contract-modal')) return;
+		const modal = document.createElement('div');
+		modal.className = 'gstore-contract-modal';
+		modal.setAttribute('aria-hidden', 'true');
+		modal.setAttribute('role', 'dialog');
+		modal.setAttribute('aria-modal', 'true');
+		modal.innerHTML = `
+			<div class="gstore-contract-modal__overlay" data-gstore-contract-close></div>
+			<div class="gstore-contract-modal__dialog" role="document">
+				<div class="gstore-contract-modal__header">
+					<div class="gstore-contract-modal__title">Contrato (prévia)</div>
+					<button type="button" class="gstore-contract-modal__close" data-gstore-contract-close aria-label="Fechar">×</button>
+				</div>
+				<div class="gstore-contract-modal__body">
+					<div class="gstore-contract-modal__loading">Carregando...</div>
+				</div>
+			</div>
+		`;
+		document.body.appendChild(modal);
+	}
+
+	function fetchContractPreviewHtml() {
+		const config = getContractPreviewConfig();
+		if (!config.ajaxUrl || !config.nonce) {
+			return Promise.reject(new Error('Configuração de contrato indisponível.'));
+		}
+
+		return new Promise((resolve, reject) => {
+			$.ajax({
+				url: config.ajaxUrl,
+				method: 'POST',
+				dataType: 'json',
+				data: {
+					action: config.action,
+					nonce: config.nonce,
+					post_data: getCheckoutPostData()
+				}
+			})
+				.done((response) => {
+					if (response && response.success && response.data && response.data.html) {
+						resolve(response.data.html);
+					} else {
+						reject(new Error((response && response.data && response.data.message) || 'Falha ao carregar contrato.'));
+					}
+				})
+				.fail(() => {
+					reject(new Error('Falha ao carregar contrato.'));
+				});
+		});
+	}
+
+	function openContractModal() {
+		ensureContractModal();
+		const modal = document.querySelector('.gstore-contract-modal');
+		if (!modal) return;
+		const body = modal.querySelector('.gstore-contract-modal__body');
+		if (body) {
+			body.innerHTML = '<div class="gstore-contract-modal__loading">Carregando...</div>';
+		}
+		modal.classList.add('is-open');
+		modal.setAttribute('aria-hidden', 'false');
+		document.body.classList.add('gstore-contract-modal-open');
+
+		fetchContractPreviewHtml()
+			.then((html) => {
+				if (body) {
+					body.innerHTML = html;
+				}
+			})
+			.catch((error) => {
+				if (body) {
+					body.innerHTML = `<div class="gstore-contract-modal__error">${escapeHtml(error.message || 'Falha ao carregar contrato.')}</div>`;
+				}
+			});
+	}
+
+	function closeContractModal() {
+		const modal = document.querySelector('.gstore-contract-modal');
+		if (!modal) return;
+		modal.classList.remove('is-open');
+		modal.setAttribute('aria-hidden', 'true');
+		document.body.classList.remove('gstore-contract-modal-open');
 	}
 
 	function syncKivoTermsButton() {
@@ -814,7 +917,7 @@
 			const contractText = contractEnabled && gstoreCheckout.contractSettings.checkboxText 
 				? gstoreCheckout.contractSettings.checkboxText 
 				: 'Li e concordo com os termos do contrato';
-			const termsUrl = (typeof gstoreCheckout !== 'undefined' && gstoreCheckout.termsUrl) ? gstoreCheckout.termsUrl : '/termos-de-uso/';
+			const termsUrl = (typeof gstoreCheckout !== 'undefined' && gstoreCheckout.termsUrl) ? gstoreCheckout.termsUrl : '/termos-do-contrato/';
 			const privacyUrl = (typeof gstoreCheckout !== 'undefined' && gstoreCheckout.privacyUrl) ? gstoreCheckout.privacyUrl : '/politica-de-privacidade/';
 			const termsHtml = contractEnabled ? buildContractTermsHtml(contractText, termsUrl, privacyUrl) : '';
 
@@ -2406,6 +2509,21 @@ function getInstallmentDisplayTotals(summaryData) {
 				$(this).closest('.gstore-contract-terms, .kivo-terms').removeClass('woocommerce-invalid');
 			}
 			syncKivoTermsButton();
+		});
+
+		// Modal do contrato (prévia)
+		$(document).on('click', '.gstore-contract-modal-trigger', function(e) {
+			e.preventDefault();
+			openContractModal();
+		});
+		$(document).on('click', '[data-gstore-contract-close]', function(e) {
+			e.preventDefault();
+			closeContractModal();
+		});
+		document.addEventListener('keydown', function(e) {
+			if (e.key === 'Escape') {
+				closeContractModal();
+			}
 		});
 
 		// Footer Kivo: ao clicar no CTA, dispara o place_order do WooCommerce
