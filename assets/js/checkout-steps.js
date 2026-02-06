@@ -2272,6 +2272,17 @@ function getInstallmentDisplayTotals(summaryData) {
 		const installmentsValue = $('#gstore_blu_installments').val() || $('#gstore_blu_installments_select').val() || '';
 		const $form = $('form.checkout').first();
 		const paymentMethod = resolveSelectedPaymentMethod($form);
+		// Garante gstore_checkout_step e campos de frete no form antes de serializar (form pode ter sido
+		// substituído por fragments do WC após updated_checkout, perdendo os hidden adicionados no update_checkout).
+		if ($form.length) {
+			updateCheckoutShippingHiddenFields();
+			let $stepInput = $form.find('input[name="gstore_checkout_step"]');
+			if (!$stepInput.length) {
+				$stepInput = $('<input>', { type: 'hidden', name: 'gstore_checkout_step', id: 'gstore_checkout_step' });
+				$form.append($stepInput);
+			}
+			$stepInput.val(typeof currentStep !== 'undefined' ? currentStep : 0);
+		}
 		const postData = $form.length ? $form.serialize() : '';
 		const cartSummaryConfig = window.gstoreCartSummary;
 		const ajaxUrl = (cartSummaryConfig && cartSummaryConfig.ajaxUrl) || (typeof wc_checkout_params !== 'undefined' && wc_checkout_params.ajax_url) || '/wp-admin/admin-ajax.php';
