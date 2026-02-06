@@ -365,21 +365,20 @@
 			 * Função usada apenas para sincronização interna
 			 */
 			function updatePaymentContent() {
-				const $livePixRadio = $('input[name="payment_method"][value="blu_pix"]');
-				const $liveCheckoutRadio = $('input[name="payment_method"][value="blu_checkout"]');
-				
-				const isCheckoutSelected = $liveCheckoutRadio.filter(':checked').length > 0;
-				const isPixSelected = $livePixRadio.filter(':checked').length > 0;
-				
-				if (!isCheckoutSelected && !isPixSelected) return;
-				
-				if ($checkoutRadioClone) $checkoutRadioClone.prop('checked', isCheckoutSelected);
-				if ($pixRadioClone) $pixRadioClone.prop('checked', isPixSelected);
-				persistSelectedPaymentMethod(isCheckoutSelected ? 'blu_checkout' : 'blu_pix');
+				// Usa lastSelectedPaymentMethod como fonte de verdade (evita race conditions)
+				const method = lastSelectedPaymentMethod || 'blu_checkout';
+				const isCheckout = method === 'blu_checkout';
+
+				// Sincroniza radios com a escolha persistida
+				$('input[name="payment_method"][value="blu_checkout"]').prop('checked', isCheckout);
+				$('input[name="payment_method"][value="blu_pix"]').prop('checked', !isCheckout);
+				if ($checkoutRadioClone) $checkoutRadioClone.prop('checked', isCheckout);
+				if ($pixRadioClone) $pixRadioClone.prop('checked', !isCheckout);
+				persistSelectedPaymentMethod(method);
 				
 				$content.empty();
 				
-				if (isCheckoutSelected) {
+				if (isCheckout) {
 					const $box = $('.payment_method_blu_checkout.gstore-hidden-for-unified .payment_box').first().clone();
 					$content.append($box);
 					toggleBillingFieldsForPaymentMethod(false);
@@ -445,53 +444,54 @@
 		});
 			
 		// Sincroniza quando WooCommerce atualiza o checkout (ex: cupom aplicado)
-		$(document.body).on('updated_checkout.gstore-unify', function() {
+		// Remove handler anterior para evitar acumulação (cada unifyBluPaymentMethods registra um novo)
+		$(document.body).off('updated_checkout.gstore-unify').on('updated_checkout.gstore-unify', function() {
 			// Re-esconde os elementos originais que podem ter sido recriados
 			$('.payment_method_blu_checkout').not('.Gstore-blu-payment-unified .payment_method_blu_checkout').addClass('gstore-hidden-for-unified');
 			$('.payment_method_blu_pix').not('.Gstore-blu-payment-unified .payment_method_blu_pix').addClass('gstore-hidden-for-unified');
 			
-			// Sincroniza a seleção visual com o estado atual dos radios
+			// Usa lastSelectedPaymentMethod como fonte de verdade (evita race conditions com radios)
 			setTimeout(function() {
-				const $livePixRadio = $('input[name="payment_method"][value="blu_pix"]');
-				const $liveCheckoutRadio = $('input[name="payment_method"][value="blu_checkout"]');
-				const isPixSelected = $livePixRadio.filter(':checked').length > 0;
-				const isCheckoutSelected = $liveCheckoutRadio.filter(':checked').length > 0;
-					
-					if (isPixSelected || isCheckoutSelected) {
-						if ($checkoutRadioClone) $checkoutRadioClone.prop('checked', isCheckoutSelected);
-						if ($pixRadioClone) $pixRadioClone.prop('checked', isPixSelected);
-						toggleBillingFieldsForPaymentMethod(isPixSelected);
-						
-						// Esconde/mostra parcelamento (PIX não tem parcelamento)
-						$('.Gstore-blu-installments').toggle(isCheckoutSelected);
-						
-						$content.empty();
-						if (isCheckoutSelected) {
-							const $box = $('.payment_method_blu_checkout.gstore-hidden-for-unified .payment_box').first().clone();
-							$content.append($box);
-						} else {
-							const $box = $('.payment_method_blu_pix.gstore-hidden-for-unified .payment_box').first().clone();
-							$content.append($box);
-						}
+				const method = lastSelectedPaymentMethod || 'blu_checkout';
+				const isCheckout = method === 'blu_checkout';
+
+				// Garante que os radios refletem a escolha do usuário
+				$('input[name="payment_method"][value="blu_checkout"]').prop('checked', isCheckout);
+				$('input[name="payment_method"][value="blu_pix"]').prop('checked', !isCheckout);
+
+				if ($checkoutRadioClone) $checkoutRadioClone.prop('checked', isCheckout);
+				if ($pixRadioClone) $pixRadioClone.prop('checked', !isCheckout);
+				toggleBillingFieldsForPaymentMethod(!isCheckout);
+
+				// Esconde/mostra parcelamento (PIX não tem parcelamento)
+				$('.Gstore-blu-installments').toggle(isCheckout);
+
+				if ($content && $content.length) {
+					$content.empty();
+					if (isCheckout) {
+						const $box = $('.payment_method_blu_checkout.gstore-hidden-for-unified .payment_box').first().clone();
+						$content.append($box);
+					} else {
+						const $box = $('.payment_method_blu_pix.gstore-hidden-for-unified .payment_box').first().clone();
+						$content.append($box);
 					}
-				}, 50);
-			});
+				}
+			}, 50);
+		});
 			
-		// Mostra conteúdo inicial
+		// Mostra conteúdo inicial usando lastSelectedPaymentMethod como fonte de verdade
 		setTimeout(function() {
-			const isPixSelected = $pixRadio.is(':checked');
-			const isCheckoutSelected = $checkoutRadio.is(':checked');
-			
-			if (!isPixSelected && !isCheckoutSelected) {
-				$checkoutRadio.prop('checked', true);
-			}
-			
-			const finalSelection = $pixRadio.is(':checked');
-			if ($pixRadioClone) $pixRadioClone.prop('checked', finalSelection);
-			if ($checkoutRadioClone) $checkoutRadioClone.prop('checked', !finalSelection);
+			const method = lastSelectedPaymentMethod || 'blu_checkout';
+			const isCheckout = method === 'blu_checkout';
+
+			// Garante que radios reflitam a escolha do usuário
+			$checkoutRadio.prop('checked', isCheckout);
+			$pixRadio.prop('checked', !isCheckout);
+			if ($checkoutRadioClone) $checkoutRadioClone.prop('checked', isCheckout);
+			if ($pixRadioClone) $pixRadioClone.prop('checked', !isCheckout);
 			
 			// Esconde/mostra parcelamento na inicialização (PIX não tem parcelamento)
-			$('.Gstore-blu-installments').toggle(!finalSelection);
+			$('.Gstore-blu-installments').toggle(isCheckout);
 			
 			updatePaymentContent();
 		}, 100);
@@ -1837,10 +1837,10 @@ function getInstallmentDisplayTotals(summaryData) {
 		}
 
 		// Atualiza quando entrar na última etapa
+		// NÃO dispara update_checkout aqui pois nextStep() já o faz (evita duplo refresh que causa race conditions)
 		if (index === lastStepIndex) {
 			setTimeout(function() {
-				$(document.body).trigger('update_checkout');
-				setTimeout(updateOrderReviewTotals, 0);
+				updateOrderReviewTotals();
 				
 				// Garante que o botão place_order esteja visível e clicável
 				const $placeOrderBtn = $('#place_order');
@@ -2766,15 +2766,25 @@ function getInstallmentDisplayTotals(summaryData) {
 				}
 			});
 			
-			// 3. Coleta payment_method - procura em qualquer lugar
-			const $paymentRadio = $('input[name="payment_method"]:checked');
-			if ($paymentRadio.length) {
-				formDataObj['payment_method'] = $paymentRadio.val();
+			// 3. Coleta payment_method - prioriza a seleção persistida (mais confiável que radio state)
+			if (lastSelectedPaymentMethod) {
+				formDataObj['payment_method'] = lastSelectedPaymentMethod;
 			} else {
-				// Fallback: usa o primeiro método disponível
-				const $firstPayment = $('input[name="payment_method"]').first();
-				if ($firstPayment.length) {
-					formDataObj['payment_method'] = $firstPayment.val();
+				const $paymentRadio = $('input[name="payment_method"]:checked');
+				if ($paymentRadio.length) {
+					formDataObj['payment_method'] = $paymentRadio.val();
+				} else {
+					// Fallback: hidden input dentro do form
+					const $hiddenPM = $('form.checkout').find('input[name="payment_method"][type="hidden"]').first();
+					if ($hiddenPM.length && $hiddenPM.val()) {
+						formDataObj['payment_method'] = $hiddenPM.val();
+					} else {
+						// Último fallback: primeiro método disponível
+						const $firstPayment = $('input[name="payment_method"]').first();
+						if ($firstPayment.length) {
+							formDataObj['payment_method'] = $firstPayment.val();
+						}
+					}
 				}
 			}
 			
