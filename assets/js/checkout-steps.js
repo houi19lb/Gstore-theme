@@ -2739,6 +2739,12 @@ function getInstallmentDisplayTotals(summaryData) {
 			const $form = $('form.checkout');
 			if (!$form.length) return;
 			if ($form.hasClass('processing')) return;
+
+			// Garante que os campos de frete (shipping_method[0], gstore_shipping_mode) estejam no form
+			// com a escolha atual antes de coletar os dados (evita frete errado no Pix).
+			if (typeof updateCheckoutShippingHiddenFields === 'function') {
+				updateCheckoutShippingHiddenFields();
+			}
 			
 			const requiredFields = ['billing_email'];
 			
