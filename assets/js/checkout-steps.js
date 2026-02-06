@@ -2082,7 +2082,7 @@ function getInstallmentDisplayTotals(summaryData) {
 	 * Carrega o resumo do carrinho via AJAX.
 	 * Preferência: window.gstoreCartSummary (plugin) para URL e nonce corretos do endpoint gstore_get_cart_summary.
 	 */
-	function loadCartSummary() {
+	function loadCartSummary(onSuccess) {
 		const installmentsValue = $('#gstore_blu_installments').val() || $('#gstore_blu_installments_select').val() || '';
 		const $form = $('form.checkout').first();
 		const paymentMethod = resolveSelectedPaymentMethod($form);
@@ -2103,11 +2103,17 @@ function getInstallmentDisplayTotals(summaryData) {
 			success: function(response) {
 				if (response.success) {
 					renderSummary(response.data);
+					if (typeof onSuccess === 'function') {
+						onSuccess();
+					}
 				}
 			},
 			error: function() {
 				// Fallback: extrai do DOM
 				extractSummaryFromDOM();
+				if (typeof onSuccess === 'function') {
+					onSuccess();
+				}
 			}
 		});
 	}
@@ -2405,27 +2411,21 @@ function getInstallmentDisplayTotals(summaryData) {
 				// Dispara update_checkout para enviar os dados ao backend e recalcular
 				$(document.body).trigger('update_checkout');
 				
-				// CORREÇÃO: Após o checkout ser atualizado, força recálculo das taxas de parcelamento
-				// porque o frete mudou e isso afeta a base de cálculo das taxas
+				// Após o checkout ser atualizado, recarrega o resumo e só então atualiza as quotes de parcelamento
+				// (o refetch deve ser após loadCartSummary completar, senão o backend ainda não tem o novo frete)
 				$(document.body).one('updated_checkout', function() {
-					// Aguarda um momento para garantir que o carrinho foi atualizado
 					setTimeout(function() {
-						// Recarrega o resumo do carrinho para obter os novos totais com frete atualizado
-						loadCartSummary();
-						// Aguarda mais um momento para o AJAX completar e então atualiza as taxas
-						setTimeout(function() {
-							// Força atualização do preview de parcelas e busca novas quotes
+						loadCartSummary(function() {
+							// Resumo já tem totais com o novo frete; agora busca quotes de parcelamento
 							if (lastCartSummaryData) {
 								updateInstallmentsPreview(lastCartSummaryData);
 							}
 							maybeFetchInstallmentQuotes();
-						}, 200);
-					}, 300);
+						});
+					}, 100);
 				});
 				
 				renderShippingSummary(lastCartSummaryData);
-				// Força atualização imediata do parcelamento após frete mudar
-				maybeFetchInstallmentQuotes();
 			}
 		});
 
@@ -2872,6 +2872,14 @@ function getInstallmentDisplayTotals(summaryData) {
 			
 			// 7. Garante campos obrigatórios para o WooCommerce
 			formDataObj['woocommerce_checkout_place_order'] = '1';
+
+			// 7.1 Força país como BR (campo removido do form, mas WooCommerce precisa para validar endereço)
+			if (!formDataObj['billing_country']) {
+				formDataObj['billing_country'] = 'BR';
+			}
+			if (!formDataObj['shipping_country']) {
+				formDataObj['shipping_country'] = 'BR';
+			}
 			
 			// Converte para query string
 			let formData = $.param(formDataObj);
