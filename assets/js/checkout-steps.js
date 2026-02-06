@@ -1142,6 +1142,9 @@ function getInstallmentDisplayTotals(summaryData) {
 	function updateCheckoutShippingSelection(mode, shouldPersist) {
 		const normalized = normalizeRateMode(mode) || 'land';
 		checkoutSelectedShippingMode = normalized;
+		// Invalida quotes de parcelamento (frete mudou, base de cálculo diferente)
+		installmentQuotes = null;
+		lastInstallmentQuotesSignature = '';
 		if (shouldPersist) {
 			const itemKeys = getCartItemKeysFromSummary(lastCartSummaryData);
 			persistShippingModeToStorage(normalized, itemKeys);
@@ -2364,6 +2367,10 @@ function getInstallmentDisplayTotals(summaryData) {
 				const normalizedMode = normalizeRateMode(value) || 'land';
 				checkoutSelectedShippingByItem[cartItemKey] = normalizedMode;
 				persistShippingModeForItem(cartItemKey, value);
+
+				// Invalida cache de quotes de parcelamento (frete mudou, base de cálculo diferente)
+				installmentQuotes = null;
+				lastInstallmentQuotesSignature = '';
 				
 				// Atualiza campo hidden no formulário de checkout para enviar ao backend
 				updateCheckoutShippingHiddenFields();
@@ -2417,6 +2424,8 @@ function getInstallmentDisplayTotals(summaryData) {
 				});
 				
 				renderShippingSummary(lastCartSummaryData);
+				// Força atualização imediata do parcelamento após frete mudar
+				maybeFetchInstallmentQuotes();
 			}
 		});
 
