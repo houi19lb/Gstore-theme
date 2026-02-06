@@ -449,9 +449,14 @@
 		}
 
 		const totalValue = subtotalValue + selectedTotal;
-		const orderTotalCell = totalsTable.querySelector('.order-total td .woocommerce-Price-amount, .order-total td');
-		if (orderTotalCell) {
-			orderTotalCell.innerHTML = formatCurrency(totalValue);
+		const orderTotalRow = totalsTable.querySelector('tr.order-total');
+		if (orderTotalRow) {
+			const amountEl = orderTotalRow.querySelector('.woocommerce-Price-amount');
+			const fallbackCell = orderTotalRow.querySelector('td:last-child');
+			const target = amountEl || fallbackCell;
+			if (target) {
+				target.innerHTML = formatCurrency(totalValue);
+			}
 		}
 	}
 

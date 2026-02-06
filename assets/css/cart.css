@@ -734,6 +734,14 @@ div.woocommerce section.Gstore-cart-shell div.Gstore-cart-container {
 	margin-top: 8px;
 }
 
+/* Na página do carrinho, esconde a seção de frete do checkout (Enviando para... / Alterar endereço).
+   O frete é controlado apenas pela calculadora e pelas opções por item, como na segunda imagem de referência. */
+body.woocommerce-cart .Gstore-cart-summary-card .gstore-shipping-totals,
+body.woocommerce-cart .Gstore-cart-summary-card .woocommerce-shipping-totals,
+body.woocommerce-cart .cart_totals tr.shipping {
+	display: none !important;
+}
+
 /* Card de Resumo (Totais) */
 .Gstore-cart-summary-card .cart_totals {
 	width: 100%;

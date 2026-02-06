@@ -1481,163 +1481,6 @@ function getInstallmentDisplayTotals(summaryData) {
 		$totals.html(totalsHtml);
 	}
 
-	/**
-	 * Atualiza apenas os valores de frete e total no resumo, sem sobrescrever as fees (ex.: taxa de parcelamento).
-	 * Usado ao trocar o radio de frete para evitar exibir taxa obsoleta até loadCartSummary retornar.
-	 */
-	function updateShippingDisplayOnly() {
-		const $shippingSummary = $('[data-gstore-shipping-summary]');
-		if (!$shippingSummary.length || !lastCartSummaryData) {
-			return;
-		}
-		const $totals = $shippingSummary.find('[data-gstore-shipping-totals]');
-		if (!$totals.length) {
-			return;
-		}
-		const data = lastCartSummaryData;
-		const ratesByItem = checkoutShippingRatesByItem || {};
-		const items = data && Array.isArray(data.items) ? data.items : [];
-		const hasItemRates = Object.keys(ratesByItem).length > 0;
-		const rates = checkoutShippingRates;
-		let selectedMode = checkoutSelectedShippingMode;
-		if (!hasItemRates && rates.length) {
-			selectedMode = resolveCheckoutShippingMode(rates, selectedMode);
-			checkoutSelectedShippingMode = selectedMode;
-		}
-		const subtotalValue = data && data.totals && data.totals.subtotal
-			? parsePriceValue(data.totals.subtotal)
-			: 0;
-		const discountValue = data && data.totals && data.totals.discount
-			? parsePriceValue(data.totals.discount)
-			: 0;
-		let selectedTotal = 0;
-		let selectedLandTotal = 0;
-		let selectedAirTotal = 0;
-		const selectedModes = new Set();
-		if (hasItemRates && items.length) {
-			items.forEach((item) => {
-				const cartItemKey = item.key || item.cart_item_key || item.cartItemKey || '';
-				if (!cartItemKey || !ratesByItem[cartItemKey]) {
-					return;
-				}
-				const itemRates = ratesByItem[cartItemKey] || [];
-				const selectedModeForItem = checkoutSelectedShippingByItem[cartItemKey] || resolveCheckoutShippingMode(itemRates, 'land');
-				selectedModes.add(selectedModeForItem);
-				const selectedRate = itemRates.find((rate) => normalizeRateMode(rate.mode) === selectedModeForItem);
-				if (selectedRate) {
-					const selectedCost = Number.isFinite(Number(selectedRate.cost))
-						? Number(selectedRate.cost)
-						: parsePriceValue(selectedRate.cost_formatted || '');
-					if (Number.isFinite(selectedCost)) {
-						selectedTotal += selectedCost;
-						if (selectedModeForItem === 'air') {
-							selectedAirTotal += selectedCost;
-						} else {
-							selectedLandTotal += selectedCost;
-						}
-					}
-				}
-			});
-		} else if (rates.length) {
-			selectedTotal = getSelectedShippingCost(rates, selectedMode);
-			if (selectedMode === 'air') {
-				selectedAirTotal = selectedTotal;
-			} else {
-				selectedLandTotal = selectedTotal;
-			}
-			selectedModes.add(selectedMode);
-		}
-		const fees = (data && data.totals && data.totals.fees && Array.isArray(data.totals.fees)) ? data.totals.fees : [];
-		let feesTotal = 0;
-		const otherFees = [];
-		fees.forEach(function (fee) {
-			const label = (fee && (fee.label || fee.name)) ? String(fee.label || fee.name).trim() : '';
-			const total = fee && Number.isFinite(Number(fee.total)) ? Number(fee.total) : parsePriceValue((fee && fee.total) ? String(fee.total) : '0');
-			if (!label) return;
-			const isFrete = label.toLowerCase().indexOf('frete') !== -1;
-			if (isFrete) return;
-			otherFees.push({ label: label, total: total });
-			feesTotal += total;
-		});
-		const totalValue = subtotalValue + selectedTotal - discountValue + feesTotal;
-		if (subtotalValue > 0) {
-			$('.Gstore-checkout-summary-top__total-amount').html(formatCurrency(totalValue));
-		}
-		lastSummaryTotals = {
-			subtotalValue,
-			selectedTotal,
-			totalValue,
-			selectedModes: Array.from(selectedModes),
-			selectedLandTotal,
-			selectedAirTotal,
-		};
-		let totalsHtml = `
-			<div class="Gstore-checkout-shipping-totals__row">
-				<span>Subtotal</span>
-				<span>${subtotalValue ? formatCurrency(subtotalValue) : (data && data.totals && data.totals.subtotal ? data.totals.subtotal : '-')}</span>
-			</div>
-		`;
-		if (selectedModes.size > 1) {
-			totalsHtml += `
-				<div class="Gstore-checkout-shipping-totals__row">
-					<span>Frete terrestre</span>
-					<span>${selectedLandTotal ? formatCurrency(selectedLandTotal) : '-'}</span>
-				</div>
-				<div class="Gstore-checkout-shipping-totals__row">
-					<span>Frete aéreo</span>
-					<span>${selectedAirTotal ? formatCurrency(selectedAirTotal) : '-'}</span>
-				</div>
-			`;
-		} else {
-			const onlyMode = selectedModes.values().next().value || 'land';
-			const singleValue = onlyMode === 'air' ? selectedAirTotal : selectedLandTotal;
-			totalsHtml += `
-				<div class="Gstore-checkout-shipping-totals__row">
-					<span>${onlyMode === 'air' ? 'Frete aéreo' : 'Frete terrestre'}</span>
-					<span>${singleValue ? formatCurrency(singleValue) : '-'}</span>
-				</div>
-			`;
-		}
-		otherFees.forEach(function (fee) {
-			totalsHtml += `
-				<div class="Gstore-checkout-shipping-totals__row">
-					<span>${fee.label}</span>
-					<span>${formatCurrency(fee.total)}</span>
-				</div>
-			`;
-		});
-		if (discountValue > 0) {
-			totalsHtml += `
-				<div class="Gstore-checkout-shipping-totals__row">
-					<span>Desconto</span>
-					<span>-${formatCurrency(discountValue)}</span>
-				</div>
-			`;
-		}
-		totalsHtml += `
-			<div class="Gstore-checkout-shipping-totals__row Gstore-checkout-shipping-totals__row--total">
-				<span>Total</span>
-				<span>${subtotalValue ? formatCurrency(totalValue) : (data && (data.base_total || data.total) ? (data.base_total || data.total) : '-')}</span>
-			</div>
-		`;
-		if (checkoutShippingStatus === 'loading') {
-			totalsHtml += `
-				<div class="Gstore-checkout-shipping-totals__hint">
-					<i class="fa-solid fa-spinner fa-spin"></i>
-					Calculando frete...
-				</div>
-			`;
-		} else if (checkoutShippingStatus === 'error') {
-			totalsHtml += `
-				<div class="Gstore-checkout-shipping-totals__error">
-					<i class="fa-solid fa-circle-exclamation"></i>
-					${checkoutShippingError || 'Erro ao calcular frete.'}
-				</div>
-			`;
-		}
-		$totals.html(totalsHtml);
-	}
-
 	function updateOrderReviewTotals() {
 		if (!lastSummaryTotals) {
 			return;
@@ -2272,17 +2115,6 @@ function getInstallmentDisplayTotals(summaryData) {
 		const installmentsValue = $('#gstore_blu_installments').val() || $('#gstore_blu_installments_select').val() || '';
 		const $form = $('form.checkout').first();
 		const paymentMethod = resolveSelectedPaymentMethod($form);
-		// Garante gstore_checkout_step e campos de frete no form antes de serializar (form pode ter sido
-		// substituído por fragments do WC após updated_checkout, perdendo os hidden adicionados no update_checkout).
-		if ($form.length) {
-			updateCheckoutShippingHiddenFields();
-			let $stepInput = $form.find('input[name="gstore_checkout_step"]');
-			if (!$stepInput.length) {
-				$stepInput = $('<input>', { type: 'hidden', name: 'gstore_checkout_step', id: 'gstore_checkout_step' });
-				$form.append($stepInput);
-			}
-			$stepInput.val(typeof currentStep !== 'undefined' ? currentStep : 0);
-		}
 		const postData = $form.length ? $form.serialize() : '';
 		const cartSummaryConfig = window.gstoreCartSummary;
 		const ajaxUrl = (cartSummaryConfig && cartSummaryConfig.ajaxUrl) || (typeof wc_checkout_params !== 'undefined' && wc_checkout_params.ajax_url) || '/wp-admin/admin-ajax.php';
@@ -2605,8 +2437,6 @@ function getInstallmentDisplayTotals(summaryData) {
 				}
 
 				
-				// Sinaliza que o próximo updated_checkout já será tratado pelo .one() abaixo (evita loadCartSummary duplicado)
-				window._gstoreSkipAutoSummary = true;
 				// Dispara update_checkout para enviar os dados ao backend e recalcular
 				$(document.body).trigger('update_checkout');
 				
@@ -2624,8 +2454,7 @@ function getInstallmentDisplayTotals(summaryData) {
 					}, 100);
 				});
 				
-				// Atualiza apenas frete e total, sem sobrescrever fees (taxa de parcelamento) com dados obsoletos
-				updateShippingDisplayOnly();
+				renderShippingSummary(lastCartSummaryData);
 			}
 		});
 
@@ -2647,11 +2476,7 @@ function getInstallmentDisplayTotals(summaryData) {
 					$hiddenPayment.val(lastSelectedPaymentMethod);
 				}
 			}
-			if (window._gstoreSkipAutoSummary) {
-				window._gstoreSkipAutoSummary = false;
-			} else {
-				loadCartSummary();
-			}
+			loadCartSummary();
 			// O WooCommerce pode re-renderizar fragments; garante que o DOM continue dentro das etapas
 			setTimeout(organizeFields, 0);
 			setTimeout(ensureBluInstallmentsUI, 0);
