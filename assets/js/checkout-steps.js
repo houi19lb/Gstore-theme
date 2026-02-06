@@ -535,8 +535,9 @@
 		}
 
 		const allow = $installments.data('allow') === 1 || $installments.data('allow') === '1';
-		const $liveCheckoutRadio = $('input[name="payment_method"][value="blu_checkout"]');
-		const isCheckoutSelected = $liveCheckoutRadio.filter(':checked').length > 0;
+		// Usa lastSelectedPaymentMethod (mais confiável que checar radios em meio a race conditions de updated_checkout)
+		const isCheckoutSelected = lastSelectedPaymentMethod === 'blu_checkout' ||
+			(!lastSelectedPaymentMethod && $('input[name="payment_method"][value="blu_checkout"]').filter(':checked').length > 0);
 
 		// Só faz sentido mostrar quando cartão estiver selecionado
 		$installments.toggle(allow && isCheckoutSelected);
@@ -644,8 +645,9 @@
 			totalValue = parsePriceValue(q.total || '');
 		}
 		let perValue = Number.isFinite(q.per_installment_raw) ? q.per_installment_raw : parsePriceValue(q.per_installment_text || q.per_installment || '');
-		if (displayTotals.shouldAddShipping && displayTotals.shippingTotal > 0 && totalValue > 0) {
-			totalValue += displayTotals.shippingTotal;
+		// O backend (ajax_installment_quotes) já inclui frete no total_raw via $cart->calculate_totals(),
+		// portanto NÃO somar frete novamente aqui (causava duplicação do valor do frete).
+		if (!Number.isFinite(perValue) || perValue <= 0) {
 			perValue = totalValue / installments;
 		}
 		const perText = perValue > 0 ? formatCurrency(perValue) : (q.per_installment_text || q.per_installment || '');
@@ -2198,6 +2200,11 @@ function getInstallmentDisplayTotals(summaryData) {
 		updateCheckoutShippingHiddenFields();
 		updateInstallmentsPreview(data);
 		setTimeout(maybeFetchInstallmentQuotes, 0);
+
+		// Garante visibilidade correta do parcelamento baseado no método de pagamento do backend
+		// (resolve race condition onde o elemento fica visível ao trocar de Cartão para PIX)
+		const isCardMethod = data.payment_method === 'blu_checkout';
+		$('.Gstore-blu-installments').toggle(isCardMethod);
 		
 		// FIX: Chamar updateOrderReviewTotals AQUI, após lastSummaryTotals ser definido
 		// em vez de no evento updated_checkout com setTimeout(0) que executava antes do AJAX completar
