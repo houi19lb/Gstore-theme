@@ -1208,6 +1208,10 @@ function getInstallmentDisplayTotals(summaryData) {
 
 		// Adiciona campo shipping_method[0] com o rate ID correto do WooCommerce.
 		// Garante que na submissão final do form, o WC reconheça o método escolhido.
+		// IMPORTANTE: data-index="0" é obrigatório para que o JS nativo do WC
+		// (update-checkout.js) leia corretamente o valor ao montar o POST de update_order_review.
+		// Sem data-index, o WC ignora nosso campo e usa o radio/hidden nativo do template
+		// cart-shipping.php, que pode ter o valor antigo (ex.: air quando o usuário escolheu land).
 		const allModes = new Set();
 		items.forEach((item) => {
 			const key = item.key || item.cart_item_key || item.cartItemKey || '';
@@ -1216,12 +1220,18 @@ function getInstallmentDisplayTotals(summaryData) {
 			}
 		});
 		const suffix = allModes.size > 1 ? 'mixed' : (allModes.values().next().value || 'land');
+		const gstoreRateId = 'gstore_custom_shipping:' + suffix;
+
+		// Remove TODOS os inputs shipping_method[0] existentes (nossos E os nativos do WC)
+		// para evitar conflito de valores no serialize() do form.
 		$checkoutForm.find('input[name="shipping_method[0]"]').remove();
 		$checkoutForm.append(
 			$('<input>', {
 				type: 'hidden',
 				name: 'shipping_method[0]',
-				value: 'gstore_custom_shipping:' + suffix
+				'data-index': '0',
+				'class': 'shipping_method',
+				value: gstoreRateId
 			})
 		);
 
@@ -3181,15 +3191,20 @@ function getInstallmentDisplayTotals(summaryData) {
 			}
 
 			// Garante shipping_method[0] com rate ID completo para persistir frete ao fechar modal Blu.
+			// Remove inputs WC nativos conflitantes e recria com data-index para compatibilidade.
 			let mode = checkoutSelectedShippingMode || (Object.values(checkoutSelectedShippingByItem)[0]) || 'land';
 			if (mode !== 'land' && mode !== 'air') mode = 'land';
 			const rateId = 'gstore_custom_shipping:' + mode;
-			const $sm = $checkoutForm.find('input[name="shipping_method[0]"]');
-			if ($sm.length) {
-				$sm.val(rateId);
-			} else {
-				$checkoutForm.append($('<input>', { type: 'hidden', name: 'shipping_method[0]', value: rateId }));
-			}
+			$checkoutForm.find('input[name="shipping_method[0]"]').remove();
+			$checkoutForm.append(
+				$('<input>', {
+					type: 'hidden',
+					name: 'shipping_method[0]',
+					'data-index': '0',
+					'class': 'shipping_method',
+					value: rateId
+				})
+			);
 		}
 	});
 	
