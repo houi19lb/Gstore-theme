@@ -265,140 +265,6 @@
 		`;
 	}
 
-	function escapeHtml(value) {
-		const text = value === null || value === undefined ? '' : String(value);
-		return text
-			.replace(/&/g, '&amp;')
-			.replace(/</g, '&lt;')
-			.replace(/>/g, '&gt;')
-			.replace(/"/g, '&quot;')
-			.replace(/'/g, '&#39;');
-	}
-
-	function buildContractTermsHtml(contractText, termsUrl, privacyUrl) {
-		const safeText = escapeHtml(contractText || 'Li e concordo com os termos do contrato');
-		const termsLink = `<a class="kivo-link gstore-contract-modal-trigger" data-gstore-contract-modal href="${termsUrl}" rel="noopener">termos do contrato</a>`;
-		let termsHtml = safeText;
-
-		if (/termos do contrato/i.test(termsHtml)) {
-			termsHtml = termsHtml.replace(/termos do contrato/gi, termsLink);
-		} else {
-			termsHtml = `${termsHtml} ${termsLink}`;
-		}
-
-		return `${termsHtml} e com a <a class="kivo-link" href="${privacyUrl}" target="_blank" rel="noopener">política de privacidade</a><span class="kivo-terms__sub">Ao finalizar, você confirma que leu e aceita esses termos.</span>`;
-	}
-
-	function getContractPreviewConfig() {
-		const config = (typeof gstoreCheckout !== 'undefined' && gstoreCheckout.contractPreview) ? gstoreCheckout.contractPreview : {};
-		const ajaxUrl = config.ajaxUrl || (window.gstoreCartSummary && window.gstoreCartSummary.ajaxUrl) || '';
-		return {
-			ajaxUrl,
-			nonce: config.nonce || '',
-			action: config.action || 'gstore_contract_preview'
-		};
-	}
-
-	function getCheckoutPostData() {
-		if ($checkoutForm && $checkoutForm.length) {
-			return $checkoutForm.serialize();
-		}
-		const $form = $('form.checkout');
-		return $form.length ? $form.serialize() : '';
-	}
-
-	function ensureContractModal() {
-		if (document.querySelector('.gstore-contract-modal')) return;
-		const modal = document.createElement('div');
-		modal.className = 'gstore-contract-modal';
-		modal.setAttribute('aria-hidden', 'true');
-		modal.setAttribute('role', 'dialog');
-		modal.setAttribute('aria-modal', 'true');
-		modal.innerHTML = `
-			<div class="gstore-contract-modal__overlay" data-gstore-contract-close></div>
-			<div class="gstore-contract-modal__dialog" role="document">
-				<div class="gstore-contract-modal__header">
-					<div class="gstore-contract-modal__title">Contrato (prévia)</div>
-					<button type="button" class="gstore-contract-modal__close" data-gstore-contract-close aria-label="Fechar">×</button>
-				</div>
-				<div class="gstore-contract-modal__body">
-					<div class="gstore-contract-modal__loading">Carregando...</div>
-				</div>
-			</div>
-		`;
-		document.body.appendChild(modal);
-	}
-
-	function fetchContractPreviewHtml() {
-		const config = getContractPreviewConfig();
-		if (!config.ajaxUrl || !config.nonce) {
-			return Promise.reject(new Error('Configuração de contrato indisponível.'));
-		}
-
-		return new Promise((resolve, reject) => {
-			$.ajax({
-				url: config.ajaxUrl,
-				method: 'POST',
-				dataType: 'json',
-				data: {
-					action: config.action,
-					nonce: config.nonce,
-					post_data: getCheckoutPostData()
-				}
-			})
-				.done((response) => {
-					if (response && response.success && response.data && response.data.html) {
-						resolve(response.data.html);
-					} else {
-						reject(new Error((response && response.data && response.data.message) || 'Falha ao carregar contrato.'));
-					}
-				})
-				.fail(() => {
-					reject(new Error('Falha ao carregar contrato.'));
-				});
-		});
-	}
-
-	function openContractModal() {
-		ensureContractModal();
-		const modal = document.querySelector('.gstore-contract-modal');
-		if (!modal) return;
-		const body = modal.querySelector('.gstore-contract-modal__body');
-		if (body) {
-			body.innerHTML = '<div class="gstore-contract-modal__loading">Carregando...</div>';
-		}
-		modal.classList.add('is-open');
-		modal.setAttribute('aria-hidden', 'false');
-		document.body.classList.add('gstore-contract-modal-open');
-
-		fetchContractPreviewHtml()
-			.then((html) => {
-				if (body) {
-					body.innerHTML = html;
-				}
-			})
-			.catch((error) => {
-				if (body) {
-					body.innerHTML = `<div class="gstore-contract-modal__error">${escapeHtml(error.message || 'Falha ao carregar contrato.')}</div>`;
-				}
-			});
-	}
-
-	function closeContractModal() {
-		const modal = document.querySelector('.gstore-contract-modal');
-		if (!modal) return;
-		modal.classList.remove('is-open');
-		modal.setAttribute('aria-hidden', 'true');
-		document.body.classList.remove('gstore-contract-modal-open');
-	}
-
-	function syncKivoTermsButton() {
-		const btn = document.getElementById('kivo_place_order');
-		if (!btn) return;
-		const cb = document.getElementById('gstore_contract_terms');
-		btn.disabled = cb ? !cb.checked : false;
-	}
-
 	/**
 	 * Unifica métodos de pagamento Blu em um card único
 	 */
@@ -662,22 +528,15 @@
 		const $installments = $('.Gstore-blu-installments').first();
 		if (!$installments.length) return;
 
-		// Move para o slot correto (prioriza dentro do card Kivo)
-		const $kivoSlot = $('.kivo-checkout-footer .Gstore-blu-installments-slot').first();
-		const $defaultSlot = $('.Gstore-checkout-step__payment-container > .Gstore-blu-installments-slot').first();
-		const $slot = $kivoSlot.length ? $kivoSlot : $defaultSlot;
-
-		if ($kivoSlot.length && $defaultSlot.length && !$defaultSlot.is($kivoSlot)) {
-			$defaultSlot.remove();
-		}
-
+		// Move para dentro da Etapa 3 (Finalizar)
+		const $slot = $('.Gstore-blu-installments-slot').first();
 		if ($slot.length && !$slot.find('.Gstore-blu-installments').length) {
 			$slot.append($installments.detach());
 		}
 
 		const allow = $installments.data('allow') === 1 || $installments.data('allow') === '1';
-		const currentMethod = resolveSelectedPaymentMethod($('form.checkout').first());
-		const isCheckoutSelected = currentMethod === 'blu_checkout';
+		const $liveCheckoutRadio = $('input[name="payment_method"][value="blu_checkout"]');
+		const isCheckoutSelected = $liveCheckoutRadio.filter(':checked').length > 0;
 
 		// Só faz sentido mostrar quando cartão estiver selecionado
 		$installments.toggle(allow && isCheckoutSelected);
@@ -700,14 +559,6 @@
 					$(document.body).trigger('update_checkout');
 				});
 			}
-		}
-
-		// Se Pix estiver ativo, reseta parcelas e esconde preview
-		if (!isCheckoutSelected) {
-			if ($hidden.length) $hidden.val('1');
-			if ($select.length) $select.val('1');
-			const $preview = $installments.find('.Gstore-blu-installments__preview');
-			if ($preview.length) $preview.html('');
 		}
 
 		// Atualiza labels das opções (Nx de R$ ...) quando disponível
@@ -909,7 +760,7 @@
 			});
 		}
 
-		// Etapa 3: Footer Kivo (termos, privacidade, CTA) + botão oculto place_order
+		// Etapa 3: Adiciona checkbox de contrato (se habilitado) e botão de finalizar
 		const $finalizeStep = $('[data-step="payment"] .Gstore-checkout-step__payment-container');
 		if ($finalizeStep.length && !$finalizeStep.find('#place_order').length) {
 			// Verifica se contratos estão habilitados
@@ -917,42 +768,32 @@
 			const contractText = contractEnabled && gstoreCheckout.contractSettings.checkboxText 
 				? gstoreCheckout.contractSettings.checkboxText 
 				: 'Li e concordo com os termos do contrato';
-			const termsUrl = (typeof gstoreCheckout !== 'undefined' && gstoreCheckout.termsUrl) ? gstoreCheckout.termsUrl : '/termos-do-contrato/';
-			const privacyUrl = (typeof gstoreCheckout !== 'undefined' && gstoreCheckout.privacyUrl) ? gstoreCheckout.privacyUrl : '/politica-de-privacidade/';
-			const termsHtml = contractEnabled ? buildContractTermsHtml(contractText, termsUrl, privacyUrl) : '';
 
-			$finalizeStep.find('.gstore-contract-terms').remove();
+			let contractCheckboxHtml = '';
+			if (contractEnabled) {
+				contractCheckboxHtml = `
+					<div class="gstore-contract-terms woocommerce-terms-and-conditions-wrapper" style="margin-bottom:16px;">
+						<label class="woocommerce-form__label woocommerce-form__label-for-checkbox checkbox" style="display:flex;align-items:flex-start;gap:8px;cursor:pointer;">
+							<input type="checkbox" class="woocommerce-form__input woocommerce-form__input-checkbox input-checkbox" name="gstore_contract_terms" id="gstore_contract_terms" value="1" required style="margin-top:3px;" />
+							<span>${contractText}</span>
+						</label>
+					</div>
+				`;
+			}
 
 			$finalizeStep.append(`
-				<div class="kivo-checkout-footer kivo-v1c">
-					<div class="kivo-helper">
-						<svg viewBox="0 0 24 24" class="kivo-lock" fill="none" xmlns="http://www.w3.org/2000/svg">
-							<path d="M7 11V8a5 5 0 0110 0v3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-							<path d="M6 11h12a2 2 0 012 2v7a2 2 0 01-2 2H6a2 2 0 01-2-2v-7a2 2 0 012-2z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
-						</svg>
-						<span>Dados sensíveis não ficam armazenados neste site.</span>
-					</div>
-					<div class="Gstore-blu-installments-slot"></div>
-					${contractEnabled ? `
-						<label class="kivo-terms">
-							<input id="gstore_contract_terms" name="gstore_contract_terms" type="checkbox" />
-							<span class="kivo-terms__text">
-								${termsHtml}
-							</span>
-						</label>
-					` : ''}
-					<button id="kivo_place_order" class="kivo-cta" type="button" ${contractEnabled ? 'disabled' : ''}>
-						FINALIZAR PEDIDO
+				<div class="Gstore-finalize-container">
+					${contractCheckboxHtml}
+					<button type="submit" class="Gstore-btn Gstore-btn--submit" name="woocommerce_checkout_place_order" id="place_order" value="Finalizar pedido" data-value="Finalizar pedido">
+						<i class="fa-solid fa-lock"></i>
+						Finalizar pedido
 					</button>
-					<div class="kivo-bottom">
-						<button type="button" class="Gstore-btn Gstore-btn--back" data-action="prev"><i class="fa-solid fa-arrow-left"></i> Voltar</button>
-						<span class="kivo-bottom__hint">Dúvidas? Veja os termos antes de concluir.</span>
-					</div>
+					<p class="Gstore-finalize-privacy">
+						Seus dados estão protegidos. Ao finalizar, você concorda com nossa 
+						<a href="${typeof gstoreCheckout !== 'undefined' && gstoreCheckout.homeUrl ? gstoreCheckout.homeUrl + 'politica-de-privacidade' : '/politica-de-privacidade'}" target="_blank">política de privacidade</a>.
+					</p>
 				</div>
-				<button type="submit" name="woocommerce_checkout_place_order" id="place_order" value="1" style="display:none;" aria-hidden="true"></button>
 			`);
-
-			syncKivoTermsButton();
 		}
 
 		// Etapa 3: Move o resumo do pedido (order review) para dentro do container principal da última etapa
@@ -972,6 +813,11 @@
 				$orderReviewSlot.append($orderReview.detach());
 			}
 		}
+
+		// Esconde a seção de frete do carrinho (cart-shipping.php) dentro do order review.
+		// O checkout já possui seu próprio sistema de frete (renderShippingSummary).
+		$orderReviewSlot.find('.gstore-shipping-totals, .woocommerce-shipping-totals').hide();
+		$orderReviewSlot.find('.gstore-shipping-calculator').hide();
 
 		// Esconde seções do WooCommerce não utilizadas
 		$('.woocommerce-additional-fields').hide();
@@ -2188,14 +2034,14 @@ function getInstallmentDisplayTotals(summaryData) {
 	 * para casos em que o rádio ainda não existe/foi desmarcado no DOM.
 	 */
 	function resolveSelectedPaymentMethod($form) {
-		const $selected = $('input[name="payment_method"]:checked');
-		if ($selected.length) return $selected.val();
-		
 		if ($form && $form.length) {
 			const $hidden = $form.find('input[name="payment_method"][type="hidden"]').first();
 			if ($hidden.length && $hidden.val()) return $hidden.val();
 		}
 
+		const $selected = $('input[name="payment_method"]:checked');
+		if ($selected.length) return $selected.val();
+		
 		if (lastSelectedPaymentMethod) return lastSelectedPaymentMethod;
 		return '';
 	}
@@ -2270,12 +2116,7 @@ function getInstallmentDisplayTotals(summaryData) {
 		// Se o Woo já esvaziou o carrinho (pedido Blu criado), não sobrescreve o topo com 0.
 		// Reusa o último resumo não-vazio para manter os dados corretos.
 		if (data && data.items_count === 0 && lastNonEmptyCartSummaryData) {
-			const currentMethod = resolveSelectedPaymentMethod($('form.checkout').first());
-			if (!currentMethod || currentMethod === lastNonEmptyCartSummaryData.payment_method) {
-				data = lastNonEmptyCartSummaryData;
-			} else {
-				lastNonEmptyCartSummaryData = null;
-			}
+			data = lastNonEmptyCartSummaryData;
 		} else if (data && data.items_count > 0) {
 			lastNonEmptyCartSummaryData = data;
 		}
@@ -2372,9 +2213,7 @@ function getInstallmentDisplayTotals(summaryData) {
 			return;
 		}
 
-		const currentMethod = resolveSelectedPaymentMethod($('form.checkout').first());
-		const effectiveMethod = currentMethod || (data ? data.payment_method : '');
-		if (effectiveMethod !== 'blu_checkout') {
+		if (data.payment_method !== 'blu_checkout') {
 			$preview.html('');
 			return;
 		}
@@ -2506,32 +2345,8 @@ function getInstallmentDisplayTotals(summaryData) {
 		// Remove erro do checkbox de contrato quando marcado
 		$(document).on('change', '#gstore_contract_terms', function() {
 			if ($(this).is(':checked')) {
-				$(this).closest('.gstore-contract-terms, .kivo-terms').removeClass('woocommerce-invalid');
+				$(this).closest('.gstore-contract-terms').removeClass('woocommerce-invalid');
 			}
-			syncKivoTermsButton();
-		});
-
-		// Modal do contrato (prévia)
-		$(document).on('click', '.gstore-contract-modal-trigger', function(e) {
-			e.preventDefault();
-			openContractModal();
-		});
-		$(document).on('click', '[data-gstore-contract-close]', function(e) {
-			e.preventDefault();
-			closeContractModal();
-		});
-		document.addEventListener('keydown', function(e) {
-			if (e.key === 'Escape') {
-				closeContractModal();
-			}
-		});
-
-		// Footer Kivo: ao clicar no CTA, dispara o place_order do WooCommerce
-		$(document).on('click', '#kivo_place_order', function() {
-			const cb = document.getElementById('gstore_contract_terms');
-			if (cb && !cb.checked) return;
-			const wooBtn = document.querySelector('#place_order');
-			if (wooBtn) wooBtn.click();
 		});
 
 		// Seleção do frete por item no resumo
@@ -2601,42 +2416,21 @@ function getInstallmentDisplayTotals(summaryData) {
 
 		// Atualiza resumo quando checkout é atualizado
 		$(document.body).on('updated_checkout', function() {
-	// Restaura seleção antes de carregar o resumo (evita default do Woo após fragments)
-	const $selectedRadio = $('input[name="payment_method"]:checked');
-	const $hiddenPayment = $('form.checkout')
-		.find('input[name="payment_method"][type="hidden"]')
-		.first();
-	const preferredMethod = ($hiddenPayment.length && $hiddenPayment.val()) ? $hiddenPayment.val() : lastSelectedPaymentMethod;
-	if ($selectedRadio.length) {
-		const selectedVal = $selectedRadio.val();
-		if (preferredMethod && selectedVal && selectedVal !== preferredMethod) {
-			const $radio = $('input[name="payment_method"]').filter(function() {
-				return $(this).val() === preferredMethod;
-			});
-			if ($radio.length) {
-				$radio.prop('checked', true);
+			// Restaura seleção antes de carregar o resumo (evita default do Woo após fragments)
+			if (lastSelectedPaymentMethod) {
+				const $radio = $('input[name="payment_method"]').filter(function() {
+					return $(this).val() === lastSelectedPaymentMethod;
+				});
+				if ($radio.length && !$radio.is(':checked')) {
+					$radio.prop('checked', true);
+				}
+				const $hiddenPayment = $('form.checkout')
+					.find('input[name="payment_method"][type="hidden"]')
+					.first();
+				if ($hiddenPayment.length && $hiddenPayment.val() !== lastSelectedPaymentMethod) {
+					$hiddenPayment.val(lastSelectedPaymentMethod);
+				}
 			}
-			lastSelectedPaymentMethod = preferredMethod;
-			if ($hiddenPayment.length && $hiddenPayment.val() !== preferredMethod) {
-				$hiddenPayment.val(preferredMethod);
-			}
-		} else if (selectedVal) {
-			lastSelectedPaymentMethod = selectedVal;
-			if ($hiddenPayment.length && $hiddenPayment.val() !== selectedVal) {
-				$hiddenPayment.val(selectedVal);
-			}
-		}
-	} else if (preferredMethod) {
-		const $radio = $('input[name="payment_method"]').filter(function() {
-			return $(this).val() === preferredMethod;
-		});
-		if ($radio.length && !$radio.is(':checked')) {
-			$radio.prop('checked', true);
-		}
-		if ($hiddenPayment.length && $hiddenPayment.val() !== preferredMethod) {
-			$hiddenPayment.val(preferredMethod);
-		}
-	}
 			loadCartSummary();
 			// O WooCommerce pode re-renderizar fragments; garante que o DOM continue dentro das etapas
 			setTimeout(organizeFields, 0);
@@ -3128,7 +2922,7 @@ function getInstallmentDisplayTotals(summaryData) {
 	 * Se o embed for bloqueado (X-Frame-Options/CSP), o botão "Abrir em nova aba" funciona como fallback.
 	 */
 	function isBluCheckoutSelected() {
-		const selected = resolveSelectedPaymentMethod($('form.checkout').first());
+		const selected = $('input[name="payment_method"]:checked').val();
 		return selected === 'blu_checkout';
 	}
 
@@ -3278,26 +3072,16 @@ function getInstallmentDisplayTotals(summaryData) {
 	
 	// Armazena a seleção antes do update e garante campos hidden de frete
 	$(document.body).on('update_checkout', function() {
-		const $checkoutForm = $('form.checkout');
-		const $hiddenPayment = $checkoutForm.find('input[name="payment_method"][type="hidden"]').first();
-		const hiddenVal = $hiddenPayment.length ? $hiddenPayment.val() : '';
-		const hasFallback = $hiddenPayment.length && ($hiddenPayment.data('gstore-fallback') || $hiddenPayment.attr('data-gstore-fallback'));
 		const $selected = $('input[name="payment_method"]:checked');
 		if ($selected.length) {
-			const selectedVal = $selected.val();
-			if (hasFallback && hiddenVal && selectedVal && hiddenVal !== selectedVal) {
-				lastSelectedPaymentMethod = hiddenVal;
-			} else if (selectedVal) {
-				lastSelectedPaymentMethod = selectedVal;
-			}
-		} else if (hiddenVal) {
-			lastSelectedPaymentMethod = hiddenVal;
+			lastSelectedPaymentMethod = $selected.val();
 		}
 		
 		// CORREÇÃO CRÍTICA: Garante que os campos de frete estejam no form
 		// ANTES do WooCommerce serializar o form para update_order_review
 		updateCheckoutShippingHiddenFields();
 		
+		const $checkoutForm = $('form.checkout');
 		if ($checkoutForm.length) {
 			// Garante que o método de pagamento esteja presente no POST,
 			// mesmo quando o rádio não está disponível/selecionado.

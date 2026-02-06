@@ -347,11 +347,12 @@
 			return;
 		}
 
-		// Checkout
-		if ($('body').hasClass('woocommerce-checkout')) {
-			// Aguarda um pouco para garantir que o WooCommerce carregou
-			setTimeout(initCheckout, 500);
-		}
+		// Checkout — desativado: o checkout-steps.js já gerencia o frete no checkout.
+		// A initCheckout() injetava um bloco "Calcular Frete" duplicado dentro do
+		// order review, conflitando com o sistema próprio de shipping do checkout.
+		// if ($('body').hasClass('woocommerce-checkout')) {
+		// 	setTimeout(initCheckout, 500);
+		// }
 	});
 
 })(jQuery);

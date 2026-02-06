@@ -2,7 +2,7 @@
 Theme Name: CAC Armas Gstore
 Author: CAC Armas Team
 Description: Tema personalizado da CAC Armas otimizado para WooCommerce.
-Version: 1.5.4
+Version: 1.5.5
 Text Domain: gstore
 */
 
@@ -3741,7 +3741,7 @@ Description: Child theme Gstore para o Twenty Twenty-Five com foco em WooCommerc
 Requires at least: 6.6
 Tested up to: 6.6
 Requires PHP: 8.1
-Version: 1.5.4
+Version: 1.5.5
 Template: twentytwentyfive
 Text Domain: gstore
 */
@@ -5075,13 +5075,14 @@ main:not(.Gstore-blog-shell):not(.Gstore-blog-single-shell) {
 	gap: 0;
 }
 
-/* Bloco meta (rating + título) - altura mínima 7em, variável conforme o texto */
+/* Bloco meta (rating + título) - altura fixa para 2 linhas de título */
 .Gstore-product-card__meta {
 	background: var(--card-meta-bg);
 	padding: 10px 20px 10px 20px;
 	border-bottom: 1px solid var(--gray-border);
 	display: flex;
 	flex-direction: column;
+	height: 7em;
 	min-height: 7em;
 	box-sizing: border-box;
 }
@@ -5158,16 +5159,6 @@ main:not(.Gstore-blog-shell):not(.Gstore-blog-single-shell) {
 .Gstore-product-card__title a:focus,
 .Gstore-product-card__title a:focus-visible {
 	outline: none;
-}
-
-/* Produtos relacionados: título sem altura fixa nem corte, para exibir o nome completo */
-.related.products .Gstore-product-card__title {
-	display: block;
-	max-height: none;
-	-webkit-line-clamp: unset;
-	line-clamp: unset;
-	-webkit-box-orient: unset;
-	overflow: visible;
 }
 
 /* BLOCO DE PREÇO - Wrapper branco separado */
@@ -5333,6 +5324,7 @@ main:not(.Gstore-blog-shell):not(.Gstore-blog-single-shell) {
 	}
 
 	.Gstore-product-card__meta {
+		height: 7em;
 		min-height: 7em;
 	}
 
