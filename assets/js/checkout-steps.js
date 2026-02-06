@@ -1206,6 +1206,25 @@ function getInstallmentDisplayTotals(summaryData) {
 			}
 		});
 
+		// Adiciona campo shipping_method[0] com o rate ID correto do WooCommerce.
+		// Garante que na submissão final do form, o WC reconheça o método escolhido.
+		const allModes = new Set();
+		items.forEach((item) => {
+			const key = item.key || item.cart_item_key || item.cartItemKey || '';
+			if (key) {
+				allModes.add(checkoutSelectedShippingByItem[key] || 'land');
+			}
+		});
+		const suffix = allModes.size > 1 ? 'mixed' : (allModes.values().next().value || 'land');
+		$checkoutForm.find('input[name="shipping_method[0]"]').remove();
+		$checkoutForm.append(
+			$('<input>', {
+				type: 'hidden',
+				name: 'shipping_method[0]',
+				value: 'gstore_custom_shipping:' + suffix
+			})
+		);
+
 	}
 
 	function syncShippingFromStorage(data) {
