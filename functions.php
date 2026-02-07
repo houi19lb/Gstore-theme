@@ -2010,6 +2010,24 @@ function gstore_prg_single_product_add_to_cart() {
 }
 add_action( 'template_redirect', 'gstore_prg_single_product_add_to_cart', 9 );
 
+// #region agent log
+function gstore_cart_debug_log( $location, $message, $data, $hypothesis_id = '' ) {
+	$path = defined( 'GSTORE_DEBUG_LOG_PATH' ) ? GSTORE_DEBUG_LOG_PATH : ( dirname( get_stylesheet_directory() ) . '/.cursor/debug.log' );
+	$payload = array(
+		'sessionId'    => 'debug-session',
+		'runId'        => isset( $_REQUEST['gstore_debug_run'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['gstore_debug_run'] ) ) : 'run1', // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		'hypothesisId' => $hypothesis_id,
+		'location'     => $location,
+		'message'      => $message,
+		'data'         => $data,
+		'timestamp'    => (int) ( microtime( true ) * 1000 ),
+	);
+	if ( is_string( $path ) && strlen( $path ) > 0 ) {
+		@file_put_contents( $path, wp_json_encode( $payload ) . "\n", FILE_APPEND | LOCK_EX ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
+	}
+}
+// #endregion
+
 /**
  * Salva o carrinho atual em sessão antes de limpar para "Comprar agora"
  * 
@@ -2141,6 +2159,9 @@ function gstore_clear_cart_before_buy_now() {
 		return;
 	}
 
+	// #region agent log
+	gstore_cart_debug_log( 'functions.php:gstore_clear_cart_before_buy_now', 'clearing cart', array( 'cart_count_before' => WC()->cart->get_cart_contents_count(), 'request_uri' => isset( $_SERVER['REQUEST_URI'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REQUEST_URI'] ) ) : '' ), 'H3' );
+	// #endregion
 	// Limpa o carrinho antes de adicionar o novo produto
 	WC()->cart->empty_cart();
 }
@@ -2197,8 +2218,12 @@ function gstore_restore_saved_cart_if_needed() {
 		}
 
 		WC()->cart->add_to_cart( $product_id, $quantity, $variation_id, $variation, $item_data );
+		++$restored;
 	}
 
+	// #region agent log
+	gstore_cart_debug_log( 'functions.php:gstore_restore_saved_cart_if_needed', 'after restore', array( 'restored' => $restored, 'cart_count_after' => WC()->cart->get_cart_contents_count() ), 'H5' );
+	// #endregion
 	// Limpa a sessão após restaurar
 	WC()->session->set( 'gstore_saved_cart_before_buy_now', null );
 	WC()->session->set( 'gstore_buy_now_active', false );
