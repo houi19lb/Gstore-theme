@@ -1,0 +1,514 @@
+/**
+ * ==========================================
+ * GSTORE - PÁGINA: INFORMATIVO (PÓS-VENDA)
+ * ==========================================
+ * Estilos específicos para a página de pós-venda: documentos, etapas e envio.
+ * Usa exclusivamente variáveis do tema (tokens.css).
+ */
+
+/* ========================================
+   SHELL E CONTAINER
+   ======================================== */
+
+.wp-site-blocks > .wp-block-group.Gstore-informativo-shell,
+.wp-site-blocks > main.Gstore-informativo-shell,
+main.Gstore-informativo-shell,
+.wp-site-blocks > .wp-block-group.alignfull.Gstore-informativo-shell {
+	background-color: var(--gstore-color-bg-base) !important;
+	color: var(--gstore-color-text-primary) !important;
+	min-height: 100vh;
+}
+
+.Gstore-informativo-container {
+	max-width: 1100px;
+	margin: 0 auto;
+	padding: var(--gstore-spacing-10) var(--gstore-container-padding-inline);
+}
+
+.Gstore-informativo-container .Gstore-card {
+	padding: var(--gstore-spacing-5);
+}
+
+/* ========================================
+   UTILITÁRIOS
+   ======================================== */
+
+.Gstore-informativo-muted {
+	color: var(--gstore-color-text-secondary);
+}
+
+.Gstore-informativo-small {
+	font-size: var(--gstore-font-size-xs);
+}
+
+.Gstore-informativo-mt-12 {
+	margin-top: var(--gstore-spacing-3);
+}
+
+.Gstore-informativo-mt-16 {
+	margin-top: var(--gstore-spacing-4);
+}
+
+.Gstore-informativo-mt-24 {
+	margin-top: var(--gstore-spacing-6);
+}
+
+/* ========================================
+   HERO
+   ======================================== */
+
+.Gstore-informativo-hero {
+	padding: var(--gstore-spacing-5) !important;
+}
+
+.Gstore-informativo-hero__top {
+	display: flex;
+	gap: var(--gstore-spacing-4);
+	align-items: flex-start;
+	justify-content: space-between;
+	flex-wrap: wrap;
+}
+
+.Gstore-informativo-hero__title {
+	font-size: var(--gstore-font-size-2xl);
+	font-weight: var(--gstore-font-weight-bold);
+	color: var(--gstore-color-text-primary);
+	margin: 0 0 var(--gstore-spacing-2) 0;
+	line-height: var(--gstore-line-height-tight);
+}
+
+.Gstore-informativo-hero__actions {
+	display: flex;
+	gap: var(--gstore-spacing-2);
+	align-items: center;
+}
+
+.Gstore-informativo-hero__grid {
+	margin-top: var(--gstore-spacing-4);
+	display: grid;
+	gap: var(--gstore-spacing-3);
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+@media (max-width: 900px) {
+	.Gstore-informativo-hero__grid {
+		grid-template-columns: 1fr;
+	}
+}
+
+/* ========================================
+   CARD HEAD
+   ======================================== */
+
+.Gstore-informativo-card-head {
+	margin-bottom: var(--gstore-spacing-3);
+}
+
+.Gstore-informativo-card-head h2 {
+	font-size: var(--gstore-font-size-lg);
+	font-weight: var(--gstore-font-weight-bold);
+	color: var(--gstore-color-text-primary);
+	margin: 0 0 var(--gstore-spacing-2) 0;
+}
+
+.Gstore-informativo-card-head p {
+	margin: 0;
+	line-height: var(--gstore-line-height-relaxed);
+}
+
+/* ========================================
+   MINI CARDS
+   ======================================== */
+
+.Gstore-informativo-mini {
+	padding: var(--gstore-spacing-4) !important;
+}
+
+.Gstore-informativo-mini--soft {
+	background-color: var(--gstore-color-bg-muted) !important;
+	border-color: var(--gstore-color-border) !important;
+}
+
+.Gstore-informativo-mini--plain {
+	background-color: var(--gstore-color-bg-light) !important;
+	border-color: var(--gstore-color-border) !important;
+}
+
+.Gstore-informativo-mini__title {
+	font-weight: var(--gstore-font-weight-bold);
+	margin-bottom: var(--gstore-spacing-2);
+	color: var(--gstore-color-text-primary);
+}
+
+.Gstore-informativo-mini__text {
+	line-height: var(--gstore-line-height-normal);
+}
+
+/* ========================================
+   GRIDS
+   ======================================== */
+
+.Gstore-informativo-grid-2 {
+	display: grid;
+	gap: var(--gstore-spacing-4);
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.Gstore-informativo-grid-3 {
+	display: grid;
+	gap: var(--gstore-spacing-3);
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+@media (max-width: 900px) {
+	.Gstore-informativo-grid-2,
+	.Gstore-informativo-grid-3 {
+		grid-template-columns: 1fr;
+	}
+}
+
+/* ========================================
+   ACCORDION
+   ======================================== */
+
+.Gstore-informativo-accordion {
+	display: flex;
+	flex-direction: column;
+	gap: var(--gstore-spacing-2);
+}
+
+.Gstore-informativo-acc-item {
+	border: 1px solid var(--gstore-color-border);
+	border-radius: var(--gstore-radius-base);
+	overflow: hidden;
+	background-color: var(--gstore-color-bg-light);
+}
+
+.Gstore-informativo-acc-btn {
+	width: 100%;
+	text-align: left;
+	background: var(--gstore-color-bg-light);
+	border: 0;
+	padding: var(--gstore-spacing-4);
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--gstore-spacing-3);
+	cursor: pointer;
+	font-family: inherit;
+	color: var(--gstore-color-text-primary);
+	transition: background-color var(--gstore-transition-base);
+}
+
+.Gstore-informativo-acc-btn:hover {
+	background-color: var(--gstore-color-bg-muted);
+}
+
+.Gstore-informativo-acc-btn:focus-visible {
+	outline: 2px solid var(--gstore-color-accent);
+	outline-offset: 2px;
+}
+
+.Gstore-informativo-acc-title {
+	display: block;
+	font-weight: var(--gstore-font-weight-bold);
+}
+
+.Gstore-informativo-acc-subtitle {
+	display: block;
+	font-size: var(--gstore-font-size-xs);
+	margin-top: var(--gstore-spacing-1);
+}
+
+.Gstore-informativo-acc-icon {
+	font-weight: var(--gstore-font-weight-bold);
+	font-size: var(--gstore-font-size-lg);
+	color: var(--gstore-color-text-secondary);
+	flex-shrink: 0;
+}
+
+.Gstore-informativo-acc-panel {
+	border-top: 1px solid var(--gstore-color-border);
+	padding: var(--gstore-spacing-4);
+}
+
+.Gstore-informativo-acc-panel p {
+	margin: 0 0 var(--gstore-spacing-2) 0;
+}
+
+.Gstore-informativo-acc-panel p:last-child {
+	margin-bottom: 0;
+}
+
+/* ========================================
+   STEPS
+   ======================================== */
+
+.Gstore-informativo-steps {
+	list-style: none;
+	padding: 0;
+	margin: 0;
+	display: flex;
+	flex-direction: column;
+	gap: var(--gstore-spacing-4);
+}
+
+.Gstore-informativo-step {
+	display: flex;
+	gap: var(--gstore-spacing-3);
+}
+
+.Gstore-informativo-step__n {
+	width: 32px;
+	height: 32px;
+	min-width: 32px;
+	display: grid;
+	place-items: center;
+	border-radius: var(--gstore-radius-base);
+	border: 1px solid var(--gstore-color-border);
+	background-color: var(--gstore-color-bg-muted);
+	font-weight: var(--gstore-font-weight-bold);
+	font-size: var(--gstore-font-size-sm);
+	color: var(--gstore-color-text-primary);
+}
+
+.Gstore-informativo-step__title {
+	font-weight: var(--gstore-font-weight-bold);
+	margin-bottom: var(--gstore-spacing-1);
+	color: var(--gstore-color-text-primary);
+}
+
+.Gstore-informativo-step__title + .Gstore-informativo-muted {
+	line-height: var(--gstore-line-height-relaxed);
+}
+
+/* ========================================
+   BADGES
+   ======================================== */
+
+.Gstore-informativo-badge {
+	display: inline-flex;
+	align-items: center;
+	padding: var(--gstore-spacing-2) var(--gstore-spacing-3);
+	border-radius: var(--gstore-radius-full);
+	font-size: var(--gstore-font-size-xs);
+	font-weight: var(--gstore-font-weight-bold);
+	border: 1px solid transparent;
+}
+
+.Gstore-informativo-badge--info {
+	background-color: var(--gstore-color-info-bg);
+	border-color: var(--gstore-color-info-border);
+	color: var(--gstore-color-info-text);
+}
+
+.Gstore-informativo-badge--warn {
+	background-color: var(--gstore-color-accent-08);
+	border-color: var(--gstore-color-accent);
+	color: var(--gstore-color-text-primary);
+}
+
+/* ========================================
+   CALLOUTS
+   ======================================== */
+
+.Gstore-informativo-callout {
+	border-radius: var(--gstore-radius-base);
+	padding: var(--gstore-spacing-4);
+	border: 1px solid var(--gstore-color-border);
+}
+
+.Gstore-informativo-callout--warn {
+	background-color: var(--gstore-color-accent-08);
+	border-color: var(--gstore-color-accent);
+}
+
+.Gstore-informativo-callout--info {
+	background-color: var(--gstore-color-info-bg);
+	border-color: var(--gstore-color-info-border);
+}
+
+.Gstore-informativo-callout__title {
+	font-weight: var(--gstore-font-weight-bold);
+	margin: var(--gstore-spacing-2) 0;
+	color: var(--gstore-color-text-primary);
+}
+
+.Gstore-informativo-callout p {
+	margin: 0;
+	line-height: var(--gstore-line-height-relaxed);
+}
+
+/* ========================================
+   FOOTER
+   ======================================== */
+
+.Gstore-informativo-footer {
+	text-align: center;
+}
+
+.Gstore-informativo-footer p {
+	margin: 0;
+}
+
+/* ========================================
+   MODAL
+   ======================================== */
+
+.Gstore-informativo-modal {
+	display: none;
+	position: fixed;
+	inset: 0;
+	z-index: var(--gstore-z-modal);
+}
+
+.Gstore-informativo-modal.is-open {
+	display: block;
+}
+
+.Gstore-informativo-modal__backdrop {
+	position: absolute;
+	inset: 0;
+	background-color: rgba(0, 0, 0, 0.4);
+	cursor: pointer;
+}
+
+.Gstore-informativo-modal__panel {
+	position: absolute;
+	inset: 0;
+	margin: auto;
+	width: min(1000px, calc(100% - var(--gstore-spacing-8)));
+	max-height: 78vh;
+	background-color: var(--gstore-color-bg-light);
+	border: 1px solid var(--gstore-color-border);
+	border-radius: var(--gstore-radius-base);
+	box-shadow: var(--gstore-shadow-xl);
+	display: flex;
+	flex-direction: column;
+	overflow: hidden;
+}
+
+.Gstore-informativo-modal__head {
+	padding: var(--gstore-spacing-4);
+	border-bottom: 1px solid var(--gstore-color-border);
+	display: flex;
+	gap: var(--gstore-spacing-3);
+	align-items: flex-start;
+	justify-content: space-between;
+	flex-wrap: wrap;
+}
+
+.Gstore-informativo-modal__title {
+	font-weight: var(--gstore-font-weight-bold);
+	font-size: var(--gstore-font-size-lg);
+	color: var(--gstore-color-text-primary);
+}
+
+.Gstore-informativo-modal__body {
+	padding: var(--gstore-spacing-4);
+	overflow: auto;
+}
+
+.Gstore-informativo-modal__filters {
+	display: grid;
+	gap: var(--gstore-spacing-4);
+	grid-template-columns: 1fr auto;
+}
+
+@media (max-width: 640px) {
+	.Gstore-informativo-modal__filters {
+		grid-template-columns: 1fr;
+	}
+}
+
+.Gstore-informativo-modal__filter-search {
+	grid-column: 1 / -1;
+}
+
+@media (min-width: 641px) {
+	.Gstore-informativo-modal__filter-search {
+		grid-column: span 2;
+	}
+}
+
+.Gstore-informativo-modal__meta {
+	display: flex;
+	align-items: center;
+	gap: var(--gstore-spacing-2);
+	flex-wrap: wrap;
+}
+
+.Gstore-informativo-label {
+	display: block;
+	font-size: var(--gstore-font-size-xs);
+	font-weight: var(--gstore-font-weight-bold);
+	color: var(--gstore-color-text-primary);
+	margin-bottom: var(--gstore-spacing-2);
+}
+
+.Gstore-informativo-input {
+	width: 100%;
+	border: 1px solid var(--gstore-color-border);
+	border-radius: var(--gstore-radius-base);
+	padding: var(--gstore-spacing-3) var(--gstore-spacing-3);
+	font-size: var(--gstore-font-size-sm);
+	outline: none;
+	font-family: inherit;
+}
+
+.Gstore-informativo-input:focus {
+	border-color: var(--gstore-color-accent);
+}
+
+.Gstore-informativo-link {
+	font-size: var(--gstore-font-size-xs);
+	font-weight: var(--gstore-font-weight-bold);
+	color: var(--gstore-color-accent);
+	text-decoration: underline;
+}
+
+.Gstore-informativo-link:hover {
+	color: var(--gstore-color-accent-hover);
+}
+
+/* ========================================
+   TABLE
+   ======================================== */
+
+.Gstore-informativo-table-wrap {
+	overflow: auto;
+}
+
+.Gstore-informativo-table {
+	width: 100%;
+	border-collapse: collapse;
+	border: 1px solid var(--gstore-color-border);
+	border-radius: var(--gstore-radius-base);
+	overflow: hidden;
+	background-color: var(--gstore-color-bg-light);
+}
+
+.Gstore-informativo-table thead tr {
+	background-color: var(--gstore-color-bg-muted);
+}
+
+.Gstore-informativo-table th,
+.Gstore-informativo-table td {
+	padding: var(--gstore-spacing-3);
+	border-top: 1px solid var(--gstore-color-border);
+	font-size: var(--gstore-font-size-sm);
+	vertical-align: top;
+}
+
+.Gstore-informativo-table th {
+	border-top: 0;
+	font-size: var(--gstore-font-size-xs);
+	color: var(--gstore-color-text-secondary);
+	text-align: left;
+	font-weight: var(--gstore-font-weight-bold);
+}
+
+.Gstore-informativo-table td:last-child {
+	font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+	font-weight: var(--gstore-font-weight-bold);
+}

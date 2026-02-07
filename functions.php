@@ -488,6 +488,7 @@ function gstore_defer_non_critical_css( $tag, $handle, $href, $media ) {
 		// CSS de páginas específicas
 		'gstore-my-account-css',
 		'gstore-como-comprar-arma-css',
+		'gstore-informativo-css',
 		'gstore-notices-css',
 		
 		// CSS de layouts que não estão acima da dobra
@@ -969,6 +970,16 @@ function gstore_enqueue_styles() {
 		);
 	}
 
+	// CSS da página informativo (pós-venda)
+	if ( is_page( 'informativo' ) ) {
+		wp_enqueue_style(
+			'gstore-informativo-css',
+			get_theme_file_uri( 'assets/css/informativo.css' ),
+			array( 'gstore-style' ),
+			$theme_version
+		);
+	}
+
 	// CSS de Notificações e Modais
 	wp_enqueue_style(
 		'gstore-notices-css',
@@ -1239,6 +1250,26 @@ function gstore_enqueue_scripts() {
 				array( 'gstore-favorites-core' ),
 				$favorites_page_js_version,
 				true
+			);
+		}
+
+		// Script da página informativo (pós-venda)
+		if ( function_exists( 'is_page' ) && is_page( 'informativo' ) ) {
+			$informativo_js_path    = get_theme_file_path( 'assets/js/informativo.js' );
+			$informativo_js_version = file_exists( $informativo_js_path ) ? (string) filemtime( $informativo_js_path ) : wp_get_theme()->get( 'Version' );
+			wp_enqueue_script(
+				'gstore-informativo-js',
+				get_theme_file_uri( 'assets/js/informativo.js' ),
+				array(),
+				$informativo_js_version,
+				true
+			);
+			wp_localize_script(
+				'gstore-informativo-js',
+				'gstoreInformativoData',
+				array(
+					'airports' => gstore_get_informativo_airports_flat(),
+				)
 			);
 		}
 
@@ -3317,6 +3348,11 @@ require_once get_theme_file_path( 'inc/class-gstore-debug-logger.php' );
  * Navegação do header: locais desktop/mobile e substituição do bloco Navigation.
  */
 require_once get_theme_file_path( 'inc/class-gstore-nav-menu.php' );
+
+/**
+ * Dados de aeroportos para a página informativo (pós-venda).
+ */
+require_once get_theme_file_path( 'inc/informativo-airports.php' );
 
 /**
  * Função helper para fazer log de debug.
@@ -7298,6 +7334,14 @@ function gstore_get_required_pages() {
 			'template'    => 'page-como-comprar-arma',
 			'content'     => '',
 			'description' => 'Página com informações sobre o processo de compra de armas.',
+			'wc_option'   => null,
+		),
+		'informativo' => array(
+			'title'       => 'Informativo',
+			'slug'        => 'informativo',
+			'template'    => 'page-informativo',
+			'content'     => '',
+			'description' => 'Página de pós-venda com documentos, etapas e informações de envio.',
 			'wc_option'   => null,
 		),
 		'blog' => array(
