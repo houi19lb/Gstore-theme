@@ -14,27 +14,45 @@
 (function($) {
     'use strict';
 
-    // #region agent log - Interceptor de fetch para detectar chamadas WC
-    // Monitora TODAS as requisições à Store API e WC AJAX
+    // #region agent log - Interceptor de fetch: INJETA header readonly + monitora
     (function() {
         var _origFetch = window.fetch;
         window.fetch = function(url, opts) {
             var urlStr = typeof url === 'string' ? url : (url && url.url ? url.url : '');
-            if (urlStr.indexOf('wc/store') !== -1 || urlStr.indexOf('wc-ajax') !== -1) {
-                var method = (opts && opts.method) || 'GET';
-                _origFetch('http://127.0.0.1:7246/ingest/82530f36-f41c-4a9b-9141-c3c4bf366209',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'FETCH-INTERCEPT',message:'Requisicao WC detectada',data:{page:window.location.pathname,url:urlStr.substring(0,120),method:method,caller:new Error().stack?.split('\n').slice(1,4).map(function(s){return s.trim()}).join(' | ')},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix-v3'})}).catch(function(){});
+            var method = (opts && opts.method) || 'GET';
+            
+            // Para TODAS as chamadas GET à Store API, injeta header X-Gstore-Readonly
+            // Isso sinaliza ao PHP para NÃO salvar a sessão e NÃO deletar cookies
+            if (urlStr.indexOf('wc/store') !== -1 && method.toUpperCase() === 'GET') {
+                opts = opts || {};
+                if (!opts.headers) {
+                    opts.headers = { 'X-Gstore-Readonly': '1' };
+                } else if (opts.headers instanceof Headers) {
+                    opts.headers.set('X-Gstore-Readonly', '1');
+                } else if (typeof opts.headers === 'object') {
+                    opts.headers['X-Gstore-Readonly'] = '1';
+                }
             }
-            return _origFetch.apply(this, arguments);
+            
+            if (urlStr.indexOf('wc/store') !== -1 || urlStr.indexOf('wc-ajax') !== -1) {
+                _origFetch('http://127.0.0.1:7246/ingest/82530f36-f41c-4a9b-9141-c3c4bf366209',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'FETCH-INTERCEPT',message:'Requisicao WC detectada',data:{page:window.location.pathname,url:urlStr.substring(0,120),method:method,hasReadonlyHeader:!!(opts&&opts.headers&&(opts.headers['X-Gstore-Readonly']||(opts.headers instanceof Headers&&opts.headers.get('X-Gstore-Readonly'))))},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix-v4'})}).catch(function(){});
+            }
+            var result = _origFetch.apply(this, arguments);
+            // Captura headers de diagnóstico da resposta REST
+            if (urlStr.indexOf('wc/store/v1/cart') !== -1) {
+                result.then(function(resp) {
+                    var hd = {};
+                    ['X-GD-CartCount','X-GD-SessClass','X-GD-Readonly','X-GD-Dirty','X-GD-CartInSess'].forEach(function(h){hd[h]=resp.headers.get(h);});
+                    _origFetch('http://127.0.0.1:7246/ingest/82530f36-f41c-4a9b-9141-c3c4bf366209',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'REST-RESPONSE-HEADERS',message:'Headers debug da resposta Store API',data:{page:window.location.pathname,url:urlStr.substring(0,120),headers:hd,status:resp.status},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix-v4'})}).catch(function(){});
+                }).catch(function(){});
+            }
+            return result;
         };
-        // Interceptor XMLHttpRequest
         var _origOpen = XMLHttpRequest.prototype.open;
         XMLHttpRequest.prototype.open = function(method, url) {
             var urlStr = String(url || '');
             if (urlStr.indexOf('wc/store') !== -1 || urlStr.indexOf('wc-ajax') !== -1) {
-                var _xhr = this;
-                _xhr._gstoreDebugUrl = urlStr;
-                _xhr._gstoreDebugMethod = method;
-                fetch('http://127.0.0.1:7246/ingest/82530f36-f41c-4a9b-9141-c3c4bf366209',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'XHR-INTERCEPT',message:'Requisicao WC XHR detectada',data:{page:window.location.pathname,url:urlStr.substring(0,120),method:method,caller:new Error().stack?.split('\n').slice(1,4).map(function(s){return s.trim()}).join(' | ')},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix-v3'})}).catch(function(){});
+                fetch('http://127.0.0.1:7246/ingest/82530f36-f41c-4a9b-9141-c3c4bf366209',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'XHR-INTERCEPT',message:'Requisicao WC XHR detectada',data:{page:window.location.pathname,url:urlStr.substring(0,120),method:method},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix-v4'})}).catch(function(){});
             }
             return _origOpen.apply(this, arguments);
         };
@@ -125,7 +143,7 @@
     function syncDOM(count) {
         // #region agent log
         var _currentDomCount = getCurrentCountFromDom();
-        if(count !== _currentDomCount) { fetch('http://127.0.0.1:7246/ingest/82530f36-f41c-4a9b-9141-c3c4bf366209',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'mini-cart-fix.js:syncDOM',message:'syncDOM ALTERANDO contador',data:{page:window.location.pathname,oldCount:_currentDomCount,newCount:count},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix-v3'})}).catch(()=>{}); }
+        if(count !== _currentDomCount) { fetch('http://127.0.0.1:7246/ingest/82530f36-f41c-4a9b-9141-c3c4bf366209',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'mini-cart-fix.js:syncDOM',message:'syncDOM ALTERANDO contador',data:{page:window.location.pathname,oldCount:_currentDomCount,newCount:count},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix-v4'})}).catch(()=>{}); }
         // #endregion
 
         // Pausa observer para evitar loop
@@ -202,7 +220,7 @@
             // Se o DOM foi alterado para 0 (ou null) mas localStorage tem itens, restaura
             if ((currentDom === 0 || currentDom === null) && currentSaved > 0) {
                 // #region agent log
-                fetch('http://127.0.0.1:7246/ingest/82530f36-f41c-4a9b-9141-c3c4bf366209',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'mini-cart-fix.js:observer',message:'Badge foi zerado externamente - RESTAURANDO',data:{page:window.location.pathname,currentDom:currentDom,savedCount:currentSaved,mutationType:mutations[0]?.type,mutationTarget:mutations[0]?.target?.className||mutations[0]?.target?.nodeName},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix-v3'})}).catch(()=>{});
+                fetch('http://127.0.0.1:7246/ingest/82530f36-f41c-4a9b-9141-c3c4bf366209',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'mini-cart-fix.js:observer',message:'Badge foi zerado externamente - RESTAURANDO',data:{page:window.location.pathname,currentDom:currentDom,savedCount:currentSaved,mutationType:mutations[0]?.type,mutationTarget:mutations[0]?.target?.className||mutations[0]?.target?.nodeName},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix-v4'})}).catch(()=>{});
                 // #endregion
                 syncDOM(currentSaved);
             }
@@ -234,7 +252,7 @@
 
         // #region agent log
         var _fragmentCount = getCountFromFragments(fragments);
-        fetch('http://127.0.0.1:7246/ingest/82530f36-f41c-4a9b-9141-c3c4bf366209',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'mini-cart-fix.js:handleAddedToCart',message:'added_to_cart disparado',data:{page:window.location.pathname,fragmentCount:_fragmentCount,domCount:getCurrentCountFromDom()},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix-v3'})}).catch(()=>{});
+        fetch('http://127.0.0.1:7246/ingest/82530f36-f41c-4a9b-9141-c3c4bf366209',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'mini-cart-fix.js:handleAddedToCart',message:'added_to_cart disparado',data:{page:window.location.pathname,fragmentCount:_fragmentCount,domCount:getCurrentCountFromDom()},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix-v4'})}).catch(()=>{});
         // #endregion
 
         // Sempre usar fragments para o contador - são confiáveis (mesma sessão WC AJAX)
@@ -278,7 +296,7 @@
         var savedCount = getSavedCartCount();
 
         // #region agent log
-        fetch('http://127.0.0.1:7246/ingest/82530f36-f41c-4a9b-9141-c3c4bf366209',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'mini-cart-fix.js:handleFragmentsRefreshed',message:'wc_fragments_refreshed - verificando se precisa restaurar',data:{page:window.location.pathname,domCount:domCount,savedCount:savedCount,willRestore:(domCount===0||domCount===null)&&savedCount>0},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix-v3'})}).catch(()=>{});
+        fetch('http://127.0.0.1:7246/ingest/82530f36-f41c-4a9b-9141-c3c4bf366209',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'mini-cart-fix.js:handleFragmentsRefreshed',message:'wc_fragments_refreshed - verificando se precisa restaurar',data:{page:window.location.pathname,domCount:domCount,savedCount:savedCount,willRestore:(domCount===0||domCount===null)&&savedCount>0},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix-v4'})}).catch(()=>{});
         // #endregion
 
         // Se fragments zeraram o badge mas localStorage tem itens, restaura
@@ -324,7 +342,7 @@
         var _phpSession = window.__gstoreDebugSession || {};
 
         // #region agent log
-        fetch('http://127.0.0.1:7246/ingest/82530f36-f41c-4a9b-9141-c3c4bf366209',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'mini-cart-fix.js:init',message:'MiniCart init v3 - com MutationObserver',data:{page:window.location.pathname,domCartCount:getCurrentCountFromDom(),phpCartCount:_phpSession.cart_count_php,phpSessionId:_phpSession.php_session_id||'N/A',sessionCookie:_phpSession.session_cookie,savedCount:getSavedCartCount(),cookies:document.cookie.split(';').map(c=>c.trim().split('=')[0]).filter(c=>c.includes('woocommerce')||c.includes('wp_woocommerce')||c.includes('cart')||c.includes('session')).join(',')},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix-v3'})}).catch(()=>{});
+        fetch('http://127.0.0.1:7246/ingest/82530f36-f41c-4a9b-9141-c3c4bf366209',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'mini-cart-fix.js:init',message:'MiniCart init v3 - com MutationObserver',data:{page:window.location.pathname,domCartCount:getCurrentCountFromDom(),phpCartCount:_phpSession.cart_count_php,phpSessionId:_phpSession.php_session_id||'N/A',sessionCookie:_phpSession.session_cookie,savedCount:getSavedCartCount(),cookies:document.cookie.split(';').map(c=>c.trim().split('=')[0]).filter(c=>c.includes('woocommerce')||c.includes('wp_woocommerce')||c.includes('cart')||c.includes('session')).join(',')},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix-v4'})}).catch(()=>{});
         // #endregion
 
         // Inicializa listeners
@@ -345,7 +363,7 @@
         // Se o PHP mostra 0 mas localStorage tem itens, usa localStorage
         else if (savedCount !== null && savedCount > 0 && (domCount === 0 || domCount === null)) {
             // #region agent log
-            fetch('http://127.0.0.1:7246/ingest/82530f36-f41c-4a9b-9141-c3c4bf366209',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'mini-cart-fix.js:init:restore',message:'Restaurando count de localStorage',data:{page:window.location.pathname,domCount:domCount,savedCount:savedCount,phpCount:phpCount},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix-v3'})}).catch(()=>{});
+            fetch('http://127.0.0.1:7246/ingest/82530f36-f41c-4a9b-9141-c3c4bf366209',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'mini-cart-fix.js:init:restore',message:'Restaurando count de localStorage',data:{page:window.location.pathname,domCount:domCount,savedCount:savedCount,phpCount:phpCount},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix-v4'})}).catch(()=>{});
             // #endregion
             syncDOM(savedCount);
         }
