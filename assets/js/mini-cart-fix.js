@@ -107,9 +107,17 @@
             const apiUrl = getCartAPIUrl();
 
             if (!nonce) {
+                // #region agent log
+                fetch('http://127.0.0.1:7246/ingest/82530f36-f41c-4a9b-9141-c3c4bf366209',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'mini-cart-fix.js:refreshCart',message:'Nonce NAO disponivel - abortando refresh',data:{page:window.location.pathname,nonceWc:!!window.wc?.storeApiNonce,nonceGstore:!!window.gstoreMiniCart?.storeApiNonce},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'B'})}).catch(()=>{});
+                // #endregion
                 reject(new Error('Nonce não disponível'));
                 return;
             }
+
+            // #region agent log
+            var _preRefreshDomCount = getCurrentCountFromDom();
+            fetch('http://127.0.0.1:7246/ingest/82530f36-f41c-4a9b-9141-c3c4bf366209',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'mini-cart-fix.js:refreshCart:before',message:'Iniciando chamada Store API',data:{page:window.location.pathname,apiUrl:apiUrl,noncePrefix:String(nonce).substring(0,8),domCountBefore:_preRefreshDomCount,trigger:new Error().stack?.split('\n').slice(1,4).map(s=>s.trim()).join(' | ')},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'B,D,E'})}).catch(()=>{});
+            // #endregion
 
             debugLog('Atualizando carrinho via API...');
 
@@ -124,6 +132,9 @@
                 cache: 'no-store'
             })
             .then(response => {
+                // #region agent log
+                fetch('http://127.0.0.1:7246/ingest/82530f36-f41c-4a9b-9141-c3c4bf366209',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'mini-cart-fix.js:refreshCart:response',message:'Resposta da Store API recebida',data:{page:window.location.pathname,status:response.status,ok:response.ok,nonceHeader:response.headers.get('X-WC-Store-API-Nonce')||'none',cacheHeader:response.headers.get('X-Cache')||response.headers.get('x-litespeed-cache')||'none'},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'B,D'})}).catch(()=>{});
+                // #endregion
                 if (!response.ok) {
                     throw new Error(`API retornou ${response.status}`);
                 }
@@ -131,6 +142,10 @@
             })
             .then(cartData => {
                 debugLog('Dados do carrinho recebidos:', cartData);
+
+                // #region agent log
+                fetch('http://127.0.0.1:7246/ingest/82530f36-f41c-4a9b-9141-c3c4bf366209',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'mini-cart-fix.js:refreshCart:data',message:'Dados do carrinho processados',data:{page:window.location.pathname,itemsCount:cartData.items_count,itemsTotal:cartData.totals?.total_items||'N/A',items:(cartData.items||[]).map(function(i){return{id:i.id,name:i.name,qty:i.quantity}}),domCountBefore:_preRefreshDomCount,willSyncTo:cartData.items_count||0},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'D,E'})}).catch(()=>{});
+                // #endregion
 
                 // Atualiza o store do WordPress se disponível
                 if (isStoreAvailable()) {
@@ -149,6 +164,9 @@
                 resolve(cartData);
             })
             .catch(error => {
+                // #region agent log
+                fetch('http://127.0.0.1:7246/ingest/82530f36-f41c-4a9b-9141-c3c4bf366209',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'mini-cart-fix.js:refreshCart:error',message:'ERRO na Store API',data:{page:window.location.pathname,error:String(error),domCountBefore:_preRefreshDomCount},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'B,D'})}).catch(()=>{});
+                // #endregion
                 errorLog('Erro ao atualizar carrinho:', error);
                 reject(error);
             });
@@ -159,6 +177,10 @@
      * Sincroniza elementos do DOM com o contador do carrinho
      */
     function syncDOM(count) {
+        // #region agent log
+        var _currentDomCount = getCurrentCountFromDom();
+        if(count !== _currentDomCount) { fetch('http://127.0.0.1:7246/ingest/82530f36-f41c-4a9b-9141-c3c4bf366209',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'mini-cart-fix.js:syncDOM',message:'syncDOM ALTERANDO contador',data:{page:window.location.pathname,oldCount:_currentDomCount,newCount:count,caller:new Error().stack?.split('\n').slice(1,3).map(s=>s.trim()).join(' | ')},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'E'})}).catch(()=>{}); }
+        // #endregion
         const badges = document.querySelectorAll('.wc-block-mini-cart__badge');
         badges.forEach(badge => {
             badge.textContent = count.toString();
@@ -224,6 +246,10 @@
         debugLog('Produto adicionado ao carrinho');
         lastAddToCartAt = Date.now();
 
+        // #region agent log
+        fetch('http://127.0.0.1:7246/ingest/82530f36-f41c-4a9b-9141-c3c4bf366209',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'mini-cart-fix.js:handleAddedToCart',message:'added_to_cart disparado',data:{page:window.location.pathname,isSingleProduct:document.body.classList.contains('single-product'),fragmentCount:getCountFromFragments(fragments),cartHash:cart_hash||'none',domCount:getCurrentCountFromDom()},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'C'})}).catch(()=>{});
+        // #endregion
+
         if (document.body.classList.contains('single-product')) {
             const fragmentCount = getCountFromFragments(fragments);
             if (fragmentCount !== null) {
@@ -248,9 +274,14 @@
      */
     function handleFragmentsRefreshed() {
         debugLog('Fragmentos atualizados');
-        if (document.body.classList.contains('single-product')) {
-            const elapsed = Date.now() - lastAddToCartAt;
-            if (elapsed < 1500) {
+        var _isSingleProduct = document.body.classList.contains('single-product');
+        var _elapsed = Date.now() - lastAddToCartAt;
+        var _willSkip = _isSingleProduct && _elapsed < 1500;
+        // #region agent log
+        fetch('http://127.0.0.1:7246/ingest/82530f36-f41c-4a9b-9141-c3c4bf366209',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'mini-cart-fix.js:handleFragmentsRefreshed',message:'wc_fragments_refreshed disparado',data:{page:window.location.pathname,isSingleProduct:_isSingleProduct,elapsed:_elapsed,willSkip:_willSkip,willRefresh:!_willSkip,domCartCount:getCurrentCountFromDom()},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'C'})}).catch(()=>{});
+        // #endregion
+        if (_isSingleProduct) {
+            if (_elapsed < 1500) {
                 return;
             }
         }
@@ -283,6 +314,10 @@
      */
     function init() {
         debugLog('Inicializando Mini Cart Sync...');
+
+        // #region agent log
+        fetch('http://127.0.0.1:7246/ingest/82530f36-f41c-4a9b-9141-c3c4bf366209',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'mini-cart-fix.js:init',message:'MiniCart init - page load',data:{page:window.location.pathname,bodyClasses:document.body.className.split(' ').filter(c=>c.includes('product')||c.includes('cart')||c.includes('checkout')||c.includes('shop')).join(' '),domCartCount:getCurrentCountFromDom(),storeAvailable:isStoreAvailable(),nonce:!!getNonce(),nonceSource:window.wc?.storeApiNonce?'wc.storeApiNonce':window.gstoreMiniCart?.storeApiNonce?'gstoreMiniCart':'none',cookies:document.cookie.split(';').map(c=>c.trim().split('=')[0]).filter(c=>c.includes('woocommerce')||c.includes('wp_woocommerce')||c.includes('cart')).join(',')},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'B,C,D'})}).catch(()=>{});
+        // #endregion
 
         // Inicializa listeners
         initEventListeners();
