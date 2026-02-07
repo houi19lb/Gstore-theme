@@ -372,40 +372,50 @@
         // Inicializa listeners
         initEventListeners();
 
+        var isFront = (window.location.pathname === '/' || window.location.pathname === '') && !document.body.classList.contains('woocommerce-cart');
+
         // Na home/páginas em cache o HTML pode vir com badge 0; restaurar último count conhecido para a mitigação funcionar.
-        function reapplyStoredCountIfNeeded() {
+        var lastRestoreAt = 0;
+        function reapplyStoredCountIfNeeded(source) {
             var domCount = getCurrentCountFromDom();
             var storedCount = getLastStoredCount();
-            if ((domCount === 0 || domCount === null) && storedCount > 0) {
-                debugLog('Reaplicando badge de sessionStorage: ' + storedCount + ' (mitigação cache).');
+            if ((domCount === 0 || domCount === null) && storedCount > 0 && (Date.now() - lastRestoreAt) > 300) {
+                lastRestoreAt = Date.now();
+                debugLog('Reaplicando badge de sessionStorage: ' + storedCount + ' (' + (source || 'unknown') + ').');
+                // #region agent log
+                fetch('http://127.0.0.1:7246/ingest/82530f36-f41c-4a9b-9141-c3c4bf366209',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'mini-cart-fix.js:reapply',message:'Reaplicacao acionada',data:{page:window.location.pathname,source:source||'unknown',storedCount:storedCount,domCountBefore:domCount},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'E'})}).catch(function(){});
+                // #endregion
                 syncDOM(storedCount);
             }
         }
-        reapplyStoredCountIfNeeded();
+        reapplyStoredCountIfNeeded('init');
         // O Mini Cart Block (React) pode fazer seu próprio fetch e re-renderizar o badge com 0; reaplicar após delays.
-        setTimeout(reapplyStoredCountIfNeeded, 500);
-        setTimeout(reapplyStoredCountIfNeeded, 1500);
-        setTimeout(reapplyStoredCountIfNeeded, 3000);
-        setTimeout(reapplyStoredCountIfNeeded, 5000);
-        setTimeout(reapplyStoredCountIfNeeded, 8000);
+        setTimeout(function () { reapplyStoredCountIfNeeded('timeout500'); }, 500);
+        setTimeout(function () { reapplyStoredCountIfNeeded('timeout1500'); }, 1500);
+        setTimeout(function () { reapplyStoredCountIfNeeded('timeout3000'); }, 3000);
+        setTimeout(function () { reapplyStoredCountIfNeeded('timeout5000'); }, 5000);
+        setTimeout(function () { reapplyStoredCountIfNeeded('timeout8000'); }, 8000);
+        setTimeout(function () { reapplyStoredCountIfNeeded('timeout12000'); }, 12000);
 
-        // MutationObserver: quando o block (ou outro código) altera o badge para 0, restaurar a partir do sessionStorage
-        var lastRestoreAt = 0;
+        // Observer no container estável: quando o React SUBSTITUI o nó do badge, nosso observer nos nós antigos perde efeito. Observar o container captura qualquer mudança no DOM do mini-cart.
+        var containerThrottle = null;
+        var containerToObserve = document.querySelector('.wc-block-mini-cart') || document.body;
+        var containerMo = new MutationObserver(function () {
+            if (containerThrottle) return;
+            containerThrottle = setTimeout(function () {
+                containerThrottle = null;
+                reapplyStoredCountIfNeeded('containerObserver');
+            }, 350);
+        });
+        containerMo.observe(containerToObserve, { childList: true, subtree: true, characterData: true });
+
+        // MutationObserver nos badges (quando o nó não é substituído)
         var observedBadges = new WeakSet();
         function observeBadgeEl(el) {
             if (observedBadges.has(el)) return;
             observedBadges.add(el);
             var mo = new MutationObserver(function () {
-                var domCount = getCurrentCountFromDom();
-                var stored = getLastStoredCount();
-                if ((domCount === 0 || domCount === null) && stored > 0 && (Date.now() - lastRestoreAt) > 300) {
-                    lastRestoreAt = Date.now();
-                    debugLog('MutationObserver: badge alterado para 0 com stored ' + stored + '; restaurado.');
-                    // #region agent log
-                    fetch('http://127.0.0.1:7246/ingest/82530f36-f41c-4a9b-9141-c3c4bf366209',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'mini-cart-fix.js:MutationObserver',message:'Badge sobrescrito para 0 - restaurado de sessionStorage',data:{page:window.location.pathname,storedCount:stored,domCountBefore:domCount},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'E'})}).catch(function(){});
-                    // #endregion
-                    syncDOM(stored);
-                }
+                reapplyStoredCountIfNeeded('badgeObserver');
             });
             mo.observe(el, { characterData: true, childList: true, subtree: true });
         }
@@ -414,18 +424,28 @@
         }
         setTimeout(attachBadgeObservers, 200);
         var badgeObsInterval = setInterval(attachBadgeObservers, 800);
-        setTimeout(function () { clearInterval(badgeObsInterval); }, 15000);
+        setTimeout(function () { clearInterval(badgeObsInterval); }, 30000);
+
+        // Rede de segurança na home: reaplicar a cada 2s por 30s (captura block que atualiza tarde)
+        var isFront = (window.location.pathname === '/' || window.location.pathname === '') && !document.body.classList.contains('woocommerce-cart');
+        if (isFront) {
+            var safetyCount = 0;
+            var safetyInterval = setInterval(function () {
+                safetyCount++;
+                reapplyStoredCountIfNeeded('safetyNet2s');
+                if (safetyCount >= 15) clearInterval(safetyInterval);
+            }, 2000);
+        }
 
         // Reaplicar ao voltar à aba ou à página (bfcache)
         document.addEventListener('visibilitychange', function () {
-            if (document.visibilityState === 'visible') reapplyStoredCountIfNeeded();
+            if (document.visibilityState === 'visible') reapplyStoredCountIfNeeded('visibilitychange');
         });
         window.addEventListener('pageshow', function (ev) {
-            if (ev.persisted) reapplyStoredCountIfNeeded();
+            if (ev.persisted) reapplyStoredCountIfNeeded('pageshow');
         });
 
         // Aguarda o store estar disponível e faz refresh inicial (na home em cache, pular se já temos count salvo para evitar API 0).
-        var isFront = (window.location.pathname === '/' || window.location.pathname === '') && !document.body.classList.contains('woocommerce-cart');
         const checkStore = setInterval(() => {
             if (isStoreAvailable() || document.querySelector('.wc-block-mini-cart')) {
                 clearInterval(checkStore);
