@@ -2037,6 +2037,13 @@ function gstore_save_cart_before_buy_now() {
 		return;
 	}
 
+	// Não sobrescreve o carrinho já salvo (ex.: usuário voltou do checkout e a página do produto recarregou com params).
+	// Assim preservamos o carrinho original do primeiro "Comprar agora".
+	$existing_saved = WC()->session->get( 'gstore_saved_cart_before_buy_now' );
+	if ( ! empty( $existing_saved ) && WC()->session->get( 'gstore_buy_now_active' ) ) {
+		return;
+	}
+
 	// Só salva se o carrinho não estiver vazio
 	if ( WC()->cart->is_empty() ) {
 		return;
