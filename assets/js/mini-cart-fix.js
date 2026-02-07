@@ -132,17 +132,6 @@
             .then(cartData => {
                 debugLog('Dados do carrinho recebidos:', cartData);
 
-                const currentCount = getCurrentCountFromDom();
-                if (
-                    typeof cartData.items_count === 'number' &&
-                    currentCount !== null &&
-                    cartData.items_count < currentCount
-                ) {
-                    debugLog('Ignorando refresh com contagem menor do que o DOM atual');
-                    resolve(cartData);
-                    return;
-                }
-
                 // Atualiza o store do WordPress se disponível
                 if (isStoreAvailable()) {
                     try {

@@ -108,26 +108,6 @@ function gstore_single_size( $size ) {
 add_filter( 'woocommerce_get_image_size_single', 'gstore_single_size' );
 
 /**
- * Obtém o ID do produto de forma segura.
- * Evita "Call to a member function get_id() on string" quando $product
- * vem como ID (int/string) em vez de objeto WC_Product.
- *
- * @param WC_Product|WC_Product_Variation|int|string|null $product Produto, variação ou ID.
- * @return int ID do produto ou 0 se inválido.
- */
-if ( ! function_exists( 'gstore_get_product_id' ) ) {
-	function gstore_get_product_id( $product ) {
-		if ( is_numeric( $product ) ) {
-			return (int) $product;
-		}
-		if ( is_object( $product ) && is_a( $product, 'WC_Product' ) ) {
-			return (int) $product->get_id();
-		}
-		return 0;
-	}
-}
-
-/**
  * Ajusta disponibilidade de variações para estoque.
  *
  * Garante que variações sem estoque não sejam consideradas compráveis e
@@ -1175,15 +1155,6 @@ function gstore_enqueue_scripts() {
 			true
 		);
 
-		wp_localize_script(
-			'gstore-product-card',
-			'gstoreProductCardConfig',
-			array(
-				'ajaxUrl' => admin_url( 'admin-ajax.php' ),
-				'action'  => 'gstore_blu_get_product_installment_quotes',
-			)
-		);
-
 		if ( function_exists( 'is_product' ) && is_product() ) {
 			$product_id = (int) get_queried_object_id();
 
@@ -2205,19 +2176,6 @@ function gstore_restore_saved_cart_if_needed() {
 		WC()->cart->add_to_cart( $product_id, $quantity, $variation_id, $variation, $item_data );
 	}
 
-	// Adiciona o produto do "Comprar agora" ao carrinho restaurado
-	$buy_now_product = WC()->session->get( 'gstore_buy_now_product' );
-	if ( ! empty( $buy_now_product ) ) {
-		$buy_now_product_id = isset( $buy_now_product['product_id'] ) ? $buy_now_product['product_id'] : 0;
-		$buy_now_quantity = isset( $buy_now_product['quantity'] ) ? $buy_now_product['quantity'] : 1;
-		$buy_now_variation_id = isset( $buy_now_product['variation_id'] ) ? $buy_now_product['variation_id'] : 0;
-		$buy_now_variation = isset( $buy_now_product['variation'] ) ? $buy_now_product['variation'] : array();
-
-		if ( $buy_now_product_id > 0 ) {
-			WC()->cart->add_to_cart( $buy_now_product_id, $buy_now_quantity, $buy_now_variation_id, $buy_now_variation );
-		}
-	}
-
 	// Limpa a sessão após restaurar
 	WC()->session->set( 'gstore_saved_cart_before_buy_now', null );
 	WC()->session->set( 'gstore_buy_now_active', false );
@@ -2227,10 +2185,9 @@ add_action( 'template_redirect', 'gstore_restore_saved_cart_if_needed', 1 );
 
 /**
  * Limpa a flag de "Comprar agora" após finalizar o pedido
- * 
- * Restaura o carrinho original antes de limpar a flag, para que o cliente
- * tenha seus itens originais de volta após finalizar a compra rápida.
- * Para Blu (modal): não restaura; só limpa as flags, mantendo o produto "Comprar agora" no carrinho.
+ *
+ * Apenas limpa as flags de sessão. O pedido já foi concluído e o carrinho
+ * já foi esvaziado pelo WooCommerce. Para Blu (modal): mantém o mesmo comportamento.
  *
  * @param int $order_id ID do pedido (passado por woocommerce_thankyou / woocommerce_checkout_order_processed).
  */
@@ -2247,41 +2204,6 @@ function gstore_clear_buy_now_flag_after_order( $order_id = 0 ) {
 		return;
 	}
 
-	// Verifica se há carrinho salvo e se "Comprar agora" estava ativo
-	$saved_cart = WC()->session->get( 'gstore_saved_cart_before_buy_now' );
-	$buy_now_active = WC()->session->get( 'gstore_buy_now_active' );
-
-	// Se há carrinho salvo, restaura antes de limpar
-	if ( ! empty( $saved_cart ) && $buy_now_active ) {
-		// Limpa o carrinho atual (que contém apenas o produto do "Comprar agora")
-		WC()->cart->empty_cart();
-
-		// Restaura o carrinho original
-		foreach ( $saved_cart as $cart_item_data ) {
-			$product_id = isset( $cart_item_data['product_id'] ) ? $cart_item_data['product_id'] : 0;
-			$quantity = isset( $cart_item_data['quantity'] ) ? $cart_item_data['quantity'] : 1;
-			$variation_id = isset( $cart_item_data['variation_id'] ) ? $cart_item_data['variation_id'] : 0;
-			$variation = isset( $cart_item_data['variation'] ) ? $cart_item_data['variation'] : array();
-			
-			if ( ! $product_id ) {
-				continue;
-			}
-			
-			$item_data = array();
-
-			// Preserva metadados customizados se existirem
-			if ( isset( $cart_item_data['gstore_shipping_rates'] ) ) {
-				$item_data['gstore_shipping_rates'] = $cart_item_data['gstore_shipping_rates'];
-			}
-			if ( isset( $cart_item_data['gstore_shipping_mode'] ) ) {
-				$item_data['gstore_shipping_mode'] = $cart_item_data['gstore_shipping_mode'];
-			}
-
-			WC()->cart->add_to_cart( $product_id, $quantity, $variation_id, $variation, $item_data );
-		}
-	}
-
-	// Limpa a flag e dados salvos após restaurar
 	WC()->session->set( 'gstore_saved_cart_before_buy_now', null );
 	WC()->session->set( 'gstore_buy_now_active', false );
 	WC()->session->set( 'gstore_buy_now_product', null );
@@ -3236,7 +3158,7 @@ function gstore_enqueue_checkout_assets() {
 			$product_id = 0;
 			$quantity   = 1;
 		} elseif ( is_product() && $product ) {
-			$product_id = gstore_get_product_id( $product );
+			$product_id = $product->get_id();
 		}
 
 		if ( function_exists( 'is_checkout' ) && is_checkout() && function_exists( 'WC' ) && WC()->cart ) {
@@ -3468,13 +3390,12 @@ if ( ! function_exists( 'gstore_get_product_slug_candidates' ) ) {
 			$slugs[] = $product_slug;
 		}
 
-		$product_id = gstore_get_product_id( $product );
-		$categories = wp_get_post_terms( $product_id, 'product_cat', array( 'fields' => 'slugs' ) );
+		$categories = wp_get_post_terms( $product->get_id(), 'product_cat', array( 'fields' => 'slugs' ) );
 		if ( is_array( $categories ) && ! is_wp_error( $categories ) ) {
 			$slugs = array_merge( $slugs, array_map( 'sanitize_title', $categories ) );
 		}
 
-		$tags = wp_get_post_terms( $product_id, 'product_tag', array( 'fields' => 'slugs' ) );
+		$tags = wp_get_post_terms( $product->get_id(), 'product_tag', array( 'fields' => 'slugs' ) );
 		if ( is_array( $tags ) && ! is_wp_error( $tags ) ) {
 			$slugs = array_merge( $slugs, array_map( 'sanitize_title', $tags ) );
 		}
@@ -4426,76 +4347,6 @@ function gstore_add_refazer_compra_button_to_order_actions( $actions, $order ) {
 	return $actions;
 }
 add_filter( 'woocommerce_my_account_my_orders_actions', 'gstore_add_refazer_compra_button_to_order_actions', 10, 2 );
-
-/**
- * Adiciona ação "Ver contrato" nos pedidos quando o PDF existe.
- *
- * @param array    $actions Ações disponíveis.
- * @param WC_Order $order   Pedido.
- * @return array
- */
-function gstore_add_contract_button_to_order_actions( $actions, $order ) {
-	if ( ! $order instanceof WC_Order ) {
-		return $actions;
-	}
-	if ( ! class_exists( '\GStore\Services\Contract_Service' ) ) {
-		return $actions;
-	}
-
-	$contract = $order->get_meta( \GStore\Services\Contract_Service::META_CONTRACT_DATA, true );
-	$contract = is_array( $contract ) ? $contract : array();
-	$url = isset( $contract['url'] ) ? (string) $contract['url'] : '';
-
-	if ( $url ) {
-		$actions['gstore-contract'] = array(
-			'url'  => $url,
-			'name' => __( 'Ver contrato', 'gstore' ),
-		);
-	}
-
-	return $actions;
-}
-add_filter( 'woocommerce_my_account_my_orders_actions', 'gstore_add_contract_button_to_order_actions', 20, 2 );
-
-/**
- * Exibe preview do contrato na página de visualização do pedido.
- *
- * @param WC_Order $order Pedido.
- * @return void
- */
-function gstore_render_contract_preview_on_order( $order ) {
-	if ( ! $order instanceof WC_Order ) {
-		return;
-	}
-	if ( ! class_exists( '\GStore\Services\Contract_Service' ) ) {
-		return;
-	}
-
-	$contract = $order->get_meta( \GStore\Services\Contract_Service::META_CONTRACT_DATA, true );
-	$contract = is_array( $contract ) ? $contract : array();
-	$url = isset( $contract['url'] ) ? (string) $contract['url'] : '';
-
-	echo '<div class="gstore-account-contract">';
-	echo '<div class="gstore-account-contract__header">';
-	echo '<div class="gstore-account-contract__title">' . esc_html__( 'Contrato', 'gstore' ) . '</div>';
-	if ( $url ) {
-		echo '<a class="button" href="' . esc_url( $url ) . '" target="_blank" rel="noopener">' . esc_html__( 'Abrir PDF', 'gstore' ) . '</a>';
-	}
-	echo '</div>';
-
-	if ( $url ) {
-		echo '<div class="gstore-account-contract__preview">';
-		echo '<object data="' . esc_url( $url ) . '" type="application/pdf">';
-		echo '<p>' . esc_html__( 'Seu navegador não suporta PDF embutido. ', 'gstore' ) . '<a href="' . esc_url( $url ) . '" target="_blank" rel="noopener">' . esc_html__( 'Abrir contrato', 'gstore' ) . '</a></p>';
-		echo '</object>';
-		echo '</div>';
-	} else {
-		echo '<div class="gstore-account-contract__status">' . esc_html__( 'Contrato disponível após confirmação de pagamento.', 'gstore' ) . '</div>';
-	}
-
-	echo '</div>';
-}
-add_action( 'woocommerce_order_details_after_order_table', 'gstore_render_contract_preview_on_order', 10, 1 );
 
 /**
  * Exclui pedidos cancelados da lista "Meus pedidos".
