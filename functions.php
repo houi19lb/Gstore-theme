@@ -1453,6 +1453,25 @@ add_action( 'init', function() {
 }, 1 );
 
 /**
+ * HOME PAGE: Evita cache quando há sessão WC para o drawer não vir vazio.
+ * Pisca 0 + badge 2 + drawer vazio = home servida do cache (HTML com 0, API com outra sessão).
+ * Com Vary: Cookie + no-store quando tem sessão, a home é gerada por PHP e a sessão bate.
+ */
+add_action( 'send_headers', function() {
+	if ( ! is_front_page() || defined( 'GSTORE_READONLY_REQUEST' ) ) {
+		return;
+	}
+	$name = 'wp_woocommerce_session_' . ( defined( 'COOKIEHASH' ) ? COOKIEHASH : '' );
+	$has_wc_session = $name && ! empty( $_COOKIE[ $name ] );
+	// Vary: Cookie para o cache (LiteSpeed etc.) não servir HTML de “sem cookie” para quem tem sessão
+	header( 'Vary: Cookie', false );
+	if ( $has_wc_session ) {
+		header( 'Cache-Control: no-store, no-cache, must-revalidate, max-age=0', true );
+		header( 'Pragma: no-cache', true );
+	}
+}, 0 );
+
+/**
  * Após add-to-cart, re-seta cookies com path='/' e força cookie de sessão.
  */
 add_action( 'woocommerce_add_to_cart', function() {
