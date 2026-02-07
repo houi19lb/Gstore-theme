@@ -1410,13 +1410,34 @@ add_action( 'wp_enqueue_scripts', 'gstore_enqueue_scripts' );
 
 // #region agent log – Fix de persistência de sessão WooCommerce
 /**
- * CORREÇÃO: Força cookies de sessão WooCommerce com path='/' explícito.
+ * CORREÇÃO: Cookies WC com path='/' para mesma sessão em todas as páginas + REST.
  * 
- * Na Hostinger com LiteSpeed Cache, os cookies de sessão WC podem não persistir
- * entre navegações porque COOKIEPATH ou COOKIE_DOMAIN podem estar com valores
- * que não cobrem todas as URLs do site. Esta correção:
- * 1. Após add-to-cart, re-seta cookies com path='/' e domain vazio (current domain)
- * 2. Garante que woocommerce_items_in_cart e woocommerce_cart_hash persistam
+ * Se o cookie de sessão (wp_woocommerce_session_*) tiver path restrito, o browser
+ * não o envia na home nem no fetch da Store API → nova sessão vazia → drawer vazio.
+ * 
+ * 1) Filter (WC 6.7+): força path='/' em todos os cookies WC.
+ * 2) Fallback: em todo request que já tem o cookie, re-envia com path='/' para atualizar no browser.
+ */
+add_filter( 'woocommerce_set_cookie_options', function( $options, $name, $value ) {
+	$options['path']   = '/';
+	$options['domain'] = '';
+	return $options;
+}, 10, 3 );
+
+add_action( 'init', function() {
+	if ( is_admin() && ! wp_doing_ajax() ) {
+		return;
+	}
+	$name = 'wp_woocommerce_session_' . ( defined( 'COOKIEHASH' ) ? COOKIEHASH : '' );
+	if ( empty( $name ) || ! isset( $_COOKIE[ $name ] ) || empty( $_COOKIE[ $name ] ) ) {
+		return;
+	}
+	$expire = time() + (int) apply_filters( 'wc_session_expiration', 2 * DAY_IN_SECONDS );
+	setcookie( $name, wp_unslash( $_COOKIE[ $name ] ), $expire, '/', '', is_ssl(), true );
+}, 1 );
+
+/**
+ * Após add-to-cart, re-seta cookies com path='/' e força cookie de sessão.
  */
 add_action( 'woocommerce_add_to_cart', function() {
 	if ( ! WC()->session || ! WC()->cart ) {
