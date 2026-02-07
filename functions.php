@@ -2118,7 +2118,6 @@ function gstore_clear_cart_before_buy_now() {
 		return;
 	}
 
-	// A página do carrinho com params já redireciona em wp_loaded 0, então aqui não é cart
 	// Só executa se gstore_buy_now estiver presente
 	// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 	if ( ! isset( $_REQUEST['gstore_buy_now'] ) ) {
@@ -2139,39 +2138,6 @@ function gstore_clear_cart_before_buy_now() {
 	WC()->cart->empty_cart();
 }
 add_action( 'wp_loaded', 'gstore_clear_cart_before_buy_now', 5 );
-
-/**
- * Na página do carrinho: redireciona para URL limpa se houver add-to-cart ou gstore_buy_now.
- * Roda em wp_loaded prioridade 0 para executar antes do WooCommerce processar add-to-cart.
- */
-function gstore_cart_page_clean_buy_now_params() {
-	if ( wp_doing_ajax() || isset( $_REQUEST['wc-ajax'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-		return;
-	}
-	// phpcs:ignore WordPress.Security.NonceVerification.Recommended
-	$has_buy_now_params = isset( $_REQUEST['add-to-cart'] ) || isset( $_REQUEST['gstore_buy_now'] );
-	if ( ! $has_buy_now_params ) {
-		return;
-	}
-	// Só redireciona se a requisição for para a página do carrinho (em wp_loaded is_cart() pode não existir)
-	$request_uri = isset( $_SERVER['REQUEST_URI'] ) ? wp_unslash( $_SERVER['REQUEST_URI'] ) : '';
-	if ( ! $request_uri || ! function_exists( 'wc_get_cart_url' ) ) {
-		return;
-	}
-	$current_path = wp_parse_url( $request_uri, PHP_URL_PATH );
-	$current_path = $current_path ? rtrim( $current_path, '/' ) : '';
-	$cart_path    = wp_parse_url( wc_get_cart_url(), PHP_URL_PATH );
-	$cart_path    = $cart_path ? rtrim( $cart_path, '/' ) : '';
-	if ( ! $cart_path || $current_path !== $cart_path ) {
-		return;
-	}
-	if ( function_exists( 'nocache_headers' ) ) {
-		nocache_headers();
-	}
-	wp_safe_redirect( wc_get_cart_url() );
-	exit;
-}
-add_action( 'wp_loaded', 'gstore_cart_page_clean_buy_now_params', 0 );
 
 /**
  * Restaura o carrinho salvo se o cliente voltar do checkout

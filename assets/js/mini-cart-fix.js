@@ -279,14 +279,9 @@
     }
 
     /**
-     * Inicialização (executa apenas uma vez para evitar múltiplos listeners)
+     * Inicialização
      */
     function init() {
-        if (window.gstoreMiniCartInitDone) {
-            debugLog('Mini Cart Sync já inicializado, ignorando.');
-            return;
-        }
-        window.gstoreMiniCartInitDone = true;
         debugLog('Inicializando Mini Cart Sync...');
 
         // Inicializa listeners
