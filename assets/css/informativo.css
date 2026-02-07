@@ -115,9 +115,11 @@ main.Gstore-informativo-shell .wp-block-group.is-layout-constrained {
 }
 
 .Gstore-informativo-highlight__item {
-	display: flex;
-	align-items: flex-start;
-	gap: 14px;
+	display: grid;
+	grid-template-columns: auto 1fr;
+	grid-template-rows: auto auto;
+	gap: 0 14px;
+	align-items: start;
 	padding: 16px 18px;
 	background: #fff;
 	border-radius: 4px;
@@ -127,18 +129,25 @@ main.Gstore-informativo-shell .wp-block-group.is-layout-constrained {
 .Gstore-informativo-highlight__item i {
 	font-size: 1.4rem;
 	color: var(--gstore-color-accent);
-	flex-shrink: 0;
+	grid-column: 1;
+	grid-row: 1;
 }
 
 .Gstore-informativo-highlight__item .Gstore-informativo-mini__title {
 	font-size: 1rem;
 	font-weight: 700;
-	margin-bottom: 6px;
+	margin: 0;
+	grid-column: 2;
+	grid-row: 1;
 }
 
 .Gstore-informativo-highlight__item .Gstore-informativo-mini__text {
 	font-size: 0.98rem;
 	line-height: 1.6;
+	margin: 8px 0 0 0;
+	grid-column: 1 / -1;
+	grid-row: 2;
+	padding-left: 0;
 }
 
 /* ========================================
@@ -318,7 +327,7 @@ main.Gstore-informativo-shell .wp-block-group.is-layout-constrained {
 
 .Gstore-informativo-block-title {
 	font-size: 1.8rem;
-	color: var(--text-main, var(--gstore-color-text-primary));
+	color: var(--gstore-color-accent);
 	margin: 0;
 	font-weight: 700;
 }
@@ -454,7 +463,7 @@ main.Gstore-informativo-shell .wp-block-group.is-layout-constrained {
 	display: none;
 	position: fixed;
 	inset: 0;
-	z-index: var(--gstore-z-modal, 400);
+	z-index: 10001;
 }
 
 .Gstore-informativo-modal.is-open {
