@@ -1410,21 +1410,37 @@ add_action( 'wp_enqueue_scripts', 'gstore_enqueue_scripts' );
 
 // #region agent log – Fix de persistência de sessão WooCommerce
 /**
- * CORREÇÃO: Cookies WC com path='/' para mesma sessão em todas as páginas + REST.
+ * CORREÇÃO: Cookies WC com path='/' em requests NORMAIS; em REST GET (readonly) NÃO alterar
+ * e NÃO permitir gravar cookie de sessão vazia (senão sobrescreve a sessão com itens).
  * 
- * Se o cookie de sessão (wp_woocommerce_session_*) tiver path restrito, o browser
- * não o envia na home nem no fetch da Store API → nova sessão vazia → drawer vazio.
- * 
- * 1) Filter (WC 6.7+): força path='/' em todos os cookies WC.
- * 2) Fallback: em todo request que já tem o cookie, re-envia com path='/' para atualizar no browser.
+ * 1) woocommerce_set_cookie_options: path='/' só quando NÃO é request readonly.
+ * 2) woocommerce_set_cookie_enabled (WC 6.3+): em readonly, não setar cookie de sessão.
+ * 3) Init fallback: re-enviar session cookie com path='/' só em requests normais (não REST).
  */
 add_filter( 'woocommerce_set_cookie_options', function( $options, $name, $value ) {
+	if ( defined( 'GSTORE_READONLY_REQUEST' ) && GSTORE_READONLY_REQUEST ) {
+		return $options;
+	}
 	$options['path']   = '/';
 	$options['domain'] = '';
 	return $options;
 }, 10, 3 );
 
+add_filter( 'woocommerce_set_cookie_enabled', function( $enabled, $name, $value, $expire, $secure ) {
+	if ( ! defined( 'GSTORE_READONLY_REQUEST' ) || ! GSTORE_READONLY_REQUEST ) {
+		return $enabled;
+	}
+	$session_cookie_name = 'wp_woocommerce_session_' . ( defined( 'COOKIEHASH' ) ? COOKIEHASH : '' );
+	if ( $session_cookie_name !== '' && $name === $session_cookie_name ) {
+		return false;
+	}
+	return $enabled;
+}, 10, 5 );
+
 add_action( 'init', function() {
+	if ( defined( 'GSTORE_READONLY_REQUEST' ) && GSTORE_READONLY_REQUEST ) {
+		return;
+	}
 	if ( is_admin() && ! wp_doing_ajax() ) {
 		return;
 	}
