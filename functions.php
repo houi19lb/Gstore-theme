@@ -1452,6 +1452,58 @@ add_action( 'woocommerce_cart_item_removed', function() {
 		setcookie( 'woocommerce_cart_hash', '', time() - 3600, '/', '', is_ssl(), false );
 	}
 }, 99 );
+
+/**
+ * CORREÇÃO CRÍTICA: Impede que a Store API (REST GET) sobrescreva o carrinho com dados vazios.
+ * 
+ * PROBLEMA: O WC Blocks mini-cart faz auto-fetch GET /wp-json/wc/store/v1/cart em cada página.
+ * Se a sessão não está perfeitamente sincronizada, esse GET retorna carrinho vazio.
+ * No shutdown do PHP, o WC salva a sessão com o carrinho vazio, DESTRUINDO os itens reais.
+ * 
+ * FIX: Durante requests REST API GET, marca a sessão como "não-dirty" no shutdown,
+ * impedindo que dados de leitura sobrescrevam dados de escrita.
+ */
+add_action( 'rest_api_init', function() {
+	// Só proteger requests GET (leitura) - POST/PUT/DELETE precisam salvar
+	if ( 'GET' !== $_SERVER['REQUEST_METHOD'] ) {
+		return;
+	}
+
+	// Hook no shutdown ANTES do WC salvar a sessão (prioridade 0 vs WC prioridade 20)
+	add_action( 'shutdown', function() {
+		if ( ! class_exists( 'WooCommerce' ) || ! WC()->session ) {
+			return;
+		}
+		
+		try {
+			$ref = new ReflectionProperty( get_class( WC()->session ), '_dirty' );
+			$ref->setAccessible( true );
+			$ref->setValue( WC()->session, false );
+		} catch ( Exception $e ) {
+			// Fallback: Se reflection falha, nada a fazer
+		}
+	}, 0 );
+} );
+
+/**
+ * CORREÇÃO: Quando WC deleta cookies de carrinho por inconsistência de sessão,
+ * re-seta os cookies imediatamente para evitar perda entre páginas.
+ * 
+ * O WC chama maybe_set_cart_cookies(false) quando cart=0, que DELETA cookies.
+ * Mas se o browser TINHA woocommerce_items_in_cart, a inconsistência é temporária
+ * (sessão errada no PHP). Re-setamos para preservar a indicação de carrinho.
+ */
+add_action( 'woocommerce_set_cart_cookies', function( $set ) {
+	if ( $set ) {
+		return; // Cookies sendo SETADOS, OK
+	}
+	
+	// WC acabou de DELETAR os cookies. Se o browser tinha o cookie, re-seta.
+	if ( isset( $_COOKIE['woocommerce_items_in_cart'] ) && ! empty( $_COOKIE['woocommerce_items_in_cart'] ) ) {
+		// Re-seta com path='/' para garantir persistência
+		setcookie( 'woocommerce_items_in_cart', '1', 0, '/', '', is_ssl(), false );
+	}
+}, 99 );
 // #endregion
 
 /**

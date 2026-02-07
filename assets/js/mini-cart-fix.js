@@ -14,6 +14,33 @@
 (function($) {
     'use strict';
 
+    // #region agent log - Interceptor de fetch para detectar chamadas WC
+    // Monitora TODAS as requisições à Store API e WC AJAX
+    (function() {
+        var _origFetch = window.fetch;
+        window.fetch = function(url, opts) {
+            var urlStr = typeof url === 'string' ? url : (url && url.url ? url.url : '');
+            if (urlStr.indexOf('wc/store') !== -1 || urlStr.indexOf('wc-ajax') !== -1) {
+                var method = (opts && opts.method) || 'GET';
+                _origFetch('http://127.0.0.1:7246/ingest/82530f36-f41c-4a9b-9141-c3c4bf366209',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'FETCH-INTERCEPT',message:'Requisicao WC detectada',data:{page:window.location.pathname,url:urlStr.substring(0,120),method:method,caller:new Error().stack?.split('\n').slice(1,4).map(function(s){return s.trim()}).join(' | ')},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix-v3'})}).catch(function(){});
+            }
+            return _origFetch.apply(this, arguments);
+        };
+        // Interceptor XMLHttpRequest
+        var _origOpen = XMLHttpRequest.prototype.open;
+        XMLHttpRequest.prototype.open = function(method, url) {
+            var urlStr = String(url || '');
+            if (urlStr.indexOf('wc/store') !== -1 || urlStr.indexOf('wc-ajax') !== -1) {
+                var _xhr = this;
+                _xhr._gstoreDebugUrl = urlStr;
+                _xhr._gstoreDebugMethod = method;
+                fetch('http://127.0.0.1:7246/ingest/82530f36-f41c-4a9b-9141-c3c4bf366209',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'XHR-INTERCEPT',message:'Requisicao WC XHR detectada',data:{page:window.location.pathname,url:urlStr.substring(0,120),method:method,caller:new Error().stack?.split('\n').slice(1,4).map(function(s){return s.trim()}).join(' | ')},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix-v3'})}).catch(function(){});
+            }
+            return _origOpen.apply(this, arguments);
+        };
+    })();
+    // #endregion
+
     // Configuração
     const CONFIG = {
         debounceDelay: 300,
