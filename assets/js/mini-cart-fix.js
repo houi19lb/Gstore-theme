@@ -68,6 +68,17 @@
                     _origFetch('http://127.0.0.1:7246/ingest/82530f36-f41c-4a9b-9141-c3c4bf366209',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'REST-RESPONSE-HEADERS',message:'Headers debug da resposta Store API',data:{page:window.location.pathname,url:urlStr.substring(0,120),headers:hd,status:resp.status},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix-v8'})}).catch(function(){});
                 }).catch(function(){});
             }
+
+            // Captura headers de debug do admin-ajax Blu (parcelamento)
+            if (urlStr.indexOf('admin-ajax.php') !== -1 && method.toUpperCase() === 'POST') {
+                result.then(function(resp) {
+                    var orig = resp.headers.get('X-GD-BluCartOrigCount');
+                    var after = resp.headers.get('X-GD-BluCartAfterRestore');
+                    if (orig !== null || after !== null) {
+                        _origFetch('http://127.0.0.1:7246/ingest/82530f36-f41c-4a9b-9141-c3c4bf366209',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'ADMIN-AJAX-HEADERS',message:'Headers do parcelamento Blu',data:{page:window.location.pathname,url:urlStr.substring(0,160),origCount:orig,afterRestore:after,status:resp.status},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix-v8'})}).catch(function(){});
+                    }
+                }).catch(function(){});
+            }
             return result;
         };
         var _origOpen = XMLHttpRequest.prototype.open;
