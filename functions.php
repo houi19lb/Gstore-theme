@@ -1351,6 +1351,37 @@ function gstore_enqueue_scripts() {
 				'debug'         => defined( 'WP_DEBUG' ) && WP_DEBUG,
 			)
 		);
+
+		// #region agent log – PHP session debug
+		if ( class_exists( 'WooCommerce' ) && WC()->session && WC()->cart ) {
+			$_gstore_debug_cart_items = array();
+			foreach ( WC()->cart->get_cart() as $_ck => $_ci ) {
+				$_gstore_debug_cart_items[] = array(
+					'key'          => substr( $_ck, 0, 8 ),
+					'product_id'   => isset( $_ci['product_id'] ) ? (int) $_ci['product_id'] : 0,
+					'variation_id' => isset( $_ci['variation_id'] ) ? (int) $_ci['variation_id'] : 0,
+					'quantity'     => isset( $_ci['quantity'] ) ? (int) $_ci['quantity'] : 0,
+				);
+			}
+			$_gstore_debug_session = array(
+				'php_session_id'     => WC()->session->get_customer_id(),
+				'cart_count_php'     => WC()->cart->get_cart_contents_count(),
+				'cart_items_php'     => $_gstore_debug_cart_items,
+				'buy_now_active'     => WC()->session->get( 'gstore_buy_now_active' ),
+				'saved_cart_exists'  => ! empty( WC()->session->get( 'gstore_saved_cart_before_buy_now' ) ),
+				'saved_cart_count'   => is_array( WC()->session->get( 'gstore_saved_cart_before_buy_now' ) ) ? count( WC()->session->get( 'gstore_saved_cart_before_buy_now' ) ) : 0,
+				'buy_now_product'    => WC()->session->get( 'gstore_buy_now_product' ),
+				'session_cookie'     => WC()->session->has_session() ? 'active' : 'none',
+				'page_type'          => is_product() ? 'product' : ( is_cart() ? 'cart' : ( is_checkout() ? 'checkout' : ( is_front_page() ? 'front' : 'other' ) ) ),
+				'restore_would_fire' => ( ! empty( WC()->session->get( 'gstore_saved_cart_before_buy_now' ) ) && WC()->session->get( 'gstore_buy_now_active' ) ) ? 'YES' : 'no',
+			);
+			wp_add_inline_script(
+				'gstore-mini-cart-fix',
+				'window.__gstoreDebugSession = ' . wp_json_encode( $_gstore_debug_session ) . ';',
+				'before'
+			);
+		}
+		// #endregion
 	}
 
 	// Localizar script para AJAX do WooCommerce
