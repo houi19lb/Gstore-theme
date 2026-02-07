@@ -41,6 +41,17 @@ main.Gstore-informativo-shell .wp-block-group.is-layout-constrained {
 	padding: 0;
 }
 
+/* Botão secundário com texto escuro (Consultar cidades, etc.) */
+.Gstore-informativo-container .Gstore-btn--secondary {
+	color: var(--gstore-color-text-primary, #1a1a1a) !important;
+	border-color: var(--gray-border, var(--gstore-color-border));
+}
+
+.Gstore-informativo-container .Gstore-btn--secondary:hover {
+	color: var(--gstore-color-accent) !important;
+	border-color: var(--gstore-color-accent);
+}
+
 /* ========================================
    HERO
    ======================================== */
@@ -296,6 +307,23 @@ main.Gstore-informativo-shell .wp-block-group.is-layout-constrained {
 }
 
 /* ========================================
+   BLOCO ARMAS (título único em cima das duas boxes)
+   ======================================== */
+
+.Gstore-informativo-arms-block {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+}
+
+.Gstore-informativo-block-title {
+	font-size: 1.8rem;
+	color: var(--text-main, var(--gstore-color-text-primary));
+	margin: 0;
+	font-weight: 700;
+}
+
+/* ========================================
    MINI CARDS (dentro de section)
    ======================================== */
 
@@ -442,10 +470,14 @@ main.Gstore-informativo-shell .wp-block-group.is-layout-constrained {
 
 .Gstore-informativo-modal__panel {
 	position: absolute;
-	inset: 0;
-	margin: auto;
+	top: max(var(--gstore-sticky-offset, 110px), 20px);
+	left: 50%;
+	transform: translateX(-50%);
+	right: auto;
+	bottom: 20px;
 	width: min(1000px, calc(100% - 32px));
-	max-height: 78vh;
+	max-height: calc(100vh - var(--gstore-sticky-offset, 110px) - 40px);
+	margin: 0;
 	background: #fff;
 	border: 1px solid var(--gray-border, var(--gstore-color-border));
 	border-radius: 4px;
