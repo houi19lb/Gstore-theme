@@ -15,10 +15,27 @@
         debug: window.gstoreMiniCart?.debug || false
     };
 
+    const STORAGE_KEY_LAST_COUNT = 'gstore_mini_cart_last_count';
+
     // Estado
     let refreshTimer = null;
     let isRefreshing = false;
     let lastAddToCartAt = 0;
+
+    function getLastStoredCount() {
+        try {
+            var n = parseInt(sessionStorage.getItem(STORAGE_KEY_LAST_COUNT) || '0', 10);
+            return (n >= 0 && Number.isFinite(n)) ? n : 0;
+        } catch (e) {
+            return 0;
+        }
+    }
+
+    function setLastStoredCount(count) {
+        try {
+            sessionStorage.setItem(STORAGE_KEY_LAST_COUNT, String(count >= 0 ? count : 0));
+        } catch (e) {}
+    }
 
     /**
      * Log de debug
@@ -149,18 +166,27 @@
 
                 var apiCount = cartData.items_count || 0;
                 // Mitigação cache: quando a API retorna 0 mas o DOM já mostra itens, a resposta pode ser cache (ex.: home em cache).
-                // Não sobrescrever o badge com 0; fazer um retry único para obter dados frescos.
+                // Não sobrescrever o badge com 0; fazer retry e só atualizar se o retry trouxer count >= atual (nunca reduzir).
                 if (apiCount === 0 && _preRefreshDomCount > 0) {
                     debugLog('API retornou 0 com itens no DOM – possível cache; agendando retry.');
+                    var _domCountWhenSuspicious = _preRefreshDomCount;
                     setTimeout(function () {
                         refreshCart().then(function (retryData) {
                             var retryCount = (retryData && retryData.items_count != null) ? retryData.items_count : 0;
+                            var currentDom = getCurrentCountFromDom();
+                            var safeCount = currentDom != null ? currentDom : _domCountWhenSuspicious;
+                            // Não reduzir o badge quando suspeitamos de cache: só atualizar se o retry trouxer >= atual.
+                            if (retryCount < safeCount) {
+                                debugLog('Retry retornou ' + retryCount + ' < ' + safeCount + '; mantendo badge atual (possível cache).');
+                                return;
+                            }
                             if (isStoreAvailable()) {
                                 try {
                                     window.wp.data.dispatch('wc/store/cart').receiveCart(retryData);
                                 } catch (e) {}
                             }
                             syncDOM(retryCount);
+                            setLastStoredCount(retryCount);
                         }).catch(function () {});
                     }, 600);
                     resolve(cartData);
@@ -178,8 +204,10 @@
                     }
                 }
 
-                // Sincroniza elementos do DOM
-                syncDOM(cartData.items_count || 0);
+                // Sincroniza elementos do DOM e persiste para mitigação de cache
+                var countToSync = cartData.items_count || 0;
+                syncDOM(countToSync);
+                setLastStoredCount(countToSync);
                 
                 resolve(cartData);
             })
@@ -322,6 +350,7 @@
         $(document.body).on('updated_wc_div', refreshMiniCart);
         $(document.body).on('wc_cart_emptied', () => {
             syncDOM(0);
+            setLastStoredCount(0);
             refreshMiniCart();
         });
 
@@ -342,6 +371,14 @@
 
         // Inicializa listeners
         initEventListeners();
+
+        // Na home/páginas em cache o HTML pode vir com badge 0; restaurar último count conhecido para a mitigação funcionar.
+        var domCount = getCurrentCountFromDom();
+        var storedCount = getLastStoredCount();
+        if ((domCount === 0 || domCount === null) && storedCount > 0) {
+            debugLog('DOM mostra 0 mas sessionStorage tem ' + storedCount + '; restaurando badge (mitigação cache).');
+            syncDOM(storedCount);
+        }
 
         // Aguarda o store estar disponível e faz refresh inicial
         const checkStore = setInterval(() => {
