@@ -375,28 +375,36 @@ main.Gstore-informativo-shell .wp-block-group.is-layout-constrained {
 	border: 1px solid var(--gray-border, var(--gstore-color-border));
 	border-radius: 4px;
 	padding: 18px;
-	display: flex;
-	align-items: flex-start;
-	gap: 14px;
+	display: grid;
+	grid-template-columns: auto 1fr;
+	grid-template-rows: auto auto;
+	gap: 0 14px;
+	align-items: start;
 }
 
 .Gstore-informativo-mini i {
 	font-size: 1.2rem;
 	color: var(--gstore-color-accent);
-	margin-top: 2px;
-	flex-shrink: 0;
+	grid-column: 1;
+	grid-row: 1;
 }
 
-.Gstore-informativo-mini__title {
+.Gstore-informativo-mini .Gstore-informativo-mini__title {
 	font-weight: 700;
 	font-size: 1rem;
-	margin-bottom: 6px;
+	margin: 0;
+	grid-column: 2;
+	grid-row: 1;
 	color: var(--text-main, var(--gstore-color-text-primary));
 }
 
-.Gstore-informativo-mini__text {
+.Gstore-informativo-mini .Gstore-informativo-mini__text {
 	font-size: 0.95rem;
 	line-height: 1.6;
+	margin: 8px 0 0 0;
+	grid-column: 1 / -1;
+	grid-row: 2;
+	padding-left: 0;
 }
 
 /* ========================================
