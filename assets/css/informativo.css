@@ -506,12 +506,44 @@ main.Gstore-informativo-shell .wp-block-group.is-layout-constrained {
 
 .Gstore-informativo-modal__head {
 	padding: 16px;
+	padding-right: 48px;
+	position: relative;
 	border-bottom: 1px solid var(--gray-border, var(--gstore-color-border));
 	display: flex;
 	gap: 12px;
 	align-items: flex-start;
 	justify-content: space-between;
 	flex-wrap: wrap;
+}
+
+.Gstore-informativo-modal__close {
+	position: absolute;
+	top: 12px;
+	right: 12px;
+	width: 36px;
+	height: 36px;
+	padding: 0;
+	border: 1px solid var(--gray-border, var(--gstore-color-border));
+	border-radius: 4px;
+	background: #fff;
+	color: var(--text-main, var(--gstore-color-text-primary));
+	cursor: pointer;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-size: 1.25rem;
+	transition: color 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+}
+
+.Gstore-informativo-modal__close:hover {
+	color: var(--gstore-color-accent);
+	border-color: var(--gstore-color-accent);
+	background: var(--gstore-color-bg-muted, #f0f2f5);
+}
+
+.Gstore-informativo-modal__close:focus-visible {
+	outline: 2px solid var(--gstore-color-accent);
+	outline-offset: 2px;
 }
 
 .Gstore-informativo-modal__title {
