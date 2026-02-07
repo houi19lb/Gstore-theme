@@ -19,6 +19,47 @@
 		});
 	}
 
+	// --- Carrossel hero (mobile) ---
+	var heroCarousel = document.getElementById("Gstore-informativo-hero-carousel");
+	var heroDots = document.getElementById("Gstore-informativo-hero-dots");
+	if (heroCarousel && heroDots) {
+		var items = heroCarousel.querySelectorAll(".Gstore-informativo-highlight__item");
+		items.forEach(function (_, i) {
+			var dot = document.createElement("button");
+			dot.type = "button";
+			dot.className = "Gstore-informativo-carousel-dot" + (i === 0 ? " is-active" : "");
+			dot.setAttribute("aria-label", "Slide " + (i + 1));
+			dot.dataset.index = i;
+			heroDots.appendChild(dot);
+		});
+		var dots = heroDots.querySelectorAll(".Gstore-informativo-carousel-dot");
+		function setActiveDot(index) {
+			dots.forEach(function (d, i) {
+				d.classList.toggle("is-active", i === index);
+			});
+		}
+		function getVisibleIndex() {
+			var scrollLeft = heroCarousel.scrollLeft;
+			var itemWidth = items[0] ? items[0].offsetWidth + 12 : 0;
+			if (!itemWidth) return 0;
+			var index = Math.round(scrollLeft / itemWidth);
+			return Math.min(index, items.length - 1);
+		}
+		heroCarousel.addEventListener("scroll", function () {
+			setActiveDot(getVisibleIndex());
+		});
+		dots.forEach(function (dot) {
+			dot.addEventListener("click", function () {
+				var i = parseInt(dot.dataset.index, 10);
+				var el = items[i];
+				if (el) {
+					el.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "start" });
+					setActiveDot(i);
+				}
+			});
+		});
+	}
+
 	// --- Modal Aeroportos ---
 	var modal = document.getElementById("Gstore-informativo-airports-modal");
 	var openBtn = document.getElementById("Gstore-informativo-open-airports");
