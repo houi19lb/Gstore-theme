@@ -1363,6 +1363,8 @@ function gstore_enqueue_scripts() {
 					'quantity'     => isset( $_ci['quantity'] ) ? (int) $_ci['quantity'] : 0,
 				);
 			}
+			// Verificar cookies de sessão WC presentes na request
+			$_wc_session_cookie_name = 'wp_woocommerce_session_' . COOKIEHASH;
 			$_gstore_debug_session = array(
 				'php_session_id'     => WC()->session->get_customer_id(),
 				'cart_count_php'     => WC()->cart->get_cart_contents_count(),
@@ -1374,6 +1376,13 @@ function gstore_enqueue_scripts() {
 				'session_cookie'     => WC()->session->has_session() ? 'active' : 'none',
 				'page_type'          => is_product() ? 'product' : ( is_cart() ? 'cart' : ( is_checkout() ? 'checkout' : ( is_front_page() ? 'front' : 'other' ) ) ),
 				'restore_would_fire' => ( ! empty( WC()->session->get( 'gstore_saved_cart_before_buy_now' ) ) && WC()->session->get( 'gstore_buy_now_active' ) ) ? 'YES' : 'no',
+				// Diagnóstico de cookies
+				'cookie_path'        => defined( 'COOKIEPATH' ) ? COOKIEPATH : 'undefined',
+				'cookie_domain'      => defined( 'COOKIE_DOMAIN' ) ? COOKIE_DOMAIN : 'undefined',
+				'cookie_hash'        => COOKIEHASH,
+				'wc_session_cookie_present' => isset( $_COOKIE[ $_wc_session_cookie_name ] ) ? 'YES' : 'NO',
+				'wc_items_cookie_present'   => isset( $_COOKIE['woocommerce_items_in_cart'] ) ? 'YES' : 'NO',
+				'is_ssl'             => is_ssl() ? 'YES' : 'NO',
 			);
 			wp_add_inline_script(
 				'gstore-mini-cart-fix',
@@ -1398,6 +1407,52 @@ function gstore_enqueue_scripts() {
 	}
 }
 add_action( 'wp_enqueue_scripts', 'gstore_enqueue_scripts' );
+
+// #region agent log – Fix de persistência de sessão WooCommerce
+/**
+ * CORREÇÃO: Força cookies de sessão WooCommerce com path='/' explícito.
+ * 
+ * Na Hostinger com LiteSpeed Cache, os cookies de sessão WC podem não persistir
+ * entre navegações porque COOKIEPATH ou COOKIE_DOMAIN podem estar com valores
+ * que não cobrem todas as URLs do site. Esta correção:
+ * 1. Após add-to-cart, re-seta cookies com path='/' e domain vazio (current domain)
+ * 2. Garante que woocommerce_items_in_cart e woocommerce_cart_hash persistam
+ */
+add_action( 'woocommerce_add_to_cart', function() {
+	if ( ! WC()->session || ! WC()->cart ) {
+		return;
+	}
+	
+	// Força o cookie de sessão WC
+	WC()->session->set_customer_session_cookie( true );
+	
+	$cart_count = WC()->cart->get_cart_contents_count();
+	if ( $cart_count > 0 ) {
+		// Re-seta cookies auxiliares com path='/' explícito (bypass COOKIEPATH)
+		setcookie( 'woocommerce_items_in_cart', '1', 0, '/', '', is_ssl(), false );
+		setcookie( 'woocommerce_cart_hash', WC()->cart->get_cart_hash(), 0, '/', '', is_ssl(), false );
+	}
+}, 99 );
+
+/**
+ * Na remoção de item do carrinho, atualiza os cookies auxiliares.
+ */
+add_action( 'woocommerce_cart_item_removed', function() {
+	if ( ! WC()->cart ) {
+		return;
+	}
+	
+	$cart_count = WC()->cart->get_cart_contents_count();
+	if ( $cart_count > 0 ) {
+		setcookie( 'woocommerce_items_in_cart', '1', 0, '/', '', is_ssl(), false );
+		setcookie( 'woocommerce_cart_hash', WC()->cart->get_cart_hash(), 0, '/', '', is_ssl(), false );
+	} else {
+		// Carrinho vazio - remove cookies
+		setcookie( 'woocommerce_items_in_cart', '', time() - 3600, '/', '', is_ssl(), false );
+		setcookie( 'woocommerce_cart_hash', '', time() - 3600, '/', '', is_ssl(), false );
+	}
+}, 99 );
+// #endregion
 
 /**
  * ============================

@@ -1,14 +1,14 @@
 /**
- * Mini Cart Sync - Versão Corrigida
+ * Mini Cart Sync - Versão Corrigida v3
  * 
- * Sincroniza o Mini Cart Block do WooCommerce com eventos de adição/remoção de produtos.
+ * PROBLEMA: O cookie de sessão WooCommerce não persiste entre páginas na Hostinger
+ * (LiteSpeed Cache). Cada navegação cria uma nova sessão temporária com carrinho vazio.
  * 
- * CORREÇÃO: Não faz refresh automático via Store API no carregamento da página.
- * A Store API pode usar uma sessão diferente da sessão WC (especialmente em
- * ambientes com cache como LiteSpeed/Hostinger), causando a exibição de
- * carrinho vazio mesmo quando há itens. Agora confiamos nos fragments do WC
- * (que usam AJAX com a sessão correta) e só chamamos a Store API em resposta
- * a ações explícitas do usuário.
+ * SOLUÇÃO:
+ * 1. Não fazer refresh automático da Store API no page load
+ * 2. Usar fragments do WC (AJAX com sessão correta) para atualizar contagem
+ * 3. Persistir contagem via localStorage entre páginas
+ * 4. MutationObserver protege o badge contra re-renders do WC Blocks React
  */
 
 (function($) {
@@ -17,15 +17,14 @@
     // Configuração
     const CONFIG = {
         debounceDelay: 300,
-        apiTimeout: 5000,
         debug: window.gstoreMiniCart?.debug || false
     };
 
     // Estado
-    let refreshTimer = null;
-    let isRefreshing = false;
     let lastAddToCartAt = 0;
     let lastUserActionAt = 0;
+    let badgeObserver = null;
+    let observerPaused = false;
     
     // Chave de localStorage para persistir contagem entre páginas
     const CART_COUNT_KEY = 'gstore_cart_count';
@@ -48,50 +47,19 @@
         try {
             var count = parseInt(localStorage.getItem(CART_COUNT_KEY) || '0', 10);
             var ts = parseInt(localStorage.getItem(CART_COUNT_TS_KEY) || '0', 10);
-            // Válido por 30 minutos
             if (Date.now() - ts > 30 * 60 * 1000) return null;
             return Number.isNaN(count) ? null : count;
         } catch(e) { return null; }
     }
 
-    /**
-     * Log de debug
-     */
     function debugLog(...args) {
         if (CONFIG.debug && window.console && console.log) {
             console.log('[MiniCart]', ...args);
         }
     }
 
-    /**
-     * Log de erro
-     */
-    function errorLog(...args) {
-        if (window.console && console.error) {
-            console.error('[MiniCart]', ...args);
-        }
-    }
-
-    /**
-     * Obtém o nonce da API do Store
-     */
     function getNonce() {
         return window.wc?.storeApiNonce || window.gstoreMiniCart?.storeApiNonce || null;
-    }
-
-    /**
-     * Obtém a URL do endpoint da API do carrinho
-     */
-    function getCartAPIUrl() {
-        return window.gstoreMiniCart?.cartEndpoint || 
-               window.location.origin + '/wp-json/wc/store/v1/cart';
-    }
-
-    /**
-     * Verifica se o store do WordPress está disponível
-     */
-    function isStoreAvailable() {
-        return !!(window.wp?.data?.dispatch?.('wc/store/cart'));
     }
 
     /**
@@ -101,9 +69,7 @@
         const counterEl =
             document.querySelector('.Gstore-cart-count') ||
             document.querySelector('.wc-block-mini-cart__badge');
-        if (!counterEl) {
-            return null;
-        }
+        if (!counterEl) return null;
         const value = parseInt(counterEl.textContent || '0', 10);
         return Number.isNaN(value) ? null : value;
     }
@@ -112,19 +78,12 @@
      * Extrai contagem de itens a partir dos fragments do WooCommerce
      */
     function getCountFromFragments(fragments) {
-        if (!fragments) {
-            return null;
-        }
-
+        if (!fragments) return null;
         const fragmentHtml =
             fragments['.Gstore-cart-count'] ||
             fragments['.wc-block-mini-cart__badge'] ||
             null;
-
-        if (!fragmentHtml) {
-            return null;
-        }
-
+        if (!fragmentHtml) return null;
         const wrapper = document.createElement('div');
         wrapper.innerHTML = fragmentHtml;
         const text = wrapper.textContent || '';
@@ -133,88 +92,18 @@
     }
 
     /**
-     * Atualiza o carrinho via API REST e sincroniza o store.
-     * SÓ deve ser chamado após ações explícitas do usuário (add/remove).
-     */
-    function refreshCart() {
-        return new Promise((resolve, reject) => {
-            const nonce = getNonce();
-            const apiUrl = getCartAPIUrl();
-
-            if (!nonce) {
-                // #region agent log
-                fetch('http://127.0.0.1:7246/ingest/82530f36-f41c-4a9b-9141-c3c4bf366209',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'mini-cart-fix.js:refreshCart',message:'Nonce NAO disponivel - abortando refresh',data:{page:window.location.pathname},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix'})}).catch(()=>{});
-                // #endregion
-                reject(new Error('Nonce não disponível'));
-                return;
-            }
-
-            // #region agent log
-            var _preRefreshDomCount = getCurrentCountFromDom();
-            fetch('http://127.0.0.1:7246/ingest/82530f36-f41c-4a9b-9141-c3c4bf366209',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'mini-cart-fix.js:refreshCart:before',message:'Iniciando chamada Store API',data:{page:window.location.pathname,domCountBefore:_preRefreshDomCount,timeSinceUserAction:Date.now()-lastUserActionAt},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix'})}).catch(()=>{});
-            // #endregion
-
-            debugLog('Atualizando carrinho via API...');
-
-            fetch(apiUrl + '?_t=' + Date.now(), {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-WC-Store-API-Nonce': nonce,
-                    'Cache-Control': 'no-cache'
-                },
-                credentials: 'same-origin',
-                cache: 'no-store'
-            })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error(`API retornou ${response.status}`);
-                }
-                return response.json();
-            })
-            .then(cartData => {
-                debugLog('Dados do carrinho recebidos:', cartData);
-
-                var newCount = cartData.items_count || 0;
-
-                // #region agent log
-                fetch('http://127.0.0.1:7246/ingest/82530f36-f41c-4a9b-9141-c3c4bf366209',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'mini-cart-fix.js:refreshCart:data',message:'Dados do carrinho processados',data:{page:window.location.pathname,itemsCount:newCount,items:(cartData.items||[]).map(function(i){return{id:i.id,name:i.name,qty:i.quantity}}),domCountBefore:_preRefreshDomCount,willSyncTo:newCount},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix'})}).catch(()=>{});
-                // #endregion
-
-                // Atualiza o store do WordPress se disponível
-                if (isStoreAvailable()) {
-                    try {
-                        const cartStore = window.wp.data.dispatch('wc/store/cart');
-                        cartStore.receiveCart(cartData);
-                        debugLog('Store atualizado com sucesso');
-                    } catch (e) {
-                        debugLog('Erro ao atualizar store:', e);
-                    }
-                }
-
-                // Sincroniza elementos do DOM
-                syncDOM(newCount);
-                
-                resolve(cartData);
-            })
-            .catch(error => {
-                // #region agent log
-                fetch('http://127.0.0.1:7246/ingest/82530f36-f41c-4a9b-9141-c3c4bf366209',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'mini-cart-fix.js:refreshCart:error',message:'ERRO na Store API',data:{page:window.location.pathname,error:String(error)},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix'})}).catch(()=>{});
-                // #endregion
-                errorLog('Erro ao atualizar carrinho:', error);
-                reject(error);
-            });
-        });
-    }
-
-    /**
-     * Sincroniza elementos do DOM com o contador do carrinho
+     * Sincroniza elementos do DOM com o contador do carrinho.
+     * Pausa o MutationObserver durante a atualização para evitar loop.
      */
     function syncDOM(count) {
         // #region agent log
         var _currentDomCount = getCurrentCountFromDom();
-        if(count !== _currentDomCount) { fetch('http://127.0.0.1:7246/ingest/82530f36-f41c-4a9b-9141-c3c4bf366209',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'mini-cart-fix.js:syncDOM',message:'syncDOM ALTERANDO contador',data:{page:window.location.pathname,oldCount:_currentDomCount,newCount:count},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix'})}).catch(()=>{}); }
+        if(count !== _currentDomCount) { fetch('http://127.0.0.1:7246/ingest/82530f36-f41c-4a9b-9141-c3c4bf366209',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'mini-cart-fix.js:syncDOM',message:'syncDOM ALTERANDO contador',data:{page:window.location.pathname,oldCount:_currentDomCount,newCount:count},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix-v3'})}).catch(()=>{}); }
         // #endregion
+
+        // Pausa observer para evitar loop
+        observerPaused = true;
+
         const badges = document.querySelectorAll('.wc-block-mini-cart__badge');
         badges.forEach(badge => {
             badge.textContent = count.toString();
@@ -235,54 +124,81 @@
         
         // Persiste no localStorage para manter entre navegações
         saveCartCount(count);
+
+        // Re-ativa observer após pequeno delay (para que mutações do syncDOM não disparem)
+        setTimeout(function() { observerPaused = false; }, 100);
     }
 
     /**
-     * Função principal de refresh com debounce.
-     * SÓ deve ser chamada após ações do usuário, NUNCA automaticamente no page load.
+     * MutationObserver: protege badges contra re-renders externos.
+     * 
+     * O WC Blocks mini-cart é um componente React que re-renderiza o badge
+     * baseado no data store (que tem a sessão errada → 0 itens).
+     * O WC fragment system também pode substituir .Gstore-cart-count com HTML
+     * do servidor (que tem a sessão errada → 0 itens).
+     * 
+     * Este observer detecta quando o badge é alterado para 0 por código externo
+     * e imediatamente restaura o valor do localStorage.
      */
-    function refreshMiniCart() {
-        if (!getNonce()) {
-            return Promise.resolve();
-        }
+    function startBadgeProtection() {
+        if (badgeObserver) return; // Já está observando
 
-        // Limpa timer anterior
-        if (refreshTimer) {
-            clearTimeout(refreshTimer);
-        }
+        var savedCount = getSavedCartCount();
+        if (savedCount === null || savedCount <= 0) return; // Nada para proteger
 
-        // Se já está atualizando, agenda para depois
-        if (isRefreshing) {
-            refreshTimer = setTimeout(() => refreshMiniCart(), CONFIG.debounceDelay);
-            return Promise.resolve();
-        }
-
-        // Debounce
-        return new Promise((resolve) => {
-            refreshTimer = setTimeout(() => {
-                refreshTimer = null;
-                isRefreshing = true;
-
-                refreshCart()
-                    .then(data => {
-                        isRefreshing = false;
-                        resolve(data);
-                    })
-                    .catch(error => {
-                        isRefreshing = false;
-                        errorLog('Falha ao atualizar mini cart:', error);
-                        resolve(null);
-                    });
-            }, CONFIG.debounceDelay);
+        // Seleciona todos os containers que contêm badges
+        var targets = [];
+        
+        // Observa o container do mini-cart block (para capturar re-renders do React)
+        var miniCartWrapper = document.querySelector('.wc-block-mini-cart');
+        if (miniCartWrapper) targets.push(miniCartWrapper);
+        
+        // Observa badges individuais
+        document.querySelectorAll('.Gstore-cart-count, .wc-block-mini-cart__badge').forEach(function(el) {
+            targets.push(el);
         });
+
+        // Observa o header inteiro como fallback (para capturar substituições de fragmentos)
+        var header = document.querySelector('header') || document.querySelector('.site-header') || document.querySelector('#masthead');
+        if (header) targets.push(header);
+
+        if (targets.length === 0) return;
+
+        badgeObserver = new MutationObserver(function(mutations) {
+            if (observerPaused) return;
+            
+            var currentSaved = getSavedCartCount();
+            if (currentSaved === null || currentSaved <= 0) return;
+            
+            var currentDom = getCurrentCountFromDom();
+            
+            // Se o DOM foi alterado para 0 (ou null) mas localStorage tem itens, restaura
+            if ((currentDom === 0 || currentDom === null) && currentSaved > 0) {
+                // #region agent log
+                fetch('http://127.0.0.1:7246/ingest/82530f36-f41c-4a9b-9141-c3c4bf366209',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'mini-cart-fix.js:observer',message:'Badge foi zerado externamente - RESTAURANDO',data:{page:window.location.pathname,currentDom:currentDom,savedCount:currentSaved,mutationType:mutations[0]?.type,mutationTarget:mutations[0]?.target?.className||mutations[0]?.target?.nodeName},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix-v3'})}).catch(()=>{});
+                // #endregion
+                syncDOM(currentSaved);
+            }
+        });
+
+        var observerConfig = { 
+            childList: true, 
+            subtree: true, 
+            characterData: true 
+        };
+
+        targets.forEach(function(target) {
+            try {
+                badgeObserver.observe(target, observerConfig);
+            } catch(e) {}
+        });
+
+        debugLog('Badge protection ativa para', targets.length, 'alvos');
     }
 
     /**
      * Handler para evento added_to_cart.
-     * 
-     * Usa SEMPRE os fragments do WooCommerce para atualizar o contador.
-     * Os fragments são confiáveis porque vêm do AJAX add-to-cart que usa
-     * a sessão WC correta. A Store API pode ter uma sessão diferente.
+     * Usa SEMPRE os fragments do WC (sessão correta) para atualizar o contador.
      */
     function handleAddedToCart(event, fragments, cart_hash) {
         debugLog('Produto adicionado ao carrinho');
@@ -291,18 +207,18 @@
 
         // #region agent log
         var _fragmentCount = getCountFromFragments(fragments);
-        fetch('http://127.0.0.1:7246/ingest/82530f36-f41c-4a9b-9141-c3c4bf366209',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'mini-cart-fix.js:handleAddedToCart',message:'added_to_cart disparado',data:{page:window.location.pathname,isSingleProduct:document.body.classList.contains('single-product'),fragmentCount:_fragmentCount,cartHash:cart_hash||'none',domCount:getCurrentCountFromDom()},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix'})}).catch(()=>{});
+        fetch('http://127.0.0.1:7246/ingest/82530f36-f41c-4a9b-9141-c3c4bf366209',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'mini-cart-fix.js:handleAddedToCart',message:'added_to_cart disparado',data:{page:window.location.pathname,fragmentCount:_fragmentCount,domCount:getCurrentCountFromDom()},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix-v3'})}).catch(()=>{});
         // #endregion
 
-        // Sempre usar fragments para o contador - são confiáveis (mesma sessão WC)
+        // Sempre usar fragments para o contador - são confiáveis (mesma sessão WC AJAX)
         const fragmentCount = getCountFromFragments(fragments);
         if (fragmentCount !== null) {
             syncDOM(fragmentCount);
         }
 
-        // NÃO chamar refreshMiniCart() aqui - a Store API pode ter sessão diferente
-        // e sobrescrever o contador correto com dados vazios.
-        // Os fragments já atualizaram o DOM corretamente.
+        // Reinicia proteção com o novo count
+        if (badgeObserver) { badgeObserver.disconnect(); badgeObserver = null; }
+        setTimeout(startBadgeProtection, 500);
     }
 
     /**
@@ -312,60 +228,63 @@
         debugLog('Produto removido do carrinho');
         lastUserActionAt = Date.now();
 
-        // Usar fragments se disponíveis
         var fragmentCount = getCountFromFragments(fragments);
         if (fragmentCount !== null) {
             syncDOM(fragmentCount);
         }
 
-        // No contexto de remoção (página do carrinho), refresh pode ser seguro
-        // pois a sessão tende a estar correta nesse ponto
-        refreshMiniCart();
+        // Reinicia proteção com o novo count
+        if (badgeObserver) { badgeObserver.disconnect(); badgeObserver = null; }
+        setTimeout(startBadgeProtection, 500);
     }
 
     /**
      * Handler para evento wc_fragments_refreshed.
-     * 
-     * CORREÇÃO: Não dispara mais refreshMiniCart() automaticamente.
-     * O refresh dos fragments pelo WooCommerce já atualiza o DOM via HTML.
-     * Chamar a Store API aqui causava sobrescrita com dados de sessão errada.
+     * Quando WC atualiza fragments, ele pode substituir .Gstore-cart-count
+     * com HTML do servidor que tem sessão errada (0 itens).
+     * Precisamos re-aplicar o localStorage count.
      */
     function handleFragmentsRefreshed() {
         debugLog('Fragmentos atualizados');
 
+        var domCount = getCurrentCountFromDom();
+        var savedCount = getSavedCartCount();
+
         // #region agent log
-        fetch('http://127.0.0.1:7246/ingest/82530f36-f41c-4a9b-9141-c3c4bf366209',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'mini-cart-fix.js:handleFragmentsRefreshed',message:'wc_fragments_refreshed disparado - NAO chamando refreshMiniCart',data:{page:window.location.pathname,domCartCount:getCurrentCountFromDom()},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix'})}).catch(()=>{});
+        fetch('http://127.0.0.1:7246/ingest/82530f36-f41c-4a9b-9141-c3c4bf366209',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'mini-cart-fix.js:handleFragmentsRefreshed',message:'wc_fragments_refreshed - verificando se precisa restaurar',data:{page:window.location.pathname,domCount:domCount,savedCount:savedCount,willRestore:(domCount===0||domCount===null)&&savedCount>0},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix-v3'})}).catch(()=>{});
         // #endregion
 
-        // NÃO chamar refreshMiniCart() aqui.
-        // Os fragments do WC já atualizaram os elementos do DOM.
-        // A Store API pode ter sessão diferente e causar regressão.
+        // Se fragments zeraram o badge mas localStorage tem itens, restaura
+        if ((domCount === 0 || domCount === null) && savedCount !== null && savedCount > 0) {
+            syncDOM(savedCount);
+        }
     }
 
     /**
      * Inicializa os event listeners
      */
     function initEventListeners() {
-        // Eventos principais do WooCommerce
         $(document.body).on('added_to_cart', handleAddedToCart);
         $(document.body).on('removed_from_cart', handleRemovedFromCart);
         $(document.body).on('wc_fragments_refreshed', handleFragmentsRefreshed);
         
-        // Eventos adicionais - só dispara refresh em contextos de ação do usuário
-        $(document.body).on('wc_cart_button_updated', function() {
-            lastUserActionAt = Date.now();
-            refreshMiniCart();
-        });
+        // NÃO usar wc_cart_button_updated - ele disparava refreshMiniCart()
+        // que chamava a Store API com sessão errada e sobrescrevia o badge.
+        
         $(document.body).on('updated_wc_div', function() {
-            // updated_wc_div acontece na página do carrinho após update - sessão correta
             if (document.body.classList.contains('woocommerce-cart')) {
                 lastUserActionAt = Date.now();
-                refreshMiniCart();
+                // Na página do carrinho a sessão está correta, podemos ler fragments
+                var domCount = getCurrentCountFromDom();
+                if (domCount !== null) saveCartCount(domCount);
             }
         });
-        $(document.body).on('wc_cart_emptied', () => {
+
+        $(document.body).on('wc_cart_emptied', function() {
             lastUserActionAt = Date.now();
             syncDOM(0);
+            // Para a proteção (carrinho realmente está vazio)
+            if (badgeObserver) { badgeObserver.disconnect(); badgeObserver = null; }
         });
     }
 
@@ -373,23 +292,17 @@
      * Inicialização
      */
     function init() {
-        debugLog('Inicializando Mini Cart Sync...');
+        debugLog('Inicializando Mini Cart Sync v3...');
+
+        var _phpSession = window.__gstoreDebugSession || {};
 
         // #region agent log
-        var _phpSession = window.__gstoreDebugSession || {};
-        fetch('http://127.0.0.1:7246/ingest/82530f36-f41c-4a9b-9141-c3c4bf366209',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'mini-cart-fix.js:init',message:'MiniCart init (POST-FIX) - SEM refresh automatico',data:{page:window.location.pathname,domCartCount:getCurrentCountFromDom(),phpCartCount:_phpSession.cart_count_php,phpSessionId:_phpSession.php_session_id||'N/A',sessionCookie:_phpSession.session_cookie,cookies:document.cookie.split(';').map(c=>c.trim().split('=')[0]).filter(c=>c.includes('woocommerce')||c.includes('wp_woocommerce')||c.includes('cart')||c.includes('session')).join(',')},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix'})}).catch(()=>{});
+        fetch('http://127.0.0.1:7246/ingest/82530f36-f41c-4a9b-9141-c3c4bf366209',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'mini-cart-fix.js:init',message:'MiniCart init v3 - com MutationObserver',data:{page:window.location.pathname,domCartCount:getCurrentCountFromDom(),phpCartCount:_phpSession.cart_count_php,phpSessionId:_phpSession.php_session_id||'N/A',sessionCookie:_phpSession.session_cookie,savedCount:getSavedCartCount(),cookies:document.cookie.split(';').map(c=>c.trim().split('=')[0]).filter(c=>c.includes('woocommerce')||c.includes('wp_woocommerce')||c.includes('cart')||c.includes('session')).join(',')},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix-v3'})}).catch(()=>{});
         // #endregion
 
         // Inicializa listeners
         initEventListeners();
 
-        // CORREÇÃO: NÃO fazer refresh automático da Store API no carregamento.
-        // O refresh automático via Store API causava o bug porque:
-        // 1. A Store API usa uma sessão que pode ser diferente da sessão WC
-        //    (especialmente com LiteSpeed Cache na Hostinger)
-        // 2. Retornava carrinho vazio → syncDOM(0) → apagava itens do usuário
-        // 
-        // Em vez disso, usamos localStorage para manter o contador entre páginas.
         var domCount = getCurrentCountFromDom();
         var savedCount = getSavedCartCount();
         var phpCount = _phpSession.cart_count_php;
@@ -399,17 +312,22 @@
             if (domCount !== phpCount) {
                 syncDOM(phpCount);
             }
+            // Atualiza localStorage com valor do PHP
+            saveCartCount(phpCount);
         }
         // Se o PHP mostra 0 mas localStorage tem itens, usa localStorage
-        // (PHP provavelmente tem sessão errada por causa do cache)
         else if (savedCount !== null && savedCount > 0 && (domCount === 0 || domCount === null)) {
             // #region agent log
-            fetch('http://127.0.0.1:7246/ingest/82530f36-f41c-4a9b-9141-c3c4bf366209',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'mini-cart-fix.js:init:restore',message:'Restaurando count de localStorage (PHP tem sessao errada)',data:{page:window.location.pathname,domCount:domCount,savedCount:savedCount,phpCount:phpCount},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix'})}).catch(()=>{});
+            fetch('http://127.0.0.1:7246/ingest/82530f36-f41c-4a9b-9141-c3c4bf366209',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'mini-cart-fix.js:init:restore',message:'Restaurando count de localStorage',data:{page:window.location.pathname,domCount:domCount,savedCount:savedCount,phpCount:phpCount},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix-v3'})}).catch(()=>{});
             // #endregion
             syncDOM(savedCount);
         }
 
-        debugLog('Mini Cart Sync inicializado (sem refresh automático)');
+        // Inicia proteção do badge contra re-renders externos (WC Blocks React, fragments)
+        // Delay para garantir que nosso syncDOM já rodou
+        setTimeout(startBadgeProtection, 300);
+
+        debugLog('Mini Cart Sync v3 inicializado');
     }
 
     // Inicializa quando o DOM estiver pronto
@@ -421,7 +339,6 @@
         init();
     }
 
-    // Expõe função global para debug
-    window.gstoreRefreshMiniCart = refreshMiniCart;
+    window.gstoreRefreshMiniCart = function() { debugLog('refreshMiniCart desabilitado para proteger sessão'); };
 
 })(jQuery);
