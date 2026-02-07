@@ -1463,21 +1463,35 @@ add_action( 'woocommerce_cart_item_removed', function() {
  *     shutdown:19 impede save_data via Reflection + remove_action
  */
 
-// PASSO 1: Detecção precoce (plugins_loaded priority 0)
-add_action( 'plugins_loaded', function() {
-	$has_header = isset( $_SERVER['HTTP_X_GSTORE_READONLY'] );
-	$is_rest_get = (
+// PASSO 1: Detecção IMEDIATA (executa no load do functions.php, SEM hook)
+// IMPORTANTE: plugins_loaded já disparou antes do tema carregar, então não pode usar hook.
+if ( ! defined( 'GSTORE_READONLY_REQUEST' ) ) {
+	$_gstore_has_header = isset( $_SERVER['HTTP_X_GSTORE_READONLY'] );
+	$_gstore_is_rest_get = (
 		isset( $_SERVER['REQUEST_URI'] ) &&
 		false !== strpos( $_SERVER['REQUEST_URI'], '/wp-json/' ) &&
 		isset( $_SERVER['REQUEST_METHOD'] ) &&
 		'GET' === $_SERVER['REQUEST_METHOD']
 	);
-	if ( $has_header || $is_rest_get ) {
+	if ( $_gstore_has_header || $_gstore_is_rest_get ) {
 		define( 'GSTORE_READONLY_REQUEST', true );
 	}
-}, 0 );
+	unset( $_gstore_has_header, $_gstore_is_rest_get );
+}
 
-// PASSO 2: Impede save_data – shutdown priority 19 (WC usa 20)
+// PASSO 2A: Remove maybe_set_cart_cookies ANTES que ele rode (shutdown:-1, WC usa 0)
+add_action( 'shutdown', function() {
+	if ( ! defined( 'GSTORE_READONLY_REQUEST' ) || ! GSTORE_READONLY_REQUEST ) {
+		return;
+	}
+	if ( ! function_exists( 'WC' ) || ! WC()->cart || ! isset( WC()->cart->session ) ) {
+		return;
+	}
+	// Remove maybe_set_cart_cookies que WC_Cart_Session registra em shutdown:0
+	remove_action( 'shutdown', array( WC()->cart->session, 'maybe_set_cart_cookies' ), 0 );
+}, -1 );
+
+// PASSO 2B: Impede save_data – shutdown priority 19 (WC usa 20)
 add_action( 'shutdown', function() {
 	if ( ! defined( 'GSTORE_READONLY_REQUEST' ) || ! GSTORE_READONLY_REQUEST ) {
 		return;
