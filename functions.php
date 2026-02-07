@@ -64,6 +64,22 @@ function gstore_after_setup_theme() {
 add_action( 'after_setup_theme', 'gstore_after_setup_theme' );
 
 /**
+ * Retorna o ID do produto a partir de um objeto WC_Product.
+ *
+ * @param WC_Product|int|null $product Objeto do produto ou ID.
+ * @return int ID do produto, ou 0 se inválido.
+ */
+function gstore_get_product_id( $product ) {
+	if ( $product instanceof WC_Product ) {
+		return (int) $product->get_id();
+	}
+	if ( is_numeric( $product ) ) {
+		return (int) $product;
+	}
+	return 0;
+}
+
+/**
  * Desativa o crop das imagens de produto do WooCommerce.
  * Garante que as miniaturas mantenham a proporção original.
  */
