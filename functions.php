@@ -1454,53 +1454,73 @@ add_action( 'woocommerce_cart_item_removed', function() {
 }, 99 );
 
 /**
- * CORREÇÃO CRÍTICA: Impede que a Store API (REST GET) sobrescreva o carrinho com dados vazios.
+ * CORREÇÃO CRÍTICA: Protege sessão e cookies contra requests REST API GET.
  * 
- * PROBLEMA: O WC Blocks mini-cart faz auto-fetch GET /wp-json/wc/store/v1/cart em cada página.
- * Se a sessão não está perfeitamente sincronizada, esse GET retorna carrinho vazio.
- * No shutdown do PHP, o WC salva a sessão com o carrinho vazio, DESTRUINDO os itens reais.
+ * PROBLEMA COMPROVADO POR LOGS:
+ * O WC Blocks cart.js faz GET /wp-json/wc/store/v1/cart em CADA página.
+ * Esse request causa dois problemas:
+ * 1. maybe_set_cart_cookies() roda e DELETA cookies quando cart=0 (sessão errada)
+ * 2. No shutdown, WC salva a sessão com carrinho vazio, destruindo itens reais
  * 
- * FIX: Durante requests REST API GET, marca a sessão como "não-dirty" no shutdown,
- * impedindo que dados de leitura sobrescrevam dados de escrita.
+ * FIX DUPLO:
+ * A) No wp_loaded prioridade 1: remove maybe_set_cart_cookies para REST GET
+ * B) No rest_api_init: remove save_data do shutdown para REST GET
  */
-add_action( 'rest_api_init', function() {
-	// Só proteger requests GET (leitura) - POST/PUT/DELETE precisam salvar
-	if ( 'GET' !== $_SERVER['REQUEST_METHOD'] ) {
+
+// FIX A: Impede maybe_set_cart_cookies de deletar cookies durante REST GET
+add_action( 'wp_loaded', function() {
+	$request_uri = isset( $_SERVER['REQUEST_URI'] ) ? $_SERVER['REQUEST_URI'] : '';
+	$method      = isset( $_SERVER['REQUEST_METHOD'] ) ? $_SERVER['REQUEST_METHOD'] : '';
+	
+	// Detecta se é um request REST API GET (Store API auto-fetch)
+	$is_rest_get = ( false !== strpos( $request_uri, '/wp-json/' ) && 'GET' === $method );
+	if ( ! $is_rest_get ) {
 		return;
 	}
+	
+	// Remove maybe_set_cart_cookies que roda em wp_loaded prioridade 99
+	// Isso impede que o REST GET delete cookies woocommerce_items_in_cart
+	if ( function_exists( 'WC' ) && WC()->cart && isset( WC()->cart->session ) && is_object( WC()->cart->session ) ) {
+		remove_action( 'wp_loaded', array( WC()->cart->session, 'maybe_set_cart_cookies' ), 99 );
+	}
+}, 1 ); // Prioridade 1, bem antes da 99
 
-	// Hook no shutdown ANTES do WC salvar a sessão (prioridade 0 vs WC prioridade 20)
+// FIX B: Impede WC de salvar sessão com dados vazios durante REST GET
+add_action( 'rest_api_init', function() {
+	if ( 'GET' !== ( $_SERVER['REQUEST_METHOD'] ?? '' ) ) {
+		return;
+	}
+	
+	// Remove o save_data do WC que roda no shutdown prioridade 20
+	if ( function_exists( 'WC' ) && WC()->session ) {
+		remove_action( 'shutdown', array( WC()->session, 'save_data' ), 20 );
+	}
+
+	// Fallback: Se o remove_action não funcionou, usa Reflection
 	add_action( 'shutdown', function() {
 		if ( ! class_exists( 'WooCommerce' ) || ! WC()->session ) {
 			return;
 		}
-		
 		try {
 			$ref = new ReflectionProperty( get_class( WC()->session ), '_dirty' );
 			$ref->setAccessible( true );
 			$ref->setValue( WC()->session, false );
-		} catch ( Exception $e ) {
-			// Fallback: Se reflection falha, nada a fazer
-		}
+		} catch ( Exception $e ) {}
 	}, 0 );
 } );
 
 /**
- * CORREÇÃO: Quando WC deleta cookies de carrinho por inconsistência de sessão,
- * re-seta os cookies imediatamente para evitar perda entre páginas.
+ * CORREÇÃO: Impede WC de deletar cookies de carrinho em QUALQUER contexto
+ * quando o browser tem woocommerce_items_in_cart mas PHP vê cart=0.
  * 
- * O WC chama maybe_set_cart_cookies(false) quando cart=0, que DELETA cookies.
- * Mas se o browser TINHA woocommerce_items_in_cart, a inconsistência é temporária
- * (sessão errada no PHP). Re-setamos para preservar a indicação de carrinho.
+ * Funciona como rede de segurança para page renders normais (não REST).
  */
 add_action( 'woocommerce_set_cart_cookies', function( $set ) {
 	if ( $set ) {
-		return; // Cookies sendo SETADOS, OK
+		return;
 	}
-	
-	// WC acabou de DELETAR os cookies. Se o browser tinha o cookie, re-seta.
+	// WC acabou de DELETAR os cookies. Se o browser TINHA o cookie, re-seta.
 	if ( isset( $_COOKIE['woocommerce_items_in_cart'] ) && ! empty( $_COOKIE['woocommerce_items_in_cart'] ) ) {
-		// Re-seta com path='/' para garantir persistência
 		setcookie( 'woocommerce_items_in_cart', '1', 0, '/', '', is_ssl(), false );
 	}
 }, 99 );
