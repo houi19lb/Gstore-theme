@@ -1,8 +1,14 @@
 /**
- * Mini Cart Sync - Versão Simplificada
+ * Mini Cart Sync - Versão Corrigida
  * 
  * Sincroniza o Mini Cart Block do WooCommerce com eventos de adição/remoção de produtos.
- * Abordagem simplificada usando apenas a API REST do WooCommerce Blocks.
+ * 
+ * CORREÇÃO: Não faz refresh automático via Store API no carregamento da página.
+ * A Store API pode usar uma sessão diferente da sessão WC (especialmente em
+ * ambientes com cache como LiteSpeed/Hostinger), causando a exibição de
+ * carrinho vazio mesmo quando há itens. Agora confiamos nos fragments do WC
+ * (que usam AJAX com a sessão correta) e só chamamos a Store API em resposta
+ * a ações explícitas do usuário.
  */
 
 (function($) {
@@ -19,6 +25,34 @@
     let refreshTimer = null;
     let isRefreshing = false;
     let lastAddToCartAt = 0;
+    let lastUserActionAt = 0;
+    
+    // Chave de localStorage para persistir contagem entre páginas
+    const CART_COUNT_KEY = 'gstore_cart_count';
+    const CART_COUNT_TS_KEY = 'gstore_cart_count_ts';
+    
+    /**
+     * Salva contagem do carrinho no localStorage
+     */
+    function saveCartCount(count) {
+        try {
+            localStorage.setItem(CART_COUNT_KEY, String(count));
+            localStorage.setItem(CART_COUNT_TS_KEY, String(Date.now()));
+        } catch(e) {}
+    }
+    
+    /**
+     * Recupera contagem salva do localStorage (válida por 30 minutos)
+     */
+    function getSavedCartCount() {
+        try {
+            var count = parseInt(localStorage.getItem(CART_COUNT_KEY) || '0', 10);
+            var ts = parseInt(localStorage.getItem(CART_COUNT_TS_KEY) || '0', 10);
+            // Válido por 30 minutos
+            if (Date.now() - ts > 30 * 60 * 1000) return null;
+            return Number.isNaN(count) ? null : count;
+        } catch(e) { return null; }
+    }
 
     /**
      * Log de debug
@@ -99,7 +133,8 @@
     }
 
     /**
-     * Atualiza o carrinho via API REST e sincroniza o store
+     * Atualiza o carrinho via API REST e sincroniza o store.
+     * SÓ deve ser chamado após ações explícitas do usuário (add/remove).
      */
     function refreshCart() {
         return new Promise((resolve, reject) => {
@@ -108,7 +143,7 @@
 
             if (!nonce) {
                 // #region agent log
-                fetch('http://127.0.0.1:7246/ingest/82530f36-f41c-4a9b-9141-c3c4bf366209',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'mini-cart-fix.js:refreshCart',message:'Nonce NAO disponivel - abortando refresh',data:{page:window.location.pathname,nonceWc:!!window.wc?.storeApiNonce,nonceGstore:!!window.gstoreMiniCart?.storeApiNonce},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'B'})}).catch(()=>{});
+                fetch('http://127.0.0.1:7246/ingest/82530f36-f41c-4a9b-9141-c3c4bf366209',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'mini-cart-fix.js:refreshCart',message:'Nonce NAO disponivel - abortando refresh',data:{page:window.location.pathname},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix'})}).catch(()=>{});
                 // #endregion
                 reject(new Error('Nonce não disponível'));
                 return;
@@ -116,7 +151,7 @@
 
             // #region agent log
             var _preRefreshDomCount = getCurrentCountFromDom();
-            fetch('http://127.0.0.1:7246/ingest/82530f36-f41c-4a9b-9141-c3c4bf366209',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'mini-cart-fix.js:refreshCart:before',message:'Iniciando chamada Store API',data:{page:window.location.pathname,apiUrl:apiUrl,noncePrefix:String(nonce).substring(0,8),domCountBefore:_preRefreshDomCount,trigger:new Error().stack?.split('\n').slice(1,4).map(s=>s.trim()).join(' | ')},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'B,D,E'})}).catch(()=>{});
+            fetch('http://127.0.0.1:7246/ingest/82530f36-f41c-4a9b-9141-c3c4bf366209',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'mini-cart-fix.js:refreshCart:before',message:'Iniciando chamada Store API',data:{page:window.location.pathname,domCountBefore:_preRefreshDomCount,timeSinceUserAction:Date.now()-lastUserActionAt},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix'})}).catch(()=>{});
             // #endregion
 
             debugLog('Atualizando carrinho via API...');
@@ -132,9 +167,6 @@
                 cache: 'no-store'
             })
             .then(response => {
-                // #region agent log
-                fetch('http://127.0.0.1:7246/ingest/82530f36-f41c-4a9b-9141-c3c4bf366209',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'mini-cart-fix.js:refreshCart:response',message:'Resposta da Store API recebida',data:{page:window.location.pathname,status:response.status,ok:response.ok,nonceHeader:response.headers.get('X-WC-Store-API-Nonce')||'none',cacheHeader:response.headers.get('X-Cache')||response.headers.get('x-litespeed-cache')||'none'},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'B,D'})}).catch(()=>{});
-                // #endregion
                 if (!response.ok) {
                     throw new Error(`API retornou ${response.status}`);
                 }
@@ -143,8 +175,10 @@
             .then(cartData => {
                 debugLog('Dados do carrinho recebidos:', cartData);
 
+                var newCount = cartData.items_count || 0;
+
                 // #region agent log
-                fetch('http://127.0.0.1:7246/ingest/82530f36-f41c-4a9b-9141-c3c4bf366209',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'mini-cart-fix.js:refreshCart:data',message:'Dados do carrinho processados',data:{page:window.location.pathname,itemsCount:cartData.items_count,itemsTotal:cartData.totals?.total_items||'N/A',items:(cartData.items||[]).map(function(i){return{id:i.id,name:i.name,qty:i.quantity}}),domCountBefore:_preRefreshDomCount,willSyncTo:cartData.items_count||0},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'D,E'})}).catch(()=>{});
+                fetch('http://127.0.0.1:7246/ingest/82530f36-f41c-4a9b-9141-c3c4bf366209',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'mini-cart-fix.js:refreshCart:data',message:'Dados do carrinho processados',data:{page:window.location.pathname,itemsCount:newCount,items:(cartData.items||[]).map(function(i){return{id:i.id,name:i.name,qty:i.quantity}}),domCountBefore:_preRefreshDomCount,willSyncTo:newCount},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix'})}).catch(()=>{});
                 // #endregion
 
                 // Atualiza o store do WordPress se disponível
@@ -159,13 +193,13 @@
                 }
 
                 // Sincroniza elementos do DOM
-                syncDOM(cartData.items_count || 0);
+                syncDOM(newCount);
                 
                 resolve(cartData);
             })
             .catch(error => {
                 // #region agent log
-                fetch('http://127.0.0.1:7246/ingest/82530f36-f41c-4a9b-9141-c3c4bf366209',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'mini-cart-fix.js:refreshCart:error',message:'ERRO na Store API',data:{page:window.location.pathname,error:String(error),domCountBefore:_preRefreshDomCount},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'B,D'})}).catch(()=>{});
+                fetch('http://127.0.0.1:7246/ingest/82530f36-f41c-4a9b-9141-c3c4bf366209',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'mini-cart-fix.js:refreshCart:error',message:'ERRO na Store API',data:{page:window.location.pathname,error:String(error)},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix'})}).catch(()=>{});
                 // #endregion
                 errorLog('Erro ao atualizar carrinho:', error);
                 reject(error);
@@ -179,7 +213,7 @@
     function syncDOM(count) {
         // #region agent log
         var _currentDomCount = getCurrentCountFromDom();
-        if(count !== _currentDomCount) { fetch('http://127.0.0.1:7246/ingest/82530f36-f41c-4a9b-9141-c3c4bf366209',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'mini-cart-fix.js:syncDOM',message:'syncDOM ALTERANDO contador',data:{page:window.location.pathname,oldCount:_currentDomCount,newCount:count,caller:new Error().stack?.split('\n').slice(1,3).map(s=>s.trim()).join(' | ')},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'E'})}).catch(()=>{}); }
+        if(count !== _currentDomCount) { fetch('http://127.0.0.1:7246/ingest/82530f36-f41c-4a9b-9141-c3c4bf366209',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'mini-cart-fix.js:syncDOM',message:'syncDOM ALTERANDO contador',data:{page:window.location.pathname,oldCount:_currentDomCount,newCount:count},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix'})}).catch(()=>{}); }
         // #endregion
         const badges = document.querySelectorAll('.wc-block-mini-cart__badge');
         badges.forEach(badge => {
@@ -198,10 +232,14 @@
                 counter.setAttribute('aria-label', ariaLabel.replace(/\d+/, count.toString()));
             }
         });
+        
+        // Persiste no localStorage para manter entre navegações
+        saveCartCount(count);
     }
 
     /**
-     * Função principal de refresh com debounce
+     * Função principal de refresh com debounce.
+     * SÓ deve ser chamada após ações do usuário, NUNCA automaticamente no page load.
      */
     function refreshMiniCart() {
         if (!getNonce()) {
@@ -240,25 +278,31 @@
     }
 
     /**
-     * Handler para evento added_to_cart
+     * Handler para evento added_to_cart.
+     * 
+     * Usa SEMPRE os fragments do WooCommerce para atualizar o contador.
+     * Os fragments são confiáveis porque vêm do AJAX add-to-cart que usa
+     * a sessão WC correta. A Store API pode ter uma sessão diferente.
      */
     function handleAddedToCart(event, fragments, cart_hash) {
         debugLog('Produto adicionado ao carrinho');
         lastAddToCartAt = Date.now();
+        lastUserActionAt = Date.now();
 
         // #region agent log
-        fetch('http://127.0.0.1:7246/ingest/82530f36-f41c-4a9b-9141-c3c4bf366209',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'mini-cart-fix.js:handleAddedToCart',message:'added_to_cart disparado',data:{page:window.location.pathname,isSingleProduct:document.body.classList.contains('single-product'),fragmentCount:getCountFromFragments(fragments),cartHash:cart_hash||'none',domCount:getCurrentCountFromDom()},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'C'})}).catch(()=>{});
+        var _fragmentCount = getCountFromFragments(fragments);
+        fetch('http://127.0.0.1:7246/ingest/82530f36-f41c-4a9b-9141-c3c4bf366209',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'mini-cart-fix.js:handleAddedToCart',message:'added_to_cart disparado',data:{page:window.location.pathname,isSingleProduct:document.body.classList.contains('single-product'),fragmentCount:_fragmentCount,cartHash:cart_hash||'none',domCount:getCurrentCountFromDom()},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix'})}).catch(()=>{});
         // #endregion
 
-        if (document.body.classList.contains('single-product')) {
-            const fragmentCount = getCountFromFragments(fragments);
-            if (fragmentCount !== null) {
-                syncDOM(fragmentCount);
-            }
-            return;
+        // Sempre usar fragments para o contador - são confiáveis (mesma sessão WC)
+        const fragmentCount = getCountFromFragments(fragments);
+        if (fragmentCount !== null) {
+            syncDOM(fragmentCount);
         }
 
-        refreshMiniCart();
+        // NÃO chamar refreshMiniCart() aqui - a Store API pode ter sessão diferente
+        // e sobrescrever o contador correto com dados vazios.
+        // Os fragments já atualizaram o DOM corretamente.
     }
 
     /**
@@ -266,26 +310,36 @@
      */
     function handleRemovedFromCart(event, fragments, cart_hash) {
         debugLog('Produto removido do carrinho');
+        lastUserActionAt = Date.now();
+
+        // Usar fragments se disponíveis
+        var fragmentCount = getCountFromFragments(fragments);
+        if (fragmentCount !== null) {
+            syncDOM(fragmentCount);
+        }
+
+        // No contexto de remoção (página do carrinho), refresh pode ser seguro
+        // pois a sessão tende a estar correta nesse ponto
         refreshMiniCart();
     }
 
     /**
-     * Handler para evento wc_fragments_refreshed
+     * Handler para evento wc_fragments_refreshed.
+     * 
+     * CORREÇÃO: Não dispara mais refreshMiniCart() automaticamente.
+     * O refresh dos fragments pelo WooCommerce já atualiza o DOM via HTML.
+     * Chamar a Store API aqui causava sobrescrita com dados de sessão errada.
      */
     function handleFragmentsRefreshed() {
         debugLog('Fragmentos atualizados');
-        var _isSingleProduct = document.body.classList.contains('single-product');
-        var _elapsed = Date.now() - lastAddToCartAt;
-        var _willSkip = _isSingleProduct && _elapsed < 1500;
+
         // #region agent log
-        fetch('http://127.0.0.1:7246/ingest/82530f36-f41c-4a9b-9141-c3c4bf366209',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'mini-cart-fix.js:handleFragmentsRefreshed',message:'wc_fragments_refreshed disparado',data:{page:window.location.pathname,isSingleProduct:_isSingleProduct,elapsed:_elapsed,willSkip:_willSkip,willRefresh:!_willSkip,domCartCount:getCurrentCountFromDom()},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'C'})}).catch(()=>{});
+        fetch('http://127.0.0.1:7246/ingest/82530f36-f41c-4a9b-9141-c3c4bf366209',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'mini-cart-fix.js:handleFragmentsRefreshed',message:'wc_fragments_refreshed disparado - NAO chamando refreshMiniCart',data:{page:window.location.pathname,domCartCount:getCurrentCountFromDom()},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix'})}).catch(()=>{});
         // #endregion
-        if (_isSingleProduct) {
-            if (_elapsed < 1500) {
-                return;
-            }
-        }
-        refreshMiniCart();
+
+        // NÃO chamar refreshMiniCart() aqui.
+        // Os fragments do WC já atualizaram os elementos do DOM.
+        // A Store API pode ter sessão diferente e causar regressão.
     }
 
     /**
@@ -297,16 +351,22 @@
         $(document.body).on('removed_from_cart', handleRemovedFromCart);
         $(document.body).on('wc_fragments_refreshed', handleFragmentsRefreshed);
         
-        // Eventos adicionais
-        $(document.body).on('wc_cart_button_updated', refreshMiniCart);
-        $(document.body).on('updated_wc_div', refreshMiniCart);
-        $(document.body).on('wc_cart_emptied', () => {
-            syncDOM(0);
+        // Eventos adicionais - só dispara refresh em contextos de ação do usuário
+        $(document.body).on('wc_cart_button_updated', function() {
+            lastUserActionAt = Date.now();
             refreshMiniCart();
         });
-
-        // Monitora mudanças de quantidade
-        $(document.body).on('change', '.quantity input.qty', refreshMiniCart);
+        $(document.body).on('updated_wc_div', function() {
+            // updated_wc_div acontece na página do carrinho após update - sessão correta
+            if (document.body.classList.contains('woocommerce-cart')) {
+                lastUserActionAt = Date.now();
+                refreshMiniCart();
+            }
+        });
+        $(document.body).on('wc_cart_emptied', () => {
+            lastUserActionAt = Date.now();
+            syncDOM(0);
+        });
     }
 
     /**
@@ -317,27 +377,39 @@
 
         // #region agent log
         var _phpSession = window.__gstoreDebugSession || {};
-        fetch('http://127.0.0.1:7246/ingest/82530f36-f41c-4a9b-9141-c3c4bf366209',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'mini-cart-fix.js:init',message:'MiniCart init - page load',data:{page:window.location.pathname,bodyClasses:document.body.className.split(' ').filter(c=>c.includes('product')||c.includes('cart')||c.includes('checkout')||c.includes('shop')).join(' '),domCartCount:getCurrentCountFromDom(),storeAvailable:isStoreAvailable(),nonce:!!getNonce(),nonceSource:window.wc?.storeApiNonce?'wc.storeApiNonce':window.gstoreMiniCart?.storeApiNonce?'gstoreMiniCart':'none',cookies:document.cookie.split(';').map(c=>c.trim().split('=')[0]).filter(c=>c.includes('woocommerce')||c.includes('wp_woocommerce')||c.includes('cart')||c.includes('session')).join(','),phpSessionId:_phpSession.php_session_id||'N/A',phpCartCount:_phpSession.cart_count_php,phpCartItems:_phpSession.cart_items_php||[],buyNowActive:_phpSession.buy_now_active,savedCartExists:_phpSession.saved_cart_exists,savedCartCount:_phpSession.saved_cart_count,buyNowProduct:_phpSession.buy_now_product,sessionCookie:_phpSession.session_cookie,pageType:_phpSession.page_type,restoreWouldFire:_phpSession.restore_would_fire},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'A,D,F,G'})}).catch(()=>{});
+        fetch('http://127.0.0.1:7246/ingest/82530f36-f41c-4a9b-9141-c3c4bf366209',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'mini-cart-fix.js:init',message:'MiniCart init (POST-FIX) - SEM refresh automatico',data:{page:window.location.pathname,domCartCount:getCurrentCountFromDom(),phpCartCount:_phpSession.cart_count_php,phpSessionId:_phpSession.php_session_id||'N/A',sessionCookie:_phpSession.session_cookie,cookies:document.cookie.split(';').map(c=>c.trim().split('=')[0]).filter(c=>c.includes('woocommerce')||c.includes('wp_woocommerce')||c.includes('cart')||c.includes('session')).join(',')},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix'})}).catch(()=>{});
         // #endregion
 
         // Inicializa listeners
         initEventListeners();
 
-        // Aguarda o store estar disponível e faz refresh inicial
-        const checkStore = setInterval(() => {
-            if (isStoreAvailable() || document.querySelector('.wc-block-mini-cart')) {
-                clearInterval(checkStore);
-                debugLog('Store disponível, fazendo refresh inicial...');
-                setTimeout(() => refreshMiniCart(), 500);
+        // CORREÇÃO: NÃO fazer refresh automático da Store API no carregamento.
+        // O refresh automático via Store API causava o bug porque:
+        // 1. A Store API usa uma sessão que pode ser diferente da sessão WC
+        //    (especialmente com LiteSpeed Cache na Hostinger)
+        // 2. Retornava carrinho vazio → syncDOM(0) → apagava itens do usuário
+        // 
+        // Em vez disso, usamos localStorage para manter o contador entre páginas.
+        var domCount = getCurrentCountFromDom();
+        var savedCount = getSavedCartCount();
+        var phpCount = _phpSession.cart_count_php;
+        
+        // Se o PHP tem itens, confia no PHP (sessão correta)
+        if (typeof phpCount === 'number' && phpCount > 0) {
+            if (domCount !== phpCount) {
+                syncDOM(phpCount);
             }
-        }, 100);
+        }
+        // Se o PHP mostra 0 mas localStorage tem itens, usa localStorage
+        // (PHP provavelmente tem sessão errada por causa do cache)
+        else if (savedCount !== null && savedCount > 0 && (domCount === 0 || domCount === null)) {
+            // #region agent log
+            fetch('http://127.0.0.1:7246/ingest/82530f36-f41c-4a9b-9141-c3c4bf366209',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'mini-cart-fix.js:init:restore',message:'Restaurando count de localStorage (PHP tem sessao errada)',data:{page:window.location.pathname,domCount:domCount,savedCount:savedCount,phpCount:phpCount},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix'})}).catch(()=>{});
+            // #endregion
+            syncDOM(savedCount);
+        }
 
-        // Timeout de segurança
-        setTimeout(() => {
-            clearInterval(checkStore);
-        }, 10000);
-
-        debugLog('Mini Cart Sync inicializado');
+        debugLog('Mini Cart Sync inicializado (sem refresh automático)');
     }
 
     // Inicializa quando o DOM estiver pronto
