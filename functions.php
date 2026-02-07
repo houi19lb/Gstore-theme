@@ -1510,17 +1510,22 @@ add_action( 'woocommerce_cart_item_removed', function() {
 }, 99 );
 
 /**
- * PROTEÇÃO DO CARRINHO v4 – Header customizado + shutdown priority 19
+ * PROTEÇÃO DO CARRINHO v5 – NUCLEAR: Remove TODOS os Set-Cookie de REST GET
  *
- * O WC Blocks cart.js faz GET /wp-json/wc/store/v1/cart em cada página.
- * Isso pode salvar sessão com carrinho vazio e deletar cookies.
+ * CAUSA RAIZ COMPROVADA POR LOGS:
+ * O fetch() da Store API (GET /wp-json/wc/store/v1/cart) retorna Set-Cookie headers
+ * que DELETAM woocommerce_items_in_cart e sobrescrevem o cookie de sessão.
+ * O browser processa esses Set-Cookie mesmo sendo uma resposta de fetch().
+ * Na próxima página, sem cookies → sessão nova → carrinho vazio.
  *
- * v4: JS injeta X-Gstore-Readonly → PHP detecta em plugins_loaded →
- *     shutdown:19 impede save_data via Reflection + remove_action
+ * SOLUÇÃO v5 (simples e confiável):
+ * 1. Detectar REST GET (GSTORE_READONLY_REQUEST)
+ * 2. Bloquear TODOS os wc_setcookie() durante readonly
+ * 3. header_remove('Set-Cookie') antes de enviar a resposta
+ * 4. _dirty=false + remove save_data para proteger o banco
  */
 
-// PASSO 1: Detecção IMEDIATA (executa no load do functions.php, SEM hook)
-// IMPORTANTE: plugins_loaded já disparou antes do tema carregar, então não pode usar hook.
+// PASSO 1: Detecção IMEDIATA
 if ( ! defined( 'GSTORE_READONLY_REQUEST' ) ) {
 	$_gstore_has_header = isset( $_SERVER['HTTP_X_GSTORE_READONLY'] );
 	$_gstore_is_rest_get = (
@@ -1535,51 +1540,27 @@ if ( ! defined( 'GSTORE_READONLY_REQUEST' ) ) {
 	unset( $_gstore_has_header, $_gstore_is_rest_get );
 }
 
-// PASSO 2A: Remove maybe_set_cart_cookies. O hook 'wp' NÃO dispara em requests REST (WP lifecycle).
-// Por isso removemos em rest_pre_dispatch (roda no REST antes da rota) e em wp:98 (page requests).
-add_filter( 'rest_pre_dispatch', function( $result, $server, $request ) {
-	if ( $result !== null || false === strpos( $request->get_route(), '/wc/store' ) ) {
-		return $result;
+// PASSO 2: Bloquear TODOS os cookies WC durante readonly (wc_setcookie passará por aqui)
+add_filter( 'woocommerce_set_cookie_enabled', function( $enabled ) {
+	if ( defined( 'GSTORE_READONLY_REQUEST' ) && GSTORE_READONLY_REQUEST ) {
+		return false;
 	}
-	if ( ! defined( 'GSTORE_READONLY_REQUEST' ) || ! GSTORE_READONLY_REQUEST ) {
-		return $result;
-	}
-	if ( ! function_exists( 'WC' ) ) {
-		return $result;
-	}
-	// Força existência do cart para obter a sessão (cart é lazy-loaded)
-	if ( ! WC()->cart || ! isset( WC()->cart->session ) ) {
-		return $result;
-	}
-	$sess = WC()->cart->session;
-	remove_action( 'wp', array( $sess, 'maybe_set_cart_cookies' ), 99 );
-	remove_action( 'shutdown', array( $sess, 'maybe_set_cart_cookies' ), 0 );
-	return $result;
-}, 10, 3 );
+	return $enabled;
+}, 10, 1 );
 
-add_action( 'wp', function() {
-	if ( ! defined( 'GSTORE_READONLY_REQUEST' ) || ! GSTORE_READONLY_REQUEST ) {
-		return;
-	}
-	if ( ! function_exists( 'WC' ) || ! WC()->cart || ! isset( WC()->cart->session ) ) {
-		return;
-	}
-	$sess = WC()->cart->session;
-	remove_action( 'wp', array( $sess, 'maybe_set_cart_cookies' ), 99 );
-	remove_action( 'shutdown', array( $sess, 'maybe_set_cart_cookies' ), 0 );
-}, 98 );
-
+// PASSO 3: NUCLEAR – Remove TODOS os Set-Cookie headers da resposta REST GET
+// Roda ANTES de qualquer outro shutdown hook (priority -10)
+// Mesmo que algo bypasse wc_setcookie e use setcookie() direto, isso remove o header
 add_action( 'shutdown', function() {
 	if ( ! defined( 'GSTORE_READONLY_REQUEST' ) || ! GSTORE_READONLY_REQUEST ) {
 		return;
 	}
-	if ( ! function_exists( 'WC' ) || ! WC()->cart || ! isset( WC()->cart->session ) ) {
-		return;
+	if ( ! headers_sent() ) {
+		header_remove( 'Set-Cookie' );
 	}
-	remove_action( 'shutdown', array( WC()->cart->session, 'maybe_set_cart_cookies' ), 0 );
-}, -1 );
+}, -10 );
 
-// PASSO 2B: Impede save_data – shutdown priority 19 (WC usa 20)
+// PASSO 4: _dirty=false + remove save_data (protege o banco de dados)
 add_action( 'shutdown', function() {
 	if ( ! defined( 'GSTORE_READONLY_REQUEST' ) || ! GSTORE_READONLY_REQUEST ) {
 		return;
@@ -1587,35 +1568,29 @@ add_action( 'shutdown', function() {
 	if ( ! class_exists( 'WooCommerce' ) || ! WC()->session ) {
 		return;
 	}
-
 	$session = WC()->session;
 
 	// #region agent log – PHP shutdown debug
-	$debug_info = array( 'dirty_before' => 'unknown', 'class' => get_class( $session ), 'has_header' => isset( $_SERVER['HTTP_X_GSTORE_READONLY'] ) ? 'yes' : 'no' );
-	try {
-		$rc = new ReflectionClass( $session );
-		if ( $rc->hasProperty( '_dirty' ) ) {
-			$dp = $rc->getProperty( '_dirty' );
-			$dp->setAccessible( true );
-			$debug_info['dirty_before'] = $dp->getValue( $session ) ? 'true' : 'false';
-		}
-		if ( $rc->hasProperty( '_data' ) ) {
-			$ddp = $rc->getProperty( '_data' );
-			$ddp->setAccessible( true );
-			$raw_data = $ddp->getValue( $session );
-			$debug_info['data_keys'] = is_array( $raw_data ) ? implode( ',', array_keys( $raw_data ) ) : 'not-array';
-			if ( is_array( $raw_data ) && isset( $raw_data['cart'] ) ) {
-				$cart_arr = maybe_unserialize( $raw_data['cart'] );
-				$debug_info['cart_items_in_session'] = is_array( $cart_arr ) ? count( $cart_arr ) : 0;
-			}
-		}
-	} catch ( Exception $e ) { $debug_info['error'] = $e->getMessage(); }
+	$debug_info = array( 'has_header' => isset( $_SERVER['HTTP_X_GSTORE_READONLY'] ) ? 'yes' : 'no' );
 	$debug_info['uri'] = isset( $_SERVER['REQUEST_URI'] ) ? substr( $_SERVER['REQUEST_URI'], 0, 80 ) : 'N/A';
+	$debug_info['headers_sent'] = headers_sent() ? 'yes' : 'no';
+	$set_cookies = array();
+	foreach ( headers_list() as $h ) {
+		if ( stripos( $h, 'set-cookie' ) === 0 ) {
+			$set_cookies[] = substr( $h, 0, 80 );
+		}
+	}
+	$debug_info['set_cookies_remaining'] = empty( $set_cookies ) ? 'NONE' : implode( ' | ', $set_cookies );
+	$debug_info['session_cookie_in_request'] = 'no';
+	$sess_name = 'wp_woocommerce_session_' . ( defined( 'COOKIEHASH' ) ? COOKIEHASH : '' );
+	if ( ! empty( $sess_name ) && isset( $_COOKIE[ $sess_name ] ) ) {
+		$debug_info['session_cookie_in_request'] = 'YES:' . substr( $_COOKIE[ $sess_name ], 0, 20 );
+	}
 	$debug_info['cart_count'] = ( function_exists( 'WC' ) && WC()->cart ) ? WC()->cart->get_cart_contents_count() : -1;
-	@file_put_contents( ABSPATH . 'gstore-cart-debug.log', json_encode( array( 'location' => 'shutdown:19', 'message' => 'Readonly protection', 'data' => $debug_info, 'ts' => time() ) ) . "\n", FILE_APPEND );
+	@file_put_contents( ABSPATH . 'gstore-cart-debug.log', json_encode( array( 'loc' => 'shutdown:19', 'data' => $debug_info, 'ts' => time() ) ) . "\n", FILE_APPEND );
 	// #endregion
 
-	// Approach A: Reflection – _dirty = false
+	// _dirty = false via Reflection
 	try {
 		$ref = new ReflectionClass( $session );
 		if ( $ref->hasProperty( '_dirty' ) ) {
@@ -1625,19 +1600,9 @@ add_action( 'shutdown', function() {
 		}
 	} catch ( Exception $e ) {}
 
-	// Approach B: remove_action (estamos em shutdown, WC save_data está em 20)
+	// remove save_data
 	remove_action( 'shutdown', array( $session, 'save_data' ), 20 );
 }, 19 );
-
-// PASSO 3: Rede de segurança para cookies
-add_action( 'woocommerce_set_cart_cookies', function( $set ) {
-	if ( $set ) {
-		return;
-	}
-	if ( isset( $_COOKIE['woocommerce_items_in_cart'] ) && ! empty( $_COOKIE['woocommerce_items_in_cart'] ) ) {
-		setcookie( 'woocommerce_items_in_cart', '1', 0, '/', '', is_ssl(), false );
-	}
-}, 99 );
 
 // #region agent log – Debug headers na resposta REST Store API
 add_filter( 'rest_post_dispatch', function( $response, $server, $request ) {
@@ -1645,19 +1610,16 @@ add_filter( 'rest_post_dispatch', function( $response, $server, $request ) {
 		return $response;
 	}
 	$cart_count  = ( function_exists( 'WC' ) && WC()->cart ) ? WC()->cart->get_cart_contents_count() : -1;
-	$sess_class  = ( function_exists( 'WC' ) && WC()->session ) ? get_class( WC()->session ) : 'none';
 	$is_readonly = defined( 'GSTORE_READONLY_REQUEST' ) ? 'yes' : 'no';
-	$dirty       = 'unknown';
-	$cart_in_sess = -1;
 
+	// Verificar se o cookie de sessão foi enviado na request
+	$sess_name = 'wp_woocommerce_session_' . ( defined( 'COOKIEHASH' ) ? COOKIEHASH : '' );
+	$has_sess_cookie = ( ! empty( $sess_name ) && isset( $_COOKIE[ $sess_name ] ) ) ? 'yes' : 'no';
+
+	$cart_in_sess = -1;
 	if ( function_exists( 'WC' ) && WC()->session ) {
 		try {
 			$rc = new ReflectionClass( WC()->session );
-			if ( $rc->hasProperty( '_dirty' ) ) {
-				$p = $rc->getProperty( '_dirty' );
-				$p->setAccessible( true );
-				$dirty = $p->getValue( WC()->session ) ? 'true' : 'false';
-			}
 			if ( $rc->hasProperty( '_data' ) ) {
 				$p2 = $rc->getProperty( '_data' );
 				$p2->setAccessible( true );
@@ -1667,14 +1629,23 @@ add_filter( 'rest_post_dispatch', function( $response, $server, $request ) {
 					$cart_in_sess = is_array( $c ) ? count( $c ) : 0;
 				}
 			}
-		} catch ( Exception $e ) { $dirty = 'error'; }
+		} catch ( Exception $e ) {}
+	}
+
+	// Capturar Set-Cookie headers pendentes
+	$pending_cookies = array();
+	foreach ( headers_list() as $h ) {
+		if ( stripos( $h, 'set-cookie' ) === 0 ) {
+			$pending_cookies[] = substr( $h, 12, 60 );
+		}
 	}
 
 	$response->header( 'X-GD-CartCount', $cart_count );
-	$response->header( 'X-GD-SessClass', $sess_class );
 	$response->header( 'X-GD-Readonly', $is_readonly );
-	$response->header( 'X-GD-Dirty', $dirty );
+	$response->header( 'X-GD-HasSessCookie', $has_sess_cookie );
 	$response->header( 'X-GD-CartInSess', $cart_in_sess );
+	$response->header( 'X-GD-PendingCookies', empty( $pending_cookies ) ? 'NONE' : implode( '|', $pending_cookies ) );
+	$response->header( 'X-GD-CookiePath', defined( 'COOKIEPATH' ) ? COOKIEPATH : 'undefined' );
 	return $response;
 }, 10, 3 );
 // #endregion
