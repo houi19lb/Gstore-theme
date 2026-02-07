@@ -386,6 +386,43 @@
         setTimeout(reapplyStoredCountIfNeeded, 500);
         setTimeout(reapplyStoredCountIfNeeded, 1500);
         setTimeout(reapplyStoredCountIfNeeded, 3000);
+        setTimeout(reapplyStoredCountIfNeeded, 5000);
+        setTimeout(reapplyStoredCountIfNeeded, 8000);
+
+        // MutationObserver: quando o block (ou outro código) altera o badge para 0, restaurar a partir do sessionStorage
+        var lastRestoreAt = 0;
+        var observedBadges = new WeakSet();
+        function observeBadgeEl(el) {
+            if (observedBadges.has(el)) return;
+            observedBadges.add(el);
+            var mo = new MutationObserver(function () {
+                var domCount = getCurrentCountFromDom();
+                var stored = getLastStoredCount();
+                if ((domCount === 0 || domCount === null) && stored > 0 && (Date.now() - lastRestoreAt) > 300) {
+                    lastRestoreAt = Date.now();
+                    debugLog('MutationObserver: badge alterado para 0 com stored ' + stored + '; restaurado.');
+                    // #region agent log
+                    fetch('http://127.0.0.1:7246/ingest/82530f36-f41c-4a9b-9141-c3c4bf366209',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'mini-cart-fix.js:MutationObserver',message:'Badge sobrescrito para 0 - restaurado de sessionStorage',data:{page:window.location.pathname,storedCount:stored,domCountBefore:domCount},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'E'})}).catch(function(){});
+                    // #endregion
+                    syncDOM(stored);
+                }
+            });
+            mo.observe(el, { characterData: true, childList: true, subtree: true });
+        }
+        function attachBadgeObservers() {
+            document.querySelectorAll('.wc-block-mini-cart__badge, .Gstore-cart-count').forEach(observeBadgeEl);
+        }
+        setTimeout(attachBadgeObservers, 200);
+        var badgeObsInterval = setInterval(attachBadgeObservers, 800);
+        setTimeout(function () { clearInterval(badgeObsInterval); }, 15000);
+
+        // Reaplicar ao voltar à aba ou à página (bfcache)
+        document.addEventListener('visibilitychange', function () {
+            if (document.visibilityState === 'visible') reapplyStoredCountIfNeeded();
+        });
+        window.addEventListener('pageshow', function (ev) {
+            if (ev.persisted) reapplyStoredCountIfNeeded();
+        });
 
         // Aguarda o store estar disponível e faz refresh inicial (na home em cache, pular se já temos count salvo para evitar API 0).
         var isFront = (window.location.pathname === '/' || window.location.pathname === '') && !document.body.classList.contains('woocommerce-cart');
