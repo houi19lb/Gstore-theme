@@ -147,6 +147,26 @@
                 fetch('http://127.0.0.1:7246/ingest/82530f36-f41c-4a9b-9141-c3c4bf366209',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'mini-cart-fix.js:refreshCart:data',message:'Dados do carrinho processados',data:{page:window.location.pathname,itemsCount:cartData.items_count,itemsTotal:cartData.totals?.total_items||'N/A',items:(cartData.items||[]).map(function(i){return{id:i.id,name:i.name,qty:i.quantity}}),domCountBefore:_preRefreshDomCount,willSyncTo:cartData.items_count||0},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'D,E'})}).catch(()=>{});
                 // #endregion
 
+                var apiCount = cartData.items_count || 0;
+                // Mitigação cache: quando a API retorna 0 mas o DOM já mostra itens, a resposta pode ser cache (ex.: home em cache).
+                // Não sobrescrever o badge com 0; fazer um retry único para obter dados frescos.
+                if (apiCount === 0 && _preRefreshDomCount > 0) {
+                    debugLog('API retornou 0 com itens no DOM – possível cache; agendando retry.');
+                    setTimeout(function () {
+                        refreshCart().then(function (retryData) {
+                            var retryCount = (retryData && retryData.items_count != null) ? retryData.items_count : 0;
+                            if (isStoreAvailable()) {
+                                try {
+                                    window.wp.data.dispatch('wc/store/cart').receiveCart(retryData);
+                                } catch (e) {}
+                            }
+                            syncDOM(retryCount);
+                        }).catch(function () {});
+                    }, 600);
+                    resolve(cartData);
+                    return;
+                }
+
                 // Atualiza o store do WordPress se disponível
                 if (isStoreAvailable()) {
                     try {
