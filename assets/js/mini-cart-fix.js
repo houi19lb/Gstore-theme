@@ -15,27 +15,10 @@
         debug: window.gstoreMiniCart?.debug || false
     };
 
-    const STORAGE_KEY_LAST_COUNT = 'gstore_mini_cart_last_count';
-
     // Estado
     let refreshTimer = null;
     let isRefreshing = false;
     let lastAddToCartAt = 0;
-
-    function getLastStoredCount() {
-        try {
-            var n = parseInt(sessionStorage.getItem(STORAGE_KEY_LAST_COUNT) || '0', 10);
-            return (n >= 0 && Number.isFinite(n)) ? n : 0;
-        } catch (e) {
-            return 0;
-        }
-    }
-
-    function setLastStoredCount(count) {
-        try {
-            sessionStorage.setItem(STORAGE_KEY_LAST_COUNT, String(count >= 0 ? count : 0));
-        } catch (e) {}
-    }
 
     /**
      * Log de debug
@@ -164,35 +147,6 @@
                 fetch('http://127.0.0.1:7246/ingest/82530f36-f41c-4a9b-9141-c3c4bf366209',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'mini-cart-fix.js:refreshCart:data',message:'Dados do carrinho processados',data:{page:window.location.pathname,itemsCount:cartData.items_count,itemsTotal:cartData.totals?.total_items||'N/A',items:(cartData.items||[]).map(function(i){return{id:i.id,name:i.name,qty:i.quantity}}),domCountBefore:_preRefreshDomCount,willSyncTo:cartData.items_count||0},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'D,E'})}).catch(()=>{});
                 // #endregion
 
-                var apiCount = cartData.items_count || 0;
-                // Mitigação cache: quando a API retorna 0 mas o DOM já mostra itens, a resposta pode ser cache (ex.: home em cache).
-                // Não sobrescrever o badge com 0; fazer retry e só atualizar se o retry trouxer count >= atual (nunca reduzir).
-                if (apiCount === 0 && _preRefreshDomCount > 0) {
-                    debugLog('API retornou 0 com itens no DOM – possível cache; agendando retry.');
-                    var _domCountWhenSuspicious = _preRefreshDomCount;
-                    setTimeout(function () {
-                        refreshCart().then(function (retryData) {
-                            var retryCount = (retryData && retryData.items_count != null) ? retryData.items_count : 0;
-                            var currentDom = getCurrentCountFromDom();
-                            var safeCount = currentDom != null ? currentDom : _domCountWhenSuspicious;
-                            // Não reduzir o badge quando suspeitamos de cache: só atualizar se o retry trouxer >= atual.
-                            if (retryCount < safeCount) {
-                                debugLog('Retry retornou ' + retryCount + ' < ' + safeCount + '; mantendo badge atual (possível cache).');
-                                return;
-                            }
-                            if (isStoreAvailable()) {
-                                try {
-                                    window.wp.data.dispatch('wc/store/cart').receiveCart(retryData);
-                                } catch (e) {}
-                            }
-                            syncDOM(retryCount);
-                            setLastStoredCount(retryCount);
-                        }).catch(function () {});
-                    }, 600);
-                    resolve(cartData);
-                    return;
-                }
-
                 // Atualiza o store do WordPress se disponível
                 if (isStoreAvailable()) {
                     try {
@@ -204,10 +158,8 @@
                     }
                 }
 
-                // Sincroniza elementos do DOM e persiste para mitigação de cache
-                var countToSync = cartData.items_count || 0;
-                syncDOM(countToSync);
-                setLastStoredCount(countToSync);
+                // Sincroniza elementos do DOM
+                syncDOM(cartData.items_count || 0);
                 
                 resolve(cartData);
             })
@@ -350,7 +302,6 @@
         $(document.body).on('updated_wc_div', refreshMiniCart);
         $(document.body).on('wc_cart_emptied', () => {
             syncDOM(0);
-            setLastStoredCount(0);
             refreshMiniCart();
         });
 
@@ -372,89 +323,12 @@
         // Inicializa listeners
         initEventListeners();
 
-        var isFront = (window.location.pathname === '/' || window.location.pathname === '') && !document.body.classList.contains('woocommerce-cart');
-
-        // Na home/páginas em cache o HTML pode vir com badge 0; restaurar último count conhecido para a mitigação funcionar.
-        var lastRestoreAt = 0;
-        function reapplyStoredCountIfNeeded(source) {
-            var domCount = getCurrentCountFromDom();
-            var storedCount = getLastStoredCount();
-            if ((domCount === 0 || domCount === null) && storedCount > 0 && (Date.now() - lastRestoreAt) > 300) {
-                lastRestoreAt = Date.now();
-                debugLog('Reaplicando badge de sessionStorage: ' + storedCount + ' (' + (source || 'unknown') + ').');
-                // #region agent log
-                fetch('http://127.0.0.1:7246/ingest/82530f36-f41c-4a9b-9141-c3c4bf366209',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'mini-cart-fix.js:reapply',message:'Reaplicacao acionada',data:{page:window.location.pathname,source:source||'unknown',storedCount:storedCount,domCountBefore:domCount},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'E'})}).catch(function(){});
-                // #endregion
-                syncDOM(storedCount);
-            }
-        }
-        reapplyStoredCountIfNeeded('init');
-        // O Mini Cart Block (React) pode fazer seu próprio fetch e re-renderizar o badge com 0; reaplicar após delays.
-        setTimeout(function () { reapplyStoredCountIfNeeded('timeout500'); }, 500);
-        setTimeout(function () { reapplyStoredCountIfNeeded('timeout1500'); }, 1500);
-        setTimeout(function () { reapplyStoredCountIfNeeded('timeout3000'); }, 3000);
-        setTimeout(function () { reapplyStoredCountIfNeeded('timeout5000'); }, 5000);
-        setTimeout(function () { reapplyStoredCountIfNeeded('timeout8000'); }, 8000);
-        setTimeout(function () { reapplyStoredCountIfNeeded('timeout12000'); }, 12000);
-
-        // Observer no container estável: quando o React SUBSTITUI o nó do badge, nosso observer nos nós antigos perde efeito. Observar o container captura qualquer mudança no DOM do mini-cart.
-        var containerThrottle = null;
-        var containerToObserve = document.querySelector('.wc-block-mini-cart') || document.body;
-        var containerMo = new MutationObserver(function () {
-            if (containerThrottle) return;
-            containerThrottle = setTimeout(function () {
-                containerThrottle = null;
-                reapplyStoredCountIfNeeded('containerObserver');
-            }, 350);
-        });
-        containerMo.observe(containerToObserve, { childList: true, subtree: true, characterData: true });
-
-        // MutationObserver nos badges (quando o nó não é substituído)
-        var observedBadges = new WeakSet();
-        function observeBadgeEl(el) {
-            if (observedBadges.has(el)) return;
-            observedBadges.add(el);
-            var mo = new MutationObserver(function () {
-                reapplyStoredCountIfNeeded('badgeObserver');
-            });
-            mo.observe(el, { characterData: true, childList: true, subtree: true });
-        }
-        function attachBadgeObservers() {
-            document.querySelectorAll('.wc-block-mini-cart__badge, .Gstore-cart-count').forEach(observeBadgeEl);
-        }
-        setTimeout(attachBadgeObservers, 200);
-        var badgeObsInterval = setInterval(attachBadgeObservers, 800);
-        setTimeout(function () { clearInterval(badgeObsInterval); }, 30000);
-
-        // Rede de segurança na home: reaplicar a cada 2s por 30s (captura block que atualiza tarde)
-        var isFront = (window.location.pathname === '/' || window.location.pathname === '') && !document.body.classList.contains('woocommerce-cart');
-        if (isFront) {
-            var safetyCount = 0;
-            var safetyInterval = setInterval(function () {
-                safetyCount++;
-                reapplyStoredCountIfNeeded('safetyNet2s');
-                if (safetyCount >= 15) clearInterval(safetyInterval);
-            }, 2000);
-        }
-
-        // Reaplicar ao voltar à aba ou à página (bfcache)
-        document.addEventListener('visibilitychange', function () {
-            if (document.visibilityState === 'visible') reapplyStoredCountIfNeeded('visibilitychange');
-        });
-        window.addEventListener('pageshow', function (ev) {
-            if (ev.persisted) reapplyStoredCountIfNeeded('pageshow');
-        });
-
-        // Aguarda o store estar disponível e faz refresh inicial (na home em cache, pular se já temos count salvo para evitar API 0).
+        // Aguarda o store estar disponível e faz refresh inicial
         const checkStore = setInterval(() => {
             if (isStoreAvailable() || document.querySelector('.wc-block-mini-cart')) {
                 clearInterval(checkStore);
-                if (isFront && getLastStoredCount() > 0) {
-                    debugLog('Home com count em sessionStorage; pulando refresh inicial (evita API em cache).');
-                } else {
-                    debugLog('Store disponível, fazendo refresh inicial...');
-                    setTimeout(() => refreshMiniCart(), 500);
-                }
+                debugLog('Store disponível, fazendo refresh inicial...');
+                setTimeout(() => refreshMiniCart(), 500);
             }
         }, 100);
 
