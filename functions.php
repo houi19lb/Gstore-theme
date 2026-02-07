@@ -1479,7 +1479,20 @@ if ( ! defined( 'GSTORE_READONLY_REQUEST' ) ) {
 	unset( $_gstore_has_header, $_gstore_is_rest_get );
 }
 
-// PASSO 2A: Remove maybe_set_cart_cookies ANTES que ele rode (shutdown:-1, WC usa 0)
+// PASSO 2A: Remove maybe_set_cart_cookies dos hooks wp:99 e shutdown:0 (WC registra em ambos)
+// Em REST GET o cart ainda está vazio em wp:99, então o callback APAGA os cookies; removemos antes.
+add_action( 'wp', function() {
+	if ( ! defined( 'GSTORE_READONLY_REQUEST' ) || ! GSTORE_READONLY_REQUEST ) {
+		return;
+	}
+	if ( ! function_exists( 'WC' ) || ! WC()->cart || ! isset( WC()->cart->session ) ) {
+		return;
+	}
+	$sess = WC()->cart->session;
+	remove_action( 'wp', array( $sess, 'maybe_set_cart_cookies' ), 99 );
+	remove_action( 'shutdown', array( $sess, 'maybe_set_cart_cookies' ), 0 );
+}, 98 );
+
 add_action( 'shutdown', function() {
 	if ( ! defined( 'GSTORE_READONLY_REQUEST' ) || ! GSTORE_READONLY_REQUEST ) {
 		return;
@@ -1487,7 +1500,6 @@ add_action( 'shutdown', function() {
 	if ( ! function_exists( 'WC' ) || ! WC()->cart || ! isset( WC()->cart->session ) ) {
 		return;
 	}
-	// Remove maybe_set_cart_cookies que WC_Cart_Session registra em shutdown:0
 	remove_action( 'shutdown', array( WC()->cart->session, 'maybe_set_cart_cookies' ), 0 );
 }, -1 );
 
