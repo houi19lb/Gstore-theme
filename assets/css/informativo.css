@@ -330,6 +330,9 @@ main.Gstore-informativo-shell .wp-block-group.is-layout-constrained {
 	color: var(--gstore-color-accent);
 	margin: 0;
 	font-weight: 700;
+}
+
+.Gstore-informativo-arms-block .Gstore-informativo-block-title {
 	padding-left: clamp(28px, 4vw, 44px);
 }
 
