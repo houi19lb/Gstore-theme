@@ -1,46 +1,23 @@
 /**
  * GSTORE - Página Informativo (Pós-venda)
- * Accordion e modal de aeroportos.
+ * FAQ (details) um-aberto-por-vez; modal de aeroportos com busca.
  */
 (function () {
 	"use strict";
 
-	// --- Accordion ---
-	document.querySelectorAll("[data-accordion]").forEach(function (acc) {
-		var items = acc.querySelectorAll(".Gstore-informativo-acc-item");
-		items.forEach(function (item) {
-			var btn = item.querySelector("[data-acc-toggle]");
-			var icon = item.querySelector(".Gstore-informativo-acc-icon");
-			var panel = item.querySelector(".Gstore-informativo-acc-panel");
-			var isOpen = item.classList.contains("is-open");
-
-			if (!btn || !icon || !panel) return;
-
-			if (!isOpen) {
-				panel.hidden = true;
-				icon.textContent = "+";
-			} else {
-				panel.hidden = false;
-				icon.textContent = "−";
-			}
-
-			btn.addEventListener("click", function () {
-				var openNow = item.classList.contains("is-open");
-				items.forEach(function (it) {
-					var p = it.querySelector(".Gstore-informativo-acc-panel");
-					var i = it.querySelector(".Gstore-informativo-acc-icon");
-					it.classList.remove("is-open");
-					if (p) p.hidden = true;
-					if (i) i.textContent = "+";
+	// --- FAQ Armas: um details aberto por vez ---
+	var faqContainer = document.querySelector(".Gstore-informativo-faq__items");
+	if (faqContainer) {
+		var details = faqContainer.querySelectorAll("details");
+		details.forEach(function (d) {
+			d.addEventListener("toggle", function () {
+				if (!d.open) return;
+				details.forEach(function (other) {
+					if (other !== d) other.open = false;
 				});
-				if (!openNow) {
-					item.classList.add("is-open");
-					panel.hidden = false;
-					icon.textContent = "−";
-				}
 			});
 		});
-	});
+	}
 
 	// --- Modal Aeroportos ---
 	var modal = document.getElementById("Gstore-informativo-airports-modal");
@@ -49,7 +26,6 @@
 
 	var closeEls = modal.querySelectorAll("[data-close-modal]");
 	var queryEl = document.getElementById("Gstore-informativo-airport-query");
-	var ufEl = document.getElementById("Gstore-informativo-uf-select");
 	var tableBody = modal.querySelector("#Gstore-informativo-airports-table tbody");
 	var resultsBadge = document.getElementById("Gstore-informativo-results-badge");
 	var noResults = document.getElementById("Gstore-informativo-no-results");
@@ -62,32 +38,19 @@
 		return String(s || "").toLowerCase().trim();
 	}
 
-	function getUniqueUFs() {
-		var ufs = {};
-		airports.forEach(function (a) {
-			ufs[a.uf] = true;
-		});
-		return Object.keys(ufs).sort();
-	}
-
 	function filterAirports() {
 		var q = normalize(queryEl ? queryEl.value : "");
-		var uf = ufEl ? ufEl.value : "ALL";
 		return airports
-			.filter(function (a) {
-				return uf === "ALL" ? true : a.uf === uf;
-			})
 			.filter(function (a) {
 				if (!q) return true;
 				return (
-					normalize(a.uf).indexOf(q) !== -1 ||
 					normalize(a.city).indexOf(q) !== -1 ||
 					normalize(a.name).indexOf(q) !== -1 ||
 					normalize(a.iata).indexOf(q) !== -1
 				);
 			})
 			.sort(function (a, b) {
-				return (a.uf + a.city).localeCompare(b.uf + b.city);
+				return (a.city + a.name).localeCompare(b.city + b.name);
 			});
 	}
 
@@ -116,22 +79,9 @@
 		});
 	}
 
-	function fillUfSelect() {
-		if (!ufEl) return;
-		var ufs = getUniqueUFs();
-		ufEl.innerHTML = '<option value="ALL">Todos</option>';
-		ufs.forEach(function (uf) {
-			var opt = document.createElement("option");
-			opt.value = uf;
-			opt.textContent = uf;
-			ufEl.appendChild(opt);
-		});
-	}
-
 	function openModal() {
 		modal.classList.add("is-open");
 		modal.setAttribute("aria-hidden", "false");
-		fillUfSelect();
 		renderTable();
 		setTimeout(function () {
 			if (queryEl) queryEl.focus();
@@ -153,5 +103,4 @@
 		}
 	});
 	if (queryEl) queryEl.addEventListener("input", renderTable);
-	if (ufEl) ufEl.addEventListener("change", renderTable);
 })();
