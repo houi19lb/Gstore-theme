@@ -326,6 +326,11 @@ main.Gstore-informativo-shell .wp-block-group.is-layout-constrained {
 	display: flex;
 	flex-direction: column;
 	gap: 16px;
+	scroll-margin-top: var(--gstore-sticky-offset, 110px);
+}
+
+#processo-municoes {
+	scroll-margin-top: var(--gstore-sticky-offset, 110px);
 }
 
 .Gstore-informativo-block-title {
