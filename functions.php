@@ -2011,6 +2011,9 @@ function gstore_prg_single_product_add_to_cart() {
 add_action( 'template_redirect', 'gstore_prg_single_product_add_to_cart', 9 );
 
 // #region agent log
+/** Guarda logs para envio ao Cursor (quando GSTORE_DEBUG_INGEST_URL está definida). */
+$GLOBALS['gstore_cart_debug_log_buffer'] = array();
+
 function gstore_cart_debug_log( $location, $message, $data, $hypothesis_id = '' ) {
 	$path = defined( 'GSTORE_DEBUG_LOG_PATH' ) ? GSTORE_DEBUG_LOG_PATH : ( dirname( get_stylesheet_directory() ) . '/.cursor/debug.log' );
 	$payload = array(
@@ -2025,7 +2028,41 @@ function gstore_cart_debug_log( $location, $message, $data, $hypothesis_id = '' 
 	if ( is_string( $path ) && strlen( $path ) > 0 ) {
 		@file_put_contents( $path, wp_json_encode( $payload ) . "\n", FILE_APPEND | LOCK_EX ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
 	}
+	if ( defined( 'GSTORE_DEBUG_INGEST_URL' ) && GSTORE_DEBUG_INGEST_URL ) {
+		$GLOBALS['gstore_cart_debug_log_buffer'][] = $payload;
+	}
 }
+
+/** Envia os logs do request para o endpoint do Cursor (via script no footer; roda no navegador do usuário). */
+function gstore_cart_debug_send_logs_to_cursor() {
+	if ( ! defined( 'GSTORE_DEBUG_INGEST_URL' ) || ! GSTORE_DEBUG_INGEST_URL ) {
+		return;
+	}
+	$buf = isset( $GLOBALS['gstore_cart_debug_log_buffer'] ) ? $GLOBALS['gstore_cart_debug_log_buffer'] : array();
+	if ( empty( $buf ) ) {
+		return;
+	}
+	$url = esc_url( GSTORE_DEBUG_INGEST_URL, array( 'http', 'https' ) );
+	if ( ! $url ) {
+		return;
+	}
+	$json_entries = array_map( 'wp_json_encode', $buf );
+	?>
+	<script>
+	(function(){
+		var url = <?php echo wp_json_encode( $url ); ?>;
+		var entries = <?php echo wp_json_encode( $json_entries ); ?>;
+		entries.forEach(function(one) {
+			try {
+				var body = typeof one === 'string' ? one : JSON.stringify(one);
+				fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: body, mode: 'no-cors' }).catch(function(){});
+			} catch (e) {}
+		});
+	})();
+	</script>
+	<?php
+}
+add_action( 'wp_footer', 'gstore_cart_debug_send_logs_to_cursor', 999 );
 // #endregion
 
 /**
