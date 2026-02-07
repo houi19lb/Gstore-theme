@@ -236,15 +236,10 @@
     }
 
     /**
-     * Handler para evento removed_from_cart.
-     * Aplica contagem dos fragmentos na hora (se vier na resposta) e depois refresha via API.
+     * Handler para evento removed_from_cart
      */
     function handleRemovedFromCart(event, fragments, cart_hash) {
         debugLog('Produto removido do carrinho');
-        const fragmentCount = getCountFromFragments(fragments);
-        if (fragmentCount !== null) {
-            syncDOM(fragmentCount);
-        }
         refreshMiniCart();
     }
 
@@ -284,18 +279,20 @@
     }
 
     /**
-     * Inicialização (executa uma única vez para evitar múltiplos listeners).
+     * Inicialização (executa apenas uma vez para evitar múltiplos listeners)
      */
-    let initDone = false;
     function init() {
-        if (initDone) {
+        if (window.gstoreMiniCartInitDone) {
+            debugLog('Mini Cart Sync já inicializado, ignorando.');
             return;
         }
-        initDone = true;
+        window.gstoreMiniCartInitDone = true;
         debugLog('Inicializando Mini Cart Sync...');
 
+        // Inicializa listeners
         initEventListeners();
 
+        // Aguarda o store estar disponível e faz refresh inicial
         const checkStore = setInterval(() => {
             if (isStoreAvailable() || document.querySelector('.wc-block-mini-cart')) {
                 clearInterval(checkStore);
@@ -304,10 +301,15 @@
             }
         }, 100);
 
-        setTimeout(() => clearInterval(checkStore), 10000);
+        // Timeout de segurança
+        setTimeout(() => {
+            clearInterval(checkStore);
+        }, 10000);
+
         debugLog('Mini Cart Sync inicializado');
     }
 
+    // Inicializa quando o DOM estiver pronto
     if (typeof jQuery !== 'undefined' && jQuery.ready) {
         jQuery(document).ready(init);
     } else if (document.readyState === 'loading') {
