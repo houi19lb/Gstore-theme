@@ -373,19 +373,31 @@
         initEventListeners();
 
         // Na home/páginas em cache o HTML pode vir com badge 0; restaurar último count conhecido para a mitigação funcionar.
-        var domCount = getCurrentCountFromDom();
-        var storedCount = getLastStoredCount();
-        if ((domCount === 0 || domCount === null) && storedCount > 0) {
-            debugLog('DOM mostra 0 mas sessionStorage tem ' + storedCount + '; restaurando badge (mitigação cache).');
-            syncDOM(storedCount);
+        function reapplyStoredCountIfNeeded() {
+            var domCount = getCurrentCountFromDom();
+            var storedCount = getLastStoredCount();
+            if ((domCount === 0 || domCount === null) && storedCount > 0) {
+                debugLog('Reaplicando badge de sessionStorage: ' + storedCount + ' (mitigação cache).');
+                syncDOM(storedCount);
+            }
         }
+        reapplyStoredCountIfNeeded();
+        // O Mini Cart Block (React) pode fazer seu próprio fetch e re-renderizar o badge com 0; reaplicar após delays.
+        setTimeout(reapplyStoredCountIfNeeded, 500);
+        setTimeout(reapplyStoredCountIfNeeded, 1500);
+        setTimeout(reapplyStoredCountIfNeeded, 3000);
 
-        // Aguarda o store estar disponível e faz refresh inicial
+        // Aguarda o store estar disponível e faz refresh inicial (na home em cache, pular se já temos count salvo para evitar API 0).
+        var isFront = (window.location.pathname === '/' || window.location.pathname === '') && !document.body.classList.contains('woocommerce-cart');
         const checkStore = setInterval(() => {
             if (isStoreAvailable() || document.querySelector('.wc-block-mini-cart')) {
                 clearInterval(checkStore);
-                debugLog('Store disponível, fazendo refresh inicial...');
-                setTimeout(() => refreshMiniCart(), 500);
+                if (isFront && getLastStoredCount() > 0) {
+                    debugLog('Home com count em sessionStorage; pulando refresh inicial (evita API em cache).');
+                } else {
+                    debugLog('Store disponível, fazendo refresh inicial...');
+                    setTimeout(() => refreshMiniCart(), 500);
+                }
             }
         }, 100);
 
