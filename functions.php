@@ -3109,6 +3109,7 @@ function gstore_enqueue_checkout_assets() {
 		$checkout_inline .= 'window.gstoreCheckout.processCheckoutNonce = ' . wp_json_encode( wp_create_nonce( 'woocommerce-process_checkout' ) ) . ';';
 		$checkout_inline .= 'window.gstoreCheckout.cartSummaryNonce = ' . wp_json_encode( wp_create_nonce( 'gstore_cart_summary' ) ) . ';';
 		$checkout_inline .= 'window.gstoreCheckout.homeUrl = ' . wp_json_encode( home_url( '/' ) ) . ';';
+		$checkout_inline .= 'window.gstoreCheckout.privacyPolicyUrl = ' . wp_json_encode( get_privacy_policy_url() ) . ';';
 		// Garante gstoreCartSummary (resumo do carrinho) com nonce válido para evitar 403 no admin-ajax.
 		$cart_summary_nonce = wp_create_nonce( 'gstore_cart_summary' );
 		$checkout_inline .= 'window.gstoreCartSummary = window.gstoreCartSummary || { ajaxUrl: ' . wp_json_encode( admin_url( 'admin-ajax.php' ) ) . ', nonce: ' . wp_json_encode( $cart_summary_nonce ) . ' };';
@@ -4043,6 +4044,48 @@ function gstore_save_cpf_field( $order_id ) {
     }
 }
 add_action( 'woocommerce_checkout_update_order_meta', 'gstore_save_cpf_field' );
+
+/**
+ * Valida aceite dos termos de contrato no backend.
+ * Garante validação mesmo em tentativas de submit sem JS.
+ */
+function gstore_validate_contract_terms_checkout() {
+	if ( empty( $_POST['gstore_contract_terms_required'] ) ) {
+		return;
+	}
+
+	$accepted = isset( $_POST['gstore_contract_terms'] ) ? sanitize_text_field( wp_unslash( $_POST['gstore_contract_terms'] ) ) : '';
+	if ( '1' !== $accepted ) {
+		wc_add_notice( __( 'Você precisa aceitar os termos do contrato para finalizar o pedido.', 'gstore' ), 'error' );
+	}
+}
+add_action( 'woocommerce_checkout_process', 'gstore_validate_contract_terms_checkout' );
+
+/**
+ * Salva metadados de compliance do checkout (termos + maior de 25).
+ */
+function gstore_save_checkout_contract_meta( $order_id ) {
+	$contract_terms = isset( $_POST['gstore_contract_terms'] ) ? sanitize_text_field( wp_unslash( $_POST['gstore_contract_terms'] ) ) : '';
+	$age_over_25    = isset( $_POST['gstore_age_over_25'] ) ? sanitize_text_field( wp_unslash( $_POST['gstore_age_over_25'] ) ) : '';
+
+	update_post_meta( $order_id, '_gstore_contract_terms_accepted', ( '1' === $contract_terms ) ? 'yes' : 'no' );
+	update_post_meta( $order_id, '_gstore_age_over_25', ( '1' === $age_over_25 ) ? 'yes' : 'no' );
+}
+add_action( 'woocommerce_checkout_update_order_meta', 'gstore_save_checkout_contract_meta', 20 );
+
+/**
+ * Exibe status de termos/idade no admin do pedido.
+ */
+function gstore_display_checkout_contract_meta_admin( $order ) {
+	$terms  = $order->get_meta( '_gstore_contract_terms_accepted' );
+	$age25  = $order->get_meta( '_gstore_age_over_25' );
+	$terms_label = ( 'yes' === $terms ) ? __( 'Sim', 'gstore' ) : __( 'Não', 'gstore' );
+	$age_label   = ( 'yes' === $age25 ) ? __( 'Sim', 'gstore' ) : __( 'Não', 'gstore' );
+
+	echo '<p><strong>' . esc_html__( 'Termos do contrato aceitos', 'gstore' ) . ':</strong> ' . esc_html( $terms_label ) . '</p>';
+	echo '<p><strong>' . esc_html__( 'Maior de 25 anos', 'gstore' ) . ':</strong> ' . esc_html( $age_label ) . '</p>';
+}
+add_action( 'woocommerce_admin_order_data_after_billing_address', 'gstore_display_checkout_contract_meta_admin', 20, 1 );
 
 /**
  * Exibe o CPF no painel de administração do pedido.

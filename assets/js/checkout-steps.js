@@ -70,6 +70,48 @@
 	let lastInstallmentQuotesSignature = '';
 	let lastBluOrderPaymentUrl = null; // URL do pagamento Blu do último pedido criado (para exibir aviso quando modal fecha)
 
+	function escapeHtml(value) {
+		return String(value || '')
+			.replace(/&/g, '&amp;')
+			.replace(/</g, '&lt;')
+			.replace(/>/g, '&gt;')
+			.replace(/"/g, '&quot;')
+			.replace(/'/g, '&#039;');
+	}
+
+	function nl2brSafe(value) {
+		return escapeHtml(value).replace(/\r\n|\r|\n/g, '<br>');
+	}
+
+	function checkoutPageUrl(path) {
+		const base = (typeof gstoreCheckout !== 'undefined' && gstoreCheckout.homeUrl)
+			? gstoreCheckout.homeUrl
+			: '/';
+		const cleanPath = String(path || '').replace(/^\/+/, '');
+		return String(base).replace(/\/+$/, '/') + cleanPath;
+	}
+
+	function getContractSettings() {
+		const settings = (typeof gstoreCheckout !== 'undefined' && gstoreCheckout.contractSettings)
+			? gstoreCheckout.contractSettings
+			: {};
+
+		const enabled = settings.enabled !== false;
+		const checkboxText = settings.checkboxText || 'Li e concordo com os';
+		const modalTitle = settings.modalTitle || 'Termos do contrato';
+		const modalContent = settings.modalContent || settings.termsText || settings.fullText || checkboxText;
+		const privacyUrl = settings.privacyUrl ||
+			((typeof gstoreCheckout !== 'undefined' && gstoreCheckout.privacyPolicyUrl) ? gstoreCheckout.privacyPolicyUrl : checkoutPageUrl('politica-de-privacidade/'));
+
+		return {
+			enabled: !!enabled,
+			checkboxText,
+			modalTitle,
+			modalContent,
+			privacyUrl
+		};
+	}
+
 	/**
 	 * Garante cálculo/validação do frete quando o CEP já está preenchido (sem precisar clicar/sair do campo).
 	 * Útil para sessão/autofill e para quando a etapa "Dados" fica ativa.
@@ -762,38 +804,63 @@
 			});
 		}
 
-		// Etapa 3: Adiciona checkbox de contrato (se habilitado) e botão de finalizar
+		// Etapa 3: Footer de finalização (termos + privacidade + CTA)
 		const $finalizeStep = $('[data-step="payment"] .Gstore-checkout-step__payment-container');
 		if ($finalizeStep.length && !$finalizeStep.find('#place_order').length) {
-			// Verifica se contratos estão habilitados
-			const contractEnabled = typeof gstoreCheckout !== 'undefined' && gstoreCheckout.contractSettings && gstoreCheckout.contractSettings.enabled;
-			const contractText = contractEnabled && gstoreCheckout.contractSettings.checkboxText 
-				? gstoreCheckout.contractSettings.checkboxText 
-				: 'Li e concordo com os termos do contrato';
+			const contractSettings = getContractSettings();
+			const contractEnabled = contractSettings.enabled;
+			const contractText = contractSettings.checkboxText;
+			const privacyUrl = contractSettings.privacyUrl;
 
 			let contractCheckboxHtml = '';
 			if (contractEnabled) {
 				contractCheckboxHtml = `
-					<div class="gstore-contract-terms woocommerce-terms-and-conditions-wrapper" style="margin-bottom:16px;">
-						<label class="woocommerce-form__label woocommerce-form__label-for-checkbox checkbox" style="display:flex;align-items:flex-start;gap:8px;cursor:pointer;">
-							<input type="checkbox" class="woocommerce-form__input woocommerce-form__input-checkbox input-checkbox" name="gstore_contract_terms" id="gstore_contract_terms" value="1" required style="margin-top:3px;" />
-							<span>${contractText}</span>
+					<div class="gstore-contract-terms woocommerce-terms-and-conditions-wrapper">
+						<label class="woocommerce-form__label woocommerce-form__label-for-checkbox checkbox gstore-contract-terms__label">
+							<input type="checkbox" class="woocommerce-form__input woocommerce-form__input-checkbox input-checkbox" name="gstore_contract_terms" id="gstore_contract_terms" value="1" required />
+							<span class="gstore-contract-terms__text">
+								${escapeHtml(contractText)}
+								<button type="button" class="gstore-contract-open-modal">termos do contrato</button>
+								e com a
+								<a class="gstore-contract-privacy-link" href="${escapeHtml(privacyUrl)}" target="_blank" rel="noopener noreferrer">política de privacidade</a>.
+							</span>
 						</label>
+						<input type="hidden" name="gstore_contract_terms_required" value="1" />
 					</div>
 				`;
 			}
 
 			$finalizeStep.append(`
 				<div class="Gstore-finalize-container">
+					<div class="Gstore-finalize-helper">
+						<i class="fa-solid fa-shield-halved" aria-hidden="true"></i>
+						<span>Dados sensíveis não ficam armazenados neste site.</span>
+					</div>
 					${contractCheckboxHtml}
+					<div class="gstore-age-confirm">
+						<label class="gstore-age-confirm__label" for="gstore_age_over_25">
+							<input type="checkbox" name="gstore_age_over_25" id="gstore_age_over_25" value="1" checked />
+							<span>Confirmo que tenho mais de 25 anos.</span>
+						</label>
+					</div>
 					<button type="submit" class="Gstore-btn Gstore-btn--submit" name="woocommerce_checkout_place_order" id="place_order" value="Finalizar pedido" data-value="Finalizar pedido">
 						<i class="fa-solid fa-lock"></i>
 						Finalizar pedido
 					</button>
 					<p class="Gstore-finalize-privacy">
 						Seus dados estão protegidos. Ao finalizar, você concorda com nossa 
-						<a href="${typeof gstoreCheckout !== 'undefined' && gstoreCheckout.homeUrl ? gstoreCheckout.homeUrl + 'politica-de-privacidade' : '/politica-de-privacidade'}" target="_blank">política de privacidade</a>.
+						<a href="${escapeHtml(privacyUrl)}" target="_blank" rel="noopener noreferrer">política de privacidade</a>.
 					</p>
+					<div id="gstore-contract-terms-modal" class="Gstore-contract-modal" aria-hidden="true">
+						<div class="Gstore-contract-modal__backdrop" data-action="close-contract-modal"></div>
+						<div class="Gstore-contract-modal__content" role="dialog" aria-modal="true" aria-labelledby="gstore-contract-modal-title">
+							<button type="button" class="Gstore-contract-modal__close" data-action="close-contract-modal" aria-label="Fechar">
+								<i class="fa-solid fa-xmark" aria-hidden="true"></i>
+							</button>
+							<h3 id="gstore-contract-modal-title" class="Gstore-contract-modal__title"></h3>
+							<div class="Gstore-contract-modal__body"></div>
+						</div>
+					</div>
 				</div>
 			`);
 		}
@@ -2394,6 +2461,17 @@ function getInstallmentDisplayTotals(summaryData) {
 			}
 		});
 
+		// Abre modal de termos do contrato
+		$(document).on('click', '.gstore-contract-open-modal', function(e) {
+			e.preventDefault();
+			openContractTermsModal();
+		});
+
+		// Fecha modal de termos
+		$(document).on('click', '#gstore-contract-terms-modal [data-action="close-contract-modal"]', function() {
+			closeContractTermsModal();
+		});
+
 		// Seleção do frete por item no resumo
 		$(document).on('change', 'input[name^="gstore_checkout_shipping_mode["]', function() {
 			const cartItemKey = $(this).data('cart-item-key') || String($(this).attr('name') || '').replace(/^gstore_checkout_shipping_mode\[|\]$/g, '');
@@ -2985,6 +3063,27 @@ function getInstallmentDisplayTotals(summaryData) {
 
 	}
 
+	function openContractTermsModal() {
+		const $modal = $('#gstore-contract-terms-modal');
+		if (!$modal.length) return;
+
+		const contractSettings = getContractSettings();
+		const title = contractSettings.modalTitle;
+		const bodyHtml = nl2brSafe(contractSettings.modalContent);
+
+		$modal.find('.Gstore-contract-modal__title').text(title);
+		$modal.find('.Gstore-contract-modal__body').html(bodyHtml);
+		$modal.addClass('is-visible').attr('aria-hidden', 'false');
+		$('body').addClass('gstore-contract-modal-open');
+	}
+
+	function closeContractTermsModal() {
+		const $modal = $('#gstore-contract-terms-modal');
+		if (!$modal.length) return;
+		$modal.removeClass('is-visible').attr('aria-hidden', 'true');
+		$('body').removeClass('gstore-contract-modal-open');
+	}
+
 	/**
 	 * === MODAL: Checkout Blu (Link Externo) ===
 	 * Mantém o usuário na página e abre o checkout da Blu em um iframe quando possível.
@@ -3036,6 +3135,10 @@ function getInstallmentDisplayTotals(summaryData) {
 				const $modal = $('#gstore-blu-checkout-modal');
 				if ($modal.length && $modal.hasClass('is-visible')) {
 					closeBluCheckoutModal();
+				}
+				const $contractModal = $('#gstore-contract-terms-modal');
+				if ($contractModal.length && $contractModal.hasClass('is-visible')) {
+					closeContractTermsModal();
 				}
 			}
 		});
