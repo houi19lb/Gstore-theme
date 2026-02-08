@@ -3069,12 +3069,50 @@ function getInstallmentDisplayTotals(summaryData) {
 
 		const contractSettings = getContractSettings();
 		const title = contractSettings.modalTitle;
-		const bodyHtml = nl2brSafe(contractSettings.modalContent);
+		const fallbackBodyHtml = nl2brSafe(contractSettings.modalContent);
+		const contractPreview = (typeof gstoreCheckout !== 'undefined' && gstoreCheckout.contractPreview)
+			? gstoreCheckout.contractPreview
+			: null;
 
 		$modal.find('.Gstore-contract-modal__title').text(title);
-		$modal.find('.Gstore-contract-modal__body').html(bodyHtml);
+		$modal.find('.Gstore-contract-modal__body').html('<p>Carregando contrato...</p>');
 		$modal.addClass('is-visible').attr('aria-hidden', 'false');
 		$('body').addClass('gstore-contract-modal-open');
+
+		if (
+			contractPreview &&
+			contractPreview.ajaxUrl &&
+			contractPreview.nonce &&
+			contractPreview.action &&
+			typeof $ !== 'undefined'
+		) {
+			const $form = $('form.checkout.woocommerce-checkout, form.checkout').first();
+			const serialized = $form.length ? $form.serialize() : '';
+
+			$.ajax({
+				type: 'POST',
+				url: contractPreview.ajaxUrl,
+				dataType: 'json',
+				data: {
+					action: contractPreview.action,
+					nonce: contractPreview.nonce,
+					post_data: serialized
+				}
+			})
+				.done(function(response) {
+					if (response && response.success && response.data && response.data.html) {
+						$modal.find('.Gstore-contract-modal__body').html(response.data.html);
+						return;
+					}
+					$modal.find('.Gstore-contract-modal__body').html(fallbackBodyHtml);
+				})
+				.fail(function() {
+					$modal.find('.Gstore-contract-modal__body').html(fallbackBodyHtml);
+				});
+			return;
+		}
+
+		$modal.find('.Gstore-contract-modal__body').html(fallbackBodyHtml);
 	}
 
 	function closeContractTermsModal() {

@@ -4050,6 +4050,11 @@ add_action( 'woocommerce_checkout_update_order_meta', 'gstore_save_cpf_field' );
  * Garante validação mesmo em tentativas de submit sem JS.
  */
 function gstore_validate_contract_terms_checkout() {
+	// Se o plugin de contratos estiver ativo, ele já valida este campo.
+	if ( class_exists( '\GStore\Services\Contract_Service' ) ) {
+		return;
+	}
+
 	if ( empty( $_POST['gstore_contract_terms_required'] ) ) {
 		return;
 	}
@@ -4065,10 +4070,14 @@ add_action( 'woocommerce_checkout_process', 'gstore_validate_contract_terms_chec
  * Salva metadados de compliance do checkout (termos + maior de 25).
  */
 function gstore_save_checkout_contract_meta( $order_id ) {
+	$has_contract_service = class_exists( '\GStore\Services\Contract_Service' );
 	$contract_terms = isset( $_POST['gstore_contract_terms'] ) ? sanitize_text_field( wp_unslash( $_POST['gstore_contract_terms'] ) ) : '';
 	$age_over_25    = isset( $_POST['gstore_age_over_25'] ) ? sanitize_text_field( wp_unslash( $_POST['gstore_age_over_25'] ) ) : '';
 
-	update_post_meta( $order_id, '_gstore_contract_terms_accepted', ( '1' === $contract_terms ) ? 'yes' : 'no' );
+	// Evita conflitar com o Contract_Service (que usa o mesmo meta key com 1/0).
+	if ( ! $has_contract_service ) {
+		update_post_meta( $order_id, '_gstore_contract_terms_accepted', ( '1' === $contract_terms ) ? 1 : 0 );
+	}
 	update_post_meta( $order_id, '_gstore_age_over_25', ( '1' === $age_over_25 ) ? 'yes' : 'no' );
 }
 add_action( 'woocommerce_checkout_update_order_meta', 'gstore_save_checkout_contract_meta', 20 );
@@ -4079,8 +4088,11 @@ add_action( 'woocommerce_checkout_update_order_meta', 'gstore_save_checkout_cont
 function gstore_display_checkout_contract_meta_admin( $order ) {
 	$terms  = $order->get_meta( '_gstore_contract_terms_accepted' );
 	$age25  = $order->get_meta( '_gstore_age_over_25' );
-	$terms_label = ( 'yes' === $terms ) ? __( 'Sim', 'gstore' ) : __( 'Não', 'gstore' );
-	$age_label   = ( 'yes' === $age25 ) ? __( 'Sim', 'gstore' ) : __( 'Não', 'gstore' );
+
+	$terms_bool = in_array( (string) $terms, array( '1', 'yes', 'true', 'on' ), true );
+	$age_bool   = in_array( (string) $age25, array( '1', 'yes', 'true', 'on' ), true );
+	$terms_label = $terms_bool ? __( 'Sim', 'gstore' ) : __( 'Não', 'gstore' );
+	$age_label   = $age_bool ? __( 'Sim', 'gstore' ) : __( 'Não', 'gstore' );
 
 	echo '<p><strong>' . esc_html__( 'Termos do contrato aceitos', 'gstore' ) . ':</strong> ' . esc_html( $terms_label ) . '</p>';
 	echo '<p><strong>' . esc_html__( 'Maior de 25 anos', 'gstore' ) . ':</strong> ' . esc_html( $age_label ) . '</p>';
