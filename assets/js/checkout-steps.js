@@ -455,6 +455,12 @@
 		const iframe = $body.find('.Gstore-contract-modal__iframe').get(0);
 		if (iframe) {
 			const resolvedContent = applyContractTemplateTokens(content);
+			// Documento HTML completo (ex.: template com .wrap > .pages > .page): usar inteiro no iframe
+			// para preservar estilos do <head> e todas as páginas do body.
+			if (looksLikeContractDocument(resolvedContent)) {
+				iframe.srcdoc = buildContractSrcDoc(resolvedContent);
+				return;
+			}
 			const documentHtml = buildContractDocumentHtml(resolvedContent);
 			iframe.srcdoc = buildContractFullDoc(documentHtml);
 		}
