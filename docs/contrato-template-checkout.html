@@ -4,6 +4,14 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Contrato (PDF em HTML)</title>
+  <!--
+    Uso: Plugin (campo "Template HTML do contrato" na config de Frete) e Tema (modal "Termos do contrato" no checkout).
+    O tema preenche os tokens abaixo com dados do checkout; o plugin exibe o mesmo HTML no modal quando ativo.
+    Tokens (tema): order.number, order.created_at, order.payment_method_title, order.status,
+    seller.legal_name, seller.cnpj, seller.address_full, buyer.company, buyer.shipping_full,
+    buyer.shipping_city, buyer.shipping_postcode, buyer.shipping_state, buyer.phone, buyer.email,
+    buyer.cpf, buyer.rg, buyer.cr, buyer.full_name, items.table_rows, contract.generated_at
+  -->
   <style>
     :root{
       --bg:#f5f5f5;

@@ -368,6 +368,21 @@
 		return html;
 	}
 
+	var CONTRACT_VAR_DISPLAY_NAMES = {
+		'nome': 'Nome do comprador',
+		'email': 'E-mail',
+		'cpf': 'CPF',
+		'endereco': 'Endereço',
+		'bairro': 'Bairro',
+		'cidade': 'Cidade',
+		'uf': 'Estado',
+		'cep': 'CEP',
+		'telefone': 'Telefone',
+		'produtos': 'Produtos',
+		'numero_pedido': 'Número do pedido',
+		'data': 'Data'
+	};
+
 	function buildContractTokenMapFromCheckout() {
 		const firstName = checkoutFieldValue('billing_first_name');
 		const lastName = checkoutFieldValue('billing_last_name');
@@ -393,6 +408,17 @@
 		const paymentMethodId = String(($('input[name="payment_method"]:checked').val() || summary.payment_method || '')).trim();
 		const paymentMethodTitle = stripHtmlText(summary.payment_method_title || resolvePaymentMethodTitle());
 
+		const email = checkoutFieldValue('billing_email');
+		const phone = checkoutFieldValue('billing_phone');
+		const shippingAddr1 = checkoutFieldValue('shipping_address_1') || checkoutFieldValue('billing_address_1');
+		const shippingAddr2 = checkoutFieldValue('shipping_address_2') || billingAddress2;
+		const shippingCity = checkoutFieldValue('shipping_city') || billingCity;
+		const shippingState = checkoutFieldValue('shipping_state') || billingState;
+		const shippingPostcode = checkoutFieldValue('shipping_postcode') || billingPostcode;
+		const shippingFull = [shippingAddr1, shippingAddr2, [shippingCity, shippingState].join('/'), shippingPostcode]
+			.filter(function(v) { return String(v || '').trim() !== ''; })
+			.join(' - ');
+
 		return {
 			'order.id': '',
 			'order.number': '',
@@ -408,8 +434,8 @@
 			'buyer.first_name': firstName,
 			'buyer.last_name': lastName,
 			'buyer.full_name': fullName,
-			'buyer.email': checkoutFieldValue('billing_email'),
-			'buyer.phone': checkoutFieldValue('billing_phone'),
+			'buyer.email': email,
+			'buyer.phone': phone,
 			'buyer.cpf': cpf,
 			'buyer.cnpj': cnpj,
 			'buyer.document': cpf || cnpj,
@@ -424,18 +450,29 @@
 			'buyer.billing_state': billingState,
 			'buyer.billing_postcode': billingPostcode,
 			'buyer.billing_full': billingFull,
-			'buyer.shipping_address_1': checkoutFieldValue('shipping_address_1') || checkoutFieldValue('billing_address_1'),
-			'buyer.shipping_address_2': checkoutFieldValue('shipping_address_2') || billingAddress2,
-			'buyer.shipping_city': checkoutFieldValue('shipping_city') || billingCity,
-			'buyer.shipping_state': checkoutFieldValue('shipping_state') || billingState,
-			'buyer.shipping_postcode': checkoutFieldValue('shipping_postcode') || billingPostcode,
+			'buyer.shipping_address_1': shippingAddr1,
+			'buyer.shipping_address_2': shippingAddr2,
+			'buyer.shipping_city': shippingCity,
+			'buyer.shipping_state': shippingState,
+			'buyer.shipping_postcode': shippingPostcode,
+			'buyer.shipping_full': shippingFull,
 			'items.list': buildItemsListSummary(items),
 			'items.table_rows': buildItemsTableRows(items),
-			'contract.generated_at': formatDateTimeBr(nowIso)
+			'contract.generated_at': formatDateTimeBr(nowIso),
+			// Aliases para template admin ({{nome}}, {{cpf}}, etc.) – compatível com Contract_Service
+			'nome': fullName,
+			'email': email,
+			'cpf': cpf || cnpj,
+			'endereco': billingAddress || billingFull,
+			'bairro': billingNeighborhood,
+			'cidade': billingCity,
+			'uf': billingState,
+			'cep': billingPostcode,
+			'telefone': phone
 		};
 	}
 
-	function applyContractTemplateTokens(content) {
+	function applyContractTemplateTokens(content, useDisplayNamesForEmpty) {
 		const raw = String(content || '');
 		if (!raw || raw.indexOf('{{') === -1) return raw;
 
@@ -457,16 +494,20 @@
 				return match;
 			}
 			const value = merged[key];
+			if (useDisplayNamesForEmpty && (value == null || String(value).trim() === '')) {
+				const displayName = CONTRACT_VAR_DISPLAY_NAMES[key] || key;
+				return String(displayName);
+			}
 			return value == null ? '' : String(value);
 		});
 	}
 
-	function renderContractModalContent($modal, content) {
+	function renderContractModalContent($modal, content, useDisplayNamesForEmpty) {
 		const $body = $modal.find('.Gstore-contract-modal__body');
 		$body.html('<iframe class="Gstore-contract-modal__iframe" title="Contrato" loading="eager"></iframe>');
 		const iframe = $body.find('.Gstore-contract-modal__iframe').get(0);
 		if (iframe) {
-			const resolvedContent = applyContractTemplateTokens(content);
+			const resolvedContent = applyContractTemplateTokens(content, !!useDisplayNamesForEmpty);
 			// Documento HTML completo (ex.: template com .wrap > .pages > .page): usar inteiro no iframe
 			// para preservar estilos do <head> e todas as páginas do body.
 			if (looksLikeContractDocument(resolvedContent)) {
@@ -3483,12 +3524,19 @@ function getInstallmentDisplayTotals(summaryData) {
 			? gstoreCheckout.contractPreview
 			: null;
 
+		// Rota Cartão (blu_checkout): dados completos só após webhook. Não chamar AJAX; usar template com variáveis vazias.
+		const paymentMethod = $('input[name="payment_method"]:checked').val();
+		const isCardRoute = paymentMethod === 'blu_checkout';
+
+		var cardNotice = '<p class="gstore-contract-modal__card-notice" style="margin-bottom:16px;padding:12px;background:#f0f9ff;border-left:4px solid #0284c7;border-radius:4px;font-size:14px;">Os dados do comprador serão preenchidos após a confirmação do pagamento no link externo.</p>';
+
 		$modal.find('.Gstore-contract-modal__title').text(title);
 		$modal.find('.Gstore-contract-modal__body').html('<p>Carregando contrato...</p>');
 		$modal.addClass('is-visible').attr('aria-hidden', 'false');
 		$('body').addClass('gstore-contract-modal-open');
 
 		if (
+			!isCardRoute &&
 			contractPreview &&
 			contractPreview.ajaxUrl &&
 			contractPreview.nonce &&
@@ -3525,7 +3573,8 @@ function getInstallmentDisplayTotals(summaryData) {
 			return;
 		}
 
-		renderContractModalContent($modal, fallbackBodyHtml);
+		var contentToRender = isCardRoute ? cardNotice + fallbackBodyHtml : fallbackBodyHtml;
+		renderContractModalContent($modal, contentToRender, isCardRoute);
 	}
 
 	function closeContractTermsModal() {
