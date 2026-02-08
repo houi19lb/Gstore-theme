@@ -2941,7 +2941,12 @@ body.gstore-blu-checkout-modal-open {
 
 .Gstore-contract-modal {
 	position: fixed;
-	inset: 0;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	width: 100vw;
+	height: 100dvh;
 	z-index: 10010;
 	display: none;
 }
@@ -2951,8 +2956,11 @@ body.gstore-blu-checkout-modal-open {
 }
 
 .Gstore-contract-modal__backdrop {
-	position: absolute;
-	inset: 0;
+	position: fixed;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
 	background: rgba(17, 24, 39, 0.55);
 }
 
@@ -3001,6 +3009,15 @@ body.gstore-blu-checkout-modal-open {
 	color: var(--gstore-foreground);
 	white-space: normal;
 	word-break: break-word;
+}
+
+.Gstore-contract-modal__iframe {
+	display: block;
+	width: 100%;
+	height: 100%;
+	min-height: calc(100vh - 96px);
+	border: 0;
+	background: #f5f5f5;
 }
 
 .Gstore-contract-modal__body > .wrap {

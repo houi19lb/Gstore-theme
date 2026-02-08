@@ -83,22 +83,41 @@
 		return escapeHtml(value).replace(/\r\n|\r|\n/g, '<br>');
 	}
 
+	function decodeHtmlEntities(value) {
+		const input = String(value || '');
+		if (!/&(?:lt|gt|amp|quot|#0*39);/i.test(input)) {
+			return input;
+		}
+		const textarea = document.createElement('textarea');
+		textarea.innerHTML = input;
+		return textarea.value;
+	}
+
+	function looksLikeContractDocument(value) {
+		const raw = String(value || '');
+		return /<!doctype\s+html/i.test(raw) ||
+			/<\s*html[\s>]/i.test(raw) ||
+			/<\s*body[\s>]/i.test(raw) ||
+			/<\s*style[\s>]/i.test(raw) ||
+			/class=["']pages["']/i.test(raw) ||
+			/class=["']page["']/i.test(raw);
+	}
+
+	function buildContractSrcDoc(value) {
+		const raw = String(value || '');
+		const safe = raw.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '');
+		if (/<!doctype\s+html/i.test(safe) || /<\s*html[\s>]/i.test(safe)) {
+			return safe;
+		}
+		return `<!doctype html><html lang="pt-br"><head><meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" /></head><body>${safe}</body></html>`;
+	}
+
 	function normalizeContractHtml(value) {
-		const raw = String(value || '').trim();
+		const raw = decodeHtmlEntities(value).trim();
 		if (!raw) return '';
 
-		// Permite que o admin salve um documento HTML completo.
-		if (/<\s*html[\s>]/i.test(raw) || /<\s*body[\s>]/i.test(raw)) {
-			try {
-				const parser = new DOMParser();
-				const doc = parser.parseFromString(raw, 'text/html');
-				const styles = Array.from(doc.querySelectorAll('style')).map(node => node.outerHTML).join('\n');
-				const bodyHtml = doc.body ? doc.body.innerHTML : raw;
-				return `${styles}\n${bodyHtml}`;
-			} catch (err) {
-				// Em fallback, usa o conteúdo original.
-				return raw;
-			}
+		if (looksLikeContractDocument(raw)) {
+			return raw;
 		}
 
 		// Se já for HTML parcial, renderiza como está.
@@ -108,6 +127,22 @@
 
 		// Texto puro mantém quebra de linha.
 		return nl2brSafe(raw);
+	}
+
+	function renderContractModalContent($modal, content) {
+		const normalized = normalizeContractHtml(content);
+		const $body = $modal.find('.Gstore-contract-modal__body');
+
+		if (looksLikeContractDocument(normalized)) {
+			$body.html('<iframe class="Gstore-contract-modal__iframe" title="Contrato" loading="eager"></iframe>');
+			const iframe = $body.find('.Gstore-contract-modal__iframe').get(0);
+			if (iframe) {
+				iframe.srcdoc = buildContractSrcDoc(normalized);
+			}
+			return;
+		}
+
+		$body.html(normalized);
 	}
 
 	function checkoutPageUrl(path) {
@@ -3091,12 +3126,18 @@ function getInstallmentDisplayTotals(summaryData) {
 	}
 
 	function openContractTermsModal() {
-		const $modal = $('#gstore-contract-terms-modal');
+		let $modal = $('#gstore-contract-terms-modal');
 		if (!$modal.length) return;
+
+		// Garante overlay em tela cheia: modal precisa estar no body (não dentro de containers com transform).
+		if (!$modal.parent().is('body')) {
+			$modal.detach().appendTo('body');
+			$modal = $('#gstore-contract-terms-modal');
+		}
 
 		const contractSettings = getContractSettings();
 		const title = contractSettings.modalTitle;
-		const fallbackBodyHtml = normalizeContractHtml(contractSettings.modalContent);
+		const fallbackBodyHtml = contractSettings.modalContent;
 		const contractPreview = (typeof gstoreCheckout !== 'undefined' && gstoreCheckout.contractPreview)
 			? gstoreCheckout.contractPreview
 			: null;
@@ -3128,18 +3169,18 @@ function getInstallmentDisplayTotals(summaryData) {
 			})
 				.done(function(response) {
 					if (response && response.success && response.data && response.data.html) {
-						$modal.find('.Gstore-contract-modal__body').html(normalizeContractHtml(response.data.html));
+						renderContractModalContent($modal, response.data.html);
 						return;
 					}
-					$modal.find('.Gstore-contract-modal__body').html(fallbackBodyHtml);
+					renderContractModalContent($modal, fallbackBodyHtml);
 				})
 				.fail(function() {
-					$modal.find('.Gstore-contract-modal__body').html(fallbackBodyHtml);
+					renderContractModalContent($modal, fallbackBodyHtml);
 				});
 			return;
 		}
 
-		$modal.find('.Gstore-contract-modal__body').html(fallbackBodyHtml);
+		renderContractModalContent($modal, fallbackBodyHtml);
 	}
 
 	function closeContractTermsModal() {
