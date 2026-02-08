@@ -3180,6 +3180,13 @@ function gstore_enqueue_checkout_assets() {
 		$contract_modal_title   = __( 'Termos do contrato', 'gstore' );
 		$contract_checkbox_text = __( 'Li e concordo com os', 'gstore' );
 		$contract_content       = get_theme_mod( 'gstore_contract_terms_content', gstore_get_default_contract_terms_content() );
+		// Preferir template do plugin (campo "Template HTML do contrato") quando disponível.
+		if ( class_exists( '\GStore\Services\Contract_Service' ) ) {
+			$plugin_contract_settings = \GStore\Services\Contract_Service::get_settings();
+			if ( ! empty( $plugin_contract_settings['template'] ) && is_string( $plugin_contract_settings['template'] ) ) {
+				$contract_content = $plugin_contract_settings['template'];
+			}
+		}
 		if ( function_exists( 'gstore_process_store_info_placeholders' ) ) {
 			$contract_content = gstore_process_store_info_placeholders( $contract_content );
 		}
