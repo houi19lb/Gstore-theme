@@ -149,7 +149,7 @@
 
 	function getContractDocumentStyles() {
 		return 'html,body{margin:0;padding:0;}' +
-			'body{background:#e5e7eb;color:#1f2937;font-family:Georgia,"Times New Roman",serif;line-height:1.65;}' +
+			'body{background:#e5e7eb;color:#1f2937;font-family:Arial,Helvetica,sans-serif;line-height:1.55;}' +
 			'*,*::before,*::after{box-sizing:border-box;}' +
 			'.gstore-contract-document{max-width:1080px;margin:0 auto;padding:18px 14px 28px;}' +
 			'.gstore-contract-document__page{background:#fff;border:1px solid #d1d5db;box-shadow:0 10px 24px rgba(17,24,39,.11);padding:32px 34px;margin:0 auto 18px;max-width:920px;}' +
@@ -458,6 +458,14 @@
 			const documentHtml = buildContractDocumentHtml(resolvedContent);
 			iframe.srcdoc = buildContractFullDoc(documentHtml);
 		}
+	}
+
+	function isLegacyContractPreviewHtml(content) {
+		const raw = String(content || '');
+		if (!raw) return true;
+		if (/Contrato \(conteúdo do PDF em HTML\)/i.test(raw)) return true;
+		if (/\{\{[^}]+\}\}/.test(raw)) return true;
+		return false;
 	}
 
 	function checkoutPageUrl(path) {
@@ -3484,6 +3492,10 @@ function getInstallmentDisplayTotals(summaryData) {
 			})
 				.done(function(response) {
 					if (response && response.success && response.data && response.data.html) {
+						if (isLegacyContractPreviewHtml(response.data.html)) {
+							renderContractModalContent($modal, fallbackBodyHtml);
+							return;
+						}
 						renderContractModalContent($modal, response.data.html);
 						return;
 					}
