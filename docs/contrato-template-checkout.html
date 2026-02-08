@@ -10,7 +10,7 @@
     Tokens (tema): order.number, order.created_at, order.payment_method_title, order.status,
     seller.legal_name, seller.cnpj, seller.address_full, buyer.company, buyer.shipping_full,
     buyer.shipping_city, buyer.shipping_postcode, buyer.shipping_state, buyer.phone, buyer.email,
-    buyer.cpf, buyer.rg, buyer.cr, buyer.full_name, items.table_rows, contract.generated_at
+    buyer.cpf, buyer.full_name, items.table_rows, contract.generated_at
   -->
   <style>
     :root{
@@ -170,12 +170,15 @@
           </div>
 
           <div class="section-title">I – VENDEDOR</div>
-          <p>
-            {{seller.legal_name}}, Pessoa Jurídica de Direito Privado inscrita no CNPJ nº {{seller.cnpj}}, sediada na cidade e
-            comarca de Novo Hamburgo/RS, à {{seller.address_full}}.
-          </p>
-          <p>( ) Presencial (X) Online; Data: {{order.created_at}} – N° do Pedido: {{order.number}}</p>
-          <p>Pedido ( ) Recebimento ( ) Nota Fiscal ( ) Entrega ( )</p>
+          <table class="table">
+            <tbody>
+              <tr><td class="key">RAZÃO SOCIAL</td><td>{{seller.legal_name}}</td></tr>
+              <tr><td class="key">CNPJ</td><td>{{seller.cnpj}}</td></tr>
+              <tr><td class="key">ENDEREÇO</td><td>{{seller.address_full}} – Novo Hamburgo/RS</td></tr>
+              <tr><td class="key">MODALIDADE / DATA / PEDIDO</td><td>( ) Presencial (X) Online; Data: {{order.created_at}} – N° do Pedido: {{order.number}}</td></tr>
+              <tr><td class="key">PEDIDO / RECEBIMENTO / NOTA FISCAL / ENTREGA</td><td>( ) Pedido ( ) Recebimento ( ) Nota Fiscal ( ) Entrega</td></tr>
+            </tbody>
+          </table>
 
           <div class="section-title">II – COMPRADOR</div>
           <table class="table">
@@ -185,8 +188,8 @@
               <tr><td class="key">CIDADE / CEP / UF</td><td>{{buyer.shipping_city}} / {{buyer.shipping_postcode}} / {{buyer.shipping_state}}</td></tr>
               <tr><td class="key">FONE</td><td>{{buyer.phone}}</td></tr>
               <tr><td class="key">EMAIL</td><td>{{buyer.email}}</td></tr>
-              <tr><td class="key">CPF / RG</td><td>{{buyer.cpf}} / {{buyer.rg}}</td></tr>
-              <tr><td class="key">CR</td><td>{{buyer.cr}}</td></tr>
+              <tr><td class="key">CPF</td><td>{{buyer.cpf}}</td></tr>
+              <tr><td class="key">DECLARAÇÃO</td><td>O comprador declara ter mais de 25 (vinte e cinco) anos de idade.</td></tr>
             </tbody>
           </table>
 

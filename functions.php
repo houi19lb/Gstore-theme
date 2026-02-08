@@ -3216,20 +3216,42 @@ function gstore_enqueue_checkout_assets() {
 			'modalContent' => $contract_content,
 			'privacyUrl'   => get_privacy_policy_url(),
 		) ) . ';';
+		$seller_name_display = gstore_get_store_name( 'display' );
+		$seller_legal        = gstore_get_store_name();
+		$seller_cnpj         = gstore_get_cnpj();
+		$seller_address      = gstore_get_address( 'full' );
+		if ( class_exists( '\GStore\Services\Contract_Service' ) ) {
+			$plugin_settings = \GStore\Services\Contract_Service::get_settings();
+			if ( ! empty( $plugin_settings['seller'] ) && is_array( $plugin_settings['seller'] ) ) {
+				$s = $plugin_settings['seller'];
+				if ( ! empty( $s['name'] ) ) {
+					$seller_name_display = $s['name'];
+				}
+				if ( ! empty( $s['legal_name'] ) ) {
+					$seller_legal = $s['legal_name'];
+				}
+				if ( ! empty( $s['cnpj'] ) ) {
+					$seller_cnpj = $s['cnpj'];
+				}
+				if ( ! empty( $s['address_full'] ) ) {
+					$seller_address = $s['address_full'];
+				}
+			}
+		}
 		$checkout_inline .= 'window.gstoreCheckout.contractTokenDefaults = ' . wp_json_encode(
 			array(
-				'store_name'               => gstore_get_store_name(),
-				'store_display_name'       => gstore_get_store_name( 'display' ),
-				'cnpj'                     => gstore_get_cnpj(),
-				'address_full'             => gstore_get_address( 'full' ),
+				'store_name'               => $seller_legal,
+				'store_display_name'       => $seller_name_display,
+				'cnpj'                     => $seller_cnpj,
+				'address_full'             => $seller_address,
 				'address_city_state'       => gstore_get_address( 'city_state' ),
 				'phone'                    => gstore_get_phone(),
 				'whatsapp_display'         => gstore_get_whatsapp( 'display' ),
 				'contract.generated_at'    => wp_date( 'd/m/Y H:i' ),
-				'seller.name'              => gstore_get_store_name( 'display' ),
-				'seller.legal_name'        => gstore_get_store_name(),
-				'seller.cnpj'              => gstore_get_cnpj(),
-				'seller.address_full'      => gstore_get_address( 'full' ),
+				'seller.name'              => $seller_name_display,
+				'seller.legal_name'        => $seller_legal,
+				'seller.cnpj'              => $seller_cnpj,
+				'seller.address_full'      => $seller_address,
 			)
 		) . ';';
 		// Preview via AJAX (quando o servico de contrato estiver disponivel no plugin).
