@@ -103,6 +103,14 @@
 			/class=["']page["']/i.test(raw);
 	}
 
+	function isPrebuiltContractMarkup(value) {
+		const raw = String(value || '');
+		return /class=["'][^"']*\bgstore-contract-page\b/i.test(raw) ||
+			/class=["'][^"']*\bgstore-contract-header\b/i.test(raw) ||
+			/class=["'][^"']*\bgstore-contract-section\b/i.test(raw) ||
+			/class=["'][^"']*\bgstore-contract-body\b/i.test(raw);
+	}
+
 	function safeUpperHeading(line) {
 		const t = line.trim();
 		if (!t) return false;
@@ -163,6 +171,22 @@
 			'.gstore-contract-document__signature-box{padding:13px;border:1px solid #d1d5db;background:#fff;}' +
 			'.gstore-contract-document__signature-label{font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#6b7280;}' +
 			'.gstore-contract-document__signature-line{margin-top:38px;border-top:1px solid #9ca3af;padding-top:8px;font-size:13px;}' +
+			'.gstore-contract-page{background:#fff;border:1px solid #d1d5db;box-shadow:0 8px 18px rgba(17,24,39,.08);margin:0 auto 14px;min-height:1120px;page-break-after:always;width:100%;max-width:920px;}' +
+			'.gstore-contract-page__inner{padding:32px 30px 26px;}' +
+			'.gstore-contract-page__footer{border-top:1px solid #e5e7eb;color:#6b7280;font-size:11px;padding:10px 30px 14px;display:flex;justify-content:space-between;gap:12px;}' +
+			'.gstore-contract-header h2{font-size:19px;margin:0 0 6px;text-align:center;}' +
+			'.gstore-contract-header__meta,.gstore-contract-header__tags{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-bottom:8px;}' +
+			'.gstore-contract-chip{background:#111827;border-radius:4px;color:#fff;display:inline-block;font-size:10px;font-weight:700;letter-spacing:.08em;padding:5px 8px;}' +
+			'.gstore-contract-section,.gstore-contract-body section{margin-bottom:14px;}' +
+			'.gstore-contract-section h3,.gstore-contract-body h3{font-size:13px;margin:0 0 7px;text-transform:uppercase;}' +
+			'.gstore-contract-section p,.gstore-contract-body p{color:#1f2937;font-size:12px;line-height:1.45;margin:0 0 7px;text-align:justify;}' +
+			'.gstore-contract-section table,.gstore-contract-body table{border-collapse:collapse;margin-bottom:12px;width:100%;}' +
+			'.gstore-contract-section th,.gstore-contract-section td,.gstore-contract-body th,.gstore-contract-body td{border:1px solid #d1d5db;font-size:11.5px;padding:6px 8px;text-align:left;vertical-align:top;}' +
+			'.gstore-contract-section th,.gstore-contract-body th{background:#f9fafb;font-weight:700;width:32%;}' +
+			'.gstore-contract-signatures{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));margin-top:22px;}' +
+			'.gstore-contract-signature{border:1px solid #d1d5db;min-height:84px;padding:10px;}' +
+			'.gstore-contract-signature__label{color:#6b7280;font-size:11px;margin-bottom:12px;}' +
+			'.gstore-contract-signature__line{border-top:1px solid #111827;font-size:12px;padding-top:5px;}' +
 			'@media (max-width: 840px){.gstore-contract-document{padding:10px;}.gstore-contract-document__page{padding:20px 16px;}.gstore-contract-document__header-title{font-size:15px;}.gstore-contract-document__signature{grid-template-columns:1fr;}}' +
 			'@media print{body{background:#fff!important;}.gstore-contract-document{max-width:none;padding:0;}.gstore-contract-document__page{break-after:page;page-break-after:always;box-shadow:none;border:0;margin:0;max-width:none;padding:18mm 14mm;}.gstore-contract-document__page:last-child{break-after:auto;page-break-after:auto;}.no-print{display:none!important;}}';
 	}
@@ -199,6 +223,9 @@
 	function buildContractDocumentHtml(content) {
 		const raw = decodeHtmlEntities(String(content || '').trim());
 		if (!raw) return '';
+		if (isPrebuiltContractMarkup(raw)) {
+			return raw;
+		}
 
 		// Conteúdo que já é documento HTML completo: extrair body ou usar dentro de uma página.
 		if (looksLikeContractDocument(raw)) {
@@ -247,6 +274,9 @@
 	function normalizeContractHtml(value) {
 		const raw = decodeHtmlEntities(value).trim();
 		if (!raw) return '';
+		if (isPrebuiltContractMarkup(raw)) {
+			return raw;
+		}
 
 		if (looksLikeContractDocument(raw)) {
 			return raw;
@@ -346,7 +376,7 @@
 		const billingPostcode = checkoutFieldValue('billing_postcode');
 		const billingFull = [billingAddress, billingAddress2, billingNeighborhood, [billingCity, billingState].join('/'), billingPostcode]
 			.filter(function(v) { return String(v || '').trim() !== ''; })
-			join(' - ');
+			.join(' - ');
 
 		const paymentMethodId = String(($('input[name="payment_method"]:checked').val() || summary.payment_method || '')).trim();
 		const paymentMethodTitle = stripHtmlText(summary.payment_method_title || resolvePaymentMethodTitle());

@@ -3143,6 +3143,14 @@ function gstore_enqueue_checkout_assets() {
 				'seller.address_full'      => gstore_get_address( 'full' ),
 			)
 		) . ';';
+		// Preview via AJAX (quando o servico de contrato estiver disponivel no plugin).
+		$checkout_inline .= 'window.gstoreCheckout.contractPreview = ' . wp_json_encode(
+			array(
+				'ajaxUrl' => admin_url( 'admin-ajax.php' ),
+				'nonce'   => wp_create_nonce( 'gstore_contract_preview' ),
+				'action'  => 'gstore_contract_preview',
+			)
+		) . ';';
 		wp_add_inline_script( 'gstore-checkout-steps', $checkout_inline, 'before' );
 
 		// CSS do Pix
