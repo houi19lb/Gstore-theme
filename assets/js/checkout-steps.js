@@ -83,6 +83,33 @@
 		return escapeHtml(value).replace(/\r\n|\r|\n/g, '<br>');
 	}
 
+	function normalizeContractHtml(value) {
+		const raw = String(value || '').trim();
+		if (!raw) return '';
+
+		// Permite que o admin salve um documento HTML completo.
+		if (/<\s*html[\s>]/i.test(raw) || /<\s*body[\s>]/i.test(raw)) {
+			try {
+				const parser = new DOMParser();
+				const doc = parser.parseFromString(raw, 'text/html');
+				const styles = Array.from(doc.querySelectorAll('style')).map(node => node.outerHTML).join('\n');
+				const bodyHtml = doc.body ? doc.body.innerHTML : raw;
+				return `${styles}\n${bodyHtml}`;
+			} catch (err) {
+				// Em fallback, usa o conteúdo original.
+				return raw;
+			}
+		}
+
+		// Se já for HTML parcial, renderiza como está.
+		if (/<[a-z][\s\S]*>/i.test(raw)) {
+			return raw;
+		}
+
+		// Texto puro mantém quebra de linha.
+		return nl2brSafe(raw);
+	}
+
 	function checkoutPageUrl(path) {
 		const base = (typeof gstoreCheckout !== 'undefined' && gstoreCheckout.homeUrl)
 			? gstoreCheckout.homeUrl
@@ -3069,7 +3096,7 @@ function getInstallmentDisplayTotals(summaryData) {
 
 		const contractSettings = getContractSettings();
 		const title = contractSettings.modalTitle;
-		const fallbackBodyHtml = nl2brSafe(contractSettings.modalContent);
+		const fallbackBodyHtml = normalizeContractHtml(contractSettings.modalContent);
 		const contractPreview = (typeof gstoreCheckout !== 'undefined' && gstoreCheckout.contractPreview)
 			? gstoreCheckout.contractPreview
 			: null;
@@ -3101,7 +3128,7 @@ function getInstallmentDisplayTotals(summaryData) {
 			})
 				.done(function(response) {
 					if (response && response.success && response.data && response.data.html) {
-						$modal.find('.Gstore-contract-modal__body').html(response.data.html);
+						$modal.find('.Gstore-contract-modal__body').html(normalizeContractHtml(response.data.html));
 						return;
 					}
 					$modal.find('.Gstore-contract-modal__body').html(fallbackBodyHtml);
