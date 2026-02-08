@@ -140,26 +140,31 @@
 	}
 
 	function getContractDocumentStyles() {
-		return '.gstore-contract-document{background:#f5f5f5;padding:12px;max-width:64rem;margin:0 auto;font-family:system-ui,-apple-system,sans-serif;}' +
-			'.gstore-contract-document__page{background:#fff;padding:2rem 2.5rem;margin-bottom:1rem;border-radius:4px;box-shadow:0 1px 3px rgba(0,0,0,.08);}' +
+		return 'html,body{margin:0;padding:0;}' +
+			'body{background:#e5e7eb;color:#1f2937;font-family:Georgia,"Times New Roman",serif;line-height:1.65;}' +
+			'*,*::before,*::after{box-sizing:border-box;}' +
+			'.gstore-contract-document{max-width:1080px;margin:0 auto;padding:18px 14px 28px;}' +
+			'.gstore-contract-document__page{background:#fff;border:1px solid #d1d5db;box-shadow:0 10px 24px rgba(17,24,39,.11);padding:32px 34px;margin:0 auto 18px;max-width:920px;}' +
 			'.gstore-contract-document__page:last-child{margin-bottom:0;}' +
-			'.gstore-contract-document__header{background:#1f2937;color:#fff;padding:1.25rem 1.75rem;border-radius:4px;margin-bottom:1.5rem;}' +
-			'.gstore-contract-document__header-title{font-size:1.125rem;font-weight:600;letter-spacing:.025em;}' +
-			'.gstore-contract-document__header-sub{font-size:.75rem;opacity:.85;margin-top:.25rem;}' +
-			'.gstore-contract-document__heading{margin-top:1.5rem;font-size:.875rem;font-weight:700;text-transform:uppercase;letter-spacing:.025em;color:#374151;}' +
+			'.gstore-contract-document__header{background:linear-gradient(180deg,#0f172a 0%,#1f2937 100%);color:#fff;padding:18px 22px;border:1px solid #0f172a;margin-bottom:22px;}' +
+			'.gstore-contract-document__header-title{font-family:Arial,Helvetica,sans-serif;font-size:18px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;line-height:1.3;}' +
+			'.gstore-contract-document__header-sub{font-family:Arial,Helvetica,sans-serif;font-size:12px;opacity:.86;margin-top:5px;}' +
+			'.gstore-contract-document__heading{margin-top:18px;font-family:Arial,Helvetica,sans-serif;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#111827;line-height:1.4;}' +
 			'.gstore-contract-document__heading:first-child{margin-top:0;}' +
-			'.gstore-contract-document__p{margin-top:.75rem;font-size:.875rem;line-height:1.6;color:#1f2937;}' +
+			'.gstore-contract-document__p{margin:8px 0 0;font-size:14px;color:#111827;text-align:justify;}' +
 			'.gstore-contract-document__p:first-child{margin-top:0;}' +
-			'.gstore-contract-document__page-footer{margin-top:1.5rem;padding-top:1rem;border-top:1px solid #e5e7eb;font-size:.75rem;color:#6b7280;display:flex;justify-content:space-between;}' +
-			'.gstore-contract-document table{border-collapse:collapse;width:100%;margin-top:.75rem;}' +
-			'.gstore-contract-document th,.gstore-contract-document td{border:1px solid #e5e7eb;padding:.75rem;text-align:left;font-size:.875rem;}' +
-			'.gstore-contract-document tr:nth-child(odd){background:#f9fafb;}' +
-			'.gstore-contract-document tr:nth-child(even){background:#fff;}' +
-			'.gstore-contract-document__signature{margin-top:2rem;display:grid;grid-template-columns:1fr 1fr;gap:1rem;}' +
-			'.gstore-contract-document__signature-box{padding:1rem;border:1px solid #e5e7eb;border-radius:4px;}' +
-			'.gstore-contract-document__signature-label{font-size:.75rem;color:#6b7280;}' +
-			'.gstore-contract-document__signature-line{margin-top:2rem;border-top:1px solid #d1d5db;padding-top:.75rem;font-size:.875rem;}' +
-			'@media print{body{background:#fff!important;}.gstore-contract-document__page{break-after:page;page-break-after:always;box-shadow:none;margin-bottom:0;}.gstore-contract-document__page:last-child{break-after:auto;page-break-after:auto;}.no-print{display:none!important;}}';
+			'.gstore-contract-document__page-footer{margin-top:22px;padding-top:12px;border-top:1px solid #d1d5db;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#6b7280;display:flex;justify-content:space-between;gap:12px;}' +
+			'.gstore-contract-document table{border-collapse:collapse;width:100%;margin-top:10px;font-family:Arial,Helvetica,sans-serif;}' +
+			'.gstore-contract-document th,.gstore-contract-document td{border:1px solid #d1d5db;padding:10px 11px;text-align:left;font-size:13px;vertical-align:top;}' +
+			'.gstore-contract-document th{width:34%;background:#f3f4f6;color:#111827;font-weight:700;}' +
+			'.gstore-contract-document tr:nth-child(odd) td{background:#f9fafb;}' +
+			'.gstore-contract-document tr:nth-child(even) td{background:#fff;}' +
+			'.gstore-contract-document__signature{margin-top:28px;display:grid;grid-template-columns:1fr 1fr;gap:14px;}' +
+			'.gstore-contract-document__signature-box{padding:13px;border:1px solid #d1d5db;background:#fff;}' +
+			'.gstore-contract-document__signature-label{font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#6b7280;}' +
+			'.gstore-contract-document__signature-line{margin-top:38px;border-top:1px solid #9ca3af;padding-top:8px;font-size:13px;}' +
+			'@media (max-width: 840px){.gstore-contract-document{padding:10px;}.gstore-contract-document__page{padding:20px 16px;}.gstore-contract-document__header-title{font-size:15px;}.gstore-contract-document__signature{grid-template-columns:1fr;}}' +
+			'@media print{body{background:#fff!important;}.gstore-contract-document{max-width:none;padding:0;}.gstore-contract-document__page{break-after:page;page-break-after:always;box-shadow:none;border:0;margin:0;max-width:none;padding:18mm 14mm;}.gstore-contract-document__page:last-child{break-after:auto;page-break-after:auto;}.no-print{display:none!important;}}';
 	}
 
 	function blocksToHtml(blocks) {
@@ -177,9 +182,10 @@
 	}
 
 	function firstPageHeaderHtml() {
+		var generatedAt = (new Date()).toLocaleDateString('pt-BR');
 		return '<div class="gstore-contract-document__header">' +
 			'<div class="gstore-contract-document__header-title">CONTRATO DE PROMESSA DE COMPRA E VENDA</div>' +
-			'<div class="gstore-contract-document__header-sub">Documento gerado eletronicamente</div>' +
+			'<div class="gstore-contract-document__header-sub">Documento gerado eletronicamente em ' + escapeHtml(generatedAt) + '</div>' +
 			'</div>';
 	}
 

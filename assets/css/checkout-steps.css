@@ -2949,6 +2949,7 @@ body.gstore-blu-checkout-modal-open {
 	height: 100dvh;
 	z-index: 10010;
 	display: none;
+	padding: 16px 10px;
 }
 
 .Gstore-contract-modal.is-visible {
@@ -2966,37 +2967,48 @@ body.gstore-blu-checkout-modal-open {
 
 .Gstore-contract-modal__content {
 	position: relative;
-	width: min(1100px, calc(100vw - 24px));
-	max-height: calc(100vh - 24px);
-	margin: 12px auto;
+	width: min(1240px, calc(100vw - 20px));
+	height: min(920px, calc(100dvh - 20px));
+	margin: 0 auto;
 	padding: 0;
 	background: #fff;
-	border-radius: 4px;
+	border-radius: 8px;
 	overflow: hidden;
 	display: flex;
 	flex-direction: column;
 	border: 1px solid var(--gstore-muted);
+	box-shadow: 0 18px 40px rgba(0, 0, 0, 0.25);
 }
 
 .Gstore-contract-modal__close {
 	position: absolute;
-	top: 12px;
-	right: 12px;
-	width: 32px;
-	height: 32px;
-	border: 1px solid var(--gstore-muted);
+	top: 10px;
+	right: 10px;
+	width: 36px;
+	height: 36px;
+	border: 1px solid #cbd5e1;
 	border-radius: 4px;
 	background: #fff;
 	cursor: pointer;
+	z-index: 2;
+	transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.Gstore-contract-modal__close:hover,
+.Gstore-contract-modal__close:focus-visible {
+	background: #f8fafc;
+	border-color: #94a3b8;
 }
 
 .Gstore-contract-modal__title {
 	margin: 0;
-	padding: 16px 56px 16px 18px;
+	padding: 16px 60px 16px 18px;
 	font-size: var(--gstore-font-size-11);
 	color: var(--gstore-foreground);
 	border-bottom: 1px solid var(--gstore-muted);
-	background: #fff;
+	background: #f8fafc;
+	font-weight: 600;
+	letter-spacing: 0.02em;
 }
 
 .Gstore-contract-modal__body {
@@ -3015,7 +3027,7 @@ body.gstore-blu-checkout-modal-open {
 	display: block;
 	width: 100%;
 	height: 100%;
-	min-height: calc(100vh - 96px);
+	min-height: 520px;
 	border: 0;
 	background: #f5f5f5;
 }
@@ -3032,6 +3044,30 @@ body.gstore-blu-checkout-modal-open {
 
 body.gstore-contract-modal-open {
 	overflow: hidden;
+}
+
+@media (max-width: 768px) {
+	.Gstore-contract-modal {
+		padding: 8px;
+	}
+
+	.Gstore-contract-modal__content {
+		width: 100%;
+		height: calc(100dvh - 16px);
+		border-radius: 6px;
+	}
+
+	.Gstore-contract-modal__title {
+		font-size: 1rem;
+		padding: 14px 54px 14px 14px;
+	}
+
+	.Gstore-contract-modal__close {
+		top: 8px;
+		right: 8px;
+		width: 34px;
+		height: 34px;
+	}
 }
 
 /* ============================================
