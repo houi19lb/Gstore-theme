@@ -3117,6 +3117,9 @@ function gstore_enqueue_checkout_assets() {
 		$contract_modal_title   = __( 'Termos do contrato', 'gstore' );
 		$contract_checkbox_text = __( 'Li e concordo com os', 'gstore' );
 		$contract_content       = get_theme_mod( 'gstore_contract_terms_content', gstore_get_default_contract_terms_content() );
+		if ( function_exists( 'gstore_process_store_info_placeholders' ) ) {
+			$contract_content = gstore_process_store_info_placeholders( $contract_content );
+		}
 		$checkout_inline .= 'window.gstoreCheckout.contractSettings = ' . wp_json_encode( array(
 			'enabled'      => true,
 			'checkboxText' => $contract_checkbox_text,
@@ -3124,6 +3127,22 @@ function gstore_enqueue_checkout_assets() {
 			'modalContent' => $contract_content,
 			'privacyUrl'   => get_privacy_policy_url(),
 		) ) . ';';
+		$checkout_inline .= 'window.gstoreCheckout.contractTokenDefaults = ' . wp_json_encode(
+			array(
+				'store_name'               => gstore_get_store_name(),
+				'store_display_name'       => gstore_get_store_name( 'display' ),
+				'cnpj'                     => gstore_get_cnpj(),
+				'address_full'             => gstore_get_address( 'full' ),
+				'address_city_state'       => gstore_get_address( 'city_state' ),
+				'phone'                    => gstore_get_phone(),
+				'whatsapp_display'         => gstore_get_whatsapp( 'display' ),
+				'contract.generated_at'    => wp_date( 'd/m/Y H:i' ),
+				'seller.name'              => gstore_get_store_name( 'display' ),
+				'seller.legal_name'        => gstore_get_store_name(),
+				'seller.cnpj'              => gstore_get_cnpj(),
+				'seller.address_full'      => gstore_get_address( 'full' ),
+			)
+		) . ';';
 		wp_add_inline_script( 'gstore-checkout-steps', $checkout_inline, 'before' );
 
 		// CSS do Pix
@@ -4198,21 +4217,247 @@ function gstore_save_checkout_contract_meta( $order_id ) {
 add_action( 'woocommerce_checkout_update_order_meta', 'gstore_save_checkout_contract_meta', 20 );
 
 /**
+ * Retorna o conteudo-base do contrato para preenchimento de tokens.
+ *
+ * @return string
+ */
+function gstore_get_contract_template_content() {
+	$content = get_theme_mod( 'gstore_contract_terms_content', gstore_get_default_contract_terms_content() );
+
+	if ( function_exists( 'gstore_process_store_info_placeholders' ) ) {
+		$content = gstore_process_store_info_placeholders( $content );
+	}
+
+	return (string) $content;
+}
+
+/**
+ * Substitui tokens do tipo {{token}} no contrato.
+ *
+ * @param string $content Conteudo do contrato.
+ * @param array  $tokens  Mapa de tokens.
+ * @return string
+ */
+function gstore_replace_contract_tokens( $content, array $tokens ) {
+	$content = (string) $content;
+	if ( '' === $content || false === strpos( $content, '{{' ) ) {
+		return $content;
+	}
+
+	$replacements = array();
+	foreach ( $tokens as $key => $value ) {
+		$replacements[ '{{' . $key . '}}' ] = (string) $value;
+	}
+
+	return strtr( $content, $replacements );
+}
+
+/**
+ * Monta token map do contrato com base no pedido.
+ *
+ * @param WC_Order $order Pedido.
+ * @return array
+ */
+function gstore_build_contract_token_map_from_order( $order ) {
+	if ( ! $order || ! is_a( $order, 'WC_Order' ) ) {
+		return array();
+	}
+
+	$billing_cpf  = (string) $order->get_meta( 'billing_cpf' );
+	$billing_cnpj = (string) $order->get_meta( 'billing_cnpj' );
+	$billing_rg   = (string) $order->get_meta( 'billing_rg' );
+	$billing_cr   = (string) $order->get_meta( 'billing_cr' );
+
+	$payment_method_id    = (string) $order->get_payment_method();
+	$payment_method_title = (string) $order->get_payment_method_title();
+	if ( '' === $payment_method_title && function_exists( 'gstore_get_payment_method_title_by_id' ) ) {
+		$payment_method_title = (string) gstore_get_payment_method_title_by_id( $payment_method_id );
+	}
+
+	$items_list = array();
+	$items_rows = '';
+	$idx        = 1;
+	foreach ( $order->get_items() as $item ) {
+		$name     = trim( wp_strip_all_tags( $item->get_name() ) );
+		$qty      = (int) $item->get_quantity();
+		$subtotal = wp_strip_all_tags( $order->get_formatted_line_subtotal( $item ) );
+		if ( '' === $name ) {
+			continue;
+		}
+
+		$items_list[] = $name . ' x' . $qty . ( $subtotal ? ' - ' . $subtotal : '' );
+		$items_rows  .= '<tr><td>' . $idx . '</td><td>' . esc_html( $name ) . '</td><td>' . $qty . '</td><td>' . esc_html( $subtotal ) . '</td></tr>';
+		$idx++;
+	}
+
+	$billing_address_full = implode(
+		' - ',
+		array_filter(
+			array(
+				trim( $order->get_billing_address_1() . ( $order->get_meta( 'billing_number' ) ? ', ' . $order->get_meta( 'billing_number' ) : '' ) ),
+				$order->get_billing_address_2(),
+				$order->get_billing_city() . '/' . $order->get_billing_state(),
+				$order->get_billing_postcode(),
+			)
+		)
+	);
+
+	$shipping_address_1 = $order->get_shipping_address_1() ? $order->get_shipping_address_1() : $order->get_billing_address_1();
+	$shipping_address_2 = $order->get_shipping_address_2() ? $order->get_shipping_address_2() : $order->get_billing_address_2();
+	$shipping_city      = $order->get_shipping_city() ? $order->get_shipping_city() : $order->get_billing_city();
+	$shipping_state     = $order->get_shipping_state() ? $order->get_shipping_state() : $order->get_billing_state();
+	$shipping_postcode  = $order->get_shipping_postcode() ? $order->get_shipping_postcode() : $order->get_billing_postcode();
+	$shipping_full      = implode(
+		' - ',
+		array_filter(
+			array(
+				$shipping_address_1,
+				$shipping_address_2,
+				$shipping_city . '/' . $shipping_state,
+				$shipping_postcode,
+			)
+		)
+	);
+
+	$date_created = $order->get_date_created() ? $order->get_date_created()->date_i18n( 'd/m/Y H:i' ) : '';
+	$date_paid    = $order->get_date_paid() ? $order->get_date_paid()->date_i18n( 'd/m/Y H:i' ) : '';
+	$updated_at   = wp_date( 'd/m/Y H:i' );
+
+	return array(
+		'order.id'                   => (string) $order->get_id(),
+		'order.number'               => (string) $order->get_order_number(),
+		'order.created_at'           => $date_created,
+		'order.paid_at'              => $date_paid,
+		'order.status'               => (string) $order->get_status(),
+		'order.payment_method'       => $payment_method_id,
+		'order.payment_method_title' => $payment_method_title,
+		'order.items_count'          => (string) $order->get_item_count(),
+		'order.subtotal'             => wp_strip_all_tags( wc_price( (float) $order->get_subtotal() ) ),
+		'order.shipping_total'       => wp_strip_all_tags( wc_price( (float) $order->get_shipping_total() ) ),
+		'order.discount_total'       => wp_strip_all_tags( wc_price( (float) $order->get_discount_total() ) ),
+		'order.total'                => wp_strip_all_tags( wc_price( (float) $order->get_total() ) ),
+		'buyer.first_name'           => (string) $order->get_billing_first_name(),
+		'buyer.last_name'            => (string) $order->get_billing_last_name(),
+		'buyer.full_name'            => trim( $order->get_formatted_billing_full_name() ),
+		'buyer.email'                => (string) $order->get_billing_email(),
+		'buyer.phone'                => (string) $order->get_billing_phone(),
+		'buyer.cpf'                  => $billing_cpf,
+		'buyer.cnpj'                 => $billing_cnpj,
+		'buyer.document'             => $billing_cpf ? $billing_cpf : $billing_cnpj,
+		'buyer.rg'                   => $billing_rg,
+		'buyer.cr'                   => $billing_cr,
+		'buyer.company'              => (string) $order->get_billing_company(),
+		'buyer.billing_address_1'    => (string) $order->get_billing_address_1(),
+		'buyer.billing_address_2'    => (string) $order->get_billing_address_2(),
+		'buyer.billing_city'         => (string) $order->get_billing_city(),
+		'buyer.billing_state'        => (string) $order->get_billing_state(),
+		'buyer.billing_postcode'     => (string) $order->get_billing_postcode(),
+		'buyer.billing_full'         => $billing_address_full,
+		'buyer.shipping_address_1'   => (string) $shipping_address_1,
+		'buyer.shipping_address_2'   => (string) $shipping_address_2,
+		'buyer.shipping_city'        => (string) $shipping_city,
+		'buyer.shipping_state'       => (string) $shipping_state,
+		'buyer.shipping_postcode'    => (string) $shipping_postcode,
+		'buyer.shipping_full'        => $shipping_full,
+		'items.list'                 => implode( "\n", $items_list ),
+		'items.table_rows'           => $items_rows,
+		'contract.generated_at'      => $updated_at,
+		'seller.name'                => gstore_get_store_name( 'display' ),
+		'seller.legal_name'          => gstore_get_store_name(),
+		'seller.cnpj'                => gstore_get_cnpj(),
+		'seller.address_full'        => gstore_get_address( 'full' ),
+	);
+}
+
+/**
+ * Gera e salva snapshot do contrato preenchido no pedido.
+ *
+ * @param int|WC_Order $order_ref ID ou objeto do pedido.
+ * @param string       $source    Origem da atualizacao.
+ * @return void
+ */
+function gstore_save_filled_contract_snapshot( $order_ref, $source = 'runtime' ) {
+	$order = is_a( $order_ref, 'WC_Order' ) ? $order_ref : wc_get_order( $order_ref );
+	if ( ! $order ) {
+		return;
+	}
+
+	$template = gstore_get_contract_template_content();
+	if ( '' === trim( $template ) ) {
+		return;
+	}
+
+	$token_map = gstore_build_contract_token_map_from_order( $order );
+	$filled    = gstore_replace_contract_tokens( $template, $token_map );
+
+	$order->update_meta_data( '_gstore_contract_template_snapshot', $template );
+	$order->update_meta_data( '_gstore_contract_filled_content', $filled );
+	$order->update_meta_data( '_gstore_contract_filled_source', (string) $source );
+	$order->update_meta_data( '_gstore_contract_filled_updated_at', current_time( 'mysql' ) );
+	$order->save();
+}
+
+/**
+ * Gera snapshot inicial no checkout.
+ *
+ * @param int $order_id ID do pedido.
+ * @return void
+ */
+function gstore_generate_contract_snapshot_on_checkout( $order_id ) {
+	gstore_save_filled_contract_snapshot( (int) $order_id, 'checkout' );
+}
+add_action( 'woocommerce_checkout_update_order_meta', 'gstore_generate_contract_snapshot_on_checkout', 30 );
+
+/**
+ * Atualiza snapshot do contrato quando pagamento for confirmado.
+ *
+ * @param int $order_id ID do pedido.
+ * @return void
+ */
+function gstore_generate_contract_snapshot_on_payment_complete( $order_id ) {
+	gstore_save_filled_contract_snapshot( (int) $order_id, 'payment_complete' );
+}
+add_action( 'woocommerce_payment_complete', 'gstore_generate_contract_snapshot_on_payment_complete', 20 );
+
+/**
+ * Atualiza snapshot do contrato em mudanca de status relevante (inclui webhook).
+ *
+ * @param int      $order_id    ID do pedido.
+ * @param string   $old_status  Status anterior.
+ * @param string   $new_status  Novo status.
+ * @param WC_Order $order       Pedido.
+ * @return void
+ */
+function gstore_generate_contract_snapshot_on_status_change( $order_id, $old_status, $new_status, $order ) {
+	$relevant = array( 'processing', 'completed' );
+	if ( ! in_array( (string) $new_status, $relevant, true ) ) {
+		return;
+	}
+
+	gstore_save_filled_contract_snapshot( $order, 'status:' . $new_status );
+}
+add_action( 'woocommerce_order_status_changed', 'gstore_generate_contract_snapshot_on_status_change', 20, 4 );
+
+/**
  * Exibe status de termos/idade no admin do pedido.
  */
 function gstore_display_checkout_contract_meta_admin( $order ) {
-	$terms  = $order->get_meta( '_gstore_contract_terms_accepted' );
-	$age25  = $order->get_meta( '_gstore_age_over_25' );
+	$terms               = $order->get_meta( '_gstore_contract_terms_accepted' );
+	$age25               = $order->get_meta( '_gstore_age_over_25' );
+	$contract_snapshot_at = $order->get_meta( '_gstore_contract_filled_updated_at' );
 
-	$terms_bool = in_array( (string) $terms, array( '1', 'yes', 'true', 'on' ), true );
-	$age_bool   = in_array( (string) $age25, array( '1', 'yes', 'true', 'on' ), true );
-	$terms_label = $terms_bool ? __( 'Sim', 'gstore' ) : __( 'Não', 'gstore' );
-	$age_label   = $age_bool ? __( 'Sim', 'gstore' ) : __( 'Não', 'gstore' );
+	$terms_bool     = in_array( (string) $terms, array( '1', 'yes', 'true', 'on' ), true );
+	$age_bool       = in_array( (string) $age25, array( '1', 'yes', 'true', 'on' ), true );
+	$terms_label    = $terms_bool ? __( 'Sim', 'gstore' ) : __( 'Nao', 'gstore' );
+	$age_label      = $age_bool ? __( 'Sim', 'gstore' ) : __( 'Nao', 'gstore' );
+	$contract_label = $contract_snapshot_at ? sprintf( __( 'Sim (%s)', 'gstore' ), $contract_snapshot_at ) : __( 'Nao', 'gstore' );
 
 	echo '<p><strong>' . esc_html__( 'Termos do contrato aceitos', 'gstore' ) . ':</strong> ' . esc_html( $terms_label ) . '</p>';
 	echo '<p><strong>' . esc_html__( 'Maior de 25 anos', 'gstore' ) . ':</strong> ' . esc_html( $age_label ) . '</p>';
+	echo '<p><strong>' . esc_html__( 'Contrato preenchido salvo', 'gstore' ) . ':</strong> ' . esc_html( $contract_label ) . '</p>';
 }
 add_action( 'woocommerce_admin_order_data_after_billing_address', 'gstore_display_checkout_contract_meta_admin', 20, 1 );
+
 
 /**
  * Exibe o CPF no painel de administração do pedido.

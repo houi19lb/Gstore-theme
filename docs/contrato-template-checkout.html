@@ -1,0 +1,250 @@
+<section>
+  <h2>CONTRATO DE PROMESSA DE COMPRA E VENDA</h2>
+  <p><strong>Gerado em:</strong> {{contract.generated_at}}</p>
+</section>
+
+<section>
+  <h3>I - VENDEDOR</h3>
+  <table>
+    <tr><th>Razao social</th><td>{{seller.legal_name}}</td></tr>
+    <tr><th>Nome fantasia</th><td>{{seller.name}}</td></tr>
+    <tr><th>CNPJ</th><td>{{seller.cnpj}}</td></tr>
+    <tr><th>Endereco</th><td>{{seller.address_full}}</td></tr>
+    <tr><th>Presencial / Online</th><td>( ) Presencial  (X) Online</td></tr>
+    <tr><th>Data</th><td>{{order.created_at}}</td></tr>
+    <tr><th>N do Pedido</th><td>{{order.number}}</td></tr>
+  </table>
+</section>
+
+<section>
+  <h3>II - COMPRADOR</h3>
+  <table>
+    <tr><th>Nome</th><td>{{buyer.full_name}}</td></tr>
+    <tr><th>Empresa</th><td>{{buyer.company}}</td></tr>
+    <tr><th>Email</th><td>{{buyer.email}}</td></tr>
+    <tr><th>Telefone</th><td>{{buyer.phone}}</td></tr>
+    <tr><th>CPF</th><td>{{buyer.cpf}}</td></tr>
+    <tr><th>CNPJ</th><td>{{buyer.cnpj}}</td></tr>
+    <tr><th>Documento</th><td>{{buyer.document}}</td></tr>
+    <tr><th>RG</th><td>{{buyer.rg}}</td></tr>
+    <tr><th>CR</th><td>{{buyer.cr}}</td></tr>
+    <tr><th>Endereco de cobranca</th><td>{{buyer.billing_full}}</td></tr>
+    <tr><th>Endereco de entrega</th><td>{{buyer.shipping_full}}</td></tr>
+  </table>
+</section>
+
+<section>
+  <h3>III - OBJETO</h3>
+  <table>
+    <tr><th>ID interno</th><td>{{order.id}}</td></tr>
+    <tr><th>Pedido</th><td>{{order.number}}</td></tr>
+    <tr><th>Status</th><td>{{order.status}}</td></tr>
+    <tr><th>Pagamento</th><td>{{order.payment_method_title}} ({{order.payment_method}})</td></tr>
+    <tr><th>Criado em</th><td>{{order.created_at}}</td></tr>
+    <tr><th>Pago em</th><td>{{order.paid_at}}</td></tr>
+    <tr><th>Itens</th><td>{{order.items_count}}</td></tr>
+    <tr><th>Subtotal</th><td>{{order.subtotal}}</td></tr>
+    <tr><th>Frete</th><td>{{order.shipping_total}}</td></tr>
+    <tr><th>Desconto</th><td>{{order.discount_total}}</td></tr>
+    <tr><th>Total</th><td>{{order.total}}</td></tr>
+  </table>
+</section>
+
+<section>
+  <h3>IV - ITENS</h3>
+  <table>
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Produto</th>
+        <th>Qtd</th>
+        <th>Subtotal</th>
+      </tr>
+    </thead>
+    <tbody>
+      {{items.table_rows}}
+    </tbody>
+  </table>
+</section>
+
+<section>
+  <h3>CONTRATO DE PROMESSA COMPRA E VENDA DE ARMA DE FOGO, MUNICOES, INSUMOS E EQUIPAMENTOS/PRODUTOS CONTROLADOS</h3>
+  <p>
+    Por este instrumento particular de Contrato de Compra e Venda de Arma de Fogo, de um lado {{seller.legal_name}},
+    Pessoa Juridica de Direito Privado inscrita no CNPJ n {{seller.cnpj}}, sediada em {{seller.address_full}},
+    neste ato denominada VENDEDORA.
+  </p>
+  <p>
+    E de outro lado: o(a) COMPRADOR(A), acima qualificado(a), tem, entre si, como justo e contratado, o que segue.
+  </p>
+  <p>
+    OBJETO DO CONTRATO: O presente instrumento tem por objeto a comercializacao de armas de fogo, municoes e acessorios
+    (equipamentos/produtos controlados), nos moldes legais e demais determinacoes normativas aplicaveis.
+  </p>
+</section>
+
+<section>
+  <h3>CLAUSULA PRIMEIRA - DOS REQUISITOS PARA CADASTRO, AUTORIZACAO DE COMPRA, AQUISICAO E REGISTRO</h3>
+  <p>
+    PARAGRAFO PRIMEIRO: O(a) COMPRADOR(A) declara e confirma, para os devidos fins, que realizou o pedido dos produtos
+    nas condicoes e quantidades discriminadas neste contrato, e declara, desde ja, que preenche todos os requisitos legais
+    para aquisicao, possui idoneidade, aptidao e documentacao habil.
+  </p>
+  <p>
+    PARAGRAFO SEGUNDO: Compete exclusivamente ao COMPRADOR, as suas expensas, providenciar e apresentar toda a
+    documentacao necessaria a aquisicao da arma de fogo, incluindo, sem se limitar a: certidoes negativas criminais nas
+    esferas federal, estadual e militar, comprovantes de capacidade tecnica e aptidao psicologica, comprovantes de
+    residencia, documentos pessoais, eventual comprovacao de efetiva necessidade (quando exigida), bem como quaisquer
+    autorizacoes, registros, licencas ou documentos adicionais requeridos pelos orgaos reguladores.
+  </p>
+  <p>
+    PARAGRAFO TERCEIRO: O VENDEDOR limita-se a comercializacao do produto, nao se responsabilizando por eventual demora,
+    indeferimento, negativa, suspensao ou cancelamento de registros, autorizacoes ou licencas pelos orgaos competentes,
+    nem por quaisquer entraves administrativos alheios a sua atuacao. Da mesma forma, o VENDEDOR nao responde pela
+    veracidade, autenticidade, exatidao ou suficiencia das informacoes e documentos fornecidos pelo COMPRADOR, os quais
+    sao de sua inteira e exclusiva responsabilidade.
+  </p>
+  <p>
+    PARAGRAFO QUARTO: Eventuais custos decorrentes da confeccao, obtencao ou tramitacao de documentos, tais como
+    deslocamentos, impressoes, taxas, autenticacoes, reconhecimentos de firma, despachantes, assessorias, entre outros,
+    correrao por conta exclusiva do COMPRADOR.
+  </p>
+</section>
+
+<section>
+  <h3>CLAUSULA SEGUNDA - IDONEIDADE, REQUISITOS LEGAIS E RESPONSABILIDADE DO COMPRADOR</h3>
+  <p>
+    PARAGRAFO PRIMEIRO: A efetivacao da presente compra e venda fica expressamente condicionada a comprovacao, pelo
+    COMPRADOR, de sua idoneidade moral, capacidade tecnica e aptidao psicologica, bem como ao integral cumprimento de
+    todos os requisitos legais e regulamentares previstos na Lei n 10.826/2003 (Estatuto do Desarmamento), seus decretos
+    regulamentadores e normas expedidas pela Policia Federal, SINARM, SINARM-CAC, Exercito Brasileiro, ou outros orgaos
+    competentes.
+  </p>
+  <p>
+    PARAGRAFO SEGUNDO: Caso o COMPRADOR nao comprove ou deixe de cumprir qualquer exigencia legal, normativa ou
+    documental, a compra podera ser suspensa, cancelada ou indeferida pelas autoridades competentes, nao sendo imputavel
+    ao VENDEDOR qualquer responsabilidade.
+  </p>
+</section>
+
+<section>
+  <h3>CLAUSULA TERCEIRA - DO PAGAMENTO</h3>
+  <p>
+    PARAGRAFO PRIMEIRO: O(a) COMPRADOR(A) compromete-se a efetuar o pagamento integral do valor ajustado pelos produtos
+    adquiridos, conforme condicoes pactuadas no ato da compra.
+  </p>
+  <p>
+    PARAGRAFO SEGUNDO: A liberacao do produto somente ocorrera apos a confirmacao do pagamento, bem como apos o
+    cumprimento de todas as exigencias legais e administrativas para a aquisicao e registro.
+  </p>
+</section>
+
+<section>
+  <h3>CLAUSULA QUARTA - ENTREGA E TRANSPORTE</h3>
+  <p>
+    PARAGRAFO PRIMEIRO: A entrega do produto estara condicionada a emissao de nota fiscal e ao cumprimento das normas de
+    transporte aplicaveis.
+  </p>
+  <p>
+    PARAGRAFO SEGUNDO: O COMPRADOR declara ter ciencia de que o transporte de armas e municoes possui regras especificas e
+    podera depender de transportadora especializada, autorizacao e disponibilidade logistica.
+  </p>
+  <p>
+    PARAGRAFO TERCEIRO: Armas e municoes serao despachadas via transporte aereo ou terrestre SOMENTE para o endereco
+    constante no CR (Certificado de Registro) do COMPRADOR(A), conforme Nota Fiscal emitida com o referido endereco, e
+    SOMENTE para aeroporto do mesmo Estado do endereco do CR do COMPRADOR(A).
+  </p>
+  <p>
+    PARAGRAFO QUARTO: A VENDEDORA nao se responsabiliza por avarias causadas no transporte (terrestre ou aereo) do
+    produto, sendo responsabilidade do COMPRADOR(A) a conferencia no ato de recebimento da transportadora ou no ato de
+    retirada no aeroporto. Caso o produto apresente avarias ou violacoes na embalagem, cabe ao COMPRADOR(A) recusar o
+    recebimento/retirada e fazer as devidas anotacoes e registros na nota fiscal e/ou conhecimento de transporte, buscando
+    junto ao transportador o ressarcimento pelas avarias causadas. A VENDEDORA nao aceitara reclamacoes posteriores.
+  </p>
+  <p>
+    PARAGRAFO QUINTO: O custo/pagamento do frete/envio sera SEMPRE por conta do COMPRADOR(A). O pagamento do frete devera
+    ser feito antes da emissao da nota fiscal e antes do envio/despacho do produto.
+  </p>
+  <p>
+    PARAGRAFO SEXTO: O COMPRADOR declara estar ciente que, em caso de venda realizada para outro Estado, no ato de emissao
+    da nota fiscal podera haver cobranca de diferencial de aliquota (DIFAL), taxas e demais encargos tributarios, os quais
+    serao de responsabilidade do COMPRADOR.
+  </p>
+</section>
+
+<section>
+  <h3>CLAUSULA QUINTA - PRAZOS E RESPONSABILIDADES</h3>
+  <p>
+    PARAGRAFO PRIMEIRO: O prazo para entrega e/ou disponibilizacao do produto podera variar de acordo com a tramitacao dos
+    processos junto aos orgaos competentes, nao se responsabilizando o VENDEDOR por atrasos decorrentes de terceiros.
+  </p>
+  <p>
+    PARAGRAFO SEGUNDO: O COMPRADOR reconhece que a efetivacao do registro, autorizacao e demais atos administrativos
+    dependem de orgaos publicos, razao pela qual nao ha garantia de prazo exato.
+  </p>
+</section>
+
+<section>
+  <h3>CLAUSULA SEXTA - DISPOSICOES GERAIS</h3>
+  <p>
+    PARAGRAFO PRIMEIRO: O presente contrato e celebrado em carater irrevogavel e irretratavel, ressalvadas as hipoteses
+    legais.
+  </p>
+  <p>
+    PARAGRAFO SEGUNDO: As partes elegem o foro da comarca de Novo Hamburgo/RS para dirimir quaisquer controversias
+    oriundas deste contrato.
+  </p>
+</section>
+
+<section>
+  <h3>CLAUSULA SETIMA - CANCELAMENTO</h3>
+  <p>
+    PARAGRAFO PRIMEIRO: O cancelamento do pedido somente podera ocorrer nas hipoteses previstas em lei e/ou quando houver
+    impossibilidade absoluta por parte do VENDEDOR.
+  </p>
+  <p>
+    PARAGRAFO SEGUNDO: Caso o COMPRADOR nao cumpra com sua obrigacao documental/legal, nao havera cancelamento por simples
+    desistencia.
+  </p>
+</section>
+
+<section>
+  <h3>CLAUSULA OITAVA - DISPOSICOES FINAIS</h3>
+  <p>PARAGRAFO PRIMEIRO: As partes declaram que leram e compreenderam todas as clausulas.</p>
+  <p>PARAGRAFO SEGUNDO: Este contrato podera ser assinado eletronicamente.</p>
+  <p>PARAGRAFO TERCEIRO: Eventuais anexos e comprovantes integram o presente instrumento.</p>
+</section>
+
+<section>
+  <h3>CLAUSULAS COMPLEMENTARES</h3>
+  <p>
+    PARAGRAFO PRIMEIRO: E de inteira obrigacao do COMPRADOR(A) adquirente providenciar toda a documentacao necessaria para
+    o processo de aquisicao do armamento/municao, ou quaisquer outros tipos de processos (solicitacao de CR, guia de
+    trafego etc.). Autorizacoes/processos indeferidos, ou que gerem pendencia, por responsabilidade do comprador (tais
+    como: documentacao insuficiente, certidoes positivas, falta de limite no acervo ou acervo cheio, falta de limite ou
+    limite insuficiente para aquisicao de municoes/insumos, entre outros), nao configuram justificativa para cancelamento
+    da compra, devendo portanto, o comprador, providenciar as correcoes necessarias em sua documentacao/processo e sanar as
+    pendencias para o devido deferimento de seu processo, assim como esgotar todos os recursos administrativos possiveis.
+  </p>
+  <p>
+    PARAGRAFO SEGUNDO: Em nenhuma hipotese serao restituidos valores pagos a titulo de servico de DESPACHANTE,
+    INDEPENDENTE de pendencias ou indeferimento de qualquer tipo de processo, uma vez que todo o trabalho de analise de
+    documentacao, protocolo e acompanhamento do processo foi feito.
+  </p>
+  <p>
+    PARAGRAFO TERCEIRO: Nenhum parceiro externo esta autorizado a receber valores em nome de {{seller.legal_name}}.
+  </p>
+</section>
+
+<section>
+  <div class="gstore-contract-document__signature">
+    <div class="gstore-contract-document__signature-box">
+      <div class="gstore-contract-document__signature-label">Comprador</div>
+      <div class="gstore-contract-document__signature-line">{{buyer.full_name}}</div>
+    </div>
+    <div class="gstore-contract-document__signature-box">
+      <div class="gstore-contract-document__signature-label">Vendedora</div>
+      <div class="gstore-contract-document__signature-line">{{seller.legal_name}}</div>
+    </div>
+  </div>
+</section>

@@ -259,12 +259,173 @@
 		return nl2brSafe(raw);
 	}
 
+	function formatDateTimeBr(value) {
+		if (!value) return '';
+		const dt = new Date(value);
+		if (Number.isNaN(dt.getTime())) return String(value);
+		const dd = String(dt.getDate()).padStart(2, '0');
+		const mm = String(dt.getMonth() + 1).padStart(2, '0');
+		const yyyy = dt.getFullYear();
+		const hh = String(dt.getHours()).padStart(2, '0');
+		const min = String(dt.getMinutes()).padStart(2, '0');
+		return dd + '/' + mm + '/' + yyyy + ' ' + hh + ':' + min;
+	}
+
+	function checkoutFieldValue(fieldId) {
+		return String($('#' + fieldId).val() || '').trim();
+	}
+
+	function stripHtmlText(value) {
+		return String(value || '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+	}
+
+	function resolvePaymentMethodTitle() {
+		const $selected = $('input[name="payment_method"]:checked');
+		if (!$selected.length) return '';
+		const methodId = String($selected.val() || '').trim();
+		let title = '';
+		const radioId = $selected.attr('id');
+		if (radioId) {
+			title = stripHtmlText($('label[for="' + radioId + '"]').first().text());
+		}
+		if (!title) {
+			title = methodId;
+		}
+		return title;
+	}
+
+	function getCheckoutSummaryData() {
+		return lastNonEmptyCartSummaryData || lastCartSummaryData || null;
+	}
+
+	function buildItemsListSummary(items) {
+		if (!Array.isArray(items) || !items.length) return '';
+		const lines = [];
+		for (var i = 0; i < items.length; i++) {
+			const it = items[i] || {};
+			const name = stripHtmlText(it.name || '');
+			const qty = parseInt(it.quantity, 10) || 1;
+			const subtotal = stripHtmlText(it.subtotal || '');
+			if (!name) continue;
+			lines.push(name + ' x' + qty + (subtotal ? ' - ' + subtotal : ''));
+		}
+		return lines.join('\n');
+	}
+
+	function buildItemsTableRows(items) {
+		if (!Array.isArray(items) || !items.length) return '';
+		let html = '';
+		for (var i = 0; i < items.length; i++) {
+			const it = items[i] || {};
+			const name = escapeHtml(stripHtmlText(it.name || ''));
+			const qty = parseInt(it.quantity, 10) || 1;
+			const subtotal = escapeHtml(stripHtmlText(it.subtotal || ''));
+			if (!name) continue;
+			html += '<tr><td>' + (i + 1) + '</td><td>' + name + '</td><td>' + qty + '</td><td>' + subtotal + '</td></tr>';
+		}
+		return html;
+	}
+
+	function buildContractTokenMapFromCheckout() {
+		const firstName = checkoutFieldValue('billing_first_name');
+		const lastName = checkoutFieldValue('billing_last_name');
+		const fullName = [firstName, lastName].join(' ').replace(/\s+/g, ' ').trim();
+		const cpf = checkoutFieldValue('billing_cpf');
+		const cnpj = checkoutFieldValue('billing_cnpj');
+		const rg = checkoutFieldValue('billing_rg');
+		const cr = checkoutFieldValue('billing_cr');
+		const summary = getCheckoutSummaryData() || {};
+		const items = Array.isArray(summary.items) ? summary.items : [];
+		const nowIso = new Date().toISOString();
+
+		const billingAddress = [checkoutFieldValue('billing_address_1'), checkoutFieldValue('billing_number')].join(', ').replace(/,\s*$/, '').trim();
+		const billingAddress2 = checkoutFieldValue('billing_address_2');
+		const billingNeighborhood = checkoutFieldValue('billing_neighborhood');
+		const billingCity = checkoutFieldValue('billing_city');
+		const billingState = checkoutFieldValue('billing_state');
+		const billingPostcode = checkoutFieldValue('billing_postcode');
+		const billingFull = [billingAddress, billingAddress2, billingNeighborhood, [billingCity, billingState].join('/'), billingPostcode]
+			.filter(function(v) { return String(v || '').trim() !== ''; })
+			join(' - ');
+
+		const paymentMethodId = String(($('input[name="payment_method"]:checked').val() || summary.payment_method || '')).trim();
+		const paymentMethodTitle = stripHtmlText(summary.payment_method_title || resolvePaymentMethodTitle());
+
+		return {
+			'order.id': '',
+			'order.number': '',
+			'order.created_at': formatDateTimeBr(nowIso),
+			'order.status': 'checkout',
+			'order.payment_method': paymentMethodId,
+			'order.payment_method_title': paymentMethodTitle,
+			'order.items_count': String(summary.items_count || items.length || ''),
+			'order.subtotal': stripHtmlText(summary.subtotal || ''),
+			'order.shipping_total': stripHtmlText(summary.shipping_total || ''),
+			'order.discount_total': stripHtmlText(summary.discount_total || ''),
+			'order.total': stripHtmlText(summary.total || ''),
+			'buyer.first_name': firstName,
+			'buyer.last_name': lastName,
+			'buyer.full_name': fullName,
+			'buyer.email': checkoutFieldValue('billing_email'),
+			'buyer.phone': checkoutFieldValue('billing_phone'),
+			'buyer.cpf': cpf,
+			'buyer.cnpj': cnpj,
+			'buyer.document': cpf || cnpj,
+			'buyer.rg': rg,
+			'buyer.cr': cr,
+			'buyer.company': checkoutFieldValue('billing_company'),
+			'buyer.billing_address_1': checkoutFieldValue('billing_address_1'),
+			'buyer.billing_number': checkoutFieldValue('billing_number'),
+			'buyer.billing_address_2': billingAddress2,
+			'buyer.billing_neighborhood': billingNeighborhood,
+			'buyer.billing_city': billingCity,
+			'buyer.billing_state': billingState,
+			'buyer.billing_postcode': billingPostcode,
+			'buyer.billing_full': billingFull,
+			'buyer.shipping_address_1': checkoutFieldValue('shipping_address_1') || checkoutFieldValue('billing_address_1'),
+			'buyer.shipping_address_2': checkoutFieldValue('shipping_address_2') || billingAddress2,
+			'buyer.shipping_city': checkoutFieldValue('shipping_city') || billingCity,
+			'buyer.shipping_state': checkoutFieldValue('shipping_state') || billingState,
+			'buyer.shipping_postcode': checkoutFieldValue('shipping_postcode') || billingPostcode,
+			'items.list': buildItemsListSummary(items),
+			'items.table_rows': buildItemsTableRows(items),
+			'contract.generated_at': formatDateTimeBr(nowIso)
+		};
+	}
+
+	function applyContractTemplateTokens(content) {
+		const raw = String(content || '');
+		if (!raw || raw.indexOf('{{') === -1) return raw;
+
+		const defaults = (typeof gstoreCheckout !== 'undefined' && gstoreCheckout.contractTokenDefaults)
+			? gstoreCheckout.contractTokenDefaults
+			: {};
+		const runtime = buildContractTokenMapFromCheckout();
+		const merged = {};
+		Object.keys(defaults || {}).forEach(function(k) {
+			merged[String(k).toLowerCase()] = defaults[k];
+		});
+		Object.keys(runtime || {}).forEach(function(k) {
+			merged[String(k).toLowerCase()] = runtime[k];
+		});
+
+		return raw.replace(/\{\{\s*([a-z0-9._-]+)\s*\}\}/gi, function(match, token) {
+			const key = String(token || '').toLowerCase();
+			if (!Object.prototype.hasOwnProperty.call(merged, key)) {
+				return match;
+			}
+			const value = merged[key];
+			return value == null ? '' : String(value);
+		});
+	}
+
 	function renderContractModalContent($modal, content) {
 		const $body = $modal.find('.Gstore-contract-modal__body');
 		$body.html('<iframe class="Gstore-contract-modal__iframe" title="Contrato" loading="eager"></iframe>');
 		const iframe = $body.find('.Gstore-contract-modal__iframe').get(0);
 		if (iframe) {
-			const documentHtml = buildContractDocumentHtml(content);
+			const resolvedContent = applyContractTemplateTokens(content);
+			const documentHtml = buildContractDocumentHtml(resolvedContent);
 			iframe.srcdoc = buildContractFullDoc(documentHtml);
 		}
 	}
