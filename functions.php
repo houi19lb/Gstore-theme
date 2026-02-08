@@ -1739,6 +1739,69 @@ function gstore_ensure_ajax_add_to_cart_enabled() {
 add_action( 'init', 'gstore_ensure_ajax_add_to_cart_enabled', 5 );
 
 /**
+ * Remove os avisos "Escolha as opções de produtos visitando…" de produtos variáveis.
+ *
+ * O WooCommerce gera esse aviso de erro quando o add-to-cart é acionado para um
+ * produto variável sem que as variações tenham sido selecionadas (GET request com
+ * ?add-to-cart=ID). Os avisos ficam na sessão e acabam aparecendo em diversas
+ * páginas, causando confusão para o usuário.
+ *
+ * Esta função filtra os notices de erro do WooCommerce e remove apenas os que
+ * correspondem a esse padrão específico, preservando todos os outros avisos.
+ */
+function gstore_suppress_variable_product_choose_options_notice() {
+	if ( ! function_exists( 'wc_get_notices' ) || ! function_exists( 'wc_clear_notices' ) ) {
+		return;
+	}
+
+	$error_notices = wc_get_notices( 'error' );
+
+	if ( empty( $error_notices ) ) {
+		return;
+	}
+
+	$had_match    = false;
+	$keep_notices = array();
+
+	foreach ( $error_notices as $notice ) {
+		$text = is_array( $notice ) ? ( $notice['notice'] ?? '' ) : (string) $notice;
+
+		// Detecta o aviso "Escolha as opções de produtos visitando" (PT-BR)
+		// e "Please choose product options by visiting" (EN) do WooCommerce core.
+		if (
+			false !== stripos( $text, 'escolha as' )
+			|| false !== stripos( $text, 'choose product options' )
+		) {
+			$had_match = true;
+			continue; // Remove este aviso.
+		}
+
+		$keep_notices[] = $notice;
+	}
+
+	if ( ! $had_match ) {
+		return;
+	}
+
+	// Limpa os avisos de erro e re-adiciona apenas os que devem permanecer.
+	wc_clear_notices( 'error' );
+
+	foreach ( $keep_notices as $notice ) {
+		if ( is_array( $notice ) ) {
+			wc_add_notice( $notice['notice'] ?? '', 'error', $notice['data'] ?? array() );
+		} else {
+			wc_add_notice( (string) $notice, 'error' );
+		}
+	}
+}
+// Executa cedo em vários pontos para garantir que o aviso nunca chegue ao frontend.
+add_action( 'wp', 'gstore_suppress_variable_product_choose_options_notice', 1 );
+add_action( 'woocommerce_before_shop_loop', 'gstore_suppress_variable_product_choose_options_notice', 1 );
+add_action( 'woocommerce_before_single_product', 'gstore_suppress_variable_product_choose_options_notice', 1 );
+add_action( 'woocommerce_before_cart', 'gstore_suppress_variable_product_choose_options_notice', 1 );
+add_action( 'woocommerce_before_checkout_form', 'gstore_suppress_variable_product_choose_options_notice', 1 );
+
+/**
  * Melhora os fragmentos do carrinho para incluir mais elementos do mini-cart.
  * 
  * Adiciona fragmentos adicionais para garantir que o mini-cart seja atualizado
