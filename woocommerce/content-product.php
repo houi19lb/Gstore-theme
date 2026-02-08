@@ -46,6 +46,18 @@ $sale_price_amount     = $is_variable_product ? (float) $product->get_variation_
 $current_price_amount  = $is_variable_product ? (float) $product->get_variation_price( 'min', true ) : (float) $product->get_price();
 $has_sale_value        = $product->is_on_sale() && $regular_price_amount > 0 && $sale_price_amount > 0;
 $display_price_amount  = $has_sale_value ? $sale_price_amount : ( $current_price_amount > 0 ? $current_price_amount : $regular_price_amount );
+// Para variáveis, resolver o ID da variação com menor preço para o AJAX de parcelas.
+$installment_product_id = gstore_get_product_id( $product );
+if ( $is_variable_product && method_exists( $product, 'get_variation_prices' ) ) {
+	$variation_prices = $product->get_variation_prices( true );
+	if ( ! empty( $variation_prices['price'] ) ) {
+		reset( $variation_prices['price'] );
+		$cheapest_variation_id = (int) key( $variation_prices['price'] );
+		if ( $cheapest_variation_id > 0 ) {
+			$installment_product_id = $cheapest_variation_id;
+		}
+	}
+}
 // Calcula parcela sem juros (taxa efetiva só no checkout).
 $installments          = (int) apply_filters( 'armastore_single_product_installments', 21, $product );
 $installment_amount    = $display_price_amount > 0 ? gstore_calculate_installment_amount( $display_price_amount, $installments ) : 0;
@@ -66,7 +78,20 @@ $installment_label       = $installment_price_html
 		<div class="Gstore-product-card__top">
 			<?php
 			// Discount Badge.
-			if ( $product->is_on_sale() ) {
+			if ( $is_variable_product ) {
+				// Variáveis: usar preços já calculados (linhas 44-48).
+				if ( $has_sale_value ) {
+					$discount_percentage = round( ( ( $regular_price_amount - $display_price_amount ) / $regular_price_amount ) * 100 );
+					if ( $discount_percentage > 0 ) {
+						?>
+						<div class="Gstore-product-card__badge">
+							<?php echo esc_html( $discount_percentage ); ?>% <?php esc_html_e( 'OFF', 'gstore' ); ?>
+						</div>
+						<?php
+					}
+				}
+			} elseif ( $product->is_on_sale() ) {
+				// Simples: código original intacto.
 				$regular_price = (float) $product->get_regular_price();
 				$sale_price    = (float) $product->get_sale_price();
 				if ( $regular_price > 0 ) {
@@ -142,7 +167,7 @@ $installment_label       = $installment_price_html
 								class="Gstore-product-card__installments-text"
 								data-gstore-installment-target="1"
 								data-gstore-installment-scope="card"
-								data-product-id="<?php echo esc_attr( (string) gstore_get_product_id( $product ) ); ?>"
+								data-product-id="<?php echo esc_attr( (string) $installment_product_id ); ?>"
 								data-max-installments="<?php echo esc_attr( $installments ); ?>"
 								data-ajax-url="<?php echo esc_attr( admin_url( 'admin-ajax.php' ) ); ?>"
 								data-initial-text="<?php echo esc_attr( wp_strip_all_tags( (string) $installment_label ) ); ?>"
