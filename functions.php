@@ -3113,6 +3113,17 @@ function gstore_enqueue_checkout_assets() {
 		// Garante gstoreCartSummary (resumo do carrinho) com nonce válido para evitar 403 no admin-ajax.
 		$cart_summary_nonce = wp_create_nonce( 'gstore_cart_summary' );
 		$checkout_inline .= 'window.gstoreCartSummary = window.gstoreCartSummary || { ajaxUrl: ' . wp_json_encode( admin_url( 'admin-ajax.php' ) ) . ', nonce: ' . wp_json_encode( $cart_summary_nonce ) . ' };';
+		// Termos do contrato: conteúdo do modal (título, texto completo, checkbox, privacidade).
+		$contract_modal_title   = __( 'Termos do contrato', 'gstore' );
+		$contract_checkbox_text = __( 'Li e concordo com os', 'gstore' );
+		$contract_content       = get_theme_mod( 'gstore_contract_terms_content', gstore_get_default_contract_terms_content() );
+		$checkout_inline .= 'window.gstoreCheckout.contractSettings = ' . wp_json_encode( array(
+			'enabled'      => true,
+			'checkboxText' => $contract_checkbox_text,
+			'modalTitle'   => $contract_modal_title,
+			'modalContent' => $contract_content,
+			'privacyUrl'   => get_privacy_policy_url(),
+		) ) . ';';
 		wp_add_inline_script( 'gstore-checkout-steps', $checkout_inline, 'before' );
 
 		// CSS do Pix
@@ -4044,6 +4055,110 @@ function gstore_save_cpf_field( $order_id ) {
     }
 }
 add_action( 'woocommerce_checkout_update_order_meta', 'gstore_save_cpf_field' );
+
+/**
+ * Retorna o texto padrão do contrato (termos) exibido no modal do checkout.
+ * Pode ser sobrescrito via theme mod 'gstore_contract_terms_content'.
+ *
+ * @return string Texto completo do contrato (múltiplas páginas).
+ */
+function gstore_get_default_contract_terms_content() {
+	$p1 = "CONTRATO DE PROMESSA DE COMPRA E VENDA\n"
+		. "I – VENDEDOR\n"
+		. "LARISSA EDUARDA DE MELLO NUNES LTDA, Pessoa Jurídica de Direito Privado inscrita no CNPJ nº 47.391.723/0001-22, sediada na cidade e\n"
+		. "comarca de Novo Hamburgo/RS, à Rua Caçador, nº 214, Bairro Rio Branco, CEP 93.336-170, e Inscrição Estadual nº S086/0555895, Nº do CR:\n"
+		. "944110, validade: 09/11/2032.\n"
+		. "() Presencial (X) Online; Data: 29/01/2026 – N° do Pedido: (a preencher)\n"
+		. "Pedido ( ) Recebimento () Nota Fiscal ( ) Entrega ( )\n"
+		. "II- COMPRADOR\n"
+		. "RAZÃO SOCIAL:\n"
+		. "ENDEREÇO DE ENTREGA:\n"
+		. "CIDADE: Bairro: Cep: UF:\n"
+		. "DDD: Fone: Email:\n"
+		. "CPF: RG: CR:\n"
+		. "III – OBJETO\n"
+		. "Especificações do objeto do presente contrato de Promessa de Compra e Venda:\n"
+		. "Código: Marca:\n"
+		. "CONTRATO DE PROMESSA COMPRA E VENDA DE ARMA DE FOGO, MUNIÇÕES, INSUMOS E EQUIPAMENTOS/PRODUTOS CONTROLADOS\n"
+		. "Por este instrumento particular de Contrato de Compra e Venda de Arma de Fogo, de um lado LARISSA EDUARDA DE MELLO NUNES LTDA, Pessoa Jurídica\n"
+		. "de Direito Privado inscrita no CNPJ nº 47.391.723/0001-22, sediada na cidade e comarca de Novo Hamburgo/RS, à Rua Caçador, nº 214, Bairro Rio Branco,\n"
+		. "CEP 93.336-170, e Inscrição Estadual nº S086/0555895, Nº do CR: 944110, validade: 09/11/2032, neste ato denominada VENDEDORA.\n"
+		. "E de outro lado: o(a) COMPRADOR(A), acima qualificado(a), têm, entre si, como justo e contratado, o que segue:\n"
+		. "OBJETO DO CONTRATO: O presente instrumento tem por objeto a comercialização de armas de fogo, munições e acessórios (equipamentos/produtos controlados),\n"
+		. "nos moldes legais e demais determinações normativas aplicáveis.\n"
+		. "CLÁUSULA PRIMEIRA: DOS REQUISITOS PARA CADASTRO, AUTORIZAÇÃO DE COMPRA, AQUISIÇÃO E REGISTRO\n"
+		. "PARÁGRAFO PRIMEIRO: O(a) COMPRADOR(A) declara e confirma, para os devidos fins, que realizou o pedido dos produtos nas condições e quantidades discriminadas\n"
+		. "neste contrato, e declara, desde já, que preenche todos os requisitos legais para aquisição, possui idoneidade, aptidão e documentação hábil.\n"
+		. "PARÁGRAFO SEGUNDO: Compete exclusivamente ao COMPRADOR, às suas expensas, providenciar e apresentar toda a documentação necessária à\n"
+		. "aquisição da arma de fogo, incluindo, sem se limitar a: certidões negativas criminais nas esferas federal, estadual e militar, comprovantes de capacidade\n"
+		. "técnica e aptidão psicológica, comprovantes de residência, documentos pessoais, eventual comprovação de efetiva necessidade (quando exigida), bem\n"
+		. "como quaisquer autorizações, registros, licenças ou documentos adicionais requeridos pelos órgãos reguladores.\n"
+		. "PARÁGRAFO TERCEIRO: O VENDEDOR limita-se à comercialização do produto, não se responsabilizando por eventual demora, indeferimento, negativa,\n"
+		. "suspensão ou cancelamento de registros, autorizações ou licenças pelos órgãos competentes, nem por quaisquer entraves administrativos alheios à sua\n"
+		. "atuação. Da mesma forma, o VENDEDOR não responde pela veracidade, autenticidade, exatidão ou suficiência das informações e documentos fornecidos\n"
+		. "pelo COMPRADOR, os quais são de sua inteira e exclusiva responsabilidade.\n"
+		. "PARÁGRAFO QUARTO: Eventuais custos decorrentes da confecção, obtenção ou tramitação de documentos, tais como deslocamentos, impressões,\n"
+		. "taxas, autenticações, reconhecimentos de firma, despachantes, assessorias, entre outros, correrão por conta exclusiva do COMPRADOR.\n"
+		. "CLÁUSULA SEGUNDA: IDONEIDADE, REQUISITOS LEGAIS E RESPONSABILIDADE DO COMPRADOR\n"
+		. "PARÁGRAFO PRIMEIRO: A efetivação da presente compra e venda fica expressamente condicionada à comprovação, pelo COMPRADOR, de sua\n"
+		. "idoneidade moral, capacidade técnica e aptidão psicológica, bem como ao integral cumprimento de todos os requisitos legais e regulamentares previstos\n"
+		. "na Lei nº 10.826/2003 (Estatuto do Desarmamento), seus decretos regulamentadores e normas expedidas pela Polícia Federal, SINARM, SINARM-CAC,\n"
+		. "Exército Brasileiro, ou outros órgãos competentes.";
+
+	$p2 = "PARÁGRAFO SEGUNDO: Caso o COMPRADOR não comprove ou deixe de cumprir qualquer exigência legal, normativa ou documental, a compra poderá ser\n"
+		. "suspensa, cancelada ou indeferida pelas autoridades competentes, não sendo imputável ao VENDEDOR qualquer responsabilidade.\n"
+		. "CLÁUSULA TERCEIRA: DO PAGAMENTO\n"
+		. "PARÁGRAFO PRIMEIRO: O(a) COMPRADOR(A) compromete-se a efetuar o pagamento integral do valor ajustado pelos produtos adquiridos, conforme\n"
+		. "condições pactuadas no ato da compra.\n"
+		. "PARÁGRAFO SEGUNDO: A liberação do produto somente ocorrerá após a confirmação do pagamento, bem como após o cumprimento de todas as exigências\n"
+		. "legais e administrativas para a aquisição e registro.\n"
+		. "CLÁUSULA QUARTA: ENTREGA E TRANSPORTE\n"
+		. "PARÁGRAFO PRIMEIRO: A entrega do produto estará condicionada à emissão de nota fiscal e ao cumprimento das normas de transporte aplicáveis.\n"
+		. "PARÁGRAFO SEGUNDO: O COMPRADOR declara ter ciência de que o transporte de armas e munições possui regras específicas e poderá depender de\n"
+		. "transportadora especializada, autorização e disponibilidade logística.\n"
+		. "CLÁUSULA QUINTA: PRAZOS E RESPONSABILIDADES\n"
+		. "PARÁGRAFO PRIMEIRO: O prazo para entrega e/ou disponibilização do produto poderá variar de acordo com a tramitação dos processos junto aos órgãos\n"
+		. "competentes, não se responsabilizando o VENDEDOR por atrasos decorrentes de terceiros.\n"
+		. "PARÁGRAFO SEGUNDO: O COMPRADOR reconhece que a efetivação do registro, autorização e demais atos administrativos dependem de órgãos públicos,\n"
+		. "razão pela qual não há garantia de prazo exato.\n"
+		. "CLÁUSULA SEXTA: DISPOSIÇÕES GERAIS\n"
+		. "PARÁGRAFO PRIMEIRO: O presente contrato é celebrado em caráter irrevogável e irretratável, ressalvadas as hipóteses legais.\n"
+		. "PARÁGRAFO SEGUNDO: As partes elegem o foro da comarca de Novo Hamburgo/RS para dirimir quaisquer controvérsias oriundas deste contrato.";
+
+	$p3 = "PARÁGRAFO TERCEIRO: Armas e munições serão despachadas via transporte aéreo ou terrestre SOMENTE para o endereço constante no CR (Certificado\n"
+		. "de Registro) do COMPRADOR(A), conforme Nota Fiscal emitida com o referido endereço, e SOMENTE para aeroporto do mesmo Estado do endereço do\n"
+		. "CR do COMPRADOR(A);\n"
+		. "PARÁGRAFO QUARTO: A VENDEDORA não se responsabiliza por avarias causadas no transporte (terrestre ou aéreo) do produto, sendo responsabilidade\n"
+		. "do COMPRADOR(A) a conferência no ato de recebimento da transportadora ou no ato de retirada no aeroporto. Caso o produto apresente avarias ou\n"
+		. "violações na embalagem, cabe ao COMPRADOR(A) recusar o recebimento/retirada e fazer as devidas anotações e registros na nota fiscal e/ou\n"
+		. "conhecimento de transporte, buscando junto ao transportador o ressarcimento pelas avarias causadas. A VENDEDORA não aceitará reclamações\n"
+		. "posteriores.\n"
+		. "PARÁGRAFO QUINTO: O custo/pagamento do frete/envio será SEMPRE por conta do COMPRADOR(A). O pagamento do frete deverá ser feito antes da\n"
+		. "emissão da nota fiscal e antes do envio/despacho do produto.\n"
+		. "PARÁGRAFO SEXTO: O COMPRADOR declara estar ciente que, em caso de venda realizada para outro Estado, no ato de emissão da nota fiscal poderá haver\n"
+		. "cobrança de diferencial de alíquota (DIFAL), taxas e demais encargos tributários, os quais serão de responsabilidade do COMPRADOR.\n"
+		. "CLÁUSULA SÉTIMA: CANCELAMENTO\n"
+		. "PARÁGRAFO PRIMEIRO: O cancelamento do pedido somente poderá ocorrer nas hipóteses previstas em lei e/ou quando houver impossibilidade absoluta\n"
+		. "por parte do VENDEDOR.\n"
+		. "PARÁGRAFO SEGUNDO: Caso o COMPRADOR não cumpra com sua obrigação documental/legal, não haverá cancelamento por simples desistência.\n"
+		. "CLÁUSULA OITAVA: DISPOSIÇÕES FINAIS\n"
+		. "PARÁGRAFO PRIMEIRO: As partes declaram que leram e compreenderam todas as cláusulas.\n"
+		. "PARÁGRAFO SEGUNDO: Este contrato poderá ser assinado eletronicamente.\n"
+		. "PARÁGRAFO TERCEIRO: Eventuais anexos e comprovantes integram o presente instrumento.";
+
+	$p4 = "PARÁGRAFO PRIMEIRO: É de inteira obrigação do COMPRADOR(A) adquirente providenciar toda a documentação necessária para o processo de aquisição\n"
+		. "do armamento/munição, ou quaisquer outros tipos de processos (solicitação de CR, guia de tráfego etc.). Autorizações/processos indeferidos, ou que\n"
+		. "gerem pendência, por responsabilidade do comprador (tais como: documentação insuficiente, certidões positivas, falta de limite no acervo ou acervo\n"
+		. "cheio, falta de limite ou limite insuficiente para aquisição de munições/insumos, entre outros), não configuram justificativa para cancelamento da compra,\n"
+		. "devendo portanto, o comprador, providenciar as correções necessárias em sua documentação/processo e sanar as pendências para o devido\n"
+		. "deferimento de seu processo, assim como esgotar todos os recursos administrativos possíveis.\n"
+		. "PARÁGRAFO SEGUNDO: Em nenhuma hipótese serão restituídos valores pagos a título de serviço de DESPACHANTE, INDEPENDENTE de pendências ou\n"
+		. "indeferimento de qualquer tipo de processo, uma vez que todo o trabalho de análise de documentação, protocolo e acompanhamento do processo foi\n"
+		. "feito.\n"
+		. "PARÁGRAFO TERCEIRO: Nenhum parceiro externo está autorizado a receber valores em nome da LARISSA EDUARDA DE MELLO NUNES LTDA.";
+
+	return $p1 . "\n\n" . $p2 . "\n\n" . $p3 . "\n\n" . $p4;
+}
 
 /**
  * Valida aceite dos termos de contrato no backend.

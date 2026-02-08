@@ -103,13 +103,139 @@
 			/class=["']page["']/i.test(raw);
 	}
 
+	function safeUpperHeading(line) {
+		const t = line.trim();
+		if (!t) return false;
+		const isClause = /^CLÁUSULA\b/.test(t) || /^PARÁGRAFO\b/.test(t);
+		const mostlyUpper = t === t.toUpperCase() && /[A-ZÁÉÍÓÚÂÊÔÃÕÇ]/.test(t);
+		return isClause || (mostlyUpper && t.length <= 120);
+	}
+
+	function splitIntoBlocks(pageText) {
+		const lines = pageText
+			.split(/\r?\n/)
+			.map(function(l) { return l.trim(); })
+			.filter(function(l) { return l.length > 0; });
+
+		const blocks = [];
+		let buf = [];
+
+		function flush() {
+			if (!buf.length) return;
+			blocks.push({ type: 'p', text: buf.join(' ').replace(/\s+/g, ' ') });
+			buf = [];
+		}
+
+		for (var i = 0; i < lines.length; i++) {
+			const line = lines[i];
+			if (safeUpperHeading(line)) {
+				flush();
+				blocks.push({ type: 'heading', text: line });
+			} else {
+				buf.push(line);
+			}
+		}
+		flush();
+		return blocks;
+	}
+
+	function getContractDocumentStyles() {
+		return '.gstore-contract-document{background:#f5f5f5;padding:12px;max-width:64rem;margin:0 auto;font-family:system-ui,-apple-system,sans-serif;}' +
+			'.gstore-contract-document__page{background:#fff;padding:2rem 2.5rem;margin-bottom:1rem;border-radius:4px;box-shadow:0 1px 3px rgba(0,0,0,.08);}' +
+			'.gstore-contract-document__page:last-child{margin-bottom:0;}' +
+			'.gstore-contract-document__header{background:#1f2937;color:#fff;padding:1.25rem 1.75rem;border-radius:4px;margin-bottom:1.5rem;}' +
+			'.gstore-contract-document__header-title{font-size:1.125rem;font-weight:600;letter-spacing:.025em;}' +
+			'.gstore-contract-document__header-sub{font-size:.75rem;opacity:.85;margin-top:.25rem;}' +
+			'.gstore-contract-document__heading{margin-top:1.5rem;font-size:.875rem;font-weight:700;text-transform:uppercase;letter-spacing:.025em;color:#374151;}' +
+			'.gstore-contract-document__heading:first-child{margin-top:0;}' +
+			'.gstore-contract-document__p{margin-top:.75rem;font-size:.875rem;line-height:1.6;color:#1f2937;}' +
+			'.gstore-contract-document__p:first-child{margin-top:0;}' +
+			'.gstore-contract-document__page-footer{margin-top:1.5rem;padding-top:1rem;border-top:1px solid #e5e7eb;font-size:.75rem;color:#6b7280;display:flex;justify-content:space-between;}' +
+			'.gstore-contract-document table{border-collapse:collapse;width:100%;margin-top:.75rem;}' +
+			'.gstore-contract-document th,.gstore-contract-document td{border:1px solid #e5e7eb;padding:.75rem;text-align:left;font-size:.875rem;}' +
+			'.gstore-contract-document tr:nth-child(odd){background:#f9fafb;}' +
+			'.gstore-contract-document tr:nth-child(even){background:#fff;}' +
+			'.gstore-contract-document__signature{margin-top:2rem;display:grid;grid-template-columns:1fr 1fr;gap:1rem;}' +
+			'.gstore-contract-document__signature-box{padding:1rem;border:1px solid #e5e7eb;border-radius:4px;}' +
+			'.gstore-contract-document__signature-label{font-size:.75rem;color:#6b7280;}' +
+			'.gstore-contract-document__signature-line{margin-top:2rem;border-top:1px solid #d1d5db;padding-top:.75rem;font-size:.875rem;}' +
+			'@media print{body{background:#fff!important;}.gstore-contract-document__page{break-after:page;page-break-after:always;box-shadow:none;margin-bottom:0;}.gstore-contract-document__page:last-child{break-after:auto;page-break-after:auto;}.no-print{display:none!important;}}';
+	}
+
+	function blocksToHtml(blocks) {
+		var html = '';
+		for (var i = 0; i < blocks.length; i++) {
+			var b = blocks[i];
+			var escaped = escapeHtml(b.text);
+			if (b.type === 'heading') {
+				html += '<div class="gstore-contract-document__heading">' + escaped + '</div>';
+			} else {
+				html += '<p class="gstore-contract-document__p">' + escaped + '</p>';
+			}
+		}
+		return html;
+	}
+
+	function firstPageHeaderHtml() {
+		return '<div class="gstore-contract-document__header">' +
+			'<div class="gstore-contract-document__header-title">CONTRATO DE PROMESSA DE COMPRA E VENDA</div>' +
+			'<div class="gstore-contract-document__header-sub">Documento gerado eletronicamente</div>' +
+			'</div>';
+	}
+
+	function contractPageFooterHtml(pageNum) {
+		return '<div class="gstore-contract-document__page-footer">' +
+			'<span>Contrato gerado eletronicamente</span>' +
+			'<span>Página ' + pageNum + '</span>' +
+			'</div>';
+	}
+
+	function buildContractDocumentHtml(content) {
+		const raw = decodeHtmlEntities(String(content || '').trim());
+		if (!raw) return '';
+
+		// Conteúdo que já é documento HTML completo: extrair body ou usar dentro de uma página.
+		if (looksLikeContractDocument(raw)) {
+			const bodyMatch = raw.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
+			const inner = bodyMatch ? bodyMatch[1].trim() : raw;
+			return '<div class="gstore-contract-document"><div class="gstore-contract-document__page">' + inner + contractPageFooterHtml(1) + '</div></div>';
+		}
+
+		// HTML rico (tabelas, secções): uma página com o conteúdo.
+		if (/<[a-z][\s\S]*>/i.test(raw)) {
+			return '<div class="gstore-contract-document"><div class="gstore-contract-document__page">' + firstPageHeaderHtml() + raw + contractPageFooterHtml(1) + '</div></div>';
+		}
+
+		// Texto puro: dividir em páginas (blocos separados por linha em branco dupla) e depois em heading/parágrafo.
+		const pageChunks = raw.split(/\n\s*\n/).filter(function(s) { return s.trim().length > 0; });
+		if (!pageChunks.length) pageChunks.push(raw);
+
+		var bodyInner = '';
+		for (var p = 0; p < pageChunks.length; p++) {
+			const blocks = splitIntoBlocks(pageChunks[p]);
+			bodyInner += '<div class="gstore-contract-document__page">';
+			if (p === 0) bodyInner += firstPageHeaderHtml();
+			bodyInner += blocksToHtml(blocks);
+			bodyInner += contractPageFooterHtml(p + 1);
+			bodyInner += '</div>';
+		}
+		return '<div class="gstore-contract-document">' + bodyInner + '</div>';
+	}
+
+	function buildContractFullDoc(bodyContent) {
+		const styleContent = getContractDocumentStyles();
+		const safeBody = String(bodyContent || '').replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '');
+		return '<!doctype html><html lang="pt-br"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>' +
+			'<style>' + styleContent + '</style></head><body>' + safeBody + '</body></html>';
+	}
+
 	function buildContractSrcDoc(value) {
 		const raw = String(value || '');
 		const safe = raw.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '');
 		if (/<!doctype\s+html/i.test(safe) || /<\s*html[\s>]/i.test(safe)) {
 			return safe;
 		}
-		return `<!doctype html><html lang="pt-br"><head><meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" /></head><body>${safe}</body></html>`;
+		return '<!doctype html><html lang="pt-br"><head><meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" /></head><body>' + safe + '</body></html>';
 	}
 
 	function normalizeContractHtml(value) {
@@ -120,29 +246,21 @@
 			return raw;
 		}
 
-		// Se já for HTML parcial, renderiza como está.
 		if (/<[a-z][\s\S]*>/i.test(raw)) {
 			return raw;
 		}
 
-		// Texto puro mantém quebra de linha.
 		return nl2brSafe(raw);
 	}
 
 	function renderContractModalContent($modal, content) {
-		const normalized = normalizeContractHtml(content);
 		const $body = $modal.find('.Gstore-contract-modal__body');
-
-		if (looksLikeContractDocument(normalized)) {
-			$body.html('<iframe class="Gstore-contract-modal__iframe" title="Contrato" loading="eager"></iframe>');
-			const iframe = $body.find('.Gstore-contract-modal__iframe').get(0);
-			if (iframe) {
-				iframe.srcdoc = buildContractSrcDoc(normalized);
-			}
-			return;
+		$body.html('<iframe class="Gstore-contract-modal__iframe" title="Contrato" loading="eager"></iframe>');
+		const iframe = $body.find('.Gstore-contract-modal__iframe').get(0);
+		if (iframe) {
+			const documentHtml = buildContractDocumentHtml(content);
+			iframe.srcdoc = buildContractFullDoc(documentHtml);
 		}
-
-		$body.html(normalized);
 	}
 
 	function checkoutPageUrl(path) {
