@@ -78,20 +78,20 @@
       line-height:1.55;
     }
 
-    .table{
+    .table,.wrap table{
       width:100%;
       border-collapse:collapse;
       margin-top:10px;
       border:var(--border);
     }
-    .table td{
+    .table td,.wrap table td{
       border-top:var(--border);
       padding:10px 10px;
       vertical-align:top;
       font-size:12px;
     }
-    .table tr:first-child td{ border-top:0; }
-    .table td.key{
+    .table tr:first-child td,.wrap table tr:first-child td{ border-top:0; }
+    .table td.key,.wrap table td:first-child{
       width:230px;
       font-weight:700;
       color:#333;

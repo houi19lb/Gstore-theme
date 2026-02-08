@@ -265,6 +265,18 @@
 	function buildContractSrcDoc(value) {
 		const raw = String(value || '');
 		const safe = raw.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '');
+		// Documento com doctype mas sem <body>: normalizar para html/head/body válidos (ex.: template colado sem wrapper).
+		if (/<!doctype\s+html/i.test(safe) && !/<\s*body[\s>]/i.test(safe)) {
+			const titleMatch = safe.match(/<title[^>]*>[\s\S]*?<\/title>/i);
+			const styleMatch = safe.match(/<style[^>]*>[\s\S]*?<\/style>/gi);
+			var headContent = (titleMatch ? titleMatch[0] : '') + (styleMatch ? styleMatch.join('') : '');
+			var bodyContent = safe
+				.replace(/<!doctype\s+html[^>]*>/gi, '')
+				.replace(/<title[^>]*>[\s\S]*?<\/title>/gi, '')
+				.replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
+				.trim();
+			return '<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/>' + headContent + '</head><body>' + bodyContent + '</body></html>';
+		}
 		if (/<!doctype\s+html/i.test(safe) || /<\s*html[\s>]/i.test(safe)) {
 			return safe;
 		}
