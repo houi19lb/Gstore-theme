@@ -70,6 +70,395 @@
 	let lastInstallmentQuotesSignature = '';
 	let lastBluOrderPaymentUrl = null; // URL do pagamento Blu do último pedido criado (para exibir aviso quando modal fecha)
 
+	function escapeHtml(value) {
+		return String(value || '')
+			.replace(/&/g, '&amp;')
+			.replace(/</g, '&lt;')
+			.replace(/>/g, '&gt;')
+			.replace(/"/g, '&quot;')
+			.replace(/'/g, '&#039;');
+	}
+
+	function nl2brSafe(value) {
+		return escapeHtml(value).replace(/\r\n|\r|\n/g, '<br>');
+	}
+
+	function decodeHtmlEntities(value) {
+		const input = String(value || '');
+		if (!/&(?:lt|gt|amp|quot|#0*39);/i.test(input)) {
+			return input;
+		}
+		const textarea = document.createElement('textarea');
+		textarea.innerHTML = input;
+		return textarea.value;
+	}
+
+	function looksLikeContractDocument(value) {
+		const raw = String(value || '');
+		return /<!doctype\s+html/i.test(raw) ||
+			/<\s*html[\s>]/i.test(raw) ||
+			/<\s*body[\s>]/i.test(raw) ||
+			/<\s*style[\s>]/i.test(raw) ||
+			/class=["']pages["']/i.test(raw) ||
+			/class=["']page["']/i.test(raw);
+	}
+
+	function safeUpperHeading(line) {
+		const t = line.trim();
+		if (!t) return false;
+		const isClause = /^CLÁUSULA\b/.test(t) || /^PARÁGRAFO\b/.test(t);
+		const mostlyUpper = t === t.toUpperCase() && /[A-ZÁÉÍÓÚÂÊÔÃÕÇ]/.test(t);
+		return isClause || (mostlyUpper && t.length <= 120);
+	}
+
+	function splitIntoBlocks(pageText) {
+		const lines = pageText
+			.split(/\r?\n/)
+			.map(function(l) { return l.trim(); })
+			.filter(function(l) { return l.length > 0; });
+
+		const blocks = [];
+		let buf = [];
+
+		function flush() {
+			if (!buf.length) return;
+			blocks.push({ type: 'p', text: buf.join(' ').replace(/\s+/g, ' ') });
+			buf = [];
+		}
+
+		for (var i = 0; i < lines.length; i++) {
+			const line = lines[i];
+			if (safeUpperHeading(line)) {
+				flush();
+				blocks.push({ type: 'heading', text: line });
+			} else {
+				buf.push(line);
+			}
+		}
+		flush();
+		return blocks;
+	}
+
+	function getContractDocumentStyles() {
+		return 'html,body{margin:0;padding:0;}' +
+			'body{background:#e5e7eb;color:#1f2937;font-family:Georgia,"Times New Roman",serif;line-height:1.65;}' +
+			'*,*::before,*::after{box-sizing:border-box;}' +
+			'.gstore-contract-document{max-width:1080px;margin:0 auto;padding:18px 14px 28px;}' +
+			'.gstore-contract-document__page{background:#fff;border:1px solid #d1d5db;box-shadow:0 10px 24px rgba(17,24,39,.11);padding:32px 34px;margin:0 auto 18px;max-width:920px;}' +
+			'.gstore-contract-document__page:last-child{margin-bottom:0;}' +
+			'.gstore-contract-document__header{background:linear-gradient(180deg,#0f172a 0%,#1f2937 100%);color:#fff;padding:18px 22px;border:1px solid #0f172a;margin-bottom:22px;}' +
+			'.gstore-contract-document__header-title{font-family:Arial,Helvetica,sans-serif;font-size:18px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;line-height:1.3;}' +
+			'.gstore-contract-document__header-sub{font-family:Arial,Helvetica,sans-serif;font-size:12px;opacity:.86;margin-top:5px;}' +
+			'.gstore-contract-document__heading{margin-top:18px;font-family:Arial,Helvetica,sans-serif;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#111827;line-height:1.4;}' +
+			'.gstore-contract-document__heading:first-child{margin-top:0;}' +
+			'.gstore-contract-document__p{margin:8px 0 0;font-size:14px;color:#111827;text-align:justify;}' +
+			'.gstore-contract-document__p:first-child{margin-top:0;}' +
+			'.gstore-contract-document__page-footer{margin-top:22px;padding-top:12px;border-top:1px solid #d1d5db;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#6b7280;display:flex;justify-content:space-between;gap:12px;}' +
+			'.gstore-contract-document table{border-collapse:collapse;width:100%;margin-top:10px;font-family:Arial,Helvetica,sans-serif;}' +
+			'.gstore-contract-document th,.gstore-contract-document td{border:1px solid #d1d5db;padding:10px 11px;text-align:left;font-size:13px;vertical-align:top;}' +
+			'.gstore-contract-document th{width:34%;background:#f3f4f6;color:#111827;font-weight:700;}' +
+			'.gstore-contract-document tr:nth-child(odd) td{background:#f9fafb;}' +
+			'.gstore-contract-document tr:nth-child(even) td{background:#fff;}' +
+			'.gstore-contract-document__signature{margin-top:28px;display:grid;grid-template-columns:1fr 1fr;gap:14px;}' +
+			'.gstore-contract-document__signature-box{padding:13px;border:1px solid #d1d5db;background:#fff;}' +
+			'.gstore-contract-document__signature-label{font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#6b7280;}' +
+			'.gstore-contract-document__signature-line{margin-top:38px;border-top:1px solid #9ca3af;padding-top:8px;font-size:13px;}' +
+			'@media (max-width: 840px){.gstore-contract-document{padding:10px;}.gstore-contract-document__page{padding:20px 16px;}.gstore-contract-document__header-title{font-size:15px;}.gstore-contract-document__signature{grid-template-columns:1fr;}}' +
+			'@media print{body{background:#fff!important;}.gstore-contract-document{max-width:none;padding:0;}.gstore-contract-document__page{break-after:page;page-break-after:always;box-shadow:none;border:0;margin:0;max-width:none;padding:18mm 14mm;}.gstore-contract-document__page:last-child{break-after:auto;page-break-after:auto;}.no-print{display:none!important;}}';
+	}
+
+	function blocksToHtml(blocks) {
+		var html = '';
+		for (var i = 0; i < blocks.length; i++) {
+			var b = blocks[i];
+			var escaped = escapeHtml(b.text);
+			if (b.type === 'heading') {
+				html += '<div class="gstore-contract-document__heading">' + escaped + '</div>';
+			} else {
+				html += '<p class="gstore-contract-document__p">' + escaped + '</p>';
+			}
+		}
+		return html;
+	}
+
+	function firstPageHeaderHtml() {
+		var generatedAt = (new Date()).toLocaleDateString('pt-BR');
+		return '<div class="gstore-contract-document__header">' +
+			'<div class="gstore-contract-document__header-title">CONTRATO DE PROMESSA DE COMPRA E VENDA</div>' +
+			'<div class="gstore-contract-document__header-sub">Documento gerado eletronicamente em ' + escapeHtml(generatedAt) + '</div>' +
+			'</div>';
+	}
+
+	function contractPageFooterHtml(pageNum) {
+		return '<div class="gstore-contract-document__page-footer">' +
+			'<span>Contrato gerado eletronicamente</span>' +
+			'<span>Página ' + pageNum + '</span>' +
+			'</div>';
+	}
+
+	function buildContractDocumentHtml(content) {
+		const raw = decodeHtmlEntities(String(content || '').trim());
+		if (!raw) return '';
+
+		// Conteúdo que já é documento HTML completo: extrair body ou usar dentro de uma página.
+		if (looksLikeContractDocument(raw)) {
+			const bodyMatch = raw.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
+			const inner = bodyMatch ? bodyMatch[1].trim() : raw;
+			return '<div class="gstore-contract-document"><div class="gstore-contract-document__page">' + inner + contractPageFooterHtml(1) + '</div></div>';
+		}
+
+		// HTML rico (tabelas, secções): uma página com o conteúdo.
+		if (/<[a-z][\s\S]*>/i.test(raw)) {
+			return '<div class="gstore-contract-document"><div class="gstore-contract-document__page">' + firstPageHeaderHtml() + raw + contractPageFooterHtml(1) + '</div></div>';
+		}
+
+		// Texto puro: dividir em páginas (blocos separados por linha em branco dupla) e depois em heading/parágrafo.
+		const pageChunks = raw.split(/\n\s*\n/).filter(function(s) { return s.trim().length > 0; });
+		if (!pageChunks.length) pageChunks.push(raw);
+
+		var bodyInner = '';
+		for (var p = 0; p < pageChunks.length; p++) {
+			const blocks = splitIntoBlocks(pageChunks[p]);
+			bodyInner += '<div class="gstore-contract-document__page">';
+			if (p === 0) bodyInner += firstPageHeaderHtml();
+			bodyInner += blocksToHtml(blocks);
+			bodyInner += contractPageFooterHtml(p + 1);
+			bodyInner += '</div>';
+		}
+		return '<div class="gstore-contract-document">' + bodyInner + '</div>';
+	}
+
+	function buildContractFullDoc(bodyContent) {
+		const styleContent = getContractDocumentStyles();
+		const safeBody = String(bodyContent || '').replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '');
+		return '<!doctype html><html lang="pt-br"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>' +
+			'<style>' + styleContent + '</style></head><body>' + safeBody + '</body></html>';
+	}
+
+	function buildContractSrcDoc(value) {
+		const raw = String(value || '');
+		const safe = raw.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '');
+		if (/<!doctype\s+html/i.test(safe) || /<\s*html[\s>]/i.test(safe)) {
+			return safe;
+		}
+		return '<!doctype html><html lang="pt-br"><head><meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" /></head><body>' + safe + '</body></html>';
+	}
+
+	function normalizeContractHtml(value) {
+		const raw = decodeHtmlEntities(value).trim();
+		if (!raw) return '';
+
+		if (looksLikeContractDocument(raw)) {
+			return raw;
+		}
+
+		if (/<[a-z][\s\S]*>/i.test(raw)) {
+			return raw;
+		}
+
+		return nl2brSafe(raw);
+	}
+
+	function formatDateTimeBr(value) {
+		if (!value) return '';
+		const dt = new Date(value);
+		if (Number.isNaN(dt.getTime())) return String(value);
+		const dd = String(dt.getDate()).padStart(2, '0');
+		const mm = String(dt.getMonth() + 1).padStart(2, '0');
+		const yyyy = dt.getFullYear();
+		const hh = String(dt.getHours()).padStart(2, '0');
+		const min = String(dt.getMinutes()).padStart(2, '0');
+		return dd + '/' + mm + '/' + yyyy + ' ' + hh + ':' + min;
+	}
+
+	function checkoutFieldValue(fieldId) {
+		return String($('#' + fieldId).val() || '').trim();
+	}
+
+	function stripHtmlText(value) {
+		return String(value || '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+	}
+
+	function resolvePaymentMethodTitle() {
+		const $selected = $('input[name="payment_method"]:checked');
+		if (!$selected.length) return '';
+		const methodId = String($selected.val() || '').trim();
+		let title = '';
+		const radioId = $selected.attr('id');
+		if (radioId) {
+			title = stripHtmlText($('label[for="' + radioId + '"]').first().text());
+		}
+		if (!title) {
+			title = methodId;
+		}
+		return title;
+	}
+
+	function getCheckoutSummaryData() {
+		return lastNonEmptyCartSummaryData || lastCartSummaryData || null;
+	}
+
+	function buildItemsListSummary(items) {
+		if (!Array.isArray(items) || !items.length) return '';
+		const lines = [];
+		for (var i = 0; i < items.length; i++) {
+			const it = items[i] || {};
+			const name = stripHtmlText(it.name || '');
+			const qty = parseInt(it.quantity, 10) || 1;
+			const subtotal = stripHtmlText(it.subtotal || '');
+			if (!name) continue;
+			lines.push(name + ' x' + qty + (subtotal ? ' - ' + subtotal : ''));
+		}
+		return lines.join('\n');
+	}
+
+	function buildItemsTableRows(items) {
+		if (!Array.isArray(items) || !items.length) return '';
+		let html = '';
+		for (var i = 0; i < items.length; i++) {
+			const it = items[i] || {};
+			const name = escapeHtml(stripHtmlText(it.name || ''));
+			const qty = parseInt(it.quantity, 10) || 1;
+			const subtotal = escapeHtml(stripHtmlText(it.subtotal || ''));
+			if (!name) continue;
+			html += '<tr><td>' + (i + 1) + '</td><td>' + name + '</td><td>' + qty + '</td><td>' + subtotal + '</td></tr>';
+		}
+		return html;
+	}
+
+	function buildContractTokenMapFromCheckout() {
+		const firstName = checkoutFieldValue('billing_first_name');
+		const lastName = checkoutFieldValue('billing_last_name');
+		const fullName = [firstName, lastName].join(' ').replace(/\s+/g, ' ').trim();
+		const cpf = checkoutFieldValue('billing_cpf');
+		const cnpj = checkoutFieldValue('billing_cnpj');
+		const rg = checkoutFieldValue('billing_rg');
+		const cr = checkoutFieldValue('billing_cr');
+		const summary = getCheckoutSummaryData() || {};
+		const items = Array.isArray(summary.items) ? summary.items : [];
+		const nowIso = new Date().toISOString();
+
+		const billingAddress = [checkoutFieldValue('billing_address_1'), checkoutFieldValue('billing_number')].join(', ').replace(/,\s*$/, '').trim();
+		const billingAddress2 = checkoutFieldValue('billing_address_2');
+		const billingNeighborhood = checkoutFieldValue('billing_neighborhood');
+		const billingCity = checkoutFieldValue('billing_city');
+		const billingState = checkoutFieldValue('billing_state');
+		const billingPostcode = checkoutFieldValue('billing_postcode');
+		const billingFull = [billingAddress, billingAddress2, billingNeighborhood, [billingCity, billingState].join('/'), billingPostcode]
+			.filter(function(v) { return String(v || '').trim() !== ''; })
+			join(' - ');
+
+		const paymentMethodId = String(($('input[name="payment_method"]:checked').val() || summary.payment_method || '')).trim();
+		const paymentMethodTitle = stripHtmlText(summary.payment_method_title || resolvePaymentMethodTitle());
+
+		return {
+			'order.id': '',
+			'order.number': '',
+			'order.created_at': formatDateTimeBr(nowIso),
+			'order.status': 'checkout',
+			'order.payment_method': paymentMethodId,
+			'order.payment_method_title': paymentMethodTitle,
+			'order.items_count': String(summary.items_count || items.length || ''),
+			'order.subtotal': stripHtmlText(summary.subtotal || ''),
+			'order.shipping_total': stripHtmlText(summary.shipping_total || ''),
+			'order.discount_total': stripHtmlText(summary.discount_total || ''),
+			'order.total': stripHtmlText(summary.total || ''),
+			'buyer.first_name': firstName,
+			'buyer.last_name': lastName,
+			'buyer.full_name': fullName,
+			'buyer.email': checkoutFieldValue('billing_email'),
+			'buyer.phone': checkoutFieldValue('billing_phone'),
+			'buyer.cpf': cpf,
+			'buyer.cnpj': cnpj,
+			'buyer.document': cpf || cnpj,
+			'buyer.rg': rg,
+			'buyer.cr': cr,
+			'buyer.company': checkoutFieldValue('billing_company'),
+			'buyer.billing_address_1': checkoutFieldValue('billing_address_1'),
+			'buyer.billing_number': checkoutFieldValue('billing_number'),
+			'buyer.billing_address_2': billingAddress2,
+			'buyer.billing_neighborhood': billingNeighborhood,
+			'buyer.billing_city': billingCity,
+			'buyer.billing_state': billingState,
+			'buyer.billing_postcode': billingPostcode,
+			'buyer.billing_full': billingFull,
+			'buyer.shipping_address_1': checkoutFieldValue('shipping_address_1') || checkoutFieldValue('billing_address_1'),
+			'buyer.shipping_address_2': checkoutFieldValue('shipping_address_2') || billingAddress2,
+			'buyer.shipping_city': checkoutFieldValue('shipping_city') || billingCity,
+			'buyer.shipping_state': checkoutFieldValue('shipping_state') || billingState,
+			'buyer.shipping_postcode': checkoutFieldValue('shipping_postcode') || billingPostcode,
+			'items.list': buildItemsListSummary(items),
+			'items.table_rows': buildItemsTableRows(items),
+			'contract.generated_at': formatDateTimeBr(nowIso)
+		};
+	}
+
+	function applyContractTemplateTokens(content) {
+		const raw = String(content || '');
+		if (!raw || raw.indexOf('{{') === -1) return raw;
+
+		const defaults = (typeof gstoreCheckout !== 'undefined' && gstoreCheckout.contractTokenDefaults)
+			? gstoreCheckout.contractTokenDefaults
+			: {};
+		const runtime = buildContractTokenMapFromCheckout();
+		const merged = {};
+		Object.keys(defaults || {}).forEach(function(k) {
+			merged[String(k).toLowerCase()] = defaults[k];
+		});
+		Object.keys(runtime || {}).forEach(function(k) {
+			merged[String(k).toLowerCase()] = runtime[k];
+		});
+
+		return raw.replace(/\{\{\s*([a-z0-9._-]+)\s*\}\}/gi, function(match, token) {
+			const key = String(token || '').toLowerCase();
+			if (!Object.prototype.hasOwnProperty.call(merged, key)) {
+				return match;
+			}
+			const value = merged[key];
+			return value == null ? '' : String(value);
+		});
+	}
+
+	function renderContractModalContent($modal, content) {
+		const $body = $modal.find('.Gstore-contract-modal__body');
+		$body.html('<iframe class="Gstore-contract-modal__iframe" title="Contrato" loading="eager"></iframe>');
+		const iframe = $body.find('.Gstore-contract-modal__iframe').get(0);
+		if (iframe) {
+			const resolvedContent = applyContractTemplateTokens(content);
+			const documentHtml = buildContractDocumentHtml(resolvedContent);
+			iframe.srcdoc = buildContractFullDoc(documentHtml);
+		}
+	}
+
+	function checkoutPageUrl(path) {
+		const base = (typeof gstoreCheckout !== 'undefined' && gstoreCheckout.homeUrl)
+			? gstoreCheckout.homeUrl
+			: '/';
+		const cleanPath = String(path || '').replace(/^\/+/, '');
+		return String(base).replace(/\/+$/, '/') + cleanPath;
+	}
+
+	function getContractSettings() {
+		const settings = (typeof gstoreCheckout !== 'undefined' && gstoreCheckout.contractSettings)
+			? gstoreCheckout.contractSettings
+			: {};
+
+		const enabled = settings.enabled !== false;
+		const checkboxText = settings.checkboxText || 'Li e concordo com os';
+		const modalTitle = settings.modalTitle || 'Termos do contrato';
+		const modalContent = settings.modalContent || settings.termsText || settings.fullText || checkboxText;
+		const privacyUrl = settings.privacyUrl ||
+			((typeof gstoreCheckout !== 'undefined' && gstoreCheckout.privacyPolicyUrl) ? gstoreCheckout.privacyPolicyUrl : checkoutPageUrl('politica-de-privacidade/'));
+
+		return {
+			enabled: !!enabled,
+			checkboxText,
+			modalTitle,
+			modalContent,
+			privacyUrl
+		};
+	}
+
 	/**
 	 * Garante cálculo/validação do frete quando o CEP já está preenchido (sem precisar clicar/sair do campo).
 	 * Útil para sessão/autofill e para quando a etapa "Dados" fica ativa.
@@ -762,38 +1151,63 @@
 			});
 		}
 
-		// Etapa 3: Adiciona checkbox de contrato (se habilitado) e botão de finalizar
+		// Etapa 3: Footer de finalização (termos + privacidade + CTA)
 		const $finalizeStep = $('[data-step="payment"] .Gstore-checkout-step__payment-container');
 		if ($finalizeStep.length && !$finalizeStep.find('#place_order').length) {
-			// Verifica se contratos estão habilitados
-			const contractEnabled = typeof gstoreCheckout !== 'undefined' && gstoreCheckout.contractSettings && gstoreCheckout.contractSettings.enabled;
-			const contractText = contractEnabled && gstoreCheckout.contractSettings.checkboxText 
-				? gstoreCheckout.contractSettings.checkboxText 
-				: 'Li e concordo com os termos do contrato';
+			const contractSettings = getContractSettings();
+			const contractEnabled = contractSettings.enabled;
+			const contractText = contractSettings.checkboxText;
+			const privacyUrl = contractSettings.privacyUrl;
 
 			let contractCheckboxHtml = '';
 			if (contractEnabled) {
 				contractCheckboxHtml = `
-					<div class="gstore-contract-terms woocommerce-terms-and-conditions-wrapper" style="margin-bottom:16px;">
-						<label class="woocommerce-form__label woocommerce-form__label-for-checkbox checkbox" style="display:flex;align-items:flex-start;gap:8px;cursor:pointer;">
-							<input type="checkbox" class="woocommerce-form__input woocommerce-form__input-checkbox input-checkbox" name="gstore_contract_terms" id="gstore_contract_terms" value="1" required style="margin-top:3px;" />
-							<span>${contractText}</span>
+					<div class="gstore-contract-terms woocommerce-terms-and-conditions-wrapper">
+						<label class="woocommerce-form__label woocommerce-form__label-for-checkbox checkbox gstore-contract-terms__label">
+							<input type="checkbox" class="woocommerce-form__input woocommerce-form__input-checkbox input-checkbox" name="gstore_contract_terms" id="gstore_contract_terms" value="1" required />
+							<span class="gstore-contract-terms__text">
+								${escapeHtml(contractText)}
+								<button type="button" class="gstore-contract-open-modal">termos do contrato</button>
+								e com a
+								<a class="gstore-contract-privacy-link" href="${escapeHtml(privacyUrl)}" target="_blank" rel="noopener noreferrer">política de privacidade</a>.
+							</span>
 						</label>
+						<input type="hidden" name="gstore_contract_terms_required" value="1" />
 					</div>
 				`;
 			}
 
 			$finalizeStep.append(`
 				<div class="Gstore-finalize-container">
+					<div class="Gstore-finalize-helper">
+						<i class="fa-solid fa-shield-halved" aria-hidden="true"></i>
+						<span>Dados sensíveis não ficam armazenados neste site.</span>
+					</div>
 					${contractCheckboxHtml}
+					<div class="gstore-age-confirm">
+						<label class="gstore-age-confirm__label" for="gstore_age_over_25">
+							<input type="checkbox" name="gstore_age_over_25" id="gstore_age_over_25" value="1" checked />
+							<span>Confirmo que tenho mais de 25 anos.</span>
+						</label>
+					</div>
 					<button type="submit" class="Gstore-btn Gstore-btn--submit" name="woocommerce_checkout_place_order" id="place_order" value="Finalizar pedido" data-value="Finalizar pedido">
 						<i class="fa-solid fa-lock"></i>
 						Finalizar pedido
 					</button>
 					<p class="Gstore-finalize-privacy">
 						Seus dados estão protegidos. Ao finalizar, você concorda com nossa 
-						<a href="${typeof gstoreCheckout !== 'undefined' && gstoreCheckout.homeUrl ? gstoreCheckout.homeUrl + 'politica-de-privacidade' : '/politica-de-privacidade'}" target="_blank">política de privacidade</a>.
+						<a href="${escapeHtml(privacyUrl)}" target="_blank" rel="noopener noreferrer">política de privacidade</a>.
 					</p>
+					<div id="gstore-contract-terms-modal" class="Gstore-contract-modal" aria-hidden="true">
+						<div class="Gstore-contract-modal__backdrop" data-action="close-contract-modal"></div>
+						<div class="Gstore-contract-modal__content" role="dialog" aria-modal="true" aria-labelledby="gstore-contract-modal-title">
+							<button type="button" class="Gstore-contract-modal__close" data-action="close-contract-modal" aria-label="Fechar">
+								<i class="fa-solid fa-xmark" aria-hidden="true"></i>
+							</button>
+							<h3 id="gstore-contract-modal-title" class="Gstore-contract-modal__title"></h3>
+							<div class="Gstore-contract-modal__body"></div>
+						</div>
+					</div>
 				</div>
 			`);
 		}
@@ -2394,6 +2808,17 @@ function getInstallmentDisplayTotals(summaryData) {
 			}
 		});
 
+		// Abre modal de termos do contrato
+		$(document).on('click', '.gstore-contract-open-modal', function(e) {
+			e.preventDefault();
+			openContractTermsModal();
+		});
+
+		// Fecha modal de termos
+		$(document).on('click', '#gstore-contract-terms-modal [data-action="close-contract-modal"]', function() {
+			closeContractTermsModal();
+		});
+
 		// Seleção do frete por item no resumo
 		$(document).on('change', 'input[name^="gstore_checkout_shipping_mode["]', function() {
 			const cartItemKey = $(this).data('cart-item-key') || String($(this).attr('name') || '').replace(/^gstore_checkout_shipping_mode\[|\]$/g, '');
@@ -2985,6 +3410,71 @@ function getInstallmentDisplayTotals(summaryData) {
 
 	}
 
+	function openContractTermsModal() {
+		let $modal = $('#gstore-contract-terms-modal');
+		if (!$modal.length) return;
+
+		// Garante overlay em tela cheia: modal precisa estar no body (não dentro de containers com transform).
+		if (!$modal.parent().is('body')) {
+			$modal.detach().appendTo('body');
+			$modal = $('#gstore-contract-terms-modal');
+		}
+
+		const contractSettings = getContractSettings();
+		const title = contractSettings.modalTitle;
+		const fallbackBodyHtml = contractSettings.modalContent;
+		const contractPreview = (typeof gstoreCheckout !== 'undefined' && gstoreCheckout.contractPreview)
+			? gstoreCheckout.contractPreview
+			: null;
+
+		$modal.find('.Gstore-contract-modal__title').text(title);
+		$modal.find('.Gstore-contract-modal__body').html('<p>Carregando contrato...</p>');
+		$modal.addClass('is-visible').attr('aria-hidden', 'false');
+		$('body').addClass('gstore-contract-modal-open');
+
+		if (
+			contractPreview &&
+			contractPreview.ajaxUrl &&
+			contractPreview.nonce &&
+			contractPreview.action &&
+			typeof $ !== 'undefined'
+		) {
+			const $form = $('form.checkout.woocommerce-checkout, form.checkout').first();
+			const serialized = $form.length ? $form.serialize() : '';
+
+			$.ajax({
+				type: 'POST',
+				url: contractPreview.ajaxUrl,
+				dataType: 'json',
+				data: {
+					action: contractPreview.action,
+					nonce: contractPreview.nonce,
+					post_data: serialized
+				}
+			})
+				.done(function(response) {
+					if (response && response.success && response.data && response.data.html) {
+						renderContractModalContent($modal, response.data.html);
+						return;
+					}
+					renderContractModalContent($modal, fallbackBodyHtml);
+				})
+				.fail(function() {
+					renderContractModalContent($modal, fallbackBodyHtml);
+				});
+			return;
+		}
+
+		renderContractModalContent($modal, fallbackBodyHtml);
+	}
+
+	function closeContractTermsModal() {
+		const $modal = $('#gstore-contract-terms-modal');
+		if (!$modal.length) return;
+		$modal.removeClass('is-visible').attr('aria-hidden', 'true');
+		$('body').removeClass('gstore-contract-modal-open');
+	}
+
 	/**
 	 * === MODAL: Checkout Blu (Link Externo) ===
 	 * Mantém o usuário na página e abre o checkout da Blu em um iframe quando possível.
@@ -3036,6 +3526,10 @@ function getInstallmentDisplayTotals(summaryData) {
 				const $modal = $('#gstore-blu-checkout-modal');
 				if ($modal.length && $modal.hasClass('is-visible')) {
 					closeBluCheckoutModal();
+				}
+				const $contractModal = $('#gstore-contract-terms-modal');
+				if ($contractModal.length && $contractModal.hasClass('is-visible')) {
+					closeContractTermsModal();
 				}
 			}
 		});
