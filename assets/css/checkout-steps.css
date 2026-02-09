@@ -2866,8 +2866,10 @@ body.gstore-blu-checkout-modal-open {
 	border-radius: 4px;
 }
 
-.gstore-contract-terms__label {
+.gstore-contract-terms .gstore-contract-terms__label {
 	display: flex;
+	flex-direction: row;
+	flex-wrap: nowrap;
 	align-items: flex-start;
 	gap: 10px;
 	cursor: pointer;
@@ -2878,7 +2880,9 @@ body.gstore-blu-checkout-modal-open {
 
 .gstore-contract-terms__text {
 	display: inline;
-	white-space: pre-line;
+	white-space: normal;
+	min-width: 0;
+	flex: 1 1 auto;
 }
 
 .gstore-contract-terms input[type="checkbox"] {
@@ -2915,6 +2919,12 @@ body.gstore-blu-checkout-modal-open {
 
 .gstore-contract-terms.woocommerce-invalid .gstore-contract-terms__label {
 	color: #991b1b;
+}
+
+@media (max-width: 360px) {
+	.gstore-contract-terms .gstore-contract-terms__label {
+		flex-wrap: wrap;
+	}
 }
 
 .Gstore-contract-modal {
