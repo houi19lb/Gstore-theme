@@ -369,6 +369,7 @@
 	}
 
 	var CONTRACT_VAR_DISPLAY_NAMES = {
+		// Legado (templates antigos)
 		'nome': 'Nome do comprador',
 		'email': 'E-mail',
 		'cpf': 'CPF',
@@ -380,7 +381,54 @@
 		'telefone': 'Telefone',
 		'produtos': 'Produtos',
 		'numero_pedido': 'Número do pedido',
-		'data': 'Data'
+		'data': 'Data',
+		// Pedido
+		'order.id': 'Número do pedido',
+		'order.number': 'Número do pedido',
+		'order.created_at': 'Data do pedido',
+		'order.status': 'Status',
+		'order.payment_method': 'Forma de pagamento',
+		'order.payment_method_title': 'Forma de pagamento',
+		'order.items_count': 'Quantidade de itens',
+		'order.subtotal': 'Subtotal',
+		'order.shipping_total': 'Frete',
+		'order.discount_total': 'Desconto',
+		'order.total': 'Total',
+		// Comprador
+		'buyer.first_name': 'Nome',
+		'buyer.last_name': 'Sobrenome',
+		'buyer.full_name': 'Nome completo',
+		'buyer.email': 'E-mail',
+		'buyer.phone': 'Telefone',
+		'buyer.cpf': 'CPF',
+		'buyer.cnpj': 'CNPJ',
+		'buyer.document': 'CPF ou CNPJ',
+		'buyer.rg': 'RG',
+		'buyer.cr': 'CR',
+		'buyer.company': 'Razão social ou empresa',
+		'buyer.billing_address_1': 'Endereço (cobrança)',
+		'buyer.billing_number': 'Número (cobrança)',
+		'buyer.billing_address_2': 'Complemento (cobrança)',
+		'buyer.billing_neighborhood': 'Bairro (cobrança)',
+		'buyer.billing_city': 'Cidade (cobrança)',
+		'buyer.billing_state': 'Estado (cobrança)',
+		'buyer.billing_postcode': 'CEP (cobrança)',
+		'buyer.billing_full': 'Endereço completo (cobrança)',
+		'buyer.shipping_address_1': 'Endereço (entrega)',
+		'buyer.shipping_address_2': 'Complemento (entrega)',
+		'buyer.shipping_city': 'Cidade',
+		'buyer.shipping_state': 'Estado',
+		'buyer.shipping_postcode': 'CEP',
+		'buyer.shipping_full': 'Endereço de entrega',
+		// Itens
+		'items.list': 'Lista de itens',
+		'items.table_rows': 'Itens do pedido',
+		// Contrato
+		'contract.generated_at': 'Data de geração do contrato',
+		// Vendedor (quando vazio no preview)
+		'seller.legal_name': 'Razão social do vendedor',
+		'seller.cnpj': 'CNPJ do vendedor',
+		'seller.address_full': 'Endereço do vendedor'
 	};
 
 	function buildContractTokenMapFromCheckout() {
