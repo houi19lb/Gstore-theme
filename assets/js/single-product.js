@@ -1119,13 +1119,13 @@ document.addEventListener('DOMContentLoaded', () => {
 	const initBuyNowVariableRedirect = () => {
 		const form = document.querySelector('form.cart.variations_form');
 		// #region agent log
-		fetch('http://127.0.0.1:7247/ingest/cce9ccaa-d42e-4577-9651-ba22a488615c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'single-product.js:initBuyNowVariableRedirect',message:'init called',data:{formFound:!!form,allForms:document.querySelectorAll('form.cart').length,variationForms:document.querySelectorAll('.variations_form').length},timestamp:Date.now(),hypothesisId:'H1'})}).catch(()=>{});
+		console.log('[GSTORE_BN_DEBUG] H1 init', {formFound:!!form, allForms:document.querySelectorAll('form.cart').length, variationForms:document.querySelectorAll('.variations_form').length});
 		// #endregion
 		if (!form) return;
 
 		const buyNowBtn = form.querySelector('.Gstore-single-product__buy-now');
 		// #region agent log
-		fetch('http://127.0.0.1:7247/ingest/cce9ccaa-d42e-4577-9651-ba22a488615c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'single-product.js:initBuyNowVariableRedirect',message:'button search',data:{btnFound:!!buyNowBtn,btnOutsideForm:!!document.querySelector('.Gstore-single-product__buy-now')},timestamp:Date.now(),hypothesisId:'H1'})}).catch(()=>{});
+		console.log('[GSTORE_BN_DEBUG] H1 btn', {btnFound:!!buyNowBtn, btnOutsideForm:!!document.querySelector('.Gstore-single-product__buy-now'), btnType:buyNowBtn?.tagName, btnDisabled:buyNowBtn?.disabled});
 		// #endregion
 		if (!buyNowBtn) return;
 
@@ -1138,7 +1138,7 @@ document.addEventListener('DOMContentLoaded', () => {
 			const qty = form.querySelector('input[name="quantity"]')?.value || '1';
 
 			// #region agent log
-			fetch('http://127.0.0.1:7247/ingest/cce9ccaa-d42e-4577-9651-ba22a488615c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'single-product.js:buyNowClick',message:'click fired',data:{productId,variationId,qty,willReturn:(!productId||!variationId||variationId==='0')},timestamp:Date.now(),hypothesisId:'H2'})}).catch(()=>{});
+			console.log('[GSTORE_BN_DEBUG] H2 click', {productId, variationId, qty, willReturn:(!productId||!variationId||variationId==='0')});
 			// #endregion
 
 			if (!productId || !variationId || variationId === '0') {
@@ -1159,7 +1159,7 @@ document.addEventListener('DOMContentLoaded', () => {
 			});
 
 			// #region agent log
-			fetch('http://127.0.0.1:7247/ingest/cce9ccaa-d42e-4577-9651-ba22a488615c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'single-product.js:buyNowClick',message:'redirecting',data:{redirectUrl:url.toString()},timestamp:Date.now(),hypothesisId:'H2'})}).catch(()=>{});
+			console.log('[GSTORE_BN_DEBUG] H2 redirect', {redirectUrl:url.toString()});
 			// #endregion
 
 			window.location.href = url.toString();
