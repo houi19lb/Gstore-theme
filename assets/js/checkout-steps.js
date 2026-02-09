@@ -3601,11 +3601,9 @@ function getInstallmentDisplayTotals(summaryData) {
 		const contractSettings = getContractSettings();
 		const title = contractSettings.modalTitle;
 		const fallbackBodyHtml = contractSettings.modalContent;
-		const contractPreview = (typeof gstoreCheckout !== 'undefined' && gstoreCheckout.contractPreview)
-			? gstoreCheckout.contractPreview
-			: null;
 
-		// Rota Cartão (blu_checkout): dados completos só após webhook. Não chamar AJAX; usar template com variáveis vazias.
+		// Rota Cartão (blu_checkout): dados completos só após webhook. Usar template com variáveis vazias.
+		// Rota PIX (blu_pix): usar mesmo template com dados reais do formulário (applyContractTemplateTokens no renderContractModalContent).
 		const paymentMethod = $('input[name="payment_method"]:checked').val();
 		const isCardRoute = paymentMethod === 'blu_checkout';
 
@@ -3615,44 +3613,6 @@ function getInstallmentDisplayTotals(summaryData) {
 		$modal.find('.Gstore-contract-modal__body').html('<p>Carregando contrato...</p>');
 		$modal.addClass('is-visible').attr('aria-hidden', 'false');
 		$('body').addClass('gstore-contract-modal-open');
-
-		if (
-			!isCardRoute &&
-			contractPreview &&
-			contractPreview.ajaxUrl &&
-			contractPreview.nonce &&
-			contractPreview.action &&
-			typeof $ !== 'undefined'
-		) {
-			const $form = $('form.checkout.woocommerce-checkout, form.checkout').first();
-			const serialized = $form.length ? $form.serialize() : '';
-
-			$.ajax({
-				type: 'POST',
-				url: contractPreview.ajaxUrl,
-				dataType: 'json',
-				data: {
-					action: contractPreview.action,
-					nonce: contractPreview.nonce,
-					post_data: serialized
-				}
-			})
-				.done(function(response) {
-					if (response && response.success && response.data && response.data.html) {
-						if (isLegacyContractPreviewHtml(response.data.html)) {
-							renderContractModalContent($modal, fallbackBodyHtml);
-							return;
-						}
-						renderContractModalContent($modal, response.data.html, false, true);
-						return;
-					}
-					renderContractModalContent($modal, fallbackBodyHtml);
-				})
-				.fail(function() {
-					renderContractModalContent($modal, fallbackBodyHtml);
-				});
-			return;
-		}
 
 		var contentToRender = isCardRoute ? cardNotice + fallbackBodyHtml : fallbackBodyHtml;
 		renderContractModalContent($modal, contentToRender, isCardRoute);
