@@ -321,6 +321,13 @@
 		return String(value || '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
 	}
 
+	function decodeHtmlEntities(value) {
+		var str = String(value || '');
+		return str
+			.replace(/&#(\d+);/g, function(_, num) { return String.fromCharCode(parseInt(num, 10)); })
+			.replace(/&#x([0-9a-fA-F]+);/g, function(_, hex) { return String.fromCharCode(parseInt(hex, 16)); });
+	}
+
 	function resolvePaymentMethodTitle() {
 		const $selected = $('input[name="payment_method"]:checked');
 		if (!$selected.length) return '';
@@ -347,8 +354,8 @@
 			const it = items[i] || {};
 			const name = stripHtmlText(it.name || '');
 			const qty = parseInt(it.quantity, 10) || 1;
-			const subtotal = stripHtmlText(it.subtotal || '');
-			if (!name) continue;
+const subtotal = decodeHtmlEntities(stripHtmlText(it.subtotal || ''));
+		if (!name) continue;
 			lines.push(name + ' x' + qty + (subtotal ? ' - ' + subtotal : ''));
 		}
 		return lines.join('\n');
@@ -361,7 +368,7 @@
 			const it = items[i] || {};
 			const name = escapeHtml(stripHtmlText(it.name || ''));
 			const qty = parseInt(it.quantity, 10) || 1;
-			const subtotal = escapeHtml(stripHtmlText(it.subtotal || ''));
+			const subtotal = escapeHtml(decodeHtmlEntities(stripHtmlText(it.subtotal || '')));
 			if (!name) continue;
 			html += '<tr><td>' + (i + 1) + '</td><td>' + name + '</td><td>' + qty + '</td><td>' + subtotal + '</td></tr>';
 		}
@@ -475,10 +482,10 @@
 			'order.payment_method': paymentMethodId,
 			'order.payment_method_title': paymentMethodTitle,
 			'order.items_count': String(summary.items_count || items.length || ''),
-			'order.subtotal': stripHtmlText(summary.subtotal || ''),
-			'order.shipping_total': stripHtmlText(summary.shipping_total || ''),
-			'order.discount_total': stripHtmlText(summary.discount_total || ''),
-			'order.total': stripHtmlText(summary.total || ''),
+			'order.subtotal': decodeHtmlEntities(stripHtmlText(summary.subtotal || '')),
+			'order.shipping_total': decodeHtmlEntities(stripHtmlText(summary.shipping_total || '')),
+			'order.discount_total': decodeHtmlEntities(stripHtmlText(summary.discount_total || '')),
+			'order.total': decodeHtmlEntities(stripHtmlText(summary.total || '')),
 			'buyer.first_name': firstName,
 			'buyer.last_name': lastName,
 			'buyer.full_name': fullName,
