@@ -152,30 +152,42 @@ $pix_discount_percent    = $pix_discount_active ? (float) $pix_discount_config['
 			</div>
 			<?php if ( ! $is_out_of_stock ) : ?>
 				<div class="Gstore-product-card__price-section">
-					<?php if ( $has_sale_value && $regular_price_html ) : ?>
+					<?php if ( $pix_discount_price_html ) : ?>
+						<?php
+						// Com desconto Pix: preço riscado = regular (se promoção) ou display (se sem promoção).
+						// Preço principal = preço Pix com desconto.
+						$strikethrough_html = $has_sale_value ? $regular_price_html : $display_price_html;
+						?>
+						<?php if ( $strikethrough_html ) : ?>
+							<div class="Gstore-product-card__price-original">
+								<?php echo wp_kses_post( $strikethrough_html ); ?>
+							</div>
+						<?php endif; ?>
+						<div class="Gstore-product-card__price-row">
+							<?php echo wp_kses_post( $pix_discount_price_html ); ?>
+						</div>
+					<?php elseif ( $has_sale_value && $regular_price_html ) : ?>
 						<div class="Gstore-product-card__price-original">
 							<?php echo wp_kses_post( $regular_price_html ); ?>
 						</div>
+						<?php if ( $display_price_html ) : ?>
+							<div class="Gstore-product-card__price-row">
+								<?php echo wp_kses_post( $display_price_html ); ?>
+							</div>
+						<?php endif; ?>
 					<?php else : ?>
 						<div class="Gstore-product-card__price-original Gstore-product-card__price-original--placeholder" aria-hidden="true">
 							&nbsp;
 						</div>
-					<?php endif; ?>
-					<?php if ( $display_price_html ) : ?>
-						<div class="Gstore-product-card__price-row">
-							<?php echo wp_kses_post( $display_price_html ); ?>
-						</div>
+						<?php if ( $display_price_html ) : ?>
+							<div class="Gstore-product-card__price-row">
+								<?php echo wp_kses_post( $display_price_html ); ?>
+							</div>
+						<?php endif; ?>
 					<?php endif; ?>
 				<?php if ( $installment_label ) : ?>
 					<div class="Gstore-product-card__price-details">
-						<strong class="Gstore-product-card__price-details-label">
-							<?php if ( $pix_discount_price_html ) : ?>
-								<span class="Gstore-product-card__pix-price"><?php echo wp_kses_post( $pix_discount_price_html ); ?></span>
-								<?php esc_html_e( 'à vista no Pix', 'gstore' ); ?>
-							<?php else : ?>
-								<?php esc_html_e( 'à vista no Pix', 'gstore' ); ?>
-							<?php endif; ?>
-						</strong>
+						<strong class="Gstore-product-card__price-details-label"><?php esc_html_e( 'à vista no Pix', 'gstore' ); ?></strong>
 						<div class="Gstore-product-card__installments" data-gstore-installment-wrapper>
 							<span
 								class="Gstore-product-card__installments-text"

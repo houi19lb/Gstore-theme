@@ -766,12 +766,14 @@ if ( $reviews_has_value ) {
 								<div>
 							<div class="price-label"><?php esc_html_e( 'À vista no PIX', 'gstore' ); ?></div>
 								<?php if ( $pix_discount_price ) : ?>
-									<div class="price Gstore-pix-discount-main" id="price" data-gstore-price data-pix-percent="<?php echo esc_attr( $pix_discount_percent ); ?>">
-										<span class="Gstore-pix-price-value" data-gstore-pix-value><?php echo wp_kses_post( wc_price( $pix_discount_price ) ); ?></span>
-									</div>
-									<div class="Gstore-pix-discount-original" data-gstore-pix-original>
-										<del><?php echo wp_kses_post( wc_price( $current_price ) ); ?></del>
-										<span class="Gstore-pix-discount-badge"><?php echo esc_html( sprintf( __( '%s%% off', 'gstore' ), number_format( $pix_discount_percent, 0 ) ) ); ?></span>
+									<?php
+									// Com desconto Pix: preço riscado + preço Pix, no mesmo padrão visual do WooCommerce (del/ins).
+									// Produto com promoção: riscado = regular. Sem promoção: riscado = current.
+									$pix_strikethrough = $has_discount ? $regular_price : $current_price;
+									?>
+									<div class="price" id="price" data-gstore-price data-pix-percent="<?php echo esc_attr( $pix_discount_percent ); ?>">
+										<del><?php echo wp_kses_post( wc_price( $pix_strikethrough ) ); ?></del>
+										<ins><?php echo wp_kses_post( wc_price( $pix_discount_price ) ); ?></ins>
 									</div>
 								<?php else : ?>
 									<div class="price" id="price" data-gstore-price data-pix-percent="0">

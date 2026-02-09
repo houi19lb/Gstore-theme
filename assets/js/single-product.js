@@ -738,44 +738,35 @@ document.addEventListener('DOMContentLoaded', () => {
 		const priceEl = document.querySelector('[data-gstore-price]');
 		const initialPriceHtml = priceEl ? priceEl.innerHTML : '';
 		const pixPercent = priceEl ? parseFloat(priceEl.getAttribute('data-pix-percent') || '0') : 0;
-		const pixValueEl = document.querySelector('[data-gstore-pix-value]');
-		const pixOriginalEl = document.querySelector('[data-gstore-pix-original]');
-		const initialPixValueHtml = pixValueEl ? pixValueEl.innerHTML : '';
-		const initialPixOriginalHtml = pixOriginalEl ? pixOriginalEl.innerHTML : '';
 
 		/**
-		 * Atualiza exibição do preço PIX com desconto quando uma variação é selecionada.
+		 * Formata valor monetário em BRL.
 		 */
-		const updatePixPrice = (variationPrice) => {
-			if (!pixPercent || pixPercent <= 0 || !pixValueEl) return;
-
-			if (variationPrice && variationPrice > 0) {
-				const discounted = variationPrice * (1 - pixPercent / 100);
-				const fmtCurrency = (v) => {
-					try {
-						return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v);
-					} catch (e) {
-						return `R$ ${v.toFixed(2).replace('.', ',')}`;
-					}
-				};
-				pixValueEl.innerHTML = '<span class="woocommerce-Price-amount amount"><bdi>' + fmtCurrency(discounted) + '</bdi></span>';
-				if (pixOriginalEl) {
-					pixOriginalEl.innerHTML = '<del><span class="woocommerce-Price-amount amount"><bdi>' + fmtCurrency(variationPrice) + '</bdi></span></del>' +
-						' <span class="Gstore-pix-discount-badge">' + Math.round(pixPercent) + '% off</span>';
-				}
+		const fmtBRL = (v) => {
+			try {
+				return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v);
+			} catch (e) {
+				return `R$ ${v.toFixed(2).replace('.', ',')}`;
 			}
 		};
 
 		/**
-		 * Restaura exibição do preço PIX ao estado inicial (reset de variação).
+		 * Atualiza exibição do preço PIX com desconto quando uma variação é selecionada.
+		 * Usa o mesmo padrão visual del/ins do WooCommerce.
 		 */
-		const resetPixPrice = () => {
-			if (pixValueEl && initialPixValueHtml) {
-				pixValueEl.innerHTML = initialPixValueHtml;
-			}
-			if (pixOriginalEl && initialPixOriginalHtml) {
-				pixOriginalEl.innerHTML = initialPixOriginalHtml;
-			}
+		const updatePixPrice = (variation) => {
+			if (!pixPercent || pixPercent <= 0 || !priceEl) return;
+
+			const displayPrice = parseFloat(variation.display_price);
+			const regularPrice = parseFloat(variation.display_regular_price);
+			if (!displayPrice || displayPrice <= 0) return;
+
+			const pixPrice = displayPrice * (1 - pixPercent / 100);
+			// Preço riscado: regular (se promoção) ou display (se sem promoção).
+			const strikePrice = (regularPrice && regularPrice > displayPrice) ? regularPrice : displayPrice;
+
+			priceEl.innerHTML = '<del><span class="woocommerce-Price-amount amount"><bdi>' + fmtBRL(strikePrice) + '</bdi></span></del> ' +
+				'<ins><span class="woocommerce-Price-amount amount"><bdi>' + fmtBRL(pixPrice) + '</bdi></span></ins>';
 		};
 
 		const getPreviewText = () => {
@@ -830,17 +821,15 @@ document.addEventListener('DOMContentLoaded', () => {
 			const $form = jQuery(form);
 			$form.on('found_variation', (event, variation) => {
 				if (pixPercent > 0 && variation && variation.display_price) {
-					// Quando há desconto PIX, atualiza a exibição do preço PIX com desconto.
-					updatePixPrice(parseFloat(variation.display_price));
+					// Quando há desconto PIX, reconstrói o preço no padrão del/ins.
+					updatePixPrice(variation);
 				} else if (priceEl && variation && typeof variation.price_html === 'string' && variation.price_html.trim().length) {
 					priceEl.innerHTML = variation.price_html;
 				}
 				setTimeout(update, 0);
 			});
 			$form.on('reset_data', () => {
-				if (pixPercent > 0) {
-					resetPixPrice();
-				} else if (priceEl && initialPriceHtml) {
+				if (priceEl && initialPriceHtml) {
 					priceEl.innerHTML = initialPriceHtml;
 				}
 				setTimeout(update, 0);

@@ -5216,65 +5216,6 @@ main:not(.Gstore-blog-shell):not(.Gstore-blog-single-shell) {
 	color: var(--text-muted);
 }
 
-/* ========================================
-   DESCONTO PIX - Cards de Produto
-   ======================================== */
-
-.Gstore-product-card__pix-price {
-	color: var(--gstore-color-accent, #ff5c00);
-	font-weight: 700;
-	font-size: var(--gstore-font-size-base, 1rem);
-	margin-right: 4px;
-}
-
-/* ========================================
-   DESCONTO PIX - Página de Produto (Single)
-   ======================================== */
-
-.Gstore-pix-discount-main .Gstore-pix-price-value {
-	display: block;
-}
-
-.Gstore-pix-discount-main .Gstore-pix-price-value .woocommerce-Price-amount {
-	font-size: inherit;
-	font-weight: inherit;
-	color: inherit;
-}
-
-.Gstore-pix-discount-original {
-	display: flex;
-	align-items: center;
-	gap: 8px;
-	margin-top: 4px;
-}
-
-.Gstore-pix-discount-original del {
-	font-size: var(--gstore-font-size-sm, 0.875rem);
-	color: var(--gstore-color-text-gray-500, #6b7280);
-	font-weight: 400;
-}
-
-.Gstore-pix-discount-badge {
-	display: inline-flex;
-	align-items: center;
-	padding: 2px 8px;
-	font-size: var(--gstore-font-size-xs, 0.75rem);
-	font-weight: 600;
-	color: #fff;
-	background-color: var(--gstore-color-accent, #ff5c00);
-	border-radius: 4px;
-	line-height: 1.4;
-	white-space: nowrap;
-}
-
-/* Desconto PIX em blocos WooCommerce */
-.Gstore-pix-discount-block {
-	display: flex;
-	align-items: center;
-	gap: 6px;
-	margin-top: 4px;
-}
-
 /* Ocultar select de parcelas nos cards - sempre usar o máximo disponível */
 .Gstore-product-card__installments .price-sub-installments-select {
 	display: none !important;

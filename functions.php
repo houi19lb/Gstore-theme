@@ -2788,18 +2788,16 @@ function gstore_add_payment_info_to_price( $html, $block_content, $block ) {
 		}
 	}
 	
-	// Preço com desconto Pix (se ativo).
-	$pix_discount_html = '';
+	// Desconto Pix: substitui o preço exibido pelo preço com desconto (mesmo padrão del/ins).
+	$pix_price_replacement = '';
 	if ( $product && is_a( $product, 'WC_Product' ) && function_exists( 'gstore_blu_pix_get_discounted_price' ) ) {
 		$price_for_pix = floatval( $product->get_price() );
 		$pix_price     = gstore_blu_pix_get_discounted_price( $price_for_pix );
 		if ( false !== $pix_price ) {
-			$pix_config        = gstore_blu_pix_get_discount_config();
-			$pix_percent_label = number_format( (float) $pix_config['percent'], 0 );
-			$pix_discount_html = '<div class="Gstore-pix-discount-block">'
-				. '<span class="Gstore-product-card__pix-price">' . wc_price( $pix_price ) . '</span> '
-				. '<span class="Gstore-pix-discount-badge">' . esc_html( $pix_percent_label . '% off' ) . '</span>'
-				. '</div>';
+			// Preço riscado: regular (se promoção) ou current (se sem promoção).
+			$regular = floatval( $product->get_regular_price() );
+			$strike  = ( $product->is_on_sale() && $regular > 0 ) ? $regular : $price_for_pix;
+			$pix_price_replacement = '<del>' . wc_price( $strike ) . '</del> <ins>' . wc_price( $pix_price ) . '</ins>';
 		}
 	}
 
@@ -2809,6 +2807,16 @@ function gstore_add_payment_info_to_price( $html, $block_content, $block ) {
 	
 	// Encontra a div interna com a classe wc-block-components-product-price
 	if ( strpos( $html, 'wc-block-components-product-price' ) !== false ) {
+		// Se tem desconto Pix, substitui o conteúdo do preço pelo padrão del/ins.
+		if ( $pix_price_replacement ) {
+			$html = preg_replace(
+				'/(<span[^>]*class="[^"]*wc-block-components-product-price__value[^"]*"[^>]*>).*?(<\/span>)/s',
+				'$1' . $pix_price_replacement . '$2',
+				$html,
+				1
+			);
+		}
+
 		// Adiciona o label antes do preço (logo após a abertura da div interna)
 		$html = preg_replace(
 			'/(<div[^>]*class="[^"]*wc-block-components-product-price[^"]*"[^>]*>\s*)/',
@@ -2817,10 +2825,10 @@ function gstore_add_payment_info_to_price( $html, $block_content, $block ) {
 			1
 		);
 		
-		// Adiciona preço Pix com desconto + texto de parcelamento antes do fechamento das divs
+		// Adiciona texto de parcelamento antes do fechamento das divs
 		$html = preg_replace(
 			'/(\s*<\/div>\s*<\/div>\s*)$/',
-			$pix_discount_html . $installment_text . '$1',
+			$installment_text . '$1',
 			$html,
 			1
 		);
