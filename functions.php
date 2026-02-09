@@ -2263,11 +2263,51 @@ add_action( 'template_redirect', 'gstore_handle_buy_now_variable_product', 0 );
 
 // #region agent log
 function gstore_bn_debug_output_footer() {
-	global $gstore_bn_debug;
-	if ( empty( $gstore_bn_debug ) || ! is_array( $gstore_bn_debug ) ) {
+	if ( ! function_exists( 'is_product' ) || ! is_product() ) {
 		return;
 	}
-	echo '<script>console.log("[GSTORE_BN_DEBUG] PHP logs",' . wp_json_encode( $gstore_bn_debug ) . ');</script>';
+	global $gstore_bn_debug;
+	$php_logs = is_array( $gstore_bn_debug ) ? $gstore_bn_debug : array();
+	?>
+	<script>
+	(function(){
+		console.warn('[GSTORE_BN_DEBUG] === INLINE SCRIPT v4 ===');
+		var phpLogs = <?php echo wp_json_encode( $php_logs ); ?>;
+		if (phpLogs.length) console.warn('[GSTORE_BN_DEBUG] PHP logs', phpLogs);
+
+		var form = document.querySelector('form.cart.variations_form');
+		console.warn('[GSTORE_BN_DEBUG] H1 form', {
+			formFound: !!form,
+			allForms: document.querySelectorAll('form.cart').length,
+			variationForms: document.querySelectorAll('.variations_form').length
+		});
+		if (!form) return;
+
+		var btn = form.querySelector('.Gstore-single-product__buy-now');
+		var btnAnywhere = document.querySelector('.Gstore-single-product__buy-now');
+		console.warn('[GSTORE_BN_DEBUG] H1 btn', {
+			btnInForm: !!btn,
+			btnAnywhere: !!btnAnywhere,
+			btnTag: btnAnywhere ? btnAnywhere.tagName : 'N/A',
+			btnDisabled: btnAnywhere ? btnAnywhere.disabled : 'N/A',
+			btnParentForm: btnAnywhere ? !!btnAnywhere.closest('form') : false,
+			btnParentFormClass: btnAnywhere && btnAnywhere.closest('form') ? btnAnywhere.closest('form').className : 'N/A'
+		});
+		if (!btn) return;
+
+		btn.addEventListener('click', function(e) {
+			var productId = form.querySelector('input[name="product_id"]');
+			var variationId = form.querySelector('input[name="variation_id"]');
+			var qty = form.querySelector('input[name="quantity"]');
+			console.warn('[GSTORE_BN_DEBUG] H2 click', {
+				productId: productId ? productId.value : 'NOT FOUND',
+				variationId: variationId ? variationId.value : 'NOT FOUND',
+				qty: qty ? qty.value : 'NOT FOUND'
+			});
+		});
+	})();
+	</script>
+	<?php
 }
 add_action( 'wp_footer', 'gstore_bn_debug_output_footer', 9999 );
 // #endregion
