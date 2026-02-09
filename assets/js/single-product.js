@@ -1,4 +1,7 @@
 document.addEventListener('DOMContentLoaded', () => {
+	// #region agent log
+	console.warn('[GSTORE_BN_DEBUG] === SCRIPT LOADED v3 ===');
+	// #endregion
 	const reviewTriggers = document.querySelectorAll('[data-gstore-tab-target="reviews"]');
 
 	const focusReviewTab = () => {
