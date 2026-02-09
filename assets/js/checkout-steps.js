@@ -405,7 +405,7 @@
 		'buyer.document': 'CPF ou CNPJ',
 		'buyer.rg': 'RG',
 		'buyer.cr': 'CR',
-		'buyer.company': 'Razão social ou empresa',
+		'buyer.company': 'Nome do comprador',
 		'buyer.billing_address_1': 'Endereço (cobrança)',
 		'buyer.billing_number': 'Número (cobrança)',
 		'buyer.billing_address_2': 'Complemento (cobrança)',
