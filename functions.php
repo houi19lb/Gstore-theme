@@ -2167,7 +2167,7 @@ function gstore_handle_buy_now_simple_product() {
 	wp_safe_redirect( wc_get_checkout_url() );
 	exit;
 }
-	add_action( 'template_redirect', 'gstore_handle_buy_now_simple_product', 0 );
+add_action( 'template_redirect', 'gstore_handle_buy_now_simple_product', 0 );
 
 /**
  * "Comprar agora" (produto variável): PRG para GET com variation_id e atributos,
@@ -2215,10 +2215,17 @@ function gstore_handle_buy_now_variable_product() {
 	$method = isset( $_SERVER['REQUEST_METHOD'] ) ? strtoupper( (string) $_SERVER['REQUEST_METHOD'] ) : 'GET';
 
 	if ( 'POST' === $method ) {
+		// Se veio via POST, faz PRG para GET com todos os parâmetros de variação.
+		if ( function_exists( 'ob_get_level' ) && function_exists( 'ob_end_clean' ) ) {
+			while ( ob_get_level() ) {
+				@ob_end_clean(); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
+			}
+		}
+
 		$args = array(
 			'add-to-cart'    => $product_id,
 			'variation_id'   => $variation_id,
-			'quantity'       => isset( $_REQUEST['quantity'] ) ? absint( $_REQUEST['quantity'] ) : 1, // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			'quantity'       => isset( $_REQUEST['quantity'] ) ? max( 1, absint( $_REQUEST['quantity'] ) ) : 1, // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 			'gstore_buy_now' => 1,
 		);
 		foreach ( array_keys( $_REQUEST ) as $key ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
@@ -2226,7 +2233,6 @@ function gstore_handle_buy_now_variable_product() {
 				$args[ $key ] = wp_unslash( $_REQUEST[ $key ] ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 			}
 		}
-		$args['quantity'] = max( 1, (int) $args['quantity'] );
 		$target = add_query_arg( $args, get_permalink( $product_id ) );
 
 		if ( function_exists( 'nocache_headers' ) ) {
@@ -2235,6 +2241,9 @@ function gstore_handle_buy_now_variable_product() {
 		wp_safe_redirect( $target );
 		exit;
 	}
+
+	// GET: o WooCommerce processa o add-to-cart no wp_loaded,
+	// e o filtro woocommerce_add_to_cart_redirect redireciona ao checkout.
 }
 add_action( 'template_redirect', 'gstore_handle_buy_now_variable_product', 0 );
 

@@ -1172,11 +1172,8 @@ document.addEventListener('DOMContentLoaded', () => {
 		url.searchParams.delete('variation_id');
 
 		// Remove atributos de variação (attribute_*)
-		for (const key of url.searchParams.keys()) {
-			if (key.indexOf('attribute_') === 0) {
-				url.searchParams.delete(key);
-			}
-		}
+		const attrKeys = [...url.searchParams.keys()].filter((k) => k.startsWith('attribute_'));
+		attrKeys.forEach((k) => url.searchParams.delete(k));
 
 		if (!url.searchParams.toString()) {
 			url.search = '';
