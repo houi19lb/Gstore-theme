@@ -2212,16 +2212,17 @@ function gstore_handle_buy_now_variable_product() {
 		return;
 	}
 
+	// Se algum plugin/tema imprimiu warning/deprecated em output buffer, limpamos para não quebrar o redirect.
+	if ( function_exists( 'ob_get_level' ) && function_exists( 'ob_end_clean' ) ) {
+		while ( ob_get_level() ) {
+			@ob_end_clean(); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
+		}
+	}
+
 	$method = isset( $_SERVER['REQUEST_METHOD'] ) ? strtoupper( (string) $_SERVER['REQUEST_METHOD'] ) : 'GET';
 
 	if ( 'POST' === $method ) {
 		// Se veio via POST, faz PRG para GET com todos os parâmetros de variação.
-		if ( function_exists( 'ob_get_level' ) && function_exists( 'ob_end_clean' ) ) {
-			while ( ob_get_level() ) {
-				@ob_end_clean(); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
-			}
-		}
-
 		$args = array(
 			'add-to-cart'    => $product_id,
 			'variation_id'   => $variation_id,
@@ -2242,8 +2243,15 @@ function gstore_handle_buy_now_variable_product() {
 		exit;
 	}
 
-	// GET: o WooCommerce processa o add-to-cart no wp_loaded,
-	// e o filtro woocommerce_add_to_cart_redirect redireciona ao checkout.
+	// GET: o WooCommerce já processou o add-to-cart no wp_loaded.
+	// Redireciona explicitamente ao checkout (igual ao produto simples).
+	// Não depende de woocommerce_add_to_cart_redirect que pode não disparar
+	// para variáveis em algumas versões do WooCommerce.
+	if ( function_exists( 'nocache_headers' ) ) {
+		nocache_headers();
+	}
+	wp_safe_redirect( wc_get_checkout_url() );
+	exit;
 }
 add_action( 'template_redirect', 'gstore_handle_buy_now_variable_product', 0 );
 
