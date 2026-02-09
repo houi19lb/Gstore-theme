@@ -2057,9 +2057,6 @@ function gstore_buy_now_redirect_to_checkout( $url ) {
 
 	// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 	if ( isset( $_REQUEST['gstore_buy_now'] ) ) {
-		// #region agent log
-		global $gstore_bn_debug; $gstore_bn_debug[] = array( 'H5', 'redirect_to_checkout FIRED', array( 'checkout_url' => wc_get_checkout_url(), 'original_url' => $url ) );
-		// #endregion
 		return wc_get_checkout_url();
 	}
 
@@ -2196,12 +2193,6 @@ function gstore_handle_buy_now_variable_product() {
 	if ( ! $product_id && isset( $_REQUEST['product_id'] ) ) {
 		$product_id = absint( $_REQUEST['product_id'] );
 	}
-
-	// #region agent log
-	global $gstore_bn_debug; if ( ! is_array( $gstore_bn_debug ) ) { $gstore_bn_debug = array(); }
-	$gstore_bn_debug[] = array( 'H5', 'variable_handler ENTERED', array( 'product_id' => $product_id, 'method' => isset( $_SERVER['REQUEST_METHOD'] ) ? $_SERVER['REQUEST_METHOD'] : 'unknown', 'request_keys' => array_keys( $_REQUEST ), 'variation_id_raw' => isset( $_REQUEST['variation_id'] ) ? $_REQUEST['variation_id'] : 'NOT SET' ) );
-	// #endregion
-
 	if ( ! $product_id ) {
 		return;
 	}
@@ -2211,11 +2202,6 @@ function gstore_handle_buy_now_variable_product() {
 	}
 
 	$product = wc_get_product( $product_id );
-
-	// #region agent log
-	$gstore_bn_debug[] = array( 'H5', 'variable_handler product_check', array( 'product_id' => $product_id, 'product_exists' => ( $product instanceof WC_Product ), 'product_type' => ( $product instanceof WC_Product ) ? $product->get_type() : 'N/A', 'is_variable' => ( $product instanceof WC_Product ) ? $product->is_type( 'variable' ) : false ) );
-	// #endregion
-
 	if ( ! $product instanceof WC_Product || ! $product->is_type( 'variable' ) ) {
 		return;
 	}
@@ -2260,57 +2246,6 @@ function gstore_handle_buy_now_variable_product() {
 	// e o filtro woocommerce_add_to_cart_redirect redireciona ao checkout.
 }
 add_action( 'template_redirect', 'gstore_handle_buy_now_variable_product', 0 );
-
-// #region agent log
-function gstore_bn_debug_output_footer() {
-	if ( ! function_exists( 'is_product' ) || ! is_product() ) {
-		return;
-	}
-	global $gstore_bn_debug;
-	$php_logs = is_array( $gstore_bn_debug ) ? $gstore_bn_debug : array();
-	?>
-	<script>
-	(function(){
-		console.warn('[GSTORE_BN_DEBUG] === INLINE SCRIPT v4 ===');
-		var phpLogs = <?php echo wp_json_encode( $php_logs ); ?>;
-		if (phpLogs.length) console.warn('[GSTORE_BN_DEBUG] PHP logs', phpLogs);
-
-		var form = document.querySelector('form.cart.variations_form');
-		console.warn('[GSTORE_BN_DEBUG] H1 form', {
-			formFound: !!form,
-			allForms: document.querySelectorAll('form.cart').length,
-			variationForms: document.querySelectorAll('.variations_form').length
-		});
-		if (!form) return;
-
-		var btn = form.querySelector('.Gstore-single-product__buy-now');
-		var btnAnywhere = document.querySelector('.Gstore-single-product__buy-now');
-		console.warn('[GSTORE_BN_DEBUG] H1 btn', {
-			btnInForm: !!btn,
-			btnAnywhere: !!btnAnywhere,
-			btnTag: btnAnywhere ? btnAnywhere.tagName : 'N/A',
-			btnDisabled: btnAnywhere ? btnAnywhere.disabled : 'N/A',
-			btnParentForm: btnAnywhere ? !!btnAnywhere.closest('form') : false,
-			btnParentFormClass: btnAnywhere && btnAnywhere.closest('form') ? btnAnywhere.closest('form').className : 'N/A'
-		});
-		if (!btn) return;
-
-		btn.addEventListener('click', function(e) {
-			var productId = form.querySelector('input[name="product_id"]');
-			var variationId = form.querySelector('input[name="variation_id"]');
-			var qty = form.querySelector('input[name="quantity"]');
-			console.warn('[GSTORE_BN_DEBUG] H2 click', {
-				productId: productId ? productId.value : 'NOT FOUND',
-				variationId: variationId ? variationId.value : 'NOT FOUND',
-				qty: qty ? qty.value : 'NOT FOUND'
-			});
-		});
-	})();
-	</script>
-	<?php
-}
-add_action( 'wp_footer', 'gstore_bn_debug_output_footer', 9999 );
-// #endregion
 
 /**
  * PRG no produto único: evita reenvio do formulário ao voltar.
@@ -2360,6 +2295,49 @@ function gstore_prg_single_product_add_to_cart() {
 	exit;
 }
 add_action( 'template_redirect', 'gstore_prg_single_product_add_to_cart', 9 );
+
+/**
+ * Garante que `add-to-cart` esteja em $_REQUEST quando "Comprar agora" é usado.
+ *
+ * Quando o usuário clica no botão "Comprar agora" (name="gstore_buy_now"), apenas
+ * esse name/value é incluído no POST. O campo `add-to-cart` (do botão "Adicionar ao
+ * carrinho") NÃO é enviado. Sem ele, o WooCommerce não processa o add-to-cart.
+ *
+ * Este handler roda em wp_loaded priority 0 (antes de tudo) e injeta `add-to-cart`
+ * a partir de `product_id`, garantindo que o fluxo do WooCommerce funcione
+ * independentemente de o JavaScript ter interceptado o clique ou não.
+ */
+function gstore_ensure_add_to_cart_for_buy_now() {
+	if ( wp_doing_ajax() || isset( $_REQUEST['wc-ajax'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		return;
+	}
+
+	// Só age quando "Comprar agora" está presente MAS `add-to-cart` está ausente.
+	// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+	if ( ! isset( $_REQUEST['gstore_buy_now'] ) ) {
+		return;
+	}
+	// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+	if ( isset( $_REQUEST['add-to-cart'] ) && is_numeric( $_REQUEST['add-to-cart'] ) ) {
+		return; // Já existe — provavelmente veio do JS redirect (GET). Nada a fazer.
+	}
+
+	// Tenta obter o product_id a partir dos campos do formulário.
+	$product_id = 0;
+	// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+	if ( isset( $_REQUEST['product_id'] ) ) {
+		$product_id = absint( $_REQUEST['product_id'] );
+	}
+	if ( ! $product_id ) {
+		return;
+	}
+
+	// Injeta add-to-cart para que o WooCommerce processe o produto.
+	$_REQUEST['add-to-cart'] = $product_id; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+	$_GET['add-to-cart']     = $product_id;
+	$_POST['add-to-cart']    = $product_id;
+}
+add_action( 'wp_loaded', 'gstore_ensure_add_to_cart_for_buy_now', 0 );
 
 /**
  * Salva o carrinho atual em sessão antes de limpar para "Comprar agora"
