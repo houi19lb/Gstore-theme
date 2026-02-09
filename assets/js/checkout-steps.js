@@ -1978,7 +1978,10 @@ function getInstallmentDisplayTotals(summaryData) {
 		const otherFees = [];
 		fees.forEach(function (fee) {
 			const label = (fee && (fee.label || fee.name)) ? String(fee.label || fee.name).trim() : '';
-			const total = fee && Number.isFinite(Number(fee.total)) ? Number(fee.total) : parsePriceValue((fee && fee.total) ? String(fee.total) : '0');
+			// Prioriza total_raw (numérico, preserva sinal negativo para descontos).
+			const total = (fee && fee.total_raw !== undefined && Number.isFinite(Number(fee.total_raw)))
+				? Number(fee.total_raw)
+				: (fee && Number.isFinite(Number(fee.total)) ? Number(fee.total) : parsePriceValue((fee && fee.total) ? String(fee.total) : '0'));
 			if (!label) return;
 			const isFrete = label.toLowerCase().indexOf('frete') !== -1;
 			if (isFrete) return;
