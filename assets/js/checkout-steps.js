@@ -275,12 +275,30 @@
 				.replace(/<title[^>]*>[\s\S]*?<\/title>/gi, '')
 				.replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
 				.trim();
-			return '<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/>' + headContent + '</head><body>' + bodyContent + '</body></html>';
+			// Injeta estilos do contrato quando o body usa classes gstore-contract-*.
+			var contractStyles = isPrebuiltContractMarkup(bodyContent) || /class=["'][^"']*gstore-contract-/i.test(bodyContent)
+				? '<style>' + getContractDocumentStyles() + '</style>'
+				: '';
+			return '<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/>' + contractStyles + headContent + '</head><body>' + bodyContent + '</body></html>';
 		}
 		if (/<!doctype\s+html/i.test(safe) || /<\s*html[\s>]/i.test(safe)) {
+			// Documento completo: injeta estilos do contrato se usar classes gstore-contract-* (ex.: preview AJAX rota PIX).
+			if (isPrebuiltContractMarkup(safe) || /class=["'][^"']*gstore-contract-/i.test(safe)) {
+				var contractStyles = '<style>' + getContractDocumentStyles() + '</style>';
+				if (/<\s*head[\s>]/i.test(safe)) {
+					return safe.replace(/<\s*head[\s>]/i, '<head>' + contractStyles);
+				}
+				if (/<\s*\/\s*head\s*>/i.test(safe)) {
+					return safe.replace(/<\s*\/\s*head\s*>/i, contractStyles + '</head>');
+				}
+			}
 			return safe;
 		}
-		return '<!doctype html><html lang="pt-br"><head><meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" /></head><body>' + safe + '</body></html>';
+		// Fragmento de body: injeta estilos se usar classes gstore-contract-*.
+		var contractStyles = (isPrebuiltContractMarkup(safe) || /class=["'][^"']*gstore-contract-/i.test(safe))
+			? '<style>' + getContractDocumentStyles() + '</style>'
+			: '';
+		return '<!doctype html><html lang="pt-br"><head><meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />' + contractStyles + '</head><body>' + safe + '</body></html>';
 	}
 
 	function normalizeContractHtml(value) {
