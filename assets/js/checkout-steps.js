@@ -103,6 +103,11 @@
 			/class=["']page["']/i.test(raw);
 	}
 
+	function extractBodyFromDocument(html) {
+		const bodyMatch = String(html || '').match(/<body[^>]*>([\s\S]*?)<\/body>/i);
+		return bodyMatch ? bodyMatch[1].trim() : html;
+	}
+
 	function isPrebuiltContractMarkup(value) {
 		const raw = String(value || '');
 		return /class=["'][^"']*\bgstore-contract-page\b/i.test(raw) ||
@@ -575,12 +580,21 @@ const subtotal = decodeHtmlEntities(stripHtmlText(it.subtotal || ''));
 		});
 	}
 
-	function renderContractModalContent($modal, content, useDisplayNamesForEmpty) {
+	function renderContractModalContent($modal, content, useDisplayNamesForEmpty, forceNormalize) {
 		const $body = $modal.find('.Gstore-contract-modal__body');
 		$body.html('<iframe class="Gstore-contract-modal__iframe" title="Contrato" loading="eager"></iframe>');
 		const iframe = $body.find('.Gstore-contract-modal__iframe').get(0);
 		if (iframe) {
 			const resolvedContent = applyContractTemplateTokens(content, !!useDisplayNamesForEmpty);
+			// forceNormalize (ex.: rota PIX): sempre usar pipeline de normalização (header, páginas, footer).
+			if (forceNormalize) {
+				const bodyContent = looksLikeContractDocument(resolvedContent)
+					? extractBodyFromDocument(resolvedContent)
+					: resolvedContent;
+				const documentHtml = buildContractDocumentHtml(bodyContent);
+				iframe.srcdoc = buildContractFullDoc(documentHtml);
+				return;
+			}
 			// Documento HTML completo (ex.: template com .wrap > .pages > .page): usar inteiro no iframe
 			// para preservar estilos do <head> e todas as páginas do body.
 			if (looksLikeContractDocument(resolvedContent)) {
@@ -3629,7 +3643,7 @@ function getInstallmentDisplayTotals(summaryData) {
 							renderContractModalContent($modal, fallbackBodyHtml);
 							return;
 						}
-						renderContractModalContent($modal, response.data.html);
+						renderContractModalContent($modal, response.data.html, false, true);
 						return;
 					}
 					renderContractModalContent($modal, fallbackBodyHtml);
