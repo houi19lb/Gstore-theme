@@ -2167,7 +2167,76 @@ function gstore_handle_buy_now_simple_product() {
 	wp_safe_redirect( wc_get_checkout_url() );
 	exit;
 }
-add_action( 'template_redirect', 'gstore_handle_buy_now_simple_product', 0 );
+	add_action( 'template_redirect', 'gstore_handle_buy_now_simple_product', 0 );
+
+/**
+ * "Comprar agora" (produto variável): PRG para GET com variation_id e atributos,
+ * para o WooCommerce processar add-to-cart e o filtro redirecionar ao checkout.
+ */
+function gstore_handle_buy_now_variable_product() {
+	if ( wp_doing_ajax() ) {
+		return;
+	}
+
+	if ( ! class_exists( 'WooCommerce' ) || ! function_exists( 'wc_get_checkout_url' ) ) {
+		return;
+	}
+
+	// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+	if ( ! isset( $_REQUEST['gstore_buy_now'] ) ) {
+		return;
+	}
+
+	// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+	$product_id = isset( $_REQUEST['add-to-cart'] ) ? absint( $_REQUEST['add-to-cart'] ) : 0;
+	// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+	if ( ! $product_id && isset( $_REQUEST['product_id'] ) ) {
+		$product_id = absint( $_REQUEST['product_id'] );
+	}
+	if ( ! $product_id ) {
+		return;
+	}
+
+	if ( ! function_exists( 'wc_get_product' ) ) {
+		return;
+	}
+
+	$product = wc_get_product( $product_id );
+	if ( ! $product instanceof WC_Product || ! $product->is_type( 'variable' ) ) {
+		return;
+	}
+
+	// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+	$variation_id = isset( $_REQUEST['variation_id'] ) ? absint( $_REQUEST['variation_id'] ) : 0;
+	if ( ! $variation_id ) {
+		return;
+	}
+
+	$method = isset( $_SERVER['REQUEST_METHOD'] ) ? strtoupper( (string) $_SERVER['REQUEST_METHOD'] ) : 'GET';
+
+	if ( 'POST' === $method ) {
+		$args = array(
+			'add-to-cart'    => $product_id,
+			'variation_id'   => $variation_id,
+			'quantity'       => isset( $_REQUEST['quantity'] ) ? absint( $_REQUEST['quantity'] ) : 1, // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			'gstore_buy_now' => 1,
+		);
+		foreach ( array_keys( $_REQUEST ) as $key ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			if ( strpos( $key, 'attribute_' ) === 0 ) {
+				$args[ $key ] = wp_unslash( $_REQUEST[ $key ] ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			}
+		}
+		$args['quantity'] = max( 1, (int) $args['quantity'] );
+		$target = add_query_arg( $args, get_permalink( $product_id ) );
+
+		if ( function_exists( 'nocache_headers' ) ) {
+			nocache_headers();
+		}
+		wp_safe_redirect( $target );
+		exit;
+	}
+}
+add_action( 'template_redirect', 'gstore_handle_buy_now_variable_product', 0 );
 
 /**
  * PRG no produto único: evita reenvio do formulário ao voltar.

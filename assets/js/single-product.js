@@ -1113,13 +1113,54 @@ document.addEventListener('DOMContentLoaded', () => {
 	initBuyNowRedirect();
 
 	/**
+	 * "Comprar agora" em produto variável: redireciona via GET com variation_id e
+	 * atributos, para o backend processar add-to-cart e redirecionar ao checkout.
+	 */
+	const initBuyNowVariableRedirect = () => {
+		const form = document.querySelector('form.cart.variations_form');
+		if (!form) return;
+
+		const buyNowBtn = form.querySelector('.Gstore-single-product__buy-now');
+		if (!buyNowBtn) return;
+
+		buyNowBtn.addEventListener('click', (e) => {
+			e.preventDefault();
+
+			const productId = form.querySelector('input[name="product_id"]')?.value || '';
+			const variationId = form.querySelector('input[name="variation_id"]')?.value || '';
+			const qty = form.querySelector('input[name="quantity"]')?.value || '1';
+
+			if (!productId || !variationId || variationId === '0') {
+				return; // variação não selecionada
+			}
+
+			const url = new URL(window.location.href);
+			url.searchParams.set('add-to-cart', productId);
+			url.searchParams.set('variation_id', variationId);
+			url.searchParams.set('quantity', qty);
+			url.searchParams.set('gstore_buy_now', '1');
+
+			// Coleta todos os attribute_*
+			form.querySelectorAll('select[name^="attribute_"], input[name^="attribute_"]').forEach((el) => {
+				if (el.name && el.value) {
+					url.searchParams.set(el.name, el.value);
+				}
+			});
+
+			window.location.href = url.toString();
+		});
+	};
+	initBuyNowVariableRedirect();
+
+	/**
 	 * Remove parâmetros de add-to-cart da URL para evitar reprocessamento.
 	 */
 	const cleanAddToCartParams = () => {
 		const url = new URL(window.location.href);
 		const shouldClean =
 			url.searchParams.has('add-to-cart') ||
-			url.searchParams.has('gstore_buy_now');
+			url.searchParams.has('gstore_buy_now') ||
+			url.searchParams.has('variation_id');
 
 		if (!shouldClean) {
 			return;
@@ -1128,6 +1169,14 @@ document.addEventListener('DOMContentLoaded', () => {
 		url.searchParams.delete('add-to-cart');
 		url.searchParams.delete('quantity');
 		url.searchParams.delete('gstore_buy_now');
+		url.searchParams.delete('variation_id');
+
+		// Remove atributos de variação (attribute_*)
+		for (const key of url.searchParams.keys()) {
+			if (key.indexOf('attribute_') === 0) {
+				url.searchParams.delete(key);
+			}
+		}
 
 		if (!url.searchParams.toString()) {
 			url.search = '';

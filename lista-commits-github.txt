@@ -1,0 +1,577 @@
+﻿63865d4 Ajustes no script de etapas do checkout
+5a11db0 Atualiza checkout-steps.js
+981fb55 Ajustes no fluxo de steps do checkout
+c5bd93d Atualiza checkout-steps e template de contrato
+0cae7ac Atualiza checkout-steps.js
+7f90e31 Atualiza estilos e script dos passos do checkout
+04c0f5e Atualiza functions.php
+b4c42f3 refazer merge
+3ec5599 att variable seller
+fd20169 atualiza├ºao preechimento de placeholders
+ecf952e ct att
+b6995e5 Merge branch 'main' of https://github.com/houi19lb/Gstore-theme
+c453dc6 contrato att
+fed7756 reversao carrinho
+ed673a1 Restaura protecao de sessao WooCommerce contra REST GET (LiteSpeed)
+5d65967 mostrar pags contrato
+a548e91 contrato
+6868063 Merge branch 'main' of https://github.com/houi19lb/Gstore-theme
+1b3e198 ATT contrato
+3769019 card produto variavel
+638bc9c modal produto variavel
+d4ef234 modal produto variavel
+2aefb73 novo html
+b614074 estiliza├ºao modal
+5287348 iframe css injection
+b836bc1 termos renderiza├ºao preview
+a1c2bc6 att contrat
+fafcd62 alinhamento com admin
+208a44a contrato/footer
+42c1d08 pagina de informativo13
+c66a83b pagina de informativo12
+17d701d pagina de informativo11
+9701690 pagina de informativo10
+ac7c1b9 pagina de informativo9
+3eef2a0 pagina de informativo8
+9fa4748 pagina de informativo7
+52abec4 pagina de informativo6
+91d3097 pagina de informativo5
+489116d pagina de informativo4
+b66363e pagina de informativo3
+562e699 pagina de informativo2
+42ab837 pagina de informativo
+e90c3f9 envio email
+ccd21da chore: remove debug instrumentation (mini-cart logs + REST debug hooks)
+9e48f12 fix: blu installment quotes restore original cart (avoid empty_cart wipe)
+33119a1 chore: detect installment quotes via fetch/FormData + bump runId v8
+1aa709a chore: log admin-ajax installment quotes to correlate cart empty
+b361d8c fix: cart protection v5 NUCLEAR - header_remove Set-Cookie + block all wc_setcookie in REST GET
+57ff10b ajuste carrinho6 debug19
+46065f3 ajuste carrinho6 debug17
+4f90c5d ajuste carrinho6 debug16
+69bffb5 fix: remove maybe_set_cart_cookies in rest_pre_dispatch (wp hook does not fire on REST)
+1690b54 fix: remove maybe_set_cart_cookies from wp:99 too (was deleting cookies in REST GET)
+1ac80dc fix: 3 bugs - plugins_loaded timing, fetch opts passing, cookie deletion in REST GET
+d77ad68 fix: cart protection v4 - readonly header + shutdown:19 + debug headers
+7ca89e9 ajuste carrinho6 debug14
+39ad4f0 ajuste carrinho6 debug13
+17da885 ajuste carrinho6 debug12
+669911b ajuste carrinho6 debug11
+9f6c696 ajuste carrinho6 debug2
+4b48a16 ajuste carrinho6 debug9
+8009d83 ajuste carrinho6 debug8
+e811a16 ajuste carrinho6 debug7
+128ad57 ajuste carrinho6 debug6
+09b484b ajuste carrinho6 debug5
+bda2236 ajuste carrinho6 debug4
+da9a5bb ajuste carrinho6 debug3
+9a3ebd7 ajuste carrinho6 debug2
+775e173 ajuste carrinho6 debug
+af62d88 ajuste carrinho6
+82af49c ajuste carrinho5
+533cdd8 ajuste carrinho4
+37046db ajuste carrinho3
+6bc8401 ajuste carrinho2
+62ecc0a ajuste carrinho
+51bb35e ajuste taxas atualizadas resolu├ºao3
+61ec3d6 ajuste taxas atualizadas resolu├ºao2
+5c88190 ajuste taxas atualizadas resolu├ºao
+29ce1c0 ajuste taxas atualizadas com frete
+519cad1 ajuste frete pix2
+04d99c8 ajuste frete pix
+7edeecf ajuste checkout 2
+d29f4e4 ajuste checkout
+0a1ebd4 chore: atualiza vers├â┬úo do tema para 1.5.8
+5fbf022 fix: forcar reload do parcelamento ao trocar tipo de frete - v1.5.7
+c6ae94b fix: corrigir parcelamento visivel no PIX e frete duplicado nas parcelas - v1.5.6
+f6ff9c3 fix: remove calculadora de frete duplicada no checkout etapa 3 - v1.5.5
+6e72ab7 chore: bump theme version to 1.5.4
+269ae42 chore: bump theme version to 1.5.2
+b52eb12 Ajustes product-card e versao 1.5.2
+09d1518 Merge branch 'main' of github.com:houi19lb/Gstore-theme
+1e8897b Bump versao tema para 1.5.2
+fb72094 Merge origin/main: resolve conflitos em product-card.js e functions.php
+28e54e2 ajuste erro ao alterar produtos
+75708a9 Atualiza product-card.js e functions.php
+b50703e ajuste nos cards parelamneto2
+bee09bd ajuste nos cards parelamneto
+25d4663 Ajustes CSS e JS: checkout e my-account
+c0ce765 titulo Cards5
+851d75f titulo Cards4
+220f3f8 titulo Cards3
+eb66bf4 titulo Cards2
+578dfea titulo Cards
+f4f2ca8 cards produtos
+9917e38 Merge branch 'main' of github.com:houi19lb/Gstore-theme
+099a237 chore: atualiza├â┬º├â┬Áes checkout, PIX, my-account e blog-single
+4fdf725 home page desfazer
+c3df4ba home page ver mais
+c9ebaf0 Atualiza l├â┬│gica dos passos do checkout
+00a9b5f Atualiza estilos e scripts dos passos do checkout
+1f5f1f0 Merge branch 'main' of github.com:houi19lb/Gstore-theme
+edc8512 Melhoria no checkout: estilos e integra├â┬º├â┬úo Kivo
+f6d7b72 envio de email 4
+c6dc0d9 envio de email 3
+3abfbd3 erro wp
+687c83a fix(checkout): melhora detec├â┬º├â┬úo e restaura├â┬º├â┬úo do m├â┬®todo de pagamento
+532b012 ajuste borda cinza3
+5d32e70 ajuste borda cinza2
+4f0e2bf ajuste borda cinza
+21614d4 ajuste pix
+10c6f77 pajustando pagina de checkout
+90a8c44 pajustando pagina de compra
+1429d51 Merge branch 'main' of github.com:houi19lb/Gstore-theme
+e835f23 checkout PIX: ajustes JS, docs e handoff; nav menu e style
+3df6721 padronizando cards4
+ffb4b55 padronizando cards3
+4b64d0a padronizando cards2
+e9dd326 padronizando cards
+59f677c testando footer3
+341907b testando footer2
+d330360 testando footer
+a756075 refatorando checkout logs2
+c76161a refatorando checkout logs
+14cb569 refatorando checkout
+206be3f contrato checkout4
+1ff2ad2 contrato checkout3
+964e352 contrato checkout2
+01b269f contrato checkout
+876c203 modal erro git pull4
+42f0c5f Atualiza├â┬º├â┬Áes
+15e7785 modal erro git pull2
+a7cb769 modal erro git pull
+04e272b Atualiza style.css e vizualizer do tema gstore
+4cd2483 Ajustes tema gstore: header, checkout, docs e single product
+45dd691 Refatora sele├â┬º├â┬úo de nav no header e condiciona filtro do menu ao fallback
+fc48e68 docs e tema: atualiza├â┬º├â┬Áes de documenta├â┬º├â┬úo, header e navega├â┬º├â┬úo
+1d79661 Merge branch 'main' of github.com:houi19lb/Gstore-theme
+9c91b41 feat: header CSS, nav menu class e ajustes single product
+6bec1c4 descri├ºao
+9e56cdd Atualiza style.css
+fa72c98 Atualiza style.css
+0d08586 Aplica
+383c07b Atualiza checkout-steps.js
+58476f2 Atualiza checkout-steps.js
+d1c956b Atualiza checkout-steps.js
+74765ce Atualiza checkout-steps.js
+319edfd debug003
+df92f66 Atualiza checkout-steps.js
+1f82152 Atualiza checkout-steps.js
+4fd509a Atualiza checkout-steps.js
+ed0fbce Atualiza checkout-steps.js
+218d43b Atualiza checkout-gestalt, checkout-steps e functions; remove docs de diagn├â┬│stico
+f70c026 Atualiza functions.php
+458e024 Atualiza functions.php
+4c273cf Atualiza functions.php
+2a4750a fix(checkout): PIX em Ver detalhes - script inline e diagnostico melhorado
+7d2a30c Atualiza functions.php
+871c8e8 Atualiza functions.php
+e2b2d64 Adiciona console-checkout-payment-diagnostic.js
+8f9b70e Atualiza functions.php e adiciona console-checkout-payment-fix.js
+03e15c8 Atualiza checkout-gestalt.js e checkout-steps.js
+50b9754 Atualiza functions.php
+a0d75f9 Atualiza checkout-steps.js
+5395cd4 Atualiza checkout-steps.js
+3d0bd12 Atualiza checkout-steps.js
+a46380d Atualiza checkout-steps.js
+1b5e6e3 Atualiza checkout-steps.js
+b5567c1 Atualiza checkout-steps.js
+9827fc7 Atualiza checkout-steps.js
+1052bff Atualiza checkout-steps.js
+a666258 Atualiza checkout-steps.js
+c9b3572 debug00
+8e6c801 Atualiza checkout-steps.js
+9506042 debug5555555
+3536ef8 debug555555
+9b6d057 debug55555
+ef43362 debug5555
+41f95e3 chore: remove debug instrumentation do checkout-steps
+c0b0423 fix(checkout): bloqueia taxa de parcelamento ao escolher PIX (imediato + resumo e tabela)
+f2e8241 fix(checkout): nao resetar parcelas para 1x ao selecionar PIX, mantem valor no cartao
+cdc6627 fix(checkout): reaplica updateOrderReviewTotals apos updated_checkout + log feeRowsRemoved
+ffca25c fix(checkout): remove linha Taxa de parcelamento do Resumo quando nao na etapa final
+21b34b9 debug555
+22583f7 debug55
+c7e6fe5 debug4
+7a84eeb fix: Remover instrumentacao de debug do checkout
+deebb34 debug3
+3d8eb06 debug: Adicionar logs para investigar taxa aparecendo no PIX
+c9132fe fix: Forcar recalculo ao sair da etapa final para remover taxa de parcelamento
+cb5f893 fix: Corrigir timing de updateOrderReviewTotals - executar apos AJAX completar
+2f27e97 debug: Adicionar instrumentacao para inconsistencia entre aba Frete e Resumo do Pedido
+ee51a92 chore: Remover instrumentacao antiga de debug
+5f6db3b Fun├ºao generica para resolver caminhos em repositorios wp instalados em sub-pasta
+16d8620 fix(checkout-blu): parcelas exibem total com frete - shouldAddShipping e post_data no AJAX
+b4310ba debug2
+e16df76 debug
+b6a20fb ICMS6
+72bedf0 ICMS5
+158a921 ICMS4
+b404c3b ICMS3
+3818741 ICMS2
+16a24b6 ICMS
+e4935be removendo div de status
+ae341cb produto indisponivel
+c7446cd ajuste footer5
+e8b1ae1 ajuste footer4
+d935b47 ajuste footer3
+ed7719e ajuste footer2
+64bcaea ajuste footer
+924d421 ajuste banner3
+6a6e812 ajuste banner2
+7e64bbc ajuste banner
+87cab01 ajuste pagina de post thunbnail 6
+d35a26b ajuste pagina de post thunbnail 5
+aa886b5 ajuste pagina de post thunbnail 4
+b7dd189 ajuste pagina de post thunbnail 2
+f084920 ajuste pagina de post thunbnail
+b422409 Remove bot├â┬úo flutuante do WhatsApp da p├â┬ígina de atendimento
+4773056 feat: componente PIX box com countdown e documenta├â┬º├â┬úo
+229f5a0 ajuste pagina de produtos10
+c9a5614 ajuste pagina de produtos9
+9515ee0 ajuste pagina de produtos8
+8f58e42 ajuste pagina de produtos7
+f6fcf44 ajuste pagina de produtos6
+4044677 ajuste pagina de produtos6
+4fe71ae ajuste pagina de produtos5
+9226fb7 ajuste pagina de produtos5
+14e74f4 ajuste pagina de produtos4
+dcda171 ajuste pagina de produtos3
+4b58f08 ajuste pagina de produtos2
+ae9e14f ajuste pagina de produtos
+b5c6c11 modal de pagamento comprar agora sem erros de carrinh otorcado
+1793a78 minha conta pedidos apos trocas de modal
+9edebfe modal de pagamento permanecnia do frete
+cd3fc6a modal de pagamento
+615e241 META DESCRI├çAO
+6be425f taxxas de parcelamento do produto 3
+070e16a taxxas de parcelamento do produto 2
+0897040 taxxas de parcelamento do produto
+8bf81a2 retirada das 3 chips pra celular
+daaccff disponibilidade pronta entrega pra celular
+84ab69b ajustando aviso especial
+ab21541 ajuste frete cursor 5
+0c7da23 ajuste frete cursor 4
+3801381 ajuste frete cursor 3
+bb941a7 ajuste frete cursor 2
+6e8afcc ajuste frete cursor opus
+c75e411 ajuste frete88854
+97b0449 ajuste frete8885
+460a8a8 ajuste frete888
+7c44ff0 ajuste frete88
+d259509 ajuste frete
+518a49d revertendo
+bdb32cf refatorando taxas 5
+72b56b8 ajuste frete455
+f648b9e ajuste frete45
+31f7d4f ajuste fretelog4
+e4dda82 ajuste fretelog2
+84ee8ff ajuste fretelog
+fe6199f ajuste frete2
+3e99485 ajuste frete
+db1c892 ajuste logs desfazendo
+bfedd34 ajuste logs
+efafa73 ajuste area de frete 6
+7179fc5 ajuste area de frete 5
+77812c6 ajuste area de frete 4
+332c28f ajuste area de frete 4
+84177c0 ajuste area de frete 3
+5af3b38 ajuste area de frete 2
+84bc2d4 ajuste area de frete
+915b13e ajuste de comprar agora6
+7050963 ajuste de comprar agora5
+8065330 ajuste de comprar agora4
+0a3c992 ajuste de comprar agora3
+a9ffde2 ajuste de comprar agora2
+300cdeb ajuste de comprar agora
+6761483 ajuste de carrinho log11
+3fb1591 ajuste de carrinho log10
+19dab41 ajuste de carrinho log9
+149b5a4 ajuste de carrinho log8
+35e2d2b ajuste de carrinho log7
+600ae7c ajuste de carrinho log5
+d69a258 ajuste de carrinho log4
+ba720c3 ajuste de carrinho log3
+28c8d2a ajuste de carrinho log2
+034b544 ajuste de carrinho log
+bd08a1c ajuste de carrinho
+f183f3e ajuste de carrinho
+9c856b0 Atualiza carrinho e functions: melhorias no cart.js e functions.php
+25d096f Atualiza cart.js e functions.php - melhorias no tema
+745b2d1 Atualiza├â┬º├â┬Áes: cart.js e functions.php
+7894b74 reversao3
+9e315d5 reversao2
+a994d38 reversao
+706e152 ajustando versao de celular carrinho18
+0dd9bc0 ajustando versao de celular carrinho17
+9437e38 ajustando versao de celular carrinho16
+cefd5d8 ajustando versao de celular carrinho16
+e27bfce ajustando versao de celular carrinho15
+f248783 ajustando versao de celular carrinho14
+64e7d6b ajustando versao de celular carrinho13
+3b4925f ajustando versao de celular carrinho12
+552d5cf ajustando versao de celular carrinho11
+5083b6b ajustando versao de celular carrinho10
+ea217d7 ajustando versao de celular carrinho9
+2983f1e ajustando versao de celular carrinho8
+5762ac1 ajustando versao de celular carrinho7
+9c72d10 ajustando versao de celular carrinho6
+abf4937 ajustando versao de celular carrinho5
+68654dd ajustando versao de celular carrinho4
+87006ed ajustando versao de celular carrinho4
+185b450 ajustando versao de celular carrinho3
+dbca556 ajustando versao de celular carrinho2
+8975eb1 ajustando versao de celular carrinho
+f19c42f Atualiza├â┬º├â┬úo do script Telegram floating
+3c9008a Atualiza├â┬º├â┬úo do script telegram-floating.js
+8ef0674 Atualiza├â┬º├â┬úo do script single-product.js
+4c529f0 Atualiza├â┬º├â┬Áes: corre├â┬º├â┬Áes de parcelamento e melhorias nos produtos
+0ad02cd Atualiza├â┬º├â┬úo: ajustes no .gitignore, package-lock.json e template de produto
+d15a8ce Adiciona instru├â┬º├â┬Áes para corrigir sincroniza├â┬º├â┬úo Git no servidor
+44accdc Adiciona script tempor├â┬írio para corrigir sincroniza├â┬º├â┬úo Git no servidor
+98006ba Adiciona arquivo inc/installments.php com fun├â┬º├â┬Áes de c├â┬ílculo de parcelas
+9a52698 Ajustes na p├â┬ígina de produto ├â┬║nico: melhorias em JS, fun├â┬º├â┬Áes, estilos e template
+04411a7 ajustes em single product, estilos e fun├â┬º├â┬Áes do tema
+bd08cc8 ajustando versao de celular8
+891cc98 ajustando versao de celular7
+8c6c137 ajustando versao de celular7
+8995b8e ajustando versao de celular6
+eda770d ajustando versao de celular5
+e232298 ajustando versao de celular4
+01fa589 ajustando versao de celular3
+628adeb ajustando versao de celular2
+41699d7 ajustando versao de celular
+b376427 ajustando plug 3
+f2a0359 ajustando pagamento pelo plugin2
+9f1d922 ajustando pagamento pelo plugin
+5ce4075 ajustando pagamento2
+93d974b ajustando pagamento
+6226826 ajustando checkout23
+a854a57 ajustando checkout22
+ebf74dd ajustando checkout21
+d395a93 ajustando checkout21
+1293ace ajustando checkout20
+f06ad62 ajustando checkout19
+730f5de ajustando checkout18
+12b4b79 ajustando checkout17
+6ad9ecc ajustando checkout16
+d6069eb ajustando checkout15
+98abd5e ajustando checkout14
+7abca1f ajustando checkout13
+5d0401a ajustando checkout12
+d668637 ajustando checkout11
+fad0b37 ajustando checkout10
+83c16ba ajustando checkout9
+06314f4 ajustando checkout8
+98426e2 ajustando checkout7
+234ead1 ajustando checkout6
+6d33fbd ajustando checkout5
+d3ec02a ajustando checkout4
+4f3990c ajustando checkout3
+1509a72 ajustando checkout2
+3b02b21 ajustando checkout
+f4b401a limpeza debug
+4577329 debug20
+f545fa8 debug19
+2022f8d debug17
+c09bba1 debug16
+387fc74 debug15
+4da5c02 debug14
+9b6a00f debug13
+7469b98 debug12
+9bbb848 debug11
+eca94e1 debug10
+dbd1c45 debug9
+2be774f debug8
+12a1986 debug7
+c34171f debug6
+02b53b2 debug5
+24420bb debug4
+8eaf22a debug3
+f778d7d debug2
+19fae54 debug
+0f1da35 ajustando posicionamento pagina do carrinho 5
+10459cc ajustando posicionamento pagina do carrinho 4
+964b4c9 ajustando posicionamento pagina do carrinho 2
+4e26428 ajustando posicionamento pagina do carrinho
+b603857 ajustando carregamento da pagina5
+1fab77a ajustando carregamento da pagina4
+4013f97 ajustando carregamento da pagina2
+9a31718 ajustando carregamento da pagina
+feaec47 criando valor de frete no total3
+2ec0a1b criando valor de frete no total
+47a958d reSOLVENDO RADIO5
+1822aea reSOLVENDO RADIO4
+1bf6fba reSOLVENDO RADIO3
+d5b2a51 reSOLVENDO RADIO2
+2ec8026 reSOLVENDO RADIO
+7c85894 revertendo altera├ºoes
+57c67cc ajuste pagina do carrinho 24
+7c74196 ajuste pagina do carrinho 23
+31b31ee ajuste pagina do carrinho 22
+8e6d018 ajuste pagina do carrinho 21
+c148169 ajuste pagina do carrinho 20
+7dea8da ajuste pagina do carrinho 19
+e0f9342 ajuste pagina do carrinho 18
+58c31d8 ajuste pagina do carrinho 17
+a498fd1 ajuste pagina do carrinho 16
+d0fe2f6 ajuste pagina do carrinho 15
+ed2913c ajuste pagina do carrinho 14
+62f4716 ajuste pagina do carrinho 13
+226f71c ajuste pagina do carrinho 12
+e8f4655 ajuste pagina do carrinho 11
+6931fea ajuste pagina do carrinho 10
+cf5498b ajuste pagina do carrinho 9
+c4f012f ajuste pagina do carrinho 6
+51c0e84 ajuste pagina do carrinho 5
+3b86faf ajuste pagina do carrinho 4
+23a0d39 ajuste pagina do carrinho 3
+9322862 ajuste pagina do carrinho 2
+99b3ea3 ajuste pagina do carrinho
+95bd747 ajuste no frete cidades theme3
+b2c3ee2 ajuste no frete cidades theme2
+702c7ca ajuste no frete cidades theme
+e1d95bd melhoria reverter
+da32823 melhoria area de comprar
+0de474b corre├ºao area de endere├ºo
+b32433b corre├ºao area de compra cliente16
+50c5c97 corre├ºao area de compra cliente15
+9927d8a corre├ºao area de compra cliente14
+7131581 corre├ºao area de compra cliente13
+6e714e4 corre├ºao area de compra cliente12
+2e5ebfa corre├ºao area de compra cliente11
+ac28ba6 corre├ºao area de compra cliente10
+f7e44a3 corre├ºao area de compra cliente9
+a80ace3 corre├ºao area de compra cliente8
+b3a5d88 corre├ºao area de compra cliente7
+d12315b corre├ºao area de compra cliente6
+acf9855 corre├ºao area de compra cliente5
+317522b corre├ºao area de compra cliente4
+b16330c corre├ºao area de compra cliente3
+139fb01 corre├ºao area de compra cliente2
+9bbbe90 corre├ºao area de compra cliente
+7b88d20 criando botao comprar novamente
+b0c92af resolver botao pagar 2
+eafd1dc resolver botao pagar
+d6c9f4c pagamento 2
+aa62305 pagamento
+350d21e fix: verifica quantidade real de estoque para variacoes
+354761d debug: adiciona logs para investigar problema de estoque em variacoes
+78b7d55 corre├ºao varia├ºoes recome├ºando 2
+9fd109e corre├ºao varia├ºoes recome├ºando 1
+e09a25c corre├ºao varia├ºoes recome├ºando
+afbc48c corre├ºao varia├ºoes novo9
+6f91340 corre├ºao varia├ºoes novo7
+3a3daa3 corre├ºao varia├ºoes novo6
+5f9ecbf corre├ºao varia├ºoes novo5
+6e264c5 corre├ºao varia├ºoes novo4
+dc545bb corre├ºao varia├ºoes novo3
+d632d24 corre├ºao varia├ºoes novo2
+8cd324b corre├ºao varia├ºoes novo
+2f39210 corre├ºao varia├ºoes
+fa33d45 corre├ºao comprar agora produto simples 5
+102119b corre├ºao comprar agora produto simples 4
+c943f4f corre├ºao comprar agora produto simples 3
+b98bd5f corre├ºao comprar agora produto simples 2
+75dfb0e corre├ºao comprar agora produto simples
+4a5b9ec corre├ºao pagina de produto
+3b968ba area de comentario
+c338c9d pagina favorito3
+e4dc866 pagina favorito2
+129855e pagina favorito
+223af04 overflow de imagem
+cef399c ajuste footer catalogo
+27add86 ajuste numeros
+62d438d ajuste setas2
+a31f502 ajuste setas
+7ce98c8 barra de pesquisa 3
+a3684a4 barra de pesquisa 2
+cb95c90 barra de pesquisa
+b3ddf65 slider 2
+6b46621 slider
+af54149 zoom ajuste 4
+00c60fd zoom ajuste 2
+a1a2fae zoom ajuste 2
+ccff641 zoom ajuste
+9fffcae ajuste article 2
+a339875 ajuste article
+63bfff7 retirada informa├ºoes tecnicas
+8e6440c refatorando produto sem estoque 5
+e5c5b5b refatorando produto sem estoque 4
+bcc5ebc refatorando produto sem estoque 3
+387b80f refatorando produto sem estoque 2
+a018831 refatorando produto sem estoque
+2fc1864 botao flutuante celular
+6bca870 botao flutuante centralizando 3
+3670e35 botao flutuante centralizando 2
+7c0223d botao flutuante centralizando
+062c9d6 botao flutuante
+1cdf23e carrossel em imagens 6+ 16
+b53d5bb carrossel em imagens 6+ 15
+37ece71 carrossel em imagens 6+ 14
+871a602 carrossel em imagens 6+ 13
+84b33b7 carrossel em imagens 6+ 12
+483d541 carrossel em imagens 6+ 11
+bdf0b43 carrossel em imagens 6+ 10
+6d53117 carrossel em imagens 6+ 9
+eaf78ec carrossel em imagens 6+ 8
+45bda75 carrossel em imagens 6+ 7
+57dcfdb carrossel em imagens 6+ 6
+c3338ac carrossel em imagens 6+ 5
+0ac436c carrossel em imagens 6+ 4
+d90922d carrossel em imagens 6+ 3
+a342184 carrossel em imagens 6+ 2
+ee6d82b carrossel em imagens 6+
+4ee4cc3 retirado texto de avalia├ºoes
+29a24b3 ordem da home4
+bdeeffe ordem da home3
+247b2da ordem da home2
+9260801 ordem da home
+6ae560a notice
+c7a99c4 resolu├º├úo bug mobile
+4082fb0 resolu├º├úo bug mobile
+0d87dc0 resolu├º├úo bug mobile
+62ace9d resolu├º├úo bug mobile
+7fb6019 resolu├º├úo bug mobile
+39a2c72 resolu├º├úo bug mobile
+1096513 add tabs desc prod
+9b96378 Separa
+68c776e limpeza
+f70ea24 atulia├ºao 4
+66ad2de atulia├ºao 2
+6e5ad4e atulia├ºao
+0ab75c3 pag produtos att
+2517742 pag produtos att
+0e0856e pag produtos att
+b6184b6 pag produtos att
+a3bfbd7 pag produtos att
+af6ddf6 pag produtos att
+5c67c02 pag produtos att
+86170bb pag produtos att
+05f0130 pag produtos att
+664ce1e pag produtos att
+3aeb776 pag produtos att
+e057075 pag produtos att
+bf46e7c melhorando varia├ºoes
+6218639 Ajuste de t├¡tulos de cat├ílogo no admin
+8715845 Ajuste de t├¡tulos de cat├ílogo no admin
+b103e37 Atualiza├º├úo dos filtros de cat├ílogo.
+0001585 Atualiza├º├úo dos filtros de cat├ílogo.
+44629c4 feat: update product availability display logic to support custom statuses and improve HTML rendering
+cbe689f chore: remover debug de meta e bump de vers├â┬úo 1.4.4
+a7a872a debug: exibir meta keys do produto via query param (admin-only)
+0a2b30a Le metadados do produto no accordion e bump versao 1.4.3
+6a72565 Add GitHub sync button to theme settings page
+075d338 Point theme updater to Gstore-theme repo; ignore large CSV export
+6adcad0 Sync theme to GitHub repo
+35e513c Implementa calculador de frete na p├ígina de produto e checkout, adicionando estilos e scripts correspondentes. Atualiza a vers├úo do tema para 1.4.1 e melhora a responsividade de elementos CSS. Refatora a l├│gica de c├ílculo de frete e valida├º├úo de CEP, garantindo uma melhor experi├¬ncia do usu├írio. Adiciona novos estilos para resultados de frete e mensagens de erro.
+e9c8716 Remove .gitignore file and implement mobile drawer menu for improved navigation. Update footer and header styles to utilize CSS variables for accent colors. Enhance product image handling in WooCommerce to maintain aspect ratios and improve layout responsiveness. Add close buttons to notices for better user experience and implement age verification modal. Update various CSS components for consistency and maintainability.
+ec6752e Atualiza a vers├úo do tema para 1.3 e altera a paleta de cores, substituindo o tom de acento para um laranja mais vibrante. Implementa novos estilos CSS para melhorar a responsividade e a apresenta├º├úo dos elementos no checkout e na conta do usu├írio. Adiciona filtros para exibir apenas produtos em estoque nas se├º├Áes de produtos da p├ígina inicial.
+e07dd34 Adiciona gerenciamento de informa├º├Áes da loja com suporte para exporta├º├úo e importa├º├úo de configura├º├Áes em JSON. Implementa visualiza├º├úo de dados atuais da loja e processa placeholders para personaliza├º├úo de conte├║do. Melhora a l├│gica de renderiza├º├úo do logo no footer e atualiza estilos CSS para o layout do footer. Adiciona se├º├úo de ferramentas de manuten├º├úo no admin para resetar templates customizados.
+0b3340b Atualiza checklist de produ├º├úo com a remo├º├úo de arquivos sens├¡veis e de debug, corre├º├Áes de sanitiza├º├úo e verifica├º├úo de nonce na fun├º├úo de salvamento de CPF. Implementa melhorias na seguran├ºa e limpeza de c├│digo, al├®m de atualizar a vers├úo do tema para 1.2. Adiciona novas funcionalidades para a p├ígina do blog, incluindo templates e estilos espec├¡ficos.
+5e6464a Adiciona fun├º├úo para ocultar o wrapper de avisos vazios no WooCommerce, evitando espa├ºos desnecess├írios na p├ígina. Implementa valida├º├Áes para a exibi├º├úo do logo do tema, garantindo que a logo configurada tenha prioridade sobre a do Customizer. Refatora a substitui├º├úo do logo no header para melhorar a l├│gica de renderiza├º├úo e atualiza estilos CSS para o logo e avisos.
+db4c517 Implementa redirecionamento da p├ígina "Loja" para "Cat├ílogo" e atualiza textos relacionados. Adiciona script para gerenciar avisos do WooCommerce e garante que a mensagem de carrinho vazio seja sempre exibida. Melhora estilos de layout e responsividade no cat├ílogo e carrinho. Refatora CSS para remover espa├ºamentos desnecess├írios e otimiza a exibi├º├úo de avisos.
+2c65d79 Adiciona link configur├ível para o banner do YouTube e implementa header fixo com controle de visibilidade ao rolar. Melhora a pesquisa mobile no menu e ajusta estilos para responsividade. Atualiza a documenta├º├úo e remove espa├ºos desnecess├írios em arquivos de log.
+f9e4cbb Implementa melhorias no Mini Cart e previne conflitos do React. Remove preload autom├ítico do stylesheet do tema filho e adiciona suporte para atualiza├º├úo de fragmentos ap├│s remo├º├úo de produtos. Atualiza a vers├úo do tema para 1.1 e simplifica o script de sincroniza├º├úo do Mini Cart, utilizando apenas a API REST do WooCommerce. Adiciona headers HTTP para evitar cache em requisi├º├Áes AJAX do carrinho.
+ae494bd Refactor color scheme and enhance performance optimizations. Updated footer and header styles to use new accent colors. Added resource hints for improved loading times and implemented font-display swap for FontAwesome. Adjusted various CSS properties to utilize CSS variables for consistency and maintainability. Enhanced checkout and cart functionalities with new JavaScript features, including last unit warnings and improved button visibility. Updated documentation for Blu payment gateway integration.
+325d51b Initial commit: Tema Gstore - Tema WordPress customizado para WooCommerce
