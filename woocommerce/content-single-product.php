@@ -449,7 +449,7 @@ $formatted_installment = $installments > 0
 $pix_discount_config  = function_exists( 'gstore_blu_pix_get_discount_config' ) ? gstore_blu_pix_get_discount_config() : array( 'enabled' => false );
 $pix_discount_active  = ! empty( $pix_discount_config['enabled'] ) && $current_price > 0;
 $pix_discount_percent = $pix_discount_active ? (float) $pix_discount_config['percent'] : 0;
-$pix_discount_price   = $pix_discount_active && function_exists( 'gstore_blu_pix_get_discounted_price' ) ? gstore_blu_pix_get_discounted_price( $current_price ) : false;
+$pix_discount_price   = $pix_discount_active && function_exists( 'gstore_blu_pix_get_discounted_price' ) ? gstore_blu_pix_get_discounted_price( $current_price, $product->get_id() ) : false;
 
 /*
 |--------------------------------------------------------------------------

@@ -2792,7 +2792,7 @@ function gstore_add_payment_info_to_price( $html, $block_content, $block ) {
 	$pix_price_replacement = '';
 	if ( $product && is_a( $product, 'WC_Product' ) && function_exists( 'gstore_blu_pix_get_discounted_price' ) ) {
 		$price_for_pix = floatval( $product->get_price() );
-		$pix_price     = gstore_blu_pix_get_discounted_price( $price_for_pix );
+		$pix_price     = gstore_blu_pix_get_discounted_price( $price_for_pix, $product->get_id() );
 		if ( false !== $pix_price ) {
 			// Preço riscado: regular (se promoção) ou current (se sem promoção).
 			$regular = floatval( $product->get_regular_price() );

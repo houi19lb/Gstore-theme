@@ -76,7 +76,7 @@ $installment_label       = $installment_price_html
 // Desconto Pix (apenas visual — não altera preço real, parcelas ou carrinho).
 $pix_discount_config     = function_exists( 'gstore_blu_pix_get_discount_config' ) ? gstore_blu_pix_get_discount_config() : array( 'enabled' => false );
 $pix_discount_active     = ! empty( $pix_discount_config['enabled'] ) && $display_price_amount > 0;
-$pix_discount_price      = $pix_discount_active && function_exists( 'gstore_blu_pix_get_discounted_price' ) ? gstore_blu_pix_get_discounted_price( $display_price_amount ) : false;
+$pix_discount_price      = $pix_discount_active && function_exists( 'gstore_blu_pix_get_discounted_price' ) ? gstore_blu_pix_get_discounted_price( $display_price_amount, $product->get_id() ) : false;
 $pix_discount_price_html = $pix_discount_price ? wc_price( $pix_discount_price ) : '';
 $pix_discount_percent    = $pix_discount_active ? (float) $pix_discount_config['percent'] : 0;
 ?>
