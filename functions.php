@@ -2057,6 +2057,9 @@ function gstore_buy_now_redirect_to_checkout( $url ) {
 
 	// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 	if ( isset( $_REQUEST['gstore_buy_now'] ) ) {
+		// #region agent log
+		@file_put_contents( get_template_directory() . '/.cursor/debug.log', json_encode( array( 'location' => 'functions.php:gstore_buy_now_redirect_to_checkout', 'message' => 'redirecting to checkout', 'data' => array( 'checkout_url' => wc_get_checkout_url(), 'original_url' => $url ), 'timestamp' => round( microtime( true ) * 1000 ), 'hypothesisId' => 'H5' ) ) . "\n", FILE_APPEND );
+		// #endregion
 		return wc_get_checkout_url();
 	}
 
@@ -2193,6 +2196,13 @@ function gstore_handle_buy_now_variable_product() {
 	if ( ! $product_id && isset( $_REQUEST['product_id'] ) ) {
 		$product_id = absint( $_REQUEST['product_id'] );
 	}
+
+	// #region agent log
+	$_gstore_dbg_dir = get_template_directory() . '/.cursor';
+	if ( ! is_dir( $_gstore_dbg_dir ) ) { @mkdir( $_gstore_dbg_dir, 0755, true ); }
+	@file_put_contents( $_gstore_dbg_dir . '/debug.log', json_encode( array( 'location' => 'functions.php:gstore_handle_buy_now_variable_product', 'message' => 'entered', 'data' => array( 'product_id' => $product_id, 'method' => isset( $_SERVER['REQUEST_METHOD'] ) ? $_SERVER['REQUEST_METHOD'] : 'unknown', 'request_keys' => array_keys( $_REQUEST ), 'variation_id_raw' => isset( $_REQUEST['variation_id'] ) ? $_REQUEST['variation_id'] : 'NOT SET' ), 'timestamp' => round( microtime( true ) * 1000 ), 'hypothesisId' => 'H5' ) ) . "\n", FILE_APPEND );
+	// #endregion
+
 	if ( ! $product_id ) {
 		return;
 	}
@@ -2202,6 +2212,11 @@ function gstore_handle_buy_now_variable_product() {
 	}
 
 	$product = wc_get_product( $product_id );
+
+	// #region agent log
+	@file_put_contents( get_template_directory() . '/.cursor/debug.log', json_encode( array( 'location' => 'functions.php:gstore_handle_buy_now_variable_product', 'message' => 'product check', 'data' => array( 'product_id' => $product_id, 'product_exists' => ( $product instanceof WC_Product ), 'product_type' => ( $product instanceof WC_Product ) ? $product->get_type() : 'N/A', 'is_variable' => ( $product instanceof WC_Product ) ? $product->is_type( 'variable' ) : false ), 'timestamp' => round( microtime( true ) * 1000 ), 'hypothesisId' => 'H5' ) ) . "\n", FILE_APPEND );
+	// #endregion
+
 	if ( ! $product instanceof WC_Product || ! $product->is_type( 'variable' ) ) {
 		return;
 	}
