@@ -72,6 +72,13 @@ $installment_label       = $installment_price_html
 		$installment_price_html
 	)
 	: '';
+
+// Desconto Pix (apenas visual — não altera preço real, parcelas ou carrinho).
+$pix_discount_config     = function_exists( 'gstore_blu_pix_get_discount_config' ) ? gstore_blu_pix_get_discount_config() : array( 'enabled' => false );
+$pix_discount_active     = ! empty( $pix_discount_config['enabled'] ) && $display_price_amount > 0;
+$pix_discount_price      = $pix_discount_active && function_exists( 'gstore_blu_pix_get_discounted_price' ) ? gstore_blu_pix_get_discounted_price( $display_price_amount ) : false;
+$pix_discount_price_html = $pix_discount_price ? wc_price( $pix_discount_price ) : '';
+$pix_discount_percent    = $pix_discount_active ? (float) $pix_discount_config['percent'] : 0;
 ?>
 <li <?php wc_product_class( 'Gstore-product-card', $product ); ?>>
 	<div class="Gstore-product-card__inner">
@@ -159,10 +166,17 @@ $installment_label       = $installment_price_html
 							<?php echo wp_kses_post( $display_price_html ); ?>
 						</div>
 					<?php endif; ?>
-					<?php if ( $installment_label ) : ?>
-						<div class="Gstore-product-card__price-details">
-							<strong class="Gstore-product-card__price-details-label"><?php esc_html_e( 'à vista no Pix', 'gstore' ); ?></strong>
-							<div class="Gstore-product-card__installments" data-gstore-installment-wrapper>
+				<?php if ( $installment_label ) : ?>
+					<div class="Gstore-product-card__price-details">
+						<strong class="Gstore-product-card__price-details-label">
+							<?php if ( $pix_discount_price_html ) : ?>
+								<span class="Gstore-product-card__pix-price"><?php echo wp_kses_post( $pix_discount_price_html ); ?></span>
+								<?php esc_html_e( 'à vista no Pix', 'gstore' ); ?>
+							<?php else : ?>
+								<?php esc_html_e( 'à vista no Pix', 'gstore' ); ?>
+							<?php endif; ?>
+						</strong>
+						<div class="Gstore-product-card__installments" data-gstore-installment-wrapper>
 							<span
 								class="Gstore-product-card__installments-text"
 								data-gstore-installment-target="1"

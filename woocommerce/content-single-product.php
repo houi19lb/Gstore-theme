@@ -445,6 +445,12 @@ $formatted_installment = $installments > 0
 	)
 	: '';
 
+// Desconto Pix (apenas visual — não altera preço real, parcelas ou carrinho).
+$pix_discount_config  = function_exists( 'gstore_blu_pix_get_discount_config' ) ? gstore_blu_pix_get_discount_config() : array( 'enabled' => false );
+$pix_discount_active  = ! empty( $pix_discount_config['enabled'] ) && $current_price > 0;
+$pix_discount_percent = $pix_discount_active ? (float) $pix_discount_config['percent'] : 0;
+$pix_discount_price   = $pix_discount_active && function_exists( 'gstore_blu_pix_get_discounted_price' ) ? gstore_blu_pix_get_discounted_price( $current_price ) : false;
+
 /*
 |--------------------------------------------------------------------------
 | Atributos e características do produto
@@ -758,13 +764,23 @@ if ( $reviews_has_value ) {
 						<?php if ( ! $is_out_of_stock ) : ?>
 							<div class="buybox-header">
 								<div>
-									<div class="price-label"><?php esc_html_e( 'À vista no PIX', 'gstore' ); ?></div>
-									<div class="price" id="price" data-gstore-price>
+							<div class="price-label"><?php esc_html_e( 'À vista no PIX', 'gstore' ); ?></div>
+								<?php if ( $pix_discount_price ) : ?>
+									<div class="price Gstore-pix-discount-main" id="price" data-gstore-price data-pix-percent="<?php echo esc_attr( $pix_discount_percent ); ?>">
+										<span class="Gstore-pix-price-value" data-gstore-pix-value><?php echo wp_kses_post( wc_price( $pix_discount_price ) ); ?></span>
+									</div>
+									<div class="Gstore-pix-discount-original" data-gstore-pix-original>
+										<del><?php echo wp_kses_post( wc_price( $current_price ) ); ?></del>
+										<span class="Gstore-pix-discount-badge"><?php echo esc_html( sprintf( __( '%s%% off', 'gstore' ), number_format( $pix_discount_percent, 0 ) ) ); ?></span>
+									</div>
+								<?php else : ?>
+									<div class="price" id="price" data-gstore-price data-pix-percent="0">
 										<?php woocommerce_template_single_price(); ?>
 									</div>
-									<?php if ( $is_variable ) : ?>
-										<div class="price-sub"><?php esc_html_e( 'Preço muda conforme as opções', 'gstore' ); ?></div>
-									<?php endif; ?>
+								<?php endif; ?>
+								<?php if ( $is_variable ) : ?>
+									<div class="price-sub"><?php esc_html_e( 'Preço muda conforme as opções', 'gstore' ); ?></div>
+								<?php endif; ?>
 									<?php if ( $formatted_installment ) : ?>
 										<div class="price-sub-wrapper" data-gstore-installment-wrapper>
 											<div

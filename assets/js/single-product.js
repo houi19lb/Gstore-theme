@@ -737,6 +737,47 @@ document.addEventListener('DOMContentLoaded', () => {
 		const addToCartButton = form.querySelector('.single_add_to_cart_button');
 		const priceEl = document.querySelector('[data-gstore-price]');
 		const initialPriceHtml = priceEl ? priceEl.innerHTML : '';
+		const pixPercent = priceEl ? parseFloat(priceEl.getAttribute('data-pix-percent') || '0') : 0;
+		const pixValueEl = document.querySelector('[data-gstore-pix-value]');
+		const pixOriginalEl = document.querySelector('[data-gstore-pix-original]');
+		const initialPixValueHtml = pixValueEl ? pixValueEl.innerHTML : '';
+		const initialPixOriginalHtml = pixOriginalEl ? pixOriginalEl.innerHTML : '';
+
+		/**
+		 * Atualiza exibição do preço PIX com desconto quando uma variação é selecionada.
+		 */
+		const updatePixPrice = (variationPrice) => {
+			if (!pixPercent || pixPercent <= 0 || !pixValueEl) return;
+
+			if (variationPrice && variationPrice > 0) {
+				const discounted = variationPrice * (1 - pixPercent / 100);
+				const fmtCurrency = (v) => {
+					try {
+						return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v);
+					} catch (e) {
+						return `R$ ${v.toFixed(2).replace('.', ',')}`;
+					}
+				};
+				pixValueEl.innerHTML = '<span class="woocommerce-Price-amount amount"><bdi>' + fmtCurrency(discounted) + '</bdi></span>';
+				if (pixOriginalEl) {
+					pixOriginalEl.innerHTML = '<del><span class="woocommerce-Price-amount amount"><bdi>' + fmtCurrency(variationPrice) + '</bdi></span></del>' +
+						' <span class="Gstore-pix-discount-badge">' + Math.round(pixPercent) + '% off</span>';
+				}
+			}
+		};
+
+		/**
+		 * Restaura exibição do preço PIX ao estado inicial (reset de variação).
+		 */
+		const resetPixPrice = () => {
+			if (pixValueEl && initialPixValueHtml) {
+				pixValueEl.innerHTML = initialPixValueHtml;
+			}
+			if (pixOriginalEl && initialPixOriginalHtml) {
+				pixOriginalEl.innerHTML = initialPixOriginalHtml;
+			}
+		};
+
 		const getPreviewText = () => {
 			const parts = selects
 				.map((select) => {
@@ -787,12 +828,19 @@ document.addEventListener('DOMContentLoaded', () => {
 		// Eventos do WooCommerce (se jQuery existir)
 		if (typeof jQuery !== 'undefined') {
 			const $form = jQuery(form);
-			$form.on('found_variation', (event, variation) => {				if (priceEl && variation && typeof variation.price_html === 'string' && variation.price_html.trim().length) {
+			$form.on('found_variation', (event, variation) => {
+				if (pixPercent > 0 && variation && variation.display_price) {
+					// Quando há desconto PIX, atualiza a exibição do preço PIX com desconto.
+					updatePixPrice(parseFloat(variation.display_price));
+				} else if (priceEl && variation && typeof variation.price_html === 'string' && variation.price_html.trim().length) {
 					priceEl.innerHTML = variation.price_html;
 				}
 				setTimeout(update, 0);
 			});
-			$form.on('reset_data', () => {				if (priceEl && initialPriceHtml) {
+			$form.on('reset_data', () => {
+				if (pixPercent > 0) {
+					resetPixPrice();
+				} else if (priceEl && initialPriceHtml) {
 					priceEl.innerHTML = initialPriceHtml;
 				}
 				setTimeout(update, 0);

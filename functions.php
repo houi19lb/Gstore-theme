@@ -2788,6 +2788,21 @@ function gstore_add_payment_info_to_price( $html, $block_content, $block ) {
 		}
 	}
 	
+	// Preço com desconto Pix (se ativo).
+	$pix_discount_html = '';
+	if ( $product && is_a( $product, 'WC_Product' ) && function_exists( 'gstore_blu_pix_get_discounted_price' ) ) {
+		$price_for_pix = floatval( $product->get_price() );
+		$pix_price     = gstore_blu_pix_get_discounted_price( $price_for_pix );
+		if ( false !== $pix_price ) {
+			$pix_config        = gstore_blu_pix_get_discount_config();
+			$pix_percent_label = number_format( (float) $pix_config['percent'], 0 );
+			$pix_discount_html = '<div class="Gstore-pix-discount-block">'
+				. '<span class="Gstore-product-card__pix-price">' . wc_price( $pix_price ) . '</span> '
+				. '<span class="Gstore-pix-discount-badge">' . esc_html( $pix_percent_label . '% off' ) . '</span>'
+				. '</div>';
+		}
+	}
+
 	// Cria os elementos de pagamento
 	$payment_label = '<div class="Gstore-payment-label">À VISTA NO PIX</div>';
 	$installment_text = '<div class="Gstore-installment-text">' . $installment_text_content . '</div>';
@@ -2802,10 +2817,10 @@ function gstore_add_payment_info_to_price( $html, $block_content, $block ) {
 			1
 		);
 		
-		// Adiciona o texto de parcelamento antes do fechamento das divs
+		// Adiciona preço Pix com desconto + texto de parcelamento antes do fechamento das divs
 		$html = preg_replace(
 			'/(\s*<\/div>\s*<\/div>\s*)$/',
-			$installment_text . '$1',
+			$pix_discount_html . $installment_text . '$1',
 			$html,
 			1
 		);
