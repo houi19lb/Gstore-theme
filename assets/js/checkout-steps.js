@@ -1281,12 +1281,6 @@
 						<span>Dados sensíveis não ficam armazenados neste site.</span>
 					</div>
 					${contractCheckboxHtml}
-					<div class="gstore-age-confirm">
-						<label class="gstore-age-confirm__label" for="gstore_age_over_25">
-							<input type="checkbox" name="gstore_age_over_25" id="gstore_age_over_25" value="1" checked />
-							<span>Confirmo que tenho mais de 25 anos.</span>
-						</label>
-					</div>
 					<button type="submit" class="Gstore-btn Gstore-btn--submit" name="woocommerce_checkout_place_order" id="place_order" value="Finalizar pedido" data-value="Finalizar pedido">
 						<i class="fa-solid fa-lock"></i>
 						Finalizar pedido

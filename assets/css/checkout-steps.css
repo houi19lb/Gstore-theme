@@ -1097,28 +1097,6 @@ body.woocommerce-checkout .Gstore-checkout-steps-shell {
 	color: var(--gstore-brass-hover);
 }
 
-.gstore-age-confirm {
-	padding: 12px;
-	border: 1px solid var(--gstore-muted);
-	border-radius: 4px;
-	background: #fff;
-}
-
-.gstore-age-confirm__label {
-	display: flex;
-	align-items: center;
-	gap: 10px;
-	font-size: var(--gstore-font-size-sm);
-	color: var(--gstore-foreground);
-}
-
-.gstore-age-confirm__label input[type="checkbox"] {
-	width: 16px;
-	height: 16px;
-	margin: 0;
-	accent-color: var(--gstore-green);
-}
-
 /* ===========================================
    GARANTIAS / ASSURANCE
    =========================================== */
