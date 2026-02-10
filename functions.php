@@ -10953,6 +10953,12 @@ function gstore_process_store_info_placeholders( $content ) {
 		return $content;
 	}
 	
+	// Resolve o link principal de contato (header/footer): se configurado usa o do JSON, senão usa o WhatsApp.
+	$contact_primary_link = gstore_store_info()->get_value( 'contact.contact_primary_link', '' );
+	if ( empty( $contact_primary_link ) ) {
+		$contact_primary_link = gstore_get_whatsapp_link();
+	}
+	
 	// Lista de placeholders e seus valores
 	$placeholders = array(
 		// Store
@@ -10976,6 +10982,12 @@ function gstore_process_store_info_placeholders( $content ) {
 		'{{whatsapp_label}}'  => gstore_store_info()->get_value( 'contact.whatsapp_label', 'WhatsApp' ),
 		'{{telegram_label}}'  => gstore_store_info()->get_value( 'contact.telegram_label', 'Telegram' ),
 		'{{instagram_label}}' => gstore_store_info()->get_value( 'contact.instagram_label', 'Instagram' ),
+		
+		// Phone link (tel:)
+		'{{phone_link}}'      => 'tel:+' . preg_replace( '/\D/', '', gstore_get_phone( 'raw' ) ),
+		
+		// Contact primary link (header/footer): usa o valor do JSON ou fallback para whatsapp_link
+		'{{contact_primary_link}}' => $contact_primary_link,
 		
 		// Social
 		'{{instagram}}'           => gstore_get_social( 'instagram' ),
