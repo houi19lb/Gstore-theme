@@ -962,7 +962,7 @@ if ( $reviews_has_value ) {
 
 						<!-- Leia antes -->
 						<div class="read-before">
-							<a href="<?php echo esc_url( home_url( '/como-comprar-arma/' ) ); ?>">
+							<a href="<?php echo esc_url( home_url( '/informativo' ) ); ?>">
 								<div>
 									<strong><?php esc_html_e( 'Leia antes de comprar', 'gstore' ); ?></strong>
 									<div class="read-sub"><?php esc_html_e( 'Veja como funciona o processo passo a passo', 'gstore' ); ?></div>
