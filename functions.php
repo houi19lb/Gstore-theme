@@ -2292,6 +2292,14 @@ function gstore_prg_single_product_add_to_cart() {
 		return;
 	}
 
+	// Remove o prefixo do subdiretório (se houver) para evitar duplicação com home_url().
+	// Ex.: REQUEST_URI = "/loja/produto/..." e home_url() = "https://dominio.com/loja"
+	// sem esta correção, home_url("/loja/produto/...") geraria "/loja/loja/produto/...".
+	$home_path = wp_parse_url( home_url(), PHP_URL_PATH );
+	if ( $home_path && '/' !== $home_path && 0 === strpos( $request_uri, $home_path ) ) {
+		$request_uri = substr( $request_uri, strlen( $home_path ) );
+	}
+
 	$current_url = home_url( $request_uri );
 	$target      = remove_query_arg( array( 'add-to-cart', 'quantity', 'gstore_buy_now' ), $current_url );
 
@@ -5340,7 +5348,9 @@ function gstore_home_sections_shortcode() {
 			}
 			$rendered = function_exists( 'do_blocks' ) ? do_blocks( $markup ) : $markup;
 			// Garante execução de shortcodes que eventualmente permaneçam no output.
-			return do_shortcode( $rendered );
+			$rendered = do_shortcode( $rendered );
+			// Resolve links relativos (href="/...") para instalações em subdiretório.
+			return gstore_resolve_home_relative_urls( $rendered );
 		};
 
 		$out  = '';
@@ -5419,7 +5429,9 @@ function gstore_home_sections_shortcode() {
 		}
 		$rendered = function_exists( 'do_blocks' ) ? do_blocks( $markup ) : $markup;
 		// Garante execução de shortcodes que eventualmente permaneçam no output.
-		return do_shortcode( $rendered );
+		$rendered = do_shortcode( $rendered );
+		// Resolve links relativos (href="/...") para instalações em subdiretório.
+		return gstore_resolve_home_relative_urls( $rendered );
 	};
 
 	foreach ( $sections as $section ) {
@@ -5572,6 +5584,8 @@ function gstore_render_home_category_section( $cat_id, $title = '' ) {
 
 	$rendered = function_exists( 'do_blocks' ) ? do_blocks( $block_markup ) : $block_markup;
 	$rendered = do_shortcode( $rendered );
+	// Resolve links relativos (href="/...") para instalações em subdiretório.
+	$rendered = gstore_resolve_home_relative_urls( $rendered );
 	return preg_replace( '#<br\s*/?>#i', '', $rendered );
 }
 
