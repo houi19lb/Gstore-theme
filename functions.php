@@ -10972,6 +10972,11 @@ function gstore_process_store_info_placeholders( $content ) {
 		'{{whatsapp_link_rastreio}}' => gstore_get_whatsapp_link( 'Olá ' . gstore_get_store_name( 'display' ) . '! Gostaria de rastrear meu pedido.' ),
 		'{{whatsapp_link_troca}}' => gstore_get_whatsapp_link( 'Olá ' . gstore_get_store_name( 'display' ) . '! Gostaria de solicitar uma troca ou devolução.' ),
 		
+		// Contact Labels
+		'{{whatsapp_label}}'  => gstore_store_info()->get_value( 'contact.whatsapp_label', 'WhatsApp' ),
+		'{{telegram_label}}'  => gstore_store_info()->get_value( 'contact.telegram_label', 'Telegram' ),
+		'{{instagram_label}}' => gstore_store_info()->get_value( 'contact.instagram_label', 'Instagram' ),
+		
 		// Social
 		'{{instagram}}'           => gstore_get_social( 'instagram' ),
 		'{{instagram_link}}'      => gstore_get_social_link( 'instagram' ),
