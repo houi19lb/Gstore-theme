@@ -540,7 +540,7 @@
 		const optionsHtml = hasMultiple
 			? normalizedRates.map((rate) => {
 					const mode = rate.mode;
-					const label = rate.label || (mode === 'air' ? 'Frete Aéreo' : mode === 'pickup' ? 'Retirada na loja: Grátis' : 'Frete Terrestre');
+					const label = rate.label || (mode === 'air' ? 'Frete Aéreo' : mode === 'pickup' ? 'Retirada na loja' : 'Frete Terrestre');
 					const cost = rate.cost_formatted || '-';
 					const checked = resolvedMode === mode ? 'checked' : '';
 					return `
@@ -556,7 +556,7 @@
 		const fixedHtml = !hasMultiple
 			? (() => {
 				const onlyRate = normalizedRates[0];
-				const label = onlyRate.label || (onlyRate.mode === 'air' ? 'Frete Aéreo' : onlyRate.mode === 'pickup' ? 'Retirada na loja: Grátis' : 'Frete Terrestre');
+				const label = onlyRate.label || (onlyRate.mode === 'air' ? 'Frete Aéreo' : onlyRate.mode === 'pickup' ? 'Retirada na loja' : 'Frete Terrestre');
 				const cost = onlyRate.cost_formatted || '-';
 				storeShippingMode(cartItemKey, onlyRate.mode);
 				return `

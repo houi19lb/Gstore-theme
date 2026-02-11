@@ -196,7 +196,7 @@
 				const label = rate.label || '';
 				const labelText = label
 					? label
-					: ((rate.mode || '').toLowerCase() === 'air' ? 'Frete Aéreo' : (rate.mode || '').toLowerCase() === 'pickup' ? 'Retirada na loja: Grátis' : 'Frete Terrestre');
+					: ((rate.mode || '').toLowerCase() === 'air' ? 'Frete Aéreo' : (rate.mode || '').toLowerCase() === 'pickup' ? 'Retirada na loja' : 'Frete Terrestre');
 				return `
 					<div class="gstore-shipping-calculator__result-row">
 						<span class="gstore-shipping-calculator__result-label">
@@ -356,7 +356,6 @@
 	});
 
 })(jQuery);
-
 
 
 
