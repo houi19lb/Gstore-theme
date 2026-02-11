@@ -980,6 +980,15 @@ function gstore_enqueue_styles() {
 		);
 	}
 
+	if ( ( function_exists( 'is_privacy_policy' ) && is_privacy_policy() ) || is_page( 'politica-de-privacidade' ) ) {
+		wp_enqueue_style(
+			'gstore-privacy-policy-css',
+			get_theme_file_uri( 'assets/css/privacy-policy.css' ),
+			array( 'gstore-style' ),
+			$theme_version
+		);
+	}
+
 	// CSS de Notificações e Modais
 	wp_enqueue_style(
 		'gstore-notices-css',
@@ -7765,7 +7774,7 @@ function gstore_get_required_pages() {
 		'politica-de-privacidade' => array(
 			'title'       => 'Política de Privacidade',
 			'slug'        => 'politica-de-privacidade',
-			'template'    => '',
+			'template'    => 'page-politica-de-privacidade',
 			'content'     => '<!-- wp:heading {"level":1} --><h1 class="wp-block-heading">Política de Privacidade</h1><!-- /wp:heading --><!-- wp:paragraph --><p>Esta página descreve como coletamos, usamos e protegemos suas informações pessoais.</p><!-- /wp:paragraph -->',
 			'description' => 'Página com a política de privacidade da loja.',
 			'wc_option'   => null,
@@ -10988,6 +10997,8 @@ function gstore_process_store_info_placeholders( $content ) {
 		
 		// Contact primary link (header/footer): usa o valor do JSON ou fallback para whatsapp_link
 		'{{contact_primary_link}}' => $contact_primary_link,
+		'{{privacy_policy_url}}'   => function_exists( 'get_privacy_policy_url' ) ? get_privacy_policy_url() : home_url( '/politica-de-privacidade/' ),
+		'{{terms_of_use_url}}'     => ( (int) get_option( 'woocommerce_terms_page_id', 0 ) > 0 ) ? get_permalink( (int) get_option( 'woocommerce_terms_page_id', 0 ) ) : home_url( '/termos-de-uso/' ),
 		
 		// Social
 		'{{instagram}}'           => gstore_get_social( 'instagram' ),
