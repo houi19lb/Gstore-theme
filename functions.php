@@ -7326,6 +7326,103 @@ function gstore_catalog_apply_search_to_products_shortcode( $query_args, $attr, 
 }
 
 /**
+ * Detecta se a pagina atual deve usar regras de ordenacao do catalogo.
+ *
+ * @return bool
+ */
+function gstore_is_catalog_context() {
+	if ( is_admin() ) {
+		return false;
+	}
+
+	if ( function_exists( 'is_page' ) && is_page( array( 'catalogo', 'ofertas' ) ) ) {
+		return true;
+	}
+
+	if ( function_exists( 'is_shop' ) && is_shop() ) {
+		return true;
+	}
+
+	if ( function_exists( 'is_product_taxonomy' ) && is_product_taxonomy() ) {
+		return true;
+	}
+
+	return false;
+}
+
+/**
+ * Marca queries de shortcode no catalogo para priorizar itens com estoque.
+ */
+add_filter( 'woocommerce_shortcode_products_query', 'gstore_catalog_mark_shortcode_stock_priority', 35, 3 );
+function gstore_catalog_mark_shortcode_stock_priority( $query_args, $attr, $type ) {
+	if ( ! gstore_is_catalog_context() ) {
+		return $query_args;
+	}
+
+	$query_args['gstore_instock_first'] = 1;
+
+	return $query_args;
+}
+
+/**
+ * Marca a query principal do WooCommerce para priorizar itens com estoque.
+ */
+add_action( 'woocommerce_product_query', 'gstore_catalog_mark_main_query_stock_priority', 30 );
+function gstore_catalog_mark_main_query_stock_priority( $query ) {
+	if ( ! gstore_is_catalog_context() ) {
+		return;
+	}
+
+	$query->set( 'gstore_instock_first', 1 );
+}
+
+/**
+ * Forca produtos sem estoque para o final, preservando a ordenacao atual como criterio secundario.
+ */
+add_filter( 'posts_clauses', 'gstore_catalog_order_by_stock_first', 20, 2 );
+function gstore_catalog_order_by_stock_first( $clauses, $query ) {
+	if ( is_admin() || ! ( $query instanceof WP_Query ) ) {
+		return $clauses;
+	}
+
+	if ( 1 !== (int) $query->get( 'gstore_instock_first' ) ) {
+		return $clauses;
+	}
+
+	$post_type = $query->get( 'post_type' );
+	if ( is_string( $post_type ) && $post_type !== 'product' ) {
+		return $clauses;
+	}
+	if ( is_array( $post_type ) && ! in_array( 'product', $post_type, true ) ) {
+		return $clauses;
+	}
+
+	global $wpdb;
+
+	$meta_alias = 'gstore_stock_order_meta';
+	if ( strpos( $clauses['join'], $meta_alias ) === false ) {
+		$clauses['join'] .= " LEFT JOIN {$wpdb->postmeta} AS {$meta_alias}
+			ON ({$wpdb->posts}.ID = {$meta_alias}.post_id AND {$meta_alias}.meta_key = '_stock_status')";
+	}
+
+	$stock_priority_sql = "CASE {$meta_alias}.meta_value
+		WHEN 'instock' THEN 0
+		WHEN 'onbackorder' THEN 1
+		WHEN 'outofstock' THEN 2
+		ELSE 1
+	END";
+
+	$current_orderby = isset( $clauses['orderby'] ) ? trim( (string) $clauses['orderby'] ) : '';
+	if ( $current_orderby !== '' ) {
+		$clauses['orderby'] = $stock_priority_sql . ' ASC, ' . $current_orderby;
+	} else {
+		$clauses['orderby'] = $stock_priority_sql . " ASC, {$wpdb->posts}.post_title ASC";
+	}
+
+	return $clauses;
+}
+
+/**
  * Compatibilidade: redireciona /catalogo/?s=... para /catalogo/?q=...
  * para evitar conflito de rotas quando o WP entra em modo search.
  */
