@@ -507,7 +507,8 @@
 
 		const normalizedRates = (rates || [])
 			.map((rate) => ({
-				mode: normalizeRateMode(rate.mode),
+				// Alinha com o checkout: quando mode não vier preenchido, tenta inferir pelo label.
+				mode: normalizeRateMode(rate.mode || rate.label || ''),
 				label: rate.label || '',
 				cost: rate.cost || '',
 				cost_formatted: rate.cost_formatted || '',
