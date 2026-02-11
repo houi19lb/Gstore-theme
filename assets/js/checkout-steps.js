@@ -890,8 +890,6 @@ const subtotal = decodeHtmlEntities(stripHtmlText(it.subtotal || ''));
 					<span>Cartão (Link de Pagamento)</span>
 				</label>
 			`);
-			$optionsContainer.append($checkoutOption);
-			
 			// Sincroniza cliques no radio clone com o original
 			$checkoutRadioClone.on('change', function() {
 				if ($(this).is(':checked')) {
@@ -916,7 +914,9 @@ const subtotal = decodeHtmlEntities(stripHtmlText(it.subtotal || ''));
 					<span>Pix</span>
 				</label>
 			`);
+			// Pix aparece primeiro, depois Cartão (ordem visual)
 			$optionsContainer.append($pixOption);
+			$optionsContainer.append($checkoutOption);
 			
 			// Sincroniza cliques no radio clone com o original
 			$pixRadioClone.on('change', function() {
