@@ -3936,7 +3936,8 @@ if ( ! function_exists( 'gstore_get_product_freight_type' ) ) {
 if ( ! function_exists( 'gstore_get_cart_item_shipping_mode' ) ) {
 	function gstore_get_cart_item_shipping_mode( $cart_item ) {
 		$mode = isset( $cart_item['gstore_shipping_mode'] ) ? (string) $cart_item['gstore_shipping_mode'] : 'land';
-		return 'air' === $mode ? 'air' : 'land';
+		$mode = gstore_normalize_shipping_mode( $mode );
+		return '' !== $mode ? $mode : 'land';
 	}
 }
 
@@ -3990,7 +3991,14 @@ if ( ! function_exists( 'gstore_get_cart_item_freight_context' ) ) {
 
 if ( ! function_exists( 'gstore_get_cart_item_shipping_label' ) ) {
 	function gstore_get_cart_item_shipping_label( $mode ) {
-		return 'air' === $mode ? __( 'Aéreo', 'gstore' ) : __( 'Terrestre', 'gstore' );
+		$mode = gstore_normalize_shipping_mode( $mode );
+		if ( 'air' === $mode ) {
+			return __( 'Aéreo', 'gstore' );
+		}
+		if ( 'pickup' === $mode ) {
+			return __( 'Retirada na loja', 'gstore' );
+		}
+		return __( 'Terrestre', 'gstore' );
 	}
 }
 
@@ -4002,6 +4010,9 @@ if ( ! function_exists( 'gstore_normalize_shipping_mode' ) ) {
 		}
 		if ( in_array( $mode, array( 'ground', 'land', 'terrestre' ), true ) ) {
 			return 'land';
+		}
+		if ( in_array( $mode, array( 'pickup', 'retirada', 'retirada na loja', 'retirada-na-loja', 'store_pickup' ), true ) ) {
+			return 'pickup';
 		}
 
 		return '';
@@ -4067,7 +4078,8 @@ if ( ! function_exists( 'gstore_normalize_cart_rates' ) ) {
 if ( ! function_exists( 'gstore_restore_cart_item_shipping_mode' ) ) {
 	function gstore_restore_cart_item_shipping_mode( $cart_item, $values ) {
 		if ( isset( $values['gstore_shipping_mode'] ) ) {
-			$cart_item['gstore_shipping_mode'] = 'air' === $values['gstore_shipping_mode'] ? 'air' : 'land';
+			$mode = gstore_normalize_shipping_mode( $values['gstore_shipping_mode'] );
+			$cart_item['gstore_shipping_mode'] = '' !== $mode ? $mode : 'land';
 		} elseif ( ! isset( $cart_item['gstore_shipping_mode'] ) ) {
 			$cart_item['gstore_shipping_mode'] = 'land';
 		}
@@ -4203,6 +4215,10 @@ if ( ! function_exists( 'gstore_get_variation_shipping_cost' ) ) {
 			return 0.0;
 		}
 
+		$mode = gstore_normalize_shipping_mode( $mode );
+		if ( 'pickup' === $mode ) {
+			return 0.0;
+		}
 		$mode = 'air' === $mode ? 'air' : 'land';
 		$price_key = 'air' === $mode ? 'airPrice' : 'landPrice';
 

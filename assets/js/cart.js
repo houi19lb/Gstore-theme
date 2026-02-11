@@ -457,11 +457,14 @@
 
 	function normalizeRateMode(mode) {
 		const value = String(mode || '').toLowerCase();
-		if (value === 'air' || value === 'aereo') {
+		if (value === 'air' || value === 'aereo' || value === 'aéreo') {
 			return 'air';
 		}
 		if (value === 'ground' || value === 'land' || value === 'terrestre') {
 			return 'land';
+		}
+		if (value === 'pickup' || value === 'retirada' || value === 'retirada na loja' || value === 'retirada-na-loja' || value === 'store_pickup') {
+			return 'pickup';
 		}
 		return '';
 	}
@@ -537,10 +540,10 @@
 		const optionsHtml = hasMultiple
 			? normalizedRates.map((rate) => {
 					const mode = rate.mode;
-				const label = rate.label || (mode === 'air' ? 'Frete Aéreo' : 'Frete Terrestre');
-				const cost = rate.cost_formatted || '-';
-				const checked = resolvedMode === mode ? 'checked' : '';
-				return `
+					const label = rate.label || (mode === 'air' ? 'Frete Aéreo' : mode === 'pickup' ? 'Retirada na loja: Grátis' : 'Frete Terrestre');
+					const cost = rate.cost_formatted || '-';
+					const checked = resolvedMode === mode ? 'checked' : '';
+					return `
 					<label class="Gstore-cart-card__shipping-option">
 						<input type="radio" name="gstore_shipping_mode[${cartItemKey}]" value="${mode}" ${checked} />
 						<span class="Gstore-cart-card__shipping-text">${label}</span>
@@ -553,7 +556,7 @@
 		const fixedHtml = !hasMultiple
 			? (() => {
 				const onlyRate = normalizedRates[0];
-				const label = onlyRate.label || (onlyRate.mode === 'air' ? 'Frete Aéreo' : 'Frete Terrestre');
+				const label = onlyRate.label || (onlyRate.mode === 'air' ? 'Frete Aéreo' : onlyRate.mode === 'pickup' ? 'Retirada na loja: Grátis' : 'Frete Terrestre');
 				const cost = onlyRate.cost_formatted || '-';
 				storeShippingMode(cartItemKey, onlyRate.mode);
 				return `

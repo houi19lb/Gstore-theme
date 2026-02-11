@@ -185,7 +185,14 @@ if ( function_exists( 'wc_wp_theme_get_element_class_name' ) ) {
 
 										if ( is_cart() && isset( $_POST['gstore_shipping_mode'][ $cart_item_key ] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Missing
 											$posted_mode = sanitize_text_field( wp_unslash( $_POST['gstore_shipping_mode'][ $cart_item_key ] ) ); // phpcs:ignore WordPress.Security.NonceVerification.Missing
-											$selected_mode = 'air' === $posted_mode ? 'air' : 'land';
+											if ( function_exists( 'gstore_normalize_shipping_mode' ) ) {
+												$selected_mode = gstore_normalize_shipping_mode( $posted_mode );
+												if ( '' === $selected_mode ) {
+													$selected_mode = 'land';
+												}
+											} else {
+												$selected_mode = 'air' === $posted_mode ? 'air' : 'land';
+											}
 										}
 										$freight_costs = array();
 										foreach ( $freight_rates as $rate ) {
@@ -369,6 +376,5 @@ if ( function_exists( 'wc_wp_theme_get_element_class_name' ) ) {
 </section>
 
 <?php do_action( 'woocommerce_after_cart' ); ?>
-
 
 

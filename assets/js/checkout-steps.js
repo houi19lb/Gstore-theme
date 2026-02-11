@@ -1450,6 +1450,9 @@ const subtotal = decodeHtmlEntities(stripHtmlText(it.subtotal || ''));
 		if (value === 'ground' || value === 'land' || value === 'terrestre') {
 			return 'land';
 		}
+		if (value === 'pickup' || value === 'retirada' || value === 'retirada na loja' || value === 'retirada-na-loja' || value === 'store_pickup') {
+			return 'pickup';
+		}
 		return '';
 	}
 
@@ -1708,7 +1711,7 @@ function getInstallmentDisplayTotals(summaryData) {
 		return rates
 			.map((rate) => {
 				const mode = normalizeRateMode(rate.mode || rate.label || '');
-				const label = rate.label || (mode === 'air' ? 'Frete Aéreo' : 'Frete Terrestre');
+				const label = rate.label || (mode === 'air' ? 'Frete Aéreo' : mode === 'pickup' ? 'Retirada na loja: Grátis' : 'Frete Terrestre');
 				return {
 					mode,
 					label,
@@ -1863,7 +1866,7 @@ function getInstallmentDisplayTotals(summaryData) {
 			}
 			const optionsHtml = rates.length
 				? rates.map((rate) => {
-						const label = rate.label || (rate.mode === 'air' ? 'Frete Aéreo' : 'Frete Terrestre');
+						const label = rate.label || (rate.mode === 'air' ? 'Frete Aéreo' : rate.mode === 'pickup' ? 'Retirada na loja: Grátis' : 'Frete Terrestre');
 						const cost = rate.cost_formatted || '-';
 						const checked = normalizeRateMode(rate.mode) === selectedMode ? 'checked' : '';
 						return `
