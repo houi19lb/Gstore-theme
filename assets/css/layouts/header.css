@@ -670,12 +670,48 @@ body:has(.Gstore-header-shell) {
 		display: none;
 	}
 
-	/* Drawer Footer */
+	/* Drawer Footer - Minha Conta + Atendimento fixos na base */
 	.Gstore-mobile-drawer__footer {
 		flex-shrink: 0;
+		margin-top: auto;
+		border-top: 1px solid var(--gstore-color-white-10, rgba(255, 255, 255, 0.1));
+		display: flex;
+		flex-direction: column;
+	}
+
+	.Gstore-mobile-drawer__footer-link {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		gap: 8px;
+		padding: 14px 16px;
+		color: var(--gstore-color-text-light, #fff) !important;
+		text-decoration: none;
+		background: var(--gstore-color-accent-10, rgba(255, 92, 0, 0.1));
+		transition: background-color var(--gstore-transition-fast, 150ms ease);
+		font-size: var(--gstore-font-size-sm, 0.875rem);
+		font-weight: 600;
+		text-transform: uppercase;
+		letter-spacing: 0.03em;
+	}
+
+	.Gstore-mobile-drawer__footer-link + .Gstore-mobile-drawer__footer-link {
 		border-top: 1px solid var(--gstore-color-white-10, rgba(255, 255, 255, 0.1));
 	}
 
+	.Gstore-mobile-drawer__footer-link:hover,
+	.Gstore-mobile-drawer__footer-link:focus {
+		background: var(--gstore-color-accent-20, rgba(255, 92, 0, 0.2));
+		outline: none;
+	}
+
+	.Gstore-mobile-drawer__footer-link .Gstore-icon {
+		width: 18px;
+		height: 18px;
+		fill: currentColor;
+	}
+
+	/* Manter compatibilidade com classe antiga */
 	.Gstore-mobile-drawer__footer .Gstore-nav__mobile-link {
 		display: flex;
 		align-items: center;
