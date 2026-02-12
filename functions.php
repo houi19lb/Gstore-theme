@@ -3624,8 +3624,14 @@ function gstore_enqueue_checkout_assets() {
 		if ( function_exists( 'is_cart' ) && is_cart() ) {
 			$product_id = 0;
 			$quantity   = 1;
-		} elseif ( is_product() && $product instanceof WC_Product ) {
-			$product_id = $product->get_id();
+		} elseif ( function_exists( 'is_product' ) && is_product() ) {
+			$queried_product_id = function_exists( 'get_queried_object_id' ) ? (int) get_queried_object_id() : 0;
+
+			if ( $queried_product_id > 0 ) {
+				$product_id = $queried_product_id;
+			} elseif ( $product instanceof WC_Product ) {
+				$product_id = (int) $product->get_id();
+			}
 		}
 
 		if ( function_exists( 'is_checkout' ) && is_checkout() && function_exists( 'WC' ) && WC()->cart ) {
