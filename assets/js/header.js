@@ -12,6 +12,63 @@
 	var headerHeight = 0; // Altura do header (calculada uma vez)
 
 	/**
+	 * Resolve URLs de conta com fallback para instalações em subdiretório.
+	 */
+	function getAccountUrl(type) {
+		if (type === 'my-account') {
+			if (typeof gstoreAccountUrls !== 'undefined') {
+				return gstoreAccountUrls.myAccount || gstoreAccountUrls.minhaContaUrl || '/minha-conta';
+			}
+			return '/minha-conta';
+		}
+
+		if (type === 'atendimento') {
+			if (typeof gstoreAccountUrls !== 'undefined') {
+				return gstoreAccountUrls.atendimentoUrl || '/atendimento';
+			}
+			return '/atendimento';
+		}
+
+		return '/';
+	}
+
+	/**
+	 * Cria link padrão do footer mobile.
+	 */
+	function createDrawerFooterLink(type, href) {
+		var link = document.createElement('a');
+		link.className = 'Gstore-nav__mobile-link Gstore-mobile-drawer__footer-link';
+		link.setAttribute('data-gstore-mobile-link', type);
+		link.setAttribute('href', href);
+
+		if (type === 'my-account') {
+			link.innerHTML = '<svg class="Gstore-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg><span>Minha conta</span>';
+		} else {
+			link.innerHTML = '<svg class="Gstore-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M12 1c-4.97 0-9 4.03-9 9v7c0 1.66 1.34 3 3 3h3v-8H5v-2c0-3.87 3.13-7 7-7s7 3.13 7 7v2h-4v8h3c1.66 0 3-1.34 3-3v-7c0-4.97-4.03-9-9-9z"/></svg><span>Atendimento</span>';
+		}
+
+		return link;
+	}
+
+	/**
+	 * Garante que o footer do drawer tenha os 2 links padrões.
+	 * Evita divergência quando o template antigo fica em cache.
+	 */
+	function ensureDrawerFooterLinks() {
+		var footer = document.querySelector('.Gstore-mobile-drawer__footer');
+		if (!footer) {
+			return;
+		}
+
+		var myAccountLink = createDrawerFooterLink('my-account', getAccountUrl('my-account'));
+		var atendimentoLink = createDrawerFooterLink('atendimento', getAccountUrl('atendimento'));
+
+		footer.innerHTML = '';
+		footer.appendChild(myAccountLink);
+		footer.appendChild(atendimentoLink);
+	}
+
+	/**
 	 * Calcula a altura do header uma vez
 	 */
 	function calculateHeaderHeight() {
@@ -91,9 +148,12 @@
 
 		// Mapeamento de links hardcoded para URLs dinâmicas (respeitam subdiretório do WP)
 		var linkMappings = {
-			'/minha-conta': gstoreAccountUrls.myAccount,
+			'/minha-conta': gstoreAccountUrls.myAccount || gstoreAccountUrls.minhaContaUrl,
+			'/minha-conta/': gstoreAccountUrls.myAccount || gstoreAccountUrls.minhaContaUrl,
 			'/meus-pedidos': gstoreAccountUrls.orders,
+			'/meus-pedidos/': gstoreAccountUrls.orders,
 			'/atendimento': gstoreAccountUrls.atendimentoUrl,
+			'/atendimento/': gstoreAccountUrls.atendimentoUrl,
 			'/favoritos/': gstoreAccountUrls.favoritosUrl
 		};
 
@@ -337,6 +397,7 @@
 	function init() {
 		setupMenuToggle();
 		updateAccountLinks();
+		ensureDrawerFooterLinks();
 		setupStickyHeader();
 		setupCartHeaderShow();
 	}
@@ -379,11 +440,11 @@
 				'<div class="Gstore-mobile-drawer__search"></div>' +
 				'<div class="Gstore-mobile-drawer__nav"></div>' +
 				'<div class="Gstore-mobile-drawer__footer">' +
-					'<a href="' + (typeof gstoreAccountUrls !== 'undefined' && gstoreAccountUrls.myAccount ? gstoreAccountUrls.myAccount : '/minha-conta') + '" class="Gstore-nav__mobile-link Gstore-mobile-drawer__footer-link">' +
+					'<a href="' + getAccountUrl('my-account') + '" class="Gstore-nav__mobile-link Gstore-mobile-drawer__footer-link">' +
 						'<svg class="Gstore-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>' +
 						'<span>Minha conta</span>' +
 					'</a>' +
-					'<a href="' + (typeof gstoreAccountUrls !== 'undefined' && gstoreAccountUrls.atendimentoUrl ? gstoreAccountUrls.atendimentoUrl : '/atendimento') + '" class="Gstore-nav__mobile-link Gstore-mobile-drawer__footer-link">' +
+					'<a href="' + getAccountUrl('atendimento') + '" class="Gstore-nav__mobile-link Gstore-mobile-drawer__footer-link">' +
 						'<svg class="Gstore-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M12 1c-4.97 0-9 4.03-9 9v7c0 1.66 1.34 3 3 3h3v-8H5v-2c0-3.87 3.13-7 7-7s7 3.13 7 7v2h-4v8h3c1.66 0 3-1.34 3-3v-7c0-4.97-4.03-9-9-9z"/></svg>' +
 						'<span>Atendimento</span>' +
 					'</a>' +
@@ -418,7 +479,8 @@
 			drawerSearch.appendChild(searchClone);
 		}
 		
-		// Re-executar setupMenuToggle para conectar o drawer criado
+		// Normaliza links do footer e conecta eventos do drawer criado
+		ensureDrawerFooterLinks();
 		setupMenuToggle();
 	}
 })();

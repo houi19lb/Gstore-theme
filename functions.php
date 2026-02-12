@@ -887,6 +887,10 @@ function gstore_enqueue_styles() {
 	$theme_version = wp_get_theme()->get( 'Version' );
 	$stylesheet_file = get_stylesheet_directory() . '/style.css';
 	$stylesheet_version = ( file_exists( $stylesheet_file ) ) ? (string) filemtime( $stylesheet_file ) : $theme_version;
+	$footer_css_file = get_theme_file_path( 'assets/css/layouts/footer.css' );
+	$footer_css_version = file_exists( $footer_css_file ) ? (string) filemtime( $footer_css_file ) : $theme_version;
+	$header_css_file = get_theme_file_path( 'assets/css/layouts/header.css' );
+	$header_css_version = file_exists( $header_css_file ) ? (string) filemtime( $header_css_file ) : $theme_version;
 	
 	// Obtém timestamp da última atualização dos tokens para forçar recarregamento
 	$tokens_version = get_option( 'gstore_tokens_last_updated', time() );
@@ -931,7 +935,7 @@ function gstore_enqueue_styles() {
 		'gstore-footer-css',
 		get_theme_file_uri( 'assets/css/layouts/footer.css' ),
 		array( 'gstore-style' ),
-		$theme_version
+		$footer_css_version
 	);
 
 	// Header CSS - carregado por último para ter prioridade sobre estilos legados
@@ -939,7 +943,7 @@ function gstore_enqueue_styles() {
 		'gstore-header-css',
 		get_theme_file_uri( 'assets/css/layouts/header.css' ),
 		array( 'gstore-style' ),
-		$theme_version
+		$header_css_version
 	);
 
 	// Botão flutuante do Telegram (usa href dinâmico da top bar; sem hardcode)
@@ -1040,11 +1044,14 @@ add_action( 'send_headers', 'gstore_add_permissions_policy_header' );
  * Enfileira scripts customizados.
  */
 function gstore_enqueue_scripts() {
+	$header_js_file = get_theme_file_path( 'assets/js/header.js' );
+	$header_js_version = file_exists( $header_js_file ) ? (string) filemtime( $header_js_file ) : wp_get_theme()->get( 'Version' );
+
 	wp_enqueue_script(
 		'gstore-header',
 		get_theme_file_uri( 'assets/js/header.js' ),
 		array(),
-		wp_get_theme()->get( 'Version' ),
+		$header_js_version,
 		true
 	);
 
