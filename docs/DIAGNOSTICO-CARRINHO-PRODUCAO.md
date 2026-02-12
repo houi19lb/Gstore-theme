@@ -4,6 +4,12 @@
 - Documento focado em **produ√ß√£o** (Hostinger) e cache/CDN.
 - Trata do mini‚Äëcart, fragments e AJAX.
 
+## Estado atual (2026-02)
+- Mini-cart lateral opera com o bloco nativo do WooCommerce como fonte de verdade.
+- Camada customizada de sync (`assets/js/mini-cart-fix.js`) foi retirada do enqueue.
+- Filtros customizados de fragments duplicados foram removidos para reduzir race conditions.
+- No loop de cat·logo, produto vari·vel abre a p·gina do produto (sem tentativa de add-to-cart direto).
+
 ## Problemas Identificados
 
 ### 1. **Cache/CDN Interferindo em Requisi√ß√µes AJAX**

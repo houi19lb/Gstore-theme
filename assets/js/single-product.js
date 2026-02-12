@@ -1100,123 +1100,47 @@ document.addEventListener('DOMContentLoaded', () => {
 	initBuyboxQtyRow();
 
 	/**
-	 * "Comprar agora" em produto simples: redireciona via GET para garantir que
-	 * o WooCommerce processe o add-to-cart e então vá para o checkout.
-	 *
-	 * Isso evita dependência de redirect PHP que pode ser bloqueado por cache/output.
+	 * Evita dupla submiss�o no "Comprar agora".
+	 * O redirect permanece no backend (PRG), sem montar URL via JavaScript.
 	 */
-	const initBuyNowRedirect = () => {
-		const form = document.querySelector('form.cart:not(.variations_form)');
-		if (!form) {
-			return;
-		}
-
-		const buyNowBtn = form.querySelector('.Gstore-single-product__buy-now');
-		if (!buyNowBtn) {
-			return;
-		}
-
-		buyNowBtn.addEventListener('click', (e) => {
-			e.preventDefault();
-
-			// Tenta pegar o product ID de várias fontes
-			const productIdInput = form.querySelector('input[name="add-to-cart"]');
-			const productIdButton = form.querySelector('button[name="add-to-cart"]');
-			const productId =
-				productIdInput?.value ||
-				productIdButton?.value ||
-				form.querySelector('input[name="product_id"]')?.value ||
-				'';
-
-			const qtyInput = form.querySelector('input[name="quantity"]');
-			const qty = qtyInput?.value || '1';
-
-			if (!productId) {
-				// Fallback: deixa o form submeter normalmente
-				form.submit();
+	const initBuyNowSubmitGuard = () => {
+		document.addEventListener('click', (event) => {
+			const button = event.target.closest('.Gstore-single-product__buy-now');
+			if (!button || button.disabled) {
 				return;
 			}
 
-			// Monta a URL GET que comprovadamente funciona
-			const url = new URL(window.location.href);
-			url.searchParams.set('add-to-cart', productId);
-			url.searchParams.set('quantity', qty);
-			url.searchParams.set('gstore_buy_now', '1');
+			button.dataset.gstoreBuyNowClicked = '1';
+			window.setTimeout(() => {
+				if (button.dataset.gstoreBuyNowClicked === '1' && !button.disabled) {
+					delete button.dataset.gstoreBuyNowClicked;
+				}
+			}, 1500);
+		}, true);
 
-			window.location.href = url.toString();
-		});
-	};
-
-	initBuyNowRedirect();
-
-	/**
-	 * "Comprar agora" em produto variável: redireciona via GET com variation_id e
-	 * atributos, para o backend processar add-to-cart e redirecionar ao checkout.
-	 *
-	 * Usa event delegation no document (fase de captura) para funcionar mesmo se
-	 * o WooCommerce reinicializar o form ou o bfcache restaurar a página.
-	 */
-	const handleBuyNowVariableClick = (e) => {
-		const btn = e.target.closest('.Gstore-single-product__buy-now');
-		if (!btn) return;
-
-		const form = btn.closest('form.variations_form');
-		if (!form) return;
-
-		const productId = form.querySelector('input[name="product_id"]')?.value || '';
-		const variationId = form.querySelector('input[name="variation_id"]')?.value || '';
-		const qty = form.querySelector('input[name="quantity"]')?.value || '1';
-
-		if (!productId || !variationId || variationId === '0') {
-			return; // variação não selecionada — não intercepta
-		}
-
-		e.preventDefault();
-		e.stopPropagation();
-
-		const url = new URL(window.location.href);
-		url.searchParams.set('add-to-cart', productId);
-		url.searchParams.set('variation_id', variationId);
-		url.searchParams.set('quantity', qty);
-		url.searchParams.set('gstore_buy_now', '1');
-
-		// Coleta todos os attribute_*
-		form.querySelectorAll('select[name^="attribute_"], input[name^="attribute_"]').forEach((el) => {
-			if (el.name && el.value) {
-				url.searchParams.set(el.name, el.value);
+		document.addEventListener('submit', (event) => {
+			const form = event.target && event.target.closest ? event.target.closest('form.cart') : event.target;
+			if (!form || !form.classList || !form.classList.contains('cart')) {
+				return;
 			}
-		});
 
-		window.location.href = url.toString();
+			const buyNowButton = form.querySelector('.Gstore-single-product__buy-now[data-gstore-buy-now-clicked="1"]');
+			if (!buyNowButton) {
+				return;
+			}
+
+			if (form.dataset.gstoreBuyNowSubmitting === '1') {
+				event.preventDefault();
+				return;
+			}
+
+			form.dataset.gstoreBuyNowSubmitting = '1';
+			buyNowButton.disabled = true;
+			buyNowButton.classList.add('is-loading');
+		}, true);
 	};
-	document.addEventListener('click', handleBuyNowVariableClick, true);
 
-	/**
-	 * Fallback: se o redirect JS não disparar e o form submeter via POST,
-	 * garante que `add-to-cart` esteja nos dados do form para o WooCommerce processar.
-	 */
-	const handleBuyNowVariableSubmit = (e) => {
-		const form = e.target.closest ? e.target.closest('form.variations_form') : e.target;
-		if (!form || !form.classList.contains('variations_form')) return;
-
-		// Só age se o submit veio do botão "Comprar agora"
-		const buyNowBtn = form.querySelector('.Gstore-single-product__buy-now');
-		if (!buyNowBtn || !document.activeElement || !document.activeElement.closest('.Gstore-single-product__buy-now')) return;
-
-		const productId = form.querySelector('input[name="product_id"]')?.value || '';
-		if (!productId) return;
-
-		// Injeta hidden input `add-to-cart` para o WooCommerce processar no POST
-		let hidden = form.querySelector('input[type="hidden"][name="add-to-cart"]');
-		if (!hidden) {
-			hidden = document.createElement('input');
-			hidden.type = 'hidden';
-			hidden.name = 'add-to-cart';
-			form.appendChild(hidden);
-		}
-		hidden.value = productId;
-	};
-	document.addEventListener('submit', handleBuyNowVariableSubmit, true);
+	initBuyNowSubmitGuard();
 
 	/**
 	 * Remove parâmetros de add-to-cart da URL para evitar reprocessamento.

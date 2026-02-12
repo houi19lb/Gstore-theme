@@ -4,6 +4,11 @@
 - Diagn√≥stico do carrinho esvaziando ap√≥s add‚Äëto‚Äëcart no produto √∫nico.
 - Causa envolvia AJAX de parcelas Blu.
 
+## AtualizaÁ„o (2026-02)
+- O endpoint `gstore_blu_get_product_installment_quotes` foi refatorado para c·lculo sem mutar `WC()->cart`.
+- A implementaÁ„o n„o usa mais `empty_cart()` nem restauraÁ„o de carrinho em requisiÁ„o AJAX de parcelas.
+- O payload de resposta foi mantido para compatibilidade com `assets/js/single-product.js` e `assets/js/product-card.js`.
+
 ## Contexto do problema
 Ao clicar em **"Adicionar ao carrinho"** na p√°gina de produto √∫nico, o item aparecia no mini‚Äëcart e logo era removido. No cat√°logo isso n√£o ocorria.
 
@@ -19,11 +24,11 @@ Isso limpava os cookies do carrinho (`woocommerce_cart_hash` e `woocommerce_item
 
 ## O que foi feito (mudan√ßas permanentes)
 ### 1) Consolidar o handler no plugin (sem override do tema)
-O AJAX de parcelas voltou a ser **responsabilidade do plugin**, mas agora com fluxo seguro:
+O AJAX de parcelas voltou a ser **responsabilidade do plugin**, agora com fluxo cartless:
 
 - **Arquivo:** `includes/blu/class-gstore-blu-checkout-handler.php`
 - **M√©todo:** `ajax_product_installment_quotes()`
-- **Resultado:** o plugin cria um carrinho tempor√°rio, calcula as parcelas e **restaura** o carrinho original, evitando limpar cookies do carrinho real.
+- **Resultado:** o plugin calcula parcelas sem mutar `WC()->cart` nem sess„o do carrinho real.
 
 ## O erro que estava sendo contornado no AJAX
 O AJAX de parcelas serve apenas para **calcular pre√ßos parcelados** na p√°gina de produto. Ele **n√£o deveria** alterar o carrinho.  
@@ -41,9 +46,9 @@ Por√©m, o handler do plugin (`Gstore_Core_Blu_Checkout_Handler->ajax_product_ins
 ## Arquivos e mudan√ßas espec√≠ficas
 - **`includes/blu/class-gstore-blu-checkout-handler.php`**
   - `ajax_product_installment_quotes()`:
-    - usa carrinho tempor√°rio;
-    - restaura o carrinho original ao final;
-    - mant√©m cookies consistentes.
+    - n„o usa `empty_cart()` nem `add_to_cart()` para simulaÁ„o;
+    - calcula base pelo preÁo do produto e quantidade;
+    - aplica regras de parcelamento do gateway/produto sem tocar no carrinho real.
 
 ## Observa√ß√£o sobre o mini‚Äëcart
 O mini‚Äëcart atualiza com fragments e Store API. Quando o carrinho era esvaziado pelo AJAX do plugin, os cookies eram limpos e a Store API passava a devolver carrinho vazio.

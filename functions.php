@@ -1362,13 +1362,6 @@ function gstore_enqueue_scripts() {
 
 		// Script para sincronização do Mini Cart Block (versão simplificada)
 		// Dependências: wc-settings (fornece storeApiNonce), wp-data (fornece wp.data store)
-		wp_enqueue_script(
-			'gstore-mini-cart-fix',
-			get_theme_file_uri( 'assets/js/mini-cart-fix.js' ),
-			array( 'jquery', 'wc-settings', 'wp-data' ),
-			'2.0.0',
-			true
-		);
 
 		// Script para gerenciar avisos do WooCommerce (slide-in e auto-dismiss)
 		wp_enqueue_script(
@@ -1389,15 +1382,6 @@ function gstore_enqueue_scripts() {
 		);
 
 		// Localizar nonce e configurações como fallback para o mini-cart fix
-		wp_localize_script(
-			'gstore-mini-cart-fix',
-			'gstoreMiniCart',
-			array(
-				'storeApiNonce' => wp_create_nonce( 'wc_store_api' ),
-				'cartEndpoint'  => rest_url( 'wc/store/v1/cart' ),
-				'debug'         => defined( 'WP_DEBUG' ) && WP_DEBUG,
-			)
-		);
 	}
 
 	// Localizar script para AJAX do WooCommerce
@@ -1835,20 +1819,6 @@ add_action( 'wp_ajax_nopriv_gstore_load_product_reviews', 'gstore_ajax_load_prod
  * @param array $fragments Fragmentos de carrinho.
  * @return array
  */
-function gstore_cart_count_fragments( $fragments ) {
-	$cart_count = WC()->cart->get_cart_contents_count();
-	
-	ob_start();
-	?>
-	<span class="Gstore-cart-count" aria-label="<?php echo esc_attr( sprintf( _n( '%d item no carrinho', '%d itens no carrinho', $cart_count, 'gstore' ), $cart_count ) ); ?>">
-		<?php echo esc_html( $cart_count ); ?>
-	</span>
-	<?php
-	$fragments['.Gstore-cart-count'] = ob_get_clean();
-	
-	return $fragments;
-}
-add_filter( 'woocommerce_add_to_cart_fragments', 'gstore_cart_count_fragments' );
 
 /**
  * Garante que o AJAX add to cart está habilitado e configurado corretamente.
@@ -1932,102 +1902,45 @@ add_action( 'woocommerce_before_cart', 'gstore_suppress_variable_product_choose_
 add_action( 'woocommerce_before_checkout_form', 'gstore_suppress_variable_product_choose_options_notice', 1 );
 
 /**
- * Melhora os fragmentos do carrinho para incluir mais elementos do mini-cart.
- * 
- * Adiciona fragmentos adicionais para garantir que o mini-cart seja atualizado
- * corretamente após adicionar OU remover produtos do carrinho.
- * 
- * IMPORTANTE: Este filtro é chamado tanto em added_to_cart quanto em removed_from_cart.
+ * Em listas de produtos, itens vari�veis devem abrir a p�gina de produto.
+ *
+ * Isso evita tentativas de add-to-cart sem atributos selecionados no cat�logo.
+ *
+ * @param string     $html    HTML do bot�o.
+ * @param WC_Product $product Produto do loop.
+ * @param array      $args    Argumentos do bot�o.
+ * @return string
  */
-function gstore_enhance_cart_fragments( $fragments ) {
-	if ( ! class_exists( 'WooCommerce' ) ) {
-		return $fragments;
+function gstore_loop_variable_product_link( $html, $product, $args ) {
+	if ( ! $product instanceof WC_Product || ! $product->is_type( 'variable' ) ) {
+		return $html;
 	}
 
-	$cart = WC()->cart;
-	
-	if ( ! $cart ) {
-		return $fragments;
+	$classes_raw = isset( $args['class'] ) ? (string) $args['class'] : 'button';
+	$classes     = preg_split( '/\\s+/', trim( $classes_raw ) );
+	if ( ! is_array( $classes ) ) {
+		$classes = array( 'button' );
 	}
 
-	$cart_count = $cart->get_cart_contents_count();
+	$blocked_classes = array( 'add_to_cart_button', 'ajax_add_to_cart' );
+	$classes         = array_values( array_diff( $classes, $blocked_classes ) );
+	if ( empty( $classes ) ) {
+		$classes = array( 'button' );
+	}
 
-	// Adiciona fragmento para o badge do mini-cart block (se existir na página)
-	ob_start();
-	?>
-	<span class="wc-block-mini-cart__badge">
-		<?php echo esc_html( $cart_count ); ?>
-	</span>
-	<?php
-	$fragments['.wc-block-mini-cart__badge'] = ob_get_clean();
+	$label = isset( $args['text'] ) ? trim( (string) $args['text'] ) : '';
+	if ( '' === $label ) {
+		$label = __( 'Ver op��es', 'gstore' );
+	}
 
-	// Adiciona fragmento para o contador customizado do tema
-	
-	ob_start();
-	?>
-	<span class="Gstore-cart-count" aria-label="<?php echo esc_attr( sprintf( _n( '%d item no carrinho', '%d itens no carrinho', $cart_count, 'gstore' ), $cart_count ) ); ?>">
-		<?php echo esc_html( $cart_count ); ?>
-	</span>
-	<?php
-	$fragments['.Gstore-cart-count'] = ob_get_clean();
-
-	return $fragments;
+	return sprintf(
+		'<a href="%1$s" data-quantity="1" class="%2$s">%3$s</a>',
+		esc_url( $product->get_permalink() ),
+		esc_attr( implode( ' ', $classes ) ),
+		esc_html( $label )
+	);
 }
-add_filter( 'woocommerce_add_to_cart_fragments', 'gstore_enhance_cart_fragments', 20 );
-
-/**
- * Garante que os fragmentos sejam atualizados também na remoção de produtos.
- * 
- * O WooCommerce usa o mesmo filtro para adição e remoção, mas esta função
- * garante que os eventos sejam disparados corretamente e que os fragmentos
- * sejam sempre retornados, especialmente em ambientes de produção com cache.
- */
-function gstore_ensure_removal_fragments() {
-	if ( ! class_exists( 'WooCommerce' ) ) {
-		return;
-	}
-
-	// Hook específico para garantir fragmentos após remoção
-	add_action( 'woocommerce_cart_item_removed', function( $cart_item_key, $cart ) {
-		// Força atualização dos fragmentos após remoção
-		// O WooCommerce já faz isso automaticamente, mas garantimos que funcione
-		// Em produção, pode haver problemas de timing ou cache
-		do_action( 'gstore_cart_item_removed', $cart_item_key, $cart );
-	}, 10, 2 );
-
-	// Garante que fragmentos sejam sempre retornados mesmo se o filtro padrão falhar
-	add_filter( 'woocommerce_add_to_cart_fragments', function( $fragments ) {
-		// Verifica se estamos em uma requisição de remoção
-		// O WooCommerce não diferencia claramente, então sempre garantimos fragmentos atualizados
-		if ( ! class_exists( 'WooCommerce' ) || ! WC()->cart ) {
-			return $fragments;
-		}
-
-		// Força atualização dos fragmentos do mini-cart mesmo se não foram incluídos
-		$cart_count = WC()->cart->get_cart_contents_count();
-		
-		// Garante que o fragmento do badge sempre existe e está atualizado
-		ob_start();
-		?>
-		<span class="wc-block-mini-cart__badge">
-			<?php echo esc_html( $cart_count ); ?>
-		</span>
-		<?php
-		$fragments['.wc-block-mini-cart__badge'] = ob_get_clean();
-
-		// Garante que o fragmento customizado sempre existe e está atualizado
-		ob_start();
-		?>
-		<span class="Gstore-cart-count" aria-label="<?php echo esc_attr( sprintf( _n( '%d item no carrinho', '%d itens no carrinho', $cart_count, 'gstore' ), $cart_count ) ); ?>">
-			<?php echo esc_html( $cart_count ); ?>
-		</span>
-		<?php
-		$fragments['.Gstore-cart-count'] = ob_get_clean();
-
-		return $fragments;
-	}, 30 ); // Prioridade alta para garantir que seja executado após outros filtros
-}
-add_action( 'init', 'gstore_ensure_removal_fragments', 15 );
+add_filter( 'woocommerce_loop_add_to_cart_link', 'gstore_loop_variable_product_link', 10, 3 );
 
 /**
  * Garante que os eventos WooCommerce sejam disparados corretamente.
@@ -2645,37 +2558,6 @@ add_action( 'wc_ajax_update_cart', 'gstore_prevent_cart_ajax_cache', 1 );
  * Hook específico para wc_ajax_remove_from_cart para garantir que fragmentos
  * sejam sempre incluídos na resposta, mesmo em ambientes com cache ou problemas de timing.
  */
-function gstore_force_fragments_on_removal() {
-	if ( ! class_exists( 'WooCommerce' ) || ! WC()->cart ) {
-		return;
-	}
-
-	// Força atualização dos fragmentos após processar remoção
-	add_filter( 'woocommerce_add_to_cart_fragments', function( $fragments ) {
-		$cart_count = WC()->cart->get_cart_contents_count();
-		
-		// Sempre garante que os fragmentos críticos existam
-		ob_start();
-		?>
-		<span class="wc-block-mini-cart__badge">
-			<?php echo esc_html( $cart_count ); ?>
-		</span>
-		<?php
-		$fragments['.wc-block-mini-cart__badge'] = ob_get_clean();
-
-		ob_start();
-		?>
-		<span class="Gstore-cart-count" aria-label="<?php echo esc_attr( sprintf( _n( '%d item no carrinho', '%d itens no carrinho', $cart_count, 'gstore' ), $cart_count ) ); ?>">
-			<?php echo esc_html( $cart_count ); ?>
-		</span>
-		<?php
-		$fragments['.Gstore-cart-count'] = ob_get_clean();
-
-		return $fragments;
-	}, 999 ); // Prioridade muito alta para garantir execução
-}
-add_action( 'wc_ajax_remove_from_cart', 'gstore_force_fragments_on_removal', 5 );
-
 /**
  * Remove o breadcrumb padrão do WooCommerce.
  */
