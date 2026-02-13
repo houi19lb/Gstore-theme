@@ -8,6 +8,7 @@
 	let cartUpdateTimeout = null;
 	let ratesSyncInProgress = false;
 	let shippingChoicesDelegated = false;
+	let initialRatesHydrated = false;
 	const CART_CEP_STORAGE_KEY = 'gstore_cart_cep';
 	const CART_MODE_STORAGE_KEY = 'gstore_cart_shipping_mode';
 	const CART_CALCULATED_SESSION_KEY = 'gstore_cart_shipping_calculated_session';
@@ -1154,14 +1155,25 @@
 	}
 
 	function init() {
+		restoreCartCep();
 		pruneShippingStorageToCurrentCart();
 		syncDomShippingRatesToStorage();
 		initQuantitySelectors();
 		initShippingChoices();
 		setupMutationObserver();
 		ensureShippingBlocksExist();
+		restoreShippingRatesFromStorage();
 		updateCartTotalsSummary();
 		updateCheckoutAvailability();
+
+		if (!initialRatesHydrated) {
+			initialRatesHydrated = true;
+			if (document.querySelector('.gstore-shipping-calculator--cart') && getCartCep()) {
+				setTimeout(() => {
+					calculateRatesForCart(false);
+				}, 120);
+			}
+		}
 	}
 
 	if (document.readyState === 'loading') {

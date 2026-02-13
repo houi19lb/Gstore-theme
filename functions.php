@@ -3941,7 +3941,11 @@ if ( ! function_exists( 'gstore_normalize_cart_rates' ) ) {
 				continue;
 			}
 
-			$mode = gstore_normalize_shipping_mode( isset( $rate['mode'] ) ? $rate['mode'] : '' );
+			$raw_mode = isset( $rate['mode'] ) ? $rate['mode'] : ( isset( $rate['label'] ) ? $rate['label'] : '' );
+			$mode     = gstore_normalize_shipping_mode( $raw_mode );
+			if ( '' === $mode ) {
+				continue;
+			}
 			$label = isset( $rate['label'] ) ? sanitize_text_field( $rate['label'] ) : gstore_get_cart_item_shipping_label( $mode );
 
 			$cost = 0.0;
