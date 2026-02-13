@@ -1134,6 +1134,17 @@ document.addEventListener('DOMContentLoaded', () => {
 				return;
 			}
 
+			// The clicked submit button becomes disabled below; persist the flag in a hidden field
+			// so the backend still receives `gstore_buy_now=1`.
+			let hiddenBuyNow = form.querySelector('input[type="hidden"][name="gstore_buy_now"]');
+			if (!hiddenBuyNow) {
+				hiddenBuyNow = document.createElement('input');
+				hiddenBuyNow.type = 'hidden';
+				hiddenBuyNow.name = 'gstore_buy_now';
+				form.appendChild(hiddenBuyNow);
+			}
+			hiddenBuyNow.value = '1';
+
 			form.dataset.gstoreBuyNowSubmitting = '1';
 			buyNowButton.disabled = true;
 			buyNowButton.classList.add('is-loading');
