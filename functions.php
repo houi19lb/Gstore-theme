@@ -428,14 +428,16 @@ function gstore_add_preload_resources() {
 	if ( function_exists( 'gstore_get_hero_slide_1_id' ) ) {
 		$hero_slide_1_id = gstore_get_hero_slide_1_id();
 		if ( $hero_slide_1_id > 0 ) {
-			$hero_url = wp_get_attachment_url( $hero_slide_1_id );
-			if ( $hero_url ) {
-				// Verifica se existe versão WebP
-				$webp_url = str_replace( array( '.jpg', '.jpeg', '.png' ), '.webp', $hero_url );
-				if ( file_exists( str_replace( home_url(), ABSPATH . '../', $webp_url ) ) ) {
-					$hero_url = $webp_url;
+			$hero_src = wp_get_attachment_image_src( $hero_slide_1_id, 'full' );
+			if ( $hero_src && ! empty( $hero_src[0] ) ) {
+				$hero_url    = $hero_src[0];
+				$hero_srcset = wp_get_attachment_image_srcset( $hero_slide_1_id, 'full' );
+				$preload_tag = '<link rel="preload" as="image" href="' . esc_url( $hero_url ) . '"';
+				if ( ! empty( $hero_srcset ) ) {
+					$preload_tag .= ' imagesrcset="' . esc_attr( $hero_srcset ) . '" imagesizes="100vw"';
 				}
-				echo '<link rel="preload" as="image" href="' . esc_url( $hero_url ) . '" fetchpriority="high">' . "\n";
+				$preload_tag .= ' fetchpriority="high">';
+				echo $preload_tag . "\n";
 			}
 		}
 	}
@@ -6839,21 +6841,27 @@ function gstore_get_hero_image_tag( $attachment_id, $alt = '', $is_first_slide =
 
 	// Atributos base
 	$attr = array(
-		'src'     => $src_url,
-		'alt'     => $alt ? $alt : '',
-		'sizes'   => '100vw',
+		'src' => $src_url,
+		'alt' => $alt ? $alt : '',
 	);
 
-	// Adiciona srcset se disponível
-	if ( ! empty( $srcset_array ) ) {
-		$attr['srcset'] = implode( ', ', $srcset_array );
+	// O primeiro slide é o LCP: força o arquivo full para evitar variação/pixelização inicial.
+	// Demais slides podem usar srcset normalmente.
+	if ( ! $is_first_slide ) {
+		$attr['sizes'] = '100vw';
+		if ( ! empty( $srcset_array ) ) {
+			$attr['srcset'] = implode( ', ', $srcset_array );
+		}
 	}
 
 	// Primeira imagem do hero: alta prioridade, sem lazy loading
 	if ( $is_first_slide ) {
 		$attr['fetchpriority'] = 'high';
 		$attr['loading'] = 'eager';
-		$attr['decoding'] = 'sync';
+		$attr['decoding'] = 'async';
+		$attr['class'] = 'skip-lazy';
+		$attr['data-no-lazy'] = '1';
+		$attr['data-skip-lazy'] = '1';
 	} else {
 		$attr['loading'] = 'lazy';
 		$attr['decoding'] = 'async';
