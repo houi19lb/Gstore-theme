@@ -138,6 +138,104 @@
 		}
 	}
 
+	function parseAndNormalizeRates(rawRates) {
+		const rates = Array.isArray(rawRates) ? rawRates : [];
+		return rates
+			.map((rate) => ({
+				mode: normalizeRateMode(rate && (rate.mode || rate.label || '')),
+				label: rate && rate.label ? String(rate.label) : '',
+				cost: rate && typeof rate === 'object' && 'cost' in rate ? rate.cost : '',
+				cost_formatted: rate && typeof rate === 'object' && 'cost_formatted' in rate ? rate.cost_formatted : '',
+			}))
+			.filter((rate) => rate.mode);
+	}
+
+	function parseRatesFromInputValue(rawValue) {
+		if (!rawValue) {
+			return [];
+		}
+		try {
+			const parsed = JSON.parse(rawValue);
+			return parseAndNormalizeRates(parsed);
+		} catch (e) {
+			return [];
+		}
+	}
+
+	function getCurrentCartItemKeys() {
+		const keys = [];
+		document.querySelectorAll('[data-cart-item-key]').forEach((el) => {
+			const key = el.dataset.cartItemKey || el.getAttribute('data-cart-item-key') || '';
+			if (key) {
+				keys.push(String(key));
+			}
+		});
+		return keys;
+	}
+
+	function pruneShippingStorageToCurrentCart() {
+		if (typeof window === 'undefined' || !window.localStorage) {
+			return;
+		}
+
+		const currentKeys = new Set(getCurrentCartItemKeys());
+		if (!currentKeys.size) {
+			return;
+		}
+
+		const prunePayload = (storageKey) => {
+			let payload = {};
+			try {
+				const raw = window.localStorage.getItem(storageKey);
+				payload = raw ? JSON.parse(raw) : {};
+			} catch (e) {
+				payload = {};
+			}
+
+			if (!payload || typeof payload !== 'object') {
+				return;
+			}
+
+			let changed = false;
+			Object.keys(payload).forEach((key) => {
+				if (key === 'default') {
+					return;
+				}
+				if (!currentKeys.has(key)) {
+					delete payload[key];
+					changed = true;
+				}
+			});
+
+			if (changed) {
+				try {
+					window.localStorage.setItem(storageKey, JSON.stringify(payload));
+				} catch (e) {
+					// ignore storage errors
+				}
+			}
+		};
+
+		prunePayload(CART_RATES_STORAGE_KEY);
+		prunePayload(CART_MODE_STORAGE_KEY);
+	}
+
+	function syncDomShippingRatesToStorage() {
+		document.querySelectorAll('input[name^="gstore_shipping_rates["]').forEach((input) => {
+			const match = String(input.name || '').match(/^gstore_shipping_rates\[(.+)\]$/);
+			if (!match || !match[1]) {
+				return;
+			}
+			const cartItemKey = String(match[1]);
+			const normalizedRates = parseRatesFromInputValue(input.value || '');
+			if (!normalizedRates.length) {
+				return;
+			}
+			input.value = JSON.stringify(normalizedRates);
+			storeShippingRates(cartItemKey, normalizedRates);
+		});
+	}
+
 	function restoreShippingRatesFromStorage() {
 		if (typeof window === 'undefined' || !window.localStorage) {
 			return;
@@ -159,8 +257,8 @@
 		}
 
 		Object.keys(storedRates).forEach((cartItemKey) => {
-			const rates = storedRates[cartItemKey];
-			if (!Array.isArray(rates) || rates.length === 0) {
+			const storedNormalizedRates = parseAndNormalizeRates(storedRates[cartItemKey]);
+			if (!storedNormalizedRates.length) {
 				return;
 			}
 
@@ -178,7 +276,15 @@
 				shippingBlock.appendChild(ratesInput);
 			}
 
-			ratesInput.value = JSON.stringify(rates);
+			const currentRates = parseRatesFromInputValue(ratesInput.value || '');
+			if (currentRates.length) {
+				// Prefer server-rendered/cart-session rates to avoid stale localStorage overriding newer modes (ex.: pickup).
+				ratesInput.value = JSON.stringify(currentRates);
+				storeShippingRates(cartItemKey, currentRates);
+				return;
+			}
+
+			ratesInput.value = JSON.stringify(storedNormalizedRates);
 		});
 	}
 
@@ -1048,6 +1154,8 @@
 	}
 
 	function init() {
+		pruneShippingStorageToCurrentCart();
+		syncDomShippingRatesToStorage();
 		initQuantitySelectors();
 		initShippingChoices();
 		setupMutationObserver();

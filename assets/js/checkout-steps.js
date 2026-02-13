@@ -1888,6 +1888,11 @@ function getInstallmentDisplayTotals(summaryData) {
 						<span class="Gstore-checkout-item-shipping-option__label">Frete Aéreo</span>
 						<span class="Gstore-checkout-item-shipping-option__price">-</span>
 					</label>
+					<label class="Gstore-checkout-item-shipping-option">
+						<input type="radio" name="gstore_checkout_shipping_mode[${cartItemKey}]" data-cart-item-key="${cartItemKey}" value="pickup" ${selectedMode === 'pickup' ? 'checked' : ''} />
+						<span class="Gstore-checkout-item-shipping-option__label">Retirada na loja</span>
+						<span class="Gstore-checkout-item-shipping-option__price">-</span>
+					</label>
 				`;
 			$slot.html(optionsHtml);
 		});
@@ -3881,7 +3886,7 @@ function getInstallmentDisplayTotals(summaryData) {
 			// Garante shipping_method[0] com rate ID completo para persistir frete ao fechar modal Blu.
 			// Remove inputs WC nativos conflitantes e recria com data-index para compatibilidade.
 			let mode = checkoutSelectedShippingMode || (Object.values(checkoutSelectedShippingByItem)[0]) || 'land';
-			if (mode !== 'land' && mode !== 'air') mode = 'land';
+			if (mode !== 'land' && mode !== 'air' && mode !== 'pickup') mode = 'land';
 			const rateId = 'gstore_custom_shipping:' + mode;
 			$checkoutForm.find('input[name="shipping_method[0]"]').remove();
 			$checkoutForm.append(

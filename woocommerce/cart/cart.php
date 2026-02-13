@@ -191,7 +191,7 @@ if ( function_exists( 'wc_wp_theme_get_element_class_name' ) ) {
 													$selected_mode = 'land';
 												}
 											} else {
-												$selected_mode = 'air' === $posted_mode ? 'air' : 'land';
+												$selected_mode = in_array( $posted_mode, array( 'air', 'pickup' ), true ) ? $posted_mode : 'land';
 											}
 										}
 										$freight_costs = array();
@@ -376,5 +376,4 @@ if ( function_exists( 'wc_wp_theme_get_element_class_name' ) ) {
 </section>
 
 <?php do_action( 'woocommerce_after_cart' ); ?>
-
 
