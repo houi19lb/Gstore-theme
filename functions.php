@@ -1930,7 +1930,7 @@ function gstore_loop_variable_product_link( $html, $product, $args ) {
 
 	$label = isset( $args['text'] ) ? trim( (string) $args['text'] ) : '';
 	if ( '' === $label ) {
-		$label = __( 'Ver op��es', 'gstore' );
+		$label = __( "Ver op\xC3\xA7\xC3\xB5es", 'gstore' );
 	}
 
 	return sprintf(
