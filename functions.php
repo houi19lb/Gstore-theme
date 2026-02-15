@@ -1,27 +1,27 @@
-<?php
+﻿<?php
 /**
- * Funções principais do child theme Gstore.
+ * FunÃ§Ãµes principais do child theme Gstore.
  *
  * @package Gstore
  * 
  * ============================================
- * CONFIGURAÇÃO DO WOOCOMMERCE
+ * CONFIGURAÃ‡ÃƒO DO WOOCOMMERCE
  * ============================================
  * Sistema: Blocos Gutenberg (Product Collection)
- * Versão WooCommerce: 9.4.0+
+ * VersÃ£o WooCommerce: 9.4.0+
  * Verificado em: 2025-11-15
  * 
  * IMPORTANTE:
- * - Este projeto usa BLOCOS do WooCommerce, não loop clássico
- * - Páginas criadas no Editor de Blocos (Gutenberg)
- * - Templates PHP clássicos (content-product.php) NÃO são usados
- * - Customizações de produtos via CSS (.wc-block-*)
- * - Estilos críticos inline via wp_head (linhas 140-224)
+ * - Este projeto usa BLOCOS do WooCommerce, nÃ£o loop clÃ¡ssico
+ * - PÃ¡ginas criadas no Editor de Blocos (Gutenberg)
+ * - Templates PHP clÃ¡ssicos (content-product.php) NÃƒO sÃ£o usados
+ * - CustomizaÃ§Ãµes de produtos via CSS (.wc-block-*)
+ * - Estilos crÃ­ticos inline via wp_head (linhas 140-224)
  * 
  * ARQUIVOS RELEVANTES:
  * - style.css (linhas 473-671) - Estilos para blocos
- * - functions.php (linhas 140-224) - Estilos críticos inline
- * - BLOCOS-WOOCOMMERCE.md - Documentação completa
+ * - functions.php (linhas 140-224) - Estilos crÃ­ticos inline
+ * - BLOCOS-WOOCOMMERCE.md - DocumentaÃ§Ã£o completa
  * ============================================
  */
 
@@ -30,7 +30,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Configurações iniciais do tema filho.
+ * ConfiguraÃ§Ãµes iniciais do tema filho.
  */
 function gstore_after_setup_theme() {
 	load_child_theme_textdomain( 'gstore', get_stylesheet_directory() . '/languages' );
@@ -49,15 +49,15 @@ function gstore_after_setup_theme() {
 	add_theme_support( 'wc-product-gallery-lightbox' );
 	add_theme_support( 'wc-product-gallery-slider' );
 	
-	// Tamanho de imagem específico para banners (alta qualidade, sem crop)
-	// Usa dimensões grandes mas sem forçar crop, permitindo que a imagem original seja usada
+	// Tamanho de imagem especÃ­fico para banners (alta qualidade, sem crop)
+	// Usa dimensÃµes grandes mas sem forÃ§ar crop, permitindo que a imagem original seja usada
 	add_image_size( 'gstore-banner-full', 2560, 1440, false );
 
-	// Locais de menu para barra desktop e mobile (atribuição em Loja > Navegação)
+	// Locais de menu para barra desktop e mobile (atribuiÃ§Ã£o em Loja > NavegaÃ§Ã£o)
 	register_nav_menus(
 		array(
-			'gstore_desktop' => __( 'Barra de navegação (Desktop)', 'gstore' ),
-			'gstore_mobile'  => __( 'Barra de navegação (Mobile)', 'gstore' ),
+			'gstore_desktop' => __( 'Barra de navegaÃ§Ã£o (Desktop)', 'gstore' ),
+			'gstore_mobile'  => __( 'Barra de navegaÃ§Ã£o (Mobile)', 'gstore' ),
 		)
 	);
 }
@@ -67,7 +67,7 @@ add_action( 'after_setup_theme', 'gstore_after_setup_theme' );
  * Retorna o ID do produto a partir de um objeto WC_Product.
  *
  * @param WC_Product|int|null $product Objeto do produto ou ID.
- * @return int ID do produto, ou 0 se inválido.
+ * @return int ID do produto, ou 0 se invÃ¡lido.
  */
 function gstore_get_product_id( $product ) {
 	if ( $product instanceof WC_Product ) {
@@ -81,10 +81,10 @@ function gstore_get_product_id( $product ) {
 
 /**
  * Desativa o crop das imagens de produto do WooCommerce.
- * Garante que as miniaturas mantenham a proporção original.
+ * Garante que as miniaturas mantenham a proporÃ§Ã£o original.
  */
 
-// 1. Forçar configuração de crop no WooCommerce (banco de dados)
+// 1. ForÃ§ar configuraÃ§Ã£o de crop no WooCommerce (banco de dados)
 function gstore_set_woocommerce_image_settings() {
 	// Desativa crop para thumbnails (usa 'uncropped' que significa sem corte)
 	if ( get_option( 'woocommerce_thumbnail_cropping' ) !== 'uncropped' ) {
@@ -124,10 +124,10 @@ function gstore_single_size( $size ) {
 add_filter( 'woocommerce_get_image_size_single', 'gstore_single_size' );
 
 /**
- * Ajusta disponibilidade de variações para estoque.
+ * Ajusta disponibilidade de variaÃ§Ãµes para estoque.
  *
- * Garante que variações sem estoque não sejam consideradas compráveis e
- * expõe flags extras no JSON de variações para o front-end.
+ * Garante que variaÃ§Ãµes sem estoque nÃ£o sejam consideradas comprÃ¡veis e
+ * expÃµe flags extras no JSON de variaÃ§Ãµes para o front-end.
  */
 function gstore_variation_is_purchasable( $purchasable, $variation ) {
 	if ( ! $variation instanceof WC_Product_Variation ) {
@@ -150,26 +150,26 @@ function gstore_available_variation_stock_payload( $data, $product, $variation )
 	// Verificar estoque de forma mais precisa
 	$is_in_stock = $variation->is_in_stock();
 
-	// Se o estoque é gerenciado, verificar a quantidade real
+	// Se o estoque Ã© gerenciado, verificar a quantidade real
 	if ( $variation->managing_stock() ) {
 		$stock_quantity = $variation->get_stock_quantity();
-		// Se quantidade é 0 ou menor, considerar fora de estoque
+		// Se quantidade Ã© 0 ou menor, considerar fora de estoque
 		if ( $stock_quantity <= 0 ) {
 			$is_in_stock = false;
 		}
 	}
 
-	// Também verificar o status direto do post meta como fallback
+	// TambÃ©m verificar o status direto do post meta como fallback
 	$stock_status = get_post_meta( $variation->get_id(), '_stock_status', true );
 	if ( 'outofstock' === $stock_status ) {
 		$is_in_stock = false;
 	}
 
 	$data['gstore_is_in_stock'] = $is_in_stock;
-	$data['is_in_stock'] = $is_in_stock; // Sobrescreve o valor padrão do WooCommerce
+	$data['is_in_stock'] = $is_in_stock; // Sobrescreve o valor padrÃ£o do WooCommerce
 	$data['gstore_is_purchasable'] = $is_in_stock && $variation->is_purchasable();
 	$data['gstore_stock_text'] = $is_in_stock
-		? __( 'Disponível', 'gstore' )
+		? __( 'DisponÃ­vel', 'gstore' )
 		: __( 'Sem estoque no momento', 'gstore' );
 
 	return $data;
@@ -177,10 +177,10 @@ function gstore_available_variation_stock_payload( $data, $product, $variation )
 add_filter( 'woocommerce_available_variation', 'gstore_available_variation_stock_payload', 10, 3 );
 
 /**
- * SEO: título do documento na página single do produto.
+ * SEO: tÃ­tulo do documento na pÃ¡gina single do produto.
  * Usa meta _gstore_seo_title se preenchido; fallback = nome do produto.
  *
- * @param array $title_parts Partes do título (title, page, tagline).
+ * @param array $title_parts Partes do tÃ­tulo (title, page, tagline).
  * @return array
  */
 function gstore_product_document_title_parts( $title_parts ) {
@@ -200,8 +200,8 @@ function gstore_product_document_title_parts( $title_parts ) {
 add_filter( 'document_title_parts', 'gstore_product_document_title_parts', 10, 1 );
 
 /**
- * SEO: meta description na página single do produto.
- * Usa meta _gstore_seo_meta_description se preenchido; fallback = resumo (descrição curta).
+ * SEO: meta description na pÃ¡gina single do produto.
+ * Usa meta _gstore_seo_meta_description se preenchido; fallback = resumo (descriÃ§Ã£o curta).
  */
 function gstore_product_meta_description() {
 	if ( ! function_exists( 'is_product' ) || ! is_product() ) {
@@ -231,17 +231,17 @@ function gstore_product_meta_description() {
 }
 add_action( 'wp_head', 'gstore_product_meta_description', 1 );
 
-// 5. Atualizar opções do banco de dados (executa apenas uma vez para garantir robustez)
+// 5. Atualizar opÃ§Ãµes do banco de dados (executa apenas uma vez para garantir robustez)
 function gstore_force_woocommerce_image_options() {
-	// Executa apenas uma vez (ou quando necessário)
+	// Executa apenas uma vez (ou quando necessÃ¡rio)
 	if ( get_option( 'gstore_image_options_set' ) === 'v2' ) {
 		return;
 	}
 	
-	// Opção principal de crop
+	// OpÃ§Ã£o principal de crop
 	update_option( 'woocommerce_thumbnail_cropping', 'uncropped' );
 	
-	// Opções de tamanho (formato antigo, ainda respeitado)
+	// OpÃ§Ãµes de tamanho (formato antigo, ainda respeitado)
 	update_option( 'woocommerce_thumbnail_image_width', 300 );
 	update_option( 'woocommerce_single_image_width', 1000 );
 	
@@ -253,14 +253,14 @@ add_action( 'init', 'gstore_force_woocommerce_image_options' );
 /**
  * Adiciona resource hints (preconnect, dns-prefetch) para melhorar performance.
  * 
- * Adiciona preconnect para CDNs e recursos externos para reduzir latência
- * na primeira conexão. Isso pode economizar ~300ms no tempo de carregamento.
+ * Adiciona preconnect para CDNs e recursos externos para reduzir latÃªncia
+ * na primeira conexÃ£o. Isso pode economizar ~300ms no tempo de carregamento.
  */
 function gstore_add_resource_hints() {
 	// Preconnect para FontAwesome CDN (prioridade alta)
 	echo '<link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>' . "\n";
 	
-	// DNS-prefetch para outras origens externas (menos crítico)
+	// DNS-prefetch para outras origens externas (menos crÃ­tico)
 	echo '<link rel="dns-prefetch" href="https://upload.wikimedia.org">' . "\n";
 	echo '<link rel="dns-prefetch" href="https://secure.gravatar.com">' . "\n";
 }
@@ -269,8 +269,8 @@ add_action( 'wp_head', 'gstore_add_resource_hints', 1 );
 /**
  * Adiciona font-display: swap para FontAwesome para melhorar FCP.
  * 
- * Isso garante que o texto seja visível imediatamente enquanto as fontes carregam,
- * evitando FOIT (Flash of Invisible Text) e melhorando a percepção de velocidade.
+ * Isso garante que o texto seja visÃ­vel imediatamente enquanto as fontes carregam,
+ * evitando FOIT (Flash of Invisible Text) e melhorando a percepÃ§Ã£o de velocidade.
  */
 function gstore_fontawesome_font_display() {
 	?>
@@ -303,7 +303,7 @@ add_action( 'wp_head', 'gstore_fontawesome_font_display', 2 );
  * Adiciona preload para Font Awesome CSS para melhorar performance.
  * 
  * Preload permite que o navegador baixe o recurso com prioridade alta
- * sem bloquear a renderização inicial.
+ * sem bloquear a renderizaÃ§Ã£o inicial.
  */
 function gstore_preload_fontawesome() {
 	?>
@@ -314,13 +314,13 @@ function gstore_preload_fontawesome() {
 add_action( 'wp_head', 'gstore_preload_fontawesome', 1 );
 
 /**
- * Inline CSS crítico acima da dobra (header e hero básico).
+ * Inline CSS crÃ­tico acima da dobra (header e hero bÃ¡sico).
  * 
  * Isso reduz render blocking ao colocar estilos essenciais diretamente no HTML,
  * permitindo que o header e hero sejam renderizados imediatamente.
  */
 function gstore_inline_critical_css() {
-	// CSS crítico mínimo para renderização inicial do header e hero
+	// CSS crÃ­tico mÃ­nimo para renderizaÃ§Ã£o inicial do header e hero
 	$critical_css = '
 		/* Reset header */
 		header.Gstore-header-shell,
@@ -331,7 +331,7 @@ function gstore_inline_critical_css() {
 			padding: 0 !important;
 		}
 		
-		/* Top bar básico */
+		/* Top bar bÃ¡sico */
 		.Gstore-top-bar {
 			background-color: #0a0a0a;
 			color: #fff;
@@ -357,7 +357,7 @@ function gstore_inline_critical_css() {
 			text-decoration: none;
 		}
 		
-		/* Header principal básico */
+		/* Header principal bÃ¡sico */
 		.Gstore-header {
 			background-color: #0a0a0a;
 		}
@@ -379,7 +379,7 @@ function gstore_inline_critical_css() {
 			font-size: 20px;
 		}
 		
-		/* Hero slider básico */
+		/* Hero slider bÃ¡sico */
 		.Gstore-hero-slider {
 			position: relative;
 			width: 100%;
@@ -404,7 +404,7 @@ function gstore_inline_critical_css() {
 		}
 	';
 	
-	// Minifica o CSS crítico (remove espaços extras)
+	// Minifica o CSS crÃ­tico (remove espaÃ§os extras)
 	$critical_css = preg_replace( '/\s+/', ' ', $critical_css );
 	$critical_css = str_replace( array( '; ', ' {', '{ ', ' }', '} ', ': ' ), array( ';', '{', '{', '}', '}', ':' ), $critical_css );
 	$critical_css = trim( $critical_css );
@@ -418,13 +418,13 @@ function gstore_inline_critical_css() {
 add_action( 'wp_head', 'gstore_inline_critical_css', 3 );
 
 /**
- * Adiciona preload para recursos críticos (imagens hero, fontes, etc).
+ * Adiciona preload para recursos crÃ­ticos (imagens hero, fontes, etc).
  * 
- * Preload ajuda o navegador a priorizar recursos críticos,
+ * Preload ajuda o navegador a priorizar recursos crÃ­ticos,
  * melhorando LCP e FCP.
  */
 function gstore_add_preload_resources() {
-	// Preload da primeira imagem do hero (se disponível)
+	// Preload da primeira imagem do hero (se disponÃ­vel)
 	if ( function_exists( 'gstore_get_hero_slide_1_id' ) ) {
 		$hero_slide_1_id = gstore_get_hero_slide_1_id();
 		if ( $hero_slide_1_id > 0 ) {
@@ -442,13 +442,13 @@ function gstore_add_preload_resources() {
 		}
 	}
 
-	// Preload de fontes críticas (se necessário)
+	// Preload de fontes crÃ­ticas (se necessÃ¡rio)
 	$critical_fonts = apply_filters( 'gstore_critical_fonts', array() );
 	foreach ( $critical_fonts as $font_url ) {
 		echo '<link rel="preload" as="font" href="' . esc_url( $font_url ) . '" crossorigin>' . "\n";
 	}
 
-	// Preload do CSS crítico do tema pai (se necessário)
+	// Preload do CSS crÃ­tico do tema pai (se necessÃ¡rio)
 	if ( is_front_page() ) {
 		$parent_theme = wp_get_theme( 'twentytwentyfive' );
 		if ( $parent_theme->exists() ) {
@@ -460,13 +460,13 @@ function gstore_add_preload_resources() {
 add_action( 'wp_head', 'gstore_add_preload_resources', 1 );
 
 /**
- * Expandida lista de CSS não crítico que pode ser deferido.
+ * Expandida lista de CSS nÃ£o crÃ­tico que pode ser deferido.
  * 
- * Adiciona mais CSS à lista de defer, incluindo layouts e componentes
- * que não são necessários para renderização inicial.
+ * Adiciona mais CSS Ã  lista de defer, incluindo layouts e componentes
+ * que nÃ£o sÃ£o necessÃ¡rios para renderizaÃ§Ã£o inicial.
  */
 function gstore_defer_non_critical_css( $tag, $handle, $href, $media ) {
-	// Não aplica em modo de desenvolvimento para facilitar debug
+	// NÃ£o aplica em modo de desenvolvimento para facilitar debug
 	if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
 		return $tag;
 	}
@@ -474,32 +474,32 @@ function gstore_defer_non_critical_css( $tag, $handle, $href, $media ) {
 		return $tag;
 	}
 
-	// Android: alguns browsers/versões podem falhar em disparar onload em <link rel="stylesheet">
-	// quando usamos a técnica media="print" (o CSS fica preso em print e a página fica sem estilo).
-	// Preferimos confiabilidade no Android e não deferimos CSS por esta técnica nesse caso.
+	// Android: alguns browsers/versÃµes podem falhar em disparar onload em <link rel="stylesheet">
+	// quando usamos a tÃ©cnica media="print" (o CSS fica preso em print e a pÃ¡gina fica sem estilo).
+	// Preferimos confiabilidade no Android e nÃ£o deferimos CSS por esta tÃ©cnica nesse caso.
 	$ua = isset( $_SERVER['HTTP_USER_AGENT'] ) ? (string) $_SERVER['HTTP_USER_AGENT'] : '';
 	if ( $ua && preg_match( '/Android/i', $ua ) ) {
 		return $tag;
 	}
 
-	// Lista expandida de CSS não crítico que pode ser deferido
+	// Lista expandida de CSS nÃ£o crÃ­tico que pode ser deferido
 	$non_critical_css = array(
-		// Font Awesome - não crítico para renderização inicial (ícones podem carregar depois)
+		// Font Awesome - nÃ£o crÃ­tico para renderizaÃ§Ã£o inicial (Ã­cones podem carregar depois)
 		'gstore-fontawesome',
 		
-		// CSS de páginas específicas
+		// CSS de pÃ¡ginas especÃ­ficas
 		'gstore-my-account-css',
 		'gstore-como-comprar-arma-css',
 	'gstore-informativo-css',
 		'gstore-notices-css',
 		
-		// CSS de layouts que não estão acima da dobra
-		'gstore-header-css',      // Já inlinado como crítico, pode defer o resto
+		// CSS de layouts que nÃ£o estÃ£o acima da dobra
+		'gstore-header-css',      // JÃ¡ inlinado como crÃ­tico, pode defer o resto
 		
-		// CSS de componentes não críticos
-		'gstore-product-card-css', // Não está acima da dobra na home
+		// CSS de componentes nÃ£o crÃ­ticos
+		'gstore-product-card-css', // NÃ£o estÃ¡ acima da dobra na home
 		
-		// CSS do WooCommerce que não é crítico
+		// CSS do WooCommerce que nÃ£o Ã© crÃ­tico
 		'woocommerce-layout',
 		'woocommerce-smallscreen',
 		'woocommerce-blocktheme',
@@ -512,28 +512,28 @@ function gstore_defer_non_critical_css( $tag, $handle, $href, $media ) {
 		'woocommerce-general',    // CSS geral do WooCommerce
 		'woocommerce-inline',     // CSS inline do WooCommerce
 		
-		// CSS de layouts específicos
-		'gstore-home-css',         // Pode defer se não for home ou se hero já foi renderizado
+		// CSS de layouts especÃ­ficos
+		'gstore-home-css',         // Pode defer se nÃ£o for home ou se hero jÃ¡ foi renderizado
 	);
 
-	// CSS de home que só deve ser deferido se não for a home page
+	// CSS de home que sÃ³ deve ser deferido se nÃ£o for a home page
 	if ( 'gstore-home-css' === $handle && is_front_page() ) {
-		// Não defer na home, mas pode ser otimizado de outra forma
+		// NÃ£o defer na home, mas pode ser otimizado de outra forma
 		return $tag;
 	}
 
-	// CSS de header - defer apenas partes não críticas (já tem inline crítico)
+	// CSS de header - defer apenas partes nÃ£o crÃ­ticas (jÃ¡ tem inline crÃ­tico)
 	if ( 'gstore-header-css' === $handle ) {
-		// Defer apenas se não for a primeira carga (já tem inline)
-		// Na prática, pode defer pois já temos CSS crítico inline
+		// Defer apenas se nÃ£o for a primeira carga (jÃ¡ tem inline)
+		// Na prÃ¡tica, pode defer pois jÃ¡ temos CSS crÃ­tico inline
 	}
 
-	// Verifica se é CSS não crítico
+	// Verifica se Ã© CSS nÃ£o crÃ­tico
 	if ( ! in_array( $handle, $non_critical_css, true ) ) {
 		return $tag;
 	}
 
-	// Verifica se já tem defer/preload
+	// Verifica se jÃ¡ tem defer/preload
 	if ( strpos( $tag, 'onload=' ) !== false || strpos( $tag, 'media="print"' ) !== false ) {
 		return $tag;
 	}
@@ -541,7 +541,7 @@ function gstore_defer_non_critical_css( $tag, $handle, $href, $media ) {
 	$original_tag = $tag;
 
 	// Marca link como "deferido" para permitir fallback JS se o onload falhar.
-	// (Não usa DOMDocument por performance e para evitar efeitos colaterais no HTML gerado pelo WP.)
+	// (NÃ£o usa DOMDocument por performance e para evitar efeitos colaterais no HTML gerado pelo WP.)
 	$tag = preg_replace(
 		'/<link\\s/i',
 		'<link data-gstore-deferred="1" data-gstore-media="' . esc_attr( $media ) . '" ',
@@ -549,7 +549,7 @@ function gstore_defer_non_critical_css( $tag, $handle, $href, $media ) {
 		1
 	);
 
-	// Aplica técnica de defer usando JavaScript
+	// Aplica tÃ©cnica de defer usando JavaScript
 	// Troca media para print e depois muda para all quando carregar
 	// Suporta tanto aspas simples quanto duplas
 	if ( strpos( $tag, "media='" ) !== false ) {
@@ -578,7 +578,7 @@ add_filter( 'style_loader_tag', 'gstore_defer_non_critical_css', 10, 4 );
 /**
  * Fallback para CSS deferido via media="print": se o onload falhar, reativa o CSS.
  *
- * Importante: só atua em links marcados pelo tema (data-gstore-deferred="1").
+ * Importante: sÃ³ atua em links marcados pelo tema (data-gstore-deferred="1").
  */
 function gstore_deferred_css_fallback_script() {
 	?>
@@ -593,7 +593,7 @@ function gstore_deferred_css_fallback_script() {
 				link.media = targetMedia;
 			}
 		}
-		// Tenta cedo (após parse) e também após load, e com um timeout de segurança.
+		// Tenta cedo (apÃ³s parse) e tambÃ©m apÃ³s load, e com um timeout de seguranÃ§a.
 		if (document.readyState === 'loading') {
 			document.addEventListener('DOMContentLoaded', fixDeferredCss);
 		} else {
@@ -611,10 +611,10 @@ add_action( 'wp_head', 'gstore_deferred_css_fallback_script', 4 );
  * Otimiza carregamento de scripts para reduzir main-thread work.
  * 
  * Aplica defer/async quando apropriado, especialmente para scripts
- * que não são necessários para renderização inicial.
+ * que nÃ£o sÃ£o necessÃ¡rios para renderizaÃ§Ã£o inicial.
  */
 function gstore_optimize_script_loading( $tag, $handle, $src ) {
-	// Não aplica em modo de desenvolvimento
+	// NÃ£o aplica em modo de desenvolvimento
 	if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
 		return $tag;
 	}
@@ -622,20 +622,20 @@ function gstore_optimize_script_loading( $tag, $handle, $src ) {
 		return $tag;
 	}
 
-	// Scripts que podem ser deferidos (não críticos para renderização inicial)
+	// Scripts que podem ser deferidos (nÃ£o crÃ­ticos para renderizaÃ§Ã£o inicial)
 	$defer_scripts = array(
-		'gstore-home-benefits',        // Não crítico para primeira renderização
+		'gstore-home-benefits',        // NÃ£o crÃ­tico para primeira renderizaÃ§Ã£o
 		'gstore-home-products-carousel', // Carrossel pode carregar depois
-		'gstore-product-card',          // Não crítico acima da dobra
-		'gstore-my-account',            // Página específica
+		'gstore-product-card',          // NÃ£o crÃ­tico acima da dobra
+		'gstore-my-account',            // PÃ¡gina especÃ­fica
 	);
 
-	// Scripts que podem usar async (não dependem de outros)
+	// Scripts que podem usar async (nÃ£o dependem de outros)
 	$async_scripts = array();
 
 	// Aplica defer
 	if ( in_array( $handle, $defer_scripts, true ) ) {
-		// Verifica se já tem defer ou async
+		// Verifica se jÃ¡ tem defer ou async
 		if ( strpos( $tag, ' defer' ) === false && strpos( $tag, ' async' ) === false ) {
 			$tag = str_replace( ' src', ' defer src', $tag );
 		}
@@ -655,7 +655,7 @@ add_filter( 'script_loader_tag', 'gstore_optimize_script_loading', 10, 3 );
 /**
  * Otimiza back/forward cache (bfcache) removendo barreiras.
  * 
- * Garante que a página pode ser restaurada do bfcache corretamente
+ * Garante que a pÃ¡gina pode ser restaurada do bfcache corretamente
  * e evita listeners que bloqueiam essa funcionalidade.
  */
 function gstore_fix_back_forward_cache() {
@@ -664,26 +664,26 @@ function gstore_fix_back_forward_cache() {
 	(function() {
 		'use strict';
 		
-		// Detecta quando a página é restaurada do bfcache
+		// Detecta quando a pÃ¡gina Ã© restaurada do bfcache
 		window.addEventListener('pageshow', function(event) {
 			if (event.persisted) {
-				// Página restaurada do bfcache - pode precisar re-inicializar alguns recursos
-				// Mas não força reload completo
+				// PÃ¡gina restaurada do bfcache - pode precisar re-inicializar alguns recursos
+				// Mas nÃ£o forÃ§a reload completo
 				
 				// Se houver scripts que precisam reinicializar, podem escutar este evento
 				window.dispatchEvent(new CustomEvent('gstore:bfcache:restore'));
 			}
 		});
 		
-		// Evita uso de beforeunload quando possível (bloqueia bfcache)
-		// Intercepta tentativas de adicionar beforeunload apenas em produção
+		// Evita uso de beforeunload quando possÃ­vel (bloqueia bfcache)
+		// Intercepta tentativas de adicionar beforeunload apenas em produÃ§Ã£o
 		if (!window.location.hostname.includes('localhost') && !window.location.hostname.includes('127.0.0.1')) {
 			var originalAddEventListener = window.addEventListener;
 			window.addEventListener = function(type, listener, options) {
-				// Bloqueia beforeunload que impede bfcache (exceto se realmente necessário)
+				// Bloqueia beforeunload que impede bfcache (exceto se realmente necessÃ¡rio)
 				if (type === 'beforeunload' && typeof listener === 'function') {
-					// Permite apenas se for realmente necessário (ex: formulário com dados não salvos)
-					// Na prática, não bloqueamos, mas logamos para debug
+					// Permite apenas se for realmente necessÃ¡rio (ex: formulÃ¡rio com dados nÃ£o salvos)
+					// Na prÃ¡tica, nÃ£o bloqueamos, mas logamos para debug
 					if (window.console && console.warn) {
 						console.warn('[Gstore Performance] beforeunload listener detectado - pode afetar bfcache');
 					}
@@ -692,12 +692,12 @@ function gstore_fix_back_forward_cache() {
 			};
 		}
 		
-		// Garante que não há referências a objetos que podem impedir bfcache
-		// Remove referências circulares comuns
+		// Garante que nÃ£o hÃ¡ referÃªncias a objetos que podem impedir bfcache
+		// Remove referÃªncias circulares comuns
 		if ('requestIdleCallback' in window) {
 			requestIdleCallback(function() {
-				// Limpa timers órfãos que podem impedir bfcache
-				// Não faz nada agressivo, apenas garante limpeza
+				// Limpa timers Ã³rfÃ£os que podem impedir bfcache
+				// NÃ£o faz nada agressivo, apenas garante limpeza
 			}, { timeout: 1000 });
 		}
 	})();
@@ -707,11 +707,11 @@ function gstore_fix_back_forward_cache() {
 add_action( 'wp_footer', 'gstore_fix_back_forward_cache', 1 );
 
 /**
- * Remove preload automático do WordPress para o style.css do tema filho.
+ * Remove preload automÃ¡tico do WordPress para o style.css do tema filho.
  * 
  * O WordPress 5.8+ adiciona automaticamente um preload para o stylesheet do tema,
- * mas isso pode causar avisos no console se o CSS não for usado imediatamente.
- * Como o CSS está sendo enfileirado corretamente, o preload não é necessário.
+ * mas isso pode causar avisos no console se o CSS nÃ£o for usado imediatamente.
+ * Como o CSS estÃ¡ sendo enfileirado corretamente, o preload nÃ£o Ã© necessÃ¡rio.
  */
 function gstore_remove_automatic_stylesheet_preload( $hints, $relation_type ) {
 	// Remove apenas preload do stylesheet do tema filho
@@ -728,13 +728,13 @@ function gstore_remove_automatic_stylesheet_preload( $hints, $relation_type ) {
 add_filter( 'wp_resource_hints', 'gstore_remove_automatic_stylesheet_preload', 10, 2 );
 
 /**
- * Previne conflitos de múltiplas instâncias do React e problemas de acessibilidade.
+ * Previne conflitos de mÃºltiplas instÃ¢ncias do React e problemas de acessibilidade.
  * 
- * 1. O erro "Failed to execute 'removeChild'" geralmente ocorre quando há
- *    múltiplas instâncias do React ou conflitos entre React e outras bibliotecas.
+ * 1. O erro "Failed to execute 'removeChild'" geralmente ocorre quando hÃ¡
+ *    mÃºltiplas instÃ¢ncias do React ou conflitos entre React e outras bibliotecas.
  * 
  * 2. O problema de aria-hidden ocorre quando o WooCommerce define aria-hidden="true"
- *    no wp-site-blocks enquanto o botão do mini-cart ainda tem foco.
+ *    no wp-site-blocks enquanto o botÃ£o do mini-cart ainda tem foco.
  */
 function gstore_prevent_react_conflicts() {
 	?>
@@ -746,42 +746,42 @@ function gstore_prevent_react_conflicts() {
 		// Apenas intercepta chamadas que falhariam
 		var originalRemoveChild = Node.prototype.removeChild;
 		Node.prototype.removeChild = function(child) {
-			// Verifica se child é válido
+			// Verifica se child Ã© vÃ¡lido
 			if (!child) {
 				return child;
 			}
 			
 			try {
-				// Verifica se o nó ainda está no DOM e se é realmente filho
+				// Verifica se o nÃ³ ainda estÃ¡ no DOM e se Ã© realmente filho
 				if (this.contains && this.contains(child)) {
-					// Verifica se o nó ainda tem um parent (pode ter sido removido por outro processo)
+					// Verifica se o nÃ³ ainda tem um parent (pode ter sido removido por outro processo)
 					if (child.parentNode === this) {
 						return originalRemoveChild.call(this, child);
 					} else if (child.parentNode) {
-						// O nó tem um parent diferente, não é filho deste nó
+						// O nÃ³ tem um parent diferente, nÃ£o Ã© filho deste nÃ³
 						// Retorna sem erro
 						return child;
 					} else {
-						// O nó não tem parent, já foi removido
+						// O nÃ³ nÃ£o tem parent, jÃ¡ foi removido
 						// Retorna sem erro
 						return child;
 					}
 				}
-				// Se não for filho, retorna o nó sem erro
+				// Se nÃ£o for filho, retorna o nÃ³ sem erro
 				return child;
 			} catch (e) {
-				// Se houver erro, apenas retorna o nó sem lançar exceção
-				// Isso previne que o erro quebre a renderização do React
+				// Se houver erro, apenas retorna o nÃ³ sem lanÃ§ar exceÃ§Ã£o
+				// Isso previne que o erro quebre a renderizaÃ§Ã£o do React
 				if (window.location.hostname.includes('localhost') || window.location.hostname.includes('127.0.0.1')) {
-					console.warn('[Gstore] Erro ao remover nó (prevenido):', e.message);
+					console.warn('[Gstore] Erro ao remover nÃ³ (prevenido):', e.message);
 				}
 				return child;
 			}
 		};
 		
 		// Corrige problema de aria-hidden no mini-cart
-		// Quando o drawer do mini-cart é aberto, o WooCommerce define aria-hidden="true"
-		// no wp-site-blocks, mas o botão do mini-cart ainda pode ter foco
+		// Quando o drawer do mini-cart Ã© aberto, o WooCommerce define aria-hidden="true"
+		// no wp-site-blocks, mas o botÃ£o do mini-cart ainda pode ter foco
 		function fixMiniCartAriaHidden() {
 			var wpSiteBlocks = document.querySelector('.wp-site-blocks');
 			var miniCartButton = document.querySelector('.wc-block-mini-cart__button');
@@ -792,15 +792,15 @@ function gstore_prevent_react_conflicts() {
 			}
 			
 			// Intercepta quando o WooCommerce tenta definir aria-hidden="true"
-			// Verifica se há elementos focáveis antes de aplicar
+			// Verifica se hÃ¡ elementos focÃ¡veis antes de aplicar
 			var originalSetAttribute = Element.prototype.setAttribute;
 			Element.prototype.setAttribute = function(name, value) {
-				// Se está tentando definir aria-hidden="true" no wp-site-blocks
+				// Se estÃ¡ tentando definir aria-hidden="true" no wp-site-blocks
 				if (name === 'aria-hidden' && value === 'true' && this === wpSiteBlocks) {
 					var activeElement = document.activeElement;
 					
-					// Verifica se há um elemento focável dentro do wp-site-blocks
-					// que não está dentro do drawer do mini-cart
+					// Verifica se hÃ¡ um elemento focÃ¡vel dentro do wp-site-blocks
+					// que nÃ£o estÃ¡ dentro do drawer do mini-cart
 					var focusableElements = wpSiteBlocks.querySelectorAll(
 						'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
 					);
@@ -817,35 +817,35 @@ function gstore_prevent_react_conflicts() {
 						}
 					}
 					
-					// Se há um elemento focável, não aplica aria-hidden no wp-site-blocks
-					// Aplica apenas no conteúdo principal (não no header)
+					// Se hÃ¡ um elemento focÃ¡vel, nÃ£o aplica aria-hidden no wp-site-blocks
+					// Aplica apenas no conteÃºdo principal (nÃ£o no header)
 					if (hasFocusedElement) {
 						var mainContent = document.querySelector('main:not(.Gstore-header)');
 						if (mainContent && !mainContent.closest('.wc-block-mini-cart__drawer')) {
 							mainContent.setAttribute('aria-hidden', 'true');
 						}
-						// Não aplica no wp-site-blocks
+						// NÃ£o aplica no wp-site-blocks
 						return;
 					}
 				}
 				
-				// Para outros casos, usa o comportamento padrão
+				// Para outros casos, usa o comportamento padrÃ£o
 				return originalSetAttribute.call(this, name, value);
 			};
 			
-			// Observa mudanças no drawer do mini-cart para limpar aria-hidden quando fechar
+			// Observa mudanÃ§as no drawer do mini-cart para limpar aria-hidden quando fechar
 			var drawerObserver = new MutationObserver(function(mutations) {
 				mutations.forEach(function(mutation) {
 					if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
 						var isDrawerOpen = miniCartDrawer.classList.contains('is-open');
 						
-						// Quando o drawer fecha, remove aria-hidden do conteúdo principal
+						// Quando o drawer fecha, remove aria-hidden do conteÃºdo principal
 						if (!isDrawerOpen) {
 							var mainContent = document.querySelector('main[aria-hidden="true"]');
 							if (mainContent) {
 								mainContent.removeAttribute('aria-hidden');
 							}
-							// Também remove do wp-site-blocks se estiver definido
+							// TambÃ©m remove do wp-site-blocks se estiver definido
 							if (wpSiteBlocks.getAttribute('aria-hidden') === 'true') {
 								wpSiteBlocks.removeAttribute('aria-hidden');
 							}
@@ -867,7 +867,7 @@ function gstore_prevent_react_conflicts() {
 			fixMiniCartAriaHidden();
 		}
 		
-		// Também tenta após um pequeno delay para garantir que o WooCommerce carregou
+		// TambÃ©m tenta apÃ³s um pequeno delay para garantir que o WooCommerce carregou
 		setTimeout(fixMiniCartAriaHidden, 1000);
 	})();
 	</script>
@@ -881,7 +881,7 @@ add_action( 'wp_head', 'gstore_prevent_react_conflicts', 999 );
  * Nova estrutura modular:
  * 1. Sistema de tokens e base (gstore-main.css)
  * 2. Style.css legado (compatibilidade)
- * 3. Estilos específicos de página (cart, checkout, etc.)
+ * 3. Estilos especÃ­ficos de pÃ¡gina (cart, checkout, etc.)
  */
 function gstore_enqueue_styles() {
 	$parent_handle = 'twentytwentyfive-style';
@@ -894,7 +894,7 @@ function gstore_enqueue_styles() {
 	$header_css_file = get_theme_file_path( 'assets/css/layouts/header.css' );
 	$header_css_version = file_exists( $header_css_file ) ? (string) filemtime( $header_css_file ) : $theme_version;
 	
-	// Obtém timestamp da última atualização dos tokens para forçar recarregamento
+	// ObtÃ©m timestamp da Ãºltima atualizaÃ§Ã£o dos tokens para forÃ§ar recarregamento
 	$tokens_version = get_option( 'gstore_tokens_last_updated', time() );
 	$gstore_version = $theme_version . '.' . $tokens_version;
 
@@ -906,8 +906,8 @@ function gstore_enqueue_styles() {
 		$parent_theme->get( 'Version' )
 	);
 
-	// Font Awesome - Carregado de forma não bloqueante
-	// Usa técnica de media="print" + onload para evitar render blocking
+	// Font Awesome - Carregado de forma nÃ£o bloqueante
+	// Usa tÃ©cnica de media="print" + onload para evitar render blocking
 	wp_enqueue_style(
 		'gstore-fontawesome',
 		'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css',
@@ -916,7 +916,7 @@ function gstore_enqueue_styles() {
 	);
 
 	// Sistema modular Gstore (tokens, base, utilities, components, layouts)
-	// Usa versão com timestamp para forçar recarregamento quando tokens são atualizados
+	// Usa versÃ£o com timestamp para forÃ§ar recarregamento quando tokens sÃ£o atualizados
 	wp_enqueue_style(
 		'gstore-main',
 		get_theme_file_uri( 'assets/css/gstore-main.css' ),
@@ -924,7 +924,7 @@ function gstore_enqueue_styles() {
 		$gstore_version
 	);
 
-	// Style.css principal (contém estilos legados que ainda não foram migrados)
+	// Style.css principal (contÃ©m estilos legados que ainda nÃ£o foram migrados)
 	wp_enqueue_style(
 		'gstore-style',
 		get_stylesheet_uri(),
@@ -932,7 +932,7 @@ function gstore_enqueue_styles() {
 		$stylesheet_version
 	);
 
-	// Footer CAC Armas (migrado do style.css para módulo dedicado)
+	// Footer CAC Armas (migrado do style.css para mÃ³dulo dedicado)
 	wp_enqueue_style(
 		'gstore-footer-css',
 		get_theme_file_uri( 'assets/css/layouts/footer.css' ),
@@ -940,7 +940,7 @@ function gstore_enqueue_styles() {
 		$footer_css_version
 	);
 
-	// Header CSS - carregado por último para ter prioridade sobre estilos legados
+	// Header CSS - carregado por Ãºltimo para ter prioridade sobre estilos legados
 	wp_enqueue_style(
 		'gstore-header-css',
 		get_theme_file_uri( 'assets/css/layouts/header.css' ),
@@ -948,7 +948,7 @@ function gstore_enqueue_styles() {
 		$header_css_version
 	);
 
-	// Botão flutuante do Telegram (usa href dinâmico da top bar; sem hardcode)
+	// BotÃ£o flutuante do Telegram (usa href dinÃ¢mico da top bar; sem hardcode)
 	wp_enqueue_style(
 		'gstore-telegram-floating-css',
 		get_theme_file_uri( 'assets/css/components/telegram-floating.css' ),
@@ -956,7 +956,7 @@ function gstore_enqueue_styles() {
 		$theme_version
 	);
 
-	// CSS da página de minha conta (login/registro)
+	// CSS da pÃ¡gina de minha conta (login/registro)
 	if ( class_exists( 'WooCommerce' ) && function_exists( 'is_account_page' ) && is_account_page() ) {
 		wp_enqueue_style(
 			'gstore-my-account-css',
@@ -966,7 +966,7 @@ function gstore_enqueue_styles() {
 		);
 	}
 
-	// CSS da página de como comprar arma
+	// CSS da pÃ¡gina de como comprar arma
 	if ( is_page( 'como-comprar-arma' ) ) {
 		wp_enqueue_style(
 			'gstore-como-comprar-arma-css',
@@ -976,7 +976,7 @@ function gstore_enqueue_styles() {
 		);
 	}
 
-	// CSS da página informativo (pós-venda)
+	// CSS da pÃ¡gina informativo (pÃ³s-venda)
 	if ( is_page( 'informativo' ) ) {
 		wp_enqueue_style(
 			'gstore-informativo-css',
@@ -995,7 +995,7 @@ function gstore_enqueue_styles() {
 		);
 	}
 
-	// CSS de Notificações e Modais
+	// CSS de NotificaÃ§Ãµes e Modais
 	wp_enqueue_style(
 		'gstore-notices-css',
 		get_theme_file_uri( 'assets/css/components/notices.css' ),
@@ -1031,12 +1031,12 @@ function gstore_enqueue_styles() {
 add_action( 'wp_enqueue_scripts', 'gstore_enqueue_styles' );
 
 /**
- * Adiciona cabeçalhos de política de permissões para permitir pagamentos e clipboard.
+ * Adiciona cabeÃ§alhos de polÃ­tica de permissÃµes para permitir pagamentos e clipboard.
  * Isso resolve o erro: Permissions policy violation: payment is not allowed in this document.
  */
 function gstore_add_permissions_policy_header() {
 	if ( ! is_admin() ) {
-		// Permite pagamentos e área de transferência (para Pix) no documento e iframes.
+		// Permite pagamentos e Ã¡rea de transferÃªncia (para Pix) no documento e iframes.
 		header( 'Permissions-Policy: payment=*, clipboard-write=*' );
 	}
 }
@@ -1078,7 +1078,7 @@ function gstore_enqueue_scripts() {
 		)
 	);
 
-	// Botão flutuante do Telegram (espelha o href do link existente na top bar)
+	// BotÃ£o flutuante do Telegram (espelha o href do link existente na top bar)
 	$telegram_floating_js_path    = get_theme_file_path( 'assets/js/telegram-floating.js' );
 	$telegram_floating_js_version = file_exists( $telegram_floating_js_path ) ? (string) filemtime( $telegram_floating_js_path ) : wp_get_theme()->get( 'Version' );
 	wp_enqueue_script(
@@ -1089,7 +1089,7 @@ function gstore_enqueue_scripts() {
 		true
 	);
 
-	// Passa URLs do tema para o JavaScript (respeitam subdiretório quando WP está em /subdir/)
+	// Passa URLs do tema para o JavaScript (respeitam subdiretÃ³rio quando WP estÃ¡ em /subdir/)
 	$gstore_account_urls = array(
 		'homeUrl'        => home_url( '/' ),
 		'atendimentoUrl' => home_url( '/atendimento' ),
@@ -1136,7 +1136,7 @@ function gstore_enqueue_scripts() {
 		);
 	}
 
-	// Script para posts únicos do blog
+	// Script para posts Ãºnicos do blog
 	if ( is_single() && get_post_type() === 'post' ) {
 		wp_enqueue_script(
 			'gstore-blog-single',
@@ -1258,7 +1258,7 @@ function gstore_enqueue_scripts() {
 			);
 		}
 
-		// Script da página de favoritos
+		// Script da pÃ¡gina de favoritos
 		if ( function_exists( 'is_page' ) && is_page( 'favoritos' ) ) {
 			$favorites_page_js_path    = get_theme_file_path( 'assets/js/favorites-page.js' );
 			$favorites_page_js_version = file_exists( $favorites_page_js_path ) ? (string) filemtime( $favorites_page_js_path ) : wp_get_theme()->get( 'Version' );
@@ -1271,7 +1271,7 @@ function gstore_enqueue_scripts() {
 			);
 		}
 
-		// Script da página informativo (pós-venda)
+		// Script da pÃ¡gina informativo (pÃ³s-venda)
 		if ( function_exists( 'is_page' ) && is_page( 'informativo' ) ) {
 			$informativo_js_path    = get_theme_file_path( 'assets/js/informativo.js' );
 			$informativo_js_version = file_exists( $informativo_js_path ) ? (string) filemtime( $informativo_js_path ) : wp_get_theme()->get( 'Version' );
@@ -1301,7 +1301,7 @@ function gstore_enqueue_scripts() {
 			);
 		}
 
-		// Script da página de minha conta (login/registro)
+		// Script da pÃ¡gina de minha conta (login/registro)
 		if ( function_exists( 'is_account_page' ) && is_account_page() ) {
 			wp_enqueue_script(
 				'gstore-my-account',
@@ -1312,17 +1312,17 @@ function gstore_enqueue_scripts() {
 			);
 		}
 
-		// Script da página de catálogo (filtros retráteis mobile)
-		// Carrega se for qualquer página de catálogo ou se tiver a classe Gstore-catalog-shell
+		// Script da pÃ¡gina de catÃ¡logo (filtros retrÃ¡teis mobile)
+		// Carrega se for qualquer pÃ¡gina de catÃ¡logo ou se tiver a classe Gstore-catalog-shell
 		$is_catalog_page = false;
 		if ( function_exists( 'is_page' ) ) {
-			// Páginas estáticas de catálogo
+			// PÃ¡ginas estÃ¡ticas de catÃ¡logo
 			$catalog_pages = array( 'catalogo', 'ofertas' );
 			$catalog_templates = array( 'page-catalogo', 'page-ofertas' );
 			
 			$is_catalog_page = is_page( $catalog_pages );
 			
-			// Verifica também pelo template
+			// Verifica tambÃ©m pelo template
 			if ( ! $is_catalog_page && is_page() ) {
 				$template = get_page_template_slug();
 				foreach ( $catalog_templates as $tpl ) {
@@ -1334,7 +1334,7 @@ function gstore_enqueue_scripts() {
 			}
 		}
 		
-		// Também verifica se é uma página de shop/archive do WooCommerce
+		// TambÃ©m verifica se Ã© uma pÃ¡gina de shop/archive do WooCommerce
 		if ( ! $is_catalog_page && function_exists( 'is_shop' ) ) {
 			$is_catalog_page = is_shop() || is_product_category() || is_product_tag();
 		}
@@ -1362,8 +1362,8 @@ function gstore_enqueue_scripts() {
 	*/
 	// #endregion
 
-		// Script para sincronização do Mini Cart Block (versão simplificada)
-		// Dependências: wc-settings (fornece storeApiNonce), wp-data (fornece wp.data store)
+		// Script para sincronizaÃ§Ã£o do Mini Cart Block (versÃ£o simplificada)
+		// DependÃªncias: wc-settings (fornece storeApiNonce), wp-data (fornece wp.data store)
 
 		// Script para gerenciar avisos do WooCommerce (slide-in e auto-dismiss)
 		wp_enqueue_script(
@@ -1383,7 +1383,7 @@ function gstore_enqueue_scripts() {
 			true
 		);
 
-		// Localizar nonce e configurações como fallback para o mini-cart fix
+		// Localizar nonce e configuraÃ§Ãµes como fallback para o mini-cart fix
 	}
 
 	// Localizar script para AJAX do WooCommerce
@@ -1403,21 +1403,21 @@ add_action( 'wp_enqueue_scripts', 'gstore_enqueue_scripts' );
 
 /**
  * ============================================================
- * Proteção de sessão WooCommerce contra REST GET (LiteSpeed)
+ * ProteÃ§Ã£o de sessÃ£o WooCommerce contra REST GET (LiteSpeed)
  *
  * O WC Blocks mini-cart faz GET para /wc/store/v1/cart ao carregar
- * cada página.  Sem proteção, o WooCommerce responde com Set-Cookie
- * contendo sessão vazia, sobrescrevendo a sessão real do cliente.
+ * cada pÃ¡gina.  Sem proteÃ§Ã£o, o WooCommerce responde com Set-Cookie
+ * contendo sessÃ£o vazia, sobrescrevendo a sessÃ£o real do cliente.
  *
  * As medidas abaixo:
- *  1. Detectam requisições REST GET (somente leitura).
- *  2. Bloqueiam wc_setcookie() durante essas requisições.
+ *  1. Detectam requisiÃ§Ãµes REST GET (somente leitura).
+ *  2. Bloqueiam wc_setcookie() durante essas requisiÃ§Ãµes.
  *  3. Removem qualquer Set-Cookie que escape do filtro.
- *  4. Impedem que a sessão seja salva no banco (_dirty=false).
+ *  4. Impedem que a sessÃ£o seja salva no banco (_dirty=false).
  * ============================================================
  */
 
-/* --- PASSO 1: Detecção imediata de REST GET readonly --- */
+/* --- PASSO 1: DetecÃ§Ã£o imediata de REST GET readonly --- */
 if ( ! defined( 'GSTORE_READONLY_REQUEST' ) ) {
 	$_gstore_is_rest_get = false;
 	if (
@@ -1447,10 +1447,10 @@ add_filter( 'woocommerce_set_cookie_enabled', function ( $enabled ) {
 	return $enabled;
 }, 10, 1 );
 
-/* --- PASSO 3: Forçar path='/' nos cookies WC em requisições normais --- */
+/* --- PASSO 3: ForÃ§ar path='/' nos cookies WC em requisiÃ§Ãµes normais --- */
 add_filter( 'woocommerce_set_cookie_options', function ( $options ) {
 	if ( defined( 'GSTORE_READONLY_REQUEST' ) && GSTORE_READONLY_REQUEST ) {
-		return $options; // Não altera em readonly (cookie será bloqueado mesmo).
+		return $options; // NÃ£o altera em readonly (cookie serÃ¡ bloqueado mesmo).
 	}
 	if ( is_array( $options ) ) {
 		$options['path'] = '/';
@@ -1458,7 +1458,7 @@ add_filter( 'woocommerce_set_cookie_options', function ( $options ) {
 	return $options;
 }, 10, 1 );
 
-/* --- PASSO 4: Nuclear – remove TODOS os Set-Cookie de respostas REST GET --- */
+/* --- PASSO 4: Nuclear â€“ remove TODOS os Set-Cookie de respostas REST GET --- */
 add_action( 'shutdown', function () {
 	if ( ! defined( 'GSTORE_READONLY_REQUEST' ) || ! GSTORE_READONLY_REQUEST ) {
 		return;
@@ -1468,7 +1468,7 @@ add_action( 'shutdown', function () {
 	}
 }, -10 );
 
-/* --- PASSO 5: _dirty=false + remove save_data na sessão durante REST GET --- */
+/* --- PASSO 5: _dirty=false + remove save_data na sessÃ£o durante REST GET --- */
 add_action( 'shutdown', function () {
 	if ( ! defined( 'GSTORE_READONLY_REQUEST' ) || ! GSTORE_READONLY_REQUEST ) {
 		return;
@@ -1477,11 +1477,11 @@ add_action( 'shutdown', function () {
 		return;
 	}
 	$handler = WC()->session;
-	// Impede que a sessão vazia seja gravada no banco.
+	// Impede que a sessÃ£o vazia seja gravada no banco.
 	if ( method_exists( $handler, 'save_data' ) ) {
 		remove_action( 'shutdown', array( $handler, 'save_data' ), 20 );
 	}
-	// Força _dirty = false via Reflection (fallback).
+	// ForÃ§a _dirty = false via Reflection (fallback).
 	try {
 		$ref = new ReflectionClass( $handler );
 		if ( $ref->hasProperty( '_dirty' ) ) {
@@ -1490,11 +1490,11 @@ add_action( 'shutdown', function () {
 			$prop->setValue( $handler, false );
 		}
 	} catch ( Exception $e ) { // phpcs:ignore Generic.CodeAnalysis.EmptyStatement.DetectedCatch
-		// Silently fail – o header_remove já garante proteção.
+		// Silently fail â€“ o header_remove jÃ¡ garante proteÃ§Ã£o.
 	}
 }, 19 );
 
-/* --- PASSO 6: Cache-Control na home quando há sessão ativa --- */
+/* --- PASSO 6: Cache-Control na home quando hÃ¡ sessÃ£o ativa --- */
 add_action( 'send_headers', function () {
 	if ( defined( 'GSTORE_READONLY_REQUEST' ) && GSTORE_READONLY_REQUEST ) {
 		return;
@@ -1556,16 +1556,16 @@ function gstore_ajax_favorites_toggle() {
 	check_ajax_referer( 'gstore_favorites', 'nonce' );
 
 	if ( ! is_user_logged_in() ) {
-		wp_send_json_error( array( 'message' => 'Você precisa estar logado para salvar favoritos.' ), 401 );
+		wp_send_json_error( array( 'message' => 'VocÃª precisa estar logado para salvar favoritos.' ), 401 );
 	}
 
 	if ( ! class_exists( 'WooCommerce' ) ) {
-		wp_send_json_error( array( 'message' => 'WooCommerce não está ativo.' ), 400 );
+		wp_send_json_error( array( 'message' => 'WooCommerce nÃ£o estÃ¡ ativo.' ), 400 );
 	}
 
 	$product_id = isset( $_POST['product_id'] ) ? absint( wp_unslash( $_POST['product_id'] ) ) : 0; // phpcs:ignore WordPress.Security.NonceVerification.Missing
 	if ( $product_id <= 0 || 'product' !== get_post_type( $product_id ) ) {
-		wp_send_json_error( array( 'message' => 'Produto inválido.' ), 400 );
+		wp_send_json_error( array( 'message' => 'Produto invÃ¡lido.' ), 400 );
 	}
 
 	$user_id = get_current_user_id();
@@ -1596,7 +1596,7 @@ function gstore_ajax_favorites_merge() {
 	check_ajax_referer( 'gstore_favorites', 'nonce' );
 
 	if ( ! is_user_logged_in() ) {
-		wp_send_json_error( array( 'message' => 'Você precisa estar logado para sincronizar favoritos.' ), 401 );
+		wp_send_json_error( array( 'message' => 'VocÃª precisa estar logado para sincronizar favoritos.' ), 401 );
 	}
 
 	$user_id = get_current_user_id();
@@ -1629,14 +1629,14 @@ add_action( 'wp_ajax_gstore_favorites_merge', 'gstore_ajax_favorites_merge' );
 
 /**
  * Renderiza lista de favoritos em HTML.
- * - Logado: se não vier ids, usa user meta.
+ * - Logado: se nÃ£o vier ids, usa user meta.
  * - Deslogado: usa ids enviados.
  */
 function gstore_ajax_favorites_render() {
 	check_ajax_referer( 'gstore_favorites', 'nonce' );
 
 	if ( ! class_exists( 'WooCommerce' ) ) {
-		wp_send_json_error( array( 'message' => 'WooCommerce não está ativo.' ), 400 );
+		wp_send_json_error( array( 'message' => 'WooCommerce nÃ£o estÃ¡ ativo.' ), 400 );
 	}
 
 	$ids = isset( $_POST['ids'] ) ? gstore_favorites_sanitize_ids( wp_unslash( $_POST['ids'] ) ) : array(); // phpcs:ignore WordPress.Security.NonceVerification.Missing
@@ -1690,15 +1690,15 @@ add_action( 'wp_ajax_nopriv_gstore_favorites_render', 'gstore_ajax_favorites_ren
 
 /**
  * ============================
- * Avaliações de produto (WooCommerce)
+ * AvaliaÃ§Ãµes de produto (WooCommerce)
  * ============================
  */
 
 if ( ! function_exists( 'gstore_render_product_review' ) ) {
 	/**
-	 * Callback customizado para listar avaliações (reviews) do WooCommerce.
+	 * Callback customizado para listar avaliaÃ§Ãµes (reviews) do WooCommerce.
 	 *
-	 * @param WP_Comment $comment Comentário atual.
+	 * @param WP_Comment $comment ComentÃ¡rio atual.
 	 * @param array      $args    Argumentos do wp_list_comments.
 	 * @param int        $depth   Profundidade.
 	 */
@@ -1742,7 +1742,7 @@ if ( ! function_exists( 'gstore_render_product_review' ) ) {
 			</header>
 			<div class="Gstore-review-item__body">
 				<?php if ( '0' === $comment->comment_approved ) : ?>
-					<em><?php esc_html_e( 'Sua avaliação está aguardando moderação.', 'gstore' ); ?></em>
+					<em><?php esc_html_e( 'Sua avaliaÃ§Ã£o estÃ¡ aguardando moderaÃ§Ã£o.', 'gstore' ); ?></em>
 				<?php endif; ?>
 				<?php comment_text(); ?>
 			</div>
@@ -1752,11 +1752,11 @@ if ( ! function_exists( 'gstore_render_product_review' ) ) {
 }
 
 /**
- * AJAX: carrega o restante das avaliações (após um offset).
+ * AJAX: carrega o restante das avaliaÃ§Ãµes (apÃ³s um offset).
  */
 function gstore_ajax_load_product_reviews() {
 	if ( ! class_exists( 'WooCommerce' ) ) {
-		wp_send_json_error( array( 'message' => 'WooCommerce não está ativo.' ), 400 );
+		wp_send_json_error( array( 'message' => 'WooCommerce nÃ£o estÃ¡ ativo.' ), 400 );
 	}
 
 	$product_id = isset( $_REQUEST['product_id'] ) ? absint( wp_unslash( $_REQUEST['product_id'] ) ) : 0; // phpcs:ignore WordPress.Security.NonceVerification.Missing
@@ -1764,16 +1764,16 @@ function gstore_ajax_load_product_reviews() {
 	$nonce      = isset( $_REQUEST['nonce'] ) ? (string) wp_unslash( $_REQUEST['nonce'] ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Missing
 
 	if ( $product_id <= 0 ) {
-		wp_send_json_error( array( 'message' => 'Produto inválido.' ), 400 );
+		wp_send_json_error( array( 'message' => 'Produto invÃ¡lido.' ), 400 );
 	}
 
 	if ( ! wp_verify_nonce( $nonce, 'gstore_load_reviews_' . $product_id ) ) {
-		wp_send_json_error( array( 'message' => 'Nonce inválido.' ), 403 );
+		wp_send_json_error( array( 'message' => 'Nonce invÃ¡lido.' ), 403 );
 	}
 
 	$product = wc_get_product( $product_id );
 	if ( ! $product ) {
-		wp_send_json_error( array( 'message' => 'Produto não encontrado.' ), 404 );
+		wp_send_json_error( array( 'message' => 'Produto nÃ£o encontrado.' ), 404 );
 	}
 
 	$comments = get_comments(
@@ -1816,23 +1816,23 @@ add_action( 'wp_ajax_gstore_load_product_reviews', 'gstore_ajax_load_product_rev
 add_action( 'wp_ajax_nopriv_gstore_load_product_reviews', 'gstore_ajax_load_product_reviews' );
 
 /**
- * Atualiza o fragmento do carrinho para refletir mudanças em tempo real.
+ * Atualiza o fragmento do carrinho para refletir mudanÃ§as em tempo real.
  *
  * @param array $fragments Fragmentos de carrinho.
  * @return array
  */
 
 /**
- * Garante que o AJAX add to cart está habilitado e configurado corretamente.
+ * Garante que o AJAX add to cart estÃ¡ habilitado e configurado corretamente.
  * 
- * Por padrão, o WooCommerce já habilita AJAX, mas esta função garante
- * que não foi desabilitado por outros plugins ou configurações.
+ * Por padrÃ£o, o WooCommerce jÃ¡ habilita AJAX, mas esta funÃ§Ã£o garante
+ * que nÃ£o foi desabilitado por outros plugins ou configuraÃ§Ãµes.
  */
 function gstore_ensure_ajax_add_to_cart_enabled() {
-	// Garante que o AJAX add to cart está habilitado
+	// Garante que o AJAX add to cart estÃ¡ habilitado
 	if ( class_exists( 'WooCommerce' ) ) {
-		// O WooCommerce já habilita AJAX por padrão via get_option('woocommerce_enable_ajax_add_to_cart')
-		// Mas vamos garantir que está ativo
+		// O WooCommerce jÃ¡ habilita AJAX por padrÃ£o via get_option('woocommerce_enable_ajax_add_to_cart')
+		// Mas vamos garantir que estÃ¡ ativo
 		if ( 'yes' !== get_option( 'woocommerce_enable_ajax_add_to_cart', 'yes' ) ) {
 			update_option( 'woocommerce_enable_ajax_add_to_cart', 'yes' );
 		}
@@ -1841,15 +1841,15 @@ function gstore_ensure_ajax_add_to_cart_enabled() {
 add_action( 'init', 'gstore_ensure_ajax_add_to_cart_enabled', 5 );
 
 /**
- * Remove os avisos "Escolha as opções de produtos visitando…" de produtos variáveis.
+ * Remove os avisos "Escolha as opÃ§Ãµes de produtos visitandoâ€¦" de produtos variÃ¡veis.
  *
- * O WooCommerce gera esse aviso de erro quando o add-to-cart é acionado para um
- * produto variável sem que as variações tenham sido selecionadas (GET request com
- * ?add-to-cart=ID). Os avisos ficam na sessão e acabam aparecendo em diversas
- * páginas, causando confusão para o usuário.
+ * O WooCommerce gera esse aviso de erro quando o add-to-cart Ã© acionado para um
+ * produto variÃ¡vel sem que as variaÃ§Ãµes tenham sido selecionadas (GET request com
+ * ?add-to-cart=ID). Os avisos ficam na sessÃ£o e acabam aparecendo em diversas
+ * pÃ¡ginas, causando confusÃ£o para o usuÃ¡rio.
  *
- * Esta função filtra os notices de erro do WooCommerce e remove apenas os que
- * correspondem a esse padrão específico, preservando todos os outros avisos.
+ * Esta funÃ§Ã£o filtra os notices de erro do WooCommerce e remove apenas os que
+ * correspondem a esse padrÃ£o especÃ­fico, preservando todos os outros avisos.
  */
 function gstore_suppress_variable_product_choose_options_notice() {
 	if ( ! function_exists( 'wc_get_notices' ) || ! function_exists( 'wc_clear_notices' ) ) {
@@ -1868,7 +1868,7 @@ function gstore_suppress_variable_product_choose_options_notice() {
 	foreach ( $error_notices as $notice ) {
 		$text = is_array( $notice ) ? ( $notice['notice'] ?? '' ) : (string) $notice;
 
-		// Detecta o aviso "Escolha as opções de produtos visitando" (PT-BR)
+		// Detecta o aviso "Escolha as opÃ§Ãµes de produtos visitando" (PT-BR)
 		// e "Please choose product options by visiting" (EN) do WooCommerce core.
 		if (
 			false !== stripos( $text, 'escolha as' )
@@ -1896,7 +1896,7 @@ function gstore_suppress_variable_product_choose_options_notice() {
 		}
 	}
 }
-// Executa cedo em vários pontos para garantir que o aviso nunca chegue ao frontend.
+// Executa cedo em vÃ¡rios pontos para garantir que o aviso nunca chegue ao frontend.
 add_action( 'wp', 'gstore_suppress_variable_product_choose_options_notice', 1 );
 add_action( 'woocommerce_before_shop_loop', 'gstore_suppress_variable_product_choose_options_notice', 1 );
 add_action( 'woocommerce_before_single_product', 'gstore_suppress_variable_product_choose_options_notice', 1 );
@@ -1904,13 +1904,13 @@ add_action( 'woocommerce_before_cart', 'gstore_suppress_variable_product_choose_
 add_action( 'woocommerce_before_checkout_form', 'gstore_suppress_variable_product_choose_options_notice', 1 );
 
 /**
- * Em listas de produtos, itens vari�veis devem abrir a p�gina de produto.
+ * Em listas de produtos, itens variï¿½veis devem abrir a pï¿½gina de produto.
  *
- * Isso evita tentativas de add-to-cart sem atributos selecionados no cat�logo.
+ * Isso evita tentativas de add-to-cart sem atributos selecionados no catï¿½logo.
  *
- * @param string     $html    HTML do bot�o.
+ * @param string     $html    HTML do botï¿½o.
  * @param WC_Product $product Produto do loop.
- * @param array      $args    Argumentos do bot�o.
+ * @param array      $args    Argumentos do botï¿½o.
  * @return string
  */
 function gstore_loop_variable_product_link( $html, $product, $args ) {
@@ -1951,17 +1951,17 @@ add_filter( 'woocommerce_loop_add_to_cart_link', 'gstore_loop_variable_product_l
  * seja sempre disparado, mesmo em casos edge.
  */
 function gstore_filter_add_to_cart_redirect( $url ) {
-	// Mantém o redirect padrão no produto único
+	// MantÃ©m o redirect padrÃ£o no produto Ãºnico
 	if ( function_exists( 'is_product' ) && is_product() ) {
 		return $url;
 	}
 
-	// Em chamadas AJAX, não redireciona para não quebrar a resposta
+	// Em chamadas AJAX, nÃ£o redireciona para nÃ£o quebrar a resposta
 	if ( wp_doing_ajax() || isset( $_REQUEST['wc-ajax'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		return false;
 	}
 
-	// Para páginas de catálogo e afins, evita redirect após add-to-cart
+	// Para pÃ¡ginas de catÃ¡logo e afins, evita redirect apÃ³s add-to-cart
 	return false;
 }
 
@@ -1970,16 +1970,16 @@ function gstore_ensure_cart_events() {
 		return;
 	}
 
-	// Evita redirect em contextos que devem permanecer na mesma página
+	// Evita redirect em contextos que devem permanecer na mesma pÃ¡gina
 	add_filter( 'woocommerce_add_to_cart_redirect', 'gstore_filter_add_to_cart_redirect', 5 );
 }
 add_action( 'init', 'gstore_ensure_cart_events', 10 );
 
 
 /**
- * "Comprar agora" (produto único): redireciona para o checkout após adicionar ao carrinho.
+ * "Comprar agora" (produto Ãºnico): redireciona para o checkout apÃ³s adicionar ao carrinho.
  *
- * Implementado via botão submit no template do produto único (name="gstore_buy_now").
+ * Implementado via botÃ£o submit no template do produto Ãºnico (name="gstore_buy_now").
  */
 function gstore_buy_now_redirect_to_checkout( $url ) {
 	if ( ! class_exists( 'WooCommerce' ) || ! function_exists( 'wc_get_checkout_url' ) ) {
@@ -1998,9 +1998,9 @@ add_filter( 'woocommerce_add_to_cart_redirect', 'gstore_buy_now_redirect_to_chec
 /**
  * "Comprar agora" (produto simples): adiciona ao carrinho respeitando quantidade e redireciona ao checkout.
  *
- * Motivo: o botão customizado `name="gstore_buy_now"` pode submeter o form sem disparar o handler nativo
- * de add-to-cart (que normalmente depende de `add-to-cart` vindo do botão padrão). Aqui tratamos no backend
- * para garantir o fluxo e evitar o aviso de reenvio de formulário ao recarregar a página.
+ * Motivo: o botÃ£o customizado `name="gstore_buy_now"` pode submeter o form sem disparar o handler nativo
+ * de add-to-cart (que normalmente depende de `add-to-cart` vindo do botÃ£o padrÃ£o). Aqui tratamos no backend
+ * para garantir o fluxo e evitar o aviso de reenvio de formulÃ¡rio ao recarregar a pÃ¡gina.
  */
 function gstore_handle_buy_now_simple_product() {
 	if ( wp_doing_ajax() ) {
@@ -2016,14 +2016,14 @@ function gstore_handle_buy_now_simple_product() {
 		return;
 	}
 
-	// Se algum plugin/tema imprimiu warning/deprecated em output buffer, limpamos para não quebrar o redirect.
+	// Se algum plugin/tema imprimiu warning/deprecated em output buffer, limpamos para nÃ£o quebrar o redirect.
 	if ( function_exists( 'ob_get_level' ) && function_exists( 'ob_end_clean' ) ) {
 		while ( ob_get_level() ) {
 			@ob_end_clean(); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
 		}
 	}
 
-	// Tenta pegar o ID do produto a partir do contexto da página.
+	// Tenta pegar o ID do produto a partir do contexto da pÃ¡gina.
 	$product_id = 0;
 	if ( function_exists( 'is_product' ) && is_product() ) {
 		$product_id = (int) get_queried_object_id();
@@ -2052,7 +2052,7 @@ function gstore_handle_buy_now_simple_product() {
 		return;
 	}
 
-	// Só cobre produto simples aqui (o seu caso). Variáveis precisam de variation_id/atributos.
+	// SÃ³ cobre produto simples aqui (o seu caso). VariÃ¡veis precisam de variation_id/atributos.
 	if ( ! $product->is_type( 'simple' ) ) {
 		return;
 	}
@@ -2067,11 +2067,11 @@ function gstore_handle_buy_now_simple_product() {
 	$qty = max( 1, (int) $qty );
 
 	/**
-	 * Fluxo robusto (igual experiência do variável):
+	 * Fluxo robusto (igual experiÃªncia do variÃ¡vel):
 	 * 1) Se veio via POST, fazemos PRG para uma URL GET com add-to-cart + quantity.
 	 *    Assim o WooCommerce processa o add-to-cart no hook nativo dele (wp_loaded) e aplica nosso
 	 *    redirect para checkout via `woocommerce_add_to_cart_redirect` quando `gstore_buy_now` estiver presente.
-	 * 2) Se já estivermos no GET (por ex. depois do PRG), mandamos direto para o checkout.
+	 * 2) Se jÃ¡ estivermos no GET (por ex. depois do PRG), mandamos direto para o checkout.
 	 */
 	$method = isset( $_SERVER['REQUEST_METHOD'] ) ? strtoupper( (string) $_SERVER['REQUEST_METHOD'] ) : 'GET';
 
@@ -2101,7 +2101,7 @@ function gstore_handle_buy_now_simple_product() {
 add_action( 'template_redirect', 'gstore_handle_buy_now_simple_product', 0 );
 
 /**
- * "Comprar agora" (produto variável): PRG para GET com variation_id e atributos,
+ * "Comprar agora" (produto variÃ¡vel): PRG para GET com variation_id e atributos,
  * para o WooCommerce processar add-to-cart e o filtro redirecionar ao checkout.
  */
 function gstore_handle_buy_now_variable_product() {
@@ -2143,7 +2143,7 @@ function gstore_handle_buy_now_variable_product() {
 		return;
 	}
 
-	// Se algum plugin/tema imprimiu warning/deprecated em output buffer, limpamos para não quebrar o redirect.
+	// Se algum plugin/tema imprimiu warning/deprecated em output buffer, limpamos para nÃ£o quebrar o redirect.
 	if ( function_exists( 'ob_get_level' ) && function_exists( 'ob_end_clean' ) ) {
 		while ( ob_get_level() ) {
 			@ob_end_clean(); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
@@ -2153,7 +2153,7 @@ function gstore_handle_buy_now_variable_product() {
 	$method = isset( $_SERVER['REQUEST_METHOD'] ) ? strtoupper( (string) $_SERVER['REQUEST_METHOD'] ) : 'GET';
 
 	if ( 'POST' === $method ) {
-		// Se veio via POST, faz PRG para GET com todos os parâmetros de variação.
+		// Se veio via POST, faz PRG para GET com todos os parÃ¢metros de variaÃ§Ã£o.
 		$args = array(
 			'add-to-cart'    => $product_id,
 			'variation_id'   => $variation_id,
@@ -2174,10 +2174,10 @@ function gstore_handle_buy_now_variable_product() {
 		exit;
 	}
 
-	// GET: o WooCommerce já processou o add-to-cart no wp_loaded.
+	// GET: o WooCommerce jÃ¡ processou o add-to-cart no wp_loaded.
 	// Redireciona explicitamente ao checkout (igual ao produto simples).
-	// Não depende de woocommerce_add_to_cart_redirect que pode não disparar
-	// para variáveis em algumas versões do WooCommerce.
+	// NÃ£o depende de woocommerce_add_to_cart_redirect que pode nÃ£o disparar
+	// para variÃ¡veis em algumas versÃµes do WooCommerce.
 	if ( function_exists( 'nocache_headers' ) ) {
 		nocache_headers();
 	}
@@ -2187,7 +2187,7 @@ function gstore_handle_buy_now_variable_product() {
 add_action( 'template_redirect', 'gstore_handle_buy_now_variable_product', 0 );
 
 /**
- * PRG no produto único: evita reenvio do formulário ao voltar.
+ * PRG no produto Ãºnico: evita reenvio do formulÃ¡rio ao voltar.
  */
 function gstore_flag_single_product_add_to_cart_prg( $cart_item_key, $product_id, $quantity, $variation_id, $variation, $cart_item_data ) {
 	$GLOBALS['gstore_single_product_added_to_cart'] = true;
@@ -2203,7 +2203,7 @@ function gstore_prg_single_product_add_to_cart() {
 		return;
 	}
 
-	// Não interfere com "Comprar agora".
+	// NÃ£o interfere com "Comprar agora".
 	// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 	if ( isset( $_REQUEST['gstore_buy_now'] ) ) {
 		return;
@@ -2223,9 +2223,9 @@ function gstore_prg_single_product_add_to_cart() {
 		return;
 	}
 
-	// Remove o prefixo do subdiretório (se houver) para evitar duplicação com home_url().
+	// Remove o prefixo do subdiretÃ³rio (se houver) para evitar duplicaÃ§Ã£o com home_url().
 	// Ex.: REQUEST_URI = "/loja/produto/..." e home_url() = "https://dominio.com/loja"
-	// sem esta correção, home_url("/loja/produto/...") geraria "/loja/loja/produto/...".
+	// sem esta correÃ§Ã£o, home_url("/loja/produto/...") geraria "/loja/loja/produto/...".
 	$home_path = wp_parse_url( home_url(), PHP_URL_PATH );
 	if ( $home_path && '/' !== $home_path && 0 === strpos( $request_uri, $home_path ) ) {
 		$request_uri = substr( $request_uri, strlen( $home_path ) );
@@ -2244,32 +2244,32 @@ function gstore_prg_single_product_add_to_cart() {
 add_action( 'template_redirect', 'gstore_prg_single_product_add_to_cart', 9 );
 
 /**
- * Garante que `add-to-cart` esteja em $_REQUEST quando "Comprar agora" é usado.
+ * Garante que `add-to-cart` esteja em $_REQUEST quando "Comprar agora" Ã© usado.
  *
- * Quando o usuário clica no botão "Comprar agora" (name="gstore_buy_now"), apenas
- * esse name/value é incluído no POST. O campo `add-to-cart` (do botão "Adicionar ao
- * carrinho") NÃO é enviado. Sem ele, o WooCommerce não processa o add-to-cart.
+ * Quando o usuÃ¡rio clica no botÃ£o "Comprar agora" (name="gstore_buy_now"), apenas
+ * esse name/value Ã© incluÃ­do no POST. O campo `add-to-cart` (do botÃ£o "Adicionar ao
+ * carrinho") NÃƒO Ã© enviado. Sem ele, o WooCommerce nÃ£o processa o add-to-cart.
  *
  * Este handler roda em wp_loaded priority 0 (antes de tudo) e injeta `add-to-cart`
  * a partir de `product_id`, garantindo que o fluxo do WooCommerce funcione
- * independentemente de o JavaScript ter interceptado o clique ou não.
+ * independentemente de o JavaScript ter interceptado o clique ou nÃ£o.
  */
 function gstore_ensure_add_to_cart_for_buy_now() {
 	if ( wp_doing_ajax() || isset( $_REQUEST['wc-ajax'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		return;
 	}
 
-	// Só age quando "Comprar agora" está presente MAS `add-to-cart` está ausente.
+	// SÃ³ age quando "Comprar agora" estÃ¡ presente MAS `add-to-cart` estÃ¡ ausente.
 	// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 	if ( ! isset( $_REQUEST['gstore_buy_now'] ) ) {
 		return;
 	}
 	// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 	if ( isset( $_REQUEST['add-to-cart'] ) && is_numeric( $_REQUEST['add-to-cart'] ) ) {
-		return; // Já existe — provavelmente veio do JS redirect (GET). Nada a fazer.
+		return; // JÃ¡ existe â€” provavelmente veio do JS redirect (GET). Nada a fazer.
 	}
 
-	// Tenta obter o product_id a partir dos campos do formulário.
+	// Tenta obter o product_id a partir dos campos do formulÃ¡rio.
 	$product_id = 0;
 	// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 	if ( isset( $_REQUEST['product_id'] ) ) {
@@ -2287,23 +2287,23 @@ function gstore_ensure_add_to_cart_for_buy_now() {
 add_action( 'wp_loaded', 'gstore_ensure_add_to_cart_for_buy_now', 0 );
 
 /**
- * Salva o carrinho atual em sessão antes de limpar para "Comprar agora"
+ * Salva o carrinho atual em sessÃ£o antes de limpar para "Comprar agora"
  * 
- * Permite restaurar os itens se o cliente voltar ou cancelar a compra rápida.
+ * Permite restaurar os itens se o cliente voltar ou cancelar a compra rÃ¡pida.
  */
 function gstore_save_cart_before_buy_now() {
-	// Só executa se não for AJAX
+	// SÃ³ executa se nÃ£o for AJAX
 	if ( wp_doing_ajax() || isset( $_REQUEST['wc-ajax'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		return;
 	}
 
-	// Só executa se gstore_buy_now estiver presente
+	// SÃ³ executa se gstore_buy_now estiver presente
 	// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 	if ( ! isset( $_REQUEST['gstore_buy_now'] ) ) {
 		return;
 	}
 
-	// Só executa se add-to-cart estiver presente (indica que vai adicionar produto)
+	// SÃ³ executa se add-to-cart estiver presente (indica que vai adicionar produto)
 	// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 	if ( ! isset( $_REQUEST['add-to-cart'] ) ) {
 		return;
@@ -2313,12 +2313,12 @@ function gstore_save_cart_before_buy_now() {
 		return;
 	}
 
-	// Só salva se o carrinho não estiver vazio
+	// SÃ³ salva se o carrinho nÃ£o estiver vazio
 	if ( WC()->cart->is_empty() ) {
 		return;
 	}
 
-	// Salva o carrinho atual na sessão do WooCommerce (apenas dados essenciais, sem objetos)
+	// Salva o carrinho atual na sessÃ£o do WooCommerce (apenas dados essenciais, sem objetos)
 	$cart_contents = WC()->cart->get_cart();
 	if ( ! empty( $cart_contents ) ) {
 		$saved_cart_data = array();
@@ -2343,14 +2343,14 @@ function gstore_save_cart_before_buy_now() {
 		WC()->session->set( 'gstore_buy_now_active', true );
 	}
 
-	// Salva informações do produto que será adicionado via "Comprar agora"
+	// Salva informaÃ§Ãµes do produto que serÃ¡ adicionado via "Comprar agora"
 	// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 	$buy_now_product_id = isset( $_REQUEST['add-to-cart'] ) ? absint( $_REQUEST['add-to-cart'] ) : 0;
 	// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 	$buy_now_quantity = isset( $_REQUEST['quantity'] ) ? absint( $_REQUEST['quantity'] ) : 1;
 	$buy_now_quantity = max( 1, $buy_now_quantity );
 
-	// Para produtos variáveis, tenta pegar variation_id e atributos
+	// Para produtos variÃ¡veis, tenta pegar variation_id e atributos
 	$buy_now_variation_id = 0;
 	$buy_now_variation = array();
 	// phpcs:ignore WordPress.Security.NonceVerification.Recommended
@@ -2359,7 +2359,7 @@ function gstore_save_cart_before_buy_now() {
 		$buy_now_variation_id = absint( $_REQUEST['variation_id'] );
 	}
 	
-	// Coleta atributos de variação se existirem
+	// Coleta atributos de variaÃ§Ã£o se existirem
 	// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 	if ( ! empty( $_REQUEST ) ) {
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
@@ -2386,21 +2386,21 @@ add_action( 'wp_loaded', 'gstore_save_cart_before_buy_now', 1 );
 /**
  * Limpa o carrinho antes de adicionar produto via "Comprar agora"
  * 
- * Executa após salvar o carrinho, antes do WooCommerce processar o add-to-cart.
+ * Executa apÃ³s salvar o carrinho, antes do WooCommerce processar o add-to-cart.
  */
 function gstore_clear_cart_before_buy_now() {
-	// Só executa se não for AJAX
+	// SÃ³ executa se nÃ£o for AJAX
 	if ( wp_doing_ajax() || isset( $_REQUEST['wc-ajax'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		return;
 	}
 
-	// Só executa se gstore_buy_now estiver presente
+	// SÃ³ executa se gstore_buy_now estiver presente
 	// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 	if ( ! isset( $_REQUEST['gstore_buy_now'] ) ) {
 		return;
 	}
 
-	// Só executa se add-to-cart estiver presente
+	// SÃ³ executa se add-to-cart estiver presente
 	// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 	if ( ! isset( $_REQUEST['add-to-cart'] ) ) {
 		return;
@@ -2418,28 +2418,28 @@ add_action( 'wp_loaded', 'gstore_clear_cart_before_buy_now', 5 );
 /**
  * Restaura o carrinho salvo se o cliente voltar do checkout
  * 
- * Executa quando o cliente acessa qualquer página após ter usado "Comprar agora".
+ * Executa quando o cliente acessa qualquer pÃ¡gina apÃ³s ter usado "Comprar agora".
  */
 function gstore_restore_saved_cart_if_needed() {
 	if ( ! class_exists( 'WooCommerce' ) || ! WC()->cart ) {
 		return;
 	}
 
-	// Não restaura se o cliente estiver no checkout (ainda está finalizando a compra)
+	// NÃ£o restaura se o cliente estiver no checkout (ainda estÃ¡ finalizando a compra)
 	if ( function_exists( 'is_checkout' ) && is_checkout() ) {
 		return;
 	}
 
-	// Verifica se há carrinho salvo e se "Comprar agora" estava ativo
+	// Verifica se hÃ¡ carrinho salvo e se "Comprar agora" estava ativo
 	$saved_cart = WC()->session->get( 'gstore_saved_cart_before_buy_now' );
 	$buy_now_active = WC()->session->get( 'gstore_buy_now_active' );
 
-	// Se não há carrinho salvo ou "Comprar agora" não está mais ativo, não faz nada
+	// Se nÃ£o hÃ¡ carrinho salvo ou "Comprar agora" nÃ£o estÃ¡ mais ativo, nÃ£o faz nada
 	if ( empty( $saved_cart ) || ! $buy_now_active ) {
 		return;
 	}
 
-	// Se o carrinho atual não está vazio, substitui pelo carrinho salvo
+	// Se o carrinho atual nÃ£o estÃ¡ vazio, substitui pelo carrinho salvo
 	if ( ! WC()->cart->is_empty() ) {
 		WC()->cart->empty_cart();
 	}
@@ -2468,7 +2468,7 @@ function gstore_restore_saved_cart_if_needed() {
 		WC()->cart->add_to_cart( $product_id, $quantity, $variation_id, $variation, $item_data );
 	}
 
-	// Limpa a sessão após restaurar
+	// Limpa a sessÃ£o apÃ³s restaurar
 	WC()->session->set( 'gstore_saved_cart_before_buy_now', null );
 	WC()->session->set( 'gstore_buy_now_active', false );
 	WC()->session->set( 'gstore_buy_now_product', null );
@@ -2476,10 +2476,10 @@ function gstore_restore_saved_cart_if_needed() {
 add_action( 'template_redirect', 'gstore_restore_saved_cart_if_needed', 1 );
 
 /**
- * Limpa a flag de "Comprar agora" após finalizar o pedido
+ * Limpa a flag de "Comprar agora" apÃ³s finalizar o pedido
  *
- * Apenas limpa as flags de sessão. O pedido já foi concluído e o carrinho
- * já foi esvaziado pelo WooCommerce. Para Blu (modal): mantém o mesmo comportamento.
+ * Apenas limpa as flags de sessÃ£o. O pedido jÃ¡ foi concluÃ­do e o carrinho
+ * jÃ¡ foi esvaziado pelo WooCommerce. Para Blu (modal): mantÃ©m o mesmo comportamento.
  *
  * @param int $order_id ID do pedido (passado por woocommerce_thankyou / woocommerce_checkout_order_processed).
  */
@@ -2504,13 +2504,13 @@ add_action( 'woocommerce_thankyou', 'gstore_clear_buy_now_flag_after_order', 10 
 add_action( 'woocommerce_checkout_order_processed', 'gstore_clear_buy_now_flag_after_order', 10 );
 
 /**
- * Adiciona headers HTTP para evitar cache em requisições AJAX do carrinho.
+ * Adiciona headers HTTP para evitar cache em requisiÃ§Ãµes AJAX do carrinho.
  * 
- * Isso é crítico em ambientes de produção onde cache pode causar
- * problemas de sincronização entre o carrinho e o mini-cart.
+ * Isso Ã© crÃ­tico em ambientes de produÃ§Ã£o onde cache pode causar
+ * problemas de sincronizaÃ§Ã£o entre o carrinho e o mini-cart.
  */
 function gstore_prevent_cart_ajax_cache() {
-	// Só adiciona headers em requisições AJAX relacionadas ao carrinho
+	// SÃ³ adiciona headers em requisiÃ§Ãµes AJAX relacionadas ao carrinho
 	if ( ! wp_doing_ajax() && ! isset( $_REQUEST['wc-ajax'] ) ) {
 		return;
 	}
@@ -2527,16 +2527,16 @@ function gstore_prevent_cart_ajax_cache() {
 	);
 
 	if ( $is_cart_action && ! headers_sent() ) {
-		// Headers para evitar cache em requisições AJAX do carrinho
-		// Crítico em produção com CDN/cache
+		// Headers para evitar cache em requisiÃ§Ãµes AJAX do carrinho
+		// CrÃ­tico em produÃ§Ã£o com CDN/cache
 		header( 'Cache-Control: no-cache, no-store, must-revalidate, max-age=0, private' );
 		header( 'Pragma: no-cache' );
 		header( 'Expires: 0' );
 		header( 'X-Accel-Buffering: no' ); // Nginx buffering
-		header( 'Vary: Cookie' ); // Garante que cache varia por cookie/sessão
+		header( 'Vary: Cookie' ); // Garante que cache varia por cookie/sessÃ£o
 		
-		// Garante que sessões sejam mantidas
-		// Força o uso de cookies para sessões
+		// Garante que sessÃµes sejam mantidas
+		// ForÃ§a o uso de cookies para sessÃµes
 		ini_set( 'session.use_cookies', '1' );
 		ini_set( 'session.use_only_cookies', '1' );
 		
@@ -2555,13 +2555,13 @@ add_action( 'wc_ajax_remove_from_cart', 'gstore_prevent_cart_ajax_cache', 1 );
 add_action( 'wc_ajax_update_cart', 'gstore_prevent_cart_ajax_cache', 1 );
 
 /**
- * Garante que fragmentos sejam sempre retornados após remoção de item.
+ * Garante que fragmentos sejam sempre retornados apÃ³s remoÃ§Ã£o de item.
  * 
- * Hook específico para wc_ajax_remove_from_cart para garantir que fragmentos
- * sejam sempre incluídos na resposta, mesmo em ambientes com cache ou problemas de timing.
+ * Hook especÃ­fico para wc_ajax_remove_from_cart para garantir que fragmentos
+ * sejam sempre incluÃ­dos na resposta, mesmo em ambientes com cache ou problemas de timing.
  */
 /**
- * Remove o breadcrumb padrão do WooCommerce.
+ * Remove o breadcrumb padrÃ£o do WooCommerce.
  */
 function gstore_remove_default_breadcrumb() {
 	remove_action( 'woocommerce_before_main_content', 'woocommerce_breadcrumb', 20 );
@@ -2569,8 +2569,8 @@ function gstore_remove_default_breadcrumb() {
 add_action( 'init', 'gstore_remove_default_breadcrumb' );
 
 /**
- * Remove o texto de privacidade do formulário de registro.
- * O texto será exibido em um modal ao invés de diretamente no formulário.
+ * Remove o texto de privacidade do formulÃ¡rio de registro.
+ * O texto serÃ¡ exibido em um modal ao invÃ©s de diretamente no formulÃ¡rio.
  */
 function gstore_remove_registration_privacy_text() {
 	remove_action( 'woocommerce_register_form', 'wc_registration_privacy_policy_text', 20 );
@@ -2578,7 +2578,7 @@ function gstore_remove_registration_privacy_text() {
 add_action( 'init', 'gstore_remove_registration_privacy_text' );
 
 /**
- * Remove a tag "Oferta" (onsale badge) da página de produto único.
+ * Remove a tag "Oferta" (onsale badge) da pÃ¡gina de produto Ãºnico.
  */
 function gstore_remove_sale_flash_on_single_product() {
 	if ( function_exists( 'is_product' ) && is_product() ) {
@@ -2588,8 +2588,8 @@ function gstore_remove_sale_flash_on_single_product() {
 add_action( 'wp', 'gstore_remove_sale_flash_on_single_product' );
 
 /**
- * Força o uso do template customizado de produto (Gstore).
- * Remove esta função depois que os cards estiverem funcionando.
+ * ForÃ§a o uso do template customizado de produto (Gstore).
+ * Remove esta funÃ§Ã£o depois que os cards estiverem funcionando.
  *
  * @param string $template      Caminho do template.
  * @param string $template_name Nome do template.
@@ -2608,19 +2608,19 @@ function gstore_force_custom_product_template( $template, $template_name, $templ
 add_filter( 'woocommerce_locate_template', 'gstore_force_custom_product_template', 10, 3 );
 
 /**
- * Força exibição de estrelas mesmo sem avaliações nos blocos.
+ * ForÃ§a exibiÃ§Ã£o de estrelas mesmo sem avaliaÃ§Ãµes nos blocos.
  *
- * @param string $html HTML do bloco de avaliação.
+ * @param string $html HTML do bloco de avaliaÃ§Ã£o.
  * @param array  $attributes Atributos do bloco.
  * @param object $product Produto WooCommerce.
  * @return string
  */
 function gstore_always_show_rating_stars( $html, $attributes, $product ) {
 	if ( empty( $html ) ) {
-		// Se não há avaliações, gerar HTML de estrelas vazias
+		// Se nÃ£o hÃ¡ avaliaÃ§Ãµes, gerar HTML de estrelas vazias
 		$html = '<div class="wc-block-components-product-rating">';
 		$html .= '<div class="wc-block-components-product-rating__stars">';
-		$html .= '<span>★★★★★</span>';
+		$html .= '<span>â˜…â˜…â˜…â˜…â˜…</span>';
 		$html .= '</div>';
 		$html .= '</div>';
 	}
@@ -2630,17 +2630,17 @@ add_filter( 'render_block_woocommerce/product-rating', 'gstore_always_show_ratin
 
 /**
  * ============================================
- * CÁLCULO DE PARCELAS (SEM JUROS)
+ * CÃLCULO DE PARCELAS (SEM JUROS)
  * ============================================
- * O parcelamento do produto é exibido sem juros no tema.
- * A taxa/fee efetiva é aplicada apenas no checkout via plugin.
+ * O parcelamento do produto Ã© exibido sem juros no tema.
+ * A taxa/fee efetiva Ã© aplicada apenas no checkout via plugin.
  */
 
 /**
  * Calcula o valor da parcela sem juros.
  *
  * @param float $price        Valor total do produto.
- * @param int   $installments Número de parcelas.
+ * @param int   $installments NÃºmero de parcelas.
  * @return float Valor da parcela.
  */
 function gstore_calculate_installment_amount( $price, $installments = 12 ) {
@@ -2655,20 +2655,20 @@ function gstore_calculate_installment_amount( $price, $installments = 12 ) {
 }
 
 /**
- * Adiciona informações de pagamento ao bloco de preço.
+ * Adiciona informaÃ§Ãµes de pagamento ao bloco de preÃ§o.
  *
- * @param string $html HTML do bloco de preço.
- * @param array  $block_content Conteúdo do bloco.
+ * @param string $html HTML do bloco de preÃ§o.
+ * @param array  $block_content ConteÃºdo do bloco.
  * @param object $block Objeto do bloco.
  * @return string
  */
 function gstore_add_payment_info_to_price( $html, $block_content, $block ) {
-	// Verifica se é o bloco de preço
+	// Verifica se Ã© o bloco de preÃ§o
 	if ( empty( $html ) || strpos( $html, 'woocommerce-Price-amount' ) === false ) {
 		return $html;
 	}
 	
-	// Verifica se já tem as classes customizadas (evita duplicação)
+	// Verifica se jÃ¡ tem as classes customizadas (evita duplicaÃ§Ã£o)
 	if ( strpos( $html, 'Gstore-payment-label' ) !== false ) {
 		return $html;
 	}
@@ -2679,30 +2679,30 @@ function gstore_add_payment_info_to_price( $html, $block_content, $block ) {
 		$product = wc_get_product( $block->context['postId'] );
 	}
 	
-	// Se não conseguir pelo contexto, tenta pegar o produto global
+	// Se nÃ£o conseguir pelo contexto, tenta pegar o produto global
 	if ( ! $product ) {
 		global $product;
 	}
 	
 	// Calcula o valor da parcela sem juros (fee aplicada no checkout).
 	$installment_value = 0;
-	$installment_text_content = 'ou em até 21x no cartão';
+	$installment_text_content = 'ou em atÃ© 21x no cartÃ£o';
 	
 	if ( $product && is_a( $product, 'WC_Product' ) ) {
 		$price_value = floatval( $product->get_price() );
 		if ( $price_value > 0 ) {
 			$installment_value = gstore_calculate_installment_amount( $price_value, 21 );
-			$installment_text_content = 'ou em até 21x de ' . wc_price( $installment_value );
+			$installment_text_content = 'ou em atÃ© 21x de ' . wc_price( $installment_value );
 		}
 	}
 	
-	// Desconto Pix: substitui o preço exibido pelo preço com desconto (mesmo padrão del/ins).
+	// Desconto Pix: substitui o preÃ§o exibido pelo preÃ§o com desconto (mesmo padrÃ£o del/ins).
 	$pix_price_replacement = '';
 	if ( $product && is_a( $product, 'WC_Product' ) && function_exists( 'gstore_blu_pix_get_discounted_price' ) ) {
 		$price_for_pix = floatval( $product->get_price() );
 		$pix_price     = gstore_blu_pix_get_discounted_price( $price_for_pix, $product->get_id() );
 		if ( false !== $pix_price ) {
-			// Preço riscado: regular (se promoção) ou current (se sem promoção).
+			// PreÃ§o riscado: regular (se promoÃ§Ã£o) ou current (se sem promoÃ§Ã£o).
 			$regular = floatval( $product->get_regular_price() );
 			$strike  = ( $product->is_on_sale() && $regular > 0 ) ? $regular : $price_for_pix;
 			$pix_price_replacement = '<del>' . wc_price( $strike ) . '</del> <ins>' . wc_price( $pix_price ) . '</ins>';
@@ -2710,12 +2710,12 @@ function gstore_add_payment_info_to_price( $html, $block_content, $block ) {
 	}
 
 	// Cria os elementos de pagamento
-	$payment_label = '<div class="Gstore-payment-label">À VISTA NO PIX</div>';
+	$payment_label = '<div class="Gstore-payment-label">Ã€ VISTA NO PIX</div>';
 	$installment_text = '<div class="Gstore-installment-text">' . $installment_text_content . '</div>';
 	
 	// Encontra a div interna com a classe wc-block-components-product-price
 	if ( strpos( $html, 'wc-block-components-product-price' ) !== false ) {
-		// Se tem desconto Pix, substitui o conteúdo do preço pelo padrão del/ins.
+		// Se tem desconto Pix, substitui o conteÃºdo do preÃ§o pelo padrÃ£o del/ins.
 		if ( $pix_price_replacement ) {
 			$html = preg_replace(
 				'/(<span[^>]*class="[^"]*wc-block-components-product-price__value[^"]*"[^>]*>).*?(<\/span>)/s',
@@ -2725,7 +2725,7 @@ function gstore_add_payment_info_to_price( $html, $block_content, $block ) {
 			);
 		}
 
-		// Adiciona o label antes do preço (logo após a abertura da div interna)
+		// Adiciona o label antes do preÃ§o (logo apÃ³s a abertura da div interna)
 		$html = preg_replace(
 			'/(<div[^>]*class="[^"]*wc-block-components-product-price[^"]*"[^>]*>\s*)/',
 			'$1' . $payment_label,
@@ -2759,12 +2759,12 @@ function gstore_filter_home_products_by_stock( $query_args ) {
 		return $query_args;
 	}
 
-	// Força apenas produtos em estoque
+	// ForÃ§a apenas produtos em estoque
 	if ( ! isset( $query_args['meta_query'] ) || ! is_array( $query_args['meta_query'] ) ) {
 		$query_args['meta_query'] = array();
 	}
 
-	// Adiciona filtro de estoque (mesmo que já tenha sido especificado no shortcode)
+	// Adiciona filtro de estoque (mesmo que jÃ¡ tenha sido especificado no shortcode)
 	$query_args['meta_query'][] = array(
 		'key'     => '_stock_status',
 		'value'   => 'instock',
@@ -2776,7 +2776,7 @@ function gstore_filter_home_products_by_stock( $query_args ) {
 add_filter( 'woocommerce_shortcode_products_query', 'gstore_filter_home_products_by_stock', 10, 1 );
 
 /**
- * Remove a formatação automática de parágrafos do WordPress.
+ * Remove a formataÃ§Ã£o automÃ¡tica de parÃ¡grafos do WordPress.
  */
 function gstore_disable_wpautop() {
 	$filters = array(
@@ -2798,7 +2798,7 @@ add_action( 'init', 'gstore_disable_wpautop', 9 );
 /**
  * Remove as tags <p> adicionadas automaticamente dentro dos cards personalizados.
  *
- * @param string $html HTML que contém os cards.
+ * @param string $html HTML que contÃ©m os cards.
  * @return string
  */
 function gstore_cleanup_shortcode_paragraphs( $html ) {
@@ -2813,8 +2813,8 @@ function gstore_cleanup_shortcode_paragraphs( $html ) {
 
 		/**
 		 * Evita `mb_convert_encoding(..., 'HTML-ENTITIES', ...)` (deprecated no PHP 8.2+).
-		 * Em vez disso, força UTF-8 no DOMDocument via header XML e sempre envolve em um wrapper <div>
-		 * para conseguirmos "unwrap" com segurança no final.
+		 * Em vez disso, forÃ§a UTF-8 no DOMDocument via header XML e sempre envolve em um wrapper <div>
+		 * para conseguirmos "unwrap" com seguranÃ§a no final.
 		 */
 		$needs_unwrap_div = true;
 		$content          = '<?xml encoding="UTF-8"?>' . '<div>' . $html . '</div>';
@@ -2878,7 +2878,7 @@ function gstore_cleanup_shortcode_paragraphs( $html ) {
 }
 
 /**
- * Garante que shortcodes de produtos não insiram <p> extras nos cards Gstore.
+ * Garante que shortcodes de produtos nÃ£o insiram <p> extras nos cards Gstore.
  *
  * @param string $output HTML gerado pelo shortcode.
  * @param string $tag    Nome do shortcode.
@@ -2906,9 +2906,9 @@ function gstore_filter_products_shortcode_output( $output, $tag ) {
 add_filter( 'do_shortcode_tag', 'gstore_filter_products_shortcode_output', 20, 2 );
 
 /**
- * Remove os parágrafos extras também quando o conteúdo completo é renderizado.
+ * Remove os parÃ¡grafos extras tambÃ©m quando o conteÃºdo completo Ã© renderizado.
  *
- * @param string $content Conteúdo da página/post.
+ * @param string $content ConteÃºdo da pÃ¡gina/post.
  * @return string
  */
 function gstore_cleanup_content_paragraphs( $content ) {
@@ -2921,9 +2921,9 @@ function gstore_cleanup_content_paragraphs( $content ) {
 add_filter( 'the_content', 'gstore_cleanup_content_paragraphs', 20 );
 
 /**
- * Garante que o bloco de checkout esteja presente quando o conteúdo estiver vazio.
+ * Garante que o bloco de checkout esteja presente quando o conteÃºdo estiver vazio.
  *
- * @param string $content Conteúdo original da página.
+ * @param string $content ConteÃºdo original da pÃ¡gina.
  * @return string
  */
 function gstore_ensure_checkout_block( $content ) {
@@ -2941,7 +2941,7 @@ function gstore_ensure_checkout_block( $content ) {
 		return $content;
 	}
 
-	// Verifica se o shortcode já foi processado (procura pela classe do form)
+	// Verifica se o shortcode jÃ¡ foi processado (procura pela classe do form)
 	if ( false !== strpos( $content, 'woocommerce-checkout' ) ) {
 		return $content;
 	}
@@ -2953,9 +2953,9 @@ function gstore_ensure_checkout_block( $content ) {
 add_filter( 'the_content', 'gstore_ensure_checkout_block', 9 );
 
 /**
- * Substitui o Checkout em bloco pelo shortcode clássico para ativar o campo CPF.
+ * Substitui o Checkout em bloco pelo shortcode clÃ¡ssico para ativar o campo CPF.
  *
- * @param string $content Conteúdo original da página.
+ * @param string $content ConteÃºdo original da pÃ¡gina.
  * @return string
  */
 function gstore_force_classic_checkout_shortcode( $content ) {
@@ -2980,7 +2980,7 @@ add_filter( 'the_content', 'gstore_force_classic_checkout_shortcode', 5 );
 /**
  * Envolve o bloco de resumo do checkout com o card customizado da Gstore.
  *
- * @param string $block_content Conteúdo original do bloco.
+ * @param string $block_content ConteÃºdo original do bloco.
  * @param array  $block         Dados do bloco.
  * @return string
  */
@@ -3019,7 +3019,7 @@ function gstore_wrap_checkout_order_summary_block( $block_content, $block ) {
 			<div>
 				<span class="Gstore-order-summary-card__eyebrow"><?php esc_html_e( 'Resumo do pedido', 'gstore' ); ?></span>
 				<h2 class="Gstore-order-summary-card__title"><?php esc_html_e( 'Revise antes de finalizar', 'gstore' ); ?></h2>
-				<p class="Gstore-order-summary-card__description"><?php esc_html_e( 'Confira itens, valores e opções de envio antes de concluir.', 'gstore' ); ?></p>
+				<p class="Gstore-order-summary-card__description"><?php esc_html_e( 'Confira itens, valores e opÃ§Ãµes de envio antes de concluir.', 'gstore' ); ?></p>
 			</div>
 
 			<div class="Gstore-order-summary-card__total" aria-live="polite">
@@ -3064,9 +3064,9 @@ function gstore_wrap_checkout_order_summary_block( $block_content, $block ) {
 add_filter( 'render_block', 'gstore_wrap_checkout_order_summary_block', 10, 2 );
 
 /**
- * Substitui o Carrinho em bloco pelo shortcode clássico para ativar o layout Gstore.
+ * Substitui o Carrinho em bloco pelo shortcode clÃ¡ssico para ativar o layout Gstore.
  *
- * @param string $content Conteúdo original da página.
+ * @param string $content ConteÃºdo original da pÃ¡gina.
  * @return string
  */
 function gstore_force_classic_cart_shortcode( $content ) {
@@ -3096,13 +3096,13 @@ function gstore_force_classic_cart_shortcode( $content ) {
 add_filter( 'the_content', 'gstore_force_classic_cart_shortcode', 5 );
 
 /**
- * Remove o título da página do carrinho (evita duplicação com o header customizado).
+ * Remove o tÃ­tulo da pÃ¡gina do carrinho (evita duplicaÃ§Ã£o com o header customizado).
  * 
  * O WordPress Block Theme renderiza automaticamente um h1.wp-block-post-title
- * que não queremos na página do carrinho, pois já temos nosso header customizado.
+ * que nÃ£o queremos na pÃ¡gina do carrinho, pois jÃ¡ temos nosso header customizado.
  */
 function gstore_remove_cart_page_title( $title, $id = null ) {
-	// Só remove se estiver na página do carrinho
+	// SÃ³ remove se estiver na pÃ¡gina do carrinho
 	if ( function_exists( 'is_cart' ) && is_cart() && in_the_loop() && is_main_query() ) {
 		return '';
 	}
@@ -3111,7 +3111,7 @@ function gstore_remove_cart_page_title( $title, $id = null ) {
 add_filter( 'the_title', 'gstore_remove_cart_page_title', 10, 2 );
 
 /**
- * Adiciona classe ao body para página do carrinho com template PHP.
+ * Adiciona classe ao body para pÃ¡gina do carrinho com template PHP.
  */
 function gstore_cart_body_class( $classes ) {
 	if ( function_exists( 'is_cart' ) && is_cart() ) {
@@ -3140,13 +3140,13 @@ function gstore_ensure_empty_cart_message() {
 		
 		// Garante que os avisos sejam exibidos
 		if ( function_exists( 'woocommerce_output_all_notices' ) ) {
-			// A mensagem de carrinho vazio já é exibida pelo WooCommerce automaticamente
-			// Mas garantimos que ela não seja escondida
+			// A mensagem de carrinho vazio jÃ¡ Ã© exibida pelo WooCommerce automaticamente
+			// Mas garantimos que ela nÃ£o seja escondida
 			add_filter( 'woocommerce_output_all_notices', function( $output ) {
 				if ( WC()->cart->is_empty() ) {
-					// Se não houver mensagem de carrinho vazio, adiciona uma
+					// Se nÃ£o houver mensagem de carrinho vazio, adiciona uma
 					if ( false === strpos( $output, 'cart-empty' ) ) {
-						$empty_message = '<p class="cart-empty woocommerce-info">' . esc_html__( 'Seu carrinho está vazio.', 'woocommerce' ) . '</p>';
+						$empty_message = '<p class="cart-empty woocommerce-info">' . esc_html__( 'Seu carrinho estÃ¡ vazio.', 'woocommerce' ) . '</p>';
 						return $empty_message . $output;
 					}
 				}
@@ -3158,8 +3158,8 @@ function gstore_ensure_empty_cart_message() {
 add_action( 'wp', 'gstore_ensure_empty_cart_message', 5 );
 
 /**
- * Remove o wrapper de notices quando não há notices para exibir.
- * Evita espaços vazios na página quando não há mensagens.
+ * Remove o wrapper de notices quando nÃ£o hÃ¡ notices para exibir.
+ * Evita espaÃ§os vazios na pÃ¡gina quando nÃ£o hÃ¡ mensagens.
  *
  * @param string $output HTML dos notices.
  * @return string
@@ -3170,8 +3170,8 @@ function gstore_hide_empty_notices_wrapper( $output ) {
 		return '';
 	}
 
-	// Remove o wrapper se não contiver nenhum notice real
-	// Verifica se há mensagens, erros ou informações
+	// Remove o wrapper se nÃ£o contiver nenhum notice real
+	// Verifica se hÃ¡ mensagens, erros ou informaÃ§Ãµes
 	if ( 
 		false === strpos( $output, 'woocommerce-message' ) &&
 		false === strpos( $output, 'woocommerce-error' ) &&
@@ -3188,8 +3188,8 @@ add_filter( 'woocommerce_output_all_notices', 'gstore_hide_empty_notices_wrapper
 
 
 /**
- * Adiciona estilos críticos inline para garantir que os cards apareçam.
- * Funciona tanto com blocos quanto com loop clássico.
+ * Adiciona estilos crÃ­ticos inline para garantir que os cards apareÃ§am.
+ * Funciona tanto com blocos quanto com loop clÃ¡ssico.
  */
 function gstore_critical_product_styles() {
 	if ( ! is_shop() && ! is_product_category() && ! is_product_tag() && ! is_search() ) {
@@ -3298,7 +3298,7 @@ function gstore_critical_product_styles() {
 add_action( 'wp_head', 'gstore_critical_product_styles', 999 );
 
 /**
- * Estilos e bibliotecas específicos do checkout.
+ * Estilos e bibliotecas especÃ­ficos do checkout.
  */
 function gstore_enqueue_checkout_assets() {
 	if ( ! class_exists( 'WooCommerce' ) ) {
@@ -3341,19 +3341,19 @@ function gstore_enqueue_checkout_assets() {
 			true
 		);
 
-		// Fornece nonce e URLs para o checkout (URLs respeitam subdiretório do WP).
+		// Fornece nonce e URLs para o checkout (URLs respeitam subdiretÃ³rio do WP).
 		$checkout_inline  = 'window.gstoreCheckout = window.gstoreCheckout || {};';
 		$checkout_inline .= 'window.gstoreCheckout.processCheckoutNonce = ' . wp_json_encode( wp_create_nonce( 'woocommerce-process_checkout' ) ) . ';';
 		$checkout_inline .= 'window.gstoreCheckout.cartSummaryNonce = ' . wp_json_encode( wp_create_nonce( 'gstore_cart_summary' ) ) . ';';
 		$checkout_inline .= 'window.gstoreCheckout.homeUrl = ' . wp_json_encode( home_url( '/' ) ) . ';';
-		// Garante gstoreCartSummary (resumo do carrinho) com nonce válido para evitar 403 no admin-ajax.
+		// Garante gstoreCartSummary (resumo do carrinho) com nonce vÃ¡lido para evitar 403 no admin-ajax.
 		$cart_summary_nonce = wp_create_nonce( 'gstore_cart_summary' );
 		$checkout_inline .= 'window.gstoreCartSummary = window.gstoreCartSummary || { ajaxUrl: ' . wp_json_encode( admin_url( 'admin-ajax.php' ) ) . ', nonce: ' . wp_json_encode( $cart_summary_nonce ) . ' };';
-		// Termos do contrato: conteúdo do modal (título, texto completo, checkbox, privacidade).
+		// Termos do contrato: conteÃºdo do modal (tÃ­tulo, texto completo, checkbox, privacidade).
 		$contract_modal_title   = __( 'Termos do contrato', 'gstore' );
 		$contract_checkbox_text = __( 'Li e concordo com os', 'gstore' );
 		$contract_content       = get_theme_mod( 'gstore_contract_terms_content', function_exists( 'gstore_get_default_contract_terms_content' ) ? gstore_get_default_contract_terms_content() : '' );
-		// Preferir template do plugin (campo "Template HTML do contrato") quando disponível.
+		// Preferir template do plugin (campo "Template HTML do contrato") quando disponÃ­vel.
 		if ( class_exists( '\GStore\Services\Contract_Service' ) ) {
 			$plugin_contract_settings = \GStore\Services\Contract_Service::get_settings();
 			if ( ! empty( $plugin_contract_settings['template'] ) && is_string( $plugin_contract_settings['template'] ) ) {
@@ -3446,7 +3446,7 @@ function gstore_enqueue_checkout_assets() {
 		);
 	}
 
-	// CSS do Pix também na página de obrigado e visualização do pedido
+	// CSS do Pix tambÃ©m na pÃ¡gina de obrigado e visualizaÃ§Ã£o do pedido
 	if ( ( function_exists( 'is_order_received_page' ) && is_order_received_page() ) || ( function_exists( 'is_view_order_page' ) && is_view_order_page() ) ) {
 		wp_enqueue_style(
 			'gstore-checkout-pix',
@@ -3455,7 +3455,7 @@ function gstore_enqueue_checkout_assets() {
 			$theme_version
 		);
 
-		// JavaScript do Pix para página de obrigado e visualização do pedido
+		// JavaScript do Pix para pÃ¡gina de obrigado e visualizaÃ§Ã£o do pedido
 		wp_enqueue_script(
 			'gstore-checkout-pix',
 			get_theme_file_uri( 'assets/js/checkout-pix.js' ),
@@ -3477,7 +3477,7 @@ function gstore_enqueue_checkout_assets() {
         );
     }
 
-	// Calculador de Frete - Produto único, carrinho e checkout
+	// Calculador de Frete - Produto Ãºnico, carrinho e checkout
 	if (
 		( function_exists( 'is_product' ) && is_product() )
 		|| ( function_exists( 'is_cart' ) && is_cart() )
@@ -3542,7 +3542,7 @@ function gstore_enqueue_checkout_assets() {
 				'i18n'       => array(
 					'calculate'        => __( 'Calcular frete', 'gstore' ),
 					'calculating'      => __( 'Calculando...', 'gstore' ),
-					'invalidCep'       => __( 'CEP inválido. Por favor, informe um CEP válido com 8 dígitos.', 'gstore' ),
+					'invalidCep'       => __( 'CEP invÃ¡lido. Por favor, informe um CEP vÃ¡lido com 8 dÃ­gitos.', 'gstore' ),
 					'error'            => __( 'Erro ao calcular frete. Tente novamente.', 'gstore' ),
 					'frete'            => __( 'Frete', 'gstore' ),
 				'destination'      => __( 'Destino', 'gstore' ),
@@ -3554,7 +3554,7 @@ function gstore_enqueue_checkout_assets() {
 add_action( 'wp', 'gstore_enqueue_checkout_assets', 40 );
 
 /**
- * Move o texto de privacidade para baixo do botão de finalizar compra.
+ * Move o texto de privacidade para baixo do botÃ£o de finalizar compra.
  */
 function gstore_move_privacy_policy_text() {
     remove_action( 'woocommerce_checkout_terms_and_conditions', 'wc_checkout_privacy_policy_text', 20 );
@@ -3562,31 +3562,31 @@ function gstore_move_privacy_policy_text() {
 }
 add_action( 'init', 'gstore_move_privacy_policy_text' );
 
-// Regras do checkout (campos, parcelas, fees e validações) ficam no plugin gstore-core.
+// Regras do checkout (campos, parcelas, fees e validaÃ§Ãµes) ficam no plugin gstore-core.
 
 /**
- * Verifica se as páginas essenciais existem na inicialização.
+ * Verifica se as pÃ¡ginas essenciais existem na inicializaÃ§Ã£o.
  * 
- * Nota: Use o menu "Setup Gstore" para criar todas as páginas de uma vez.
- * Esta função apenas cria páginas essenciais do WooCommerce se não existirem.
+ * Nota: Use o menu "Setup Gstore" para criar todas as pÃ¡ginas de uma vez.
+ * Esta funÃ§Ã£o apenas cria pÃ¡ginas essenciais do WooCommerce se nÃ£o existirem.
  */
 function gstore_check_essential_pages() {
-	// Só roda no admin para evitar sobrecarga no frontend
+	// SÃ³ roda no admin para evitar sobrecarga no frontend
 	if ( ! is_admin() ) {
 		return;
 	}
 	
-	// Só verifica uma vez por sessão usando transient
+	// SÃ³ verifica uma vez por sessÃ£o usando transient
 	$checked = get_transient( 'gstore_pages_checked' );
 	if ( $checked ) {
 		return;
 	}
 	
-	// Verifica se a página de catálogo existe (para compatibilidade com versões anteriores)
+	// Verifica se a pÃ¡gina de catÃ¡logo existe (para compatibilidade com versÃµes anteriores)
 	$catalog_page = get_page_by_path( 'catalogo' );
 	if ( ! $catalog_page ) {
 		wp_insert_post( array(
-			'post_title'   => 'Catálogo',
+			'post_title'   => 'CatÃ¡logo',
 			'post_name'    => 'catalogo',
 			'post_status'  => 'publish',
 			'post_type'    => 'page',
@@ -3594,7 +3594,7 @@ function gstore_check_essential_pages() {
 		) );
 	}
 	
-	// Define transient para não verificar novamente por 1 hora
+	// Define transient para nÃ£o verificar novamente por 1 hora
 	set_transient( 'gstore_pages_checked', true, HOUR_IN_SECONDS );
 }
 add_action( 'admin_init', 'gstore_check_essential_pages' );
@@ -3605,8 +3605,8 @@ add_action( 'admin_init', 'gstore_check_essential_pages' );
 // Movido para o plugin gstore-core.
 
 /**
- * Correção temporária: Corrige o status do Pix via JavaScript.
- * O status 'processed' significa apenas que a cobrança foi criada, não que foi paga.
+ * CorreÃ§Ã£o temporÃ¡ria: Corrige o status do Pix via JavaScript.
+ * O status 'processed' significa apenas que a cobranÃ§a foi criada, nÃ£o que foi paga.
  * Apenas 'paid' deve mostrar "Pagamento aprovado".
  */
 add_action( 'wp_footer', function() {
@@ -3626,7 +3626,7 @@ add_action( 'wp_footer', function() {
 			var match = statusText.match(/Status:\s*(\w+)/i);
 			if (match) {
 				var realStatus = match[1].toLowerCase();
-				// Apenas 'paid' é pagamento aprovado
+				// Apenas 'paid' Ã© pagamento aprovado
 				if (realStatus !== 'paid') {
 					statusBadge.textContent = 'AGUARDANDO PAGAMENTO';
 					pixBox.classList.remove('pix-box--processed');
@@ -3655,24 +3655,24 @@ require_once get_theme_file_path( 'inc/class-gstore-category-filter.php' );
 require_once get_theme_file_path( 'inc/class-gstore-debug-logger.php' );
 
 /**
- * Navegação do header: locais desktop/mobile e substituição do bloco Navigation.
+ * NavegaÃ§Ã£o do header: locais desktop/mobile e substituiÃ§Ã£o do bloco Navigation.
  */
 require_once get_theme_file_path( 'inc/class-gstore-nav-menu.php' );
 
 /**
- * Dados de aeroportos para a página informativo (pós-venda).
+ * Dados de aeroportos para a pÃ¡gina informativo (pÃ³s-venda).
  */
 require_once get_theme_file_path( 'inc/informativo-airports.php' );
 
 /**
- * Função helper para fazer log de debug.
+ * FunÃ§Ã£o helper para fazer log de debug.
  *
- * @param string $location Localização (arquivo:linha).
+ * @param string $location LocalizaÃ§Ã£o (arquivo:linha).
  * @param string $message Mensagem.
  * @param array  $data Dados adicionais.
- * @param string $session_id ID da sessão.
- * @param string $run_id ID da execução.
- * @param string $hypothesis_id ID da hipótese.
+ * @param string $session_id ID da sessÃ£o.
+ * @param string $run_id ID da execuÃ§Ã£o.
+ * @param string $hypothesis_id ID da hipÃ³tese.
  */
 function gstore_debug_log( $location, $message, $data = array(), $session_id = 'debug-session', $run_id = 'run1', $hypothesis_id = '' ) {
 	if ( isset( $GLOBALS['gstore_debug_logger'] ) ) {
@@ -3681,9 +3681,9 @@ function gstore_debug_log( $location, $message, $data = array(), $session_id = '
 }
 
 /**
- * Gerenciador de informações da loja (JSON centralizado).
+ * Gerenciador de informaÃ§Ãµes da loja (JSON centralizado).
  */
-// Movido para o plugin gstore-core (persistência em wp_options).
+// Movido para o plugin gstore-core (persistÃªncia em wp_options).
 
 /**
  * API Visualizer (React + Mermaid) - shortcode e enqueue dos assets.
@@ -3691,7 +3691,12 @@ function gstore_debug_log( $location, $message, $data = array(), $session_id = '
 require_once get_theme_file_path( 'inc/api-visualizer.php' );
 
 /**
- * Método de envio customizado Gstore.
+ * Home Blog V1 shortcode (destaque + grid).
+ */
+require_once get_theme_file_path( 'home-blog-v1.php' );
+
+/**
+ * MÃ©todo de envio customizado Gstore.
  *
  * Movido para o plugin gstore-core.
  */
@@ -3890,7 +3895,7 @@ if ( ! function_exists( 'gstore_get_cart_item_shipping_label' ) ) {
 	function gstore_get_cart_item_shipping_label( $mode ) {
 		$mode = gstore_normalize_shipping_mode( $mode );
 		if ( 'air' === $mode ) {
-			return __( 'Aéreo', 'gstore' );
+			return __( 'AÃ©reo', 'gstore' );
 		}
 		if ( 'pickup' === $mode ) {
 			return __( 'Retirada na loja', 'gstore' );
@@ -3902,7 +3907,7 @@ if ( ! function_exists( 'gstore_get_cart_item_shipping_label' ) ) {
 if ( ! function_exists( 'gstore_normalize_shipping_mode' ) ) {
 	function gstore_normalize_shipping_mode( $mode ) {
 		$mode = strtolower( trim( (string) $mode ) );
-		if ( in_array( $mode, array( 'air', 'aereo', 'aéreo' ), true ) ) {
+		if ( in_array( $mode, array( 'air', 'aereo', 'aÃ©reo' ), true ) ) {
 			return 'air';
 		}
 		if ( in_array( $mode, array( 'ground', 'land', 'terrestre' ), true ) ) {
@@ -4170,11 +4175,11 @@ if ( ! function_exists( 'gstore_get_cart_item_shipping_cost_display' ) ) {
 }
 
 /**
- * Identifica a região de envio baseado no estado ou CEP.
+ * Identifica a regiÃ£o de envio baseado no estado ou CEP.
  *
  * @param string $state Estado (UF) ou vazio.
  * @param string $postcode CEP ou vazio.
- * @return string Região: 'sul', 'resto_brasil', 'rio_janeiro'.
+ * @return string RegiÃ£o: 'sul', 'resto_brasil', 'rio_janeiro'.
  */
 function gstore_get_shipping_region( $state = '', $postcode = '' ) {
 	// Limpa o estado
@@ -4187,7 +4192,7 @@ function gstore_get_shipping_region( $state = '', $postcode = '' ) {
 			return 'rio_janeiro';
 		}
 
-		// Região Sul
+		// RegiÃ£o Sul
 		if ( in_array( $state, array( 'RS', 'SC', 'PR' ), true ) ) {
 			return 'sul';
 		}
@@ -4196,7 +4201,7 @@ function gstore_get_shipping_region( $state = '', $postcode = '' ) {
 		return 'resto_brasil';
 	}
 
-	// Se não tem estado, tenta identificar pelo CEP
+	// Se nÃ£o tem estado, tenta identificar pelo CEP
 	if ( ! empty( $postcode ) ) {
 		$postcode = preg_replace( '/[^0-9]/', '', $postcode );
 		$first_digits = substr( $postcode, 0, 2 );
@@ -4217,17 +4222,17 @@ function gstore_get_shipping_region( $state = '', $postcode = '' ) {
 		}
 	}
 
-	// Padrão: resto do Brasil
+	// PadrÃ£o: resto do Brasil
 	return 'resto_brasil';
 }
 
 // Endpoint AJAX Pix movido para o plugin gstore-core.
 
 /**
- * Obtém o estado (UF) a partir do CEP.
+ * ObtÃ©m o estado (UF) a partir do CEP.
  *
- * @param string $postcode CEP (apenas números).
- * @return string Estado (UF) ou vazio se não identificado.
+ * @param string $postcode CEP (apenas nÃºmeros).
+ * @return string Estado (UF) ou vazio se nÃ£o identificado.
  */
 function gstore_get_state_from_postcode( $postcode ) {
 	$postcode = preg_replace( '/[^0-9]/', '', $postcode );
@@ -4239,13 +4244,13 @@ function gstore_get_state_from_postcode( $postcode ) {
 	$first_two   = substr( $postcode, 0, 2 );
 
 	// Mapeamento de CEP para Estado
-	// Referência: https://www.correios.com.br/
+	// ReferÃªncia: https://www.correios.com.br/
 	$cep_ranges = array(
-		// São Paulo
+		// SÃ£o Paulo
 		array( 'start' => '01', 'end' => '19', 'state' => 'SP' ),
 		// Rio de Janeiro
 		array( 'start' => '20', 'end' => '28', 'state' => 'RJ' ),
-		// Espírito Santo
+		// EspÃ­rito Santo
 		array( 'start' => '29', 'end' => '29', 'state' => 'ES' ),
 		// Minas Gerais
 		array( 'start' => '30', 'end' => '39', 'state' => 'MG' ),
@@ -4257,30 +4262,30 @@ function gstore_get_state_from_postcode( $postcode ) {
 		array( 'start' => '50', 'end' => '56', 'state' => 'PE' ),
 		// Alagoas
 		array( 'start' => '57', 'end' => '57', 'state' => 'AL' ),
-		// Paraíba
+		// ParaÃ­ba
 		array( 'start' => '58', 'end' => '58', 'state' => 'PB' ),
 		// Rio Grande do Norte
 		array( 'start' => '59', 'end' => '59', 'state' => 'RN' ),
-		// Ceará
+		// CearÃ¡
 		array( 'start' => '60', 'end' => '63', 'state' => 'CE' ),
-		// Piauí
+		// PiauÃ­
 		array( 'start' => '64', 'end' => '64', 'state' => 'PI' ),
-		// Maranhão
+		// MaranhÃ£o
 		array( 'start' => '65', 'end' => '65', 'state' => 'MA' ),
-		// Pará
+		// ParÃ¡
 		array( 'start' => '66', 'end' => '68', 'state' => 'PA' ),
-		// Amapá (68900-68999)
+		// AmapÃ¡ (68900-68999)
 		// Amazonas
 		array( 'start' => '69', 'end' => '69', 'state' => 'AM' ),
-		// Goiás e Tocantins
+		// GoiÃ¡s e Tocantins
 		array( 'start' => '70', 'end' => '72', 'state' => 'DF' ), // Distrito Federal (70000-72799)
-		array( 'start' => '73', 'end' => '76', 'state' => 'GO' ), // Goiás
+		array( 'start' => '73', 'end' => '76', 'state' => 'GO' ), // GoiÃ¡s
 		array( 'start' => '77', 'end' => '77', 'state' => 'TO' ), // Tocantins
 		// Mato Grosso
 		array( 'start' => '78', 'end' => '78', 'state' => 'MT' ),
 		// Mato Grosso do Sul
 		array( 'start' => '79', 'end' => '79', 'state' => 'MS' ),
-		// Paraná
+		// ParanÃ¡
 		array( 'start' => '80', 'end' => '87', 'state' => 'PR' ),
 		// Santa Catarina
 		array( 'start' => '88', 'end' => '89', 'state' => 'SC' ),
@@ -4290,7 +4295,7 @@ function gstore_get_state_from_postcode( $postcode ) {
 
 	foreach ( $cep_ranges as $range ) {
 		if ( $first_two >= $range['start'] && $first_two <= $range['end'] ) {
-			// Tratamento especial para Amapá (68900-68999)
+			// Tratamento especial para AmapÃ¡ (68900-68999)
 			if ( $first_two === '68' && substr( $postcode, 0, 3 ) >= '689' ) {
 				return 'AP';
 			}
@@ -4302,7 +4307,7 @@ function gstore_get_state_from_postcode( $postcode ) {
 			if ( $first_two === '69' && substr( $postcode, 0, 3 ) >= '693' && substr( $postcode, 0, 3 ) <= '693' ) {
 				return 'RR';
 			}
-			// Tratamento especial para Rondônia (76800-76999)
+			// Tratamento especial para RondÃ´nia (76800-76999)
 			if ( $first_two === '76' && substr( $postcode, 0, 3 ) >= '768' ) {
 				return 'RO';
 			}
@@ -4315,9 +4320,9 @@ function gstore_get_state_from_postcode( $postcode ) {
 
 /**
  * Endpoint AJAX para calcular frete.
- * Retorna array de rates com modos permitidos (terrestre/aéreo) baseado na variação do produto.
+ * Retorna array de rates com modos permitidos (terrestre/aÃ©reo) baseado na variaÃ§Ã£o do produto.
  */
-// Cálculo de frete via AJAX: responsabilidade do plugin gstore-core.
+// CÃ¡lculo de frete via AJAX: responsabilidade do plugin gstore-core.
 
 
 
@@ -4325,7 +4330,7 @@ function gstore_get_state_from_postcode( $postcode ) {
  * Adiciona campo CPF no checkout e salva no pedido.
  */
 function gstore_add_cpf_field( $fields ) {
-    // Se for o filtro woocommerce_billing_fields, o array é direto
+    // Se for o filtro woocommerce_billing_fields, o array Ã© direto
     // Se for woocommerce_checkout_fields, tem 'billing'
     
     if ( isset( $fields['billing'] ) ) {
@@ -4354,7 +4359,7 @@ add_filter( 'woocommerce_checkout_fields', 'gstore_add_cpf_field', 20 );
 add_filter( 'woocommerce_billing_fields', 'gstore_add_cpf_field', 20 );
 
 function gstore_save_cpf_field( $order_id ) {
-    // Verifica nonce do checkout (segurança)
+    // Verifica nonce do checkout (seguranÃ§a)
     if ( ! isset( $_POST['woocommerce-process-checkout-nonce'] ) || 
          ! wp_verify_nonce( $_POST['woocommerce-process-checkout-nonce'], 'woocommerce-process_checkout' ) ) {
         return;
@@ -4363,9 +4368,9 @@ function gstore_save_cpf_field( $order_id ) {
     if ( ! empty( $_POST['billing_cpf'] ) ) {
         // Sanitiza o campo antes de processar
         $cpf = sanitize_text_field( $_POST['billing_cpf'] );
-        // Remove tudo que não é número
+        // Remove tudo que nÃ£o Ã© nÃºmero
         $cpf = preg_replace( '/[^0-9]/', '', $cpf );
-        // Salva apenas se tiver conteúdo válido
+        // Salva apenas se tiver conteÃºdo vÃ¡lido
         if ( ! empty( $cpf ) ) {
             update_post_meta( $order_id, 'billing_cpf', $cpf );
             update_post_meta( $order_id, '_billing_cpf', $cpf );
@@ -4375,7 +4380,7 @@ function gstore_save_cpf_field( $order_id ) {
 add_action( 'woocommerce_checkout_update_order_meta', 'gstore_save_cpf_field' );
 
 /**
- * Exibe o CPF no painel de administração do pedido.
+ * Exibe o CPF no painel de administraÃ§Ã£o do pedido.
  */
 function gstore_display_cpf_admin_order_data( $order ) {
     $cpf = $order->get_meta( 'billing_cpf' );
@@ -4386,7 +4391,7 @@ function gstore_display_cpf_admin_order_data( $order ) {
 add_action( 'woocommerce_admin_order_data_after_billing_address', 'gstore_display_cpf_admin_order_data', 10, 1 );
 
 /**
- * Retorna o título amigável do método de pagamento a partir do ID do gateway.
+ * Retorna o tÃ­tulo amigÃ¡vel do mÃ©todo de pagamento a partir do ID do gateway.
  *
  * @param string $payment_method ID do gateway (ex: blu_pix, blu_checkout, cod).
  * @return string
@@ -4400,7 +4405,7 @@ function gstore_get_payment_method_title_by_id( $payment_method ) {
 	// Overrides do tema (para manter o texto consistente no resumo).
 	$overrides = array(
 		'blu_pix'      => __( 'Pix', 'gstore' ),
-		'blu_checkout' => __( 'Cartão', 'gstore' ),
+		'blu_checkout' => __( 'CartÃ£o', 'gstore' ),
 	);
 	if ( isset( $overrides[ $payment_method ] ) ) {
 		return (string) $overrides[ $payment_method ];
@@ -4412,7 +4417,7 @@ function gstore_get_payment_method_title_by_id( $payment_method ) {
 
 	$payment_method_title = '';
 
-	// Preferir gateways disponíveis no checkout (já respeitam país/moeda/regras).
+	// Preferir gateways disponÃ­veis no checkout (jÃ¡ respeitam paÃ­s/moeda/regras).
 	$available = WC()->payment_gateways()->get_available_payment_gateways();
 	if ( isset( $available[ $payment_method ] ) && is_object( $available[ $payment_method ] ) ) {
 		$title = '';
@@ -4423,7 +4428,7 @@ function gstore_get_payment_method_title_by_id( $payment_method ) {
 		}
 		$payment_method_title = wp_strip_all_tags( $title );
 	} else {
-		// Fallback: gateway registrado (pode não estar "available" ainda em alguns estados).
+		// Fallback: gateway registrado (pode nÃ£o estar "available" ainda em alguns estados).
 		$all_gateways = WC()->payment_gateways()->payment_gateways();
 		if ( isset( $all_gateways[ $payment_method ] ) && is_object( $all_gateways[ $payment_method ] ) ) {
 			$title = '';
@@ -4440,7 +4445,7 @@ function gstore_get_payment_method_title_by_id( $payment_method ) {
 }
 
 /**
- * Exibe o método de pagamento selecionado no resumo (tabela) do checkout clássico.
+ * Exibe o mÃ©todo de pagamento selecionado no resumo (tabela) do checkout clÃ¡ssico.
  */
 function gstore_checkout_review_order_payment_method_row() {
 	if ( ! function_exists( 'WC' ) || ! WC()->session ) {
@@ -4467,12 +4472,12 @@ add_action( 'woocommerce_review_order_before_order_total', 'gstore_checkout_revi
 
 /**
  * ============================================
- * PÁGINA MINHA CONTA - CUSTOMIZAÇÕES
+ * PÃGINA MINHA CONTA - CUSTOMIZAÃ‡Ã•ES
  * ============================================
  */
 
 /**
- * Sobrescreve o template de navegação do WooCommerce.
+ * Sobrescreve o template de navegaÃ§Ã£o do WooCommerce.
  */
 function gstore_custom_account_navigation() {
 	wc_get_template( 'myaccount/navigation.php' );
@@ -4490,7 +4495,7 @@ function gstore_rename_account_menu_items( $items ) {
 	$items['dashboard']       = __( 'Painel', 'gstore' );
 	$items['orders']          = __( 'Pedidos', 'gstore' );
 	$items['downloads']       = __( 'Downloads', 'gstore' );
-	$items['edit-address']    = __( 'Endereços', 'gstore' );
+	$items['edit-address']    = __( 'EndereÃ§os', 'gstore' );
 	$items['edit-account']    = __( 'Meus Dados', 'gstore' );
 	$items['customer-logout'] = __( 'Sair', 'gstore' );
 	
@@ -4499,7 +4504,7 @@ function gstore_rename_account_menu_items( $items ) {
 add_filter( 'woocommerce_account_menu_items', 'gstore_rename_account_menu_items' );
 
 /**
- * Adiciona classe body customizada para a página minha conta.
+ * Adiciona classe body customizada para a pÃ¡gina minha conta.
  *
  * @param array $classes Classes do body.
  * @return array
@@ -4513,8 +4518,8 @@ function gstore_myaccount_body_class( $classes ) {
 add_filter( 'body_class', 'gstore_myaccount_body_class' );
 
 /**
- * Força o navegador e eventuais caches de hospedagem a não armazenarem
- * a página "Minha Conta". Isso evita que o formulário de cadastro use
+ * ForÃ§a o navegador e eventuais caches de hospedagem a nÃ£o armazenarem
+ * a pÃ¡gina "Minha Conta". Isso evita que o formulÃ¡rio de cadastro use
  * nonces expirados (comuns em hosts que ativam cache para visitantes).
  */
 function gstore_disable_account_page_cache() {
@@ -4535,20 +4540,20 @@ function gstore_disable_account_page_cache() {
 add_action( 'template_redirect', 'gstore_disable_account_page_cache', 0 );
 
 /**
- * Redireciona a página "Loja" para "Catálogo".
+ * Redireciona a pÃ¡gina "Loja" para "CatÃ¡logo".
  * 
- * Redireciona qualquer acesso à página /loja para /catalogo,
- * incluindo a página de arquivo do WooCommerce.
+ * Redireciona qualquer acesso Ã  pÃ¡gina /loja para /catalogo,
+ * incluindo a pÃ¡gina de arquivo do WooCommerce.
  */
 function gstore_redirect_loja_to_catalogo() {
-	// Verifica se é a página "loja" pelo slug
+	// Verifica se Ã© a pÃ¡gina "loja" pelo slug
 	if ( is_page( 'loja' ) ) {
 		$catalogo_url = home_url( '/catalogo' );
 		wp_safe_redirect( $catalogo_url, 301 );
 		exit;
 	}
 	
-	// Verifica se é a página de shop do WooCommerce configurada como "loja"
+	// Verifica se Ã© a pÃ¡gina de shop do WooCommerce configurada como "loja"
 	if ( function_exists( 'is_shop' ) && is_shop() ) {
 		$shop_page_id = wc_get_page_id( 'shop' );
 		if ( $shop_page_id ) {
@@ -4564,10 +4569,10 @@ function gstore_redirect_loja_to_catalogo() {
 add_action( 'template_redirect', 'gstore_redirect_loja_to_catalogo', 1 );
 
 /**
- * Altera a URL do botão "Return to shop" para apontar para o catálogo.
+ * Altera a URL do botÃ£o "Return to shop" para apontar para o catÃ¡logo.
  * 
- * @param string $url URL original do botão.
- * @return string URL do catálogo.
+ * @param string $url URL original do botÃ£o.
+ * @return string URL do catÃ¡logo.
  */
 function gstore_return_to_shop_url( $url ) {
 	$catalogo_page = get_page_by_path( 'catalogo' );
@@ -4579,18 +4584,18 @@ function gstore_return_to_shop_url( $url ) {
 add_filter( 'woocommerce_return_to_shop_redirect', 'gstore_return_to_shop_url' );
 
 /**
- * Altera o texto do botão "Return to shop" para "Retornar para o catálogo".
+ * Altera o texto do botÃ£o "Return to shop" para "Retornar para o catÃ¡logo".
  * 
- * @param string $text Texto original do botão.
+ * @param string $text Texto original do botÃ£o.
  * @return string Novo texto.
  */
 function gstore_return_to_shop_text( $text ) {
-	return __( 'Retornar para o catálogo', 'gstore' );
+	return __( 'Retornar para o catÃ¡logo', 'gstore' );
 }
 add_filter( 'woocommerce_return_to_shop_text', 'gstore_return_to_shop_text' );
 
 /**
- * Exibe uma mensagem amigável quando o nonce do formulário expira.
+ * Exibe uma mensagem amigÃ¡vel quando o nonce do formulÃ¡rio expira.
  * Sem isso o WooCommerce simplesmente ignora o POST e nada acontece.
  */
 function gstore_handle_expired_register_nonce() {
@@ -4615,15 +4620,15 @@ function gstore_handle_expired_register_nonce() {
 	}
 
 	wc_add_notice(
-		__( 'Não conseguimos validar sua sessão de cadastro. Atualize a página e tente novamente.', 'gstore' ),
+		__( 'NÃ£o conseguimos validar sua sessÃ£o de cadastro. Atualize a pÃ¡gina e tente novamente.', 'gstore' ),
 		'error'
 	);
 }
 add_action( 'wp_loaded', 'gstore_handle_expired_register_nonce', 5 );
 
 /**
- * Remove o wrapper padrão do WooCommerce na página minha conta
- * para usarmos nosso próprio layout.
+ * Remove o wrapper padrÃ£o do WooCommerce na pÃ¡gina minha conta
+ * para usarmos nosso prÃ³prio layout.
  */
 function gstore_remove_myaccount_wrapper() {
 	if ( function_exists( 'is_account_page' ) && is_account_page() ) {
@@ -4634,10 +4639,10 @@ function gstore_remove_myaccount_wrapper() {
 add_action( 'wp', 'gstore_remove_myaccount_wrapper' );
 
 /**
- * Retorna o ícone SVG para cada endpoint do menu da conta.
+ * Retorna o Ã­cone SVG para cada endpoint do menu da conta.
  *
  * @param string $endpoint Endpoint do menu.
- * @return string SVG do ícone.
+ * @return string SVG do Ã­cone.
  */
 function gstore_get_myaccount_icon( $endpoint ) {
 	$icons = array(
@@ -4665,8 +4670,8 @@ function gstore_get_myaccount_icon( $endpoint ) {
 /**
  * Permite "Order Again" apenas para pedidos cancelados.
  *
- * Por padrão, o WooCommerce só permite "Order Again" para pedidos completed.
- * Esta função ajusta para aceitar apenas pedidos cancelados.
+ * Por padrÃ£o, o WooCommerce sÃ³ permite "Order Again" para pedidos completed.
+ * Esta funÃ§Ã£o ajusta para aceitar apenas pedidos cancelados.
  *
  * @param array $statuses Array de status permitidos.
  * @return array Status permitidos atualizados.
@@ -4677,21 +4682,21 @@ function gstore_allow_order_again_for_cancelled( $statuses ) {
 add_filter( 'woocommerce_valid_order_statuses_for_order_again', 'gstore_allow_order_again_for_cancelled', 10, 1 );
 
 /**
- * Remove botões "Pagar" e "Cancelar" padrão do WooCommerce da tabela de pedidos.
+ * Remove botÃµes "Pagar" e "Cancelar" padrÃ£o do WooCommerce da tabela de pedidos.
  *
- * Esses botões nativos não são mais necessários, pois usamos "Order Again"
+ * Esses botÃµes nativos nÃ£o sÃ£o mais necessÃ¡rios, pois usamos "Order Again"
  * para pagar pedidos com menos de 1 dia.
  *
- * @param array    $actions Ações disponíveis para o pedido.
+ * @param array    $actions AÃ§Ãµes disponÃ­veis para o pedido.
  * @param WC_Order $order   Objeto do pedido.
- * @return array Ações atualizadas (sem 'pay' e 'cancel').
+ * @return array AÃ§Ãµes atualizadas (sem 'pay' e 'cancel').
  */
 function gstore_remove_default_order_actions( $actions, $order ) {
 	if ( ! is_array( $actions ) ) {
 		return $actions;
 	}
 
-	// Remover ações padrão 'pay' e 'cancel'
+	// Remover aÃ§Ãµes padrÃ£o 'pay' e 'cancel'
 	unset( $actions['pay'] );
 	unset( $actions['cancel'] );
 
@@ -4700,27 +4705,27 @@ function gstore_remove_default_order_actions( $actions, $order ) {
 add_filter( 'woocommerce_my_account_my_orders_actions', 'gstore_remove_default_order_actions', 5, 2 );
 
 /**
- * Adiciona botão "Refazer compra" na lista de pedidos, apenas se:
- * - Status é cancelled
+ * Adiciona botÃ£o "Refazer compra" na lista de pedidos, apenas se:
+ * - Status Ã© cancelled
  *
  * Usa funcionalidade nativa "Order Again" do WooCommerce.
  *
- * @param array    $actions Ações disponíveis para o pedido.
+ * @param array    $actions AÃ§Ãµes disponÃ­veis para o pedido.
  * @param WC_Order $order   Objeto do pedido.
- * @return array Ações atualizadas.
+ * @return array AÃ§Ãµes atualizadas.
  */
 function gstore_add_refazer_compra_button_to_order_actions( $actions, $order ) {
 	if ( ! $order instanceof WC_Order ) {
 		return $actions;
 	}
 
-	// Verificar se status é cancelled
+	// Verificar se status Ã© cancelled
 	$order_status = $order->get_status();
 	if ( 'cancelled' !== $order_status ) {
 		return $actions;
 	}
 
-	// Adicionar ação "Refazer compra" usando sistema nativo order_again
+	// Adicionar aÃ§Ã£o "Refazer compra" usando sistema nativo order_again
 	$actions['order-again'] = array(
 		'url'  => wp_nonce_url( add_query_arg( 'order_again', $order->get_id() ), 'woocommerce-order_again' ),
 		'name' => __( 'Refazer compra', 'gstore' ),
@@ -4732,7 +4737,7 @@ add_filter( 'woocommerce_my_account_my_orders_actions', 'gstore_add_refazer_comp
 
 /**
  * Exclui pedidos cancelados da lista "Meus pedidos".
- * Mostra apenas a última tentativa (pendente) e pedidos ativos; tentativas canceladas somem.
+ * Mostra apenas a Ãºltima tentativa (pendente) e pedidos ativos; tentativas canceladas somem.
  *
  * @param array $args Argumentos da query de pedidos do My Account.
  * @return array Argumentos atualizados.
@@ -4754,7 +4759,7 @@ add_filter( 'woocommerce_my_account_my_orders_query', 'gstore_my_account_orders_
  * Valida estoque antes de adicionar produtos ao carrinho via "Order Again".
  *
  * Remove produtos sem estoque do array antes de adicionar ao carrinho.
- * Adiciona notice se algum produto não estiver disponível.
+ * Adiciona notice se algum produto nÃ£o estiver disponÃ­vel.
  *
  * @param array $cart_item_data Dados do item do carrinho.
  * @param array $order_item     Item do pedido original.
@@ -4770,15 +4775,15 @@ function gstore_validate_order_again_stock( $cart_item_data, $order_item, $order
 	$variation_id = isset( $cart_item_data['variation_id'] ) ? absint( $cart_item_data['variation_id'] ) : 0;
 	$quantity = isset( $cart_item_data['quantity'] ) ? absint( $cart_item_data['quantity'] ) : 1;
 
-	// Obter produto ou variação
+	// Obter produto ou variaÃ§Ã£o
 	$product = $variation_id > 0 ? wc_get_product( $variation_id ) : wc_get_product( $product_id );
 
 	if ( ! $product || ! $product->exists() ) {
-		// Produto deletado - não adicionar ao carrinho
+		// Produto deletado - nÃ£o adicionar ao carrinho
 		wc_add_notice(
 			sprintf(
 				/* translators: %s: nome do produto */
-				__( 'O produto "%s" não está mais disponível.', 'gstore' ),
+				__( 'O produto "%s" nÃ£o estÃ¡ mais disponÃ­vel.', 'gstore' ),
 				$order_item->get_name()
 			),
 			'error'
@@ -4791,7 +4796,7 @@ function gstore_validate_order_again_stock( $cart_item_data, $order_item, $order
 		wc_add_notice(
 			sprintf(
 				/* translators: %s: nome do produto */
-				__( 'Não existe mais estoque para o produto "%s".', 'gstore' ),
+				__( 'NÃ£o existe mais estoque para o produto "%s".', 'gstore' ),
 				$order_item->get_name()
 			),
 			'error'
@@ -4799,24 +4804,24 @@ function gstore_validate_order_again_stock( $cart_item_data, $order_item, $order
 		return null; // Remove do carrinho
 	}
 
-	// Verificar quantidade disponível em estoque (se gerenciado)
+	// Verificar quantidade disponÃ­vel em estoque (se gerenciado)
 	if ( $product->managing_stock() ) {
 		$stock_quantity = $product->get_stock_quantity();
 		if ( $stock_quantity !== null && $stock_quantity < $quantity ) {
 			wc_add_notice(
 				sprintf(
-					/* translators: 1: nome do produto, 2: quantidade disponível */
-					__( 'Apenas %2$d unidade(s) disponível(is) do produto "%1$s". Ajustamos a quantidade.', 'gstore' ),
+					/* translators: 1: nome do produto, 2: quantidade disponÃ­vel */
+					__( 'Apenas %2$d unidade(s) disponÃ­vel(is) do produto "%1$s". Ajustamos a quantidade.', 'gstore' ),
 					$order_item->get_name(),
 					$stock_quantity
 				),
 				'error'
 			);
-			// Ajustar quantidade para o disponível
+			// Ajustar quantidade para o disponÃ­vel
 			if ( $stock_quantity > 0 ) {
 				$cart_item_data['quantity'] = $stock_quantity;
 			} else {
-				return null; // Remove se não há estoque
+				return null; // Remove se nÃ£o hÃ¡ estoque
 			}
 		}
 	}
@@ -4826,9 +4831,9 @@ function gstore_validate_order_again_stock( $cart_item_data, $order_item, $order
 add_filter( 'woocommerce_order_again_cart_item_data', 'gstore_validate_order_again_stock', 10, 3 );
 
 /**
- * Redireciona para o carrinho após "Order Again" de pedidos cancelados.
+ * Redireciona para o carrinho apÃ³s "Order Again" de pedidos cancelados.
  *
- * Verifica se a requisição veio de order_again e se o pedido está cancelado.
+ * Verifica se a requisiÃ§Ã£o veio de order_again e se o pedido estÃ¡ cancelado.
  *
  * @param string $url URL de redirecionamento.
  * @return string URL do carrinho ou URL original.
@@ -4862,12 +4867,12 @@ function gstore_redirect_order_again_to_cart( $url ) {
 		return $url;
 	}
 
-	// Verificar se pedido pertence ao usuário atual
+	// Verificar se pedido pertence ao usuÃ¡rio atual
 	if ( get_current_user_id() !== $order->get_user_id() ) {
 		return $url;
 	}
 
-	// Verificar se status é cancelled
+	// Verificar se status Ã© cancelled
 	$order_status = $order->get_status();
 	if ( 'cancelled' !== $order_status ) {
 		return $url;
@@ -4880,42 +4885,42 @@ add_filter( 'woocommerce_add_to_cart_redirect', 'gstore_redirect_order_again_to_
 
 /**
  * ============================================
- * FUNÇÕES HELPER PARA IMAGENS DA BIBLIOTECA
+ * FUNÃ‡Ã•ES HELPER PARA IMAGENS DA BIBLIOTECA
  * ============================================
  */
 
 /**
- * Aumenta a qualidade das imagens JPEG para melhor qualidade em produção.
+ * Aumenta a qualidade das imagens JPEG para melhor qualidade em produÃ§Ã£o.
  * 
- * O WordPress usa qualidade 82 por padrão. Aumentamos para 92 para banners.
- * Isso garante que imagens novas e redimensionadas tenham qualidade máxima.
+ * O WordPress usa qualidade 82 por padrÃ£o. Aumentamos para 92 para banners.
+ * Isso garante que imagens novas e redimensionadas tenham qualidade mÃ¡xima.
  * 
- * NOTA: Imagens já carregadas precisarão ser regeneradas para aplicar a nova qualidade.
- * Use um plugin como "Regenerate Thumbnails" ou faça upload novamente das imagens.
+ * NOTA: Imagens jÃ¡ carregadas precisarÃ£o ser regeneradas para aplicar a nova qualidade.
+ * Use um plugin como "Regenerate Thumbnails" ou faÃ§a upload novamente das imagens.
  * 
- * @param int    $quality Qualidade atual (82 padrão).
+ * @param int    $quality Qualidade atual (82 padrÃ£o).
  * @param string $mime_type Tipo MIME da imagem.
  * @return int Nova qualidade.
  */
 function gstore_increase_jpeg_quality( $quality, $mime_type ) {
 	if ( 'image/jpeg' === $mime_type ) {
-		// Aumenta a qualidade para 92 (qualidade alta, ainda com compressão)
-		// 92 é um bom equilíbrio entre qualidade e tamanho de arquivo
+		// Aumenta a qualidade para 92 (qualidade alta, ainda com compressÃ£o)
+		// 92 Ã© um bom equilÃ­brio entre qualidade e tamanho de arquivo
 		return 92;
 	}
 	
-	// Para WebP e PNG, mantém a qualidade padrão
+	// Para WebP e PNG, mantÃ©m a qualidade padrÃ£o
 	return $quality;
 }
 add_filter( 'jpeg_quality', 'gstore_increase_jpeg_quality', 10, 2 );
 add_filter( 'wp_editor_set_quality', 'gstore_increase_jpeg_quality', 10, 2 );
 
 /**
- * Retorna a URL de uma imagem da biblioteca de mídia pelo ID.
+ * Retorna a URL de uma imagem da biblioteca de mÃ­dia pelo ID.
  *
  * @param int    $attachment_id ID da imagem na biblioteca.
  * @param string $size          Tamanho da imagem (thumbnail, medium, large, full, etc.).
- * @return string URL da imagem ou string vazia se não encontrada.
+ * @return string URL da imagem ou string vazia se nÃ£o encontrada.
  */
 function gstore_get_image_url( $attachment_id, $size = 'full' ) {
 	if ( ! $attachment_id ) {
@@ -4928,7 +4933,7 @@ function gstore_get_image_url( $attachment_id, $size = 'full' ) {
 		return '';
 	}
 
-	// Valida se é uma imagem
+	// Valida se Ã© uma imagem
 	$mime_type = get_post_mime_type( $attachment_id );
 	if ( ! $mime_type || strpos( $mime_type, 'image/' ) !== 0 ) {
 		return '';
@@ -4937,7 +4942,7 @@ function gstore_get_image_url( $attachment_id, $size = 'full' ) {
 	// Para banners (tamanho 'full'), garante que sempre use a imagem original
 	if ( 'full' === $size ) {
 		$image_url = wp_get_attachment_image_url( $attachment_id, 'full' );
-		// Se não encontrar, tenta pegar a URL do arquivo original diretamente
+		// Se nÃ£o encontrar, tenta pegar a URL do arquivo original diretamente
 		if ( ! $image_url ) {
 			$image_url = wp_get_attachment_url( $attachment_id );
 		}
@@ -4953,9 +4958,9 @@ function gstore_get_image_url( $attachment_id, $size = 'full' ) {
  *
  * @param int    $attachment_id ID da imagem na biblioteca.
  * @param string $size          Tamanho da imagem.
- * @param string $alt           Texto alternativo (opcional, usa o alt da mídia se não fornecido).
+ * @param string $alt           Texto alternativo (opcional, usa o alt da mÃ­dia se nÃ£o fornecido).
  * @param array  $attr          Atributos adicionais para a tag img.
- * @param bool   $use_srcset    Se true, gera srcset e sizes para imagens responsivas (padrão: true).
+ * @param bool   $use_srcset    Se true, gera srcset e sizes para imagens responsivas (padrÃ£o: true).
  * @return string Tag <img> completa ou string vazia.
  */
 function gstore_get_image_tag( $attachment_id, $size = 'full', $alt = '', $attr = array(), $use_srcset = true ) {
@@ -4963,7 +4968,7 @@ function gstore_get_image_tag( $attachment_id, $size = 'full', $alt = '', $attr 
 		return '';
 	}
 
-	// Se alt não foi fornecido, tenta pegar da mídia
+	// Se alt nÃ£o foi fornecido, tenta pegar da mÃ­dia
 	if ( empty( $alt ) ) {
 		$alt = get_post_meta( $attachment_id, '_wp_attachment_image_alt', true );
 	}
@@ -4981,11 +4986,11 @@ function gstore_get_image_tag( $attachment_id, $size = 'full', $alt = '', $attr 
 		'decoding' => 'async',
 	);
 
-	// Gera srcset e sizes se solicitado e se não for 'full' (full usa imagem original)
+	// Gera srcset e sizes se solicitado e se nÃ£o for 'full' (full usa imagem original)
 	if ( $use_srcset && 'full' !== $size ) {
 		$image_meta = wp_get_attachment_metadata( $attachment_id );
 		if ( $image_meta && isset( $image_meta['sizes'] ) ) {
-			// Tamanhos disponíveis para srcset
+			// Tamanhos disponÃ­veis para srcset
 			$srcset_sizes = array( 'thumbnail', 'medium', 'medium_large', 'large' );
 			$srcset_array = array();
 
@@ -4998,10 +5003,10 @@ function gstore_get_image_tag( $attachment_id, $size = 'full', $alt = '', $attr 
 				}
 			}
 
-			// Adiciona outros tamanhos disponíveis
+			// Adiciona outros tamanhos disponÃ­veis
 			foreach ( $srcset_sizes as $srcset_size ) {
 				if ( $srcset_size === $size ) {
-					continue; // Já adicionado
+					continue; // JÃ¡ adicionado
 				}
 
 				if ( isset( $image_meta['sizes'][ $srcset_size ] ) ) {
@@ -5013,7 +5018,7 @@ function gstore_get_image_tag( $attachment_id, $size = 'full', $alt = '', $attr 
 				}
 			}
 
-			// Adiciona o tamanho completo (original) se disponível e não for muito grande
+			// Adiciona o tamanho completo (original) se disponÃ­vel e nÃ£o for muito grande
 			if ( isset( $image_meta['width'] ) && $image_meta['width'] <= 2048 ) {
 				$full_url = gstore_get_image_url( $attachment_id, 'full' );
 				if ( $full_url ) {
@@ -5032,7 +5037,7 @@ function gstore_get_image_tag( $attachment_id, $size = 'full', $alt = '', $attr 
 		}
 	}
 
-	// Width e height para evitar CLS (se disponível)
+	// Width e height para evitar CLS (se disponÃ­vel)
 	if ( ! isset( $attr['width'] ) || ! isset( $attr['height'] ) ) {
 		$image_src = wp_get_attachment_image_src( $attachment_id, $size );
 		if ( $image_src && isset( $image_src[1] ) && isset( $image_src[2] ) ) {
@@ -5050,7 +5055,7 @@ function gstore_get_image_tag( $attachment_id, $size = 'full', $alt = '', $attr 
 	$img_tag = '<img';
 	foreach ( $attr as $key => $value ) {
 		if ( 'srcset' === $key && is_array( $value ) ) {
-			// srcset já foi convertido para string acima
+			// srcset jÃ¡ foi convertido para string acima
 			continue;
 		}
 		if ( ! empty( $value ) || 'alt' === $key ) {
@@ -5063,10 +5068,10 @@ function gstore_get_image_tag( $attachment_id, $size = 'full', $alt = '', $attr 
 }
 
 /**
- * Adiciona dimensões explícitas (width/height) a todas as imagens renderizadas pelo WordPress.
+ * Adiciona dimensÃµes explÃ­citas (width/height) a todas as imagens renderizadas pelo WordPress.
  * 
  * Isso inclui imagens de blocos Gutenberg, the_content, etc.
- * Reduz CLS (Cumulative Layout Shift) melhorando a experiência do usuário.
+ * Reduz CLS (Cumulative Layout Shift) melhorando a experiÃªncia do usuÃ¡rio.
  * 
  * @param array $attr Atributos da imagem
  * @param WP_Post $attachment Objeto do attachment
@@ -5074,23 +5079,23 @@ function gstore_get_image_tag( $attachment_id, $size = 'full', $alt = '', $attr 
  * @return array Atributos modificados
  */
 function gstore_add_image_dimensions( $attr, $attachment, $size ) {
-	// Se já tem width e height, não precisa adicionar
+	// Se jÃ¡ tem width e height, nÃ£o precisa adicionar
 	if ( isset( $attr['width'] ) && isset( $attr['height'] ) ) {
 		return $attr;
 	}
 
-	// Obtém informações da imagem
+	// ObtÃ©m informaÃ§Ãµes da imagem
 	$image_src = wp_get_attachment_image_src( $attachment->ID, $size );
 	if ( ! $image_src ) {
 		return $attr;
 	}
 
-	// Adiciona width se não existir
+	// Adiciona width se nÃ£o existir
 	if ( ! isset( $attr['width'] ) && isset( $image_src[1] ) ) {
 		$attr['width'] = $image_src[1];
 	}
 
-	// Adiciona height se não existir
+	// Adiciona height se nÃ£o existir
 	if ( ! isset( $attr['height'] ) && isset( $image_src[2] ) ) {
 		$attr['height'] = $image_src[2];
 	}
@@ -5100,15 +5105,15 @@ function gstore_add_image_dimensions( $attr, $attachment, $size ) {
 add_filter( 'wp_get_attachment_image_attributes', 'gstore_add_image_dimensions', 10, 3 );
 
 /**
- * Adiciona dimensões a imagens no conteúdo (the_content).
+ * Adiciona dimensÃµes a imagens no conteÃºdo (the_content).
  * 
- * Processa imagens que podem não ter sido renderizadas via wp_get_attachment_image.
+ * Processa imagens que podem nÃ£o ter sido renderizadas via wp_get_attachment_image.
  * 
- * @param string $content Conteúdo do post
- * @return string Conteúdo modificado
+ * @param string $content ConteÃºdo do post
+ * @return string ConteÃºdo modificado
  */
 function gstore_add_dimensions_to_content_images( $content ) {
-	// Não processa em admin
+	// NÃ£o processa em admin
 	if ( is_admin() ) {
 		return $content;
 	}
@@ -5120,7 +5125,7 @@ function gstore_add_dimensions_to_content_images( $content ) {
 			$img_tag = $matches[0];
 			$attributes = $matches[1] . $matches[2];
 
-			// Se já tem width e height, retorna como está
+			// Se jÃ¡ tem width e height, retorna como estÃ¡
 			if ( preg_match( '/\s+(?:width|height)\s*=\s*["\'][^"\']*["\']/i', $img_tag ) ) {
 				return $img_tag;
 			}
@@ -5179,7 +5184,7 @@ add_shortcode( 'gstore_image_url', 'gstore_image_url_shortcode' );
 /**
  * Shortcode para retornar tag <img> completa da biblioteca.
  * 
- * Uso: [gstore_image id="123" size="full" alt="Descrição"]
+ * Uso: [gstore_image id="123" size="full" alt="DescriÃ§Ã£o"]
  * 
  * @param array $atts Atributos do shortcode.
  * @return string Tag <img> completa.
@@ -5206,21 +5211,21 @@ add_shortcode( 'gstore_image', 'gstore_image_shortcode' );
 
 /**
  * Shortcode para renderizar o banner do YouTube condicionalmente.
- * Só exibe se o banner estiver configurado em Configurações Gstore.
+ * SÃ³ exibe se o banner estiver configurado em ConfiguraÃ§Ãµes Gstore.
  *
  * Uso: [gstore_banner_youtube]
  *
- * @return string HTML do banner ou string vazia se não configurado.
+ * @return string HTML do banner ou string vazia se nÃ£o configurado.
  */
 function gstore_banner_youtube_shortcode() {
 	$banner_id = gstore_get_banner_youtube_id();
 	
 	if ( $banner_id <= 0 ) {
-		return ''; // Não exibe nada se não estiver configurado
+		return ''; // NÃ£o exibe nada se nÃ£o estiver configurado
 	}
 	
 	$banner_url = wp_get_attachment_url( $banner_id );
-	$banner_alt = esc_attr( get_option( 'gstore_banner_youtube_alt', 'Conheça o conteúdo da CAC Armas no YouTube' ) );
+	$banner_alt = esc_attr( get_option( 'gstore_banner_youtube_alt', 'ConheÃ§a o conteÃºdo da CAC Armas no YouTube' ) );
 	$banner_link = esc_url( get_option( 'gstore_banner_youtube_link', '' ) );
 	
 	if ( empty( $banner_url ) ) {
@@ -5257,7 +5262,7 @@ function gstore_banner_youtube_shortcode() {
 add_shortcode( 'gstore_banner_youtube', 'gstore_banner_youtube_shortcode' );
 
 /**
- * Renderiza as seções da Home na ordem configurada no admin (via plugin),
+ * Renderiza as seÃ§Ãµes da Home na ordem configurada no admin (via plugin),
  * com fallback para a ordem fixa quando o plugin estiver inativo/sem config.
  *
  * Uso: [gstore_home_sections]
@@ -5273,9 +5278,9 @@ function gstore_home_sections_shortcode() {
 				return '';
 			}
 			$rendered = function_exists( 'do_blocks' ) ? do_blocks( $markup ) : $markup;
-			// Garante execução de shortcodes que eventualmente permaneçam no output.
+			// Garante execuÃ§Ã£o de shortcodes que eventualmente permaneÃ§am no output.
 			$rendered = do_shortcode( $rendered );
-			// Resolve links relativos (href="/...") para instalações em subdiretório.
+			// Resolve links relativos (href="/...") para instalaÃ§Ãµes em subdiretÃ³rio.
 			return gstore_resolve_home_relative_urls( $rendered );
 		};
 
@@ -5284,7 +5289,7 @@ function gstore_home_sections_shortcode() {
 		$out .= $render_part( 'parts/home-promocoes.html' );
 		$out .= $render_part( 'parts/home-equipamentos.html' );
 		$out .= do_shortcode( '[gstore_banner_youtube]' );
-		$out .= $render_part( 'parts/home-blog.html' );
+		$out .= do_shortcode( '[gstore_home_blog_v1]' );
 		return $out;
 	};
 
@@ -5322,7 +5327,7 @@ function gstore_home_sections_shortcode() {
 		return $fallback_render();
 	}
 
-	// Fallback: mantém exatamente a ordem antiga quando não houver configuração.
+	// Fallback: mantÃ©m exatamente a ordem antiga quando nÃ£o houver configuraÃ§Ã£o.
 	if ( empty( $sections ) ) {
 		return $fallback_render();
 	}
@@ -5338,7 +5343,7 @@ function gstore_home_sections_shortcode() {
 		$sections = is_object( $sections['sections'] ) ? (array) $sections['sections'] : $sections['sections'];
 	}
 
-	// Se vier como mapa (associativo), mantém só os valores para iterar na ordem.
+	// Se vier como mapa (associativo), mantÃ©m sÃ³ os valores para iterar na ordem.
 	$keys = array_keys( $sections );
 	$is_list = ( $keys === range( 0, count( $sections ) - 1 ) );
 	if ( ! $is_list ) {
@@ -5354,9 +5359,9 @@ function gstore_home_sections_shortcode() {
 			return '';
 		}
 		$rendered = function_exists( 'do_blocks' ) ? do_blocks( $markup ) : $markup;
-		// Garante execução de shortcodes que eventualmente permaneçam no output.
+		// Garante execuÃ§Ã£o de shortcodes que eventualmente permaneÃ§am no output.
 		$rendered = do_shortcode( $rendered );
-		// Resolve links relativos (href="/...") para instalações em subdiretório.
+		// Resolve links relativos (href="/...") para instalaÃ§Ãµes em subdiretÃ³rio.
 		return gstore_resolve_home_relative_urls( $rendered );
 	};
 
@@ -5368,14 +5373,14 @@ function gstore_home_sections_shortcode() {
 			continue;
 		}
 
-		// Se "enabled" não vier, assume ligado (não derruba a Home).
+		// Se "enabled" nÃ£o vier, assume ligado (nÃ£o derruba a Home).
 		$enabled_value = array_key_exists( 'enabled', $section ) ? $section['enabled'] : null;
 		if ( ! $is_enabled( $enabled_value, true ) ) {
 			continue;
 		}
 
 		$type = isset( $section['type'] ) ? (string) $section['type'] : '';
-		// Inferência: se não vier "type", tenta deduzir pelo conteúdo.
+		// InferÃªncia: se nÃ£o vier "type", tenta deduzir pelo conteÃºdo.
 		if ( '' === $type ) {
 			if ( isset( $section['key'] ) ) {
 				$type = 'builtin';
@@ -5398,13 +5403,13 @@ function gstore_home_sections_shortcode() {
 					$out .= $render_part( 'parts/home-equipamentos.html' );
 					break;
 				case 'blog':
-					$out .= $render_part( 'parts/home-blog.html' );
+					$out .= do_shortcode( '[gstore_home_blog_v1]' );
 					break;
 				case 'youtube_banner':
 					$out .= do_shortcode( '[gstore_banner_youtube]' );
 					break;
 				default:
-					// Tipo/key desconhecidos não podem matar a Home.
+					// Tipo/key desconhecidos nÃ£o podem matar a Home.
 					continue 2;
 			}
 		} elseif ( 'wc_category' === $type ) {
@@ -5421,16 +5426,16 @@ function gstore_home_sections_shortcode() {
 		}
 	}
 
-	// Se por algum motivo não renderizou nada, cai no fallback (evita Home vazia).
+	// Se por algum motivo nÃ£o renderizou nada, cai no fallback (evita Home vazia).
 	return '' !== trim( $out ) ? $out : $fallback_render();
 }
 add_shortcode( 'gstore_home_sections', 'gstore_home_sections_shortcode' );
 
 /**
- * Renderiza uma seção de vitrine de produtos por categoria (product_cat) para a Home.
+ * Renderiza uma seÃ§Ã£o de vitrine de produtos por categoria (product_cat) para a Home.
  *
  * @param int    $cat_id ID da categoria (term_id em product_cat).
- * @param string $title  Título opcional (se vazio, usa o nome da categoria).
+ * @param string $title  TÃ­tulo opcional (se vazio, usa o nome da categoria).
  * @return string
  */
 function gstore_render_home_category_section( $cat_id, $title = '' ) {
@@ -5479,7 +5484,7 @@ function gstore_render_home_category_section( $cat_id, $title = '' ) {
 		);
 	}
 
-	// Gera markup de blocos para manter o mesmo "padrão" (constrained/wideSize/classes) das seções existentes.
+	// Gera markup de blocos para manter o mesmo "padrÃ£o" (constrained/wideSize/classes) das seÃ§Ãµes existentes.
 	$block_markup = sprintf(
 		'<!-- wp:group {"align":"full","className":"Gstore-home-section Gstore-home-products Gstore-products-shell","style":{"spacing":{"padding":{"top":"48px","bottom":"56px","left":"0px","right":"0px"}}},"layout":{"type":"constrained","wideSize":"1280px"}} -->
 <div class="wp-block-group alignfull Gstore-home-section Gstore-home-products Gstore-products-shell" style="padding-top:48px;padding-bottom:56px;padding-left:0px;padding-right:0px">
@@ -5510,7 +5515,7 @@ function gstore_render_home_category_section( $cat_id, $title = '' ) {
 
 	$rendered = function_exists( 'do_blocks' ) ? do_blocks( $block_markup ) : $block_markup;
 	$rendered = do_shortcode( $rendered );
-	// Resolve links relativos (href="/...") para instalações em subdiretório.
+	// Resolve links relativos (href="/...") para instalaÃ§Ãµes em subdiretÃ³rio.
 	$rendered = gstore_resolve_home_relative_urls( $rendered );
 	return preg_replace( '#<br\s*/?>#i', '', $rendered );
 }
@@ -5518,8 +5523,8 @@ function gstore_render_home_category_section( $cat_id, $title = '' ) {
 /**
  * Remove <br> tags de dentro de elementos figure com classe Gstore-home-transition.
  *
- * @param string $content Conteúdo HTML.
- * @return string Conteúdo processado.
+ * @param string $content ConteÃºdo HTML.
+ * @return string ConteÃºdo processado.
  */
 function gstore_remove_br_from_banner_figure( $content ) {
 	// Remove <br> tags dentro de figure com classe Gstore-home-transition
@@ -5536,17 +5541,17 @@ add_filter( 'render_block', 'gstore_remove_br_from_banner_figure', 20 );
 
 /**
  * ============================================
- * PÁGINA DE CONFIGURAÇÕES DO TEMA - ADMIN
+ * PÃGINA DE CONFIGURAÃ‡Ã•ES DO TEMA - ADMIN
  * ============================================
  */
 
 /**
- * Adiciona página de configurações do tema no menu do admin.
+ * Adiciona pÃ¡gina de configuraÃ§Ãµes do tema no menu do admin.
  */
 function gstore_add_theme_settings_page() {
 	add_theme_page(
-		__( 'Configurações do Tema Gstore', 'gstore' ),
-		__( 'Configurações Gstore', 'gstore' ),
+		__( 'ConfiguraÃ§Ãµes do Tema Gstore', 'gstore' ),
+		__( 'ConfiguraÃ§Ãµes Gstore', 'gstore' ),
 		'manage_woocommerce',
 		'gstore-settings',
 		'gstore_render_settings_page'
@@ -5555,7 +5560,7 @@ function gstore_add_theme_settings_page() {
 add_action( 'admin_menu', 'gstore_add_theme_settings_page' );
 
 /**
- * Define o capability necessário para salvar/alterar opções do grupo gstore_settings via options.php.
+ * Define o capability necessÃ¡rio para salvar/alterar opÃ§Ãµes do grupo gstore_settings via options.php.
  *
  * @return string
  */
@@ -5565,10 +5570,10 @@ function gstore_settings_option_page_capability() {
 add_filter( 'option_page_capability_gstore_settings', 'gstore_settings_option_page_capability' );
 
 /**
- * Registra as opções do tema.
+ * Registra as opÃ§Ãµes do tema.
  */
 function gstore_register_theme_settings() {
-	// Hero Slider - Configurações de quantidade
+	// Hero Slider - ConfiguraÃ§Ãµes de quantidade
 	register_setting( 'gstore_settings', 'gstore_hero_slides_desktop_count', array(
 		'type' => 'integer',
 		'sanitize_callback' => 'absint',
@@ -5580,7 +5585,7 @@ function gstore_register_theme_settings() {
 		'default' => 2,
 	) );
 	
-	// Hero Slider - Slides Desktop (até 10)
+	// Hero Slider - Slides Desktop (atÃ© 10)
 	for ( $i = 1; $i <= 10; $i++ ) {
 		register_setting( 'gstore_settings', "gstore_hero_desktop_slide_{$i}_id", array(
 			'type' => 'integer',
@@ -5599,7 +5604,7 @@ function gstore_register_theme_settings() {
 		) );
 	}
 	
-	// Hero Slider - Slides Mobile (até 10)
+	// Hero Slider - Slides Mobile (atÃ© 10)
 	for ( $i = 1; $i <= 10; $i++ ) {
 		register_setting( 'gstore_settings', "gstore_hero_mobile_slide_{$i}_id", array(
 			'type' => 'integer',
@@ -5627,7 +5632,7 @@ function gstore_register_theme_settings() {
 	register_setting( 'gstore_settings', 'gstore_banner_youtube_alt', array(
 		'type' => 'string',
 		'sanitize_callback' => 'sanitize_text_field',
-		'default' => 'Conheça o conteúdo da CAC Armas no YouTube',
+		'default' => 'ConheÃ§a o conteÃºdo da CAC Armas no YouTube',
 	) );
 	register_setting( 'gstore_settings', 'gstore_banner_youtube_link', array(
 		'type' => 'string',
@@ -5657,23 +5662,23 @@ function gstore_register_theme_settings() {
 add_action( 'admin_init', 'gstore_register_theme_settings' );
 
 /**
- * Renderiza a página de configurações.
+ * Renderiza a pÃ¡gina de configuraÃ§Ãµes.
  */
 function gstore_render_settings_page() {
 	if ( ! current_user_can( 'manage_woocommerce' ) ) {
 		return;
 	}
 	
-	// Verifica se o formulário foi submetido
+	// Verifica se o formulÃ¡rio foi submetido
 	if ( isset( $_GET['settings-updated'] ) ) {
-		add_settings_error( 'gstore_messages', 'gstore_message', __( 'Configurações salvas com sucesso!', 'gstore' ), 'updated' );
+		add_settings_error( 'gstore_messages', 'gstore_message', __( 'ConfiguraÃ§Ãµes salvas com sucesso!', 'gstore' ), 'updated' );
 	}
 	
 	settings_errors( 'gstore_messages' );
 	?>
 	<div class="wrap">
 		<h1><?php echo esc_html( get_admin_page_title() ); ?></h1>
-		<p><?php _e( 'Configure as imagens do tema Gstore. Selecione as imagens da biblioteca de mídia do WordPress.', 'gstore' ); ?></p>
+		<p><?php _e( 'Configure as imagens do tema Gstore. Selecione as imagens da biblioteca de mÃ­dia do WordPress.', 'gstore' ); ?></p>
 		
 		<form action="options.php" method="post">
 			<?php
@@ -5682,7 +5687,7 @@ function gstore_render_settings_page() {
 			?>
 			
 			<h2 class="title"><?php _e( 'Logo do Site', 'gstore' ); ?></h2>
-			<p class="description"><?php _e( 'Configure a logo que será exibida no header do site. Se não houver logo configurada, será exibido o título do site.', 'gstore' ); ?></p>
+			<p class="description"><?php _e( 'Configure a logo que serÃ¡ exibida no header do site. Se nÃ£o houver logo configurada, serÃ¡ exibido o tÃ­tulo do site.', 'gstore' ); ?></p>
 			
 			<table class="form-table" role="presentation">
 				<tr>
@@ -5695,10 +5700,10 @@ function gstore_render_settings_page() {
 				</tr>
 			</table>
 			
-			<h2 class="title"><?php _e( 'Hero Slider - Slides da Página Inicial', 'gstore' ); ?></h2>
-			<p class="description"><?php _e( 'Configure as imagens do slider principal da página inicial. Os slides de Desktop e Mobile são configurados separadamente para otimização de performance e experiência do usuário.', 'gstore' ); ?></p>
+			<h2 class="title"><?php _e( 'Hero Slider - Slides da PÃ¡gina Inicial', 'gstore' ); ?></h2>
+			<p class="description"><?php _e( 'Configure as imagens do slider principal da pÃ¡gina inicial. Os slides de Desktop e Mobile sÃ£o configurados separadamente para otimizaÃ§Ã£o de performance e experiÃªncia do usuÃ¡rio.', 'gstore' ); ?></p>
 			
-			<!-- Configuração de Quantidade de Slides -->
+			<!-- ConfiguraÃ§Ã£o de Quantidade de Slides -->
 			<div class="gstore-slider-config" style="display: flex; gap: 30px; margin: 20px 0; flex-wrap: wrap;">
 				<div style="flex: 1; min-width: 200px;">
 					<label for="gstore_hero_slides_desktop_count" style="display: block; font-weight: 600; margin-bottom: 8px;">
@@ -5747,7 +5752,7 @@ function gstore_render_settings_page() {
 				<div id="gstore-desktop-slides" class="gstore-tab-content" style="background: #fff; border: 1px solid #c3c4c7; border-top: none; padding: 20px;">
 					<p class="description" style="margin-top: 0;">
 						<span class="dashicons dashicons-info" style="color: #2271b1;"></span>
-						<?php _e( 'Imagens recomendadas: 1920x600px ou proporção similar para desktop.', 'gstore' ); ?>
+						<?php _e( 'Imagens recomendadas: 1920x600px ou proporÃ§Ã£o similar para desktop.', 'gstore' ); ?>
 					</p>
 					<table class="form-table" role="presentation">
 						<?php for ( $i = 1; $i <= 10; $i++ ) : 
@@ -5781,7 +5786,7 @@ function gstore_render_settings_page() {
 				<div id="gstore-mobile-slides" class="gstore-tab-content" style="background: #fff; border: 1px solid #c3c4c7; border-top: none; padding: 20px; display: none;">
 					<p class="description" style="margin-top: 0;">
 						<span class="dashicons dashicons-info" style="color: #2271b1;"></span>
-						<?php _e( 'Imagens recomendadas: 768x900px ou proporção vertical para mobile.', 'gstore' ); ?>
+						<?php _e( 'Imagens recomendadas: 768x900px ou proporÃ§Ã£o vertical para mobile.', 'gstore' ); ?>
 					</p>
 					<table class="form-table" role="presentation">
 						<?php for ( $i = 1; $i <= 10; $i++ ) : 
@@ -5852,7 +5857,7 @@ function gstore_render_settings_page() {
 						<label for="gstore_banner_youtube_id"><?php _e( 'Banner YouTube', 'gstore' ); ?></label>
 					</th>
 					<td>
-						<?php gstore_render_media_selector( 'gstore_banner_youtube_id', 'gstore_banner_youtube_alt', get_option( 'gstore_banner_youtube_id', 0 ), get_option( 'gstore_banner_youtube_alt', 'Conheça o conteúdo da CAC Armas no YouTube' ) ); ?>
+						<?php gstore_render_media_selector( 'gstore_banner_youtube_id', 'gstore_banner_youtube_alt', get_option( 'gstore_banner_youtube_id', 0 ), get_option( 'gstore_banner_youtube_alt', 'ConheÃ§a o conteÃºdo da CAC Armas no YouTube' ) ); ?>
 					</td>
 				</tr>
 				<tr>
@@ -5861,26 +5866,26 @@ function gstore_render_settings_page() {
 					</th>
 					<td>
 						<input type="url" id="gstore_banner_youtube_link" name="gstore_banner_youtube_link" value="<?php echo esc_attr( get_option( 'gstore_banner_youtube_link', '' ) ); ?>" class="regular-text" placeholder="https://..." />
-						<p class="description"><?php _e( 'URL para onde o banner deve redirecionar quando clicado. Deixe em branco se não quiser que o banner seja clicável.', 'gstore' ); ?></p>
+						<p class="description"><?php _e( 'URL para onde o banner deve redirecionar quando clicado. Deixe em branco se nÃ£o quiser que o banner seja clicÃ¡vel.', 'gstore' ); ?></p>
 					</td>
 				</tr>
 			</table>
 			
-			<?php submit_button( __( 'Salvar Configurações', 'gstore' ) ); ?>
+			<?php submit_button( __( 'Salvar ConfiguraÃ§Ãµes', 'gstore' ) ); ?>
 		</form>
 		
 		<hr style="margin: 40px 0;" />
 		
-		<h2 class="title"><?php _e( 'Informações da Loja (JSON)', 'gstore' ); ?></h2>
+		<h2 class="title"><?php _e( 'InformaÃ§Ãµes da Loja (JSON)', 'gstore' ); ?></h2>
 		<p class="description">
-			<?php _e( 'Gerencie as informações centralizadas da loja (nome, contatos, footer, etc). Útil para migrar configurações entre lojas.', 'gstore' ); ?>
+			<?php _e( 'Gerencie as informaÃ§Ãµes centralizadas da loja (nome, contatos, footer, etc). Ãštil para migrar configuraÃ§Ãµes entre lojas.', 'gstore' ); ?>
 		</p>
 		
 		<div class="gstore-store-info-actions" style="display: flex; gap: 20px; margin: 20px 0; flex-wrap: wrap;">
 			<!-- Exportar -->
 			<div class="gstore-export-card" style="background: #fff; border: 1px solid #c3c4c7; border-radius: 4px; padding: 20px; flex: 1; min-width: 280px;">
-				<h3 style="margin-top: 0;"><?php _e( 'Exportar Configurações', 'gstore' ); ?></h3>
-				<p><?php _e( 'Baixe um arquivo JSON com todas as informações da loja para backup ou migração.', 'gstore' ); ?></p>
+				<h3 style="margin-top: 0;"><?php _e( 'Exportar ConfiguraÃ§Ãµes', 'gstore' ); ?></h3>
+				<p><?php _e( 'Baixe um arquivo JSON com todas as informaÃ§Ãµes da loja para backup ou migraÃ§Ã£o.', 'gstore' ); ?></p>
 				<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
 					<input type="hidden" name="action" value="gstore_export_store_info" />
 					<?php wp_nonce_field( 'gstore_export_store_info', 'gstore_export_nonce' ); ?>
@@ -5893,8 +5898,8 @@ function gstore_render_settings_page() {
 			
 			<!-- Importar -->
 			<div class="gstore-import-card" style="background: #fff; border: 1px solid #c3c4c7; border-radius: 4px; padding: 20px; flex: 1; min-width: 280px;">
-				<h3 style="margin-top: 0;"><?php _e( 'Importar Configurações', 'gstore' ); ?></h3>
-				<p><?php _e( 'Carregue um arquivo JSON previamente exportado para atualizar as informações da loja.', 'gstore' ); ?></p>
+				<h3 style="margin-top: 0;"><?php _e( 'Importar ConfiguraÃ§Ãµes', 'gstore' ); ?></h3>
+				<p><?php _e( 'Carregue um arquivo JSON previamente exportado para atualizar as informaÃ§Ãµes da loja.', 'gstore' ); ?></p>
 				<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" enctype="multipart/form-data">
 					<input type="hidden" name="action" value="gstore_import_store_info" />
 					<?php wp_nonce_field( 'gstore_import_store_info', 'gstore_import_nonce' ); ?>
@@ -5910,7 +5915,7 @@ function gstore_render_settings_page() {
 		<!-- Preview dos dados atuais -->
 		<div class="gstore-current-info" style="margin-top: 30px;">
 			<h3><?php _e( 'Dados Atuais da Loja', 'gstore' ); ?></h3>
-			<p class="description"><?php _e( 'Pré-visualização das informações configuradas no arquivo JSON.', 'gstore' ); ?></p>
+			<p class="description"><?php _e( 'PrÃ©-visualizaÃ§Ã£o das informaÃ§Ãµes configuradas no arquivo JSON.', 'gstore' ); ?></p>
 			
 			<?php
 			$store_info = gstore_store_info();
@@ -5936,11 +5941,11 @@ function gstore_render_settings_page() {
 						<td>@<?php echo esc_html( $data['social']['instagram'] ?? '' ); ?></td>
 					</tr>
 					<tr>
-						<th><?php _e( 'Endereço', 'gstore' ); ?></th>
+						<th><?php _e( 'EndereÃ§o', 'gstore' ); ?></th>
 						<td><?php echo esc_html( gstore_get_address( 'short' ) ); ?></td>
 					</tr>
 					<tr>
-						<th><?php _e( 'Horário de Funcionamento', 'gstore' ); ?></th>
+						<th><?php _e( 'HorÃ¡rio de Funcionamento', 'gstore' ); ?></th>
 						<td><?php echo esc_html( $data['business_hours']['full_text'] ?? '' ); ?></td>
 					</tr>
 				</tbody>
@@ -5951,20 +5956,20 @@ function gstore_render_settings_page() {
 					<span class="dashicons dashicons-edit" style="margin-right: 5px; vertical-align: middle;"></span>
 					<?php _e( 'Editar JSON diretamente', 'gstore' ); ?>
 				</a>
-				<span class="description" style="margin-left: 10px;"><?php _e( '(Cuidado: edição manual pode quebrar a estrutura)', 'gstore' ); ?></span>
+				<span class="description" style="margin-left: 10px;"><?php _e( '(Cuidado: ediÃ§Ã£o manual pode quebrar a estrutura)', 'gstore' ); ?></span>
 			</p>
 		</div>
 
 		<hr style="margin: 40px 0;" />
 
-		<h2 class="title"><?php _e( 'Sincronização GitHub', 'gstore' ); ?></h2>
+		<h2 class="title"><?php _e( 'SincronizaÃ§Ã£o GitHub', 'gstore' ); ?></h2>
 		<p class="description">
-			<?php _e( 'Mantenha os arquivos do tema atualizados diretamente do repositório GitHub.', 'gstore' ); ?>
+			<?php _e( 'Mantenha os arquivos do tema atualizados diretamente do repositÃ³rio GitHub.', 'gstore' ); ?>
 		</p>
 
 		<div class="gstore-github-sync" style="background: #fff; border: 1px solid #c3c4c7; border-radius: 4px; padding: 20px; margin-top: 20px; max-width: 800px;">
 			<h3 style="margin-top: 0;"><?php _e( 'Atualizar Tema via Git', 'gstore' ); ?></h3>
-			<p><?php _e( 'Este comando irá executar um "git pull" (fetch + reset --hard) para sincronizar os arquivos locais com a versão mais recente do branch principal no GitHub.', 'gstore' ); ?></p>
+			<p><?php _e( 'Este comando irÃ¡ executar um "git pull" (fetch + reset --hard) para sincronizar os arquivos locais com a versÃ£o mais recente do branch principal no GitHub.', 'gstore' ); ?></p>
 			
 			<div style="margin-top: 20px;">
 				<button type="button" class="button button-primary gstore-theme-git-update" data-nonce="<?php echo esc_attr( wp_create_nonce( 'gstore_theme_git_pull' ) ); ?>">
@@ -5972,7 +5977,7 @@ function gstore_render_settings_page() {
 					<?php _e( 'Sincronizar Agora', 'gstore' ); ?>
 				</button>
 				<p class="description" style="margin-top: 10px;">
-					<?php _e( 'Atenção: Quaisquer alterações locais não commitadas serão perdidas.', 'gstore' ); ?>
+					<?php _e( 'AtenÃ§Ã£o: Quaisquer alteraÃ§Ãµes locais nÃ£o commitadas serÃ£o perdidas.', 'gstore' ); ?>
 				</p>
 			</div>
 		</div>
@@ -6034,7 +6039,7 @@ function gstore_render_settings_page() {
 	
 	<script>
 	jQuery(document).ready(function($) {
-		// Abre o seletor de mídia
+		// Abre o seletor de mÃ­dia
 		$(document).on('click', '.gstore-select-media', function(e) {
 			e.preventDefault();
 			
@@ -6082,7 +6087,7 @@ function gstore_render_settings_page() {
 			button.hide();
 		});
 		
-		// Carrega previews existentes ao carregar a página
+		// Carrega previews existentes ao carregar a pÃ¡gina
 		$('.gstore-media-preview').each(function() {
 			var preview = $(this);
 			var inputId = preview.data('input-id');
@@ -6114,7 +6119,7 @@ function gstore_render_settings_page() {
 }
 
 /**
- * Renderiza o seletor de mídia.
+ * Renderiza o seletor de mÃ­dia.
  */
 function gstore_render_media_selector( $input_id, $alt_input_id, $current_id = 0, $current_alt = '' ) {
 	$preview_id = $input_id . '_preview';
@@ -6129,7 +6134,7 @@ function gstore_render_media_selector( $input_id, $alt_input_id, $current_id = 0
 					?>
 					<img src="<?php echo esc_url( $image_url ); ?>" alt="<?php echo esc_attr( $current_alt ); ?>" />
 				<?php else : ?>
-					<span style="color: #999;">Imagem não encontrada</span>
+					<span style="color: #999;">Imagem nÃ£o encontrada</span>
 				<?php endif; ?>
 			<?php else : ?>
 				<span style="color: #999;">Nenhuma imagem selecionada</span>
@@ -6152,7 +6157,7 @@ function gstore_render_media_selector( $input_id, $alt_input_id, $current_id = 0
 					<?php _e( 'Texto Alternativo (Alt)', 'gstore' ); ?>
 				</label>
 				<input type="text" id="<?php echo esc_attr( $alt_input_id ); ?>" name="<?php echo esc_attr( $alt_input_id ); ?>" value="<?php echo esc_attr( $current_alt ); ?>" class="regular-text" />
-				<p class="description"><?php _e( 'Descrição da imagem para acessibilidade e SEO.', 'gstore' ); ?></p>
+				<p class="description"><?php _e( 'DescriÃ§Ã£o da imagem para acessibilidade e SEO.', 'gstore' ); ?></p>
 			</div>
 		</div>
 	</div>
@@ -6160,7 +6165,7 @@ function gstore_render_media_selector( $input_id, $alt_input_id, $current_id = 0
 }
 
 /**
- * Renderiza o seletor de mídia com campo de link.
+ * Renderiza o seletor de mÃ­dia com campo de link.
  */
 function gstore_render_media_selector_with_link( $input_id, $alt_input_id, $link_input_id, $current_id = 0, $current_alt = '', $current_link = '' ) {
 	$preview_id = $input_id . '_preview';
@@ -6175,7 +6180,7 @@ function gstore_render_media_selector_with_link( $input_id, $alt_input_id, $link
 					?>
 					<img src="<?php echo esc_url( $image_url ); ?>" alt="<?php echo esc_attr( $current_alt ); ?>" />
 				<?php else : ?>
-					<span style="color: #999;">Imagem não encontrada</span>
+					<span style="color: #999;">Imagem nÃ£o encontrada</span>
 				<?php endif; ?>
 			<?php else : ?>
 				<span style="color: #999;">Nenhuma imagem selecionada</span>
@@ -6219,20 +6224,20 @@ function gstore_ajax_get_image_data() {
 	check_ajax_referer( 'gstore_ajax', 'nonce' );
 	
 	if ( ! current_user_can( 'manage_woocommerce' ) ) {
-		wp_send_json_error( array( 'message' => __( 'Permissão negada.', 'gstore' ) ) );
+		wp_send_json_error( array( 'message' => __( 'PermissÃ£o negada.', 'gstore' ) ) );
 	}
 	
 	$image_id = isset( $_POST['image_id'] ) ? absint( $_POST['image_id'] ) : 0;
 	
 	if ( ! $image_id ) {
-		wp_send_json_error( array( 'message' => __( 'ID da imagem não fornecido.', 'gstore' ) ) );
+		wp_send_json_error( array( 'message' => __( 'ID da imagem nÃ£o fornecido.', 'gstore' ) ) );
 	}
 	
 	$image_url = wp_get_attachment_image_url( $image_id, 'thumbnail' );
 	$image_alt = get_post_meta( $image_id, '_wp_attachment_image_alt', true );
 	
 	if ( ! $image_url ) {
-		wp_send_json_error( array( 'message' => __( 'Imagem não encontrada.', 'gstore' ) ) );
+		wp_send_json_error( array( 'message' => __( 'Imagem nÃ£o encontrada.', 'gstore' ) ) );
 	}
 	
 	wp_send_json_success( array(
@@ -6244,7 +6249,7 @@ function gstore_ajax_get_image_data() {
 add_action( 'wp_ajax_gstore_get_image_data', 'gstore_ajax_get_image_data' );
 
 /**
- * Enfileira scripts e estilos necessários na página de configurações.
+ * Enfileira scripts e estilos necessÃ¡rios na pÃ¡gina de configuraÃ§Ãµes.
  */
 function gstore_enqueue_settings_assets( $hook ) {
 	if ( 'appearance_page_gstore-settings' !== $hook ) {
@@ -6263,14 +6268,14 @@ function gstore_enqueue_settings_assets( $hook ) {
 add_action( 'admin_enqueue_scripts', 'gstore_enqueue_settings_assets' );
 
 /**
- * Funções helper para obter IDs configurados.
+ * FunÃ§Ãµes helper para obter IDs configurados.
  */
 /**
- * Funções para o Hero Slider com suporte a Desktop/Mobile.
+ * FunÃ§Ãµes para o Hero Slider com suporte a Desktop/Mobile.
  */
 
 /**
- * Obtém a quantidade de slides configurada.
+ * ObtÃ©m a quantidade de slides configurada.
  *
  * @param string $device 'desktop' ou 'mobile'.
  * @return int Quantidade de slides.
@@ -6281,10 +6286,10 @@ function gstore_get_hero_slides_count( $device = 'desktop' ) {
 }
 
 /**
- * Obtém dados de um slide específico.
+ * ObtÃ©m dados de um slide especÃ­fico.
  *
  * @param string $device 'desktop' ou 'mobile'.
- * @param int    $index  Índice do slide (1-10).
+ * @param int    $index  Ãndice do slide (1-10).
  * @return array Array com 'id', 'alt', 'link', 'url'.
  */
 function gstore_get_hero_slide( $device, $index ) {
@@ -6306,7 +6311,7 @@ function gstore_get_hero_slide( $device, $index ) {
 }
 
 /**
- * Obtém todos os slides configurados para um dispositivo.
+ * ObtÃ©m todos os slides configurados para um dispositivo.
  *
  * @param string $device 'desktop' ou 'mobile'.
  * @return array Array de slides.
@@ -6336,7 +6341,7 @@ function gstore_render_hero_slider() {
 	$desktop_total = count( $desktop_slides );
 	$mobile_total = count( $mobile_slides );
 	
-	// Se não houver slides, retorna vazio
+	// Se nÃ£o houver slides, retorna vazio
 	if ( empty( $desktop_slides ) && empty( $mobile_slides ) ) {
 		return '';
 	}
@@ -6395,7 +6400,7 @@ function gstore_render_hero_slider() {
 				</span>
 			</button>
 			
-			<button class="Gstore-hero-slider__control Gstore-hero-slider__control--next" type="button" aria-label="Próximo slide" data-gstore-hero-next>
+			<button class="Gstore-hero-slider__control Gstore-hero-slider__control--next" type="button" aria-label="PrÃ³ximo slide" data-gstore-hero-next>
 				<span aria-hidden="true">
 					<i class="fa-solid fa-chevron-right"></i>
 				</span>
@@ -6411,7 +6416,7 @@ function gstore_render_hero_slider() {
 					<?php else : ?>
 						<button class="Gstore-hero-slider__dot is-active" type="button" role="tab" aria-label="Mostrar slide 1" aria-selected="true" data-gstore-hero-dot="0"></button>
 						<button class="Gstore-hero-slider__dot" type="button" role="tab" aria-label="Mostrar slides do meio" aria-selected="false" data-gstore-hero-dot="middle"></button>
-						<button class="Gstore-hero-slider__dot" type="button" role="tab" aria-label="Mostrar último slide" aria-selected="false" data-gstore-hero-dot="<?php echo esc_attr( $desktop_total - 1 ); ?>"></button>
+						<button class="Gstore-hero-slider__dot" type="button" role="tab" aria-label="Mostrar Ãºltimo slide" aria-selected="false" data-gstore-hero-dot="<?php echo esc_attr( $desktop_total - 1 ); ?>"></button>
 					<?php endif; ?>
 				</div>
 			<?php endif; ?>
@@ -6426,7 +6431,7 @@ function gstore_render_hero_slider() {
 					<?php else : ?>
 						<button class="Gstore-hero-slider__dot is-active" type="button" role="tab" aria-label="Mostrar slide 1" aria-selected="true" data-gstore-hero-dot-mobile="0"></button>
 						<button class="Gstore-hero-slider__dot" type="button" role="tab" aria-label="Mostrar slides do meio" aria-selected="false" data-gstore-hero-dot-mobile="middle"></button>
-						<button class="Gstore-hero-slider__dot" type="button" role="tab" aria-label="Mostrar último slide" aria-selected="false" data-gstore-hero-dot-mobile="<?php echo esc_attr( $mobile_total - 1 ); ?>"></button>
+						<button class="Gstore-hero-slider__dot" type="button" role="tab" aria-label="Mostrar Ãºltimo slide" aria-selected="false" data-gstore-hero-dot-mobile="<?php echo esc_attr( $mobile_total - 1 ); ?>"></button>
 					<?php endif; ?>
 				</div>
 			<?php endif; ?>
@@ -6436,7 +6441,7 @@ function gstore_render_hero_slider() {
 	return ob_get_clean();
 }
 
-// Funções de compatibilidade com o sistema antigo (deprecated)
+// FunÃ§Ãµes de compatibilidade com o sistema antigo (deprecated)
 function gstore_get_hero_slide_1_id() {
 	// Tenta obter do novo sistema primeiro
 	$slide = gstore_get_hero_slide( 'desktop', 1 );
@@ -6460,42 +6465,42 @@ function gstore_get_logo_id() {
 /**
  * Filtro para modificar o bloco site-logo para usar a logo configurada.
  * 
- * @param string $block_content Conteúdo do bloco.
+ * @param string $block_content ConteÃºdo do bloco.
  * @param array  $block         Dados do bloco.
  * @return string
  */
 function gstore_custom_site_logo_block( $block_content, $block ) {
-	// Verifica se é o bloco site-logo
+	// Verifica se Ã© o bloco site-logo
 	if ( empty( $block['blockName'] ) || 'core/site-logo' !== $block['blockName'] ) {
 		return $block_content;
 	}
 	
-	// Verifica se está no header (pela classe ou contexto)
+	// Verifica se estÃ¡ no header (pela classe ou contexto)
 	$is_in_header = false;
 	if ( isset( $block['attrs']['className'] ) && strpos( $block['attrs']['className'], 'Gstore-header__logo' ) !== false ) {
 		$is_in_header = true;
 	}
 	
-	// Se não está no header, não modifica
+	// Se nÃ£o estÃ¡ no header, nÃ£o modifica
 	if ( ! $is_in_header ) {
 		return $block_content;
 	}
 	
-	// Evita processamento duplicado - se já contém a marca de logo customizada
+	// Evita processamento duplicado - se jÃ¡ contÃ©m a marca de logo customizada
 	if ( strpos( $block_content, 'data-gstore-logo="1"' ) !== false ) {
 		return $block_content;
 	}
 	
-	// Obtém a logo configurada
+	// ObtÃ©m a logo configurada
 	$logo_id = gstore_get_logo_id();
 	
 	if ( $logo_id > 0 ) {
 		$logo_url = gstore_get_image_url( $logo_id, 'full' );
 		$logo_alt = get_option( 'gstore_logo_alt', 'Logo CAC Armas' );
 		
-		// Valida se a URL é válida
+		// Valida se a URL Ã© vÃ¡lida
 		if ( $logo_url && filter_var( $logo_url, FILTER_VALIDATE_URL ) ) {
-			// Substitui o conteúdo do bloco pela logo configurada
+			// Substitui o conteÃºdo do bloco pela logo configurada
 			$home_url = esc_url( home_url( '/' ) );
 			$site_name = esc_attr( get_bloginfo( 'name' ) );
 			$logo_html = sprintf(
@@ -6517,42 +6522,42 @@ add_filter( 'render_block', 'gstore_custom_site_logo_block', 10, 2 );
 /**
  * Filtro para modificar o bloco site-logo no footer para usar a logo configurada.
  * 
- * @param string $block_content Conteúdo do bloco.
+ * @param string $block_content ConteÃºdo do bloco.
  * @param array  $block         Dados do bloco.
  * @return string
  */
 function gstore_custom_footer_logo_block( $block_content, $block ) {
-	// Verifica se é o bloco site-logo
+	// Verifica se Ã© o bloco site-logo
 	if ( empty( $block['blockName'] ) || 'core/site-logo' !== $block['blockName'] ) {
 		return $block_content;
 	}
 	
-	// Verifica se está no footer (pela classe footer-logo)
+	// Verifica se estÃ¡ no footer (pela classe footer-logo)
 	$is_in_footer = false;
 	if ( isset( $block['attrs']['className'] ) && strpos( $block['attrs']['className'], 'footer-logo' ) !== false ) {
 		$is_in_footer = true;
 	}
 	
-	// Se não está no footer, não modifica
+	// Se nÃ£o estÃ¡ no footer, nÃ£o modifica
 	if ( ! $is_in_footer ) {
 		return $block_content;
 	}
 	
-	// Evita processamento duplicado - se já contém a marca de logo customizada
+	// Evita processamento duplicado - se jÃ¡ contÃ©m a marca de logo customizada
 	if ( strpos( $block_content, 'data-gstore-footer-logo="1"' ) !== false ) {
 		return $block_content;
 	}
 	
-	// Obtém a logo configurada
+	// ObtÃ©m a logo configurada
 	$logo_id = gstore_get_logo_id();
 	
 	if ( $logo_id > 0 ) {
 		$logo_url = gstore_get_image_url( $logo_id, 'full' );
 		$logo_alt = get_option( 'gstore_logo_alt', 'Logo CAC Armas' );
 		
-		// Valida se a URL é válida
+		// Valida se a URL Ã© vÃ¡lida
 		if ( $logo_url && filter_var( $logo_url, FILTER_VALIDATE_URL ) ) {
-			// Substitui o conteúdo do bloco pela logo configurada
+			// Substitui o conteÃºdo do bloco pela logo configurada
 			$home_url = esc_url( home_url( '/' ) );
 			$site_name = esc_attr( get_bloginfo( 'name' ) );
 			$logo_html = sprintf(
@@ -6574,42 +6579,42 @@ add_filter( 'render_block', 'gstore_custom_footer_logo_block', 10, 2 );
 /**
  * Filtro para modificar o bloco site-title no checkout header para usar a logo configurada.
  * 
- * @param string $block_content Conteúdo do bloco.
+ * @param string $block_content ConteÃºdo do bloco.
  * @param array  $block         Dados do bloco.
  * @return string
  */
 function gstore_custom_checkout_header_logo_block( $block_content, $block ) {
-	// Verifica se é o bloco site-title
+	// Verifica se Ã© o bloco site-title
 	if ( empty( $block['blockName'] ) || 'core/site-title' !== $block['blockName'] ) {
 		return $block_content;
 	}
 	
-	// Verifica se está no checkout header (pela classe Gstore-checkout-header__logo)
+	// Verifica se estÃ¡ no checkout header (pela classe Gstore-checkout-header__logo)
 	$is_in_checkout_header = false;
 	if ( isset( $block['attrs']['className'] ) && strpos( $block['attrs']['className'], 'Gstore-checkout-header__logo' ) !== false ) {
 		$is_in_checkout_header = true;
 	}
 	
-	// Se não está no checkout header, não modifica
+	// Se nÃ£o estÃ¡ no checkout header, nÃ£o modifica
 	if ( ! $is_in_checkout_header ) {
 		return $block_content;
 	}
 	
-	// Evita processamento duplicado - se já contém a marca de logo customizada
+	// Evita processamento duplicado - se jÃ¡ contÃ©m a marca de logo customizada
 	if ( strpos( $block_content, 'data-gstore-checkout-logo="1"' ) !== false ) {
 		return $block_content;
 	}
 	
-	// Obtém a logo configurada
+	// ObtÃ©m a logo configurada
 	$logo_id = gstore_get_logo_id();
 	
 	if ( $logo_id > 0 ) {
 		$logo_url = gstore_get_image_url( $logo_id, 'full' );
 		$logo_alt = get_option( 'gstore_logo_alt', 'Logo CAC Armas' );
 		
-		// Valida se a URL é válida
+		// Valida se a URL Ã© vÃ¡lida
 		if ( $logo_url && filter_var( $logo_url, FILTER_VALIDATE_URL ) ) {
-			// Substitui o conteúdo do bloco pela logo configurada
+			// Substitui o conteÃºdo do bloco pela logo configurada
 			$home_url = esc_url( home_url( '/' ) );
 			$site_name = esc_attr( get_bloginfo( 'name' ) );
 			$logo_html = sprintf(
@@ -6631,13 +6636,13 @@ add_filter( 'render_block', 'gstore_custom_checkout_header_logo_block', 10, 2 );
 /**
  * Filtro para garantir que o logo do tema tenha prioridade sobre o Customizer.
  * 
- * Quando há uma logo configurada no tema, desabilita o site logo do Customizer.
+ * Quando hÃ¡ uma logo configurada no tema, desabilita o site logo do Customizer.
  */
 add_filter( 'theme_mod_custom_logo', 'gstore_override_customizer_logo', 10, 1 );
 function gstore_override_customizer_logo( $logo_id ) {
 	$theme_logo_id = gstore_get_logo_id();
 	
-	// Se há uma logo configurada no tema, usa ela ao invés do Customizer
+	// Se hÃ¡ uma logo configurada no tema, usa ela ao invÃ©s do Customizer
 	if ( $theme_logo_id > 0 ) {
 		return $theme_logo_id;
 	}
@@ -6648,21 +6653,21 @@ function gstore_override_customizer_logo( $logo_id ) {
 /**
  * Substitui o link de texto da logo pela imagem configurada no header HTML.
  * 
- * @param string $content Conteúdo do template part.
+ * @param string $content ConteÃºdo do template part.
  * @return string
  */
 function gstore_replace_header_logo_html( $content ) {
-	// Evita processamento duplicado - se já contém a marca de logo customizada
+	// Evita processamento duplicado - se jÃ¡ contÃ©m a marca de logo customizada
 	if ( strpos( $content, 'data-gstore-logo="1"' ) !== false ) {
 		return $content;
 	}
 	
-	// Evita processar se já contém uma imagem de logo
+	// Evita processar se jÃ¡ contÃ©m uma imagem de logo
 	if ( preg_match( '/<a[^>]*class="[^"]*Gstore-header__logo[^"]*"[^>]*>.*?<img[^>]*>/is', $content ) ) {
 		return $content;
 	}
 	
-	// Obtém a logo configurada
+	// ObtÃ©m a logo configurada
 	$logo_id = gstore_get_logo_id();
 	
 	if ( $logo_id <= 0 ) {
@@ -6672,7 +6677,7 @@ function gstore_replace_header_logo_html( $content ) {
 	$logo_url = gstore_get_image_url( $logo_id, 'full' );
 	$logo_alt = get_option( 'gstore_logo_alt', 'Logo CAC Armas' );
 	
-	// Valida se a URL é válida
+	// Valida se a URL Ã© vÃ¡lida
 	if ( ! $logo_url || ! filter_var( $logo_url, FILTER_VALIDATE_URL ) ) {
 		return $content;
 	}
@@ -6680,7 +6685,7 @@ function gstore_replace_header_logo_html( $content ) {
 	$home_url = esc_url( home_url( '/' ) );
 	$site_name = esc_attr( get_bloginfo( 'name' ) );
 	
-	// HTML da logo com imagem (para substituição via regex)
+	// HTML da logo com imagem (para substituiÃ§Ã£o via regex)
 	$logo_html = sprintf(
 		'<div class="wp-block-site-logo Gstore-header__logo" data-gstore-logo="1" style="grid-area: logo;"><a href="%s" rel="home" aria-label="%s"><img src="%s" alt="%s" style="max-height: 36px; max-width: 180px; width: auto; height: auto;" loading="eager" /></a></div>',
 		$home_url,
@@ -6689,29 +6694,29 @@ function gstore_replace_header_logo_html( $content ) {
 		esc_attr( $logo_alt )
 	);
 	
-	// Padrão 1: Substitui apenas o bloco site-logo renderizado pelo WordPress
+	// PadrÃ£o 1: Substitui apenas o bloco site-logo renderizado pelo WordPress
 	// Captura: <div class="wp-block-site-logo...">...</div> (bloco completo)
 	$pattern1 = '/<div\s+[^>]*class="[^"]*wp-block-site-logo[^"]*"[^>]*>.*?<\/div>/is';
 	$replacement1 = '<div class="wp-block-site-logo Gstore-header__logo" data-gstore-logo="1" style="grid-area: logo;"><a href="' . $home_url . '" rel="home" aria-label="' . $site_name . '"><img src="' . esc_url( $logo_url ) . '" alt="' . esc_attr( $logo_alt ) . '" style="max-height: 36px; max-width: 180px; width: auto; height: auto;" loading="eager" /></a></div>';
 	$content = preg_replace( $pattern1, $replacement1, $content, 1 );
 	
-	// Padrão 2: Link com classe Gstore-header__logo (mas sem imagem) - apenas dentro do header content
+	// PadrÃ£o 2: Link com classe Gstore-header__logo (mas sem imagem) - apenas dentro do header content
 	// Captura: <a href="/" class="Gstore-header__logo">TEXTO</a> (sem img dentro)
 	// Limita a busca apenas dentro do Gstore-header__content para evitar capturar elementos errados
 	if ( preg_match( '/(<div[^>]*class="[^"]*Gstore-header__content[^"]*"[^>]*>)(.*?)(<\/div>)/is', $content, $header_content_match ) ) {
 		$header_content = $header_content_match[2];
-		// Padrão que captura o link completo incluindo elementos filhos (span, etc)
+		// PadrÃ£o que captura o link completo incluindo elementos filhos (span, etc)
 		$pattern2 = '/<a\s+[^>]*class="[^"]*Gstore-header__logo[^"]*"[^>]*>(?!.*?<img)(?:[^<]|<(?!\/a>))*?<\/a>/is';
 		$header_content_new = preg_replace( $pattern2, $logo_html, $header_content, 1 );
 		if ( $header_content_new !== $header_content ) {
 			$content = str_replace( $header_content_match[0], $header_content_match[1] . $header_content_new . $header_content_match[3], $content );
 		}
 	} else {
-		// Padrão 2b: Se não encontrar Gstore-header__content, procura diretamente no header
+		// PadrÃ£o 2b: Se nÃ£o encontrar Gstore-header__content, procura diretamente no header
 		// Captura: <a href="/" class="Gstore-header__logo">ARMA<span>STORE</span></a> (sem img dentro)
 		// Apenas dentro de elementos com classe Gstore-header para evitar substituir outros links
 		if ( strpos( $content, 'Gstore-header' ) !== false ) {
-			// Padrão que captura o link completo incluindo elementos filhos (span, etc)
+			// PadrÃ£o que captura o link completo incluindo elementos filhos (span, etc)
 			$pattern2b = '/<a\s+[^>]*class="[^"]*Gstore-header__logo[^"]*"[^>]*>(?!.*?<img)(?:[^<]|<(?!\/a>))*?<\/a>/is';
 			$content = preg_replace( $pattern2b, $logo_html, $content, 1 );
 		}
@@ -6720,28 +6725,28 @@ function gstore_replace_header_logo_html( $content ) {
 	return $content;
 }
 // Remove o filtro de render_block para evitar conflito com gstore_custom_site_logo_block
-// Mantém apenas nos outros filtros
+// MantÃ©m apenas nos outros filtros
 add_filter( 'render_block_core/template-part', 'gstore_replace_header_logo_html', 10, 1 );
 add_filter( 'the_content', 'gstore_replace_header_logo_html', 5 );
 
 /**
  * Substitui o texto da logo pela imagem configurada no footer HTML.
  * 
- * @param string $content Conteúdo do template part.
+ * @param string $content ConteÃºdo do template part.
  * @return string
  */
 function gstore_replace_footer_logo_html( $content ) {
-	// Verifica se é o footer (pela classe armastore-footer)
+	// Verifica se Ã© o footer (pela classe armastore-footer)
 	if ( strpos( $content, 'armastore-footer' ) === false ) {
 		return $content;
 	}
 	
-	// Evita processamento duplicado - se já contém a marca de logo customizada
+	// Evita processamento duplicado - se jÃ¡ contÃ©m a marca de logo customizada
 	if ( strpos( $content, 'data-gstore-footer-logo="1"' ) !== false ) {
 		return $content;
 	}
 	
-	// Obtém a logo configurada
+	// ObtÃ©m a logo configurada
 	$logo_id = gstore_get_logo_id();
 	
 	if ( $logo_id <= 0 ) {
@@ -6751,7 +6756,7 @@ function gstore_replace_footer_logo_html( $content ) {
 	$logo_url = gstore_get_image_url( $logo_id, 'full' );
 	$logo_alt = get_option( 'gstore_logo_alt', 'Logo CAC Armas' );
 	
-	// Valida se a URL é válida
+	// Valida se a URL Ã© vÃ¡lida
 	if ( ! $logo_url || ! filter_var( $logo_url, FILTER_VALIDATE_URL ) ) {
 		return $content;
 	}
@@ -6768,9 +6773,9 @@ function gstore_replace_footer_logo_html( $content ) {
 		esc_attr( $logo_alt )
 	);
 	
-	// Padrão 1: Substitui o bloco site-logo renderizado pelo WordPress no footer
-	// Procura especificamente dentro do primeiro footer-column (onde está a logo)
-	// Usa uma regex mais específica para capturar apenas o primeiro footer-column dentro do footer-main
+	// PadrÃ£o 1: Substitui o bloco site-logo renderizado pelo WordPress no footer
+	// Procura especificamente dentro do primeiro footer-column (onde estÃ¡ a logo)
+	// Usa uma regex mais especÃ­fica para capturar apenas o primeiro footer-column dentro do footer-main
 	if ( preg_match( '/(<div[^>]*class="[^"]*footer-main[^"]*"[^>]*>)(.*?)(<\/div>)/is', $content, $footer_main_match ) ) {
 		$footer_main_content = $footer_main_match[2];
 		
@@ -6782,13 +6787,13 @@ function gstore_replace_footer_logo_html( $content ) {
 			$pattern1 = '/<div\s+[^>]*class="[^"]*wp-block-site-logo[^"]*footer-logo[^"]*"[^>]*>.*?<\/div>/is';
 			$footer_column_content_new = preg_replace( $pattern1, $logo_html, $footer_column_content, 1 );
 			
-			// Se não encontrou o bloco site-logo, tenta substituir um h3 com texto "CAC" no início
+			// Se nÃ£o encontrou o bloco site-logo, tenta substituir um h3 com texto "CAC" no inÃ­cio
 			if ( $footer_column_content_new === $footer_column_content ) {
 				$pattern2 = '/<h3[^>]*>CAC\s*<span[^>]*>.*?<\/span><\/h3>/is';
 				$footer_column_content_new = preg_replace( $pattern2, $logo_html, $footer_column_content, 1 );
 			}
 			
-			// Se houve substituição, atualiza o conteúdo
+			// Se houve substituiÃ§Ã£o, atualiza o conteÃºdo
 			if ( $footer_column_content_new !== $footer_column_content ) {
 				$footer_main_content_new = str_replace( $footer_column_match[0], $footer_column_match[1] . $footer_column_content_new . $footer_column_match[3], $footer_main_content );
 				$content = str_replace( $footer_main_match[0], $footer_main_match[1] . $footer_main_content_new . $footer_main_match[3], $content );
@@ -6802,7 +6807,7 @@ add_filter( 'render_block_core/template-part', 'gstore_replace_footer_logo_html'
 add_filter( 'the_content', 'gstore_replace_footer_logo_html', 5 );
 
 /**
- * Gera tag de imagem otimizada para hero com srcset e priorização.
+ * Gera tag de imagem otimizada para hero com srcset e priorizaÃ§Ã£o.
  * 
  * @param int    $attachment_id ID da imagem.
  * @param string $alt           Texto alternativo.
@@ -6819,7 +6824,7 @@ function gstore_get_hero_image_tag( $attachment_id, $alt = '', $is_first_slide =
 		return '';
 	}
 
-	// Gera srcset com múltiplos tamanhos
+	// Gera srcset com mÃºltiplos tamanhos
 	$srcset_sizes = array( 'medium_large', 'large', 'full' );
 	$srcset_array = array();
 
@@ -6833,7 +6838,7 @@ function gstore_get_hero_image_tag( $attachment_id, $alt = '', $is_first_slide =
 		}
 	}
 
-	// URL principal (usa full como padrão)
+	// URL principal (usa full como padrÃ£o)
 	$src_url = gstore_get_image_url( $attachment_id, 'full' );
 	if ( empty( $src_url ) ) {
 		return '';
@@ -6845,7 +6850,7 @@ function gstore_get_hero_image_tag( $attachment_id, $alt = '', $is_first_slide =
 		'alt' => $alt ? $alt : '',
 	);
 
-	// O primeiro slide é o LCP: força o arquivo full para evitar variação/pixelização inicial.
+	// O primeiro slide Ã© o LCP: forÃ§a o arquivo full para evitar variaÃ§Ã£o/pixelizaÃ§Ã£o inicial.
 	// Demais slides podem usar srcset normalmente.
 	if ( ! $is_first_slide ) {
 		$attr['sizes'] = '100vw';
@@ -6874,7 +6879,7 @@ function gstore_get_hero_image_tag( $attachment_id, $alt = '', $is_first_slide =
 		$attr['height'] = $image_src[2];
 	}
 
-	// Constrói a tag
+	// ConstrÃ³i a tag
 	$img_tag = '<img';
 	foreach ( $attr as $key => $value ) {
 		if ( ! empty( $value ) || 'alt' === $key ) {
@@ -6891,36 +6896,36 @@ function gstore_get_hero_image_tag( $attachment_id, $alt = '', $is_first_slide =
  * 
  * Substitui placeholders como {{gstore_image:123}} por URLs reais da biblioteca.
  * 
- * @param string $content Conteúdo do template.
- * @return string Conteúdo processado.
+ * @param string $content ConteÃºdo do template.
+ * @return string ConteÃºdo processado.
  */
 function gstore_process_image_placeholders( $content ) {
 	if ( empty( $content ) ) {
 		return $content;
 	}
 	
-	// NOVO SISTEMA: Hero Slider dinâmico com Desktop/Mobile
+	// NOVO SISTEMA: Hero Slider dinÃ¢mico com Desktop/Mobile
 	if ( strpos( $content, '{{gstore_hero_slider}}' ) !== false ) {
 		$slider_html = gstore_render_hero_slider();
 		$content = str_replace( '{{gstore_hero_slider}}', $slider_html, $content );
 	}
 	
-	// Placeholders especiais que usam configurações do tema (SISTEMA LEGADO - mantido para compatibilidade)
+	// Placeholders especiais que usam configuraÃ§Ãµes do tema (SISTEMA LEGADO - mantido para compatibilidade)
 	// {{gstore_hero_slide_1}}, {{gstore_hero_slide_2}}, {{gstore_banner_youtube}}
 	$hero_slide_1_id = gstore_get_hero_slide_1_id();
 	$hero_slide_2_id = gstore_get_hero_slide_2_id();
 	$banner_youtube_id = gstore_get_banner_youtube_id();
 	
-	// Processa hero slides com otimização (srcset + priorização)
+	// Processa hero slides com otimizaÃ§Ã£o (srcset + priorizaÃ§Ã£o)
 	if ( $hero_slide_1_id > 0 ) {
 		$hero_slide_1_alt = esc_attr( get_option( 'gstore_hero_slide_1_alt', 'Campanha Excedente Black Week CAC Armas' ) );
 		$hero_slide_1_tag = gstore_get_hero_image_tag( $hero_slide_1_id, $hero_slide_1_alt, true );
 		
-		// Substitui tag img completa que contém o placeholder (flexível com qualquer ordem de atributos)
+		// Substitui tag img completa que contÃ©m o placeholder (flexÃ­vel com qualquer ordem de atributos)
 		$pattern = '/<img\s+[^>]*src=["\']\{\{gstore_hero_slide_1\}\}["\'][^>]*>/is';
 		$content = preg_replace( $pattern, $hero_slide_1_tag, $content );
 		
-		// Fallback: substitui apenas URL se tag não foi encontrada (para compatibilidade)
+		// Fallback: substitui apenas URL se tag nÃ£o foi encontrada (para compatibilidade)
 		if ( strpos( $content, '{{gstore_hero_slide_1}}' ) !== false ) {
 			$hero_slide_1_url = wp_get_attachment_url( $hero_slide_1_id );
 			$content = str_replace( '{{gstore_hero_slide_1}}', $hero_slide_1_url, $content );
@@ -6930,14 +6935,14 @@ function gstore_process_image_placeholders( $content ) {
 	}
 	
 	if ( $hero_slide_2_id > 0 ) {
-		$hero_slide_2_alt = esc_attr( get_option( 'gstore_hero_slide_2_alt', 'Produtos da Black Week com a mesma condição CAC Armas' ) );
+		$hero_slide_2_alt = esc_attr( get_option( 'gstore_hero_slide_2_alt', 'Produtos da Black Week com a mesma condiÃ§Ã£o CAC Armas' ) );
 		$hero_slide_2_tag = gstore_get_hero_image_tag( $hero_slide_2_id, $hero_slide_2_alt, false );
 		
-		// Substitui tag img completa que contém o placeholder (flexível com qualquer ordem de atributos)
+		// Substitui tag img completa que contÃ©m o placeholder (flexÃ­vel com qualquer ordem de atributos)
 		$pattern = '/<img\s+[^>]*src=["\']\{\{gstore_hero_slide_2\}\}["\'][^>]*>/is';
 		$content = preg_replace( $pattern, $hero_slide_2_tag, $content );
 		
-		// Fallback: substitui apenas URL se tag não foi encontrada (para compatibilidade)
+		// Fallback: substitui apenas URL se tag nÃ£o foi encontrada (para compatibilidade)
 		if ( strpos( $content, '{{gstore_hero_slide_2}}' ) !== false ) {
 			$hero_slide_2_url = wp_get_attachment_url( $hero_slide_2_id );
 			$content = str_replace( '{{gstore_hero_slide_2}}', $hero_slide_2_url, $content );
@@ -6946,10 +6951,10 @@ function gstore_process_image_placeholders( $content ) {
 		$content = str_replace( '{{gstore_hero_slide_2}}', '', $content );
 	}
 	
-	// Banner YouTube (não precisa de srcset, não é LCP)
+	// Banner YouTube (nÃ£o precisa de srcset, nÃ£o Ã© LCP)
 	if ( $banner_youtube_id > 0 ) {
 		$banner_youtube_url = wp_get_attachment_url( $banner_youtube_id );
-		$banner_youtube_alt = esc_attr( get_option( 'gstore_banner_youtube_alt', 'Conheça o conteúdo da CAC Armas no YouTube' ) );
+		$banner_youtube_alt = esc_attr( get_option( 'gstore_banner_youtube_alt', 'ConheÃ§a o conteÃºdo da CAC Armas no YouTube' ) );
 		$banner_youtube_link = esc_url( get_option( 'gstore_banner_youtube_link', '' ) );
 		
 		$img_tag = sprintf(
@@ -6967,11 +6972,11 @@ function gstore_process_image_placeholders( $content ) {
 			);
 		}
 		
-		// Substitui a tag img completa que contém o placeholder
+		// Substitui a tag img completa que contÃ©m o placeholder
 		$pattern = '/<img\s+[^>]*src=["\']\{\{gstore_banner_youtube\}\}["\'][^>]*>/is';
 		$content = preg_replace( $pattern, $img_tag, $content );
 		
-		// Fallback: substitui apenas URL se tag não foi encontrada (para compatibilidade)
+		// Fallback: substitui apenas URL se tag nÃ£o foi encontrada (para compatibilidade)
 		if ( strpos( $content, '{{gstore_banner_youtube}}' ) !== false ) {
 			$content = str_replace( '{{gstore_banner_youtube}}', $banner_youtube_url, $content );
 		}
@@ -6981,10 +6986,10 @@ function gstore_process_image_placeholders( $content ) {
 	
 	// Placeholders para textos alternativos (para uso em outros contextos)
 	$content = str_replace( '{{gstore_hero_slide_1_alt}}', esc_attr( get_option( 'gstore_hero_slide_1_alt', 'Campanha Excedente Black Week CAC Armas' ) ), $content );
-	$content = str_replace( '{{gstore_hero_slide_2_alt}}', esc_attr( get_option( 'gstore_hero_slide_2_alt', 'Produtos da Black Week com a mesma condição CAC Armas' ) ), $content );
-	$content = str_replace( '{{gstore_banner_youtube_alt}}', esc_attr( get_option( 'gstore_banner_youtube_alt', 'Conheça o conteúdo da CAC Armas no YouTube' ) ), $content );
+	$content = str_replace( '{{gstore_hero_slide_2_alt}}', esc_attr( get_option( 'gstore_hero_slide_2_alt', 'Produtos da Black Week com a mesma condiÃ§Ã£o CAC Armas' ) ), $content );
+	$content = str_replace( '{{gstore_banner_youtube_alt}}', esc_attr( get_option( 'gstore_banner_youtube_alt', 'ConheÃ§a o conteÃºdo da CAC Armas no YouTube' ) ), $content );
 	
-	// Padrão: {{gstore_image:ID:size}} para URL apenas
+	// PadrÃ£o: {{gstore_image:ID:size}} para URL apenas
 	$pattern = '/\{\{gstore_image:(\d+)(?::([^}]+))?\}\}/';
 	
 	$content = preg_replace_callback(
@@ -7003,7 +7008,7 @@ function gstore_process_image_placeholders( $content ) {
 		$content
 	);
 	
-	// Padrão: {{gstore_image_tag:ID:size:alt}} para tag completa
+	// PadrÃ£o: {{gstore_image_tag:ID:size:alt}} para tag completa
 	$pattern_tag = '/\{\{gstore_image_tag:(\d+)(?::([^:}]+))?(?::([^}]+))?\}\}/';
 	
 	$content = preg_replace_callback(
@@ -7026,7 +7031,7 @@ function gstore_process_image_placeholders( $content ) {
 }
 
 /**
- * Filtro para processar placeholders em conteúdo de posts/páginas.
+ * Filtro para processar placeholders em conteÃºdo de posts/pÃ¡ginas.
  */
 add_filter( 'the_content', 'gstore_process_image_placeholders', 5 );
 add_filter( 'widget_text', 'gstore_process_image_placeholders', 5 );
@@ -7034,10 +7039,10 @@ add_filter( 'widget_text', 'gstore_process_image_placeholders', 5 );
 /**
  * Processa template parts HTML carregando e substituindo placeholders.
  * 
- * Esta função pode ser usada para processar templates HTML manualmente.
+ * Esta funÃ§Ã£o pode ser usada para processar templates HTML manualmente.
  * 
  * @param string $template_path Caminho do template part.
- * @return string Conteúdo processado.
+ * @return string ConteÃºdo processado.
  */
 function gstore_load_template_part( $template_path ) {
 	$template_file = get_theme_file_path( $template_path );
@@ -7056,7 +7061,7 @@ function gstore_load_template_part( $template_path ) {
 /**
  * Filtro para processar blocos HTML customizados do Gutenberg.
  * 
- * Processa placeholders quando blocos HTML são renderizados.
+ * Processa placeholders quando blocos HTML sÃ£o renderizados.
  */
 add_filter( 'render_block_core/html', 'gstore_process_block_html', 10, 2 );
 function gstore_process_block_html( $block_content, $block ) {
@@ -7082,8 +7087,8 @@ function gstore_process_template_part_block( $block_content, $block ) {
 /**
  * Garante que a busca do tema (core/search) envia para /catalogo (produtos).
  *
- * Importante: só altera blocos core/search com classes do tema (Gstore-*),
- * para não afetar outras buscas (ex.: blog, widgets etc.).
+ * Importante: sÃ³ altera blocos core/search com classes do tema (Gstore-*),
+ * para nÃ£o afetar outras buscas (ex.: blog, widgets etc.).
  */
 add_filter( 'render_block_core/search', 'gstore_search_block_action_to_catalog', 10, 2 );
 function gstore_search_block_action_to_catalog( $block_content, $block ) {
@@ -7122,7 +7127,7 @@ function gstore_search_block_action_to_catalog( $block_content, $block ) {
 		1
 	);
 
-	// Fallback: se não existir action, injeta após a abertura do <form ...>.
+	// Fallback: se nÃ£o existir action, injeta apÃ³s a abertura do <form ...>.
 	if ( $updated === $block_content ) {
 		$updated = preg_replace(
 			'/(<form\b)([^>]*)(>)/i',
@@ -7132,9 +7137,9 @@ function gstore_search_block_action_to_catalog( $block_content, $block ) {
 		);
 	}
 
-	// Troca o parâmetro padrão de busca do WP (s) por um parâmetro do catálogo (q),
+	// Troca o parÃ¢metro padrÃ£o de busca do WP (s) por um parÃ¢metro do catÃ¡logo (q),
 	// para evitar conflito entre /catalogo e o modo search do WordPress.
-	// Mantém o tipo de aspas (simples/duplas).
+	// MantÃ©m o tipo de aspas (simples/duplas).
 	$updated = preg_replace(
 		'/(<input\b[^>]*\bname=)(["\'])s\2/i',
 		'$1$2q$2',
@@ -7147,7 +7152,7 @@ function gstore_search_block_action_to_catalog( $block_content, $block ) {
 
 /**
  * Aplica o termo de busca (?s=) e match de categoria na query do shortcode [products]
- * quando usado no catálogo (/catalogo).
+ * quando usado no catÃ¡logo (/catalogo).
  */
 add_filter( 'woocommerce_shortcode_products_query', 'gstore_catalog_apply_search_to_products_shortcode', 25, 3 );
 function gstore_catalog_apply_search_to_products_shortcode( $query_args, $attr, $type ) {
@@ -7167,10 +7172,10 @@ function gstore_catalog_apply_search_to_products_shortcode( $query_args, $attr, 
 		return $query_args;
 	}
 
-	// Aplica busca textual padrão do WP/WooCommerce.
+	// Aplica busca textual padrÃ£o do WP/WooCommerce.
 	$query_args['s'] = $search_term;
 
-	// Se o usuário já selecionou categoria via filter_cat[], não forçamos match automático.
+	// Se o usuÃ¡rio jÃ¡ selecionou categoria via filter_cat[], nÃ£o forÃ§amos match automÃ¡tico.
 	$has_manual_category_filter = isset( $_GET['filter_cat'] ) || isset( $_GET['filter_cat[]'] );
 	if ( $has_manual_category_filter ) {
 		return $query_args;
@@ -7563,14 +7568,14 @@ function gstore_process_image_block( $block_content, $block ) {
 }
 
 /**
- * Filtro para processar todo o conteúdo renderizado.
+ * Filtro para processar todo o conteÃºdo renderizado.
  * 
- * Processa placeholders em qualquer conteúdo renderizado pelo WordPress.
+ * Processa placeholders em qualquer conteÃºdo renderizado pelo WordPress.
  */
 add_filter( 'render_block', 'gstore_process_all_blocks', 10, 2 );
 function gstore_process_all_blocks( $block_content, $block ) {
 	if ( ! empty( $block_content ) && is_string( $block_content ) ) {
-		// Verifica se contém placeholders antes de processar
+		// Verifica se contÃ©m placeholders antes de processar
 		if ( strpos( $block_content, '{{gstore_' ) !== false ) {
 			$block_content = gstore_process_image_placeholders( $block_content );
 		}
@@ -7579,9 +7584,9 @@ function gstore_process_all_blocks( $block_content, $block ) {
 }
 
 /**
- * Processa o output final da página para garantir que placeholders sejam substituídos.
+ * Processa o output final da pÃ¡gina para garantir que placeholders sejam substituÃ­dos.
  * 
- * Este é um filtro de último recurso que processa todo o HTML antes de ser enviado ao navegador.
+ * Este Ã© um filtro de Ãºltimo recurso que processa todo o HTML antes de ser enviado ao navegador.
  */
 add_action( 'template_redirect', 'gstore_start_output_buffer', 1 );
 function gstore_start_output_buffer() {
@@ -7601,17 +7606,17 @@ function gstore_end_output_buffer() {
 }
 
 /**
- * Processa o output final da página.
+ * Processa o output final da pÃ¡gina.
  * 
- * @param string $buffer Conteúdo HTML da página.
- * @return string Conteúdo processado.
+ * @param string $buffer ConteÃºdo HTML da pÃ¡gina.
+ * @return string ConteÃºdo processado.
  */
 function gstore_process_final_output( $buffer ) {
 	if ( empty( $buffer ) ) {
 		return $buffer;
 	}
 	
-	// Processa placeholders de informações da loja (store-info.json)
+	// Processa placeholders de informaÃ§Ãµes da loja (store-info.json)
 	if ( function_exists( 'gstore_process_store_info_placeholders' ) ) {
 		$buffer = gstore_process_store_info_placeholders( $buffer );
 	}
@@ -7630,17 +7635,17 @@ function gstore_process_final_output( $buffer ) {
 }
 
 /**
- * Remove classes problemáticas do wrapper do WooCommerce na página do carrinho.
+ * Remove classes problemÃ¡ticas do wrapper do WooCommerce na pÃ¡gina do carrinho.
  *
  * O bloco woocommerce/page-content-wrapper e entry-content adicionam classes como
  * is-layout-constrained e wp-block-group-is-layout-constrained que aplicam
- * max-width: 720px e padding indesejado. Esta função remove essas classes
+ * max-width: 720px e padding indesejado. Esta funÃ§Ã£o remove essas classes
  * para permitir que o layout do carrinho use 1280px.
  *
- * NOTA: Apenas o carrinho precisa dessa remoção. As páginas de
- * atendimento e produto único mantêm suas classes para estilização.
+ * NOTA: Apenas o carrinho precisa dessa remoÃ§Ã£o. As pÃ¡ginas de
+ * atendimento e produto Ãºnico mantÃªm suas classes para estilizaÃ§Ã£o.
  *
- * @param string $html HTML da página.
+ * @param string $html HTML da pÃ¡gina.
  * @return string HTML processado.
  */
 function gstore_strip_cart_shell_from_wc_wrapper( $html ) {
@@ -7688,17 +7693,17 @@ function gstore_strip_cart_shell_from_wc_wrapper( $html ) {
 
 /**
  * ============================================
- * SETUP DO TEMA - CRIAÇÃO AUTOMÁTICA DE PÁGINAS
+ * SETUP DO TEMA - CRIAÃ‡ÃƒO AUTOMÃTICA DE PÃGINAS
  * ============================================
  * 
- * Sistema que permite criar todas as páginas necessárias
+ * Sistema que permite criar todas as pÃ¡ginas necessÃ¡rias
  * para o funcionamento do tema Gstore com um clique.
  */
 
 /**
- * Retorna a lista de páginas que o tema precisa.
+ * Retorna a lista de pÃ¡ginas que o tema precisa.
  * 
- * @return array Lista de páginas com configurações.
+ * @return array Lista de pÃ¡ginas com configuraÃ§Ãµes.
  */
 function gstore_get_required_pages() {
 	return array(
@@ -7707,15 +7712,15 @@ function gstore_get_required_pages() {
 			'slug'        => 'home',
 			'template'    => 'page-home',
 			'content'     => '',
-			'description' => 'Página inicial da loja com hero, benefícios, lançamentos e promoções.',
+			'description' => 'PÃ¡gina inicial da loja com hero, benefÃ­cios, lanÃ§amentos e promoÃ§Ãµes.',
 			'set_as'      => 'front_page',
 		),
 		'catalogo' => array(
-			'title'       => 'Catálogo',
+			'title'       => 'CatÃ¡logo',
 			'slug'        => 'catalogo',
 			'template'    => 'page-catalogo',
 			'content'     => '',
-			'description' => 'Página de catálogo com filtros e lista de produtos.',
+			'description' => 'PÃ¡gina de catÃ¡logo com filtros e lista de produtos.',
 			'wc_option'   => null,
 		),
 		'loja' => array(
@@ -7723,7 +7728,7 @@ function gstore_get_required_pages() {
 			'slug'        => 'loja',
 			'template'    => 'page-loja',
 			'content'     => '',
-			'description' => 'Página principal da loja WooCommerce com layout de catálogo. (REDIRECIONADA PARA CATÁLOGO)',
+			'description' => 'PÃ¡gina principal da loja WooCommerce com layout de catÃ¡logo. (REDIRECIONADA PARA CATÃLOGO)',
 			'wc_option'   => 'woocommerce_shop_page_id',
 			'redirect_to' => 'catalogo',
 		),
@@ -7732,15 +7737,15 @@ function gstore_get_required_pages() {
 			'slug'        => 'ofertas',
 			'template'    => 'page-ofertas',
 			'content'     => '',
-			'description' => 'Página de produtos em promoção.',
+			'description' => 'PÃ¡gina de produtos em promoÃ§Ã£o.',
 			'wc_option'   => null,
 		),
 		'carrinho' => array(
 			'title'       => 'Carrinho',
 			'slug'        => 'carrinho',
 			'template'    => 'page-carrinho', // Template de blocos HTML (sem .html)
-			'content'     => '', // Conteúdo vazio - o template de blocos renderiza tudo
-			'description' => 'Página do carrinho de compras.',
+			'content'     => '', // ConteÃºdo vazio - o template de blocos renderiza tudo
+			'description' => 'PÃ¡gina do carrinho de compras.',
 			'wc_option'   => 'woocommerce_cart_page_id',
 		),
 		'finalizar-compra' => array(
@@ -7748,7 +7753,7 @@ function gstore_get_required_pages() {
 			'slug'        => 'finalizar-compra',
 			'template'    => 'page-checkout',
 			'content'     => '<!-- wp:shortcode -->[woocommerce_checkout]<!-- /wp:shortcode -->',
-			'description' => 'Página de checkout com formulário de endereço e pagamento.',
+			'description' => 'PÃ¡gina de checkout com formulÃ¡rio de endereÃ§o e pagamento.',
 			'wc_option'   => 'woocommerce_checkout_page_id',
 		),
 		'minha-conta' => array(
@@ -7756,7 +7761,7 @@ function gstore_get_required_pages() {
 			'slug'        => 'minha-conta',
 			'template'    => '',
 			'content'     => '<!-- wp:shortcode -->[woocommerce_my_account]<!-- /wp:shortcode -->',
-			'description' => 'Área do cliente para gerenciar pedidos, endereços e dados.',
+			'description' => 'Ãrea do cliente para gerenciar pedidos, endereÃ§os e dados.',
 			'wc_option'   => 'woocommerce_myaccount_page_id',
 		),
 		'atendimento' => array(
@@ -7772,7 +7777,7 @@ function gstore_get_required_pages() {
 			'slug'        => 'como-comprar-arma',
 			'template'    => 'page-como-comprar-arma',
 			'content'     => '',
-			'description' => 'Página com informações sobre o processo de compra de armas.',
+			'description' => 'PÃ¡gina com informaÃ§Ãµes sobre o processo de compra de armas.',
 			'wc_option'   => null,
 		),
 		'informativo' => array(
@@ -7780,7 +7785,7 @@ function gstore_get_required_pages() {
 			'slug'        => 'informativo',
 			'template'    => 'page-informativo',
 			'content'     => '',
-			'description' => 'Página de pós-venda com documentos, etapas e informações de envio.',
+			'description' => 'PÃ¡gina de pÃ³s-venda com documentos, etapas e informaÃ§Ãµes de envio.',
 			'wc_option'   => null,
 		),
 		'blog' => array(
@@ -7788,15 +7793,15 @@ function gstore_get_required_pages() {
 			'slug'        => 'blog',
 			'template'    => 'page-blog',
 			'content'     => '',
-			'description' => 'Página do blog com artigos e notícias.',
+			'description' => 'PÃ¡gina do blog com artigos e notÃ­cias.',
 			'wc_option'   => null,
 		),
 		'politica-de-privacidade' => array(
-			'title'       => 'Política de Privacidade',
+			'title'       => 'PolÃ­tica de Privacidade',
 			'slug'        => 'politica-de-privacidade',
 			'template'    => 'page-politica-de-privacidade',
-			'content'     => '<!-- wp:heading {"level":1} --><h1 class="wp-block-heading">Política de Privacidade</h1><!-- /wp:heading --><!-- wp:paragraph --><p>Esta página descreve como coletamos, usamos e protegemos suas informações pessoais.</p><!-- /wp:paragraph -->',
-			'description' => 'Página com a política de privacidade da loja.',
+			'content'     => '<!-- wp:heading {"level":1} --><h1 class="wp-block-heading">PolÃ­tica de Privacidade</h1><!-- /wp:heading --><!-- wp:paragraph --><p>Esta pÃ¡gina descreve como coletamos, usamos e protegemos suas informaÃ§Ãµes pessoais.</p><!-- /wp:paragraph -->',
+			'description' => 'PÃ¡gina com a polÃ­tica de privacidade da loja.',
 			'wc_option'   => null,
 			'wp_option'   => 'wp_page_for_privacy_policy',
 		),
@@ -7804,8 +7809,8 @@ function gstore_get_required_pages() {
 			'title'       => 'Termos de Uso',
 			'slug'        => 'termos-de-uso',
 			'template'    => '',
-			'content'     => '<!-- wp:heading {"level":1} --><h1 class="wp-block-heading">Termos de Uso</h1><!-- /wp:heading --><!-- wp:paragraph --><p>Ao utilizar nosso site, você concorda com os termos e condições descritos nesta página.</p><!-- /wp:paragraph -->',
-			'description' => 'Página com os termos e condições de uso.',
+			'content'     => '<!-- wp:heading {"level":1} --><h1 class="wp-block-heading">Termos de Uso</h1><!-- /wp:heading --><!-- wp:paragraph --><p>Ao utilizar nosso site, vocÃª concorda com os termos e condiÃ§Ãµes descritos nesta pÃ¡gina.</p><!-- /wp:paragraph -->',
+			'description' => 'PÃ¡gina com os termos e condiÃ§Ãµes de uso.',
 			'wc_option'   => 'woocommerce_terms_page_id',
 		),
 		'blog' => array(
@@ -7813,7 +7818,7 @@ function gstore_get_required_pages() {
 			'slug'        => 'blog',
 			'template'    => 'page-blog',
 			'content'     => '',
-			'description' => 'Página do blog com artigos e notícias.',
+			'description' => 'PÃ¡gina do blog com artigos e notÃ­cias.',
 			'set_as'      => 'posts_page',
 		),
 	);
@@ -7851,17 +7856,17 @@ function gstore_add_design_tokens_submenu() {
 add_action( 'admin_menu', 'gstore_add_design_tokens_submenu' );
 
 /**
- * Renderiza a página de Design Tokens.
+ * Renderiza a pÃ¡gina de Design Tokens.
  */
 function gstore_render_design_tokens_page() {
 	if ( ! current_user_can( 'manage_options' ) ) {
 		return;
 	}
 	
-	// Obtém a cor de accent salva ou usa a padrão
+	// ObtÃ©m a cor de accent salva ou usa a padrÃ£o
 	$accent_color = get_option( 'gstore_accent_color', '#b5a642' );
 	
-	// Lê o arquivo de tokens
+	// LÃª o arquivo de tokens
 	$tokens_file = get_theme_file_path( 'assets/css/tokens.css' );
 	$tokens_content = file_exists( $tokens_file ) ? file_get_contents( $tokens_file ) : '';
 	
@@ -7874,12 +7879,12 @@ function gstore_render_design_tokens_page() {
 	?>
 	<div class="wrap">
 		<h1><?php echo esc_html( __( 'Design Tokens - GStore', 'gstore' ) ); ?></h1>
-		<p class="description"><?php echo esc_html( __( 'Visualize todos os tokens de cor, tipografia, espaçamento e outros tokens de design do tema.', 'gstore' ) ); ?></p>
+		<p class="description"><?php echo esc_html( __( 'Visualize todos os tokens de cor, tipografia, espaÃ§amento e outros tokens de design do tema.', 'gstore' ) ); ?></p>
 		
 		<!-- Seletor de Cor de Accent -->
 		<div class="gstore-accent-selector" style="background: #fff; border: 1px solid #ccd0d4; border-radius: 4px; padding: 20px; margin: 20px 0; box-shadow: 0 1px 1px rgba(0,0,0,.04);">
 			<h2 style="margin-top: 0;"><?php echo esc_html( __( 'Cor de Accent', 'gstore' ) ); ?></h2>
-			<p class="description"><?php echo esc_html( __( 'Escolha a cor de accent principal. Os tokens derivados (hover, dark, light, transparências) serão gerados automaticamente.', 'gstore' ) ); ?></p>
+			<p class="description"><?php echo esc_html( __( 'Escolha a cor de accent principal. Os tokens derivados (hover, dark, light, transparÃªncias) serÃ£o gerados automaticamente.', 'gstore' ) ); ?></p>
 			
 			<form id="gstore-accent-color-form" method="post" action="">
 				<?php wp_nonce_field( 'gstore_save_accent_color', 'gstore_accent_color_nonce' ); ?>
@@ -8092,7 +8097,7 @@ function gstore_render_design_tokens_page() {
 				const previews = document.querySelectorAll('.gstore-derived-tokens-preview .gstore-color-preview');
 				const codes = document.querySelectorAll('.gstore-derived-tokens-preview .gstore-color-info code');
 				
-				// Faz requisição AJAX para obter os tokens derivados
+				// Faz requisiÃ§Ã£o AJAX para obter os tokens derivados
 				const formData = new FormData();
 				formData.append('action', 'gstore_get_derived_tokens');
 				formData.append('accent_color', color);
@@ -8151,7 +8156,7 @@ function gstore_render_design_tokens_page() {
 				});
 			}
 			
-			// Função auxiliar para converter hex para RGB
+			// FunÃ§Ã£o auxiliar para converter hex para RGB
 			function hexToRgb(hex) {
 				const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
 				return result ? {
@@ -8161,7 +8166,7 @@ function gstore_render_design_tokens_page() {
 				} : null;
 			}
 			
-			// Submissão do formulário via AJAX
+			// SubmissÃ£o do formulÃ¡rio via AJAX
 			const form = document.getElementById('gstore-accent-color-form');
 			if (form) {
 				form.addEventListener('submit', function(e) {
@@ -8189,7 +8194,7 @@ function gstore_render_design_tokens_page() {
 						
 						if (data.success) {
 							message.innerHTML = '<div class="notice notice-success is-dismissible"><p>' + data.data.message + '</p></div>';
-							// Recarrega a página após 1 segundo para mostrar os tokens atualizados
+							// Recarrega a pÃ¡gina apÃ³s 1 segundo para mostrar os tokens atualizados
 							setTimeout(() => {
 								window.location.reload();
 							}, 1000);
@@ -8217,13 +8222,13 @@ function gstore_ajax_get_derived_tokens() {
 	check_ajax_referer( 'gstore_get_derived_tokens', 'nonce' );
 	
 	if ( ! current_user_can( 'manage_options' ) ) {
-		wp_send_json_error( array( 'message' => __( 'Permissão negada.', 'gstore' ) ) );
+		wp_send_json_error( array( 'message' => __( 'PermissÃ£o negada.', 'gstore' ) ) );
 	}
 	
 	$accent_color = isset( $_POST['accent_color'] ) ? sanitize_hex_color( $_POST['accent_color'] ) : '#b5a642';
 	
 	if ( ! $accent_color ) {
-		wp_send_json_error( array( 'message' => __( 'Cor inválida.', 'gstore' ) ) );
+		wp_send_json_error( array( 'message' => __( 'Cor invÃ¡lida.', 'gstore' ) ) );
 	}
 	
 	$tokens = gstore_generate_accent_tokens( $accent_color );
@@ -8239,16 +8244,16 @@ function gstore_ajax_save_accent_color() {
 	check_ajax_referer( 'gstore_save_accent_color', 'gstore_accent_color_nonce' );
 	
 	if ( ! current_user_can( 'manage_options' ) ) {
-		wp_send_json_error( array( 'message' => __( 'Permissão negada.', 'gstore' ) ) );
+		wp_send_json_error( array( 'message' => __( 'PermissÃ£o negada.', 'gstore' ) ) );
 	}
 	
 	$accent_color = isset( $_POST['gstore_accent_color'] ) ? sanitize_hex_color( $_POST['gstore_accent_color'] ) : '';
 	
 	if ( ! $accent_color ) {
-		wp_send_json_error( array( 'message' => __( 'Cor inválida. Por favor, selecione uma cor válida.', 'gstore' ) ) );
+		wp_send_json_error( array( 'message' => __( 'Cor invÃ¡lida. Por favor, selecione uma cor vÃ¡lida.', 'gstore' ) ) );
 	}
 	
-	// Salva a opção
+	// Salva a opÃ§Ã£o
 	update_option( 'gstore_accent_color', $accent_color );
 	
 	// Atualiza o arquivo tokens.css
@@ -8258,10 +8263,10 @@ function gstore_ajax_save_accent_color() {
 		wp_send_json_error( array( 'message' => $result->get_error_message() ) );
 	}
 	
-	// Atualiza o timestamp para forçar recarregamento do CSS
+	// Atualiza o timestamp para forÃ§ar recarregamento do CSS
 	update_option( 'gstore_tokens_last_updated', time() );
 	
-	// Limpa cache do WordPress se disponível
+	// Limpa cache do WordPress se disponÃ­vel
 	if ( function_exists( 'wp_cache_flush' ) ) {
 		wp_cache_flush();
 	}
@@ -8275,7 +8280,7 @@ function gstore_ajax_save_accent_color() {
 add_action( 'wp_ajax_gstore_save_accent_color', 'gstore_ajax_save_accent_color' );
 
 /**
- * Extrai cores do conteúdo do arquivo de tokens.
+ * Extrai cores do conteÃºdo do arquivo de tokens.
  */
 function gstore_extract_colors_from_tokens( $content ) {
 	$colors = array(
@@ -8288,7 +8293,7 @@ function gstore_extract_colors_from_tokens( $content ) {
 		'estados' => array(),
 	);
 	
-	// Primeiro, cria um mapa de todas as variáveis para resolver referências
+	// Primeiro, cria um mapa de todas as variÃ¡veis para resolver referÃªncias
 	$var_map = array();
 	preg_match_all('/--gstore-color-([^:]+):\s*([^;]+);/', $content, $all_matches, PREG_SET_ORDER);
 	foreach ( $all_matches as $match ) {
@@ -8297,14 +8302,14 @@ function gstore_extract_colors_from_tokens( $content ) {
 		$var_map[ $var_name ] = $var_value;
 	}
 	
-	// Padrão para encontrar variáveis CSS
+	// PadrÃ£o para encontrar variÃ¡veis CSS
 	preg_match_all('/--gstore-color-([^:]+):\s*([^;]+);/', $content, $matches, PREG_SET_ORDER);
 	
 	foreach ( $matches as $match ) {
 		$name = trim( $match[1] );
 		$value = trim( $match[2] );
 		
-		// Resolve variáveis CSS se for uma referência
+		// Resolve variÃ¡veis CSS se for uma referÃªncia
 		$resolved_value = gstore_resolve_css_variable( $value, $var_map );
 		
 		// Categoriza as cores
@@ -8365,7 +8370,7 @@ function gstore_extract_colors_from_tokens( $content ) {
 }
 
 /**
- * Resolve uma variável CSS para seu valor final.
+ * Resolve uma variÃ¡vel CSS para seu valor final.
  */
 function gstore_resolve_css_variable( $value, $var_map, $depth = 0 ) {
 	// Limita a profundidade para evitar loops infinitos
@@ -8373,12 +8378,12 @@ function gstore_resolve_css_variable( $value, $var_map, $depth = 0 ) {
 		return $value;
 	}
 	
-	// Se não é uma variável, retorna o valor
+	// Se nÃ£o Ã© uma variÃ¡vel, retorna o valor
 	if ( strpos( $value, 'var(' ) !== 0 ) {
 		return $value;
 	}
 	
-	// Extrai o nome da variável
+	// Extrai o nome da variÃ¡vel
 	preg_match( '/var\(([^)]+)\)/', $value, $matches );
 	if ( empty( $matches[1] ) ) {
 		return $value;
@@ -8386,7 +8391,7 @@ function gstore_resolve_css_variable( $value, $var_map, $depth = 0 ) {
 	
 	$var_name = trim( $matches[1] );
 	
-	// Se a variável existe no mapa, resolve recursivamente
+	// Se a variÃ¡vel existe no mapa, resolve recursivamente
 	if ( isset( $var_map[ $var_name ] ) ) {
 		return gstore_resolve_css_variable( $var_map[ $var_name ], $var_map, $depth + 1 );
 	}
@@ -8395,7 +8400,7 @@ function gstore_resolve_css_variable( $value, $var_map, $depth = 0 ) {
 }
 
 /**
- * Renderiza os tokens de cor na página.
+ * Renderiza os tokens de cor na pÃ¡gina.
  */
 function gstore_render_color_tokens( $colors ) {
 	$sections = array(
@@ -8404,8 +8409,8 @@ function gstore_render_color_tokens( $colors ) {
 		'acentos' => __( 'Acentos e Estados', 'gstore' ),
 		'bordas' => __( 'Bordas', 'gstore' ),
 		'ratings' => __( 'Ratings', 'gstore' ),
-		'transparencia' => __( 'Cores com Transparência', 'gstore' ),
-		'estados' => __( 'Estados Específicos', 'gstore' ),
+		'transparencia' => __( 'Cores com TransparÃªncia', 'gstore' ),
+		'estados' => __( 'Estados EspecÃ­ficos', 'gstore' ),
 	);
 	
 	foreach ( $sections as $key => $title ) {
@@ -8421,10 +8426,10 @@ function gstore_render_color_tokens( $colors ) {
 					$color_value = isset( $color['resolved'] ) && $color['resolved'] !== $color['value'] ? $color['resolved'] : $color['value'];
 					$display_value = $color_value;
 					
-					// Se ainda for uma variável não resolvida, tenta usar o valor original
+					// Se ainda for uma variÃ¡vel nÃ£o resolvida, tenta usar o valor original
 					if ( strpos( $color_value, 'var(' ) === 0 ) {
 						$display_value = $color['value'];
-						$color_value = '#f0f0f0'; // Cor padrão para variáveis não resolvidas
+						$color_value = '#f0f0f0'; // Cor padrÃ£o para variÃ¡veis nÃ£o resolvidas
 					}
 					
 					// Determina se o texto deve ser claro ou escuro
@@ -8440,7 +8445,7 @@ function gstore_render_color_tokens( $colors ) {
 							<div class="gstore-color-value"><?php echo esc_html( $color['value'] ); ?></div>
 							<?php if ( isset( $color['resolved'] ) && $color['resolved'] !== $color['value'] && strpos( $color['value'], 'var(' ) === 0 ) : ?>
 								<div class="gstore-color-value" style="color: #2271b1; margin-top: 3px;">
-									→ <?php echo esc_html( $color['resolved'] ); ?>
+									â†’ <?php echo esc_html( $color['resolved'] ); ?>
 								</div>
 							<?php endif; ?>
 						</div>
@@ -8456,7 +8461,7 @@ function gstore_render_color_tokens( $colors ) {
  * Determina a cor do texto baseado no contraste do fundo.
  */
 function gstore_get_contrast_color( $color ) {
-	// Se for rgba ou variável, retorna preto por padrão
+	// Se for rgba ou variÃ¡vel, retorna preto por padrÃ£o
 	if ( strpos( $color, 'rgba' ) === 0 || strpos( $color, 'var(' ) === 0 ) {
 		// Para rgba, tenta extrair a opacidade
 		if ( preg_match( '/rgba\([^)]+,\s*([\d.]+)\)/', $color, $matches ) ) {
@@ -8470,7 +8475,7 @@ function gstore_get_contrast_color( $color ) {
 	// Remove # se existir
 	$color = ltrim( $color, '#' );
 	
-	// Se não for hex válido, retorna preto
+	// Se nÃ£o for hex vÃ¡lido, retorna preto
 	if ( ! preg_match( '/^[0-9a-fA-F]{3,6}$/', $color ) ) {
 		return '#000';
 	}
@@ -8484,7 +8489,7 @@ function gstore_get_contrast_color( $color ) {
 	$g = hexdec( substr( $color, 2, 2 ) );
 	$b = hexdec( substr( $color, 4, 2 ) );
 	
-	// Calcula luminância relativa
+	// Calcula luminÃ¢ncia relativa
 	$luminance = ( 0.299 * $r + 0.587 * $g + 0.114 * $b ) / 255;
 	
 	// Retorna branco para fundos escuros, preto para fundos claros
@@ -8495,12 +8500,12 @@ function gstore_get_contrast_color( $color ) {
  * Converte cor hex para RGB.
  * 
  * @param string $hex Cor em formato hex (#RRGGBB ou RRGGBB).
- * @return array|false Array com r, g, b ou false se inválido.
+ * @return array|false Array com r, g, b ou false se invÃ¡lido.
  */
 function gstore_hex_to_rgb( $hex ) {
 	$hex = ltrim( $hex, '#' );
 	
-	// Se não for hex válido, retorna false
+	// Se nÃ£o for hex vÃ¡lido, retorna false
 	if ( ! preg_match( '/^[0-9a-fA-F]{3,6}$/', $hex ) ) {
 		return false;
 	}
@@ -8622,7 +8627,7 @@ function gstore_generate_accent_tokens( $accent_color ) {
 
 /**
  * Atualiza o arquivo tokens.css com a nova cor de accent e tokens derivados.
- * Também atualiza valores de fallback em outros arquivos CSS.
+ * TambÃ©m atualiza valores de fallback em outros arquivos CSS.
  * 
  * @param string $accent_color Cor de accent em hex.
  * @return bool|WP_Error True em sucesso, WP_Error em erro.
@@ -8630,7 +8635,7 @@ function gstore_generate_accent_tokens( $accent_color ) {
 function gstore_update_accent_tokens_in_file( $accent_color ) {
 	$tokens = gstore_generate_accent_tokens( $accent_color );
 	
-	// Mapeia os nomes dos tokens para os padrões no arquivo
+	// Mapeia os nomes dos tokens para os padrÃµes no arquivo
 	$token_map = array(
 		'accent' => '--gstore-color-accent',
 		'accent-hover' => '--gstore-color-accent-hover',
@@ -8781,16 +8786,16 @@ function gstore_update_accent_tokens_in_file( $accent_color ) {
 }
 
 /**
- * Verifica se uma página existe pelo slug.
+ * Verifica se uma pÃ¡gina existe pelo slug.
  * 
- * @param string $slug Slug da página.
+ * @param string $slug Slug da pÃ¡gina.
  * @return WP_Post|null Post encontrado ou null.
  */
 function gstore_get_page_by_slug( $slug ) {
 	$page = get_page_by_path( $slug );
 	
 	if ( ! $page ) {
-		// Tenta encontrar com query mais específica
+		// Tenta encontrar com query mais especÃ­fica
 		$pages = get_posts( array(
 			'name'        => $slug,
 			'post_type'   => 'page',
@@ -8805,11 +8810,11 @@ function gstore_get_page_by_slug( $slug ) {
 }
 
 /**
- * Cria uma página do tema.
+ * Cria uma pÃ¡gina do tema.
  * 
- * @param string $page_key Chave da página na lista de páginas.
- * @param bool   $force    Se true, recria a página mesmo se já existir.
- * @return array Resultado da operação.
+ * @param string $page_key Chave da pÃ¡gina na lista de pÃ¡ginas.
+ * @param bool   $force    Se true, recria a pÃ¡gina mesmo se jÃ¡ existir.
+ * @return array Resultado da operaÃ§Ã£o.
  */
 function gstore_create_page( $page_key, $force = false ) {
 	$pages = gstore_get_required_pages();
@@ -8817,29 +8822,29 @@ function gstore_create_page( $page_key, $force = false ) {
 	if ( ! isset( $pages[ $page_key ] ) ) {
 		return array(
 			'success' => false,
-			'message' => __( 'Página não encontrada nas configurações.', 'gstore' ),
+			'message' => __( 'PÃ¡gina nÃ£o encontrada nas configuraÃ§Ãµes.', 'gstore' ),
 		);
 	}
 	
 	$page_config = $pages[ $page_key ];
 	$existing_page = gstore_get_page_by_slug( $page_config['slug'] );
 	
-	// Se a página já existe e não é forçado, apenas retorna sucesso
+	// Se a pÃ¡gina jÃ¡ existe e nÃ£o Ã© forÃ§ado, apenas retorna sucesso
 	if ( $existing_page && ! $force ) {
 		return array(
 			'success' => true,
-			'message' => __( 'Página já existe.', 'gstore' ),
+			'message' => __( 'PÃ¡gina jÃ¡ existe.', 'gstore' ),
 			'page_id' => $existing_page->ID,
 			'action'  => 'exists',
 		);
 	}
 	
-	// Se força recriação, deleta a existente
+	// Se forÃ§a recriaÃ§Ã£o, deleta a existente
 	if ( $existing_page && $force ) {
 		wp_delete_post( $existing_page->ID, true );
 	}
 	
-	// Prepara os dados da nova página
+	// Prepara os dados da nova pÃ¡gina
 	$page_data = array(
 		'post_title'   => $page_config['title'],
 		'post_name'    => $page_config['slug'],
@@ -8848,7 +8853,7 @@ function gstore_create_page( $page_key, $force = false ) {
 		'post_content' => $page_config['content'],
 	);
 	
-	// Insere a página
+	// Insere a pÃ¡gina
 	$page_id = wp_insert_post( $page_data );
 	
 	if ( is_wp_error( $page_id ) ) {
@@ -8863,17 +8868,17 @@ function gstore_create_page( $page_key, $force = false ) {
 		update_post_meta( $page_id, '_wp_page_template', $page_config['template'] );
 	}
 	
-	// Configura opções do WooCommerce
+	// Configura opÃ§Ãµes do WooCommerce
 	if ( ! empty( $page_config['wc_option'] ) && class_exists( 'WooCommerce' ) ) {
 		update_option( $page_config['wc_option'], $page_id );
 	}
 	
-	// Configura opções do WordPress
+	// Configura opÃ§Ãµes do WordPress
 	if ( ! empty( $page_config['wp_option'] ) ) {
 		update_option( $page_config['wp_option'], $page_id );
 	}
 	
-	// Define como página inicial ou de posts
+	// Define como pÃ¡gina inicial ou de posts
 	if ( ! empty( $page_config['set_as'] ) ) {
 		if ( 'front_page' === $page_config['set_as'] ) {
 			update_option( 'show_on_front', 'page' );
@@ -8881,7 +8886,7 @@ function gstore_create_page( $page_key, $force = false ) {
 		} elseif ( 'posts_page' === $page_config['set_as'] ) {
 			update_option( 'show_on_front', 'page' );
 			update_option( 'page_for_posts', $page_id );
-			// Força o uso do template page-blog.html para a página de posts
+			// ForÃ§a o uso do template page-blog.html para a pÃ¡gina de posts
 			if ( ! empty( $page_config['template'] ) ) {
 				update_post_meta( $page_id, '_wp_page_template', $page_config['template'] );
 			}
@@ -8890,62 +8895,62 @@ function gstore_create_page( $page_key, $force = false ) {
 	
 	return array(
 		'success' => true,
-		'message' => __( 'Página criada com sucesso!', 'gstore' ),
+		'message' => __( 'PÃ¡gina criada com sucesso!', 'gstore' ),
 		'page_id' => $page_id,
 		'action'  => 'created',
 	);
 }
 
 /**
- * Força o uso do template page-blog.html quando for a página de posts do blog.
+ * ForÃ§a o uso do template page-blog.html quando for a pÃ¡gina de posts do blog.
  * 
- * Quando uma página é definida como "posts_page", o WordPress usa templates de arquivo
- * (home.html, archive.html) ao invés de templates de página. Este filtro corrige isso.
+ * Quando uma pÃ¡gina Ã© definida como "posts_page", o WordPress usa templates de arquivo
+ * (home.html, archive.html) ao invÃ©s de templates de pÃ¡gina. Este filtro corrige isso.
  * 
- * IMPORTANTE: Em Block Themes, não devemos retornar o caminho do arquivo HTML diretamente
+ * IMPORTANTE: Em Block Themes, nÃ£o devemos retornar o caminho do arquivo HTML diretamente
  * via template_include, pois isso impede o processamento dos blocos. Em vez disso, usamos
- * o filtro block_template_loader para forçar o template correto.
+ * o filtro block_template_loader para forÃ§ar o template correto.
  * 
  * @param string $template Template atual.
  * @return string Template a ser usado.
  */
 function gstore_force_blog_page_template( $template ) {
-	// Verifica se é a página de posts ou se está acessando /blog
+	// Verifica se Ã© a pÃ¡gina de posts ou se estÃ¡ acessando /blog
 	if ( is_home() && ! is_front_page() ) {
 		$blog_page_id = get_option( 'page_for_posts' );
 		
 		if ( $blog_page_id ) {
 			$blog_page = get_post( $blog_page_id );
 			
-			// Verifica se a página do blog tem o template page-blog
+			// Verifica se a pÃ¡gina do blog tem o template page-blog
 			if ( $blog_page && 'blog' === $blog_page->post_name ) {
 				$page_template = get_page_template_slug( $blog_page_id );
 				
-				// Se o template for page-blog, força o uso dele
+				// Se o template for page-blog, forÃ§a o uso dele
 				if ( 'page-blog' === $page_template || 'page-blog.html' === $page_template ) {
-					// Em Block Themes, não retornamos o caminho do arquivo diretamente
+					// Em Block Themes, nÃ£o retornamos o caminho do arquivo diretamente
 					// porque isso impede o processamento dos blocos. Em vez disso, deixamos
 					// o WordPress usar o sistema de Block Templates nativo.
-					// O template será carregado automaticamente pelo WordPress se existir.
-					// Não retornamos nada aqui - deixamos o WordPress usar o sistema nativo
+					// O template serÃ¡ carregado automaticamente pelo WordPress se existir.
+					// NÃ£o retornamos nada aqui - deixamos o WordPress usar o sistema nativo
 				}
 			}
 		}
 	}
 	
-	// Também verifica se está acessando diretamente a página /blog
+	// TambÃ©m verifica se estÃ¡ acessando diretamente a pÃ¡gina /blog
 	if ( is_page( 'blog' ) ) {
 		$blog_page = get_page_by_path( 'blog' );
 		
 		if ( $blog_page ) {
 			$page_template = get_page_template_slug( $blog_page->ID );
 			
-			// Se o template for page-blog, força o uso dele
+			// Se o template for page-blog, forÃ§a o uso dele
 			if ( 'page-blog' === $page_template || 'page-blog.html' === $page_template ) {
-				// Em Block Themes, não retornamos o caminho do arquivo diretamente
+				// Em Block Themes, nÃ£o retornamos o caminho do arquivo diretamente
 				// porque isso impede o processamento dos blocos. Em vez disso, deixamos
 				// o WordPress usar o sistema de Block Templates nativo.
-				// Não retornamos nada aqui - deixamos o WordPress usar o sistema nativo
+				// NÃ£o retornamos nada aqui - deixamos o WordPress usar o sistema nativo
 			}
 		}
 	}
@@ -8955,7 +8960,7 @@ function gstore_force_blog_page_template( $template ) {
 add_filter( 'template_include', 'gstore_force_blog_page_template', 99 );
 
 /**
- * Força o uso do template page-blog.html via Block Template API quando for a página de posts.
+ * ForÃ§a o uso do template page-blog.html via Block Template API quando for a pÃ¡gina de posts.
  * 
  * Este filtro funciona em conjunto com gstore_force_blog_page_template para garantir
  * que o WordPress use o template correto e processe os blocos adequadamente.
@@ -8964,7 +8969,7 @@ add_filter( 'template_include', 'gstore_force_blog_page_template', 99 );
  * @return WP_Block_Template|null Template a ser usado.
  */
 function gstore_force_blog_block_template( $template ) {
-	// Verifica se é a página de posts
+	// Verifica se Ã© a pÃ¡gina de posts
 	if ( is_home() && ! is_front_page() ) {
 		$blog_page_id = get_option( 'page_for_posts' );
 		
@@ -8974,7 +8979,7 @@ function gstore_force_blog_block_template( $template ) {
 			if ( $blog_page && 'blog' === $blog_page->post_name ) {
 				$page_template = get_page_template_slug( $blog_page_id );
 				
-				// Se o template for page-blog, força o uso dele via Block Template API
+				// Se o template for page-blog, forÃ§a o uso dele via Block Template API
 				if ( 'page-blog' === $page_template || 'page-blog.html' === $page_template ) {
 					if ( function_exists( 'get_block_template' ) ) {
 						$block_template = get_block_template( get_stylesheet() . '//page-blog', 'wp_template' );
@@ -8993,10 +8998,10 @@ function gstore_force_blog_block_template( $template ) {
 add_filter( 'block_template_loader', 'gstore_force_blog_block_template', 10, 1 );
 
 /**
- * Cria todas as páginas do tema.
+ * Cria todas as pÃ¡ginas do tema.
  * 
- * @param bool $force Se true, recria todas as páginas.
- * @return array Resultados das operações.
+ * @param bool $force Se true, recria todas as pÃ¡ginas.
+ * @return array Resultados das operaÃ§Ãµes.
  */
 function gstore_create_all_pages( $force = false ) {
 	$pages = gstore_get_required_pages();
@@ -9010,9 +9015,9 @@ function gstore_create_all_pages( $force = false ) {
 }
 
 /**
- * Executa diagnóstico dos assets críticos do tema.
+ * Executa diagnÃ³stico dos assets crÃ­ticos do tema.
  *
- * @return array Resultado da verificação.
+ * @return array Resultado da verificaÃ§Ã£o.
  */
 function gstore_run_asset_diagnostics() {
 	$assets = array(
@@ -9041,73 +9046,73 @@ function gstore_run_asset_diagnostics() {
 
 	return array(
 		'success' => true,
-		'message' => __( 'Todos os arquivos críticos estão presentes. O layout mobile será aplicado automaticamente.', 'gstore' ),
+		'message' => __( 'Todos os arquivos crÃ­ticos estÃ£o presentes. O layout mobile serÃ¡ aplicado automaticamente.', 'gstore' ),
 	);
 }
 
 /**
  * ============================================
- * DIAGNÓSTICO DE CSS - VERIFICAÇÃO EM PRODUÇÃO
+ * DIAGNÃ“STICO DE CSS - VERIFICAÃ‡ÃƒO EM PRODUÃ‡ÃƒO
  * ============================================
  * 
- * Sistema que verifica se regras CSS críticas estão
+ * Sistema que verifica se regras CSS crÃ­ticas estÃ£o
  * sendo aplicadas corretamente no frontend.
  */
 
 /**
- * Retorna as regras CSS críticas que devem ser verificadas.
+ * Retorna as regras CSS crÃ­ticas que devem ser verificadas.
  * 
  * @return array Lista de regras com seletores e propriedades esperadas.
  */
 function gstore_get_css_diagnostic_rules() {
 	return array(
 		'benefits_slider_controls_hidden' => array(
-			'name'        => 'Setas do carrossel de benefícios (mobile)',
+			'name'        => 'Setas do carrossel de benefÃ­cios (mobile)',
 			'selector'    => '.Gstore-home-benefits__slider-control--prev',
 			'property'    => 'display',
 			'expected'    => 'none',
 			'viewport'    => 'mobile',
-			'description' => 'As setas de navegação devem estar ocultas no mobile (@media max-width: 900px)',
+			'description' => 'As setas de navegaÃ§Ã£o devem estar ocultas no mobile (@media max-width: 900px)',
 			'css_file'    => 'style.css',
 			'css_line'    => '~2320',
 		),
 		'benefits_slider_controls_next_hidden' => array(
-			'name'        => 'Seta próximo do carrossel (mobile)',
+			'name'        => 'Seta prÃ³ximo do carrossel (mobile)',
 			'selector'    => '.Gstore-home-benefits__slider-control--next',
 			'property'    => 'display',
 			'expected'    => 'none',
 			'viewport'    => 'mobile',
-			'description' => 'A seta próximo deve estar oculta no mobile',
+			'description' => 'A seta prÃ³ximo deve estar oculta no mobile',
 			'css_file'    => 'style.css',
 			'css_line'    => '~2320',
 		),
 		'benefits_slider_dots_hidden' => array(
-			'name'        => 'Dots do carrossel de benefícios (mobile)',
+			'name'        => 'Dots do carrossel de benefÃ­cios (mobile)',
 			'selector'    => '.Gstore-home-benefits__slider-dots',
 			'property'    => 'display',
 			'expected'    => 'none',
 			'viewport'    => 'mobile',
-			'description' => 'Os dots de navegação devem estar ocultos no mobile',
+			'description' => 'Os dots de navegaÃ§Ã£o devem estar ocultos no mobile',
 			'css_file'    => 'style.css',
 			'css_line'    => '~2324',
 		),
 		'benefits_slider_visible' => array(
-			'name'        => 'Slider de benefícios visível (mobile)',
+			'name'        => 'Slider de benefÃ­cios visÃ­vel (mobile)',
 			'selector'    => '.Gstore-home-benefits__slider',
 			'property'    => 'display',
 			'expected'    => 'block',
 			'viewport'    => 'mobile',
-			'description' => 'O slider deve estar visível no mobile',
+			'description' => 'O slider deve estar visÃ­vel no mobile',
 			'css_file'    => 'style.css',
 			'css_line'    => '~2307',
 		),
 		'benefits_inner_hidden' => array(
-			'name'        => 'Grid de benefícios oculto (mobile)',
+			'name'        => 'Grid de benefÃ­cios oculto (mobile)',
 			'selector'    => '.Gstore-home-benefits__inner',
 			'property'    => 'display',
 			'expected'    => 'none',
 			'viewport'    => 'mobile',
-			'description' => 'O grid desktop de benefícios deve estar oculto no mobile',
+			'description' => 'O grid desktop de benefÃ­cios deve estar oculto no mobile',
 			'css_file'    => 'style.css',
 			'css_line'    => '~2303',
 		),
@@ -9117,7 +9122,7 @@ function gstore_get_css_diagnostic_rules() {
 			'property'    => 'display',
 			'expected'    => 'none',
 			'viewport'    => 'desktop',
-			'description' => 'O botão de menu mobile deve estar oculto no desktop',
+			'description' => 'O botÃ£o de menu mobile deve estar oculto no desktop',
 			'css_file'    => 'assets/css/layouts/header.css',
 			'css_line'    => 'varies',
 		),
@@ -9125,9 +9130,9 @@ function gstore_get_css_diagnostic_rules() {
 }
 
 /**
- * Gera o script JavaScript de diagnóstico para rodar no frontend.
+ * Gera o script JavaScript de diagnÃ³stico para rodar no frontend.
  * 
- * @return string Código JavaScript para diagnóstico.
+ * @return string CÃ³digo JavaScript para diagnÃ³stico.
  */
 function gstore_generate_css_diagnostics_script() {
 	$rules = gstore_get_css_diagnostic_rules();
@@ -9169,7 +9174,7 @@ function gstore_generate_css_diagnostics_script() {
 		}
 	});
 	
-	// Retorna os resultados para uso programático
+	// Retorna os resultados para uso programÃ¡tico
 	return results;
 })();
 JAVASCRIPT;
@@ -9178,7 +9183,7 @@ JAVASCRIPT;
 }
 
 /**
- * Adiciona painel de diagnóstico no frontend via query parameter.
+ * Adiciona painel de diagnÃ³stico no frontend via query parameter.
  * 
  * Acesse: ?gstore_diagnostics=1 para ver o painel visual.
  */
@@ -9217,7 +9222,7 @@ function gstore_frontend_diagnostics_panel() {
 			align-items: center;
 		">
 			<h3 style="margin: 0; font-size: 14px; display: flex; align-items: center; gap: 8px;">
-				🔍 Gstore CSS Diagnostics
+				ðŸ” Gstore CSS Diagnostics
 			</h3>
 			<button onclick="document.getElementById('gstore-diagnostics-panel').remove();" style="
 				background: none;
@@ -9264,7 +9269,7 @@ function gstore_frontend_diagnostics_panel() {
 					border-radius: 4px;
 					cursor: pointer;
 					font-weight: 500;
-				">🔄 Executar Diagnóstico</button>
+				">ðŸ”„ Executar DiagnÃ³stico</button>
 				
 			</div>
 		</div>
@@ -9300,9 +9305,9 @@ function gstore_frontend_diagnostics_panel() {
 			var status, statusColor, statusIcon;
 			
 			if (!element) {
-				status = 'Elemento não encontrado';
+				status = 'Elemento nÃ£o encontrado';
 				statusColor = '#dba617';
-				statusIcon = '❓';
+				statusIcon = 'â“';
 				notFound++;
 			} else {
 				var computedStyle = window.getComputedStyle(element);
@@ -9311,12 +9316,12 @@ function gstore_frontend_diagnostics_panel() {
 				if (actualValue === rule.expected) {
 					status = rule.property + ': ' + actualValue;
 					statusColor = '#00a32a';
-					statusIcon = '✅';
+					statusIcon = 'âœ…';
 					passed++;
 				} else {
 					status = 'Esperado: ' + rule.expected + ' | Atual: ' + actualValue;
 					statusColor = '#d63638';
-					statusIcon = '❌';
+					statusIcon = 'âŒ';
 					failed++;
 				}
 			}
@@ -9355,13 +9360,13 @@ function gstore_frontend_diagnostics_panel() {
 add_action( 'wp_footer', 'gstore_frontend_diagnostics_panel', 9999 );
 
 /**
- * AJAX: Retorna o script de diagnóstico para copiar.
+ * AJAX: Retorna o script de diagnÃ³stico para copiar.
  */
 function gstore_ajax_get_diagnostics_script() {
 	check_ajax_referer( 'gstore_setup_nonce', 'nonce' );
 	
 	if ( ! current_user_can( 'manage_options' ) ) {
-		wp_send_json_error( array( 'message' => __( 'Permissão negada.', 'gstore' ) ) );
+		wp_send_json_error( array( 'message' => __( 'PermissÃ£o negada.', 'gstore' ) ) );
 	}
 	
 	$script = gstore_generate_css_diagnostics_script();
@@ -9374,9 +9379,9 @@ function gstore_ajax_get_diagnostics_script() {
 add_action( 'wp_ajax_gstore_get_diagnostics_script', 'gstore_ajax_get_diagnostics_script' );
 
 /**
- * Sincroniza as opções do WooCommerce/WordPress com as páginas atuais.
+ * Sincroniza as opÃ§Ãµes do WooCommerce/WordPress com as pÃ¡ginas atuais.
  *
- * @return array Resultado da sincronização.
+ * @return array Resultado da sincronizaÃ§Ã£o.
  */
 function gstore_sync_required_page_options() {
 	$pages   = gstore_get_required_pages();
@@ -9424,7 +9429,7 @@ function gstore_sync_required_page_options() {
 	}
 
 	$message = sprintf(
-		__( '%1$d integrações WooCommerce e %2$d ajustes WordPress sincronizados.', 'gstore' ),
+		__( '%1$d integraÃ§Ãµes WooCommerce e %2$d ajustes WordPress sincronizados.', 'gstore' ),
 		$updates['wc'],
 		$updates['wp']
 	);
@@ -9439,7 +9444,7 @@ function gstore_sync_required_page_options() {
 /**
  * Regrava as regras de permalink.
  *
- * @return array Resultado da operação.
+ * @return array Resultado da operaÃ§Ã£o.
  */
 function gstore_flush_permalink_rules() {
 	flush_rewrite_rules();
@@ -9474,7 +9479,7 @@ function gstore_reset_blog_template() {
 	) );
 	$template_ids = array_merge( $template_ids, $found );
 	
-	// Busca por archive (pode ser usado se a página Blog está configurada como página de posts)
+	// Busca por archive (pode ser usado se a pÃ¡gina Blog estÃ¡ configurada como pÃ¡gina de posts)
 	$found = $wpdb->get_col( $wpdb->prepare(
 		"SELECT ID FROM {$wpdb->posts} 
 		WHERE post_type = 'wp_template' 
@@ -9484,7 +9489,7 @@ function gstore_reset_blog_template() {
 	) );
 	$template_ids = array_merge( $template_ids, $found );
 	
-	// Busca por qualquer template que contenha 'blog' no nome ou título
+	// Busca por qualquer template que contenha 'blog' no nome ou tÃ­tulo
 	$found = $wpdb->get_col( $wpdb->prepare(
 		"SELECT ID FROM {$wpdb->posts} 
 		WHERE post_type = 'wp_template' 
@@ -9506,7 +9511,7 @@ function gstore_reset_blog_template() {
 			continue;
 		}
 		
-		// Deleta o template (qualquer wp_template salvo no banco é uma customização)
+		// Deleta o template (qualquer wp_template salvo no banco Ã© uma customizaÃ§Ã£o)
 		$deleted = wp_delete_post( $template_id, true );
 		
 		if ( $deleted && ! is_wp_error( $deleted ) ) {
@@ -9521,7 +9526,7 @@ function gstore_reset_blog_template() {
 	wp_cache_flush();
 	clean_post_cache( 0 );
 	
-	// Força o WordPress a recarregar os templates
+	// ForÃ§a o WordPress a recarregar os templates
 	if ( function_exists( 'wp_get_theme' ) ) {
 		$theme = wp_get_theme();
 		delete_transient( 'wp_get_theme' );
@@ -9530,8 +9535,8 @@ function gstore_reset_blog_template() {
 	if ( $deleted_count > 0 ) {
 		$message = sprintf(
 			_n(
-				'%d template customizado removido com sucesso! A página do blog agora usará o template do tema. Recarregue a página do blog para ver as mudanças.',
-				'%d templates customizados removidos com sucesso! A página do blog agora usará o template do tema. Recarregue a página do blog para ver as mudanças.',
+				'%d template customizado removido com sucesso! A pÃ¡gina do blog agora usarÃ¡ o template do tema. Recarregue a pÃ¡gina do blog para ver as mudanÃ§as.',
+				'%d templates customizados removidos com sucesso! A pÃ¡gina do blog agora usarÃ¡ o template do tema. Recarregue a pÃ¡gina do blog para ver as mudanÃ§as.',
 				$deleted_count,
 				'gstore'
 			),
@@ -9547,7 +9552,7 @@ function gstore_reset_blog_template() {
 			'message' => $message,
 		);
 	} else {
-		$message = __( 'Nenhum template customizado encontrado no banco de dados. A página do blog já está usando o template do tema. Se o problema persistir, pode ser cache do navegador.', 'gstore' );
+		$message = __( 'Nenhum template customizado encontrado no banco de dados. A pÃ¡gina do blog jÃ¡ estÃ¡ usando o template do tema. Se o problema persistir, pode ser cache do navegador.', 'gstore' );
 		
 		if ( ! empty( $errors ) ) {
 			$message .= ' ' . __( 'Avisos:', 'gstore' ) . ' ' . implode( ', ', $errors );
@@ -9561,13 +9566,13 @@ function gstore_reset_blog_template() {
 }
 
 /**
- * Processa ações AJAX do setup.
+ * Processa aÃ§Ãµes AJAX do setup.
  */
 function gstore_ajax_setup_action() {
 	check_ajax_referer( 'gstore_setup_nonce', 'nonce' );
 	
 	if ( ! current_user_can( 'manage_options' ) ) {
-		wp_send_json_error( array( 'message' => __( 'Permissão negada.', 'gstore' ) ) );
+		wp_send_json_error( array( 'message' => __( 'PermissÃ£o negada.', 'gstore' ) ) );
 	}
 	
 	$action_type = isset( $_POST['action_type'] ) ? sanitize_text_field( $_POST['action_type'] ) : '';
@@ -9594,7 +9599,7 @@ function gstore_ajax_setup_action() {
 		wp_send_json( array(
 			'success' => true,
 			'message' => sprintf(
-				__( '%d páginas processadas, %d criadas.', 'gstore' ),
+				__( '%d pÃ¡ginas processadas, %d criadas.', 'gstore' ),
 				$success_count,
 				$created_count
 			),
@@ -9616,19 +9621,19 @@ function gstore_ajax_setup_action() {
 			'script'       => $script,
 			'rules'        => gstore_get_css_diagnostic_rules(),
 			'frontend_url' => $frontend_url,
-			'message'      => __( 'Script de diagnóstico gerado! Cole no console do navegador em produção.', 'gstore' ),
+			'message'      => __( 'Script de diagnÃ³stico gerado! Cole no console do navegador em produÃ§Ã£o.', 'gstore' ),
 		) );
 	} elseif ( 'reset_blog_template' === $action_type ) {
 		$result = gstore_reset_blog_template();
 		wp_send_json( $result );
 	} else {
-		wp_send_json_error( array( 'message' => __( 'Ação inválida.', 'gstore' ) ) );
+		wp_send_json_error( array( 'message' => __( 'AÃ§Ã£o invÃ¡lida.', 'gstore' ) ) );
 	}
 }
 add_action( 'wp_ajax_gstore_setup_action', 'gstore_ajax_setup_action' );
 
 /**
- * Renderiza a página de setup do tema.
+ * Renderiza a pÃ¡gina de setup do tema.
  */
 function gstore_render_setup_page() {
 	if ( ! current_user_can( 'manage_options' ) ) {
@@ -9644,13 +9649,13 @@ function gstore_render_setup_page() {
 		</h1>
 		
 		<div class="gstore-setup-intro">
-			<p><?php _e( 'Esta ferramenta cria automaticamente todas as páginas necessárias para o funcionamento do tema Gstore. Cada página será configurada com o template correto e integrada com o WooCommerce.', 'gstore' ); ?></p>
+			<p><?php _e( 'Esta ferramenta cria automaticamente todas as pÃ¡ginas necessÃ¡rias para o funcionamento do tema Gstore. Cada pÃ¡gina serÃ¡ configurada com o template correto e integrada com o WooCommerce.', 'gstore' ); ?></p>
 		</div>
 		
 		<div class="gstore-setup-actions">
 			<button type="button" id="gstore-create-all" class="button button-primary button-hero">
 				<span class="dashicons dashicons-welcome-add-page"></span>
-				<?php _e( 'Criar Todas as Páginas', 'gstore' ); ?>
+				<?php _e( 'Criar Todas as PÃ¡ginas', 'gstore' ); ?>
 			</button>
 			
 			<button type="button" id="gstore-recreate-all" class="button button-secondary">
@@ -9670,10 +9675,10 @@ function gstore_render_setup_page() {
 			<thead>
 				<tr>
 					<th class="column-status" style="width: 80px;"><?php _e( 'Status', 'gstore' ); ?></th>
-					<th class="column-title"><?php _e( 'Página', 'gstore' ); ?></th>
+					<th class="column-title"><?php _e( 'PÃ¡gina', 'gstore' ); ?></th>
 					<th class="column-template" style="width: 160px;"><?php _e( 'Template', 'gstore' ); ?></th>
-					<th class="column-description"><?php _e( 'Descrição', 'gstore' ); ?></th>
-					<th class="column-actions" style="width: 200px;"><?php _e( 'Ações', 'gstore' ); ?></th>
+					<th class="column-description"><?php _e( 'DescriÃ§Ã£o', 'gstore' ); ?></th>
+					<th class="column-actions" style="width: 200px;"><?php _e( 'AÃ§Ãµes', 'gstore' ); ?></th>
 				</tr>
 			</thead>
 			<tbody>
@@ -9682,7 +9687,7 @@ function gstore_render_setup_page() {
 					$status = $existing_page ? 'exists' : 'missing';
 					$status_class = $existing_page ? 'gstore-status--success' : 'gstore-status--warning';
 					$status_icon = $existing_page ? 'yes-alt' : 'warning';
-					$status_text = $existing_page ? __( 'Existe', 'gstore' ) : __( 'Não existe', 'gstore' );
+					$status_text = $existing_page ? __( 'Existe', 'gstore' ) : __( 'NÃ£o existe', 'gstore' );
 				?>
 				<tr id="gstore-page-row-<?php echo esc_attr( $page_key ); ?>" data-page-key="<?php echo esc_attr( $page_key ); ?>">
 					<td class="column-status">
@@ -9705,7 +9710,7 @@ function gstore_render_setup_page() {
 						<?php if ( ! empty( $page_config['template'] ) ) : ?>
 							<code><?php echo esc_html( $page_config['template'] ); ?></code>
 						<?php else : ?>
-							<span class="gstore-muted"><?php _e( 'Padrão', 'gstore' ); ?></span>
+							<span class="gstore-muted"><?php _e( 'PadrÃ£o', 'gstore' ); ?></span>
 						<?php endif; ?>
 					</td>
 					<td class="column-description">
@@ -9717,9 +9722,9 @@ function gstore_render_setup_page() {
 							<br><small class="gstore-badge gstore-badge--wp">
 								<?php 
 								if ( 'front_page' === $page_config['set_as'] ) {
-									_e( 'Página Inicial', 'gstore' );
+									_e( 'PÃ¡gina Inicial', 'gstore' );
 								} elseif ( 'posts_page' === $page_config['set_as'] ) {
-									_e( 'Página de Posts', 'gstore' );
+									_e( 'PÃ¡gina de Posts', 'gstore' );
 								}
 								?>
 							</small>
@@ -9744,41 +9749,41 @@ function gstore_render_setup_page() {
 		</table>
 		
 		<div class="gstore-setup-info">
-			<h3><span class="dashicons dashicons-info"></span> <?php _e( 'Informações', 'gstore' ); ?></h3>
+			<h3><span class="dashicons dashicons-info"></span> <?php _e( 'InformaÃ§Ãµes', 'gstore' ); ?></h3>
 			<ul>
-				<li><?php _e( '<strong>Criar:</strong> Cria a página apenas se ela não existir.', 'gstore' ); ?></li>
-				<li><?php _e( '<strong>Recriar:</strong> Remove a página existente e cria uma nova com as configurações padrão do tema.', 'gstore' ); ?></li>
-				<li><?php _e( '<strong>Templates:</strong> Páginas com template específico usam layouts customizados do tema Gstore.', 'gstore' ); ?></li>
-				<li><?php _e( '<strong>WooCommerce:</strong> Páginas marcadas com WooCommerce são automaticamente configuradas nas opções da loja.', 'gstore' ); ?></li>
+				<li><?php _e( '<strong>Criar:</strong> Cria a pÃ¡gina apenas se ela nÃ£o existir.', 'gstore' ); ?></li>
+				<li><?php _e( '<strong>Recriar:</strong> Remove a pÃ¡gina existente e cria uma nova com as configuraÃ§Ãµes padrÃ£o do tema.', 'gstore' ); ?></li>
+				<li><?php _e( '<strong>Templates:</strong> PÃ¡ginas com template especÃ­fico usam layouts customizados do tema Gstore.', 'gstore' ); ?></li>
+				<li><?php _e( '<strong>WooCommerce:</strong> PÃ¡ginas marcadas com WooCommerce sÃ£o automaticamente configuradas nas opÃ§Ãµes da loja.', 'gstore' ); ?></li>
 			</ul>
 		</div>
 
 		<div class="gstore-setup-utilities">
-			<h3><span class="dashicons dashicons-hammer"></span> <?php _e( 'Automatizações úteis', 'gstore' ); ?></h3>
-			<p><?php _e( 'Execute correções rápidas após instalar o tema ou migrar o site.', 'gstore' ); ?></p>
+			<h3><span class="dashicons dashicons-hammer"></span> <?php _e( 'AutomatizaÃ§Ãµes Ãºteis', 'gstore' ); ?></h3>
+			<p><?php _e( 'Execute correÃ§Ãµes rÃ¡pidas apÃ³s instalar o tema ou migrar o site.', 'gstore' ); ?></p>
 
 			<div class="gstore-setup-utilities__grid">
 				<div class="gstore-setup-card">
-					<h4><?php _e( 'Verificar assets críticos', 'gstore' ); ?></h4>
-					<p><?php _e( 'Confere se os arquivos CSS e JS do carrossel e do header estão disponíveis mesmo em child themes.', 'gstore' ); ?></p>
+					<h4><?php _e( 'Verificar assets crÃ­ticos', 'gstore' ); ?></h4>
+					<p><?php _e( 'Confere se os arquivos CSS e JS do carrossel e do header estÃ£o disponÃ­veis mesmo em child themes.', 'gstore' ); ?></p>
 					<button type="button" class="button button-primary gstore-utility-action" data-action="sync_assets" data-loading-text="<?php esc_attr_e( 'Verificando assets...', 'gstore' ); ?>">
 						<span class="dashicons dashicons-admin-appearance"></span>
-						<?php _e( 'Executar verificação', 'gstore' ); ?>
+						<?php _e( 'Executar verificaÃ§Ã£o', 'gstore' ); ?>
 					</button>
 				</div>
 
 				<div class="gstore-setup-card">
-					<h4><?php _e( 'Sincronizar páginas do WooCommerce', 'gstore' ); ?></h4>
-					<p><?php _e( 'Reatribui carrinho, checkout, minha conta e páginas estáticas nas opções oficiais.', 'gstore' ); ?></p>
-					<button type="button" class="button button-secondary gstore-utility-action" data-action="sync_pages" data-loading-text="<?php esc_attr_e( 'Sincronizando páginas...', 'gstore' ); ?>">
+					<h4><?php _e( 'Sincronizar pÃ¡ginas do WooCommerce', 'gstore' ); ?></h4>
+					<p><?php _e( 'Reatribui carrinho, checkout, minha conta e pÃ¡ginas estÃ¡ticas nas opÃ§Ãµes oficiais.', 'gstore' ); ?></p>
+					<button type="button" class="button button-secondary gstore-utility-action" data-action="sync_pages" data-loading-text="<?php esc_attr_e( 'Sincronizando pÃ¡ginas...', 'gstore' ); ?>">
 						<span class="dashicons dashicons-update-alt"></span>
-						<?php _e( 'Sincronizar páginas', 'gstore' ); ?>
+						<?php _e( 'Sincronizar pÃ¡ginas', 'gstore' ); ?>
 					</button>
 				</div>
 
 				<div class="gstore-setup-card">
 					<h4><?php _e( 'Regravar links permanentes', 'gstore' ); ?></h4>
-					<p><?php _e( 'Executa o flush das regras de permalink para resolver erros 404 após migrações.', 'gstore' ); ?></p>
+					<p><?php _e( 'Executa o flush das regras de permalink para resolver erros 404 apÃ³s migraÃ§Ãµes.', 'gstore' ); ?></p>
 					<button type="button" class="button gstore-utility-action" data-action="flush_permalinks" data-loading-text="<?php esc_attr_e( 'Regravando links...', 'gstore' ); ?>">
 						<span class="dashicons dashicons-admin-settings"></span>
 						<?php _e( 'Regravar links', 'gstore' ); ?>
@@ -9787,7 +9792,7 @@ function gstore_render_setup_page() {
 
 				<div class="gstore-setup-card">
 					<h4><?php _e( 'Resetar template do Blog', 'gstore' ); ?></h4>
-					<p><?php _e( 'Remove customizações do template do blog salvas no banco de dados, fazendo a página usar o template do tema novamente. Útil quando header/footer não aparecem.', 'gstore' ); ?></p>
+					<p><?php _e( 'Remove customizaÃ§Ãµes do template do blog salvas no banco de dados, fazendo a pÃ¡gina usar o template do tema novamente. Ãštil quando header/footer nÃ£o aparecem.', 'gstore' ); ?></p>
 					<button type="button" class="button button-secondary gstore-utility-action" data-action="reset_blog_template" data-loading-text="<?php esc_attr_e( 'Resetando template...', 'gstore' ); ?>">
 						<span class="dashicons dashicons-update-alt"></span>
 						<?php _e( 'Resetar template do Blog', 'gstore' ); ?>
@@ -9797,13 +9802,13 @@ function gstore_render_setup_page() {
 		</div>
 
 		<div class="gstore-setup-diagnostics">
-			<h3><span class="dashicons dashicons-visibility"></span> <?php _e( 'Diagnóstico de CSS em Produção', 'gstore' ); ?></h3>
-			<p><?php _e( 'Verifique se as regras CSS críticas estão sendo aplicadas corretamente no frontend. Útil para identificar problemas de cache ou deploy.', 'gstore' ); ?></p>
+			<h3><span class="dashicons dashicons-visibility"></span> <?php _e( 'DiagnÃ³stico de CSS em ProduÃ§Ã£o', 'gstore' ); ?></h3>
+			<p><?php _e( 'Verifique se as regras CSS crÃ­ticas estÃ£o sendo aplicadas corretamente no frontend. Ãštil para identificar problemas de cache ou deploy.', 'gstore' ); ?></p>
 			
 			<div class="gstore-setup-diagnostics__actions">
 				<button type="button" id="gstore-open-frontend-diag" class="button button-primary">
 					<span class="dashicons dashicons-external"></span>
-					<?php _e( 'Abrir Diagnóstico Visual', 'gstore' ); ?>
+					<?php _e( 'Abrir DiagnÃ³stico Visual', 'gstore' ); ?>
 				</button>
 				
 				<button type="button" id="gstore-copy-diag-script" class="button">
@@ -9813,7 +9818,7 @@ function gstore_render_setup_page() {
 			</div>
 			
 			<div id="gstore-diag-script-container" style="display: none; margin-top: 16px;">
-				<p class="description"><?php _e( 'Cole este script no console do navegador (F12) em produção:', 'gstore' ); ?></p>
+				<p class="description"><?php _e( 'Cole este script no console do navegador (F12) em produÃ§Ã£o:', 'gstore' ); ?></p>
 				<textarea id="gstore-diag-script-textarea" readonly style="width: 100%; height: 200px; font-family: monospace; font-size: 12px; background: #1d2327; color: #f0f0f1; border: 1px solid #3c434a; border-radius: 4px; padding: 12px;"></textarea>
 			</div>
 			
@@ -9851,10 +9856,10 @@ function gstore_render_setup_page() {
 			</div>
 		</div>
 
-		<!-- DIAGNÓSTICO DE ESTRUTURA DO CARRINHO -->
+		<!-- DIAGNÃ“STICO DE ESTRUTURA DO CARRINHO -->
 		<div class="gstore-setup-diagnostics" style="margin-top: 30px; border-top: 2px solid #c9a43a; padding-top: 20px;">
-			<h3><span class="dashicons dashicons-code-standards"></span> <?php _e( 'Diagnóstico de Estrutura do Carrinho', 'gstore' ); ?></h3>
-			<p><?php _e( 'Analise a estrutura HTML da página do carrinho para identificar problemas de layout. Clique no botão e depois vá para a página do carrinho.', 'gstore' ); ?></p>
+			<h3><span class="dashicons dashicons-code-standards"></span> <?php _e( 'DiagnÃ³stico de Estrutura do Carrinho', 'gstore' ); ?></h3>
+			<p><?php _e( 'Analise a estrutura HTML da pÃ¡gina do carrinho para identificar problemas de layout. Clique no botÃ£o e depois vÃ¡ para a pÃ¡gina do carrinho.', 'gstore' ); ?></p>
 			
 			<?php 
 			$cart_page = gstore_get_page_by_slug( 'carrinho' );
@@ -10071,8 +10076,8 @@ function gstore_render_setup_page() {
 	<script>
 	jQuery(document).ready(function($) {
 		var nonce = '<?php echo wp_create_nonce( 'gstore_setup_nonce' ); ?>';
-		var defaultSuccessMessage = '<?php echo esc_js( __( 'Ação concluída.', 'gstore' ) ); ?>';
-		var defaultLoadingMessage = '<?php echo esc_js( __( 'Executando ação...', 'gstore' ) ); ?>';
+		var defaultSuccessMessage = '<?php echo esc_js( __( 'AÃ§Ã£o concluÃ­da.', 'gstore' ) ); ?>';
+		var defaultLoadingMessage = '<?php echo esc_js( __( 'Executando aÃ§Ã£o...', 'gstore' ) ); ?>';
 		
 		function showStatus(message, type) {
 			var $status = $('#gstore-setup-status');
@@ -10105,7 +10110,7 @@ function gstore_render_setup_page() {
 			$row.removeClass('gstore-row-updating');
 		}
 		
-		// Criar página individual
+		// Criar pÃ¡gina individual
 		$(document).on('click', '.gstore-create-page, .gstore-recreate-page', function() {
 			var $btn = $(this);
 			var pageKey = $btn.data('page-key');
@@ -10113,7 +10118,7 @@ function gstore_render_setup_page() {
 			var force = $btn.hasClass('gstore-recreate-page');
 			
 			$row.addClass('gstore-row-updating');
-			showStatus(force ? 'Recriando página...' : 'Criando página...', 'loading');
+			showStatus(force ? 'Recriando pÃ¡gina...' : 'Criando pÃ¡gina...', 'loading');
 			
 			$.ajax({
 				url: ajaxurl,
@@ -10130,25 +10135,25 @@ function gstore_render_setup_page() {
 						showStatus(response.message, 'success');
 						updateRowStatus($row, true);
 					} else {
-						showStatus(response.message || 'Erro ao criar página.', 'error');
+						showStatus(response.message || 'Erro ao criar pÃ¡gina.', 'error');
 						$row.removeClass('gstore-row-updating');
 					}
 				},
 				error: function() {
-					showStatus('Erro de conexão.', 'error');
+					showStatus('Erro de conexÃ£o.', 'error');
 					$row.removeClass('gstore-row-updating');
 				}
 			});
 		});
 		
-		// Criar todas as páginas
+		// Criar todas as pÃ¡ginas
 		$('#gstore-create-all').on('click', function() {
 			createAllPages(false);
 		});
 		
-		// Recriar todas as páginas
+		// Recriar todas as pÃ¡ginas
 		$('#gstore-recreate-all').on('click', function() {
-			if (confirm('Tem certeza? Isso irá SOBRESCREVER todas as páginas existentes com o conteúdo padrão do tema.')) {
+			if (confirm('Tem certeza? Isso irÃ¡ SOBRESCREVER todas as pÃ¡ginas existentes com o conteÃºdo padrÃ£o do tema.')) {
 				createAllPages(true);
 			}
 		});
@@ -10156,7 +10161,7 @@ function gstore_render_setup_page() {
 		function createAllPages(force) {
 			var $rows = $('.gstore-pages-table tbody tr');
 			$rows.addClass('gstore-row-updating');
-			showStatus('Criando páginas...', 'loading');
+			showStatus('Criando pÃ¡ginas...', 'loading');
 			
 			$.ajax({
 				url: ajaxurl,
@@ -10181,12 +10186,12 @@ function gstore_render_setup_page() {
 							}
 						});
 					} else {
-						showStatus(response.message || 'Erro ao criar páginas.', 'error');
+						showStatus(response.message || 'Erro ao criar pÃ¡ginas.', 'error');
 						$rows.removeClass('gstore-row-updating');
 					}
 				},
 				error: function() {
-					showStatus('Erro de conexão.', 'error');
+					showStatus('Erro de conexÃ£o.', 'error');
 					$rows.removeClass('gstore-row-updating');
 				}
 			});
@@ -10226,7 +10231,7 @@ function gstore_render_setup_page() {
 					}
 				},
 				error: function() {
-					showStatus('Erro de conexão.', 'error');
+					showStatus('Erro de conexÃ£o.', 'error');
 				},
 				complete: function() {
 					$btn.removeClass('is-busy').prop('disabled', false);
@@ -10234,26 +10239,26 @@ function gstore_render_setup_page() {
 			});
 		});
 
-		// Diagnóstico CSS - Abrir no frontend
+		// DiagnÃ³stico CSS - Abrir no frontend
 		$('#gstore-open-frontend-diag').on('click', function() {
 			var frontendUrl = '<?php echo esc_js( add_query_arg( 'gstore_diagnostics', '1', home_url( '/' ) ) ); ?>';
 			window.open(frontendUrl, '_blank');
 		});
 
-		// Diagnóstico CSS - Copiar script para console
+		// DiagnÃ³stico CSS - Copiar script para console
 		$('#gstore-copy-diag-script').on('click', function() {
 			var $btn = $(this);
 			var $container = $('#gstore-diag-script-container');
 			var $textarea = $('#gstore-diag-script-textarea');
 
 			if ($container.is(':visible') && $textarea.val()) {
-				// Se já está visível e tem conteúdo, apenas copia
+				// Se jÃ¡ estÃ¡ visÃ­vel e tem conteÃºdo, apenas copia
 				copyToClipboard($textarea.val(), $btn);
 				return;
 			}
 
 			$btn.addClass('is-busy').prop('disabled', true);
-			showStatus('Gerando script de diagnóstico...', 'loading');
+			showStatus('Gerando script de diagnÃ³stico...', 'loading');
 
 			$.ajax({
 				url: ajaxurl,
@@ -10274,7 +10279,7 @@ function gstore_render_setup_page() {
 					}
 				},
 				error: function() {
-					showStatus('Erro de conexão.', 'error');
+					showStatus('Erro de conexÃ£o.', 'error');
 				},
 				complete: function() {
 					$btn.removeClass('is-busy').prop('disabled', false);
@@ -10317,7 +10322,7 @@ function gstore_render_setup_page() {
 
 /**
  * ==========================================
- * GSTORE CART FIX - CENTRALIZAÇÃO FORÇADA
+ * GSTORE CART FIX - CENTRALIZAÃ‡ÃƒO FORÃ‡ADA
  * ==========================================
  * 
  * Remove estilos conflitantes do WooCommerce e adiciona
@@ -10326,8 +10331,8 @@ function gstore_render_setup_page() {
  */
 
 /**
- * Remove estilos padrão do WooCommerce na página do carrinho
- * que interferem na centralização.
+ * Remove estilos padrÃ£o do WooCommerce na pÃ¡gina do carrinho
+ * que interferem na centralizaÃ§Ã£o.
  */
 add_action( 'wp_enqueue_scripts', function() {
 	if ( function_exists( 'is_cart' ) && is_cart() ) {
@@ -10340,7 +10345,7 @@ add_action( 'wp_enqueue_scripts', function() {
 }, 100 );
 
 /**
- * Adiciona CSS inline de alta prioridade para forçar centralização do carrinho.
+ * Adiciona CSS inline de alta prioridade para forÃ§ar centralizaÃ§Ã£o do carrinho.
  */
 add_action( 'wp_head', function() {
 	if ( ! function_exists( 'is_cart' ) || ! is_cart() ) {
@@ -10349,10 +10354,10 @@ add_action( 'wp_head', function() {
 	?>
 	<style id="gstore-cart-fix">
 	/* ============================================
-	   GSTORE CART FIX - CENTRALIZAÇÃO FORÇADA
+	   GSTORE CART FIX - CENTRALIZAÃ‡ÃƒO FORÃ‡ADA
 	   ============================================ */
 	
-	/* Reset variáveis do WordPress */
+	/* Reset variÃ¡veis do WordPress */
 	body.woocommerce-cart {
 		--wp--style--root--padding-left: 0 !important;
 		--wp--style--root--padding-right: 0 !important;
@@ -10360,7 +10365,7 @@ add_action( 'wp_head', function() {
 		--wp--style--global--wide-size: 100% !important;
 	}
 	
-	/* Esconde título duplicado */
+	/* Esconde tÃ­tulo duplicado */
 	body.woocommerce-cart .wp-block-post-title {
 		display: none !important;
 	}
@@ -10379,7 +10384,7 @@ add_action( 'wp_head', function() {
 		max-width: none !important;
 	}
 	
-	/* Espaçamento para entry-content quando carrinho está vazio */
+	/* EspaÃ§amento para entry-content quando carrinho estÃ¡ vazio */
 	body.woocommerce-cart .entry-content:has(.cart-empty),
 	body.woocommerce-cart .wp-block-post-content:has(.cart-empty),
 	body.woocommerce-cart .entry-content:has(.return-to-shop),
@@ -10395,7 +10400,7 @@ add_action( 'wp_head', function() {
 		min-height: 400px !important;
 	}
 	
-	/* Reset is-layout-constrained - NÃO afeta o container */
+	/* Reset is-layout-constrained - NÃƒO afeta o container */
 	body.woocommerce-cart .is-layout-constrained > *:not(.Gstore-cart-container),
 	body.woocommerce-cart .wp-block-group-is-layout-constrained > *:not(.Gstore-cart-container) {
 		max-width: none !important;
@@ -10403,7 +10408,7 @@ add_action( 'wp_head', function() {
 		margin-right: 0 !important;
 	}
 	
-	/* Main da página do carrinho */
+	/* Main da pÃ¡gina do carrinho */
 	body.woocommerce-cart main.Gstore-cart-page,
 	body.woocommerce-cart main[data-page="cart"],
 	body.woocommerce-cart .gstore-cart-page {
@@ -10451,7 +10456,7 @@ add_action( 'wp_head', function() {
 }, 9999 );
 
 /**
- * JavaScript para remover classes problemáticas do WordPress no DOM.
+ * JavaScript para remover classes problemÃ¡ticas do WordPress no DOM.
  */
 add_action( 'wp_footer', function() {
 	if ( ! function_exists( 'is_cart' ) || ! is_cart() ) {
@@ -10462,7 +10467,7 @@ add_action( 'wp_footer', function() {
 	(function() {
 		'use strict';
 		
-		// Classes problemáticas do WordPress que adicionam max-width
+		// Classes problemÃ¡ticas do WordPress que adicionam max-width
 		const badClasses = [
 			'is-layout-constrained',
 			'wp-block-group-is-layout-constrained',
@@ -10495,12 +10500,12 @@ add_action( 'wp_footer', function() {
 		// Executa imediatamente
 		cleanCartClasses();
 		
-		// Executa após DOM ready
+		// Executa apÃ³s DOM ready
 		if (document.readyState === 'loading') {
 			document.addEventListener('DOMContentLoaded', cleanCartClasses);
 		}
 		
-		// Executa após load completo (para scripts que adicionam classes depois)
+		// Executa apÃ³s load completo (para scripts que adicionam classes depois)
 		window.addEventListener('load', cleanCartClasses);
 	})();
 	</script>
@@ -10508,11 +10513,11 @@ add_action( 'wp_footer', function() {
 }, 9999 );
 
 // ============================================
-// FUNÇÕES HELPER PARA INFORMAÇÕES DA LOJA
+// FUNÃ‡Ã•ES HELPER PARA INFORMAÃ‡Ã•ES DA LOJA
 // ============================================
 
 /**
- * Obtém o nome da loja.
+ * ObtÃ©m o nome da loja.
  *
  * @param string $format 'name' (CAC ARMAS), 'display' (CAC Armas), ou 'highlight' (ARMAS).
  * @return string
@@ -10531,7 +10536,7 @@ function gstore_get_store_name( $format = 'name' ) {
 }
 
 /**
- * Obtém o CNPJ da loja.
+ * ObtÃ©m o CNPJ da loja.
  *
  * @return string
  */
@@ -10540,7 +10545,7 @@ function gstore_get_cnpj() {
 }
 
 /**
- * Obtém o número do WhatsApp.
+ * ObtÃ©m o nÃºmero do WhatsApp.
  *
  * @param string $format 'raw' (556296635633) ou 'display' (+55 62 9663-5633).
  * @return string
@@ -10558,7 +10563,7 @@ function gstore_get_whatsapp( $format = 'raw' ) {
 /**
  * Gera link do WhatsApp com mensagem opcional.
  *
- * @param string $message Mensagem pré-preenchida (opcional).
+ * @param string $message Mensagem prÃ©-preenchida (opcional).
  * @return string URL do WhatsApp.
  */
 function gstore_get_whatsapp_link( $message = '' ) {
@@ -10573,7 +10578,7 @@ function gstore_get_whatsapp_link( $message = '' ) {
 }
 
 /**
- * Obtém o telefone da loja.
+ * ObtÃ©m o telefone da loja.
  *
  * @param string $format 'raw' ou 'display'.
  * @return string
@@ -10589,7 +10594,7 @@ function gstore_get_phone( $format = 'display' ) {
 }
 
 /**
- * Obtém informações de uma rede social.
+ * ObtÃ©m informaÃ§Ãµes de uma rede social.
  *
  * @param string $network Nome da rede (instagram, facebook, youtube, telegram_group).
  * @return string Username/ID da rede social.
@@ -10632,7 +10637,7 @@ function gstore_get_social_link( $network ) {
 }
 
 /**
- * Obtém o endereço formatado.
+ * ObtÃ©m o endereÃ§o formatado.
  *
  * @param string $format 'full', 'street', 'city_state', ou 'short'.
  * @return string
@@ -10673,7 +10678,7 @@ function gstore_get_address( $format = 'full' ) {
 }
 
 /**
- * Obtém URL do Google Maps.
+ * ObtÃ©m URL do Google Maps.
  *
  * @return string
  */
@@ -10682,7 +10687,7 @@ function gstore_get_maps_url() {
 }
 
 /**
- * Obtém horário de funcionamento.
+ * ObtÃ©m horÃ¡rio de funcionamento.
  *
  * @param string $format 'full', 'weekdays', 'saturday', ou 'support'.
  * @return string
@@ -10704,9 +10709,9 @@ function gstore_get_business_hours( $format = 'full' ) {
 }
 
 /**
- * Obtém informações do footer.
+ * ObtÃ©m informaÃ§Ãµes do footer.
  *
- * @param string $key Chave específica (about_paragraphs, newsletter, etc).
+ * @param string $key Chave especÃ­fica (about_paragraphs, newsletter, etc).
  * @return mixed
  */
 function gstore_get_footer_info( $key = '' ) {
@@ -10720,12 +10725,12 @@ function gstore_get_footer_info( $key = '' ) {
 }
 
 /**
- * Obtém o texto de copyright com ano atual.
+ * ObtÃ©m o texto de copyright com ano atual.
  *
  * @return string
  */
 function gstore_get_copyright() {
-	$template = gstore_store_info()->get_value( 'footer.copyright_text', 'Copyright © {year} {store_name}. Todos os direitos reservados.' );
+	$template = gstore_store_info()->get_value( 'footer.copyright_text', 'Copyright Â© {year} {store_name}. Todos os direitos reservados.' );
 	
 	$replacements = array(
 		'{year}'       => date( 'Y' ),
@@ -10736,7 +10741,7 @@ function gstore_get_copyright() {
 }
 
 /**
- * Obtém meta informações do site.
+ * ObtÃ©m meta informaÃ§Ãµes do site.
  *
  * @param string $key 'description', 'keywords', ou 'og_image'.
  * @return string
@@ -10746,7 +10751,7 @@ function gstore_get_meta( $key ) {
 }
 
 /**
- * Obtém cor de branding.
+ * ObtÃ©m cor de branding.
  *
  * @param string $key 'accent_color', 'primary_color'.
  * @return string
@@ -10756,7 +10761,7 @@ function gstore_get_brand_color( $key ) {
 }
 
 /**
- * Obtém o ano de fundação da loja.
+ * ObtÃ©m o ano de fundaÃ§Ã£o da loja.
  *
  * @return string
  */
@@ -10765,21 +10770,21 @@ function gstore_get_founded_year() {
 }
 
 // ============================================
-// HANDLERS DE EXPORTAÇÃO/IMPORTAÇÃO
+// HANDLERS DE EXPORTAÃ‡ÃƒO/IMPORTAÃ‡ÃƒO
 // ============================================
 
 /**
- * Handler para exportar informações da loja como JSON.
+ * Handler para exportar informaÃ§Ãµes da loja como JSON.
  */
 function gstore_handle_export_store_info() {
-	// Verifica permissões
+	// Verifica permissÃµes
 	if ( ! current_user_can( 'manage_woocommerce' ) ) {
-		wp_die( __( 'Você não tem permissão para realizar esta ação.', 'gstore' ) );
+		wp_die( __( 'VocÃª nÃ£o tem permissÃ£o para realizar esta aÃ§Ã£o.', 'gstore' ) );
 	}
 	
 	// Verifica nonce
 	if ( ! isset( $_POST['gstore_export_nonce'] ) || ! wp_verify_nonce( $_POST['gstore_export_nonce'], 'gstore_export_store_info' ) ) {
-		wp_die( __( 'Verificação de segurança falhou.', 'gstore' ) );
+		wp_die( __( 'VerificaÃ§Ã£o de seguranÃ§a falhou.', 'gstore' ) );
 	}
 	
 	$store_info = gstore_store_info();
@@ -10801,17 +10806,17 @@ function gstore_handle_export_store_info() {
 add_action( 'admin_post_gstore_export_store_info', 'gstore_handle_export_store_info' );
 
 /**
- * Handler para importar informações da loja de um arquivo JSON.
+ * Handler para importar informaÃ§Ãµes da loja de um arquivo JSON.
  */
 function gstore_handle_import_store_info() {
-	// Verifica permissões
+	// Verifica permissÃµes
 	if ( ! current_user_can( 'manage_woocommerce' ) ) {
-		wp_die( __( 'Você não tem permissão para realizar esta ação.', 'gstore' ) );
+		wp_die( __( 'VocÃª nÃ£o tem permissÃ£o para realizar esta aÃ§Ã£o.', 'gstore' ) );
 	}
 	
 	// Verifica nonce
 	if ( ! isset( $_POST['gstore_import_nonce'] ) || ! wp_verify_nonce( $_POST['gstore_import_nonce'], 'gstore_import_store_info' ) ) {
-		wp_die( __( 'Verificação de segurança falhou.', 'gstore' ) );
+		wp_die( __( 'VerificaÃ§Ã£o de seguranÃ§a falhou.', 'gstore' ) );
 	}
 	
 	// Verifica se arquivo foi enviado
@@ -10822,7 +10827,7 @@ function gstore_handle_import_store_info() {
 			switch ( $_FILES['store_info_file']['error'] ) {
 				case UPLOAD_ERR_INI_SIZE:
 				case UPLOAD_ERR_FORM_SIZE:
-					$error_message = __( 'O arquivo é muito grande.', 'gstore' );
+					$error_message = __( 'O arquivo Ã© muito grande.', 'gstore' );
 					break;
 				case UPLOAD_ERR_NO_FILE:
 					$error_message = __( 'Nenhum arquivo foi selecionado.', 'gstore' );
@@ -10838,14 +10843,14 @@ function gstore_handle_import_store_info() {
 		exit;
 	}
 	
-	// Lê o conteúdo do arquivo primeiro (validação por conteúdo, não apenas extensão)
+	// LÃª o conteÃºdo do arquivo primeiro (validaÃ§Ã£o por conteÃºdo, nÃ£o apenas extensÃ£o)
 	$json_content = file_get_contents( $_FILES['store_info_file']['tmp_name'] );
 	
 	if ( empty( $json_content ) ) {
 		wp_redirect( add_query_arg( array(
 			'page'    => 'gstore-settings',
 			'message' => 'import_error',
-			'error'   => urlencode( __( 'O arquivo está vazio.', 'gstore' ) ),
+			'error'   => urlencode( __( 'O arquivo estÃ¡ vazio.', 'gstore' ) ),
 		), admin_url( 'themes.php' ) ) );
 		exit;
 	}
@@ -10853,20 +10858,20 @@ function gstore_handle_import_store_info() {
 	// Remove BOM (Byte Order Mark) se presente
 	$json_content = preg_replace( '/^\xEF\xBB\xBF/', '', $json_content );
 	
-	// Remove espaços em branco no início e fim
+	// Remove espaÃ§os em branco no inÃ­cio e fim
 	$json_content = trim( $json_content );
 	
 	// Valida o JSON antes de importar
 	$json_data = json_decode( $json_content, true );
 	
 	if ( json_last_error() !== JSON_ERROR_NONE ) {
-		// Mensagem de erro específica do JSON
+		// Mensagem de erro especÃ­fica do JSON
 		$json_error_messages = array(
-			JSON_ERROR_DEPTH          => __( 'Profundidade máxima da pilha excedida.', 'gstore' ),
-			JSON_ERROR_STATE_MISMATCH => __( 'JSON inválido ou malformado.', 'gstore' ),
+			JSON_ERROR_DEPTH          => __( 'Profundidade mÃ¡xima da pilha excedida.', 'gstore' ),
+			JSON_ERROR_STATE_MISMATCH => __( 'JSON invÃ¡lido ou malformado.', 'gstore' ),
 			JSON_ERROR_CTRL_CHAR      => __( 'Caractere de controle encontrado, possivelmente codificado incorretamente.', 'gstore' ),
-			JSON_ERROR_SYNTAX         => __( 'Erro de sintaxe JSON. Verifique vírgulas, chaves e aspas.', 'gstore' ),
-			JSON_ERROR_UTF8           => __( 'Caracteres UTF-8 malformados, possivelmente codificação incorreta.', 'gstore' ),
+			JSON_ERROR_SYNTAX         => __( 'Erro de sintaxe JSON. Verifique vÃ­rgulas, chaves e aspas.', 'gstore' ),
+			JSON_ERROR_UTF8           => __( 'Caracteres UTF-8 malformados, possivelmente codificaÃ§Ã£o incorreta.', 'gstore' ),
 		);
 		
 		$error_message = isset( $json_error_messages[ json_last_error() ] ) 
@@ -10883,7 +10888,7 @@ function gstore_handle_import_store_info() {
 		exit;
 	}
 	
-	// Tenta importar (passa o array já decodificado para evitar decodificar duas vezes)
+	// Tenta importar (passa o array jÃ¡ decodificado para evitar decodificar duas vezes)
 	$store_info = gstore_store_info();
 	
 	if ( ! is_array( $json_data ) ) {
@@ -10891,7 +10896,7 @@ function gstore_handle_import_store_info() {
 			'page'    => 'gstore-settings',
 			'message' => 'import_error',
 			'error'   => urlencode( sprintf( 
-				__( 'Erro: JSON decodificado não é um array. Tipo: %s', 'gstore' ), 
+				__( 'Erro: JSON decodificado nÃ£o Ã© um array. Tipo: %s', 'gstore' ), 
 				gettype( $json_data ) 
 			) ),
 		), admin_url( 'themes.php' ) ) );
@@ -10903,10 +10908,10 @@ function gstore_handle_import_store_info() {
 	if ( is_wp_error( $result ) ) {
 		$error_message = $result->get_error_message();
 		
-		// Adiciona informações de debug se for erro de estrutura
+		// Adiciona informaÃ§Ãµes de debug se for erro de estrutura
 		if ( $result->get_error_code() === 'invalid_structure' ) {
 			$secoes_encontradas = array_keys( $json_data );
-			$error_message .= ' | Seções no JSON: ' . implode( ', ', $secoes_encontradas );
+			$error_message .= ' | SeÃ§Ãµes no JSON: ' . implode( ', ', $secoes_encontradas );
 		}
 		
 		wp_redirect( add_query_arg( array(
@@ -10927,7 +10932,7 @@ function gstore_handle_import_store_info() {
 add_action( 'admin_post_gstore_import_store_info', 'gstore_handle_import_store_info' );
 
 /**
- * Exibe mensagens de sucesso/erro para importação.
+ * Exibe mensagens de sucesso/erro para importaÃ§Ã£o.
  */
 function gstore_store_info_admin_notices() {
 	$screen = get_current_screen();
@@ -10940,7 +10945,7 @@ function gstore_store_info_admin_notices() {
 		if ( $_GET['message'] === 'import_success' ) {
 			?>
 			<div class="notice notice-success is-dismissible">
-				<p><?php _e( 'Informações da loja importadas com sucesso!', 'gstore' ); ?></p>
+				<p><?php _e( 'InformaÃ§Ãµes da loja importadas com sucesso!', 'gstore' ); ?></p>
 			</div>
 			<?php
 		} elseif ( $_GET['message'] === 'import_error' && isset( $_GET['error'] ) ) {
@@ -10952,10 +10957,10 @@ function gstore_store_info_admin_notices() {
 				<p style="margin-top: 10px;">
 					<strong><?php _e( 'Dicas:', 'gstore' ); ?></strong>
 					<ul style="margin-left: 20px; margin-top: 5px;">
-						<li><?php _e( 'Verifique se o arquivo é um JSON válido (use um validador online se necessário)', 'gstore' ); ?></li>
-						<li><?php _e( 'Certifique-se de que todas as seções obrigatórias estão presentes', 'gstore' ); ?></li>
-						<li><?php _e( 'Verifique vírgulas, chaves { } e colchetes [ ]', 'gstore' ); ?></li>
-						<li><?php _e( 'Certifique-se de que todas as strings estão entre aspas duplas', 'gstore' ); ?></li>
+						<li><?php _e( 'Verifique se o arquivo Ã© um JSON vÃ¡lido (use um validador online se necessÃ¡rio)', 'gstore' ); ?></li>
+						<li><?php _e( 'Certifique-se de que todas as seÃ§Ãµes obrigatÃ³rias estÃ£o presentes', 'gstore' ); ?></li>
+						<li><?php _e( 'Verifique vÃ­rgulas, chaves { } e colchetes [ ]', 'gstore' ); ?></li>
+						<li><?php _e( 'Certifique-se de que todas as strings estÃ£o entre aspas duplas', 'gstore' ); ?></li>
 					</ul>
 				</p>
 			</div>
@@ -10970,19 +10975,19 @@ add_action( 'admin_notices', 'gstore_store_info_admin_notices' );
 // ============================================
 
 /**
- * Processa placeholders de informações da loja no conteúdo.
+ * Processa placeholders de informaÃ§Ãµes da loja no conteÃºdo.
  *
  * Substitui placeholders como {{store_name}}, {{whatsapp_link}}, etc.
  *
- * @param string $content Conteúdo a processar.
- * @return string Conteúdo processado.
+ * @param string $content ConteÃºdo a processar.
+ * @return string ConteÃºdo processado.
  */
 function gstore_process_store_info_placeholders( $content ) {
 	if ( empty( $content ) || strpos( $content, '{{' ) === false ) {
 		return $content;
 	}
 	
-	// Resolve o link principal de contato (header/footer): se configurado usa o do JSON, senão usa o WhatsApp.
+	// Resolve o link principal de contato (header/footer): se configurado usa o do JSON, senÃ£o usa o WhatsApp.
 	$contact_primary_link = gstore_store_info()->get_value( 'contact.contact_primary_link', '' );
 	if ( empty( $contact_primary_link ) ) {
 		$contact_primary_link = gstore_get_whatsapp_link();
@@ -11003,9 +11008,9 @@ function gstore_process_store_info_placeholders( $content ) {
 		'{{whatsapp}}'            => gstore_get_whatsapp(),
 		'{{whatsapp_display}}'    => gstore_get_whatsapp( 'display' ),
 		'{{whatsapp_link}}'       => gstore_get_whatsapp_link(),
-		'{{whatsapp_link_hello}}' => gstore_get_whatsapp_link( 'Olá ' . gstore_get_store_name( 'display' ) . '!' ),
-		'{{whatsapp_link_rastreio}}' => gstore_get_whatsapp_link( 'Olá ' . gstore_get_store_name( 'display' ) . '! Gostaria de rastrear meu pedido.' ),
-		'{{whatsapp_link_troca}}' => gstore_get_whatsapp_link( 'Olá ' . gstore_get_store_name( 'display' ) . '! Gostaria de solicitar uma troca ou devolução.' ),
+		'{{whatsapp_link_hello}}' => gstore_get_whatsapp_link( 'OlÃ¡ ' . gstore_get_store_name( 'display' ) . '!' ),
+		'{{whatsapp_link_rastreio}}' => gstore_get_whatsapp_link( 'OlÃ¡ ' . gstore_get_store_name( 'display' ) . '! Gostaria de rastrear meu pedido.' ),
+		'{{whatsapp_link_troca}}' => gstore_get_whatsapp_link( 'OlÃ¡ ' . gstore_get_store_name( 'display' ) . '! Gostaria de solicitar uma troca ou devoluÃ§Ã£o.' ),
 		
 		// Contact Labels
 		'{{whatsapp_label}}'  => gstore_store_info()->get_value( 'contact.whatsapp_label', 'WhatsApp' ),
@@ -11052,7 +11057,7 @@ function gstore_process_store_info_placeholders( $content ) {
 		'{{year}}'                => date( 'Y' ),
 	);
 	
-	// Processa parágrafos do footer (array)
+	// Processa parÃ¡grafos do footer (array)
 	$footer_paragraphs = gstore_get_footer_info( 'about_paragraphs' );
 	if ( is_array( $footer_paragraphs ) ) {
 		foreach ( $footer_paragraphs as $index => $paragraph ) {
@@ -11069,10 +11074,10 @@ function gstore_process_store_info_placeholders( $content ) {
 /**
  * Adiciona o processamento de placeholders ao output buffer existente.
  *
- * Este filtro é aplicado ao output final da página.
+ * Este filtro Ã© aplicado ao output final da pÃ¡gina.
  *
- * @param string $content Conteúdo HTML.
- * @return string Conteúdo processado.
+ * @param string $content ConteÃºdo HTML.
+ * @return string ConteÃºdo processado.
  */
 function gstore_add_store_info_to_output_processing( $content ) {
 	return gstore_process_store_info_placeholders( $content );
@@ -11100,11 +11105,11 @@ add_filter( 'render_block_core/template-part', function( $block_content, $block 
 }, 15, 2 );
 
 /**
- * Resolve links relativos à raiz (href="/path") para a URL completa do site.
- * Necessário quando o WordPress está instalado em um subdiretório (ex.: dominio.com/subdir/).
+ * Resolve links relativos Ã  raiz (href="/path") para a URL completa do site.
+ * NecessÃ¡rio quando o WordPress estÃ¡ instalado em um subdiretÃ³rio (ex.: dominio.com/subdir/).
  *
- * @param string $content Conteúdo HTML.
- * @return string Conteúdo com href="/..." substituídos por href="{home_url}/...".
+ * @param string $content ConteÃºdo HTML.
+ * @return string ConteÃºdo com href="/..." substituÃ­dos por href="{home_url}/...".
  */
 function gstore_resolve_home_relative_urls( $content ) {
 	if ( empty( $content ) || strpos( $content, 'href="/' ) === false ) {
@@ -11125,21 +11130,21 @@ add_filter( 'render_block_core/html', 'gstore_resolve_home_relative_urls', 20, 1
 add_filter( 'the_content', 'gstore_resolve_home_relative_urls', 25 );
 
 // ============================================
-// MIGRAÇÃO E INICIALIZAÇÃO AUTOMÁTICA
+// MIGRAÃ‡ÃƒO E INICIALIZAÃ‡ÃƒO AUTOMÃTICA
 // ============================================
 
 /**
- * Inicializa o arquivo JSON com dados padrão se não existir.
+ * Inicializa o arquivo JSON com dados padrÃ£o se nÃ£o existir.
  *
  * Executado automaticamente na primeira visita ao admin.
  */
 function gstore_maybe_init_store_info_json() {
-	// Só executa no admin e se o usuário tiver permissões
+	// SÃ³ executa no admin e se o usuÃ¡rio tiver permissÃµes
 	if ( ! is_admin() || ! current_user_can( 'manage_options' ) ) {
 		return;
 	}
 	
-	// Verifica se já foi inicializado
+	// Verifica se jÃ¡ foi inicializado
 	$initialized = get_option( 'gstore_store_info_initialized', false );
 	if ( $initialized ) {
 		return;
@@ -11147,7 +11152,7 @@ function gstore_maybe_init_store_info_json() {
 	
 	$store_info = gstore_store_info();
 	
-	// Se o arquivo JSON não existe, cria com valores padrão
+	// Se o arquivo JSON nÃ£o existe, cria com valores padrÃ£o
 	if ( ! $store_info->json_exists() ) {
 		$store_info->create_default_json();
 	}
@@ -11158,22 +11163,22 @@ function gstore_maybe_init_store_info_json() {
 add_action( 'admin_init', 'gstore_maybe_init_store_info_json' );
 
 // ============================================
-// MODAL DE VERIFICAÇÃO DE IDADE (+18)
+// MODAL DE VERIFICAÃ‡ÃƒO DE IDADE (+18)
 // ============================================
 
 /**
- * Exibe o modal de verificação de idade no frontend.
+ * Exibe o modal de verificaÃ§Ã£o de idade no frontend.
  * 
- * O modal aparece na primeira visita do usuário e guarda
- * a confirmação no localStorage por 30 dias.
+ * O modal aparece na primeira visita do usuÃ¡rio e guarda
+ * a confirmaÃ§Ã£o no localStorage por 30 dias.
  */
 function gstore_age_verification_modal() {
-	// Não exibe no admin
+	// NÃ£o exibe no admin
 	if ( is_admin() ) {
 		return;
 	}
 	?>
-	<!-- Modal de Verificação de Idade -->
+	<!-- Modal de VerificaÃ§Ã£o de Idade -->
 	<div id="gstore-age-modal" class="gstore-age-modal" aria-hidden="true" role="dialog" aria-labelledby="gstore-age-title" aria-describedby="gstore-age-desc">
 		<div class="gstore-age-modal__overlay"></div>
 		<div class="gstore-age-modal__content">
@@ -11189,11 +11194,11 @@ function gstore_age_verification_modal() {
 					<path d="M12 16h.01"/>
 				</svg>
 			</div>
-			<h2 id="gstore-age-title" class="gstore-age-modal__title">Verificação de Idade</h2>
+			<h2 id="gstore-age-title" class="gstore-age-modal__title">VerificaÃ§Ã£o de Idade</h2>
 			<p id="gstore-age-desc" class="gstore-age-modal__text">
-				Este site contém produtos destinados exclusivamente para maiores de 18 anos.
+				Este site contÃ©m produtos destinados exclusivamente para maiores de 18 anos.
 			</p>
-			<p class="gstore-age-modal__question">Você tem 18 anos ou mais?</p>
+			<p class="gstore-age-modal__question">VocÃª tem 18 anos ou mais?</p>
 			<div class="gstore-age-modal__actions">
 				<button type="button" id="gstore-age-confirm" class="gstore-age-modal__btn gstore-age-modal__btn--confirm">
 					<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -11206,17 +11211,17 @@ function gstore_age_verification_modal() {
 						<line x1="18" y1="6" x2="6" y2="18"/>
 						<line x1="6" y1="6" x2="18" y2="18"/>
 					</svg>
-					Não, sou menor
+					NÃ£o, sou menor
 				</button>
 			</div>
 			<p class="gstore-age-modal__disclaimer">
-				Ao confirmar, você declara estar ciente de que é proibida a venda de produtos para menores de 18 anos.
+				Ao confirmar, vocÃª declara estar ciente de que Ã© proibida a venda de produtos para menores de 18 anos.
 			</p>
 		</div>
 	</div>
 
 	<style id="gstore-age-modal-styles">
-		/* Modal de Verificação de Idade */
+		/* Modal de VerificaÃ§Ã£o de Idade */
 		.gstore-age-modal {
 			position: fixed;
 			top: 0;
@@ -11484,7 +11489,7 @@ function gstore_age_verification_modal() {
 			}
 		}
 		
-		/* Animação de entrada */
+		/* AnimaÃ§Ã£o de entrada */
 		@keyframes gstore-age-fadeIn {
 			from {
 				opacity: 0;
@@ -11494,7 +11499,7 @@ function gstore_age_verification_modal() {
 			}
 		}
 		
-		/* Previne scroll do body quando modal está aberto */
+		/* Previne scroll do body quando modal estÃ¡ aberto */
 		body.gstore-age-modal-open {
 			overflow: hidden;
 		}
@@ -11515,7 +11520,7 @@ function gstore_age_verification_modal() {
 				var data = JSON.parse(stored);
 				var now = new Date().getTime();
 				
-				// Verifica se ainda está válido
+				// Verifica se ainda estÃ¡ vÃ¡lido
 				if (data.verified && data.expires > now) {
 					return true;
 				}
@@ -11536,7 +11541,7 @@ function gstore_age_verification_modal() {
 				};
 				localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
 			} catch (e) {
-				// localStorage não disponível
+				// localStorage nÃ£o disponÃ­vel
 			}
 		}
 		
@@ -11573,19 +11578,19 @@ function gstore_age_verification_modal() {
 					'</div>' +
 					'<h2 class="gstore-age-modal__blocked-title">Acesso Restrito</h2>' +
 					'<p class="gstore-age-modal__blocked-text">' +
-						'Desculpe, este site é destinado apenas para maiores de 18 anos.<br><br>' +
-						'Você será redirecionado para o Google em alguns segundos...' +
+						'Desculpe, este site Ã© destinado apenas para maiores de 18 anos.<br><br>' +
+						'VocÃª serÃ¡ redirecionado para o Google em alguns segundos...' +
 					'</p>';
 			}
 			
-			// Redireciona após 5 segundos
+			// Redireciona apÃ³s 5 segundos
 			setTimeout(function() {
 				window.location.href = 'https://www.google.com';
 			}, 5000);
 		}
 		
 		function init() {
-			// Se já verificado, não mostra o modal
+			// Se jÃ¡ verificado, nÃ£o mostra o modal
 			if (isVerified()) {
 				var modal = document.getElementById('gstore-age-modal');
 				if (modal) {
@@ -11615,7 +11620,7 @@ function gstore_age_verification_modal() {
 					setVerified();
 					hideModal();
 					
-					// Remove o modal após a animação
+					// Remove o modal apÃ³s a animaÃ§Ã£o
 					setTimeout(function() {
 						var modal = document.getElementById('gstore-age-modal');
 						if (modal) modal.remove();
@@ -11643,7 +11648,7 @@ function gstore_age_verification_modal() {
 add_action( 'wp_footer', 'gstore_age_verification_modal', 999 );
 
 /**
- * Fallback do menu mobile no footer para uso pelo JS quando o drawer não existir no template.
+ * Fallback do menu mobile no footer para uso pelo JS quando o drawer nÃ£o existir no template.
  */
 function gstore_render_mobile_menu_fallback() {
 	if ( is_admin() ) {
@@ -11685,7 +11690,7 @@ function gstore_render_mobile_menu_fallback() {
 add_action( 'wp_footer', 'gstore_render_mobile_menu_fallback', 5 );
 
 /**
- * Customiza a exibição do endereço na página Minha Conta para incluir rótulos.
+ * Customiza a exibiÃ§Ã£o do endereÃ§o na pÃ¡gina Minha Conta para incluir rÃ³tulos.
  */
 add_filter( 'woocommerce_my_account_my_address_formatted_address', 'gstore_custom_my_account_address_labels', 10, 3 );
 function gstore_custom_my_account_address_labels( $address, $customer_id, $name_type ) {
@@ -11709,9 +11714,9 @@ function gstore_custom_my_account_address_labels( $address, $customer_id, $name_
         $new_address['last_name']  = ''; 
     }
     
-    // Endereço: Rua, Numero - Complemento
+    // EndereÃ§o: Rua, Numero - Complemento
     if ( $address_1 ) {
-        $addr = 'Endereço: ' . $address_1;
+        $addr = 'EndereÃ§o: ' . $address_1;
         if ( $number ) {
             $addr .= ', ' . $number;
         }
@@ -11741,16 +11746,16 @@ function gstore_custom_my_account_address_labels( $address, $customer_id, $name_
         $new_address['postcode'] = 'CEP: ' . $postcode;
     }
 
-    // Não exibe o país na página de conta se for BR
+    // NÃ£o exibe o paÃ­s na pÃ¡gina de conta se for BR
     $new_address['country'] = (isset($address['country']) && $address['country'] !== 'BR') ? $address['country'] : ''; 
 
     return $new_address;
 }
 
 /**
- * Define o formato de endereço para o Brasil para incluir o bairro e garantir a ordem.
- * Nota: Isso afeta apenas quando wc_get_formatted_address é chamado, 
- * mas como alteramos os valores apenas na Minha Conta, o impacto visual é controlado.
+ * Define o formato de endereÃ§o para o Brasil para incluir o bairro e garantir a ordem.
+ * Nota: Isso afeta apenas quando wc_get_formatted_address Ã© chamado, 
+ * mas como alteramos os valores apenas na Minha Conta, o impacto visual Ã© controlado.
  */
 add_filter( 'woocommerce_localisation_address_formats', 'gstore_br_address_format_with_neighborhood' );
 function gstore_br_address_format_with_neighborhood( $formats ) {
@@ -11759,7 +11764,7 @@ function gstore_br_address_format_with_neighborhood( $formats ) {
 }
 
 /**
- * Adiciona suporte ao placeholder {neighborhood} no formato de endereço.
+ * Adiciona suporte ao placeholder {neighborhood} no formato de endereÃ§o.
  */
 add_filter( 'woocommerce_formatted_address_replacements', 'gstore_add_neighborhood_replacement', 10, 2 );
 function gstore_add_neighborhood_replacement( $replacements, $args ) {
@@ -11772,4 +11777,6 @@ function gstore_add_neighborhood_replacement( $replacements, $args ) {
 // Ferramentas administrativas (thumbnails + updater via git) movidas para o plugin gstore-core.
 
 // Endpoint de debug log movido para inc/class-gstore-debug-logger.php
-// Os logs são salvos em: wp-content/uploads/gstore-debug-logs/debug.log
+// Os logs sÃ£o salvos em: wp-content/uploads/gstore-debug-logs/debug.log
+
+
