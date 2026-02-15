@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 /**
  * FunÃ§Ãµes principais do child theme Gstore.
  *

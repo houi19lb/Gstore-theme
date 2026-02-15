@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 /**
  * Home Blog V1 (Destaque + grid) - Gstore adaptation
  *
