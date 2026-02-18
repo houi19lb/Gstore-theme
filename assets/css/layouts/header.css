@@ -286,7 +286,7 @@ body:has(.Gstore-header-shell) {
 }
 
 .Gstore-header__menu-text {
-	font-size: 0.8125rem;
+	font-size: 0.9375rem;
 	font-weight: 700;
 	letter-spacing: 0.05em;
 	line-height: 1;
@@ -770,7 +770,7 @@ body:has(.Gstore-header-shell) {
 	}
 
 	.Gstore-header__menu-text {
-		font-size: 0.75rem;
+		font-size: 0.9375rem;
 	}
 	
 	.Gstore-header__logo {
