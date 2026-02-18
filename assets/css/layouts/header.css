@@ -255,23 +255,40 @@ body:has(.Gstore-header-shell) {
 /* Menu Toggle (Hamburger) */
 .Gstore-header__menu-toggle {
 	display: none;
-	flex-direction: column;
-	justify-content: center;
-	gap: 5px;
-	width: 32px;
-	height: 32px;
+	align-items: center;
+	gap: 8px;
+	min-height: 32px;
 	padding: 4px;
 	background: none;
 	border: none;
 	cursor: pointer;
 }
 
-.Gstore-header__menu-toggle span {
+.Gstore-header__menu-icon {
+	display: inline-flex;
+	flex-direction: column;
+	justify-content: center;
+	gap: 3px;
+}
+
+.Gstore-header__menu-line {
 	display: block;
-	width: 100%;
+	width: 16px;
 	height: 2px;
 	background-color: var(--gstore-color-accent, #ff5c00);
-	transition: all 0.3s ease;
+	opacity: 0.85;
+	transition: transform 0.3s ease, opacity 0.3s ease;
+	transform-origin: center;
+}
+
+.Gstore-header__menu-text {
+	font-size: 0.875rem;
+	font-weight: 700;
+	letter-spacing: 0.08em;
+	line-height: 1;
+	text-transform: uppercase;
+	white-space: nowrap;
+	color: var(--gstore-color-text-light, #fff);
 }
 
 .Gstore-header__menu-toggle:focus {
@@ -280,17 +297,16 @@ body:has(.Gstore-header-shell) {
 
 /* Animação do botão hamburger para X quando ativo */
 @media (max-width: 767px) {
-	.Gstore-header__menu-toggle.is-active span:nth-child(1) {
-		transform: rotate(45deg) translate(7px, 7px);
+	.Gstore-header__menu-toggle.is-active .Gstore-header__menu-line:nth-child(1) {
+		transform: translateY(5px) rotate(45deg);
 	}
 
-	.Gstore-header__menu-toggle.is-active span:nth-child(2) {
+	.Gstore-header__menu-toggle.is-active .Gstore-header__menu-line:nth-child(2) {
 		opacity: 0;
-		transform: translateX(-10px);
 	}
 
-	.Gstore-header__menu-toggle.is-active span:nth-child(3) {
-		transform: rotate(-45deg) translate(7px, -7px);
+	.Gstore-header__menu-toggle.is-active .Gstore-header__menu-line:nth-child(3) {
+		transform: translateY(-5px) rotate(-45deg);
 	}
 }
 
