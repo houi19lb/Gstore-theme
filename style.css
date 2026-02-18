@@ -8116,13 +8116,14 @@ main.Gstore-blog-single-shell .wp-block-group.is-layout-constrained:not(.Gstore-
 	display: inline-flex;
 	flex-direction: column;
 	justify-content: center;
-	gap: 2px;
+	gap: 3px;
 }
 
 .Gstore-header__menu-line {
 	display: block;
 	width: 14px;
-	height: 2px;
+	height: 3px;
+	border-radius: 2px;
 	background-color: var(--gstore-color-accent, #ff5c00);
 	opacity: 0.85;
 	transition: transform var(--gstore-transition-fast), opacity var(--gstore-transition-fast);

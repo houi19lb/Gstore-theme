@@ -271,13 +271,14 @@ body:has(.Gstore-header-shell) {
 	display: inline-flex;
 	flex-direction: column;
 	justify-content: center;
-	gap: 2px;
+	gap: 3px;
 }
 
 .Gstore-header__menu-line {
 	display: block;
 	width: 14px;
-	height: 2px;
+	height: 3px;
+	border-radius: 2px;
 	background-color: var(--gstore-color-accent, #ff5c00);
 	opacity: 0.85;
 	transition: transform 0.3s ease, opacity 0.3s ease;
@@ -301,7 +302,7 @@ body:has(.Gstore-header-shell) {
 /* Animação do botão hamburger para X quando ativo */
 @media (max-width: 767px) {
 	.Gstore-header__menu-toggle.is-active .Gstore-header__menu-line:nth-child(1) {
-		transform: translateY(4px) rotate(45deg);
+		transform: translateY(5px) rotate(45deg);
 	}
 
 	.Gstore-header__menu-toggle.is-active .Gstore-header__menu-line:nth-child(2) {
@@ -309,7 +310,7 @@ body:has(.Gstore-header-shell) {
 	}
 
 	.Gstore-header__menu-toggle.is-active .Gstore-header__menu-line:nth-child(3) {
-		transform: translateY(-4px) rotate(-45deg);
+		transform: translateY(-5px) rotate(-45deg);
 	}
 }
 
