@@ -19,9 +19,15 @@
 		let lockCloseUntil = 0;
 		const sidebarOriginalParent = sidebar ? sidebar.parentNode : null;
 		const sidebarOriginalNextSibling = sidebar ? sidebar.nextSibling : null;
-		let mountedToBody = false;
+		let mountedToBody = !!(sidebar && sidebar.parentNode === document.body);
 
 		initDynamicBreadcrumb();
+
+		// Estado defensivo inicial para evitar backdrop preso por cache de navegação.
+		overlay.classList.remove('is-active');
+		overlay.setAttribute('aria-hidden', 'true');
+		document.documentElement.style.overflow = '';
+		document.body.style.overflow = '';
 
 		if (!toggleButton || !sidebar) {
 			return;
@@ -35,6 +41,7 @@
 			if (!isMobileViewport() || mountedToBody || !sidebarOriginalParent) {
 				return;
 			}
+			sidebar.classList.add('Gstore-catalog-mobile-sheet');
 			document.body.appendChild(sidebar);
 			mountedToBody = true;
 		}
@@ -48,6 +55,7 @@
 			} else {
 				sidebarOriginalParent.appendChild(sidebar);
 			}
+			sidebar.classList.remove('Gstore-catalog-mobile-sheet');
 			mountedToBody = false;
 		}
 
@@ -132,9 +140,8 @@
 			}, 160);
 		});
 
-		if (window.innerWidth > 1024) {
-			closeFilters();
-		}
+		// Estado inicial defensivo: evita overlay/states "presos" de cache/back-forward.
+		closeFilters();
 	}
 
 	function ensureOverlay() {

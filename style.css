@@ -8544,22 +8544,22 @@ body:has(.Gstore-catalog-shell--light) main {
 
 /* Overlay para mobile */
 .Gstore-catalog-filters-overlay {
-	display: none;
+	display: none !important;
 	position: fixed;
 	top: 0;
 	left: 0;
 	right: 0;
 	bottom: 0;
-	background: rgba(0, 0, 0, 0.36);
+	background: transparent;
 	z-index: 2147483000;
-	opacity: 0;
+	opacity: 0 !important;
 	transition: none;
 	pointer-events: none;
 }
 
 .Gstore-catalog-filters-overlay.is-active {
-	display: block;
-	opacity: 1;
+	display: none !important;
+	opacity: 0 !important;
 	pointer-events: none;
 }
 
@@ -9200,7 +9200,8 @@ body:has(.Gstore-catalog-shell--light) main {
 	}
 
 	/* Filtros retráteis no mobile */
-	.Gstore-catalog-shell--light .Gstore-catalog-sidebar__inner--collapsible {
+	.Gstore-catalog-shell--light .Gstore-catalog-sidebar__inner--collapsible,
+	.Gstore-catalog-mobile-sheet {
 		position: fixed;
 		left: 0;
 		right: 0;
@@ -9230,13 +9231,15 @@ body:has(.Gstore-catalog-shell--light) main {
 		backdrop-filter: none !important;
 	}
 
-	.Gstore-catalog-shell--light .Gstore-catalog-sidebar__inner--collapsible.is-open {
+	.Gstore-catalog-shell--light .Gstore-catalog-sidebar__inner--collapsible.is-open,
+	.Gstore-catalog-mobile-sheet.is-open {
 		transform: translateY(0);
 		visibility: visible;
 		pointer-events: auto;
 	}
 
-	.Gstore-catalog-shell--light .Gstore-catalog-sidebar__inner--collapsible::before {
+	.Gstore-catalog-shell--light .Gstore-catalog-sidebar__inner--collapsible::before,
+	.Gstore-catalog-mobile-sheet::before {
 		content: '';
 		display: block;
 		width: 54px;
@@ -9259,11 +9262,13 @@ body:has(.Gstore-catalog-shell--light) main {
 		padding: 12px 0;
 	}
 
-	.Gstore-catalog-shell--light .gstore-category-filter__tree-container {
+	.Gstore-catalog-shell--light .gstore-category-filter__tree-container,
+	.Gstore-catalog-mobile-sheet .gstore-category-filter__tree-container {
 		max-height: min(45vh, 420px);
 	}
 
-	.Gstore-catalog-shell--light .gstore-category-filter__actions {
+	.Gstore-catalog-shell--light .gstore-category-filter__actions,
+	.Gstore-catalog-mobile-sheet .gstore-category-filter__actions {
 		position: sticky;
 		bottom: 0;
 		background: #ffffff;
