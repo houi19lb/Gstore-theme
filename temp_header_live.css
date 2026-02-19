@@ -1,0 +1,1007 @@
+/**
+ * ==========================================
+ * GSTORE HEADER - REFATORADO
+ * ==========================================
+ * CSS limpo e sem conflitos com WordPress Block Theme
+ * 
+ * NOTA: Este arquivo substitui os estilos de header do style.css
+ * Os seletores usam alta especificidade para garantir prioridade
+ */
+
+/* ========================================
+   RESET WORDPRESS BLOCK THEME - ALTA PRIORIDADE
+   ======================================== */
+
+/* Reset agressivo para todo o header shell */
+header.Gstore-header-shell,
+header.Gstore-header-shell.wp-block-group,
+.Gstore-header-shell,
+.Gstore-header-shell.wp-block-group {
+	width: 100% !important;
+	max-width: none !important;
+	margin: 0 !important;
+	padding: 0 !important;
+}
+
+/* Reset de margens em todos os elementos do header */
+header.Gstore-header-shell *,
+header.Gstore-header-shell .wp-block-group,
+.Gstore-header-shell *,
+.Gstore-header-shell .wp-block-group {
+	margin-block-start: 0 !important;
+	margin-block-end: 0 !important;
+}
+
+/* ========================================
+   TOP BAR
+   ======================================== */
+
+.Gstore-top-bar {
+	background-color: var(--gstore-color-bg-dark, #0a0a0a);
+	color: var(--gstore-color-text-light, #fff);
+	font-size: var(--gstore-font-size-sm);
+}
+
+.Gstore-top-bar__inner {
+	max-width: 1280px;
+	margin: 0 auto;
+	padding: 4px 20px;
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: space-between;
+	align-items: center;
+	gap: 16px;
+}
+
+.Gstore-top-bar__contacts,
+.Gstore-top-bar__actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 20px;
+	align-items: center;
+}
+
+.Gstore-top-bar__link {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	color: var(--gstore-color-text-light, #fff);
+	text-decoration: none;
+	transition: color 0.2s ease;
+}
+
+.Gstore-top-bar__link:hover {
+	color: var(--gstore-color-accent, #b5a642);
+}
+
+.Gstore-top-bar__link .Gstore-icon {
+	width: 16px;
+	height: 16px;
+	fill: currentColor;
+}
+
+/* ========================================
+   HEADER PRINCIPAL
+   ======================================== */
+
+.Gstore-header-shell {
+	position: fixed;
+	top: 0;
+	left: 0;
+	right: 0;
+	width: 100%;
+	z-index: 1000;
+	transition: transform 0.3s ease-in-out;
+	will-change: transform;
+}
+
+.Gstore-header-shell.is-hidden {
+	transform: translateY(-100%);
+}
+
+.Gstore-header-shell.is-visible {
+	transform: translateY(0);
+}
+
+/* Compensação de espaço para o header fixo */
+body:has(.Gstore-header-shell) {
+	/* O padding será aplicado via JavaScript no .wp-site-blocks */
+}
+
+.wp-site-blocks {
+	/* Padding será aplicado dinamicamente via JavaScript */
+	transition: padding-top 0.3s ease-in-out;
+}
+
+.Gstore-header {
+	background-color: var(--gstore-color-bg-dark, #0a0a0a);
+}
+
+.Gstore-header__inner {
+	max-width: 1280px;
+	margin: 0 auto;
+	padding: 6px 20px;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 16px;
+}
+
+/* Logo */
+.Gstore-header__logo {
+	font-size: var(--gstore-font-size-3xl);
+	font-weight: var(--gstore-font-weight-bold);
+	color: var(--gstore-color-text-light, #fff) !important;
+	text-decoration: none;
+	text-transform: uppercase;
+	letter-spacing: var(--gstore-letter-spacing-tight);
+	white-space: nowrap;
+	display: flex;
+	align-items: center;
+}
+
+/* Logo com imagem (quando configurada) */
+.Gstore-header__logo img {
+	max-height: 36px;
+	max-width: 180px;
+	width: auto;
+	height: auto;
+	display: block;
+	object-fit: contain;
+}
+
+/* Site Logo Block - quando há logo configurada */
+.Gstore-header__logo.wp-block-site-logo {
+	display: flex;
+	align-items: center;
+}
+
+.Gstore-header__logo.wp-block-site-logo img {
+	max-height: 36px;
+	max-width: 180px;
+	width: auto;
+	height: auto;
+	object-fit: contain;
+}
+
+/* Esconde o título quando há logo configurada (site-logo existe) */
+.Gstore-header__content:has(.wp-block-site-logo) .Gstore-header__logo-text {
+	display: none !important;
+}
+
+/* Mostra o título apenas quando não há logo */
+.Gstore-header__logo-text {
+	display: block;
+}
+
+.Gstore-logo-highlight {
+	color: var(--gstore-color-accent, #b5a642);
+}
+
+/* Barra de Pesquisa */
+.Gstore-header__search-wrapper {
+	flex: 1;
+	max-width: 500px;
+	margin: 0 20px;
+}
+
+.Gstore-header__search {
+	width: 100%;
+}
+
+.Gstore-header__search .wp-block-search__inside-wrapper {
+	background: rgba(255, 255, 255, 0.1);
+	border: 1px solid rgba(255, 255, 255, 0.2);
+	border-radius: 4px;
+	overflow: hidden;
+}
+
+.Gstore-header__search .wp-block-search__input {
+	background: transparent !important;
+	border: none !important;
+	color: var(--gstore-color-text-light, #fff) !important;
+	padding: 10px 14px !important;
+	font-size: var(--gstore-font-size-xs) !important;
+}
+
+.Gstore-header__search .wp-block-search__input::placeholder {
+	color: var(--gstore-color-white-60) !important;
+}
+
+.Gstore-header__search .wp-block-search__button {
+	background: var(--gstore-color-accent, #b5a642) !important;
+	border: none !important;
+	padding: 10px 14px !important;
+	color: var(--gstore-color-black) !important;
+}
+
+.Gstore-header__search .wp-block-search__button svg {
+	fill: var(--gstore-color-black) !important;
+	width: 18px;
+	height: 18px;
+}
+
+/* Actions (carrinho + atendimento) */
+.Gstore-header__actions {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+}
+
+.Gstore-header__btn-atendimento {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	padding: 8px 16px;
+	color: var(--gstore-color-text-light, #fff) !important;
+	text-decoration: none;
+	border: 1px solid rgba(255, 255, 255, 0.2);
+	border-radius: 4px;
+	font-size: var(--gstore-font-size-sm);
+	transition: all 0.2s ease;
+}
+
+.Gstore-header__btn-atendimento:hover {
+	border-color: var(--gstore-color-accent, #b5a642);
+	color: var(--gstore-color-accent, #b5a642) !important;
+}
+
+.Gstore-header__btn-atendimento .Gstore-icon {
+	width: 18px;
+	height: 18px;
+	fill: currentColor;
+}
+
+/* Menu Toggle (Hamburger) */
+.Gstore-header__menu-toggle {
+	display: none;
+	align-items: center;
+	justify-content: center;
+	gap: 6px;
+	height: 34px;
+	min-width: 72px;
+	padding: 0 8px;
+	background: none;
+	border: none;
+	cursor: pointer;
+	line-height: 1;
+}
+
+.Gstore-header__menu-icon {
+	display: inline-flex;
+	flex-direction: column;
+	justify-content: center;
+	gap: 3px;
+}
+
+.Gstore-header__menu-line {
+	display: block;
+	width: 14px;
+	height: 3px;
+	border-radius: 2px;
+	background-color: var(--gstore-color-accent, #b5a642);
+	opacity: 0.85;
+	transition: transform 0.3s ease, opacity 0.3s ease;
+	transform-origin: center;
+}
+
+.Gstore-header__menu-text {
+	font-size: 0.9375rem;
+	font-weight: 700;
+	letter-spacing: 0.05em;
+	line-height: 1;
+	text-transform: uppercase;
+	white-space: nowrap;
+	color: var(--gstore-color-text-light, #fff);
+}
+
+.Gstore-header__menu-toggle:focus {
+	outline: none;
+}
+
+/* Animação do botão hamburger para X quando ativo */
+@media (max-width: 767px) {
+	.Gstore-header__menu-toggle.is-active .Gstore-header__menu-line:nth-child(1) {
+		transform: translateY(5px) rotate(45deg);
+	}
+
+	.Gstore-header__menu-toggle.is-active .Gstore-header__menu-line:nth-child(2) {
+		opacity: 0;
+	}
+
+	.Gstore-header__menu-toggle.is-active .Gstore-header__menu-line:nth-child(3) {
+		transform: translateY(-5px) rotate(-45deg);
+	}
+}
+
+/* Mini Cart */
+.Gstore-header__mini-cart {
+	display: flex;
+	align-items: center;
+}
+
+.Gstore-header__mini-cart .wc-block-mini-cart__button {
+		background-color: var(--gstore-color-accent, #b5a642) !important;
+	border: none !important;
+	border-radius: 4px !important;
+	padding: 8px 12px !important;
+}
+
+/* ========================================
+   NAVEGAÇÃO
+   ======================================== */
+
+.Gstore-nav-shell {
+	background-color: var(--gstore-color-bg-darker, #1a1a1a);
+	border-bottom: 1px solid var(--gstore-color-white-10);
+}
+
+.Gstore-nav__inner {
+	max-width: 1280px;
+	margin: 0 auto;
+	padding: 0 20px;
+}
+
+.Gstore-nav {
+	width: 100%;
+}
+
+.Gstore-nav .wp-block-navigation__container {
+	justify-content: center;
+	gap: 32px;
+}
+
+.Gstore-nav .wp-block-navigation-item__content {
+	color: var(--gstore-color-text-light, #fff) !important;
+	padding: 12px 0;
+	font-size: var(--gstore-font-size-sm);
+	text-decoration: none;
+	position: relative;
+}
+
+.Gstore-nav .wp-block-navigation-item__content::after {
+	content: '';
+	position: absolute;
+	bottom: 0;
+	left: 0;
+	width: 0;
+	height: 2px;
+	background-color: var(--gstore-color-accent, #b5a642);
+	transition: width 0.2s ease;
+}
+
+.Gstore-nav .wp-block-navigation-item__content:hover::after {
+	width: 100%;
+}
+
+.Gstore-nav__mobile-link {
+	display: none;
+}
+
+/* ========================================
+   MOBILE (até 767px)
+   ======================================== */
+
+@media (max-width: 767px) {
+	/* Top bar escondida no mobile */
+	.Gstore-top-bar {
+		display: none;
+	}
+	
+	/* Header principal */
+	.Gstore-header__inner {
+		padding: 6px 16px;
+		display: grid;
+		grid-template-columns: 1fr auto 1fr;
+		grid-template-areas: "toggle logo actions";
+		align-items: center;
+		gap: 8px;
+	}
+	
+	/* Menu toggle visível */
+	.Gstore-header__menu-toggle {
+		display: flex;
+		grid-area: toggle;
+		justify-self: start;
+	}
+	
+	/* Logo centralizada */
+	.Gstore-header__logo,
+	.Gstore-header__logo-text {
+		grid-area: logo;
+		justify-self: center;
+		font-size: var(--gstore-font-size-2xl);
+	}
+	
+	/* Logo image no mobile */
+	.Gstore-header__logo.wp-block-site-logo {
+		grid-area: logo;
+		justify-self: center;
+	}
+	
+	.Gstore-header__logo img,
+	.Gstore-header__logo.wp-block-site-logo img {
+		max-height: 32px;
+		max-width: 140px;
+	}
+	
+	/* Esconde barra de pesquisa no mobile */
+	.Gstore-header__search-wrapper {
+		display: none;
+	}
+	
+	/* Actions */
+	.Gstore-header__actions {
+		grid-area: actions;
+		gap: 8px;
+		justify-self: end;
+		justify-content: flex-end;
+		min-width: 0;
+	}
+	
+	/* Esconde botão de atendimento no mobile */
+	.Gstore-header__btn-atendimento {
+		display: none;
+	}
+	
+	/* Mini cart ajustado */
+	.Gstore-header__mini-cart .wc-block-mini-cart__button {
+		min-height: 34px !important;
+		padding: 0 10px !important;
+	}
+	
+	.Gstore-nav__mobile-link .Gstore-icon {
+		width: 18px;
+		height: 18px;
+		fill: currentColor;
+	}
+
+	/* ========================================
+	   RETROCOMPATIBILIDADE - Template antigo (.Gstore-header__content)
+	   Cobre o caso em que o Site Editor do WordPress salvou o header
+	   antigo no banco de dados (usa Gstore-header__content ao invés
+	   de Gstore-header__inner).
+	   ======================================== */
+
+	.Gstore-header__content,
+	.Gstore-header__content.is-layout-constrained,
+	.Gstore-header__content.wp-block-group-is-layout-constrained,
+	.wp-block-group.Gstore-header__content {
+		display: grid !important;
+		grid-template-columns: 1fr auto 1fr !important;
+		grid-template-areas: "toggle logo actions" !important;
+		align-items: center !important;
+		gap: 8px !important;
+		padding: 6px 16px !important;
+		margin: 0 auto !important;
+	}
+
+	.Gstore-header__content > *,
+	.Gstore-header__content.is-layout-constrained > * {
+		margin-block-start: 0 !important;
+		margin-block-end: 0 !important;
+		margin-top: 0 !important;
+		margin-bottom: 0 !important;
+		max-width: none !important;
+	}
+
+	/* Esconde busca no header (template antigo usa .Gstore-header__search direto) */
+	.Gstore-header__content .Gstore-header__search,
+	.Gstore-header .Gstore-header__search.wp-block-search {
+		display: none !important;
+	}
+
+	/* Esconde botão atendimento (template antigo usa .Gstore-btn--secondary) */
+	.Gstore-header__content .Gstore-btn--secondary {
+		display: none !important;
+	}
+
+	/* Logo: wp-block-site-logo dentro do content antigo */
+	.Gstore-header__content .wp-block-site-logo,
+	.Gstore-header__content .Gstore-header__logo.wp-block-site-logo {
+		grid-area: logo !important;
+		justify-self: center !important;
+		margin: 0 !important;
+		padding: 0 !important;
+	}
+
+	.Gstore-header__content .wp-block-site-logo img,
+	.Gstore-header__content .wp-block-site-logo a {
+		display: block !important;
+		max-height: 32px !important;
+		max-width: 140px !important;
+		width: auto !important;
+		height: auto !important;
+		object-fit: contain !important;
+		margin: 0 !important;
+		padding: 0 !important;
+	}
+
+	/* Logo texto: wp-block-site-title dentro do content antigo */
+	.Gstore-header__content .Gstore-header__logo-text,
+	.Gstore-header__content .wp-block-site-title {
+		grid-area: logo !important;
+		justify-self: center !important;
+		margin: 0 !important;
+	}
+
+	.Gstore-header__content .Gstore-header__logo-text a {
+		font-size: 1.5rem !important;
+	}
+
+	/* Actions dentro do content antigo */
+	.Gstore-header__content .Gstore-header__actions,
+	.Gstore-header__content .wp-block-group.Gstore-header__actions {
+		grid-area: actions !important;
+		justify-self: end !important;
+		justify-content: flex-end !important;
+		display: flex !important;
+		align-items: center !important;
+		gap: 8px !important;
+		min-width: 0 !important;
+	}
+}
+
+/* ========================================
+   MOBILE DRAWER MENU
+   ======================================== */
+
+/* Drawer Container - Escondido no desktop; visível apenas no mobile */
+.Gstore-mobile-drawer {
+	display: none !important;
+}
+
+@media (min-width: 768px) {
+	/* Garante que o drawer nunca apareça no desktop */
+	.Gstore-mobile-drawer {
+		display: none !important;
+	}
+}
+
+@media (max-width: 767px) {
+	/* Barra de navegação desktop: sempre escondida no mobile */
+	.Gstore-nav-shell,
+	header.Gstore-header-shell .Gstore-nav-shell,
+	.wp-block-group.alignfull.Gstore-nav {
+		display: none !important;
+	}
+
+	/* Mostra drawer apenas no mobile */
+	.Gstore-mobile-drawer {
+		display: block !important;
+		position: fixed;
+		top: 0;
+		left: 0;
+		width: 100%;
+		height: 100vh;
+		height: 100dvh;
+		z-index: var(--gstore-z-overlay, 300);
+		pointer-events: none;
+	}
+
+	/* Overlay/Backdrop */
+	.Gstore-mobile-drawer__overlay {
+		position: absolute;
+		top: 0;
+		left: 0;
+		width: 100%;
+		height: 100%;
+		background-color: rgba(0, 0, 0, 0.5);
+		backdrop-filter: blur(2px);
+		opacity: 0;
+		transition: opacity var(--gstore-transition-base, 250ms ease-in-out);
+		pointer-events: none;
+	}
+
+	/* Drawer Content */
+	.Gstore-mobile-drawer__content {
+		position: absolute;
+		top: 0;
+		left: 0;
+		width: 320px;
+		max-width: 85vw;
+		height: 100%;
+		height: 100dvh;
+		background-color: var(--gstore-color-bg-darker, #1a1a1a);
+		box-shadow: 2px 0 10px rgba(0, 0, 0, 0.3);
+		transform: translateX(-100%);
+		transition: transform var(--gstore-transition-base, 250ms ease-in-out);
+		display: flex;
+		flex-direction: column;
+		overflow: hidden;
+		z-index: 301;
+		pointer-events: auto;
+	}
+
+	/* Drawer aberto */
+	.Gstore-mobile-drawer.is-open {
+		pointer-events: auto;
+	}
+
+	.Gstore-mobile-drawer.is-open .Gstore-mobile-drawer__overlay {
+		opacity: 1;
+		pointer-events: auto;
+	}
+
+	.Gstore-mobile-drawer.is-open .Gstore-mobile-drawer__content {
+		transform: translateX(0);
+	}
+
+	/* Drawer Header */
+	.Gstore-mobile-drawer__header {
+		display: flex;
+		align-items: center;
+		justify-content: flex-end;
+		padding: 16px;
+		border-bottom: 1px solid var(--gstore-color-white-10, rgba(255, 255, 255, 0.1));
+		flex-shrink: 0;
+	}
+
+	.Gstore-mobile-drawer__close {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		width: 40px;
+		height: 40px;
+		background: none;
+		border: none;
+		cursor: pointer;
+		color: var(--gstore-color-text-light, #fff);
+		padding: 0;
+		transition: color var(--gstore-transition-fast, 150ms ease);
+	}
+
+	.Gstore-mobile-drawer__close:hover,
+	.Gstore-mobile-drawer__close:focus {
+		color: var(--gstore-color-accent, #b5a642);
+		outline: none;
+	}
+
+	.Gstore-mobile-drawer__close .Gstore-icon {
+		width: 24px;
+		height: 24px;
+		fill: currentColor;
+	}
+
+	/* Drawer Search */
+	.Gstore-mobile-drawer__search {
+		padding: 16px;
+		border-bottom: 1px solid var(--gstore-color-white-10, rgba(255, 255, 255, 0.1));
+		flex-shrink: 0;
+	}
+
+	.Gstore-mobile-drawer__search .Gstore-nav__search {
+		width: 100%;
+		max-width: 100%;
+	}
+
+	.Gstore-mobile-drawer__search .wp-block-search__inside-wrapper {
+		display: flex;
+		align-items: stretch;
+		width: 100%;
+		border: none;
+		border-radius: 0;
+		overflow: visible;
+		background-color: transparent;
+		gap: 0 !important;
+		margin: 0 !important;
+	}
+
+	.Gstore-mobile-drawer__search .wp-block-search__input {
+		flex: 1;
+		padding: 10px 14px !important;
+		background-color: var(--gstore-color-bg-dark, #0a0a0a) !important;
+		border: 1px solid var(--gstore-color-border, rgba(255, 255, 255, 0.2)) !important;
+		border-right: none !important;
+		border-radius: 4px 0 0 4px !important;
+		color: var(--gstore-color-text-light, #fff) !important;
+		font-size: 0.875rem !important;
+		outline: none !important;
+		transition: border-color var(--gstore-transition-fast, 150ms ease);
+		margin: 0 !important;
+	}
+
+	.Gstore-mobile-drawer__search .wp-block-search__input::placeholder {
+		color: var(--gstore-color-text-secondary, rgba(255, 255, 255, 0.6));
+	}
+
+	.Gstore-mobile-drawer__search .wp-block-search__input:focus {
+		border-color: var(--gstore-color-accent, #b5a642) !important;
+	}
+
+	.Gstore-mobile-drawer__search .wp-block-search__button {
+		padding: 10px 14px !important;
+		background-color: var(--gstore-color-accent, #b5a642) !important;
+		border: 1px solid var(--gstore-color-accent, #b5a642) !important;
+		border-left: 1px solid var(--gstore-color-accent, #b5a642) !important;
+		border-radius: 0 4px 4px 0 !important;
+		color: var(--gstore-color-bg-dark, #0a0a0a) !important;
+		cursor: pointer;
+		transition: all var(--gstore-transition-fast, 150ms ease);
+		display: flex !important;
+		align-items: center;
+		justify-content: center;
+		min-width: auto !important;
+		margin: 0 !important;
+	}
+
+	.Gstore-mobile-drawer__search .wp-block-search__button:hover,
+	.Gstore-mobile-drawer__search .wp-block-search__button:focus {
+		background-color: var(--gstore-color-accent-hover, #ff6500) !important;
+		outline: none;
+		transform: translateY(-1px);
+	}
+
+	.Gstore-mobile-drawer__search .wp-block-search__button svg {
+		width: 20px;
+		height: 20px;
+		fill: currentColor;
+	}
+
+	/* Drawer Navigation */
+	.Gstore-mobile-drawer__nav {
+		flex: 1;
+		min-height: 0;
+		overflow-y: auto;
+		overflow-x: hidden;
+	}
+
+	.Gstore-mobile-drawer__nav .Gstore-nav {
+		width: 100%;
+	}
+
+	.Gstore-mobile-drawer__nav .Gstore-nav .wp-block-navigation__container,
+	.Gstore-mobile-drawer__nav .Gstore-nav--mobile .wp-block-navigation__container {
+		flex-direction: column;
+		gap: 0;
+		width: 100%;
+	}
+
+	.Gstore-mobile-drawer__nav .wp-block-navigation-item {
+		width: 100%;
+	}
+
+	.Gstore-mobile-drawer__nav .wp-block-navigation-item__content {
+		display: block;
+		width: 100%;
+		padding: 14px 16px;
+		border-bottom: 1px solid var(--gstore-color-white-10, rgba(255, 255, 255, 0.1));
+		color: var(--gstore-color-text-light, #fff) !important;
+		text-decoration: none;
+		font-size: var(--gstore-font-size-sm, 0.875rem);
+		transition: background-color var(--gstore-transition-fast, 150ms ease);
+	}
+
+	.Gstore-mobile-drawer__nav .wp-block-navigation-item__content:hover,
+	.Gstore-mobile-drawer__nav .wp-block-navigation-item__content:focus {
+		background-color: var(--gstore-color-bg-dark, #0a0a0a);
+		color: var(--gstore-color-accent, #b5a642) !important;
+		outline: none;
+	}
+
+	.Gstore-mobile-drawer__nav .wp-block-navigation-item__content::after {
+		display: none;
+	}
+
+	/* Drawer Footer */
+	.Gstore-mobile-drawer__footer {
+		flex-shrink: 0;
+		margin-top: auto;
+		border-top: 1px solid var(--gstore-color-white-10, rgba(255, 255, 255, 0.1));
+		display: grid;
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+		background: var(--gstore-color-accent-10, rgba(255, 92, 0, 0.1));
+		padding-bottom: env(safe-area-inset-bottom, 0px);
+		position: relative;
+		z-index: 1;
+	}
+
+	.Gstore-mobile-drawer__footer .Gstore-nav__mobile-link,
+	.Gstore-mobile-drawer__footer .Gstore-mobile-drawer__footer-link {
+		display: flex;
+		display: flex !important;
+		align-items: center;
+		justify-content: center;
+		gap: 8px;
+		padding: 14px 8px;
+		color: var(--gstore-color-text-light, #fff) !important;
+		text-decoration: none;
+		font-size: var(--gstore-font-size-sm, 0.875rem);
+		font-weight: 600;
+		background: transparent;
+		border-right: 1px solid var(--gstore-color-white-10, rgba(255, 255, 255, 0.1));
+		transition: background-color var(--gstore-transition-fast, 150ms ease);
+	}
+
+	.Gstore-mobile-drawer__footer > a:last-child {
+		border-right: none;
+	}
+
+	.Gstore-mobile-drawer__footer .Gstore-nav__mobile-link:hover,
+	.Gstore-mobile-drawer__footer .Gstore-nav__mobile-link:focus,
+	.Gstore-mobile-drawer__footer .Gstore-mobile-drawer__footer-link:hover,
+	.Gstore-mobile-drawer__footer .Gstore-mobile-drawer__footer-link:focus {
+		background: var(--gstore-color-accent-20, rgba(255, 92, 0, 0.2));
+		outline: none;
+	}
+
+	.Gstore-mobile-drawer__footer .Gstore-nav__mobile-link .Gstore-icon,
+	.Gstore-mobile-drawer__footer .Gstore-mobile-drawer__footer-link .Gstore-icon {
+		width: 18px;
+		height: 18px;
+		fill: currentColor;
+	}
+
+	/* Prevenir scroll do body quando drawer está aberto */
+	body.drawer-open {
+		overflow: hidden;
+		position: fixed;
+		width: 100%;
+	}
+}
+
+/* ========================================
+   MOBILE PEQUENO (até 480px)
+   ======================================== */
+
+@media (max-width: 480px) {
+	.Gstore-header__inner,
+	.Gstore-header__content,
+	.Gstore-header__content.is-layout-constrained {
+		padding: 6px 12px !important;
+	}
+
+	.Gstore-header__menu-toggle {
+		min-width: 68px;
+		padding: 0 6px;
+		gap: 5px;
+	}
+
+	.Gstore-header__menu-text {
+		font-size: 0.9375rem;
+	}
+	
+	.Gstore-header__logo {
+		font-size: var(--gstore-font-size-xl);
+	}
+
+	.Gstore-header__content .wp-block-site-logo img,
+	.Gstore-header__content .wp-block-site-logo a {
+		max-height: 28px !important;
+		max-width: 120px !important;
+	}
+}
+
+/* ==========================================
+ * SEARCH AUTOCOMPLETE (Sugestões)
+ * ========================================== */
+.Gstore-search-form--suggest .wp-block-search__inside-wrapper {
+	position: relative;
+	/* Permite o dropdown (position:absolute) aparecer fora do wrapper */
+	overflow: visible !important;
+}
+
+.Gstore-search-suggest {
+	position: absolute;
+	top: calc(100% + 6px);
+	left: 0;
+	right: 0;
+	z-index: 9999;
+	background: var(--gstore-color-bg, #ffffff);
+	color: var(--gstore-color-text, #0a0a0a);
+	border: 1px solid rgba(0, 0, 0, 0.12);
+	border-radius: 10px;
+	box-shadow: 0 12px 30px rgba(0, 0, 0, 0.12);
+	max-height: 320px;
+	overflow: auto;
+	padding: 8px;
+}
+
+.Gstore-search-suggest__title {
+	font-size: 12px;
+	font-weight: 700;
+	letter-spacing: 0.02em;
+	text-transform: uppercase;
+	color: rgba(0, 0, 0, 0.6);
+	padding: 8px 10px 6px;
+}
+
+.Gstore-search-suggest__item {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	padding: 10px;
+	border-radius: 8px;
+	cursor: pointer;
+}
+
+.Gstore-search-suggest__item:hover,
+.Gstore-search-suggest__item.is-active {
+	background: rgba(0, 0, 0, 0.06);
+}
+
+.Gstore-search-suggest__left {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 44px;
+	height: 44px;
+	flex: 0 0 44px;
+	overflow: hidden;
+	border-radius: 8px;
+}
+
+.Gstore-search-suggest__img {
+	/* Força thumbnail mesmo que existam regras globais de img */
+	display: block !important;
+	width: 44px !important;
+	height: 44px !important;
+	max-width: 44px !important;
+	max-height: 44px !important;
+	border-radius: 8px !important;
+	object-fit: cover !important;
+	background: rgba(0, 0, 0, 0.05);
+}
+
+.Gstore-search-suggest__img--placeholder {
+	background: rgba(0, 0, 0, 0.06);
+}
+
+.Gstore-search-suggest__mid {
+	min-width: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+}
+
+.Gstore-search-suggest__name {
+	font-size: 14px;
+	font-weight: 600;
+	line-height: 1.2;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.Gstore-search-suggest__price {
+	font-size: 12px;
+	color: rgba(0, 0, 0, 0.65);
+}
+
+.Gstore-search-suggest__item--category .Gstore-search-suggest__cat-icon {
+	width: 44px;
+	height: 44px;
+	border-radius: 8px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background: rgba(0, 0, 0, 0.06);
+	flex: 0 0 44px;
+}
+
+.Gstore-search-suggest__item--category .Gstore-search-suggest__cat-icon svg {
+	width: 20px;
+	height: 20px;
+	opacity: 0.8;
+}
+
+/* Drawer (tema escuro) */
+.Gstore-mobile-drawer .Gstore-search-suggest {
+	background: var(--gstore-color-bg-dark, #0a0a0a);
+	color: var(--gstore-color-text-light, #ffffff);
+	border: 1px solid rgba(255, 255, 255, 0.14);
+	box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35);
+}
+
+.Gstore-mobile-drawer .Gstore-search-suggest__title {
+	color: rgba(255, 255, 255, 0.7);
+}
+
+.Gstore-mobile-drawer .Gstore-search-suggest__item:hover,
+.Gstore-mobile-drawer .Gstore-search-suggest__item.is-active {
+	background: rgba(255, 255, 255, 0.08);
+}
+
+.Gstore-mobile-drawer .Gstore-search-suggest__price {
+	color: rgba(255, 255, 255, 0.7);
+}
