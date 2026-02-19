@@ -1,9 +1,13 @@
 /**
- * Script de diagnóstico PROFUNDO do botão MENU do header.
+ * Script de correção IMEDIATA do botão MENU do header.
  * Cole no Console do navegador (F12 > Console) e pressione Enter.
  *
- * Compara computed styles entre o site "bom" e o "ruim" para
- * encontrar a diferença visual exata.
+ * Problema: O style.css?ver=1.3 cacheado contém regras legadas com o seletor
+ * genérico ".Gstore-header__menu-toggle span" (especificidade 0,1,1) que
+ * sobrescreve os seletores de classe corretos (0,1,0).
+ *
+ * Este script injeta CSS com especificidade elevada para anular as regras
+ * cacheadas e restaurar o visual correto do botão.
  */
 (function() {
   'use strict';
@@ -13,196 +17,122 @@
       info:  'color:#2196F3;font-weight:bold',
       ok:    'color:#4CAF50;font-weight:bold',
       warn:  'color:#FF9800;font-weight:bold',
-      error: 'color:#f44336;font-weight:bold',
-      data:  'color:#9C27B0'
+      error: 'color:#f44336;font-weight:bold'
     };
     console.log('%c[GStore Fix] ' + msg, styles[type] || styles.info);
   };
 
-  log('=== DIAGNÓSTICO PROFUNDO DO BOTÃO MENU ===', 'info');
+  log('Aplicando correção do botão MENU...', 'info');
 
   var btn = document.querySelector('.Gstore-header__menu-toggle');
-  if (!btn) { log('Botão NÃO encontrado.', 'error'); return; }
-
-  var icon = btn.querySelector('.Gstore-header__menu-icon');
-  var lines = btn.querySelectorAll('.Gstore-header__menu-line');
-  var textSpan = btn.querySelector('.Gstore-header__menu-text');
-
-  function getStyles(el, label) {
-    if (!el) { log(label + ': ELEMENTO AUSENTE', 'error'); return null; }
-    var cs = window.getComputedStyle(el);
-    var rect = el.getBoundingClientRect();
-    return {
-      display: cs.display,
-      visibility: cs.visibility,
-      opacity: cs.opacity,
-      width: cs.width,
-      height: cs.height,
-      color: cs.color,
-      backgroundColor: cs.backgroundColor,
-      fontSize: cs.fontSize,
-      fontWeight: cs.fontWeight,
-      gap: cs.gap,
-      flexDirection: cs.flexDirection,
-      alignItems: cs.alignItems,
-      justifyContent: cs.justifyContent,
-      position: cs.position,
-      overflow: cs.overflow,
-      zIndex: cs.zIndex,
-      transform: cs.transform,
-      clipPath: cs.clipPath,
-      borderRadius: cs.borderRadius,
-      padding: cs.padding,
-      margin: cs.margin,
-      rectTop: Math.round(rect.top),
-      rectLeft: Math.round(rect.left),
-      rectWidth: Math.round(rect.width),
-      rectHeight: Math.round(rect.height)
-    };
+  if (!btn) {
+    log('Botão .Gstore-header__menu-toggle não encontrado.', 'error');
+    return;
   }
 
-  function printStyles(styles, label) {
-    if (!styles) return;
-    log('--- ' + label + ' ---', 'info');
-    log('  display: ' + styles.display + ' | visibility: ' + styles.visibility + ' | opacity: ' + styles.opacity, 'data');
-    log('  width: ' + styles.width + ' | height: ' + styles.height, 'data');
-    log('  backgroundColor: ' + styles.backgroundColor + ' | color: ' + styles.color, 'data');
-    log('  position: ' + styles.position + ' | zIndex: ' + styles.zIndex + ' | overflow: ' + styles.overflow, 'data');
-    log('  transform: ' + styles.transform + ' | clipPath: ' + styles.clipPath, 'data');
-    log('  gap: ' + styles.gap + ' | flexDirection: ' + styles.flexDirection, 'data');
-    log('  padding: ' + styles.padding + ' | margin: ' + styles.margin, 'data');
-    log('  BoundingRect: top=' + styles.rectTop + ' left=' + styles.rectLeft +
-        ' width=' + styles.rectWidth + ' height=' + styles.rectHeight, 'data');
+  // Injeta CSS com especificidade alta para vencer ".Gstore-header__menu-toggle span" (0,1,1)
+  // Novos seletores: ".Gstore-header__menu-toggle .Gstore-header__menu-*" (0,2,0)
+  var fixCSS = document.createElement('style');
+  fixCSS.id = 'gstore-menu-fix';
+  fixCSS.textContent = [
+    '/* Fix: anula regras legadas cacheadas de .Gstore-header__menu-toggle span */',
+
+    '.Gstore-header__menu-toggle {',
+    '  display: flex !important;',
+    '  flex-direction: row !important;',
+    '  align-items: center !important;',
+    '  justify-content: center !important;',
+    '  gap: 6px !important;',
+    '  height: 34px;',
+    '  min-width: 72px;',
+    '  padding: 0 8px;',
+    '}',
+
+    '.Gstore-header__menu-toggle .Gstore-header__menu-icon {',
+    '  display: inline-flex !important;',
+    '  flex-direction: column !important;',
+    '  justify-content: center !important;',
+    '  gap: 3px !important;',
+    '  width: auto !important;',
+    '  height: auto !important;',
+    '  background-color: transparent !important;',
+    '}',
+
+    '.Gstore-header__menu-toggle .Gstore-header__menu-line {',
+    '  display: block !important;',
+    '  width: 14px !important;',
+    '  height: 3px !important;',
+    '  border-radius: 2px;',
+    '  background-color: var(--gstore-color-accent, #ff5c00) !important;',
+    '  opacity: 0.85;',
+    '}',
+
+    '.Gstore-header__menu-toggle .Gstore-header__menu-text {',
+    '  font-size: 0.9375rem !important;',
+    '  font-weight: 700 !important;',
+    '  letter-spacing: 0.05em;',
+    '  line-height: 1 !important;',
+    '  text-transform: uppercase;',
+    '  white-space: nowrap;',
+    '  color: var(--gstore-color-text-light, #fff) !important;',
+    '  width: auto !important;',
+    '  height: auto !important;',
+    '  background-color: transparent !important;',
+    '}'
+  ].join('\n');
+
+  // Remove fix anterior se existir
+  var old = document.getElementById('gstore-menu-fix');
+  if (old) old.remove();
+
+  document.head.appendChild(fixCSS);
+
+  // Verifica resultado
+  var cs = window.getComputedStyle(btn);
+  var iconEl = btn.querySelector('.Gstore-header__menu-icon');
+  var textEl = btn.querySelector('.Gstore-header__menu-text');
+  var linesEl = btn.querySelectorAll('.Gstore-header__menu-line');
+
+  var ok = true;
+
+  if (cs.flexDirection !== 'row') {
+    log('AVISO: flex-direction ainda é ' + cs.flexDirection, 'error');
+    ok = false;
   }
 
-  // Botão
-  printStyles(getStyles(btn, 'BUTTON'), 'BUTTON .Gstore-header__menu-toggle');
-
-  // Ícone container
-  printStyles(getStyles(icon, 'ICON'), 'SPAN .Gstore-header__menu-icon');
-
-  // Cada linha
-  for (var i = 0; i < lines.length; i++) {
-    var ls = getStyles(lines[i], 'LINE ' + (i+1));
-    printStyles(ls, 'SPAN .Gstore-header__menu-line[' + (i+1) + ']');
-  }
-
-  // Texto
-  printStyles(getStyles(textSpan, 'TEXT'), 'SPAN .Gstore-header__menu-text');
-
-  // Header containers
-  log('=== CONTAINERS DO HEADER ===', 'info');
-
-  var headerShell = document.querySelector('.Gstore-header-shell');
-  var headerMain = document.querySelector('.Gstore-header');
-  var headerInner = document.querySelector('.Gstore-header__inner');
-  var headerContent = document.querySelector('.Gstore-header__content');
-
-  if (headerShell) printStyles(getStyles(headerShell), 'header.Gstore-header-shell');
-  if (headerMain) printStyles(getStyles(headerMain), 'div.Gstore-header');
-  if (headerInner) printStyles(getStyles(headerInner), 'div.Gstore-header__inner');
-  if (headerContent) printStyles(getStyles(headerContent), 'div.Gstore-header__content');
-
-  // Verificar todas as stylesheets que afetam o botão
-  log('=== CSS RULES QUE AFETAM O BOTÃO ===', 'info');
-  try {
-    var sheets = document.styleSheets;
-    var matchingRules = [];
-    for (var s = 0; s < sheets.length; s++) {
-      try {
-        var rules = sheets[s].cssRules || sheets[s].rules;
-        if (!rules) continue;
-        for (var r = 0; r < rules.length; r++) {
-          var rule = rules[r];
-          if (rule.selectorText && rule.selectorText.indexOf('menu-toggle') !== -1) {
-            matchingRules.push({
-              selector: rule.selectorText,
-              cssText: rule.cssText.substring(0, 200),
-              sheet: sheets[s].href || 'inline'
-            });
-          }
-          if (rule.selectorText && rule.selectorText.indexOf('menu-line') !== -1) {
-            matchingRules.push({
-              selector: rule.selectorText,
-              cssText: rule.cssText.substring(0, 200),
-              sheet: sheets[s].href || 'inline'
-            });
-          }
-          if (rule.selectorText && rule.selectorText.indexOf('menu-icon') !== -1) {
-            matchingRules.push({
-              selector: rule.selectorText,
-              cssText: rule.cssText.substring(0, 200),
-              sheet: sheets[s].href || 'inline'
-            });
-          }
-          if (rule.selectorText && rule.selectorText.indexOf('menu-text') !== -1) {
-            matchingRules.push({
-              selector: rule.selectorText,
-              cssText: rule.cssText.substring(0, 200),
-              sheet: sheets[s].href || 'inline'
-            });
-          }
-          // Checa media queries
-          if (rule.type === CSSRule.MEDIA_RULE) {
-            var mediaRules = rule.cssRules;
-            for (var mr = 0; mr < mediaRules.length; mr++) {
-              var mRule = mediaRules[mr];
-              if (mRule.selectorText &&
-                  (mRule.selectorText.indexOf('menu-toggle') !== -1 ||
-                   mRule.selectorText.indexOf('menu-line') !== -1 ||
-                   mRule.selectorText.indexOf('menu-icon') !== -1 ||
-                   mRule.selectorText.indexOf('menu-text') !== -1)) {
-                matchingRules.push({
-                  selector: mRule.selectorText,
-                  cssText: mRule.cssText.substring(0, 200),
-                  media: rule.conditionText,
-                  sheet: sheets[s].href || 'inline'
-                });
-              }
-            }
-          }
-        }
-      } catch(e) {
-        log('  (não foi possível ler: ' + (sheets[s].href || 'inline') + ')', 'warn');
-      }
+  if (iconEl) {
+    var iconCs = window.getComputedStyle(iconEl);
+    if (iconCs.display !== 'inline-flex' && iconCs.display !== 'flex') {
+      log('AVISO: .menu-icon display = ' + iconCs.display + ' (esperado: inline-flex)', 'error');
+      ok = false;
     }
-    log('Total de regras CSS encontradas para o menu: ' + matchingRules.length, 'info');
-    for (var m = 0; m < matchingRules.length; m++) {
-      var mr2 = matchingRules[m];
-      var sheetName = mr2.sheet ? mr2.sheet.split('/').pop() : 'inline';
-      log('  [' + sheetName + ']' + (mr2.media ? ' @media(' + mr2.media + ')' : ''), 'data');
-      log('    ' + mr2.cssText, 'data');
-    }
-  } catch(e) {
-    log('Erro ao inspecionar stylesheets: ' + e.message, 'error');
-  }
-
-  // Verificar CSS custom properties (variáveis)
-  log('=== CSS VARIABLES ===', 'info');
-  var root = document.documentElement;
-  var rootStyles = getComputedStyle(root);
-  var vars = ['--gstore-color-accent', '--gstore-color-text-light', '--gstore-transition-fast',
-              '--gstore-color-bg-dark', '--gstore-header-bg', '--gstore-color-primary'];
-  for (var v = 0; v < vars.length; v++) {
-    var val = rootStyles.getPropertyValue(vars[v]).trim();
-    log('  ' + vars[v] + ': ' + (val || '(não definida)'), val ? 'data' : 'warn');
-  }
-
-  // Verificar se header.css está carregado
-  log('=== STYLESHEETS CARREGADAS (header) ===', 'info');
-  var allLinks = document.querySelectorAll('link[rel="stylesheet"]');
-  var headerCSSFound = false;
-  for (var l = 0; l < allLinks.length; l++) {
-    var href = allLinks[l].href || '';
-    if (href.indexOf('header') !== -1 || href.indexOf('Gstore') !== -1 || href.indexOf('gstore') !== -1) {
-      log('  ' + href.split('/').slice(-3).join('/'), 'data');
-      if (href.indexOf('header') !== -1) headerCSSFound = true;
+    if (parseInt(iconCs.height) < 5) {
+      log('AVISO: .menu-icon height = ' + iconCs.height + ' (esperado: ~15px)', 'error');
+      ok = false;
     }
   }
-  if (!headerCSSFound) {
-    log('  AVISO: header.css NÃO encontrado nas stylesheets!', 'error');
+
+  if (textEl) {
+    var textCs = window.getComputedStyle(textEl);
+    if (parseInt(textCs.height) < 5) {
+      log('AVISO: .menu-text height = ' + textCs.height + ' (esperado: ~15px)', 'error');
+      ok = false;
+    }
   }
 
-  log('=== DIAGNÓSTICO CONCLUÍDO ===', 'info');
-  log('Cole os resultados acima para comparação entre site bom e ruim.', 'info');
+  for (var i = 0; i < linesEl.length; i++) {
+    var lineCs = window.getComputedStyle(linesEl[i]);
+    if (parseInt(lineCs.width) > 20) {
+      log('AVISO: .menu-line[' + (i+1) + '] width = ' + lineCs.width + ' (esperado: 14px)', 'error');
+      ok = false;
+    }
+  }
+
+  if (ok) {
+    log('Correção aplicada com sucesso! O botão MENU está correto agora.', 'ok');
+    log('Para correção permanente: atualize o tema no servidor e limpe o cache.', 'info');
+  } else {
+    log('Correção parcial. Alguns estilos ainda estão sendo sobrescritos.', 'warn');
+    log('Tente limpar o cache do servidor/CDN e recarregar a página.', 'warn');
+  }
 })();

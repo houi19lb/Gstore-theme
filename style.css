@@ -2,7 +2,7 @@
 Theme Name: CAC Armas Gstore
 Author: CAC Armas Team
 Description: Tema personalizado da CAC Armas otimizado para WooCommerce.
-Version: 1.5.8
+Version: 1.5.9
 Text Domain: gstore
 */
 
@@ -3741,7 +3741,7 @@ Description: Child theme Gstore para o Twenty Twenty-Five com foco em WooCommerc
 Requires at least: 6.6
 Tested up to: 6.6
 Requires PHP: 8.1
-Version: 1.5.8
+Version: 1.5.9
 Template: twentytwentyfive
 Text Domain: gstore
 */
@@ -8093,6 +8093,7 @@ main.Gstore-blog-single-shell .wp-block-group.is-layout-constrained:not(.Gstore-
 	display: none;
 	align-items: center;
 	justify-content: center;
+	flex-direction: row;
 	gap: 6px;
 	background: none;
 	border: none;
@@ -8112,14 +8113,17 @@ main.Gstore-blog-single-shell .wp-block-group.is-layout-constrained:not(.Gstore-
 	box-shadow: none;
 }
 
-.Gstore-header__menu-icon {
+.Gstore-header__menu-toggle .Gstore-header__menu-icon {
 	display: inline-flex;
 	flex-direction: column;
 	justify-content: center;
 	gap: 3px;
+	width: auto;
+	height: auto;
+	background-color: transparent;
 }
 
-.Gstore-header__menu-line {
+.Gstore-header__menu-toggle .Gstore-header__menu-line {
 	display: block;
 	width: 14px;
 	height: 3px;
@@ -8130,7 +8134,7 @@ main.Gstore-blog-single-shell .wp-block-group.is-layout-constrained:not(.Gstore-
 	transform-origin: center;
 }
 
-.Gstore-header__menu-text {
+.Gstore-header__menu-toggle .Gstore-header__menu-text {
 	font-size: 0.9375rem;
 	font-weight: 700;
 	letter-spacing: 0.05em;
@@ -8138,6 +8142,9 @@ main.Gstore-blog-single-shell .wp-block-group.is-layout-constrained:not(.Gstore-
 	text-transform: uppercase;
 	white-space: nowrap;
 	color: var(--gstore-color-text-light, #ffffff);
+	width: auto;
+	height: auto;
+	background-color: transparent;
 }
 
 @media (max-width: 767px) {

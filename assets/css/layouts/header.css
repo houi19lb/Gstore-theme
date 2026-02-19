@@ -252,11 +252,15 @@ body:has(.Gstore-header-shell) {
 	fill: currentColor;
 }
 
-/* Menu Toggle (Hamburger) */
+/* Menu Toggle (Hamburger)
+ * Seletores com especificidade elevada (0,2,x) para vencer regras legadas
+ * cacheadas que usavam ".Gstore-header__menu-toggle span" (0,1,1).
+ */
 .Gstore-header__menu-toggle {
 	display: none;
 	align-items: center;
 	justify-content: center;
+	flex-direction: row;
 	gap: 6px;
 	height: 34px;
 	min-width: 72px;
@@ -267,14 +271,17 @@ body:has(.Gstore-header-shell) {
 	line-height: 1;
 }
 
-.Gstore-header__menu-icon {
+.Gstore-header__menu-toggle .Gstore-header__menu-icon {
 	display: inline-flex;
 	flex-direction: column;
 	justify-content: center;
 	gap: 3px;
+	width: auto;
+	height: auto;
+	background-color: transparent;
 }
 
-.Gstore-header__menu-line {
+.Gstore-header__menu-toggle .Gstore-header__menu-line {
 	display: block;
 	width: 14px;
 	height: 3px;
@@ -285,7 +292,7 @@ body:has(.Gstore-header-shell) {
 	transform-origin: center;
 }
 
-.Gstore-header__menu-text {
+.Gstore-header__menu-toggle .Gstore-header__menu-text {
 	font-size: 0.9375rem;
 	font-weight: 700;
 	letter-spacing: 0.05em;
@@ -293,6 +300,9 @@ body:has(.Gstore-header-shell) {
 	text-transform: uppercase;
 	white-space: nowrap;
 	color: var(--gstore-color-text-light, #fff);
+	width: auto;
+	height: auto;
+	background-color: transparent;
 }
 
 .Gstore-header__menu-toggle:focus {

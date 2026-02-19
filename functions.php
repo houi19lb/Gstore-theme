@@ -898,13 +898,19 @@ function gstore_enqueue_styles() {
 	$tokens_version = get_option( 'gstore_tokens_last_updated', time() );
 	$gstore_version = $theme_version . '.' . $tokens_version;
 
-	// Tema pai
-	wp_enqueue_style(
-		$parent_handle,
-		get_template_directory_uri() . '/style.css',
-		array(),
-		$parent_theme->get( 'Version' )
-	);
+	// Tema pai (só carrega se Gstore for realmente child theme do TT5,
+	// caso contrário get_template_directory_uri() aponta para o próprio Gstore
+	// e o style.css seria carregado duas vezes com versões diferentes)
+	if ( is_child_theme() && $parent_theme->exists() ) {
+		wp_enqueue_style(
+			$parent_handle,
+			get_template_directory_uri() . '/style.css',
+			array(),
+			$parent_theme->get( 'Version' )
+		);
+	} else {
+		wp_register_style( $parent_handle, false );
+	}
 
 	// Font Awesome - Carregado de forma não bloqueante
 	// Usa técnica de media="print" + onload para evitar render blocking
