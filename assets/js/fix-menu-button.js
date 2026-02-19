@@ -1,8 +1,11 @@
 /**
- * Script de correção IMEDIATA do botão MENU do header.
+ * Script de diagnóstico PROFUNDO do botão MENU - Estado NORMAL e ATIVO.
  * Cole no Console do navegador (F12 > Console) e pressione Enter.
  *
- * Corrige o botão hamburger E a animação para X quando o menu lateral abre.
+ * 1. Captura estilos no estado normal (hamburger fechado)
+ * 2. Simula clique para abrir o menu (estado is-active)
+ * 3. Captura estilos no estado ativo (X aberto)
+ * 4. Mostra tudo lado a lado para comparação entre sites
  */
 (function() {
   'use strict';
@@ -12,137 +15,113 @@
       info:  'color:#2196F3;font-weight:bold',
       ok:    'color:#4CAF50;font-weight:bold',
       warn:  'color:#FF9800;font-weight:bold',
-      error: 'color:#f44336;font-weight:bold'
+      error: 'color:#f44336;font-weight:bold',
+      data:  'color:#9C27B0'
     };
-    console.log('%c[GStore Fix] ' + msg, styles[type] || styles.info);
+    console.log('%c[Diag] ' + msg, styles[type] || styles.info);
   };
 
-  log('Aplicando correção do botão MENU + animação X...', 'info');
+  function captureAll(label) {
+    log('========== ' + label + ' ==========', 'info');
 
-  var btn = document.querySelector('.Gstore-header__menu-toggle');
-  if (!btn) {
-    log('Botão .Gstore-header__menu-toggle não encontrado.', 'error');
-    return;
-  }
+    var btn = document.querySelector('.Gstore-header__menu-toggle');
+    if (!btn) { log('Botão não encontrado!', 'error'); return; }
 
-  var fixCSS = document.createElement('style');
-  fixCSS.id = 'gstore-menu-fix';
-  fixCSS.textContent = [
-    '/* === Estado normal (hamburger) === */',
+    var icon = btn.querySelector('.Gstore-header__menu-icon');
+    var lines = btn.querySelectorAll('.Gstore-header__menu-line');
+    var textSpan = btn.querySelector('.Gstore-header__menu-text');
 
-    '.Gstore-header__menu-toggle {',
-    '  display: flex !important;',
-    '  flex-direction: row !important;',
-    '  align-items: center !important;',
-    '  justify-content: center !important;',
-    '  gap: 6px !important;',
-    '  height: 34px;',
-    '  min-width: 72px;',
-    '  padding: 0 8px;',
-    '}',
-
-    '.Gstore-header__menu-toggle .Gstore-header__menu-icon {',
-    '  display: inline-flex !important;',
-    '  flex-direction: column !important;',
-    '  justify-content: center !important;',
-    '  gap: 3px !important;',
-    '  width: auto !important;',
-    '  height: auto !important;',
-    '  background-color: transparent !important;',
-    '}',
-
-    '.Gstore-header__menu-toggle .Gstore-header__menu-line {',
-    '  display: block !important;',
-    '  width: 14px !important;',
-    '  height: 3px !important;',
-    '  border-radius: 2px;',
-    '  background-color: var(--gstore-color-accent, #ff5c00) !important;',
-    '  opacity: 0.85;',
-    '  transition: transform 0.3s ease, opacity 0.3s ease;',
-    '  transform-origin: center;',
-    '}',
-
-    '.Gstore-header__menu-toggle .Gstore-header__menu-text {',
-    '  font-size: 0.9375rem !important;',
-    '  font-weight: 700 !important;',
-    '  letter-spacing: 0.05em;',
-    '  line-height: 1 !important;',
-    '  text-transform: uppercase;',
-    '  white-space: nowrap;',
-    '  color: var(--gstore-color-text-light, #fff) !important;',
-    '  width: auto !important;',
-    '  height: auto !important;',
-    '  background-color: transparent !important;',
-    '}',
-
-    '',
-    '/* === Estado ativo (X) === */',
-
-    '.Gstore-header__menu-toggle.is-active .Gstore-header__menu-icon {',
-    '  display: inline-flex !important;',
-    '  flex-direction: column !important;',
-    '  gap: 3px !important;',
-    '  width: auto !important;',
-    '  height: auto !important;',
-    '  background-color: transparent !important;',
-    '}',
-
-    '.Gstore-header__menu-toggle.is-active .Gstore-header__menu-line {',
-    '  width: 14px !important;',
-    '  height: 3px !important;',
-    '  background-color: var(--gstore-color-accent, #ff5c00) !important;',
-    '}',
-
-    '.Gstore-header__menu-toggle.is-active .Gstore-header__menu-line:nth-child(1) {',
-    '  transform: translateY(5px) rotate(45deg) !important;',
-    '}',
-
-    '.Gstore-header__menu-toggle.is-active .Gstore-header__menu-line:nth-child(2) {',
-    '  opacity: 0 !important;',
-    '}',
-
-    '.Gstore-header__menu-toggle.is-active .Gstore-header__menu-line:nth-child(3) {',
-    '  transform: translateY(-5px) rotate(-45deg) !important;',
-    '}',
-
-    '.Gstore-header__menu-toggle.is-active .Gstore-header__menu-text {',
-    '  width: auto !important;',
-    '  height: auto !important;',
-    '  background-color: transparent !important;',
-    '  color: var(--gstore-color-text-light, #fff) !important;',
-    '}'
-  ].join('\n');
-
-  var old = document.getElementById('gstore-menu-fix');
-  if (old) old.remove();
-  document.head.appendChild(fixCSS);
-
-  log('CSS injetado com sucesso.', 'ok');
-
-  // Verifica estado atual
-  var cs = window.getComputedStyle(btn);
-  if (cs.flexDirection === 'row') {
-    log('flex-direction: row - OK', 'ok');
-  } else {
-    log('flex-direction: ' + cs.flexDirection + ' - PROBLEMA', 'error');
-  }
-
-  var iconEl = btn.querySelector('.Gstore-header__menu-icon');
-  if (iconEl) {
-    var ics = window.getComputedStyle(iconEl);
-    if (parseInt(ics.height) > 5) {
-      log('menu-icon height: ' + ics.height + ' - OK', 'ok');
-    } else {
-      log('menu-icon height: ' + ics.height + ' - PROBLEMA (deveria ser ~15px)', 'error');
+    function dump(el, name) {
+      if (!el) { log(name + ': NÃO EXISTE', 'error'); return; }
+      var cs = window.getComputedStyle(el);
+      var r = el.getBoundingClientRect();
+      log(name, 'warn');
+      log('  classes: ' + el.className, 'data');
+      log('  display: ' + cs.display + ' | visibility: ' + cs.visibility + ' | opacity: ' + cs.opacity, 'data');
+      log('  flexDir: ' + cs.flexDirection + ' | alignItems: ' + cs.alignItems + ' | justifyContent: ' + cs.justifyContent, 'data');
+      log('  width: ' + cs.width + ' | height: ' + cs.height + ' | gap: ' + cs.gap, 'data');
+      log('  padding: ' + cs.padding + ' | margin: ' + cs.margin, 'data');
+      log('  bgColor: ' + cs.backgroundColor + ' | color: ' + cs.color, 'data');
+      log('  transform: ' + cs.transform, 'data');
+      log('  rect: ' + Math.round(r.left) + ',' + Math.round(r.top) + ' ' + Math.round(r.width) + 'x' + Math.round(r.height), 'data');
     }
+
+    dump(btn, 'BUTTON');
+    dump(icon, 'ICON (.Gstore-header__menu-icon)');
+    for (var i = 0; i < lines.length; i++) {
+      dump(lines[i], 'LINE[' + (i+1) + '] (.Gstore-header__menu-line)');
+    }
+    dump(textSpan, 'TEXT (.Gstore-header__menu-text)');
+
+    // Capturar regras CSS que afetam o botão no estado atual
+    log('--- CSS Rules com "is-active" ou "menu-toggle" ---', 'info');
+    try {
+      var sheets = document.styleSheets;
+      for (var s = 0; s < sheets.length; s++) {
+        try {
+          var rules = sheets[s].cssRules || sheets[s].rules;
+          if (!rules) continue;
+          function scanRules(ruleList, mediaCtx) {
+            for (var r = 0; r < ruleList.length; r++) {
+              var rule = ruleList[r];
+              if (rule.type === CSSRule.MEDIA_RULE) {
+                var mq = rule.conditionText || rule.media.mediaText;
+                if (window.matchMedia(mq).matches) {
+                  scanRules(rule.cssRules, '@media(' + mq + ')');
+                }
+                continue;
+              }
+              if (!rule.selectorText) continue;
+              var sel = rule.selectorText;
+              var isRelevant = (sel.indexOf('is-active') !== -1 && sel.indexOf('menu') !== -1) ||
+                               (sel.indexOf('menu-toggle') !== -1 && sel.indexOf('span') !== -1);
+              if (isRelevant) {
+                var src = sheets[s].href ? sheets[s].href.split('/').pop().split('?')[0] : 'inline';
+                log('  [' + src + ']' + (mediaCtx ? ' ' + mediaCtx : ''), 'data');
+                log('    ' + rule.cssText.substring(0, 250), 'data');
+              }
+            }
+          }
+          scanRules(rules, null);
+        } catch(e) {}
+      }
+    } catch(e) {
+      log('Erro ao ler stylesheets: ' + e.message, 'error');
+    }
+
+    // Verificar inline styles
+    log('--- Inline styles ---', 'info');
+    log('  btn.style: "' + btn.style.cssText + '"', 'data');
+    if (icon) log('  icon.style: "' + icon.style.cssText + '"', 'data');
+    for (var j = 0; j < lines.length; j++) {
+      log('  line[' + (j+1) + '].style: "' + lines[j].style.cssText + '"', 'data');
+    }
+    if (textSpan) log('  text.style: "' + textSpan.style.cssText + '"', 'data');
   }
 
-  var lineEls = btn.querySelectorAll('.Gstore-header__menu-line');
-  if (lineEls.length === 3) {
-    var lcs = window.getComputedStyle(lineEls[0]);
-    log('menu-line: ' + lcs.width + ' x ' + lcs.height + ', bg: ' + lcs.backgroundColor, 'ok');
-  }
+  // Captura no estado atual
+  var btn = document.querySelector('.Gstore-header__menu-toggle');
+  if (!btn) { log('Botão não encontrado!', 'error'); return; }
 
-  log('Correção aplicada! Teste abrir/fechar o menu lateral.', 'ok');
-  log('Para correção permanente: atualize o tema e limpe o cache do servidor.', 'info');
+  var isOpen = btn.classList.contains('is-active');
+
+  if (isOpen) {
+    captureAll('ESTADO ATIVO (menu aberto)');
+    log('O menu já está aberto. Feche e rode de novo para capturar ambos os estados.', 'info');
+  } else {
+    captureAll('ESTADO NORMAL (menu fechado)');
+
+    log('Abrindo menu para capturar estado ativo...', 'info');
+    btn.click();
+
+    setTimeout(function() {
+      captureAll('ESTADO ATIVO (menu aberto)');
+
+      log('Fechando menu...', 'info');
+      btn.click();
+
+      log('======================================', 'info');
+      log('PRONTO! Cole os resultados para comparação.', 'ok');
+    }, 500);
+  }
 })();
