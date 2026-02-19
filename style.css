@@ -9198,7 +9198,8 @@ body:has(.Gstore-catalog-shell--light) main {
 	}
 
 	/* Filtros retráteis no mobile */
-	.Gstore-catalog-shell--light .Gstore-catalog-sidebar__inner--collapsible {
+	.Gstore-catalog-shell--light .Gstore-catalog-sidebar__inner--collapsible,
+	.Gstore-catalog-sidebar__inner--collapsible.Gstore-catalog-sidebar--detached {
 		position: fixed;
 		top: 0;
 		left: 0;
@@ -9219,9 +9220,12 @@ body:has(.Gstore-catalog-shell--light) main {
 		box-shadow: 2px 0 8px rgba(0, 0, 0, 0.15);
 		margin: 0;
 		padding: 24px 20px;
+		transition: transform 0.16s ease, opacity 0.16s ease;
+		will-change: transform, opacity;
 	}
 
-	.Gstore-catalog-shell--light .Gstore-catalog-sidebar__inner--collapsible.is-open {
+	.Gstore-catalog-shell--light .Gstore-catalog-sidebar__inner--collapsible.is-open,
+	.Gstore-catalog-sidebar__inner--collapsible.Gstore-catalog-sidebar--detached.is-open {
 		transform: translateX(0);
 		opacity: 1;
 		visibility: visible;
