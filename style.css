@@ -8544,23 +8544,21 @@ body:has(.Gstore-catalog-shell--light) main {
 
 /* Overlay para mobile */
 .Gstore-catalog-filters-overlay {
-	display: none !important;
+	display: none;
 	position: fixed;
 	top: 0;
 	left: 0;
 	right: 0;
 	bottom: 0;
-	background: transparent;
-	z-index: 2147483000;
-	opacity: 0 !important;
-	transition: none;
-	pointer-events: none;
+	background: rgba(0, 0, 0, 0.5);
+	z-index: 9998;
+	opacity: 0;
+	transition: opacity 0.3s ease;
 }
 
 .Gstore-catalog-filters-overlay.is-active {
-	display: none !important;
-	opacity: 0 !important;
-	pointer-events: none;
+	display: block;
+	opacity: 1;
 }
 
 .Gstore-catalog-shell--light .Gstore-catalog-sidebar__title {
@@ -9178,9 +9176,9 @@ body:has(.Gstore-catalog-shell--light) main {
 	}
 
 	.Gstore-catalog-shell--light .Gstore-catalog-sidebar {
-		flex-basis: 0 !important;
-		width: 0;
-		margin-bottom: 0;
+		flex-basis: 100% !important;
+		width: 100%;
+		margin-bottom: 24px;
 	}
 
 	.Gstore-catalog-shell--light .Gstore-catalog-sidebar__inner {
@@ -9200,94 +9198,45 @@ body:has(.Gstore-catalog-shell--light) main {
 	}
 
 	/* Filtros retráteis no mobile */
-	.Gstore-catalog-shell--light .Gstore-catalog-sidebar__inner--collapsible,
-	.Gstore-catalog-mobile-sheet {
+	.Gstore-catalog-shell--light .Gstore-catalog-sidebar__inner--collapsible {
 		position: fixed;
-		left: 0;
-		right: 0;
-		bottom: 0;
-		top: auto;
-		width: 100%;
-		max-width: 640px;
-		max-height: 88vh;
-		max-height: 88dvh;
-		z-index: 2147483001;
-		overflow-y: auto;
-		overscroll-behavior: contain;
-		-webkit-overflow-scrolling: touch;
-		transform: translateY(104%);
-		opacity: 1;
-		visibility: hidden;
-		pointer-events: none;
-		background: #ffffff;
-		border: 1px solid var(--gray-border, #e6e6e6);
-		border-bottom: none;
-		border-radius: 26px 26px 0 0;
-		box-shadow: 0 -16px 42px rgba(0, 0, 0, 0.22);
-		margin: 0 auto;
-		padding: 10px 16px calc(12px + env(safe-area-inset-bottom));
-		transition: none !important;
-		filter: none !important;
-		backdrop-filter: none !important;
-	}
-
-	.Gstore-catalog-shell--light .Gstore-catalog-sidebar__inner--collapsible.is-open,
-	.Gstore-catalog-mobile-sheet.is-open {
-		transform: translateY(0);
-		visibility: visible;
-		pointer-events: auto;
-	}
-
-	.Gstore-catalog-shell--light .Gstore-catalog-sidebar__inner--collapsible::before,
-	.Gstore-catalog-mobile-sheet::before {
-		content: '';
-		display: block;
-		width: 54px;
-		height: 6px;
-		border-radius: 999px;
-		background: var(--gray-border, #e6e6e6);
-		margin: 2px auto 10px;
-	}
-
-	.Gstore-catalog-sidebar__title-wrapper {
-		position: sticky;
 		top: 0;
-		z-index: 2;
-		background: #ffffff;
-		padding-top: 4px;
-		margin-bottom: 10px;
+		left: 0;
+		width: 85%;
+		max-width: 320px;
+		height: 100vh;
+		height: 100dvh;
+		/* Suporte para mobile browsers */
+		z-index: 9999;
+		overflow-y: auto;
+		transform: translateX(-100%);
+		opacity: 0;
+		visibility: hidden;
+		border-radius: 0;
+		border-left: none;
+		border-top: none;
+		border-bottom: none;
+		box-shadow: 2px 0 8px rgba(0, 0, 0, 0.15);
+		margin: 0;
+		padding: 24px 20px;
 	}
 
-	.Gstore-catalog-filter-section {
-		padding: 12px 0;
+	.Gstore-catalog-shell--light .Gstore-catalog-sidebar__inner--collapsible.is-open {
+		transform: translateX(0);
+		opacity: 1;
+		visibility: visible;
 	}
-
-	.Gstore-catalog-shell--light .gstore-category-filter__tree-container,
-	.Gstore-catalog-mobile-sheet .gstore-category-filter__tree-container {
-		max-height: min(45vh, 420px);
-	}
-
-	.Gstore-catalog-shell--light .gstore-category-filter__actions,
-	.Gstore-catalog-mobile-sheet .gstore-category-filter__actions {
-		position: sticky;
-		bottom: 0;
-		background: #ffffff;
-		padding: 12px 0 calc(12px + env(safe-area-inset-bottom));
-		margin-top: 12px;
-		border-top: 1px solid var(--gray-border, #e6e6e6);
-	}
-
 
 	.Gstore-catalog-sidebar__close {
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		width: 36px;
-		height: 36px;
+		width: 32px;
+		height: 32px;
 		padding: 0;
 		background: transparent;
 		border: none;
-		border-radius: 10px;
+		border-radius: 4px;
 		cursor: pointer;
 		color: var(--text-main, #1a1a1a);
 		transition: background 0.2s ease;

@@ -1,7 +1,11 @@
 /**
- * Catalog filters toggle (mobile)
- * Bottom-sheet behavior based on existing catalog sidebar.
+ * ==========================================
+ * CATALOG FILTERS TOGGLE - Mobile
+ * ==========================================
+ * Controla a abertura/fechamento dos filtros
+ * na versao mobile do catalogo.
  */
+
 (function () {
 	'use strict';
 
@@ -16,51 +20,14 @@
 		const sidebar = document.querySelector('.Gstore-catalog-sidebar__inner--collapsible');
 		const closeButton = document.querySelector('.Gstore-catalog-sidebar__close');
 		const overlay = ensureOverlay();
-		let lockCloseUntil = 0;
-		const sidebarOriginalParent = sidebar ? sidebar.parentNode : null;
-		const sidebarOriginalNextSibling = sidebar ? sidebar.nextSibling : null;
-		let mountedToBody = !!(sidebar && sidebar.parentNode === document.body);
 
 		initDynamicBreadcrumb();
-
-		// Estado defensivo inicial para evitar backdrop preso por cache de navegação.
-		overlay.classList.remove('is-active');
-		overlay.setAttribute('aria-hidden', 'true');
-		document.documentElement.style.overflow = '';
-		document.body.style.overflow = '';
 
 		if (!toggleButton || !sidebar) {
 			return;
 		}
 
-		function isMobileViewport() {
-			return window.innerWidth <= 1024;
-		}
-
-		function mountSidebarToBodyIfNeeded() {
-			if (!isMobileViewport() || mountedToBody || !sidebarOriginalParent) {
-				return;
-			}
-			sidebar.classList.add('Gstore-catalog-mobile-sheet');
-			document.body.appendChild(sidebar);
-			mountedToBody = true;
-		}
-
-		function restoreSidebarToLayoutIfNeeded() {
-			if (!mountedToBody || !sidebarOriginalParent) {
-				return;
-			}
-			if (sidebarOriginalNextSibling && sidebarOriginalNextSibling.parentNode === sidebarOriginalParent) {
-				sidebarOriginalParent.insertBefore(sidebar, sidebarOriginalNextSibling);
-			} else {
-				sidebarOriginalParent.appendChild(sidebar);
-			}
-			sidebar.classList.remove('Gstore-catalog-mobile-sheet');
-			mountedToBody = false;
-		}
-
 		function openFilters() {
-			mountSidebarToBodyIfNeeded();
 			sidebar.classList.add('is-open');
 			toggleButton.classList.add('is-active');
 			toggleButton.setAttribute('aria-expanded', 'true');
@@ -78,40 +45,23 @@
 			overlay.setAttribute('aria-hidden', 'true');
 			document.documentElement.style.overflow = '';
 			document.body.style.overflow = '';
-			restoreSidebarToLayoutIfNeeded();
 		}
 
 		toggleButton.addEventListener('click', function (e) {
 			e.preventDefault();
 			e.stopPropagation();
 
-			lockCloseUntil = Date.now() + 220;
-
 			if (sidebar.classList.contains('is-open')) {
 				closeFilters();
-				return;
+			} else {
+				openFilters();
 			}
-
-			openFilters();
 		});
 
-		sidebar.addEventListener('click', function (e) {
-			e.stopPropagation();
-		});
-
-		document.addEventListener('pointerdown', function (e) {
-			if (!sidebar.classList.contains('is-open')) {
-				return;
-			}
-			if (Date.now() < lockCloseUntil) {
-				return;
-			}
-			if (sidebar.contains(e.target) || toggleButton.contains(e.target)) {
-				return;
-			}
+		overlay.addEventListener('click', function (e) {
 			e.preventDefault();
 			closeFilters();
-		}, true);
+		});
 
 		if (closeButton) {
 			closeButton.addEventListener('click', function (e) {
@@ -134,14 +84,12 @@
 				if (window.innerWidth > 1024 && sidebar.classList.contains('is-open')) {
 					closeFilters();
 				}
-				if (window.innerWidth > 1024) {
-					restoreSidebarToLayoutIfNeeded();
-				}
-			}, 160);
+			}, 200);
 		});
 
-		// Estado inicial defensivo: evita overlay/states "presos" de cache/back-forward.
-		closeFilters();
+		if (window.innerWidth > 1024) {
+			closeFilters();
+		}
 	}
 
 	function ensureOverlay() {
@@ -155,6 +103,10 @@
 		return overlay;
 	}
 
+	/**
+	 * Inicializa o breadcrumb dinamico
+	 * Preenche o nome da categoria/termo atual no breadcrumb
+	 */
 	function initDynamicBreadcrumb() {
 		const dynamicBreadcrumb = document.querySelector('.Gstore-breadcrumb--dynamic');
 		if (!dynamicBreadcrumb) {
@@ -163,6 +115,7 @@
 
 		const currentTermSpan = dynamicBreadcrumb.querySelector('.Gstore-breadcrumb__current-term');
 		const currentSep = dynamicBreadcrumb.querySelector('.Gstore-breadcrumb__current-sep');
+
 		if (!currentTermSpan) {
 			return;
 		}
@@ -170,7 +123,8 @@
 		let termName = '';
 		const archiveTitle = document.querySelector('.Gstore-catalog-title');
 		if (archiveTitle) {
-			termName = archiveTitle.textContent.trim().replace(/^(Categoria:|Category:|Arquivo:|Archive:)\s*/i, '');
+			termName = archiveTitle.textContent.trim();
+			termName = termName.replace(/^(Categoria:|Category:|Arquivo:|Archive:)\s*/i, '');
 		}
 
 		if (!termName) {
@@ -188,12 +142,11 @@
 
 		if (termName) {
 			currentTermSpan.textContent = termName;
-			return;
+		} else {
+			if (currentSep) {
+				currentSep.style.display = 'none';
+			}
+			currentTermSpan.style.display = 'none';
 		}
-
-		if (currentSep) {
-			currentSep.style.display = 'none';
-		}
-		currentTermSpan.style.display = 'none';
 	}
 })();
