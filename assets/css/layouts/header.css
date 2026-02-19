@@ -310,18 +310,39 @@ body:has(.Gstore-header-shell) {
 }
 
 /* Animação do botão hamburger para X quando ativo */
-@media (max-width: 767px) {
-	.Gstore-header__menu-toggle.is-active .Gstore-header__menu-line:nth-child(1) {
-		transform: translateY(5px) rotate(45deg);
-	}
+.Gstore-header__menu-toggle.is-active .Gstore-header__menu-icon {
+	display: inline-flex;
+	flex-direction: column;
+	justify-content: center;
+	gap: 3px;
+	width: auto;
+	height: auto;
+	background-color: transparent;
+}
 
-	.Gstore-header__menu-toggle.is-active .Gstore-header__menu-line:nth-child(2) {
-		opacity: 0;
-	}
+.Gstore-header__menu-toggle.is-active .Gstore-header__menu-line {
+	width: 14px;
+	height: 3px;
+	background-color: var(--gstore-color-accent, #ff5c00);
+}
 
-	.Gstore-header__menu-toggle.is-active .Gstore-header__menu-line:nth-child(3) {
-		transform: translateY(-5px) rotate(-45deg);
-	}
+.Gstore-header__menu-toggle.is-active .Gstore-header__menu-line:nth-child(1) {
+	transform: translateY(5px) rotate(45deg);
+}
+
+.Gstore-header__menu-toggle.is-active .Gstore-header__menu-line:nth-child(2) {
+	opacity: 0;
+}
+
+.Gstore-header__menu-toggle.is-active .Gstore-header__menu-line:nth-child(3) {
+	transform: translateY(-5px) rotate(-45deg);
+}
+
+.Gstore-header__menu-toggle.is-active .Gstore-header__menu-text {
+	width: auto;
+	height: auto;
+	background-color: transparent;
+	color: var(--gstore-color-text-light, #fff);
 }
 
 /* Mini Cart */
