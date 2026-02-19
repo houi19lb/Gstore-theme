@@ -8550,10 +8550,10 @@ body:has(.Gstore-catalog-shell--light) main {
 	left: 0;
 	right: 0;
 	bottom: 0;
-	background: rgba(0, 0, 0, 0.5);
-	z-index: 9998;
+	background: rgba(0, 0, 0, 0.42);
+	z-index: 9990;
 	opacity: 0;
-	transition: opacity 0.3s ease;
+	transition: none;
 }
 
 .Gstore-catalog-filters-overlay.is-active {
@@ -9203,11 +9203,13 @@ body:has(.Gstore-catalog-shell--light) main {
 		height: 100vh;
 		height: 100dvh;
 		/* Suporte para mobile browsers */
-		z-index: 9999;
+		z-index: 10020;
 		overflow-y: auto;
 		transform: translateX(-100%);
 		opacity: 0;
 		visibility: hidden;
+		pointer-events: none;
+		background: #ffffff;
 		border-radius: 0;
 		border-left: none;
 		border-top: none;
@@ -9215,12 +9217,16 @@ body:has(.Gstore-catalog-shell--light) main {
 		box-shadow: 2px 0 8px rgba(0, 0, 0, 0.15);
 		margin: 0;
 		padding: 24px 20px;
+		transition: none !important;
+		filter: none !important;
+		backdrop-filter: none !important;
 	}
 
 	.Gstore-catalog-shell--light .Gstore-catalog-sidebar__inner--collapsible.is-open {
 		transform: translateX(0);
 		opacity: 1;
 		visibility: visible;
+		pointer-events: auto;
 	}
 
 

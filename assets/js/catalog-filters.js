@@ -22,6 +22,7 @@
 		const closeButton = document.querySelector('.Gstore-catalog-sidebar__close');
 		const overlay = document.createElement('div');
 		overlay.className = 'Gstore-catalog-filters-overlay';
+		let openedAt = 0;
 		
 		// Inicializa breadcrumb dinâmico
 		initDynamicBreadcrumb();
@@ -35,6 +36,7 @@
 
 		// Função para abrir filtros
 		function openFilters() {
+			openedAt = Date.now();
 			sidebar.classList.add('is-open');
 			toggleButton.classList.add('is-active');
 			toggleButton.setAttribute('aria-expanded', 'true');
@@ -64,7 +66,20 @@
 		});
 
 		// Fechar ao clicar no overlay
-		overlay.addEventListener('click', closeFilters);
+		overlay.addEventListener('click', function(e) {
+			if (Date.now() - openedAt < 220) {
+				return;
+			}
+			if (e.target !== overlay) {
+				return;
+			}
+			closeFilters();
+		});
+
+		// Nunca fechar ao clicar dentro da sidebar.
+		sidebar.addEventListener('click', function(e) {
+			e.stopPropagation();
+		});
 
 		// Fechar ao clicar no botão de fechar (se existir)
 		if (closeButton) {
