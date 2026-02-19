@@ -1340,16 +1340,14 @@ function gstore_enqueue_scripts() {
 		}
 		
 		if ( $is_catalog_page ) {
-		/*
-		wp_enqueue_script(
-			'gstore-catalog-filters',
-			get_theme_file_uri( 'assets/js/catalog-filters.js' ),
-			array(),
-			wp_get_theme()->get( 'Version' ),
-			true
-		);
-		*/
-	}
+			wp_enqueue_script(
+				'gstore-catalog-filters',
+				get_theme_file_uri( 'assets/js/catalog-filters.js' ),
+				array(),
+				wp_get_theme()->get( 'Version' ),
+				true
+			);
+		}
 	
 	/*
 	wp_enqueue_script(
