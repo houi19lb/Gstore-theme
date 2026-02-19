@@ -8551,14 +8551,16 @@ body:has(.Gstore-catalog-shell--light) main {
 	right: 0;
 	bottom: 0;
 	background: rgba(0, 0, 0, 0.36);
-	z-index: 10000;
+	z-index: 2147483000;
 	opacity: 0;
 	transition: none;
+	pointer-events: none;
 }
 
 .Gstore-catalog-filters-overlay.is-active {
 	display: block;
 	opacity: 1;
+	pointer-events: none;
 }
 
 .Gstore-catalog-shell--light .Gstore-catalog-sidebar__title {
@@ -9208,7 +9210,7 @@ body:has(.Gstore-catalog-shell--light) main {
 		max-width: 640px;
 		max-height: 88vh;
 		max-height: 88dvh;
-		z-index: 10010;
+		z-index: 2147483001;
 		overflow-y: auto;
 		overscroll-behavior: contain;
 		-webkit-overflow-scrolling: touch;

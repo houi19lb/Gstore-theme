@@ -1344,7 +1344,7 @@ function gstore_enqueue_scripts() {
 				'gstore-catalog-filters',
 				get_theme_file_uri( 'assets/js/catalog-filters.js' ),
 				array(),
-				wp_get_theme()->get( 'Version' ),
+				(string) @filemtime( get_theme_file_path( 'assets/js/catalog-filters.js' ) ),
 				true
 			);
 		}
