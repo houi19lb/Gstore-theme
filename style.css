@@ -8533,7 +8533,8 @@ body:has(.Gstore-catalog-shell--light) main {
 	flex-grow: 0;
 }
 
-.Gstore-catalog-shell--light .Gstore-catalog-sidebar__inner {
+.Gstore-catalog-shell--light .Gstore-catalog-sidebar__inner,
+.Gstore-catalog-sidebar__inner.Gstore-catalog-sidebar--detached {
 	background: #ffffff;
 	border: 1px solid var(--gray-border, #e6e6e6);
 	border-radius: var(--gstore-radius-base, 4px);
@@ -8550,15 +8551,17 @@ body:has(.Gstore-catalog-shell--light) main {
 	left: 0;
 	right: 0;
 	bottom: 0;
-	background: rgba(0, 0, 0, 0.5);
+	background: rgba(0, 0, 0, 0.32);
 	z-index: 9998;
 	opacity: 0;
+	pointer-events: none;
 	transition: opacity 0.3s ease;
 }
 
 .Gstore-catalog-filters-overlay.is-active {
 	display: block;
 	opacity: 1;
+	pointer-events: auto;
 }
 
 .Gstore-catalog-shell--light .Gstore-catalog-sidebar__title {
@@ -9209,18 +9212,24 @@ body:has(.Gstore-catalog-shell--light) main {
 		height: 100dvh;
 		/* Suporte para mobile browsers */
 		z-index: 9999;
+		background: #ffffff;
+		color: var(--text-main, #1a1a1a);
 		overflow-y: auto;
 		transform: translateX(-100%);
 		opacity: 0;
 		visibility: hidden;
+		pointer-events: none;
 		border-radius: 0;
 		border-left: none;
 		border-top: none;
 		border-bottom: none;
 		box-shadow: 2px 0 8px rgba(0, 0, 0, 0.15);
 		margin: 0;
-		padding: 24px 20px;
-		transition: transform 0.16s ease, opacity 0.16s ease;
+		padding: 16px;
+		box-sizing: border-box;
+		-webkit-overflow-scrolling: touch;
+		overscroll-behavior: contain;
+		transition: transform 0.14s ease, opacity 0.14s ease;
 		will-change: transform, opacity;
 	}
 
@@ -9229,6 +9238,24 @@ body:has(.Gstore-catalog-shell--light) main {
 		transform: translateX(0);
 		opacity: 1;
 		visibility: visible;
+		pointer-events: auto;
+	}
+
+	.Gstore-catalog-sidebar__inner--collapsible .Gstore-catalog-sidebar__title-wrapper {
+		margin-bottom: 8px;
+		padding-bottom: 8px;
+	}
+
+	.Gstore-catalog-sidebar__inner--collapsible .Gstore-catalog-filter-section {
+		padding: 10px 0;
+	}
+
+	.Gstore-catalog-sidebar__inner--collapsible .Gstore-catalog-sidebar__subtitle {
+		margin-bottom: 8px;
+	}
+
+	.Gstore-catalog-sidebar__inner--collapsible .wp-block-spacer {
+		height: 8px !important;
 	}
 
 	.Gstore-catalog-sidebar__close {

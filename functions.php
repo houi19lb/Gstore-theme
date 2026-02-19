@@ -1012,19 +1012,23 @@ function gstore_enqueue_styles() {
 	);
 
 	// Filtro de Categorias Marketplace
+	$category_filter_css_file = get_theme_file_path( 'assets/css/category-filter.css' );
+	$category_filter_css_version = file_exists( $category_filter_css_file ) ? (string) filemtime( $category_filter_css_file ) : $theme_version;
 	wp_enqueue_style(
 		'gstore-category-filter',
 		get_theme_file_uri( 'assets/css/category-filter.css' ),
 		array( 'gstore-style' ),
-		$theme_version
+		$category_filter_css_version
 	);
 
 	// Filtro de Categorias Marketplace - JS
+	$category_filter_js_file = get_theme_file_path( 'assets/js/category-filter.js' );
+	$category_filter_js_version = file_exists( $category_filter_js_file ) ? (string) filemtime( $category_filter_js_file ) : $theme_version;
 	wp_enqueue_script(
 		'gstore-category-filter-js',
 		get_theme_file_uri( 'assets/js/category-filter.js' ),
 		array(),
-		$theme_version,
+		$category_filter_js_version,
 		true
 	);
 }

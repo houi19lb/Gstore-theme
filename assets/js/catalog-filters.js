@@ -83,7 +83,6 @@
 			toggleButton.classList.remove('is-active');
 			toggleButton.setAttribute('aria-expanded', 'false');
 			resetGlobalState();
-			restoreSidebarIfNeeded();
 		}
 
 		toggleButton.addEventListener('click', function (e) {
@@ -139,6 +138,9 @@
 		});
 
 		closeFilters();
+		if (isMobileViewport()) {
+			detachSidebarIfNeeded();
+		}
 	}
 
 	function ensureOverlay() {
