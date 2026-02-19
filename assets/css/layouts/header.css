@@ -309,8 +309,12 @@ body:has(.Gstore-header-shell) {
 	outline: none;
 }
 
-/* Animação do botão hamburger para X quando ativo */
-.Gstore-header__menu-toggle.is-active .Gstore-header__menu-icon {
+/* Animação do botão hamburger para X quando ativo.
+ * Seletores usam "span.Class" (0,3,1) para vencer regras cacheadas
+ * legadas que usavam "span:nth-child(N)" (0,3,1) nos filhos diretos,
+ * atingindo o container do ícone e o texto por engano.
+ */
+.Gstore-header__menu-toggle.is-active span.Gstore-header__menu-icon {
 	display: inline-flex;
 	flex-direction: column;
 	justify-content: center;
@@ -318,31 +322,36 @@ body:has(.Gstore-header-shell) {
 	width: auto;
 	height: auto;
 	background-color: transparent;
+	transform: none;
+	opacity: 1;
 }
 
-.Gstore-header__menu-toggle.is-active .Gstore-header__menu-line {
+.Gstore-header__menu-toggle.is-active span.Gstore-header__menu-line {
 	width: 14px;
 	height: 3px;
 	background-color: var(--gstore-color-accent, #ff5c00);
 }
 
-.Gstore-header__menu-toggle.is-active .Gstore-header__menu-line:nth-child(1) {
+.Gstore-header__menu-toggle.is-active span.Gstore-header__menu-line:nth-child(1) {
 	transform: translateY(5px) rotate(45deg);
 }
 
-.Gstore-header__menu-toggle.is-active .Gstore-header__menu-line:nth-child(2) {
+.Gstore-header__menu-toggle.is-active span.Gstore-header__menu-line:nth-child(2) {
 	opacity: 0;
+	transform: none;
 }
 
-.Gstore-header__menu-toggle.is-active .Gstore-header__menu-line:nth-child(3) {
+.Gstore-header__menu-toggle.is-active span.Gstore-header__menu-line:nth-child(3) {
 	transform: translateY(-5px) rotate(-45deg);
 }
 
-.Gstore-header__menu-toggle.is-active .Gstore-header__menu-text {
+.Gstore-header__menu-toggle.is-active span.Gstore-header__menu-text {
 	width: auto;
 	height: auto;
 	background-color: transparent;
 	color: var(--gstore-color-text-light, #fff);
+	transform: none;
+	opacity: 1;
 }
 
 /* Mini Cart */
