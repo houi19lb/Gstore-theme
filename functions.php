@@ -11775,3 +11775,41 @@ function gstore_add_neighborhood_replacement( $replacements, $args ) {
 
 // Endpoint de debug log movido para inc/class-gstore-debug-logger.php
 // Os logs são salvos em: wp-content/uploads/gstore-debug-logs/debug.log
+
+/**
+ * Garante que o botão .Gstore-header__menu-toggle sempre tenha a estrutura interna
+ * com o ícone hamburger (3 linhas) + texto MENU.
+ *
+ * Necessário porque o Editor de Site do WordPress pode limpar o HTML interno do
+ * <button> ao salvar customizações, transformando-o em <button>MENU</button>.
+ */
+add_filter( 'render_block_core/template-part', 'gstore_fix_menu_toggle_structure', 25, 1 );
+function gstore_fix_menu_toggle_structure( $content ) {
+	if ( empty( $content ) || strpos( $content, 'Gstore-header__menu-toggle' ) === false ) {
+		return $content;
+	}
+
+	$correct_inner =
+		'<span class="Gstore-header__menu-icon" aria-hidden="true">' .
+			'<span class="Gstore-header__menu-line"></span>' .
+			'<span class="Gstore-header__menu-line"></span>' .
+			'<span class="Gstore-header__menu-line"></span>' .
+		'</span>' .
+		'<span class="Gstore-header__menu-text">MENU</span>';
+
+	$pattern = '/<button([^>]*class="[^"]*Gstore-header__menu-toggle[^"]*"[^>]*)>(.*?)<\/button>/is';
+
+	if ( ! preg_match( $pattern, $content, $match ) ) {
+		return $content;
+	}
+
+	if ( strpos( $match[2], 'Gstore-header__menu-icon' ) !== false &&
+	     substr_count( $match[2], 'Gstore-header__menu-line' ) >= 3 ) {
+		return $content;
+	}
+
+	$fixed_button = '<button' . $match[1] . '>' . $correct_inner . '</button>';
+	$content = str_replace( $match[0], $fixed_button, $content );
+
+	return $content;
+}
