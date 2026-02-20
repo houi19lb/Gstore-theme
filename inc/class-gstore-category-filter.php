@@ -328,67 +328,202 @@ class GStore_Category_Filter {
 	}
 
 	/**
-	 * Carrega categorias presentes nos produtos do escopo e inclui ancestrais para manter hierarquia.
+	 * Filtra os IDs para produtos publicados.
+	 *
+	 * @param int[] $product_ids IDs.
+	 * @return int[]
+	 */
+	private function filter_published_product_ids( $product_ids ) {
+		if ( empty( $product_ids ) ) {
+			return array();
+		}
+
+		$published_ids = get_posts(
+			array(
+				'post_type'              => 'product',
+				'post_status'            => 'publish',
+				'post__in'               => $product_ids,
+				'posts_per_page'         => -1,
+				'orderby'                => 'post__in',
+				'fields'                 => 'ids',
+				'no_found_rows'          => true,
+				'cache_results'          => false,
+				'update_post_meta_cache' => false,
+				'update_post_term_cache' => false,
+			)
+		);
+
+		return array_values(
+			array_unique(
+				array_filter(
+					array_map( 'absint', is_array( $published_ids ) ? $published_ids : array() )
+				)
+			)
+		);
+	}
+
+	/**
+	 * Retorna os IDs de termos selecionados (categoria extra no filtro).
+	 *
+	 * @return int[]
+	 */
+	private function get_selected_term_ids() {
+		if ( empty( $this->selected_slugs ) ) {
+			return array();
+		}
+
+		$ids = array();
+		foreach ( $this->selected_slugs as $slug ) {
+			$term = get_term_by( 'slug', sanitize_title( $slug ), 'product_cat' );
+			if ( $term && ! is_wp_error( $term ) ) {
+				$ids[] = (int) $term->term_id;
+			}
+		}
+
+		return array_values( array_unique( array_filter( $ids ) ) );
+	}
+
+	/**
+	 * Calcula contexto de produtos/contagens para o escopo atual (scope + selecao em AND).
+	 *
+	 * @param \WP_Term $scope_term Termo de escopo.
+	 * @return array{product_ids:int[],counts:array<int,int>}
+	 */
+	private function get_scoped_context_data( $scope_term ) {
+		$scope_product_ids = $this->filter_published_product_ids( $this->get_scoped_product_ids( $scope_term ) );
+		if ( empty( $scope_product_ids ) ) {
+			return array( 'product_ids' => array(), 'counts' => array() );
+		}
+
+		$relations = wp_get_object_terms(
+			$scope_product_ids,
+			'product_cat',
+			array(
+				'fields'  => 'all_with_object_id',
+				'orderby' => 'none',
+			)
+		);
+		if ( is_wp_error( $relations ) || empty( $relations ) ) {
+			return array( 'product_ids' => array(), 'counts' => array() );
+		}
+
+		$product_terms = array();
+		foreach ( $relations as $row ) {
+			$pid = isset( $row->object_id ) ? (int) $row->object_id : 0;
+			$tid = isset( $row->term_id ) ? (int) $row->term_id : 0;
+			if ( $pid <= 0 || $tid <= 0 ) {
+				continue;
+			}
+			if ( ! isset( $product_terms[ $pid ] ) ) {
+				$product_terms[ $pid ] = array();
+			}
+			$product_terms[ $pid ][ $tid ] = true;
+		}
+
+		$selected_term_ids = $this->get_selected_term_ids();
+		$selected_sets = array();
+		foreach ( $selected_term_ids as $selected_term_id ) {
+			$set = array_merge(
+				array( (int) $selected_term_id ),
+				array_map( 'absint', get_term_children( (int) $selected_term_id, 'product_cat' ) )
+			);
+			$selected_sets[] = array_values( array_unique( array_filter( $set ) ) );
+		}
+
+		$context_product_ids = array();
+		foreach ( $scope_product_ids as $pid ) {
+			$assigned = isset( $product_terms[ $pid ] ) ? array_keys( $product_terms[ $pid ] ) : array();
+			if ( empty( $assigned ) ) {
+				continue;
+			}
+
+			$matches_all_selected = true;
+			foreach ( $selected_sets as $term_set ) {
+				if ( empty( array_intersect( $assigned, $term_set ) ) ) {
+					$matches_all_selected = false;
+					break;
+				}
+			}
+
+			if ( $matches_all_selected ) {
+				$context_product_ids[] = (int) $pid;
+			}
+		}
+
+		$context_product_ids = array_values( array_unique( array_filter( $context_product_ids ) ) );
+		if ( empty( $context_product_ids ) ) {
+			return array( 'product_ids' => array(), 'counts' => array() );
+		}
+
+		$counts = array();
+		$ancestor_cache = array();
+		foreach ( $context_product_ids as $pid ) {
+			$assigned = isset( $product_terms[ $pid ] ) ? array_map( 'intval', array_keys( $product_terms[ $pid ] ) ) : array();
+			if ( empty( $assigned ) ) {
+				continue;
+			}
+
+			$expanded = array();
+			foreach ( $assigned as $term_id ) {
+				$expanded[ $term_id ] = true;
+				if ( ! isset( $ancestor_cache[ $term_id ] ) ) {
+					$ancestor_cache[ $term_id ] = array_map( 'absint', get_ancestors( $term_id, 'product_cat', 'taxonomy' ) );
+				}
+				foreach ( $ancestor_cache[ $term_id ] as $ancestor_id ) {
+					$expanded[ (int) $ancestor_id ] = true;
+				}
+			}
+
+			foreach ( array_keys( $expanded ) as $expanded_term_id ) {
+				$expanded_term_id = (int) $expanded_term_id;
+				if ( ! isset( $counts[ $expanded_term_id ] ) ) {
+					$counts[ $expanded_term_id ] = 0;
+				}
+				$counts[ $expanded_term_id ]++;
+			}
+		}
+
+		return array(
+			'product_ids' => $context_product_ids,
+			'counts'      => $counts,
+		);
+	}
+
+	/**
+	 * Carrega categorias presentes no contexto do escopo e aplica contagem real do contexto.
 	 *
 	 * @param \WP_Term $scope_term Termo de escopo.
 	 * @return \WP_Term[]
 	 */
 	private function get_terms_for_scoped_products( $scope_term ) {
-		$product_ids = $this->get_scoped_product_ids( $scope_term );
-		if ( empty( $product_ids ) ) {
+		$context = $this->get_scoped_context_data( $scope_term );
+		$counts = isset( $context['counts'] ) && is_array( $context['counts'] ) ? $context['counts'] : array();
+		$term_ids = array_values( array_map( 'intval', array_keys( $counts ) ) );
+		if ( empty( $term_ids ) ) {
 			return array();
 		}
 
-		$terms = wp_get_object_terms(
-			$product_ids,
-			'product_cat',
+		$terms = get_terms(
 			array(
-				'hide_empty' => true,
+				'taxonomy'   => 'product_cat',
+				'include'    => $term_ids,
+				'hide_empty' => false,
 			)
 		);
 		if ( is_wp_error( $terms ) || empty( $terms ) ) {
 			return array();
 		}
 
-		$term_map = array();
+		$out = array();
 		foreach ( $terms as $term ) {
-			$term_map[ (int) $term->term_id ] = $term;
-		}
-
-		$ancestor_ids = array();
-		foreach ( $term_map as $term ) {
-			$ancestors = get_ancestors( (int) $term->term_id, 'product_cat', 'taxonomy' );
-			if ( ! empty( $ancestors ) ) {
-				$ancestor_ids = array_merge( $ancestor_ids, array_map( 'absint', $ancestors ) );
-			}
-		}
-		$ancestor_ids = array_values(
-			array_unique(
-				array_filter(
-					$ancestor_ids,
-					static function( $id ) use ( $term_map ) {
-						return ! isset( $term_map[ (int) $id ] );
-					}
-				)
-			)
-		);
-
-		if ( ! empty( $ancestor_ids ) ) {
-			$ancestor_terms = get_terms(
-				array(
-					'taxonomy'   => 'product_cat',
-					'include'    => $ancestor_ids,
-					'hide_empty' => false,
-				)
-			);
-			if ( ! is_wp_error( $ancestor_terms ) ) {
-				foreach ( $ancestor_terms as $ancestor_term ) {
-					$term_map[ (int) $ancestor_term->term_id ] = $ancestor_term;
-				}
+			$tid = (int) $term->term_id;
+			$term->count = isset( $counts[ $tid ] ) ? (int) $counts[ $tid ] : 0;
+			if ( $term->count > 0 ) {
+				$out[] = $term;
 			}
 		}
 
-		return array_values( $term_map );
+		return $out;
 	}
 
 	/**
@@ -458,13 +593,15 @@ class GStore_Category_Filter {
 		}
 
 		if ( $has_selected ) {
-			$query_args['tax_query'][] = [
-				'taxonomy'         => 'product_cat',
-				'field'            => 'slug',
-				'terms'            => $this->selected_slugs,
-				'operator'         => 'IN',
-				'include_children' => true,
-			];
+			foreach ( $this->selected_slugs as $selected_slug ) {
+				$query_args['tax_query'][] = [
+					'taxonomy'         => 'product_cat',
+					'field'            => 'slug',
+					'terms'            => [ $selected_slug ],
+					'operator'         => 'IN',
+					'include_children' => true,
+				];
+			}
 		}
 
 		return $query_args;
@@ -502,13 +639,15 @@ class GStore_Category_Filter {
 		}
 
 		if ( $has_selected ) {
-			$tax_query[] = [
-				'taxonomy'         => 'product_cat',
-				'field'            => 'slug',
-				'terms'            => $this->selected_slugs,
-				'operator'         => 'IN',
-				'include_children' => true,
-			];
+			foreach ( $this->selected_slugs as $selected_slug ) {
+				$tax_query[] = [
+					'taxonomy'         => 'product_cat',
+					'field'            => 'slug',
+					'terms'            => [ $selected_slug ],
+					'operator'         => 'IN',
+					'include_children' => true,
+				];
+			}
 		}
 
 		$query->set( 'tax_query', $tax_query );
