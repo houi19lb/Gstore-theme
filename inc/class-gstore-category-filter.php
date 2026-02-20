@@ -224,11 +224,18 @@ class GStore_Category_Filter {
 	 */
 	private function get_category_tree() {
 		$scope_term = $this->get_scope_term();
-
-		$terms = get_terms( [
-			'taxonomy'   => 'product_cat',
-			'hide_empty' => true,
-		] );
+		$terms = array();
+		if ( $scope_term ) {
+			$terms = $this->get_terms_for_scoped_products( $scope_term );
+		}
+		if ( empty( $terms ) ) {
+			$terms = get_terms(
+				array(
+					'taxonomy'   => 'product_cat',
+					'hide_empty' => true,
+				)
+			);
+		}
 
 		if ( is_wp_error( $terms ) || empty( $terms ) ) {
 			return [];
@@ -257,15 +264,131 @@ class GStore_Category_Filter {
 		}
 
 		if ( $scope_term ) {
-			$scope_id = (int) $scope_term->term_id;
-			if ( isset( $term_map[ $scope_id ] ) && ! empty( $term_map[ $scope_id ]->children ) ) {
-				$tree = $term_map[ $scope_id ]->children;
-			} else {
-				$tree = array();
+			$scope_slug = (string) $scope_term->slug;
+			$tree = array_values(
+				array_filter(
+					$tree,
+					static function( $node ) use ( $scope_slug ) {
+						return isset( $node->slug ) && (string) $node->slug !== $scope_slug;
+					}
+				)
+			);
+			foreach ( $term_map as $node ) {
+				if ( ! empty( $node->children ) ) {
+					$node->children = array_values(
+						array_filter(
+							$node->children,
+							static function( $child ) use ( $scope_slug ) {
+								return isset( $child->slug ) && (string) $child->slug !== $scope_slug;
+							}
+						)
+					);
+				}
 			}
 		}
 
 		return $tree;
+	}
+
+	/**
+	 * Retorna IDs de produtos no escopo da categoria principal (incluindo filhas).
+	 *
+	 * @param \WP_Term $scope_term Termo de escopo.
+	 * @return int[]
+	 */
+	private function get_scoped_product_ids( $scope_term ) {
+		$scope_id = (int) $scope_term->term_id;
+		if ( $scope_id <= 0 ) {
+			return array();
+		}
+
+		$scope_term_ids = array_merge(
+			array( $scope_id ),
+			array_map( 'absint', get_term_children( $scope_id, 'product_cat' ) )
+		);
+		$scope_term_ids = array_values( array_unique( array_filter( $scope_term_ids ) ) );
+		if ( empty( $scope_term_ids ) ) {
+			return array();
+		}
+
+		$product_ids = get_objects_in_term( $scope_term_ids, 'product_cat' );
+		if ( is_wp_error( $product_ids ) || empty( $product_ids ) ) {
+			return array();
+		}
+
+		$product_ids = array_values(
+			array_unique(
+				array_filter(
+					array_map( 'absint', $product_ids )
+				)
+			)
+		);
+
+		return $product_ids;
+	}
+
+	/**
+	 * Carrega categorias presentes nos produtos do escopo e inclui ancestrais para manter hierarquia.
+	 *
+	 * @param \WP_Term $scope_term Termo de escopo.
+	 * @return \WP_Term[]
+	 */
+	private function get_terms_for_scoped_products( $scope_term ) {
+		$product_ids = $this->get_scoped_product_ids( $scope_term );
+		if ( empty( $product_ids ) ) {
+			return array();
+		}
+
+		$terms = wp_get_object_terms(
+			$product_ids,
+			'product_cat',
+			array(
+				'hide_empty' => true,
+			)
+		);
+		if ( is_wp_error( $terms ) || empty( $terms ) ) {
+			return array();
+		}
+
+		$term_map = array();
+		foreach ( $terms as $term ) {
+			$term_map[ (int) $term->term_id ] = $term;
+		}
+
+		$ancestor_ids = array();
+		foreach ( $term_map as $term ) {
+			$ancestors = get_ancestors( (int) $term->term_id, 'product_cat', 'taxonomy' );
+			if ( ! empty( $ancestors ) ) {
+				$ancestor_ids = array_merge( $ancestor_ids, array_map( 'absint', $ancestors ) );
+			}
+		}
+		$ancestor_ids = array_values(
+			array_unique(
+				array_filter(
+					$ancestor_ids,
+					static function( $id ) use ( $term_map ) {
+						return ! isset( $term_map[ (int) $id ] );
+					}
+				)
+			)
+		);
+
+		if ( ! empty( $ancestor_ids ) ) {
+			$ancestor_terms = get_terms(
+				array(
+					'taxonomy'   => 'product_cat',
+					'include'    => $ancestor_ids,
+					'hide_empty' => false,
+				)
+			);
+			if ( ! is_wp_error( $ancestor_terms ) ) {
+				foreach ( $ancestor_terms as $ancestor_term ) {
+					$term_map[ (int) $ancestor_term->term_id ] = $ancestor_term;
+				}
+			}
+		}
+
+		return array_values( $term_map );
 	}
 
 	/**
