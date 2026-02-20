@@ -254,6 +254,28 @@
     text-align: center;
 }
 
+.gstore-category-filter__btn-full-catalog {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    margin-bottom: 4px;
+    padding: 10px 16px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    text-decoration: none;
+    color: var(--filter-text);
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    transition: all 0.2s;
+}
+
+.gstore-category-filter__btn-full-catalog:hover {
+    background: #f1f5f9;
+    border-color: #cbd5e1;
+}
+
 .gstore-category-filter__btn-clear {
     background: #fff;
     color: var(--filter-text);

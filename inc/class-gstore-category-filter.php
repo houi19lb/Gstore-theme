@@ -44,6 +44,8 @@ class GStore_Category_Filter {
 	 * Inicializa os hooks.
 	 */
 	private function init_hooks() {
+		add_filter( 'query_vars', [ $this, 'register_query_vars' ] );
+
 		// Intercepta a renderização do bloco de categorias
 		add_filter( 'render_block', [ $this, 'intercept_category_block' ], 10, 2 );
 
@@ -58,11 +60,51 @@ class GStore_Category_Filter {
 	}
 
 	/**
+	 * Registra query vars usadas pelo catálogo.
+	 *
+	 * @param array $vars Query vars.
+	 * @return array
+	 */
+	public function register_query_vars( $vars ) {
+		$vars[] = 'gstore_catalog_scope';
+		return $vars;
+	}
+
+	/**
 	 * Carrega os slugs selecionados da querystring filter_cat[].
 	 */
 	private function load_selected_slugs() {
 		$filter_cat = isset( $_GET['filter_cat'] ) ? (array) $_GET['filter_cat'] : [];
 		$this->selected_slugs = array_map( 'sanitize_title', $filter_cat );
+	}
+
+	/**
+	 * Retorna o termo de escopo, quando existir e for válido.
+	 *
+	 * @return \WP_Term|null
+	 */
+	private function get_scope_term() {
+		$scope_slug = get_query_var( 'gstore_catalog_scope', '' );
+		if ( '' === $scope_slug && isset( $_GET['gstore_catalog_scope'] ) ) {
+			$scope_slug = sanitize_text_field( wp_unslash( $_GET['gstore_catalog_scope'] ) );
+		}
+		$scope_slug = is_string( $scope_slug ) ? sanitize_title( $scope_slug ) : '';
+
+		if ( '' === $scope_slug ) {
+			return null;
+		}
+
+		$term = get_term_by( 'slug', $scope_slug, 'product_cat' );
+		if ( ! $term || is_wp_error( $term ) ) {
+			return null;
+		}
+
+		// Escopo de catálogo por categoria principal (pai).
+		if ( (int) $term->parent !== 0 ) {
+			return null;
+		}
+
+		return $term;
 	}
 
 	/**
@@ -81,6 +123,7 @@ class GStore_Category_Filter {
 	 */
 	public function render_filter_html() {
 		$categories = $this->get_category_tree();
+		$scope_term = $this->get_scope_term();
 		
 		ob_start();
 		?>
@@ -103,6 +146,9 @@ class GStore_Category_Filter {
 			</div>
 
 			<div class="gstore-category-filter__actions">
+				<?php if ( $scope_term ) : ?>
+					<a class="gstore-category-filter__btn-full-catalog" href="<?php echo esc_url( home_url( '/catalogo/' ) ); ?>">Ver catálogo completo</a>
+				<?php endif; ?>
 				<button type="button" class="gstore-category-filter__btn-clear" id="gstore-filter-clear">Limpar</button>
 				<button type="button" class="gstore-category-filter__btn-apply" id="gstore-filter-apply">Aplicar</button>
 			</div>
@@ -115,6 +161,8 @@ class GStore_Category_Filter {
 	 * Busca e organiza as categorias em árvore.
 	 */
 	private function get_category_tree() {
+		$scope_term = $this->get_scope_term();
+
 		$terms = get_terms( [
 			'taxonomy'   => 'product_cat',
 			'hide_empty' => true,
@@ -143,6 +191,15 @@ class GStore_Category_Filter {
 				$term_map[ $node->parent ]->children[] = $node;
 			} else {
 				$tree[] = $node;
+			}
+		}
+
+		if ( $scope_term ) {
+			$scope_id = (int) $scope_term->term_id;
+			if ( isset( $term_map[ $scope_id ] ) && ! empty( $term_map[ $scope_id ]->children ) ) {
+				$tree = $term_map[ $scope_id ]->children;
+			} else {
+				$tree = array();
 			}
 		}
 
@@ -193,7 +250,11 @@ class GStore_Category_Filter {
 	 * Aplica o filtro na query dos produtos.
 	 */
 	public function apply_category_filter( $query_args, $attr, $type ) {
-		if ( empty( $this->selected_slugs ) ) {
+		$scope_term = $this->get_scope_term();
+		$has_scope = (bool) $scope_term;
+		$has_selected = ! empty( $this->selected_slugs );
+
+		if ( ! $has_scope && ! $has_selected ) {
 			return $query_args;
 		}
 
@@ -201,13 +262,25 @@ class GStore_Category_Filter {
 			$query_args['tax_query'] = [];
 		}
 
-		$query_args['tax_query'][] = [
-			'taxonomy' => 'product_cat',
-			'field'    => 'slug',
-			'terms'    => $this->selected_slugs,
-			'operator' => 'IN',
-			'include_children' => true,
-		];
+		if ( $has_scope ) {
+			$query_args['tax_query'][] = [
+				'taxonomy'         => 'product_cat',
+				'field'            => 'term_id',
+				'terms'            => [ (int) $scope_term->term_id ],
+				'operator'         => 'IN',
+				'include_children' => true,
+			];
+		}
+
+		if ( $has_selected ) {
+			$query_args['tax_query'][] = [
+				'taxonomy'         => 'product_cat',
+				'field'            => 'slug',
+				'terms'            => $this->selected_slugs,
+				'operator'         => 'IN',
+				'include_children' => true,
+			];
+		}
 
 		return $query_args;
 	}
@@ -220,7 +293,11 @@ class GStore_Category_Filter {
 			return;
 		}
 
-		if ( empty( $this->selected_slugs ) ) {
+		$scope_term = $this->get_scope_term();
+		$has_scope = (bool) $scope_term;
+		$has_selected = ! empty( $this->selected_slugs );
+
+		if ( ! $has_scope && ! $has_selected ) {
 			return;
 		}
 
@@ -229,13 +306,25 @@ class GStore_Category_Filter {
 			$tax_query = [];
 		}
 
-		$tax_query[] = [
-			'taxonomy' => 'product_cat',
-			'field'    => 'slug',
-			'terms'    => $this->selected_slugs,
-			'operator' => 'IN',
-			'include_children' => true,
-		];
+		if ( $has_scope ) {
+			$tax_query[] = [
+				'taxonomy'         => 'product_cat',
+				'field'            => 'term_id',
+				'terms'            => [ (int) $scope_term->term_id ],
+				'operator'         => 'IN',
+				'include_children' => true,
+			];
+		}
+
+		if ( $has_selected ) {
+			$tax_query[] = [
+				'taxonomy'         => 'product_cat',
+				'field'            => 'slug',
+				'terms'            => $this->selected_slugs,
+				'operator'         => 'IN',
+				'include_children' => true,
+			];
+		}
 
 		$query->set( 'tax_query', $tax_query );
 	}

@@ -7151,6 +7151,75 @@ function gstore_search_block_action_to_catalog( $block_content, $block ) {
 }
 
 /**
+ * Mapeia rotas raiz "/{categoria-principal}" para o template de catálogo.
+ *
+ * Exemplo:
+ * - /clube-de-tiro -> /catalogo (internamente), com escopo da categoria.
+ *
+ * Não sobrescreve páginas reais nem slugs reservados do core.
+ */
+add_filter( 'request', 'gstore_catalog_scope_root_category_route', 5 );
+function gstore_catalog_scope_root_category_route( $vars ) {
+	if ( is_admin() ) {
+		return $vars;
+	}
+	if ( defined( 'REST_REQUEST' ) && REST_REQUEST ) {
+		return $vars;
+	}
+
+	$pagename = isset( $vars['pagename'] ) ? (string) $vars['pagename'] : '';
+	if ( '' === $pagename ) {
+		return $vars;
+	}
+	if ( strpos( $pagename, '/' ) !== false ) {
+		return $vars;
+	}
+
+	$slug = sanitize_title( $pagename );
+	if ( '' === $slug ) {
+		return $vars;
+	}
+
+	// Nunca sobrescreve páginas publicadas/existentes.
+	if ( get_page_by_path( $slug ) ) {
+		return $vars;
+	}
+
+	$reserved_slugs = array(
+		'wp-admin',
+		'wp-login',
+		'wp-json',
+		'feed',
+		'comments',
+		'search',
+		'sitemap.xml',
+		'sitemap_index.xml',
+		'robots.txt',
+	);
+	if ( in_array( $slug, $reserved_slugs, true ) ) {
+		return $vars;
+	}
+
+	$term = get_term_by( 'slug', $slug, 'product_cat' );
+	if ( ! $term || is_wp_error( $term ) ) {
+		return $vars;
+	}
+
+	// Escopo apenas para categorias principais.
+	if ( (int) $term->parent !== 0 ) {
+		return $vars;
+	}
+
+	$vars['pagename'] = 'catalogo';
+	$vars['gstore_catalog_scope'] = $slug;
+
+	// Evita conflitos com possíveis matches anteriores.
+	unset( $vars['name'], $vars['attachment'], $vars['attachment_id'], $vars['category_name'] );
+
+	return $vars;
+}
+
+/**
  * Aplica o termo de busca (?s=) e match de categoria na query do shortcode [products]
  * quando usado no catÃ¡logo (/catalogo).
  */
