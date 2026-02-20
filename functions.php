@@ -7117,7 +7117,17 @@ function gstore_search_block_action_to_catalog( $block_content, $block ) {
 		return $block_content;
 	}
 
-	$catalog_url = esc_url( home_url( '/catalogo/' ) );
+	$target_url = home_url( '/catalogo/' );
+	if (
+		function_exists( 'gstore_is_generated_category_catalog_page' ) &&
+		gstore_is_generated_category_catalog_page() &&
+		function_exists( 'get_queried_object_id' ) &&
+		get_queried_object_id()
+	) {
+		$target_url = get_permalink( get_queried_object_id() );
+	}
+
+	$catalog_url = esc_url( $target_url );
 
 	// Substitui o action do form.
 	$updated = preg_replace(
@@ -7148,6 +7158,24 @@ function gstore_search_block_action_to_catalog( $block_content, $block ) {
 	);
 
 	return $updated;
+}
+
+/**
+ * Detecta se a pagina atual e um catalogo de categoria principal gerado pelo painel.
+ *
+ * @return bool
+ */
+function gstore_is_generated_category_catalog_page() {
+	if ( ! function_exists( 'is_page' ) || ! is_page() ) {
+		return false;
+	}
+
+	$page = get_queried_object();
+	if ( ! ( $page instanceof WP_Post ) || 'page' !== $page->post_type ) {
+		return false;
+	}
+
+	return (bool) get_post_meta( $page->ID, '_gstore_category_catalog_generated', true );
 }
 
 /**
@@ -7210,6 +7238,20 @@ function gstore_catalog_scope_root_category_route( $vars ) {
 		return $vars;
 	}
 
+	$main_category_ids = get_option( 'gstore_main_categories', array() );
+	$main_category_ids = array_values(
+		array_unique(
+			array_filter(
+				array_map( 'absint', is_array( $main_category_ids ) ? $main_category_ids : array() )
+			)
+		)
+	);
+
+	// Escopo apenas para categorias marcadas como principais no painel.
+	if ( empty( $main_category_ids ) || ! in_array( (int) $term->term_id, $main_category_ids, true ) ) {
+		return $vars;
+	}
+
 	$vars['pagename'] = 'catalogo';
 	$vars['gstore_catalog_scope'] = $slug;
 
@@ -7225,7 +7267,9 @@ function gstore_catalog_scope_root_category_route( $vars ) {
  */
 add_filter( 'woocommerce_shortcode_products_query', 'gstore_catalog_apply_search_to_products_shortcode', 25, 3 );
 function gstore_catalog_apply_search_to_products_shortcode( $query_args, $attr, $type ) {
-	if ( ! function_exists( 'is_page' ) || ! is_page( 'catalogo' ) ) {
+	$is_catalog_page = function_exists( 'is_page' ) && is_page( 'catalogo' );
+	$is_generated_catalog_page = function_exists( 'gstore_is_generated_category_catalog_page' ) && gstore_is_generated_category_catalog_page();
+	if ( ! $is_catalog_page && ! $is_generated_catalog_page ) {
 		return $query_args;
 	}
 
@@ -7333,6 +7377,10 @@ function gstore_is_catalog_context() {
 	}
 
 	if ( function_exists( 'is_page' ) && is_page( array( 'catalogo', 'ofertas' ) ) ) {
+		return true;
+	}
+
+	if ( function_exists( 'gstore_is_generated_category_catalog_page' ) && gstore_is_generated_category_catalog_page() ) {
 		return true;
 	}
 

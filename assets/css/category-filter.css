@@ -53,6 +53,36 @@
     pointer-events: none;
 }
 
+/* Escopo da categoria principal */
+.gstore-category-filter__scope {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin: 4px 0 8px 0;
+    padding: 8px 10px;
+    border-radius: 8px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+}
+
+.gstore-category-filter__scope-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: #334155;
+}
+
+.gstore-category-filter__scope-link {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--filter-primary);
+    text-decoration: none;
+}
+
+.gstore-category-filter__scope-link:hover {
+    text-decoration: underline;
+}
+
 /* Chips */
 .gstore-category-filter__chips {
     padding: 8px 0;

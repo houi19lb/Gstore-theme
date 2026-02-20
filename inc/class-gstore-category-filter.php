@@ -84,11 +84,40 @@ class GStore_Category_Filter {
 	 * @return \WP_Term|null
 	 */
 	private function get_scope_term() {
+		$skip_main_category_validation = false;
+
 		$scope_slug = get_query_var( 'gstore_catalog_scope', '' );
 		if ( '' === $scope_slug && isset( $_GET['gstore_catalog_scope'] ) ) {
 			$scope_slug = sanitize_text_field( wp_unslash( $_GET['gstore_catalog_scope'] ) );
 		}
 		$scope_slug = is_string( $scope_slug ) ? sanitize_title( $scope_slug ) : '';
+
+		// Fallback: paginas de catalogo geradas para categoria principal.
+		if ( '' === $scope_slug && is_page() ) {
+			$page = get_queried_object();
+			if ( $page instanceof \WP_Post && 'page' === $page->post_type ) {
+				$is_generated = (bool) get_post_meta( $page->ID, '_gstore_category_catalog_generated', true );
+				if ( $is_generated ) {
+					$scope_slug = sanitize_title(
+						(string) get_post_meta( $page->ID, '_gstore_category_catalog_term_slug', true )
+					);
+					$skip_main_category_validation = true;
+				}
+			}
+		}
+
+		// Fallback adicional: pagina com template de catalogo cujo slug bate com categoria raiz.
+		if ( '' === $scope_slug && is_page() ) {
+			$page = get_queried_object();
+			if ( $page instanceof \WP_Post && 'page' === $page->post_type ) {
+				$template = (string) get_page_template_slug( $page->ID );
+				$is_catalog_template = ( '' !== $template && strpos( $template, 'page-catalogo' ) !== false );
+				if ( $is_catalog_template && ! empty( $page->post_name ) ) {
+					$scope_slug = sanitize_title( $page->post_name );
+					$skip_main_category_validation = true;
+				}
+			}
+		}
 
 		if ( '' === $scope_slug ) {
 			return null;
@@ -101,6 +130,19 @@ class GStore_Category_Filter {
 
 		// Escopo de catálogo por categoria principal (pai).
 		if ( (int) $term->parent !== 0 ) {
+			return null;
+		}
+
+		$main_category_ids = get_option( 'gstore_main_categories', array() );
+		$main_category_ids = array_values(
+			array_unique(
+				array_filter(
+					array_map( 'absint', is_array( $main_category_ids ) ? $main_category_ids : array() )
+				)
+			)
+		);
+
+		if ( ! $skip_main_category_validation && ( empty( $main_category_ids ) || ! in_array( (int) $term->term_id, $main_category_ids, true ) ) ) {
 			return null;
 		}
 
@@ -124,16 +166,36 @@ class GStore_Category_Filter {
 	public function render_filter_html() {
 		$categories = $this->get_category_tree();
 		$scope_term = $this->get_scope_term();
+		$full_catalog_url = home_url( '/catalogo/' );
 		
 		ob_start();
 		?>
-		<div class="gstore-category-filter" id="gstore-category-filter">
+		<div class="gstore-category-filter" id="gstore-category-filter" <?php echo $scope_term ? 'data-full-catalog-url="' . esc_url( $full_catalog_url ) . '"' : ''; ?>>
 			<div class="gstore-category-filter__search-wrapper">
 				<input type="text" class="gstore-category-filter__search" placeholder="Buscar categoria..." aria-label="Buscar categoria">
 				<svg class="gstore-category-filter__search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
 					<circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>
 				</svg>
 			</div>
+
+			<?php if ( $scope_term ) : ?>
+				<div class="gstore-category-filter__scope">
+					<span class="gstore-category-filter__scope-label">
+						<?php
+						echo esc_html(
+							sprintf(
+								/* translators: %s: category name */
+								__( 'Categoria atual: %s', 'gstore' ),
+								$scope_term->name
+							)
+						);
+						?>
+					</span>
+					<a class="gstore-category-filter__scope-link" href="<?php echo esc_url( $full_catalog_url ); ?>">
+						<?php esc_html_e( 'Ver catalogo completo', 'gstore' ); ?>
+					</a>
+				</div>
+			<?php endif; ?>
 
 			<div class="gstore-category-filter__chips" id="gstore-category-filter-chips">
 				<!-- Chips serão inseridos via JS -->
@@ -147,7 +209,7 @@ class GStore_Category_Filter {
 
 			<div class="gstore-category-filter__actions">
 				<?php if ( $scope_term ) : ?>
-					<a class="gstore-category-filter__btn-full-catalog" href="<?php echo esc_url( home_url( '/catalogo/' ) ); ?>">Ver catálogo completo</a>
+					<a class="gstore-category-filter__btn-full-catalog" href="<?php echo esc_url( $full_catalog_url ); ?>">Ver catálogo completo</a>
 				<?php endif; ?>
 				<button type="button" class="gstore-category-filter__btn-clear" id="gstore-filter-clear">Limpar</button>
 				<button type="button" class="gstore-category-filter__btn-apply" id="gstore-filter-apply">Aplicar</button>
