@@ -326,6 +326,19 @@ if ( ! function_exists( 'gstore_home_blog_v1_render' ) ) {
 				gap: 8px;
 				vertical-align: middle;
 			}
+			.gstore-hb-v1 .hb-head .Gstore-btn--secondary {
+				gap: 10px;
+			}
+			.gstore-hb-v1 .hb-btn-icon {
+				width: 14px;
+				height: 14px;
+				flex: 0 0 14px;
+				transition: transform .2s ease;
+			}
+			.gstore-hb-v1 .hb-head .Gstore-btn--secondary:hover .hb-btn-icon,
+			.gstore-hb-v1 .hb-head .Gstore-btn--secondary:focus .hb-btn-icon {
+				transform: translateX(2px);
+			}
 			.gstore-hb-v1 .Gstore-btn span[aria-hidden="true"] {
 				display: inline-block;
 				line-height: 1;
@@ -359,6 +372,25 @@ if ( ! function_exists( 'gstore_home_blog_v1_render' ) ) {
 				.gstore-hb-v1 .hb-thumb {
 					aspect-ratio: 16 / 10;
 				}
+				/* No mobile, iguala o card destaque aos cards secundários */
+				.gstore-hb-v1 .hb-grid > .hb-card:first-child .hb-pill,
+				.gstore-hb-v1 .hb-grid > .hb-card:first-child .hb-tags {
+					display: none !important;
+				}
+				.gstore-hb-v1 .hb-grid > .hb-card:first-child .hb-h3 {
+					font-size: var(--gstore-font-size-base, 16px);
+					display: -webkit-box;
+					-webkit-line-clamp: 2;
+					-webkit-box-orient: vertical;
+					overflow: hidden;
+				}
+				.gstore-hb-v1 .hb-grid > .hb-card:first-child .hb-row {
+					justify-content: flex-start;
+				}
+				.gstore-hb-v1 .hb-grid > .hb-card:first-child .Gstore-btn--outline {
+					padding: 6px 10px;
+					font-size: var(--gstore-font-size-xs, 12px);
+				}
 				.gstore-hb-v1 .hb-mini {
 					display: block;
 				}
@@ -385,7 +417,10 @@ if ( ! function_exists( 'gstore_home_blog_v1_render' ) ) {
 							<?php endif; ?>
 						</div>
 						<a class="Gstore-btn Gstore-btn--secondary" href="<?php echo esc_url( $atts['button_url'] ); ?>">
-							<?php echo esc_html( $atts['button_text'] ); ?> <span aria-hidden="true">-></span>
+							<span class="hb-btn-label"><?php echo esc_html( $atts['button_text'] ); ?></span>
+							<svg class="hb-btn-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true" focusable="false">
+								<path d="M4.167 10h11.666M10.833 4.167 15.833 10l-5 5.833" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path>
+							</svg>
 						</a>
 					</div>
 
@@ -435,7 +470,12 @@ if ( ! function_exists( 'gstore_home_blog_v1_render' ) ) {
 									<?php else : ?>
 										<span></span>
 									<?php endif; ?>
-									<a class="Gstore-btn Gstore-btn--outline" href="<?php echo esc_url( $feat_url ); ?>">Continuar <span aria-hidden="true">-></span></a>
+									<a class="Gstore-btn Gstore-btn--outline" href="<?php echo esc_url( $feat_url ); ?>">
+										<span class="hb-btn-label">Continuar</span>
+										<svg class="hb-btn-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true" focusable="false">
+											<path d="M4.167 10h11.666M10.833 4.167 15.833 10l-5 5.833" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path>
+										</svg>
+									</a>
 								</div>
 							</div>
 						</article>
@@ -481,7 +521,12 @@ if ( ! function_exists( 'gstore_home_blog_v1_render' ) ) {
 												<p class="hb-excerpt hb-mini__excerpt"><?php echo esc_html( $excerpt ); ?></p>
 											<?php endif; ?>
 											<div class="hb-actions-inline">
-												<a class="Gstore-btn Gstore-btn--ghost Gstore-btn--sm" href="<?php echo esc_url( $url ); ?>">Ler <span aria-hidden="true">-></span></a>
+												<a class="Gstore-btn Gstore-btn--ghost Gstore-btn--sm" href="<?php echo esc_url( $url ); ?>">
+													<span class="hb-btn-label">Ler</span>
+													<svg class="hb-btn-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true" focusable="false">
+														<path d="M4.167 10h11.666M10.833 4.167 15.833 10l-5 5.833" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path>
+													</svg>
+												</a>
 											</div>
 										</div>
 									</div>
