@@ -78,13 +78,13 @@ if ( ! function_exists( 'gstore_home_blog_v1_render' ) ) {
 				--hb-radius: var(--gstore-radius-base, 4px);
 				--hb-border: var(--gstore-color-border-light, #e8e8e6);
 				--hb-card-bg: var(--gstore-color-bg-light, #fff);
-				--hb-card-soft: var(--gstore-color-bg-base, #f5f5f2);
+				--hb-card-soft: var(--gstore-color-bg-muted, #f0f2f5);
 				--hb-title: var(--gstore-color-text-primary, #1a1a1a);
 				--hb-muted: var(--gstore-color-text-muted, #7a7a7a);
 				--hb-link: var(--gstore-color-text-primary, #1a1a1a);
 				--hb-link-hover: var(--gstore-color-accent, #ff5c00);
-				--hb-shadow: var(--gstore-shadow-none, none);
-				background: transparent;
+				--hb-shadow: var(--gstore-shadow-sm, 0 1px 2px rgba(0, 0, 0, 0.06));
+				background: var(--gstore-color-bg-light, #ffffff);
 				color: var(--hb-title);
 			}
 			.gstore-hb-v1,
@@ -97,12 +97,12 @@ if ( ! function_exists( 'gstore_home_blog_v1_render' ) ) {
 			.gstore-hb-v1 .Gstore-container {
 				padding-top: clamp(var(--gstore-spacing-6, 24px), 3vw, var(--gstore-spacing-10, 40px));
 				padding-bottom: clamp(var(--gstore-spacing-6, 24px), 3vw, var(--gstore-spacing-10, 40px));
-				background: transparent;
+				background: var(--gstore-color-bg-light, #ffffff);
 			}
 			.gstore-hb-v1 .hb-shell {
 				border: 1px solid var(--hb-border);
 				border-radius: var(--hb-radius);
-				background: var(--gstore-color-bg-base, #f5f5f2);
+				background: var(--gstore-color-bg-light, #ffffff);
 				box-shadow: var(--hb-shadow);
 				padding: clamp(var(--gstore-spacing-4, 16px), 2.5vw, var(--gstore-spacing-6, 24px));
 			}
