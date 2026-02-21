@@ -11303,7 +11303,7 @@ function gstore_age_verification_modal() {
 		return;
 	}
 	?>
-	<!-- Modal de VerificaÃ§Ã£o de Idade -->
+	<!-- Modal de Verificacao de Idade -->
 	<div id="gstore-age-modal" class="gstore-age-modal" aria-hidden="true" role="dialog" aria-labelledby="gstore-age-title" aria-describedby="gstore-age-desc">
 		<div class="gstore-age-modal__overlay"></div>
 		<div class="gstore-age-modal__content">
@@ -11319,11 +11319,11 @@ function gstore_age_verification_modal() {
 					<path d="M12 16h.01"/>
 				</svg>
 			</div>
-			<h2 id="gstore-age-title" class="gstore-age-modal__title">VerificaÃ§Ã£o de Idade</h2>
+			<h2 id="gstore-age-title" class="gstore-age-modal__title">Verifica&#231;&#227;o de Idade</h2>
 			<p id="gstore-age-desc" class="gstore-age-modal__text">
-				Este site contÃ©m produtos destinados exclusivamente para maiores de 18 anos.
+				Este site cont&eacute;m produtos destinados exclusivamente para maiores de 18 anos.
 			</p>
-			<p class="gstore-age-modal__question">VocÃª tem 18 anos ou mais?</p>
+			<p class="gstore-age-modal__question">Voc&#234; tem 18 anos ou mais?</p>
 			<div class="gstore-age-modal__actions">
 				<button type="button" id="gstore-age-confirm" class="gstore-age-modal__btn gstore-age-modal__btn--confirm">
 					<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -11336,17 +11336,17 @@ function gstore_age_verification_modal() {
 						<line x1="18" y1="6" x2="6" y2="18"/>
 						<line x1="6" y1="6" x2="18" y2="18"/>
 					</svg>
-					NÃ£o, sou menor
+					N&#227;o, sou menor
 				</button>
 			</div>
 			<p class="gstore-age-modal__disclaimer">
-				Ao confirmar, vocÃª declara estar ciente de que Ã© proibida a venda de produtos para menores de 18 anos.
+				Ao confirmar, voc&#234; declara estar ciente de que &#233; proibida a venda de produtos para menores de 18 anos.
 			</p>
 		</div>
 	</div>
 
 	<style id="gstore-age-modal-styles">
-		/* Modal de VerificaÃ§Ã£o de Idade */
+		/* Modal de Verificacao de Idade */
 		.gstore-age-modal {
 			position: fixed;
 			top: 0;
@@ -11645,7 +11645,7 @@ function gstore_age_verification_modal() {
 				var data = JSON.parse(stored);
 				var now = new Date().getTime();
 				
-				// Verifica se ainda estÃ¡ vÃ¡lido
+				// Verifica se ainda esta valido
 				if (data.verified && data.expires > now) {
 					return true;
 				}
@@ -11666,7 +11666,7 @@ function gstore_age_verification_modal() {
 				};
 				localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
 			} catch (e) {
-				// localStorage nÃ£o disponÃ­vel
+				// localStorage nao disponivel
 			}
 		}
 		
@@ -11703,12 +11703,12 @@ function gstore_age_verification_modal() {
 					'</div>' +
 					'<h2 class="gstore-age-modal__blocked-title">Acesso Restrito</h2>' +
 					'<p class="gstore-age-modal__blocked-text">' +
-						'Desculpe, este site Ã© destinado apenas para maiores de 18 anos.<br><br>' +
-						'VocÃª serÃ¡ redirecionado para o Google em alguns segundos...' +
+						'Desculpe, este site &eacute; destinado apenas para maiores de 18 anos.<br><br>' +
+						'Voc&ecirc; ser&aacute; redirecionado para o Google em alguns segundos...' +
 					'</p>';
 			}
 			
-			// Redireciona apÃ³s 5 segundos
+			// Redireciona apos 5 segundos
 			setTimeout(function() {
 				window.location.href = 'https://www.google.com';
 			}, 5000);
@@ -11745,7 +11745,7 @@ function gstore_age_verification_modal() {
 					setVerified();
 					hideModal();
 					
-					// Remove o modal apÃ³s a animaÃ§Ã£o
+					// Remove o modal apos a animacao
 					setTimeout(function() {
 						var modal = document.getElementById('gstore-age-modal');
 						if (modal) modal.remove();
