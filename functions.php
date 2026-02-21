@@ -5297,7 +5297,7 @@ function gstore_home_sections_shortcode() {
 		$out .= $render_part( 'parts/home-promocoes.html' );
 		$out .= $render_part( 'parts/home-equipamentos.html' );
 		$out .= do_shortcode( '[gstore_banner_youtube]' );
-		$out .= do_shortcode( '[gstore_home_blog_v1]' );
+		$out .= $render_part( 'parts/home-blog.html' );
 		return $out;
 	};
 
@@ -5411,7 +5411,7 @@ function gstore_home_sections_shortcode() {
 					$out .= $render_part( 'parts/home-equipamentos.html' );
 					break;
 				case 'blog':
-					$out .= do_shortcode( '[gstore_home_blog_v1]' );
+					$out .= $render_part( 'parts/home-blog.html' );
 					break;
 				case 'youtube_banner':
 					$out .= do_shortcode( '[gstore_banner_youtube]' );
