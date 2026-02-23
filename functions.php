@@ -1099,6 +1099,35 @@ function gstore_enqueue_scripts() {
 		true
 	);
 
+	// Config do quick action de atendimento (tema) para integrar com bridge do plugin/Chatwoot.
+	wp_localize_script(
+		'gstore-telegram-floating',
+		'gstoreSupportQuickAction',
+		array(
+			'storageKey'          => 'gstore_support_preference',
+			'chatPreferenceValue' => 'chat_site',
+			'uiStrategy'          => 'A',
+			'texts'               => array(
+				'openSupport'      => __( 'Atendimento', 'gstore' ),
+				'openSupportShort' => __( 'Atendimento', 'gstore' ),
+				'openChat'         => __( 'Abrir chat', 'gstore' ),
+				'close'            => __( 'Fechar', 'gstore' ),
+				'selectorEyebrow'  => __( 'Atendimento', 'gstore' ),
+				'selectorTitle'    => __( 'Como prefere falar com a gente?', 'gstore' ),
+				'selectorText'     => __( 'Escolha o canal. Se optar pelo chat do site, o botÃ£o passa a abrir o chat direto.', 'gstore' ),
+				'chatTitle'        => __( 'Chat do site', 'gstore' ),
+				'chatReadyDesc'    => __( 'Atendimento dentro do site (abre direto nas prÃ³ximas vezes)', 'gstore' ),
+				'chatLoadingDesc'  => __( 'Carregando chat...', 'gstore' ),
+				'telegramTitle'    => __( 'Telegram', 'gstore' ),
+				'telegramDesc'     => __( 'Abrir grupo oficial no Telegram', 'gstore' ),
+				'chatEyebrow'      => __( 'Atendimento online', 'gstore' ),
+				'chatModalTitle'   => __( 'Chat do site', 'gstore' ),
+				'chatModalHint'    => __( 'Abrindo o chat do site. Se o widget estiver carregando, aguarde alguns segundos.', 'gstore' ),
+				'changeChannel'    => __( 'Trocar canal', 'gstore' ),
+			),
+		)
+	);
+
 	// Passa URLs do tema para o JavaScript (respeitam subdiretÃ³rio quando WP estÃ¡ em /subdir/)
 	$gstore_account_urls = array(
 		'homeUrl'        => home_url( '/' ),
