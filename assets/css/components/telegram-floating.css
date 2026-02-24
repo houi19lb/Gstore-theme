@@ -386,8 +386,12 @@ body.gstore-support-chat-open [class*="woot-widget-holder"] {
 }
 
 /* Evita duplicidade: usa o quick action do tema para abrir o Chatwoot nativo. */
+html.gstore-support-quick-action-mounted #cw-bubble-holder,
+body.gstore-support-quick-action-mounted #cw-bubble-holder,
 body.gstore-support-quick-action-mounted .woot-widget-bubble,
+html.gstore-support-quick-action-mounted .woot-widget-bubble,
 body.gstore-support-quick-action-mounted [class*="woot-widget-bubble"] {
+	display: none !important;
 	opacity: 0 !important;
 	pointer-events: none !important;
 	visibility: hidden !important;

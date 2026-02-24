@@ -342,6 +342,9 @@
 		button.addEventListener('click', onQuickActionClick);
 		document.body.appendChild(button);
 		document.body.classList.add('gstore-support-quick-action-mounted');
+		if (document.documentElement) {
+			document.documentElement.classList.add('gstore-support-quick-action-mounted');
+		}
 		return button;
 	}
 
@@ -803,7 +806,23 @@
 		} catch (e2) {}
 	}
 
+	function hideChatwootBubbleBestEffort(scope) {
+		var root = scope && scope.querySelectorAll ? scope : document;
+		var selector = '#cw-bubble-holder, .woot-widget-bubble, [class*="woot-widget-bubble"]';
+
+		try {
+			var nodes = root.querySelectorAll(selector);
+			for (var i = 0; i < nodes.length; i++) {
+				nodes[i].style.setProperty('display', 'none', 'important');
+				nodes[i].style.setProperty('opacity', '0', 'important');
+				nodes[i].style.setProperty('visibility', 'hidden', 'important');
+				nodes[i].style.setProperty('pointer-events', 'none', 'important');
+			}
+		} catch (e) {}
+	}
+
 	function bindChatwootBrandingCleanup() {
+		hideChatwootBubbleBestEffort(document);
 		hideChatwootBrandingBestEffort(document);
 
 		try {
@@ -815,6 +834,7 @@
 						for (var j = 0; j < m.addedNodes.length; j++) {
 							var node = m.addedNodes[j];
 							if (node && node.nodeType === 1) {
+								hideChatwootBubbleBestEffort(node);
 								hideChatwootBrandingBestEffort(node);
 							}
 						}
@@ -834,6 +854,9 @@
 
 		ensureQuickActionButton();
 		document.body.classList.add('gstore-support-quick-action-mounted');
+		if (document.documentElement) {
+			document.documentElement.classList.add('gstore-support-quick-action-mounted');
+		}
 		ensureSelectorModal();
 		ensureChatShellModal();
 
