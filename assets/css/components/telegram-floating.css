@@ -385,6 +385,14 @@ body.gstore-support-chat-open [class*="woot-widget-holder"] {
 	z-index: 2147483300 !important;
 }
 
+/* Evita duplicidade: usa o quick action do tema para abrir o Chatwoot nativo. */
+body.gstore-support-quick-action-mounted .woot-widget-bubble,
+body.gstore-support-quick-action-mounted [class*="woot-widget-bubble"] {
+	opacity: 0 !important;
+	pointer-events: none !important;
+	visibility: hidden !important;
+}
+
 /* Best effort para esconder branding do Chatwoot quando renderizado fora do iframe. */
 .woot-widget-holder [class*="powered"],
 .woot-widget-holder [class*="Powered"],

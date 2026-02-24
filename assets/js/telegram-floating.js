@@ -341,6 +341,7 @@
 
 		button.addEventListener('click', onQuickActionClick);
 		document.body.appendChild(button);
+		document.body.classList.add('gstore-support-quick-action-mounted');
 		return button;
 	}
 
@@ -832,6 +833,7 @@
 		if (!applyTelegramLinkFromSource(src)) return false;
 
 		ensureQuickActionButton();
+		document.body.classList.add('gstore-support-quick-action-mounted');
 		ensureSelectorModal();
 		ensureChatShellModal();
 
