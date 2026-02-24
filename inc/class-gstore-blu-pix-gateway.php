@@ -591,6 +591,9 @@ class Gstore_Blu_Pix_Gateway extends WC_Payment_Gateway {
 		// Determina a classe de status
 		$status_class = 'pix-box--pending';
 		$status_text  = __( 'Aguardando pagamento', 'gstore' );
+		if ( function_exists( 'is_account_page' ) && is_account_page() ) {
+			$status_text = __( 'Processando pagamento', 'gstore' );
+		}
 		
 		$order_status = $order->get_status();
 

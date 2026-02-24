@@ -4793,6 +4793,28 @@ function gstore_my_account_orders_exclude_cancelled( $args ) {
 add_filter( 'woocommerce_my_account_my_orders_query', 'gstore_my_account_orders_exclude_cancelled', 10, 1 );
 
 /**
+ * Ajusta o rótulo do status "pending" apenas na área Minha Conta.
+ *
+ * Evita que o cliente veja "Aguardando pagamento" quando o pagamento já foi
+ * realizado e a confirmação ainda está em processamento.
+ *
+ * @param array $statuses Lista de status do WooCommerce.
+ * @return array
+ */
+function gstore_my_account_pending_payment_label( $statuses ) {
+	if ( is_admin() || ! function_exists( 'is_account_page' ) || ! is_account_page() ) {
+		return $statuses;
+	}
+
+	if ( isset( $statuses['wc-pending'] ) ) {
+		$statuses['wc-pending'] = __( 'Processando pagamento', 'gstore' );
+	}
+
+	return $statuses;
+}
+add_filter( 'wc_order_statuses', 'gstore_my_account_pending_payment_label', 20 );
+
+/**
  * Valida estoque antes de adicionar produtos ao carrinho via "Order Again".
  *
  * Remove produtos sem estoque do array antes de adicionar ao carrinho.
