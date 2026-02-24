@@ -460,12 +460,6 @@
 
 	function onQuickActionClick(event) {
 		if (event) event.preventDefault();
-
-		if (state.preferredChannel === CHAT_PREF_VALUE && state.chatReady) {
-			openChatDirect();
-			return;
-		}
-
 		openSelectorModal();
 	}
 
