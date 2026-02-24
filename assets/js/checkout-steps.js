@@ -69,6 +69,7 @@
 	let isLoadingInstallmentQuotes = false;
 	let lastInstallmentQuotesSignature = '';
 	let lastBluOrderPaymentUrl = null; // URL do pagamento Blu do último pedido criado (para exibir aviso quando modal fecha)
+	let bluRedirectInProgress = false; // Evita abrir modal/redirect da Blu em duplicidade (ex.: submit + ajaxComplete)
 
 	function escapeHtml(value) {
 		return String(value || '')
@@ -3583,16 +3584,16 @@ function getInstallmentDisplayTotals(summaryData) {
 				success: function(response) {
 					updateProcessingStep(3);
 					
-					if (response.result === 'success') {
-						setTimeout(function() { showProcessingSuccess(); }, 500);
-						if (isBluCheckoutSelected()) {
-							setTimeout(function() {
-								hideProcessingModal();
-								openBluCheckoutModal(response.redirect);
-							}, 900);
-						} else {
-							setTimeout(function() { window.location.href = response.redirect; }, 1500);
-						}
+						if (response.result === 'success') {
+							setTimeout(function() { showProcessingSuccess(); }, 500);
+							if (isBluCheckoutSelected()) {
+								setTimeout(function() {
+									hideProcessingModal();
+									handleBluCheckoutRedirect(response.redirect);
+								}, 900);
+							} else {
+								setTimeout(function() { handleBluCheckoutRedirect(response.redirect); }, 1500);
+							}
 					} else if (response.result === 'failure') {
 						hideProcessingModal();
 						$form.removeClass('processing').unblock();
@@ -3678,6 +3679,38 @@ function getInstallmentDisplayTotals(summaryData) {
 		return selected === 'blu_checkout';
 	}
 
+	function shouldUseExternalBluCheckoutFlow() {
+		if (!isBluCheckoutSelected()) return false;
+		if (typeof window.matchMedia !== 'function') return false;
+
+		const isSmallViewport = window.matchMedia('(max-width: 768px)').matches;
+		const isCoarsePointer = window.matchMedia('(hover: none) and (pointer: coarse)').matches;
+
+		return isSmallViewport || isCoarsePointer;
+	}
+
+	function handleBluCheckoutRedirect(url) {
+		if (!url) return;
+
+		if (!isBluCheckoutSelected()) {
+			window.location.href = url;
+			return;
+		}
+
+		if (bluRedirectInProgress) {
+			return;
+		}
+
+		bluRedirectInProgress = true;
+
+		if (shouldUseExternalBluCheckoutFlow()) {
+			window.location.assign(url);
+			return;
+		}
+
+		openBluCheckoutModal(url);
+	}
+
 	function ensureBluCheckoutModal() {
 		if ($('#gstore-blu-checkout-modal').length) return;
 
@@ -3761,6 +3794,7 @@ function getInstallmentDisplayTotals(summaryData) {
 		const $modal = $('#gstore-blu-checkout-modal');
 		if (!$modal.length) return;
 
+		bluRedirectInProgress = false;
 		$modal.removeClass('is-visible').attr('aria-hidden', 'true');
 		$('body').removeClass('gstore-blu-checkout-modal-open');
 
@@ -3937,11 +3971,7 @@ function getInstallmentDisplayTotals(summaryData) {
 			try {
 				const response = JSON.parse(xhr.responseText);
 				if (response.result === 'success' && response.redirect) {
-					if (isBluCheckoutSelected()) {
-						openBluCheckoutModal(response.redirect);
-					} else {
-						window.location.href = response.redirect;
-					}
+					handleBluCheckoutRedirect(response.redirect);
 				}
 			} catch (e) {
 				// Não é JSON - normal para outras respostas
