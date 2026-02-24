@@ -78,13 +78,13 @@ if ( ! function_exists( 'gstore_home_blog_v1_render' ) ) {
 				--hb-radius: var(--gstore-radius-base, 4px);
 				--hb-border: var(--gstore-color-border-light, #e8e8e6);
 				--hb-card-bg: var(--gstore-color-bg-light, #fff);
-				--hb-card-soft: var(--gstore-color-bg-base, #f5f5f2);
+				--hb-card-soft: var(--gstore-color-bg-muted, #f0f2f5);
 				--hb-title: var(--gstore-color-text-primary, #1a1a1a);
 				--hb-muted: var(--gstore-color-text-muted, #7a7a7a);
 				--hb-link: var(--gstore-color-text-primary, #1a1a1a);
 				--hb-link-hover: var(--gstore-color-accent, #ff5c00);
-				--hb-shadow: var(--gstore-shadow-none, none);
-				background: transparent;
+				--hb-shadow: var(--gstore-shadow-sm, 0 1px 2px rgba(0, 0, 0, 0.06));
+				background: var(--gstore-color-bg-light, #ffffff);
 				color: var(--hb-title);
 			}
 			.gstore-hb-v1,
@@ -97,12 +97,12 @@ if ( ! function_exists( 'gstore_home_blog_v1_render' ) ) {
 			.gstore-hb-v1 .Gstore-container {
 				padding-top: clamp(var(--gstore-spacing-6, 24px), 3vw, var(--gstore-spacing-10, 40px));
 				padding-bottom: clamp(var(--gstore-spacing-6, 24px), 3vw, var(--gstore-spacing-10, 40px));
-				background: transparent;
+				background: var(--gstore-color-bg-light, #ffffff);
 			}
 			.gstore-hb-v1 .hb-shell {
 				border: 1px solid var(--hb-border);
 				border-radius: var(--hb-radius);
-				background: var(--gstore-color-bg-base, #f5f5f2);
+				background: var(--gstore-color-bg-light, #ffffff);
 				box-shadow: var(--hb-shadow);
 				padding: clamp(var(--gstore-spacing-4, 16px), 2.5vw, var(--gstore-spacing-6, 24px));
 			}
@@ -113,11 +113,16 @@ if ( ! function_exists( 'gstore_home_blog_v1_render' ) ) {
 				gap: var(--hb-gap);
 				flex-wrap: wrap;
 			}
+			.gstore-hb-v1 .hb-head > div {
+				min-width: 0;
+				flex: 1 1 320px;
+			}
 			.gstore-hb-v1 .hb-title {
 				margin: 0;
 				color: var(--hb-title);
 				font-size: clamp(var(--gstore-font-size-lg, 18px), 2vw, var(--gstore-font-size-2xl, 24px));
 				line-height: var(--gstore-line-height-tight, 1.25);
+				overflow-wrap: anywhere;
 			}
 			.gstore-hb-v1 .hb-subtitle {
 				margin: var(--gstore-spacing-2, 8px) 0 0;
@@ -143,6 +148,7 @@ if ( ! function_exists( 'gstore_home_blog_v1_render' ) ) {
 				border: 1px solid var(--hb-border);
 				border-radius: var(--hb-radius);
 				overflow: hidden;
+				min-width: 0;
 			}
 			.gstore-hb-v1 .hb-card__inner {
 				padding: clamp(var(--gstore-spacing-4, 16px), 2vw, var(--gstore-spacing-5, 20px));
@@ -183,6 +189,12 @@ if ( ! function_exists( 'gstore_home_blog_v1_render' ) ) {
 				text-decoration: none;
 				color: var(--hb-link);
 			}
+			.gstore-hb-v1 .hb-thumb-link,
+			.gstore-hb-v1 .hb-cover-link {
+				display: block;
+				width: 100%;
+				height: 100%;
+			}
 			.gstore-hb-v1 .hb-title-link:hover,
 			.gstore-hb-v1 .hb-thumb-link:hover,
 			.gstore-hb-v1 .hb-cover-link:hover {
@@ -197,6 +209,7 @@ if ( ! function_exists( 'gstore_home_blog_v1_render' ) ) {
 				font-size: clamp(var(--gstore-font-size-xl, 20px), 2vw, var(--gstore-font-size-2xl, 24px));
 				line-height: var(--gstore-line-height-tight, 1.25);
 				color: var(--hb-title);
+				overflow-wrap: anywhere;
 			}
 			.gstore-hb-v1 .hb-h4 {
 				margin: var(--gstore-spacing-2, 8px) 0 0;
@@ -207,6 +220,7 @@ if ( ! function_exists( 'gstore_home_blog_v1_render' ) ) {
 				-webkit-line-clamp: 2;
 				-webkit-box-orient: vertical;
 				overflow: hidden;
+				overflow-wrap: anywhere;
 			}
 			.gstore-hb-v1 .hb-excerpt {
 				margin: var(--gstore-spacing-3, 12px) 0 0;
@@ -307,14 +321,87 @@ if ( ! function_exists( 'gstore_home_blog_v1_render' ) ) {
 			}
 			.gstore-hb-v1 .Gstore-btn {
 				width: auto;
+				display: inline-flex;
+				align-items: center;
+				gap: 8px;
+				vertical-align: middle;
 			}
-			@media (max-width: 640px) {
-				.gstore-hb-v1 .hb-mini {
+			.gstore-hb-v1 .hb-head .Gstore-btn--secondary {
+				gap: 10px;
+			}
+			.gstore-hb-v1 .hb-btn-icon {
+				width: 14px;
+				height: 14px;
+				flex: 0 0 14px;
+				transition: transform .2s ease;
+			}
+			.gstore-hb-v1 .hb-head .Gstore-btn--secondary:hover .hb-btn-icon,
+			.gstore-hb-v1 .hb-head .Gstore-btn--secondary:focus .hb-btn-icon {
+				transform: translateX(2px);
+			}
+			.gstore-hb-v1 .Gstore-btn span[aria-hidden="true"] {
+				display: inline-block;
+				line-height: 1;
+				transform: translateY(-1px);
+			}
+			@media (max-width: 1024px) {
+				.gstore-hb-v1 .hb-head {
 					align-items: flex-start;
 				}
+				.gstore-hb-v1 .hb-head .Gstore-btn--secondary {
+					align-self: flex-start;
+				}
+				.gstore-hb-v1 .hb-grid > .hb-card:first-child .hb-h3 {
+					font-size: clamp(var(--gstore-font-size-lg, 18px), 5vw, var(--gstore-font-size-xl, 20px));
+				}
+				.gstore-hb-v1 .hb-grid > .hb-card:first-child .hb-excerpt {
+					display: none;
+				}
+				.gstore-hb-v1 .hb-grid > .hb-card:first-child .hb-row[style] {
+					margin-top: var(--gstore-spacing-2, 8px) !important;
+				}
+			}
+			@media (max-width: 640px) {
+				.gstore-hb-v1 .hb-grid {
+					gap: var(--gstore-spacing-3, 12px);
+				}
+				.gstore-hb-v1 .hb-card__inner {
+					padding: var(--gstore-spacing-3, 12px);
+				}
+				.gstore-hb-v1 .hb-cover,
 				.gstore-hb-v1 .hb-thumb {
-					width: 96px;
-					flex-basis: 96px;
+					aspect-ratio: 16 / 10;
+				}
+				/* No mobile, iguala o card destaque aos cards secundários */
+				.gstore-hb-v1 .hb-grid > .hb-card:first-child .hb-pill,
+				.gstore-hb-v1 .hb-grid > .hb-card:first-child .hb-tags {
+					display: none !important;
+				}
+				.gstore-hb-v1 .hb-grid > .hb-card:first-child .hb-h3 {
+					font-size: var(--gstore-font-size-base, 16px);
+					display: -webkit-box;
+					-webkit-line-clamp: 2;
+					-webkit-box-orient: vertical;
+					overflow: hidden;
+				}
+				.gstore-hb-v1 .hb-grid > .hb-card:first-child .hb-row {
+					justify-content: flex-start;
+				}
+				.gstore-hb-v1 .hb-grid > .hb-card:first-child .Gstore-btn--outline {
+					padding: 6px 10px;
+					font-size: var(--gstore-font-size-xs, 12px);
+				}
+				.gstore-hb-v1 .hb-mini {
+					display: block;
+				}
+				.gstore-hb-v1 .hb-thumb {
+					width: 100%;
+					flex-basis: auto;
+					margin-bottom: var(--gstore-spacing-2, 8px);
+				}
+				.gstore-hb-v1 .hb-head .Gstore-btn--secondary {
+					width: 100%;
+					justify-content: center;
 				}
 			}
 		</style>
@@ -330,7 +417,10 @@ if ( ! function_exists( 'gstore_home_blog_v1_render' ) ) {
 							<?php endif; ?>
 						</div>
 						<a class="Gstore-btn Gstore-btn--secondary" href="<?php echo esc_url( $atts['button_url'] ); ?>">
-							<?php echo esc_html( $atts['button_text'] ); ?> <span aria-hidden="true">-></span>
+							<span class="hb-btn-label"><?php echo esc_html( $atts['button_text'] ); ?></span>
+							<svg class="hb-btn-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true" focusable="false">
+								<path d="M4.167 10h11.666M10.833 4.167 15.833 10l-5 5.833" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path>
+							</svg>
 						</a>
 					</div>
 
@@ -380,7 +470,12 @@ if ( ! function_exists( 'gstore_home_blog_v1_render' ) ) {
 									<?php else : ?>
 										<span></span>
 									<?php endif; ?>
-									<a class="Gstore-btn Gstore-btn--outline" href="<?php echo esc_url( $feat_url ); ?>">Continuar <span aria-hidden="true">-></span></a>
+									<a class="Gstore-btn Gstore-btn--outline" href="<?php echo esc_url( $feat_url ); ?>">
+										<span class="hb-btn-label">Continuar</span>
+										<svg class="hb-btn-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true" focusable="false">
+											<path d="M4.167 10h11.666M10.833 4.167 15.833 10l-5 5.833" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path>
+										</svg>
+									</a>
 								</div>
 							</div>
 						</article>
@@ -426,7 +521,12 @@ if ( ! function_exists( 'gstore_home_blog_v1_render' ) ) {
 												<p class="hb-excerpt hb-mini__excerpt"><?php echo esc_html( $excerpt ); ?></p>
 											<?php endif; ?>
 											<div class="hb-actions-inline">
-												<a class="Gstore-btn Gstore-btn--ghost Gstore-btn--sm" href="<?php echo esc_url( $url ); ?>">Ler <span aria-hidden="true">-></span></a>
+												<a class="Gstore-btn Gstore-btn--ghost Gstore-btn--sm" href="<?php echo esc_url( $url ); ?>">
+													<span class="hb-btn-label">Ler</span>
+													<svg class="hb-btn-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true" focusable="false">
+														<path d="M4.167 10h11.666M10.833 4.167 15.833 10l-5 5.833" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path>
+													</svg>
+												</a>
 											</div>
 										</div>
 									</div>

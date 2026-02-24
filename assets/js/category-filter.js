@@ -12,6 +12,7 @@ class CategoryFilterTree {
         this.chipsContainer = this.container.querySelector('#gstore-category-filter-chips');
         this.applyBtn = this.container.querySelector('#gstore-filter-apply');
         this.clearBtn = this.container.querySelector('#gstore-filter-clear');
+        this.fullCatalogUrl = this.container.dataset.fullCatalogUrl || '';
 
         this.init();
     }
@@ -249,7 +250,9 @@ class CategoryFilterTree {
             }
         });
 
-        const newUrl = url.origin + url.pathname + (otherParams.length ? '?' + otherParams.join('&') : '');
+        // Em páginas de catálogo escopadas por categoria principal, "Limpar" vira atalho para catálogo completo.
+        const targetBase = this.fullCatalogUrl ? this.fullCatalogUrl : (url.origin + url.pathname);
+        const newUrl = targetBase + (otherParams.length ? (targetBase.includes('?') ? '&' : '?') + otherParams.join('&') : '');
         window.location.href = newUrl;
     }
 }

@@ -898,13 +898,19 @@ function gstore_enqueue_styles() {
 	$tokens_version = get_option( 'gstore_tokens_last_updated', time() );
 	$gstore_version = $theme_version . '.' . $tokens_version;
 
-	// Tema pai
-	wp_enqueue_style(
-		$parent_handle,
-		get_template_directory_uri() . '/style.css',
-		array(),
-		$parent_theme->get( 'Version' )
-	);
+	// Tema pai (só carrega se Gstore for realmente child theme do TT5,
+	// caso contrário get_template_directory_uri() aponta para o próprio Gstore
+	// e o style.css seria carregado duas vezes com versões diferentes)
+	if ( is_child_theme() && $parent_theme->exists() ) {
+		wp_enqueue_style(
+			$parent_handle,
+			get_template_directory_uri() . '/style.css',
+			array(),
+			$parent_theme->get( 'Version' )
+		);
+	} else {
+		wp_register_style( $parent_handle, false );
+	}
 
 	// Font Awesome - Carregado de forma nÃ£o bloqueante
 	// Usa tÃ©cnica de media="print" + onload para evitar render blocking
@@ -1012,19 +1018,23 @@ function gstore_enqueue_styles() {
 	);
 
 	// Filtro de Categorias Marketplace
+	$category_filter_css_file = get_theme_file_path( 'assets/css/category-filter.css' );
+	$category_filter_css_version = file_exists( $category_filter_css_file ) ? (string) filemtime( $category_filter_css_file ) : $theme_version;
 	wp_enqueue_style(
 		'gstore-category-filter',
 		get_theme_file_uri( 'assets/css/category-filter.css' ),
 		array( 'gstore-style' ),
-		$theme_version
+		$category_filter_css_version
 	);
 
 	// Filtro de Categorias Marketplace - JS
+	$category_filter_js_file = get_theme_file_path( 'assets/js/category-filter.js' );
+	$category_filter_js_version = file_exists( $category_filter_js_file ) ? (string) filemtime( $category_filter_js_file ) : $theme_version;
 	wp_enqueue_script(
 		'gstore-category-filter-js',
 		get_theme_file_uri( 'assets/js/category-filter.js' ),
 		array(),
-		$theme_version,
+		$category_filter_js_version,
 		true
 	);
 }
@@ -1340,16 +1350,14 @@ function gstore_enqueue_scripts() {
 		}
 		
 		if ( $is_catalog_page ) {
-		/*
-		wp_enqueue_script(
-			'gstore-catalog-filters',
-			get_theme_file_uri( 'assets/js/catalog-filters.js' ),
-			array(),
-			wp_get_theme()->get( 'Version' ),
-			true
-		);
-		*/
-	}
+			wp_enqueue_script(
+				'gstore-catalog-filters',
+				get_theme_file_uri( 'assets/js/catalog-filters.js' ),
+				array(),
+				(string) @filemtime( get_theme_file_path( 'assets/js/catalog-filters.js' ) ),
+				true
+			);
+		}
 	
 	/*
 	wp_enqueue_script(
@@ -5289,7 +5297,7 @@ function gstore_home_sections_shortcode() {
 		$out .= $render_part( 'parts/home-promocoes.html' );
 		$out .= $render_part( 'parts/home-equipamentos.html' );
 		$out .= do_shortcode( '[gstore_banner_youtube]' );
-		$out .= do_shortcode( '[gstore_home_blog_v1]' );
+		$out .= $render_part( 'parts/home-blog.html' );
 		return $out;
 	};
 
@@ -5403,7 +5411,7 @@ function gstore_home_sections_shortcode() {
 					$out .= $render_part( 'parts/home-equipamentos.html' );
 					break;
 				case 'blog':
-					$out .= do_shortcode( '[gstore_home_blog_v1]' );
+					$out .= $render_part( 'parts/home-blog.html' );
 					break;
 				case 'youtube_banner':
 					$out .= do_shortcode( '[gstore_banner_youtube]' );
@@ -7117,7 +7125,17 @@ function gstore_search_block_action_to_catalog( $block_content, $block ) {
 		return $block_content;
 	}
 
-	$catalog_url = esc_url( home_url( '/catalogo/' ) );
+	$target_url = home_url( '/catalogo/' );
+	if (
+		function_exists( 'gstore_is_generated_category_catalog_page' ) &&
+		gstore_is_generated_category_catalog_page() &&
+		function_exists( 'get_queried_object_id' ) &&
+		get_queried_object_id()
+	) {
+		$target_url = get_permalink( get_queried_object_id() );
+	}
+
+	$catalog_url = esc_url( $target_url );
 
 	// Substitui o action do form.
 	$updated = preg_replace(
@@ -7151,12 +7169,115 @@ function gstore_search_block_action_to_catalog( $block_content, $block ) {
 }
 
 /**
+ * Detecta se a pagina atual e um catalogo de categoria principal gerado pelo painel.
+ *
+ * @return bool
+ */
+function gstore_is_generated_category_catalog_page() {
+	if ( ! function_exists( 'is_page' ) || ! is_page() ) {
+		return false;
+	}
+
+	$page = get_queried_object();
+	if ( ! ( $page instanceof WP_Post ) || 'page' !== $page->post_type ) {
+		return false;
+	}
+
+	return (bool) get_post_meta( $page->ID, '_gstore_category_catalog_generated', true );
+}
+
+/**
+ * Mapeia rotas raiz "/{categoria-principal}" para o template de catálogo.
+ *
+ * Exemplo:
+ * - /clube-de-tiro -> /catalogo (internamente), com escopo da categoria.
+ *
+ * Não sobrescreve páginas reais nem slugs reservados do core.
+ */
+add_filter( 'request', 'gstore_catalog_scope_root_category_route', 5 );
+function gstore_catalog_scope_root_category_route( $vars ) {
+	if ( is_admin() ) {
+		return $vars;
+	}
+	if ( defined( 'REST_REQUEST' ) && REST_REQUEST ) {
+		return $vars;
+	}
+
+	$pagename = isset( $vars['pagename'] ) ? (string) $vars['pagename'] : '';
+	if ( '' === $pagename ) {
+		return $vars;
+	}
+	if ( strpos( $pagename, '/' ) !== false ) {
+		return $vars;
+	}
+
+	$slug = sanitize_title( $pagename );
+	if ( '' === $slug ) {
+		return $vars;
+	}
+
+	// Nunca sobrescreve páginas publicadas/existentes.
+	if ( get_page_by_path( $slug ) ) {
+		return $vars;
+	}
+
+	$reserved_slugs = array(
+		'wp-admin',
+		'wp-login',
+		'wp-json',
+		'feed',
+		'comments',
+		'search',
+		'sitemap.xml',
+		'sitemap_index.xml',
+		'robots.txt',
+	);
+	if ( in_array( $slug, $reserved_slugs, true ) ) {
+		return $vars;
+	}
+
+	$term = get_term_by( 'slug', $slug, 'product_cat' );
+	if ( ! $term || is_wp_error( $term ) ) {
+		return $vars;
+	}
+
+	// Escopo apenas para categorias principais.
+	if ( (int) $term->parent !== 0 ) {
+		return $vars;
+	}
+
+	$main_category_ids = get_option( 'gstore_main_categories', array() );
+	$main_category_ids = array_values(
+		array_unique(
+			array_filter(
+				array_map( 'absint', is_array( $main_category_ids ) ? $main_category_ids : array() )
+			)
+		)
+	);
+
+	// Escopo apenas para categorias marcadas como principais no painel.
+	if ( empty( $main_category_ids ) || ! in_array( (int) $term->term_id, $main_category_ids, true ) ) {
+		return $vars;
+	}
+
+	$vars['pagename'] = 'catalogo';
+	$vars['gstore_catalog_scope'] = $slug;
+
+	// Evita conflitos com possíveis matches anteriores.
+	unset( $vars['name'], $vars['attachment'], $vars['attachment_id'], $vars['category_name'] );
+
+	return $vars;
+}
+
+/**
  * Aplica o termo de busca (?s=) e match de categoria na query do shortcode [products]
  * quando usado no catÃ¡logo (/catalogo).
  */
 add_filter( 'woocommerce_shortcode_products_query', 'gstore_catalog_apply_search_to_products_shortcode', 25, 3 );
 function gstore_catalog_apply_search_to_products_shortcode( $query_args, $attr, $type ) {
-	if ( ! function_exists( 'is_page' ) || ! is_page( 'catalogo' ) ) {
+	$is_catalog_page = function_exists( 'is_page' ) && is_page( 'catalogo' );
+	$is_generated_catalog_page = function_exists( 'gstore_is_generated_category_catalog_page' ) && gstore_is_generated_category_catalog_page();
+	if ( ! $is_catalog_page && ! $is_generated_catalog_page ) {
 		return $query_args;
 	}
 
@@ -7264,6 +7385,10 @@ function gstore_is_catalog_context() {
 	}
 
 	if ( function_exists( 'is_page' ) && is_page( array( 'catalogo', 'ofertas' ) ) ) {
+		return true;
+	}
+
+	if ( function_exists( 'gstore_is_generated_category_catalog_page' ) && gstore_is_generated_category_catalog_page() ) {
 		return true;
 	}
 
@@ -11178,7 +11303,7 @@ function gstore_age_verification_modal() {
 		return;
 	}
 	?>
-	<!-- Modal de VerificaÃ§Ã£o de Idade -->
+	<!-- Modal de Verificacao de Idade -->
 	<div id="gstore-age-modal" class="gstore-age-modal" aria-hidden="true" role="dialog" aria-labelledby="gstore-age-title" aria-describedby="gstore-age-desc">
 		<div class="gstore-age-modal__overlay"></div>
 		<div class="gstore-age-modal__content">
@@ -11194,11 +11319,11 @@ function gstore_age_verification_modal() {
 					<path d="M12 16h.01"/>
 				</svg>
 			</div>
-			<h2 id="gstore-age-title" class="gstore-age-modal__title">VerificaÃ§Ã£o de Idade</h2>
+			<h2 id="gstore-age-title" class="gstore-age-modal__title">Verifica&#231;&#227;o de Idade</h2>
 			<p id="gstore-age-desc" class="gstore-age-modal__text">
-				Este site contÃ©m produtos destinados exclusivamente para maiores de 18 anos.
+				Este site cont&eacute;m produtos destinados exclusivamente para maiores de 18 anos.
 			</p>
-			<p class="gstore-age-modal__question">VocÃª tem 18 anos ou mais?</p>
+			<p class="gstore-age-modal__question">Voc&#234; tem 18 anos ou mais?</p>
 			<div class="gstore-age-modal__actions">
 				<button type="button" id="gstore-age-confirm" class="gstore-age-modal__btn gstore-age-modal__btn--confirm">
 					<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -11211,17 +11336,17 @@ function gstore_age_verification_modal() {
 						<line x1="18" y1="6" x2="6" y2="18"/>
 						<line x1="6" y1="6" x2="18" y2="18"/>
 					</svg>
-					NÃ£o, sou menor
+					N&#227;o, sou menor
 				</button>
 			</div>
 			<p class="gstore-age-modal__disclaimer">
-				Ao confirmar, vocÃª declara estar ciente de que Ã© proibida a venda de produtos para menores de 18 anos.
+				Ao confirmar, voc&#234; declara estar ciente de que &#233; proibida a venda de produtos para menores de 18 anos.
 			</p>
 		</div>
 	</div>
 
 	<style id="gstore-age-modal-styles">
-		/* Modal de VerificaÃ§Ã£o de Idade */
+		/* Modal de Verificacao de Idade */
 		.gstore-age-modal {
 			position: fixed;
 			top: 0;
@@ -11520,7 +11645,7 @@ function gstore_age_verification_modal() {
 				var data = JSON.parse(stored);
 				var now = new Date().getTime();
 				
-				// Verifica se ainda estÃ¡ vÃ¡lido
+				// Verifica se ainda esta valido
 				if (data.verified && data.expires > now) {
 					return true;
 				}
@@ -11541,7 +11666,7 @@ function gstore_age_verification_modal() {
 				};
 				localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
 			} catch (e) {
-				// localStorage nÃ£o disponÃ­vel
+				// localStorage nao disponivel
 			}
 		}
 		
@@ -11578,12 +11703,12 @@ function gstore_age_verification_modal() {
 					'</div>' +
 					'<h2 class="gstore-age-modal__blocked-title">Acesso Restrito</h2>' +
 					'<p class="gstore-age-modal__blocked-text">' +
-						'Desculpe, este site Ã© destinado apenas para maiores de 18 anos.<br><br>' +
-						'VocÃª serÃ¡ redirecionado para o Google em alguns segundos...' +
+						'Desculpe, este site &eacute; destinado apenas para maiores de 18 anos.<br><br>' +
+						'Voc&ecirc; ser&aacute; redirecionado para o Google em alguns segundos...' +
 					'</p>';
 			}
 			
-			// Redireciona apÃ³s 5 segundos
+			// Redireciona apos 5 segundos
 			setTimeout(function() {
 				window.location.href = 'https://www.google.com';
 			}, 5000);
@@ -11620,7 +11745,7 @@ function gstore_age_verification_modal() {
 					setVerified();
 					hideModal();
 					
-					// Remove o modal apÃ³s a animaÃ§Ã£o
+					// Remove o modal apos a animacao
 					setTimeout(function() {
 						var modal = document.getElementById('gstore-age-modal');
 						if (modal) modal.remove();
@@ -11777,6 +11902,42 @@ function gstore_add_neighborhood_replacement( $replacements, $args ) {
 // Ferramentas administrativas (thumbnails + updater via git) movidas para o plugin gstore-core.
 
 // Endpoint de debug log movido para inc/class-gstore-debug-logger.php
-// Os logs sÃ£o salvos em: wp-content/uploads/gstore-debug-logs/debug.log
+// Os logs são salvos em: wp-content/uploads/gstore-debug-logs/debug.log
 
+/**
+ * Garante que o botão .Gstore-header__menu-toggle sempre tenha a estrutura interna
+ * com o ícone hamburger (3 linhas) + texto MENU.
+ *
+ * Necessário porque o Editor de Site do WordPress pode limpar o HTML interno do
+ * <button> ao salvar customizações, transformando-o em <button>MENU</button>.
+ */
+add_filter( 'render_block_core/template-part', 'gstore_fix_menu_toggle_structure', 25, 1 );
+function gstore_fix_menu_toggle_structure( $content ) {
+	if ( empty( $content ) || strpos( $content, 'Gstore-header__menu-toggle' ) === false ) {
+		return $content;
+	}
 
+	$correct_inner =
+		'<span class="Gstore-header__menu-icon" aria-hidden="true">' .
+			'<span class="Gstore-header__menu-line"></span>' .
+			'<span class="Gstore-header__menu-line"></span>' .
+			'<span class="Gstore-header__menu-line"></span>' .
+		'</span>' .
+		'<span class="Gstore-header__menu-text">MENU</span>';
+
+	$pattern = '/<button([^>]*class="[^"]*Gstore-header__menu-toggle[^"]*"[^>]*)>(.*?)<\/button>/is';
+
+	if ( ! preg_match( $pattern, $content, $match ) ) {
+		return $content;
+	}
+
+	if ( strpos( $match[2], 'Gstore-header__menu-icon' ) !== false &&
+	     substr_count( $match[2], 'Gstore-header__menu-line' ) >= 3 ) {
+		return $content;
+	}
+
+	$fixed_button = '<button' . $match[1] . '>' . $correct_inner . '</button>';
+	$content = str_replace( $match[0], $fixed_button, $content );
+
+	return $content;
+}
