@@ -1,25 +1,60 @@
+:root {
+	--gstore-support-qa-fg: var(--gstore-color-white, #fff);
+	--gstore-support-qa-fg-muted: var(--gstore-color-text-secondary, #6b6b6b);
+	--gstore-support-qa-bg: linear-gradient(
+		135deg,
+		var(--gstore-color-accent-secondary-dark, #567745) 0%,
+		var(--gstore-color-accent-secondary, #5a8900) 55%,
+		var(--gstore-color-bg-dark, #0a0a0a) 100%
+	);
+	--gstore-support-qa-bg-chat: linear-gradient(
+		135deg,
+		var(--gstore-color-accent, #ff5c00) 0%,
+		var(--gstore-color-accent-light, #ff6500) 55%,
+		var(--gstore-color-accent-dark, #bf4500) 100%
+	);
+	--gstore-support-qa-chip-bg: var(--gstore-color-white-20, rgba(255, 255, 255, 0.2));
+	--gstore-support-qa-surface: var(--gstore-color-bg-light, #fff);
+	--gstore-support-qa-surface-muted: var(--gstore-color-bg-slate-50, #f8fafc);
+	--gstore-support-qa-text: var(--gstore-color-text-primary, #1a1a1a);
+	--gstore-support-qa-text-secondary: var(--gstore-color-text-gray-600, #475569);
+	--gstore-support-qa-text-tertiary: var(--gstore-color-text-slate-400, #94a3b8);
+	--gstore-support-qa-border: var(--gstore-color-border, #e6e6e6);
+	--gstore-support-qa-border-strong: var(--gstore-color-border-card, #d1d5db);
+	--gstore-support-qa-accent: var(--gstore-color-accent, #ff5c00);
+	--gstore-support-qa-accent-soft: var(--gstore-color-accent-08, rgba(255, 92, 0, 0.08));
+	--gstore-support-qa-shadow: var(--gstore-shadow-lg, 0 10px 30px rgba(0, 0, 0, 0.12));
+	--gstore-support-qa-shadow-hover: var(--gstore-shadow-xl, 0 20px 60px rgba(17, 24, 39, 0.08));
+	--gstore-support-qa-radius-pill: var(--gstore-radius-full, 9999px);
+	--gstore-support-qa-radius-card: var(--gstore-radius-xl, 12px);
+}
+
 .Gstore-support-float,
 .Gstore-telegram-float {
 	position: fixed;
 	right: calc(var(--gstore-support-float-right, 16px) + env(safe-area-inset-right, 0px));
 	bottom: calc(var(--gstore-support-float-bottom, 16px) + env(safe-area-inset-bottom, 0px));
 	min-height: 56px;
-	padding: 0 14px 0 12px;
+	padding: 0 var(--gstore-spacing-3, 12px) 0 var(--gstore-spacing-3, 12px);
 	display: inline-flex;
 	align-items: center;
-	gap: 10px;
+	gap: var(--gstore-spacing-2, 8px);
 	border: 0;
-	border-radius: 999px;
+	border-radius: var(--gstore-support-qa-radius-pill);
 	background:
 		radial-gradient(circle at 18% 18%, rgba(255, 255, 255, 0.35), transparent 45%),
-		linear-gradient(135deg, #0f766e 0%, #0ea5a0 48%, #0f172a 100%);
-	color: #fff;
+		var(--gstore-support-qa-bg);
+	color: var(--gstore-support-qa-fg);
 	text-decoration: none;
-	box-shadow: 0 14px 30px rgba(15, 23, 42, 0.28);
+	box-shadow: var(--gstore-support-qa-shadow);
 	z-index: 99999;
 	cursor: pointer;
-	transition: transform 120ms ease, box-shadow 120ms ease, filter 120ms ease;
+	transition:
+		transform var(--gstore-transition-fast, 150ms ease-in-out),
+		box-shadow var(--gstore-transition-fast, 150ms ease-in-out),
+		filter var(--gstore-transition-fast, 150ms ease-in-out);
 	-webkit-tap-highlight-color: transparent;
+	font-family: var(--gstore-font-family, sans-serif);
 }
 
 .Gstore-support-float:hover,
@@ -27,7 +62,7 @@
 .Gstore-telegram-float:hover,
 .Gstore-telegram-float:focus-visible {
 	transform: translateY(-2px);
-	box-shadow: 0 18px 34px rgba(15, 23, 42, 0.32);
+	box-shadow: var(--gstore-support-qa-shadow-hover);
 	filter: saturate(1.06);
 	outline: none;
 }
@@ -40,7 +75,7 @@
 .Gstore-support-float.is-direct-chat {
 	background:
 		radial-gradient(circle at 20% 20%, rgba(255, 255, 255, 0.3), transparent 45%),
-		linear-gradient(135deg, #0b5fff 0%, #0ea5e9 52%, #082f49 100%);
+		var(--gstore-support-qa-bg-chat);
 }
 
 .Gstore-support-float__icon-wrap {
@@ -49,8 +84,8 @@
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
-	border-radius: 999px;
-	background: rgba(255, 255, 255, 0.16);
+	border-radius: var(--gstore-support-qa-radius-pill);
+	background: var(--gstore-support-qa-chip-bg);
 	flex: 0 0 auto;
 }
 
@@ -62,11 +97,11 @@
 }
 
 .Gstore-support-float__label {
-	font-size: 13px;
-	font-weight: 700;
+	font-size: var(--gstore-font-size-sm, 0.875rem);
+	font-weight: var(--gstore-font-weight-bold, 700);
 	line-height: 1;
 	white-space: nowrap;
-	letter-spacing: 0.01em;
+	letter-spacing: var(--gstore-letter-spacing-02, 0.02em);
 }
 
 .Gstore-support-modal,
@@ -76,7 +111,7 @@
 	z-index: 2147483000;
 	opacity: 0;
 	pointer-events: none;
-	transition: opacity 140ms ease;
+	transition: opacity var(--gstore-transition-fast, 150ms ease-in-out);
 }
 
 .Gstore-support-modal[aria-hidden="false"],
@@ -89,7 +124,7 @@
 .Gstore-support-chat-shell__backdrop {
 	position: absolute;
 	inset: 0;
-	background: rgba(2, 6, 23, 0.5);
+	background: var(--gstore-color-black-60, rgba(0, 0, 0, 0.6));
 	backdrop-filter: blur(2px);
 }
 
@@ -98,12 +133,13 @@
 	right: 16px;
 	bottom: calc(84px + env(safe-area-inset-bottom, 0px));
 	width: min(420px, calc(100vw - 32px));
-	border-radius: 18px;
-	background: #fff;
-	color: #0f172a;
-	box-shadow: 0 28px 64px rgba(15, 23, 42, 0.28);
+	border-radius: calc(var(--gstore-support-qa-radius-card) + 6px);
+	background: var(--gstore-support-qa-surface);
+	color: var(--gstore-support-qa-text);
+	box-shadow: var(--gstore-support-qa-shadow-hover);
 	transform: translateY(10px) scale(0.985);
-	transition: transform 140ms ease;
+	transition: transform var(--gstore-transition-fast, 150ms ease-in-out);
+	border: 1px solid var(--gstore-support-qa-border);
 }
 
 .Gstore-support-modal[aria-hidden="false"] .Gstore-support-modal__panel {
@@ -117,9 +153,9 @@
 	width: 36px;
 	height: 36px;
 	border: 0;
-	border-radius: 999px;
-	background: #f1f5f9;
-	color: #0f172a;
+	border-radius: var(--gstore-support-qa-radius-pill);
+	background: var(--gstore-support-qa-surface-muted);
+	color: var(--gstore-support-qa-text);
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
@@ -135,31 +171,31 @@
 }
 
 .Gstore-support-modal__body {
-	padding: 18px 18px 16px;
+	padding: var(--gstore-spacing-5, 20px) var(--gstore-spacing-5, 20px) var(--gstore-spacing-4, 16px);
 }
 
 .Gstore-support-modal__eyebrow {
 	margin: 0 0 4px;
-	font-size: 11px;
-	font-weight: 700;
+	font-size: var(--gstore-font-size-xs, 0.75rem);
+	font-weight: var(--gstore-font-weight-bold, 700);
 	text-transform: uppercase;
-	letter-spacing: 0.08em;
-	color: #0f766e;
+	letter-spacing: var(--gstore-letter-spacing-wider, 0.08em);
+	color: var(--gstore-support-qa-accent);
 }
 
 .Gstore-support-modal__title {
 	margin: 0 38px 8px 0;
-	font-size: 20px;
+	font-size: var(--gstore-font-size-xl, 1.25rem);
 	line-height: 1.15;
 	font-weight: 800;
-	color: #0f172a;
+	color: var(--gstore-support-qa-text);
 }
 
 .Gstore-support-modal__text {
 	margin: 0 0 14px;
-	font-size: 14px;
-	line-height: 1.45;
-	color: #475569;
+	font-size: var(--gstore-font-size-sm, 0.875rem);
+	line-height: var(--gstore-line-height-normal, 1.5);
+	color: var(--gstore-support-qa-text-secondary);
 }
 
 .Gstore-support-modal__options {
@@ -169,21 +205,25 @@
 
 .Gstore-support-option {
 	width: 100%;
-	border: 1px solid #dbe3ee;
-	background: #fff;
-	border-radius: 14px;
-	padding: 12px;
+	border: 1px solid var(--gstore-support-qa-border-strong);
+	background: var(--gstore-support-qa-surface);
+	border-radius: calc(var(--gstore-support-qa-radius-card) + 2px);
+	padding: var(--gstore-spacing-3, 12px);
 	text-align: left;
 	display: grid;
 	gap: 4px;
 	cursor: pointer;
-	transition: border-color 120ms ease, transform 120ms ease, box-shadow 120ms ease;
+	transition:
+		border-color var(--gstore-transition-fast, 150ms ease-in-out),
+		transform var(--gstore-transition-fast, 150ms ease-in-out),
+		box-shadow var(--gstore-transition-fast, 150ms ease-in-out);
+	font-family: var(--gstore-font-family, sans-serif);
 }
 
 .Gstore-support-option:hover,
 .Gstore-support-option:focus-visible {
-	border-color: #94a3b8;
-	box-shadow: 0 10px 18px rgba(15, 23, 42, 0.08);
+	border-color: var(--gstore-support-qa-accent);
+	box-shadow: var(--gstore-shadow-md, 0 3px 10px rgba(0, 0, 0, 0.08));
 	transform: translateY(-1px);
 	outline: none;
 }
@@ -197,15 +237,15 @@
 }
 
 .Gstore-support-option__title {
-	font-size: 15px;
-	font-weight: 700;
-	color: #0f172a;
+	font-size: var(--gstore-font-size-base, 1rem);
+	font-weight: var(--gstore-font-weight-bold, 700);
+	color: var(--gstore-support-qa-text);
 }
 
 .Gstore-support-option__desc {
-	font-size: 13px;
+	font-size: var(--gstore-font-size-sm, 0.875rem);
 	line-height: 1.35;
-	color: #64748b;
+	color: var(--gstore-support-qa-text-secondary);
 }
 
 .Gstore-support-chat-shell {
@@ -218,17 +258,17 @@
 	bottom: 12px;
 	width: min(420px, calc(100vw - 24px));
 	height: min(720px, calc(100vh - 24px));
-	border-radius: 18px;
+	border-radius: calc(var(--gstore-support-qa-radius-card) + 6px);
 	background:
-		linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(255, 255, 255, 0.88)),
-		linear-gradient(135deg, #dbeafe, #ccfbf1);
-	border: 1px solid rgba(255, 255, 255, 0.7);
-	box-shadow: 0 30px 70px rgba(2, 6, 23, 0.26);
+		linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(255, 255, 255, 0.92)),
+		linear-gradient(135deg, var(--gstore-color-bg-accent-light, #faf7ed), var(--gstore-color-bg-light, #fff));
+	border: 1px solid var(--gstore-color-border-light, #e8e8e6);
+	box-shadow: var(--gstore-support-qa-shadow-hover);
 	overflow: hidden;
 	display: grid;
 	grid-template-rows: auto 1fr;
 	transform: translateY(10px) scale(0.985);
-	transition: transform 140ms ease;
+	transition: transform var(--gstore-transition-fast, 150ms ease-in-out);
 	pointer-events: none;
 }
 
@@ -242,10 +282,10 @@
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
-	gap: 12px;
-	padding: 12px 12px 12px 14px;
+	gap: var(--gstore-spacing-3, 12px);
+	padding: var(--gstore-spacing-3, 12px) var(--gstore-spacing-3, 12px) var(--gstore-spacing-3, 12px) var(--gstore-spacing-4, 16px);
 	background: rgba(255, 255, 255, 0.92);
-	border-bottom: 1px solid rgba(148, 163, 184, 0.28);
+	border-bottom: 1px solid var(--gstore-support-qa-border);
 	pointer-events: auto;
 }
 
@@ -255,19 +295,19 @@
 
 .Gstore-support-chat-shell__eyebrow {
 	margin: 0;
-	font-size: 10px;
-	font-weight: 700;
-	letter-spacing: 0.08em;
+	font-size: var(--gstore-font-size-xs, 0.75rem);
+	font-weight: var(--gstore-font-weight-bold, 700);
+	letter-spacing: var(--gstore-letter-spacing-wider, 0.08em);
 	text-transform: uppercase;
-	color: #0369a1;
+	color: var(--gstore-color-accent-secondary-dark, #567745);
 }
 
 .Gstore-support-chat-shell__title {
 	margin: 2px 0 0;
-	font-size: 15px;
+	font-size: var(--gstore-font-size-base, 1rem);
 	font-weight: 800;
 	line-height: 1.2;
-	color: #0f172a;
+	color: var(--gstore-support-qa-text);
 }
 
 .Gstore-support-chat-shell__actions {
@@ -279,18 +319,18 @@
 .Gstore-support-chat-shell__link {
 	border: 0;
 	background: transparent;
-	color: #0f766e;
-	font-size: 12px;
-	font-weight: 700;
+	color: var(--gstore-support-qa-accent);
+	font-size: var(--gstore-font-size-xs, 0.75rem);
+	font-weight: var(--gstore-font-weight-bold, 700);
 	padding: 6px 8px;
-	border-radius: 999px;
+	border-radius: var(--gstore-support-qa-radius-pill);
 	cursor: pointer;
 	white-space: nowrap;
 }
 
 .Gstore-support-chat-shell__link:hover,
 .Gstore-support-chat-shell__link:focus-visible {
-	background: rgba(15, 118, 110, 0.08);
+	background: var(--gstore-support-qa-accent-soft);
 	outline: none;
 }
 
@@ -298,9 +338,9 @@
 	width: 34px;
 	height: 34px;
 	border: 0;
-	border-radius: 999px;
-	background: #e2e8f0;
-	color: #0f172a;
+	border-radius: var(--gstore-support-qa-radius-pill);
+	background: var(--gstore-support-qa-surface-muted);
+	color: var(--gstore-support-qa-text);
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
@@ -311,15 +351,15 @@
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	padding: 16px;
-	color: #334155;
-	font-size: 14px;
-	line-height: 1.45;
+	padding: var(--gstore-spacing-4, 16px);
+	color: var(--gstore-support-qa-text-secondary);
+	font-size: var(--gstore-font-size-sm, 0.875rem);
+	line-height: var(--gstore-line-height-normal, 1.5);
 	text-align: center;
 	background:
-		radial-gradient(circle at 14% 12%, rgba(14, 165, 233, 0.12), transparent 46%),
-		radial-gradient(circle at 88% 18%, rgba(20, 184, 166, 0.14), transparent 45%),
-		linear-gradient(180deg, rgba(255, 255, 255, 0.8), rgba(248, 250, 252, 0.92));
+		radial-gradient(circle at 14% 12%, var(--gstore-color-accent-08, rgba(255, 92, 0, 0.08)), transparent 46%),
+		radial-gradient(circle at 88% 18%, var(--gstore-color-accent-secondary-12, rgba(90, 137, 0, 0.12)), transparent 45%),
+		linear-gradient(180deg, rgba(255, 255, 255, 0.85), var(--gstore-color-bg-slate-50, #f8fafc));
 }
 
 body.gstore-support-modal-open {

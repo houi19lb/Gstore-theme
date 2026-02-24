@@ -41,6 +41,39 @@
 		activeModal: null
 	};
 
+	function demojibakePt(value) {
+		if (typeof value !== 'string' || value.indexOf('Ã') === -1) return value;
+		return value
+			.replace(/ÃƒÂ£/g, '\u00e3')
+			.replace(/ÃƒÂµ/g, '\u00f5')
+			.replace(/ÃƒÂ¡/g, '\u00e1')
+			.replace(/ÃƒÂ©/g, '\u00e9')
+			.replace(/ÃƒÂ­/g, '\u00ed')
+			.replace(/ÃƒÂ³/g, '\u00f3')
+			.replace(/ÃƒÂº/g, '\u00fa')
+			.replace(/ÃƒÂ§/g, '\u00e7')
+			.replace(/Ã£/g, '\u00e3')
+			.replace(/Ãµ/g, '\u00f5')
+			.replace(/Ã¡/g, '\u00e1')
+			.replace(/Ã©/g, '\u00e9')
+			.replace(/Ã­/g, '\u00ed')
+			.replace(/Ã³/g, '\u00f3')
+			.replace(/Ãº/g, '\u00fa')
+			.replace(/Ã§/g, '\u00e7');
+	}
+
+	function normalizeTextMap(map) {
+		if (!map || typeof map !== 'object') return map;
+		for (var key in map) {
+			if (Object.prototype.hasOwnProperty.call(map, key)) {
+				map[key] = demojibakePt(map[key]);
+			}
+		}
+		return map;
+	}
+
+	normalizeTextMap(TEXTS);
+
 	function text(key, fallback) {
 		if (TEXTS && typeof TEXTS[key] === 'string' && TEXTS[key]) return TEXTS[key];
 		return fallback;
