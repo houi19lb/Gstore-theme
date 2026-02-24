@@ -39,14 +39,12 @@
 	display: inline-flex;
 	align-items: center;
 	gap: var(--gstore-spacing-2, 8px);
-	border: 0;
+	border: 1px solid var(--gstore-support-qa-border-strong);
 	border-radius: var(--gstore-support-qa-radius-pill);
-	background:
-		radial-gradient(circle at 18% 18%, rgba(255, 255, 255, 0.35), transparent 45%),
-		var(--gstore-support-qa-bg);
-	color: var(--gstore-support-qa-fg);
+	background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(248, 250, 252, 0.96));
+	color: var(--gstore-support-qa-text);
 	text-decoration: none;
-	box-shadow: var(--gstore-support-qa-shadow);
+	box-shadow: 0 10px 28px rgba(15, 23, 42, 0.14);
 	z-index: 99999;
 	cursor: pointer;
 	transition:
@@ -62,8 +60,8 @@
 .Gstore-telegram-float:hover,
 .Gstore-telegram-float:focus-visible {
 	transform: translateY(-2px);
-	box-shadow: var(--gstore-support-qa-shadow-hover);
-	filter: saturate(1.06);
+	box-shadow: 0 16px 36px rgba(15, 23, 42, 0.18);
+	filter: none;
 	outline: none;
 }
 
@@ -73,9 +71,8 @@
 }
 
 .Gstore-support-float.is-direct-chat {
-	background:
-		radial-gradient(circle at 20% 20%, rgba(255, 255, 255, 0.3), transparent 45%),
-		var(--gstore-support-qa-bg-chat);
+	border-color: rgba(255, 92, 0, 0.28);
+	background: linear-gradient(180deg, rgba(255, 255, 255, 0.99), rgba(255, 247, 240, 0.98));
 }
 
 .Gstore-support-float__icon-wrap {
@@ -85,8 +82,14 @@
 	align-items: center;
 	justify-content: center;
 	border-radius: var(--gstore-support-qa-radius-pill);
-	background: var(--gstore-support-qa-chip-bg);
+	background: rgba(255, 92, 0, 0.12);
+	color: var(--gstore-support-qa-accent);
 	flex: 0 0 auto;
+}
+
+.Gstore-support-float:not(.is-direct-chat) .Gstore-support-float__icon-wrap {
+	background: rgba(255, 92, 0, 0.1);
+	color: var(--gstore-support-qa-accent);
 }
 
 .Gstore-support-float__icon {
@@ -380,6 +383,16 @@ body.gstore-support-chat-open [class*="woot-widget-bubble"] {
 body.gstore-support-chat-open .woot-widget-holder,
 body.gstore-support-chat-open [class*="woot-widget-holder"] {
 	z-index: 2147483300 !important;
+}
+
+/* Best effort para esconder branding do Chatwoot quando renderizado fora do iframe. */
+.woot-widget-holder [class*="powered"],
+.woot-widget-holder [class*="Powered"],
+[class*="woot"] [class*="powered"],
+[class*="woot"] [class*="Powered"],
+.woot-widget-holder a[href*="chatwoot"],
+[class*="woot"] a[href*="chatwoot"] {
+	display: none !important;
 }
 
 @media (max-width: 768px) {

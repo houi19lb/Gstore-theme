@@ -458,7 +458,7 @@
 		if (event) event.preventDefault();
 
 		if (state.preferredChannel === CHAT_PREF_VALUE && state.chatReady) {
-			openChatShellModal();
+			openChatDirect();
 			return;
 		}
 
@@ -561,6 +561,13 @@
 		emitEvent('gstore:support:chat-shell-open', { strategy: CHAT_UI_STRATEGY });
 	}
 
+	function openChatDirect() {
+		closeSelectorModal(true);
+		closeChatShellModal(true);
+		openChatEngine();
+		emitEvent('gstore:support:chat-open-native', { strategy: CHAT_UI_STRATEGY });
+	}
+
 	function closeChatShellModal(silent) {
 		var modal = document.getElementById(CHAT_MODAL_ID);
 		if (modal) modal.setAttribute('aria-hidden', 'true');
@@ -593,7 +600,7 @@
 	function handleSelectChat() {
 		if (!state.chatReady) return;
 		persistPreferredChannel(CHAT_PREF_VALUE);
-		openChatShellModal();
+		openChatDirect();
 		emitEvent('gstore:support:channel-selected', { channel: CHAT_PREF_VALUE });
 	}
 
@@ -761,6 +768,63 @@
 		}, 1000);
 	}
 
+	function hideChatwootBrandingBestEffort(scope) {
+		var root = scope && scope.querySelectorAll ? scope : document;
+		var selector =
+			'.woot-widget-holder [class*="powered"], ' +
+			'.woot-widget-holder [class*="Powered"], ' +
+			'[class*="woot"] [class*="powered"], ' +
+			'[class*="woot"] [class*="Powered"], ' +
+			'.woot-widget-holder a[href*="chatwoot"], ' +
+			'[class*="woot"] a[href*="chatwoot"]';
+
+		try {
+			var directMatches = root.querySelectorAll(selector);
+			for (var i = 0; i < directMatches.length; i++) {
+				directMatches[i].style.display = 'none';
+			}
+		} catch (e) {}
+
+		try {
+			var textNodes = root.querySelectorAll('a, span, small, p, div');
+			for (var j = 0; j < textNodes.length; j++) {
+				var el = textNodes[j];
+				if (!el || !el.textContent) continue;
+				if (!el.closest || !el.closest('.woot-widget-holder, [class*="woot"]')) continue;
+				if (el.querySelector && el.querySelector('iframe, button, input, textarea')) continue;
+				var txt = normalizeText(el.textContent);
+				if (!txt) continue;
+				if (txt.length > 80) continue;
+				if (txt.indexOf('chatwoot') === -1) continue;
+				if (txt.indexOf('powered') === -1 && txt.indexOf('desenvolvido') === -1) continue;
+				el.style.display = 'none';
+			}
+		} catch (e2) {}
+	}
+
+	function bindChatwootBrandingCleanup() {
+		hideChatwootBrandingBestEffort(document);
+
+		try {
+			if (document.__gstoreChatwootBrandingObserverBound) return;
+			var obs = new MutationObserver(function (mutations) {
+				for (var i = 0; i < mutations.length; i++) {
+					var m = mutations[i];
+					if (m.addedNodes && m.addedNodes.length) {
+						for (var j = 0; j < m.addedNodes.length; j++) {
+							var node = m.addedNodes[j];
+							if (node && node.nodeType === 1) {
+								hideChatwootBrandingBestEffort(node);
+							}
+						}
+					}
+				}
+			});
+			obs.observe(document.body, { childList: true, subtree: true });
+			document.__gstoreChatwootBrandingObserverBound = true;
+		} catch (e) {}
+	}
+
 	function syncSourceAndUI() {
 		var src = findTelegramAnchor();
 		if (!src) return false;
@@ -809,6 +873,7 @@
 
 		bindKeyboardShortcuts();
 		bindChatReadySignals();
+		bindChatwootBrandingCleanup();
 
 		window.addEventListener('resize', toggleQuickActionVisibility);
 		window.addEventListener('gstore:support:chat-shell-open', toggleQuickActionVisibility);
