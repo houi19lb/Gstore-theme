@@ -38,7 +38,8 @@
 		chatReady: false,
 		preferredChannel: null,
 		telegramLink: null,
-		activeModal: null
+		activeModal: null,
+		quickActionConfig: null
 	};
 
 	function demojibakePt(value) {
@@ -185,7 +186,73 @@
 		return { ok: false };
 	}
 
+	function getBridgeQuickActionConfig() {
+		var viaMethod = callBridge(['getQuickActionConfig'], []);
+		if (viaMethod.ok && viaMethod.value && typeof viaMethod.value === 'object') {
+			return viaMethod.value;
+		}
+
+		var bridge = getBridge();
+		if (bridge && bridge.quickAction && typeof bridge.quickAction === 'object') {
+			return bridge.quickAction;
+		}
+
+		return null;
+	}
+
+	function syncQuickActionConfigFromBridge() {
+		var qa = getBridgeQuickActionConfig();
+		if (!qa || typeof qa !== 'object') return false;
+
+		state.quickActionConfig = qa;
+		if (isValidHref(qa.telegramUrl)) {
+			state.telegramLink = qa.telegramUrl;
+		}
+		return true;
+	}
+
+	function getEffectiveQuickActionConfig() {
+		return state.quickActionConfig && typeof state.quickActionConfig === 'object'
+			? state.quickActionConfig
+			: null;
+	}
+
+	function getEffectiveQuickActionType() {
+		var qa = getEffectiveQuickActionConfig();
+		if (qa && typeof qa.effectiveType === 'string' && qa.effectiveType) {
+			return qa.effectiveType;
+		}
+		return 'selector';
+	}
+
+	function getQuickActionDisplayMode() {
+		var qa = getEffectiveQuickActionConfig();
+		if (qa && qa.display === 'icon_only') return 'icon_only';
+		return 'icon_label';
+	}
+
+	function getQuickActionLabel() {
+		var qa = getEffectiveQuickActionConfig();
+		if (qa && typeof qa.effectiveLabel === 'string' && qa.effectiveLabel.trim()) {
+			return qa.effectiveLabel.trim();
+		}
+		return null;
+	}
+
+	function getQuickActionIconKind() {
+		var qa = getEffectiveQuickActionConfig();
+		if (qa && typeof qa.effectiveIcon === 'string' && qa.effectiveIcon) {
+			return qa.effectiveIcon;
+		}
+		return getEffectiveQuickActionType() === 'telegram' ? 'telegram' : 'chat';
+	}
+
 	function detectChatReady() {
+		var qa = getEffectiveQuickActionConfig();
+		if (qa && qa.chatwootEnabled === false) {
+			return false;
+		}
+
 		var bridge = getBridge();
 		if (bridge) {
 			if (typeof bridge.isChatReady === 'function') {
@@ -308,12 +375,24 @@
 		return pickTelegramLink(anchors);
 	}
 
-	function supportFloatIconSvg() {
+	function chatFloatIconSvg() {
 		return (
 			'<svg class="Gstore-support-float__icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">' +
 			'<path d="M12 2C6.478 2 2 6.145 2 11.258c0 2.911 1.452 5.507 3.72 7.202V22l3.22-1.763c.97.27 2.002.413 3.06.413 5.523 0 10-4.145 10-9.258C22 6.145 17.523 2 12 2zm-4.1 8.9h8.2a.9.9 0 1 1 0 1.8H7.9a.9.9 0 1 1 0-1.8zm0-3.4h8.2a.9.9 0 1 1 0 1.8H7.9a.9.9 0 1 1 0-1.8z"/>' +
 			'</svg>'
 		);
+	}
+
+	function telegramFloatIconSvg() {
+		return (
+			'<svg class="Gstore-support-float__icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">' +
+			'<path d="M21.4 4.6a1.4 1.4 0 0 0-1.45-.22L4.17 10.84a1.5 1.5 0 0 0 .1 2.81l4.2 1.47 1.47 4.2a1.5 1.5 0 0 0 2.81.08l6.86-15.33a1.4 1.4 0 0 0-.21-1.47zM9.35 14.65l-.7 3.15-1.1-3.15 7.6-6.7-5.8 6.7z"/>' +
+			'</svg>'
+		);
+	}
+
+	function supportFloatIconSvg(kind) {
+		return kind === 'telegram' ? telegramFloatIconSvg() : chatFloatIconSvg();
 	}
 
 	function closeIconSvg() {
@@ -336,7 +415,7 @@
 		button.setAttribute('aria-label', text('openSupport', 'Atendimento'));
 		button.setAttribute('title', text('openSupport', 'Atendimento'));
 		button.innerHTML =
-			'<span class="Gstore-support-float__icon-wrap">' + supportFloatIconSvg() + '</span>' +
+			'<span class="Gstore-support-float__icon-wrap">' + supportFloatIconSvg(getQuickActionIconKind()) + '</span>' +
 			'<span class="Gstore-support-float__label"></span>';
 
 		button.addEventListener('click', onQuickActionClick);
@@ -460,6 +539,12 @@
 
 	function onQuickActionClick(event) {
 		if (event) event.preventDefault();
+
+		if (getEffectiveQuickActionType() === 'telegram') {
+			handleSelectTelegram();
+			return;
+		}
+
 		openSelectorModal();
 	}
 
@@ -468,18 +553,44 @@
 		if (!button) return;
 
 		var labelEl = button.querySelector('.Gstore-support-float__label');
+		var iconWrapEl = button.querySelector('.Gstore-support-float__icon-wrap');
 		var isDirectChat = state.preferredChannel === CHAT_PREF_VALUE;
+		var effectiveType = getEffectiveQuickActionType();
+		var iconKind = getQuickActionIconKind();
+		var displayMode = getQuickActionDisplayMode();
+		var configuredLabel = getQuickActionLabel();
+		var isDirectTelegram = effectiveType === 'telegram';
 
 		button.classList.toggle('is-direct-chat', !!isDirectChat);
+		button.classList.toggle('is-direct-telegram', !!isDirectTelegram);
 		button.classList.toggle('is-chat-ready', !!state.chatReady);
+		button.classList.toggle('is-icon-only', displayMode === 'icon_only');
 
-		var ariaLabel = isDirectChat ? text('openChat', 'Abrir chat') : text('openSupport', 'Atendimento');
+		if (iconWrapEl) {
+			iconWrapEl.innerHTML = supportFloatIconSvg(iconKind);
+		}
+
+		var ariaLabel;
+		if (isDirectTelegram) {
+			ariaLabel = configuredLabel || text('telegramTitle', 'Telegram');
+		} else if (isDirectChat) {
+			ariaLabel = text('openChat', 'Abrir chat');
+		} else {
+			ariaLabel = configuredLabel || text('openSupport', 'Atendimento');
+		}
 		button.setAttribute('aria-label', ariaLabel);
 		button.setAttribute('title', ariaLabel);
 		button.setAttribute('aria-expanded', state.activeModal ? 'true' : 'false');
 
 		if (labelEl) {
-			labelEl.textContent = isDirectChat ? text('openChat', 'Abrir chat') : text('openSupportShort', 'Atendimento');
+			labelEl.style.display = displayMode === 'icon_only' ? 'none' : '';
+			if (isDirectTelegram) {
+				labelEl.textContent = configuredLabel || text('telegramTitle', 'Telegram');
+			} else if (isDirectChat) {
+				labelEl.textContent = text('openChat', 'Abrir chat');
+			} else {
+				labelEl.textContent = configuredLabel || text('openSupportShort', 'Atendimento');
+			}
 		}
 	}
 
@@ -490,6 +601,13 @@
 		var chatBtn = modal.querySelector('[data-channel="chat"]');
 		var statusEl = modal.querySelector('[data-chat-status]');
 		if (!chatBtn || !statusEl) return;
+
+		if (getEffectiveQuickActionType() === 'telegram') {
+			chatBtn.disabled = true;
+			chatBtn.classList.add('is-disabled');
+			statusEl.textContent = text('chatDisabledDesc', 'Chat do site desativado no momento');
+			return;
+		}
 
 		if (state.chatReady) {
 			chatBtn.disabled = false;
@@ -511,6 +629,11 @@
 	}
 
 	function openSelectorModal() {
+		if (getEffectiveQuickActionType() === 'telegram') {
+			handleSelectTelegram();
+			return;
+		}
+
 		var modal = getSelectorModal();
 		closeChatShellModal(true);
 		state.activeModal = 'selector';
@@ -841,6 +964,8 @@
 	}
 
 	function syncSourceAndUI() {
+		syncQuickActionConfigFromBridge();
+
 		var src = findTelegramAnchor();
 		if (!src) return false;
 
@@ -871,6 +996,7 @@
 	}
 
 	function boot() {
+		syncQuickActionConfigFromBridge();
 		state.preferredChannel = getPreferredChannel();
 		setChatReady(detectChatReady());
 
@@ -893,6 +1019,12 @@
 		bindKeyboardShortcuts();
 		bindChatReadySignals();
 		bindChatwootBrandingCleanup();
+		window.addEventListener('gstore:support-config-ready', function () {
+			syncQuickActionConfigFromBridge();
+			setChatReady(detectChatReady());
+			updateSelectorChatOptionStatus();
+			updateQuickActionPresentation();
+		});
 
 		window.addEventListener('resize', toggleQuickActionVisibility);
 		window.addEventListener('gstore:support:chat-shell-open', toggleQuickActionVisibility);
