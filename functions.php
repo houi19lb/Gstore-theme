@@ -4604,7 +4604,7 @@ function gstore_rename_account_menu_items( $items ) {
 	$items['dashboard']       = __( 'Painel', 'gstore' );
 	$items['orders']          = __( 'Pedidos', 'gstore' );
 	$items['downloads']       = __( 'Downloads', 'gstore' );
-	$items['edit-address']    = __( 'EndereÃ§os', 'gstore' );
+	$items['edit-address']    = __( 'Endereços', 'gstore' );
 	$items['edit-account']    = __( 'Meus Dados', 'gstore' );
 	$items['customer-logout'] = __( 'Sair', 'gstore' );
 	

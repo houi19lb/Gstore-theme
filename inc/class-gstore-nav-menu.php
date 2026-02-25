@@ -85,8 +85,11 @@ class Gstore_Nav_Menu_Walker extends Walker_Nav_Menu {
 
 		// Avoid `the_title` here: WooCommerce endpoint title filters can leak the current
 		// My Account endpoint label into header menu items (e.g. "Downloads", "Pedidos (página 2)").
-		$item_title   = isset( $item->title ) ? $item->title : '';
-		$item_title   = apply_filters( 'nav_menu_item_title', $item_title, $item, $args, $depth );
+		if ( isset( $item->post_title ) && '' !== $item->post_title ) {
+			$item_title = $item->post_title;
+		} else {
+			$item_title = isset( $item->title ) ? $item->title : '';
+		}
 
 		$item_output  = ( $args->before ?? '' );
 		$item_output .= '<a' . $attributes . '>';
