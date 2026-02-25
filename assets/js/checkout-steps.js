@@ -3851,12 +3851,6 @@ function getInstallmentDisplayTotals(summaryData) {
 
 	// Inicializa quando o DOM estiver pronto
 	$(document).ready(function() {
-		// Ao voltar da Blu via botão "voltar" (BFCache), o estado JS pode ser restaurado.
-		// Resetamos a guarda para permitir nova tentativa de pagamento.
-		$(window).on('pageshow', function() {
-			resetBluRedirectGuard();
-		});
-
 		// Aguarda um momento para o WooCommerce carregar
 		setTimeout(init, 100);
 	});

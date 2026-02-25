@@ -2655,8 +2655,8 @@ body.woocommerce-checkout .Gstore-checkout-steps-shell {
 	position: absolute;
 	top: 12px;
 	right: 12px;
-	width: 40px;
-	height: 40px;
+	width: 44px;
+	height: 44px;
 	border-radius: 6px;
 	border: none;
 	background: rgba(255, 255, 255, 0.9);
@@ -2666,6 +2666,7 @@ body.woocommerce-checkout .Gstore-checkout-steps-shell {
 	justify-content: center;
 	cursor: pointer;
 	z-index: 2;
+	touch-action: manipulation;
 }
 
 .Gstore-blu-checkout-modal__header {
@@ -2693,7 +2694,7 @@ body.woocommerce-checkout .Gstore-checkout-steps-shell {
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
-	min-height: 40px;
+	min-height: 44px;
 	padding: 10px 14px;
 	width: auto;
 	max-width: 100%;
@@ -2710,6 +2711,7 @@ body.woocommerce-checkout .Gstore-checkout-steps-shell {
 	text-transform: none;
 	letter-spacing: normal;
 	white-space: nowrap;
+	touch-action: manipulation;
 }
 
 #gstore-blu-checkout-modal .Gstore-blu-checkout-modal__open:hover,
@@ -2758,10 +2760,19 @@ body.gstore-blu-checkout-modal-open {
 }
 
 @media (max-width: 480px) {
+	.Gstore-blu-checkout-modal__close {
+		top: 8px;
+		right: 8px;
+		width: 48px;
+		height: 48px;
+		border-radius: 10px;
+	}
+
 	.Gstore-blu-checkout-modal__header {
 		flex-direction: column;
 		align-items: flex-start;
-		padding-right: 16px;
+		padding: 12px 64px 10px 12px;
+		gap: 10px;
 	}
 
 	.Gstore-blu-checkout-modal__actions {
@@ -2769,7 +2780,11 @@ body.gstore-blu-checkout-modal-open {
 	}
 
 	#gstore-blu-checkout-modal .Gstore-blu-checkout-modal__open {
+		width: 100%;
+		min-height: 48px;
+		padding: 12px 14px;
 		white-space: normal;
+		font-size: var(--gstore-font-size-base);
 	}
 }
 

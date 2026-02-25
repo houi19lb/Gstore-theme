@@ -262,13 +262,17 @@ body:has(.Gstore-header-shell) {
 	justify-content: center;
 	flex-direction: row;
 	gap: 6px;
-	height: 34px;
+	height: 40px;
 	min-width: 72px;
-	padding: 0 8px;
+	padding: 0 10px;
 	background: none;
 	border: none;
 	cursor: pointer;
 	line-height: 1;
+	position: relative;
+	z-index: 1;
+	touch-action: manipulation;
+	-webkit-tap-highlight-color: transparent;
 }
 
 .Gstore-header__menu-toggle .Gstore-header__menu-icon {
@@ -361,10 +365,17 @@ body:has(.Gstore-header-shell) {
 }
 
 .Gstore-header__mini-cart .wc-block-mini-cart__button {
-		background-color: var(--gstore-color-accent, #ff5c00) !important;
+	background-color: var(--gstore-color-accent, #ff5c00) !important;
 	border: none !important;
 	border-radius: 4px !important;
 	padding: 8px 12px !important;
+	display: inline-flex !important;
+	align-items: center !important;
+	justify-content: center !important;
+	position: relative;
+	z-index: 1;
+	touch-action: manipulation;
+	-webkit-tap-highlight-color: transparent;
 }
 
 /* ========================================
@@ -443,6 +454,11 @@ body:has(.Gstore-header-shell) {
 		display: flex;
 		grid-area: toggle;
 		justify-self: start;
+		min-height: 44px;
+		min-width: 84px;
+		padding: 0 12px;
+		border-radius: 8px;
+		align-items: center;
 	}
 	
 	/* Logo centralizada */
@@ -476,7 +492,10 @@ body:has(.Gstore-header-shell) {
 		gap: 8px;
 		justify-self: end;
 		justify-content: flex-end;
+		align-items: center;
 		min-width: 0;
+		position: relative;
+		z-index: 2;
 	}
 	
 	/* Esconde botão de atendimento no mobile */
@@ -486,8 +505,11 @@ body:has(.Gstore-header-shell) {
 	
 	/* Mini cart ajustado */
 	.Gstore-header__mini-cart .wc-block-mini-cart__button {
-		min-height: 34px !important;
+		min-width: 44px !important;
+		min-height: 44px !important;
 		padding: 0 10px !important;
+		border-radius: 8px !important;
+		line-height: 1 !important;
 	}
 	
 	.Gstore-nav__mobile-link .Gstore-icon {
@@ -595,13 +617,16 @@ body:has(.Gstore-header-shell) {
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		width: 40px;
-		height: 40px;
+		width: 48px;
+		height: 48px;
 		background: none;
 		border: none;
 		cursor: pointer;
 		color: var(--gstore-color-text-light, #fff);
 		padding: 0;
+		border-radius: 10px;
+		touch-action: manipulation;
+		-webkit-tap-highlight-color: transparent;
 		transition: color var(--gstore-transition-fast, 150ms ease);
 	}
 
