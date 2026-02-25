@@ -94,8 +94,7 @@ function gstore_get_accent_color_from_tokens_file() {
  * @return string Cor hex.
  */
 function gstore_get_default_accent_color() {
-	$file_color = gstore_get_accent_color_from_tokens_file();
-	return $file_color ? $file_color : '#ff5c00';
+	return '#b5a642';
 }
 
 /**
@@ -4973,6 +4972,7 @@ function gstore_my_account_orders_exclude_cancelled( $args ) {
 		'wc-failed',
 		'wc-cancelled',
 	);
+	$args['limit']  = 5;
 	return $args;
 }
 add_filter( 'woocommerce_my_account_my_orders_query', 'gstore_my_account_orders_exclude_cancelled', 10, 1 );
@@ -5900,7 +5900,7 @@ function gstore_register_theme_settings() {
 	register_setting( 'gstore_design_tokens', 'gstore_accent_color', array(
 		'type' => 'string',
 		'sanitize_callback' => 'sanitize_hex_color',
-		'default' => gstore_get_default_accent_color(),
+		'default' => '#b5a642',
 	) );
 }
 add_action( 'admin_init', 'gstore_register_theme_settings' );
@@ -8225,7 +8225,7 @@ function gstore_render_design_tokens_page() {
 	}
 	
 	// ObtÃ©m a cor de accent salva ou usa a padrÃ£o
-	$accent_color = gstore_get_effective_accent_color();
+	$accent_color = get_option( 'gstore_accent_color', '#b5a642' );
 	
 	// LÃª o arquivo de tokens
 	$tokens_file = get_theme_file_path( 'assets/css/tokens.css' );
@@ -8586,7 +8586,7 @@ function gstore_ajax_get_derived_tokens() {
 		wp_send_json_error( array( 'message' => __( 'PermissÃ£o negada.', 'gstore' ) ) );
 	}
 	
-	$accent_color = isset( $_POST['accent_color'] ) ? sanitize_hex_color( $_POST['accent_color'] ) : gstore_get_effective_accent_color();
+	$accent_color = isset( $_POST['accent_color'] ) ? sanitize_hex_color( $_POST['accent_color'] ) : '#b5a642';
 	
 	if ( ! $accent_color ) {
 		wp_send_json_error( array( 'message' => __( 'Cor invÃ¡lida.', 'gstore' ) ) );
