@@ -3385,6 +3385,9 @@ function getInstallmentDisplayTotals(summaryData) {
 		function submitCheckoutDirectly() {
 			const $form = $('form.checkout');
 			if (!$form.length) return;
+
+			// Nova tentativa de pagamento: libera a guarda de redirect da Blu.
+			resetBluRedirectGuard();
 			if ($form.hasClass('processing')) return;
 
 			// Garante que os campos de frete (shipping_method[0], gstore_shipping_mode) estejam no form
@@ -3711,6 +3714,10 @@ function getInstallmentDisplayTotals(summaryData) {
 		openBluCheckoutModal(url);
 	}
 
+	function resetBluRedirectGuard() {
+		bluRedirectInProgress = false;
+	}
+
 	function ensureBluCheckoutModal() {
 		if ($('#gstore-blu-checkout-modal').length) return;
 
@@ -3794,7 +3801,7 @@ function getInstallmentDisplayTotals(summaryData) {
 		const $modal = $('#gstore-blu-checkout-modal');
 		if (!$modal.length) return;
 
-		bluRedirectInProgress = false;
+		resetBluRedirectGuard();
 		$modal.removeClass('is-visible').attr('aria-hidden', 'true');
 		$('body').removeClass('gstore-blu-checkout-modal-open');
 
@@ -3844,6 +3851,12 @@ function getInstallmentDisplayTotals(summaryData) {
 
 	// Inicializa quando o DOM estiver pronto
 	$(document).ready(function() {
+		// Ao voltar da Blu via botão "voltar" (BFCache), o estado JS pode ser restaurado.
+		// Resetamos a guarda para permitir nova tentativa de pagamento.
+		$(window).on('pageshow', function() {
+			resetBluRedirectGuard();
+		});
+
 		// Aguarda um momento para o WooCommerce carregar
 		setTimeout(init, 100);
 	});
