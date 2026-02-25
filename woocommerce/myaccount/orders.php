@@ -42,7 +42,12 @@ if ( $has_orders ) :
 									<?php echo esc_html( wc_format_datetime( $order->get_date_created() ) ); ?>
 								</time>
 							<?php elseif ( 'order-status' === $column_id ) : ?>
-								<?php echo esc_html( wc_get_order_status_name( $order->get_status() ) ); ?>
+								<?php
+								$status_label = function_exists( 'gstore_my_account_get_orders_tab_status_label' )
+									? gstore_my_account_get_orders_tab_status_label( $order )
+									: wc_get_order_status_name( $order->get_status() );
+								echo esc_html( $status_label );
+								?>
 							<?php elseif ( 'order-total' === $column_id ) : ?>
 								<?php
 								printf(

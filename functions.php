@@ -4773,6 +4773,117 @@ function gstore_add_refazer_compra_button_to_order_actions( $actions, $order ) {
 add_filter( 'woocommerce_my_account_my_orders_actions', 'gstore_add_refazer_compra_button_to_order_actions', 10, 2 );
 
 /**
+ * Checks whether a Blu history JSON contains a successful payment status.
+ *
+ * @param mixed $raw_json         Raw JSON string (or array) stored in order meta.
+ * @param array $success_statuses List of statuses considered as payment evidence.
+ * @return bool
+ */
+function gstore_my_account_order_history_has_success_status( $raw_json, array $success_statuses ) {
+	if ( empty( $raw_json ) || empty( $success_statuses ) ) {
+		return false;
+	}
+
+	$statuses_lookup = array();
+	foreach ( $success_statuses as $success_status ) {
+		$key = strtolower( trim( (string) $success_status ) );
+		if ( '' !== $key ) {
+			$statuses_lookup[ $key ] = true;
+		}
+	}
+
+	if ( empty( $statuses_lookup ) ) {
+		return false;
+	}
+
+	$entries = is_array( $raw_json ) ? $raw_json : json_decode( (string) $raw_json, true );
+	if ( ! is_array( $entries ) ) {
+		return false;
+	}
+
+	foreach ( $entries as $entry ) {
+		if ( ! is_array( $entry ) ) {
+			continue;
+		}
+
+		$entry_status = '';
+		if ( isset( $entry['status'] ) ) {
+			$entry_status = strtolower( trim( (string) $entry['status'] ) );
+		} elseif ( isset( $entry['payload'] ) && is_array( $entry['payload'] ) && isset( $entry['payload']['status'] ) ) {
+			$entry_status = strtolower( trim( (string) $entry['payload']['status'] ) );
+		}
+
+		if ( '' !== $entry_status && isset( $statuses_lookup[ $entry_status ] ) ) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
+/**
+ * Detects payment evidence for an order, even if Woo status ended up as cancelled.
+ *
+ * @param WC_Order $order Pedido.
+ * @return bool
+ */
+function gstore_my_account_order_has_payment_evidence( WC_Order $order ) {
+	if ( $order->is_paid() ) {
+		return true;
+	}
+
+	if ( $order->get_date_paid() ) {
+		return true;
+	}
+
+	$transaction_id = trim( (string) $order->get_transaction_id() );
+	if ( '' !== $transaction_id ) {
+		return true;
+	}
+
+	$blu_status = strtolower( trim( (string) $order->get_meta( '_gstore_blu_status', true ) ) );
+	if ( in_array( $blu_status, array( 'paid', 'success', 'confirmed' ), true ) ) {
+		return true;
+	}
+
+	if ( gstore_my_account_order_history_has_success_status( $order->get_meta( '_gstore_blu_history', true ), array( 'paid', 'success', 'confirmed' ) ) ) {
+		return true;
+	}
+
+	$pix_status = strtolower( trim( (string) $order->get_meta( '_gstore_blu_pix_status', true ) ) );
+	if ( in_array( $pix_status, array( 'paid', 'success' ), true ) ) {
+		return true;
+	}
+
+	$pix_movement_id = trim( (string) $order->get_meta( '_gstore_blu_pix_movement_id', true ) );
+	if ( '' !== $pix_movement_id ) {
+		return true;
+	}
+
+	if ( gstore_my_account_order_history_has_success_status( $order->get_meta( '_gstore_blu_pix_history', true ), array( 'paid', 'success' ) ) ) {
+		return true;
+	}
+
+	return false;
+}
+
+/**
+ * Returns the status label for the My Account > Orders table.
+ *
+ * @param WC_Order $order Pedido.
+ * @return string
+ */
+function gstore_my_account_get_orders_tab_status_label( WC_Order $order ) {
+	$order_status = $order->get_status();
+
+	if ( 'cancelled' === $order_status && gstore_my_account_order_has_payment_evidence( $order ) ) {
+		return __( 'Pago/Confirmado', 'gstore' );
+	}
+
+	return wc_get_order_status_name( $order_status );
+}
+
+/**
  * Exclui pedidos cancelados da lista "Meus pedidos".
  * Mostra apenas a Ãºltima tentativa (pendente) e pedidos ativos; tentativas canceladas somem.
  *
@@ -4787,7 +4898,82 @@ function gstore_my_account_orders_exclude_cancelled( $args ) {
 		'wc-completed',
 		'wc-refunded',
 		'wc-failed',
+		'wc-cancelled',
 	);
+
+	static $is_building_cancelled_exclusions = false;
+
+	if ( $is_building_cancelled_exclusions ) {
+		return $args;
+	}
+
+	$customer_id = 0;
+	if ( isset( $args['customer_id'] ) ) {
+		$customer_id = absint( $args['customer_id'] );
+	} elseif ( isset( $args['customer'] ) && is_numeric( $args['customer'] ) ) {
+		$customer_id = absint( $args['customer'] );
+	}
+
+	if ( ! $customer_id && function_exists( 'get_current_user_id' ) ) {
+		$customer_id = absint( get_current_user_id() );
+	}
+
+	if ( $customer_id <= 0 || ! function_exists( 'wc_get_orders' ) ) {
+		return $args;
+	}
+
+	$is_building_cancelled_exclusions = true;
+
+	try {
+		$cancelled_orders = wc_get_orders(
+			array(
+				'customer_id' => $customer_id,
+				'limit'       => -1,
+				'status'      => array( 'wc-cancelled' ),
+			)
+		);
+	} finally {
+		$is_building_cancelled_exclusions = false;
+	}
+
+	if ( empty( $cancelled_orders ) ) {
+		return $args;
+	}
+
+	$cancelled_without_payment = array();
+
+	foreach ( $cancelled_orders as $cancelled_order ) {
+		if ( ! $cancelled_order instanceof WC_Order ) {
+			continue;
+		}
+
+		if ( gstore_my_account_order_has_payment_evidence( $cancelled_order ) ) {
+			continue;
+		}
+
+		$cancelled_without_payment[] = $cancelled_order->get_id();
+	}
+
+	if ( empty( $cancelled_without_payment ) ) {
+		return $args;
+	}
+
+	$existing_exclude = array();
+	if ( isset( $args['exclude'] ) ) {
+		$existing_exclude = is_array( $args['exclude'] ) ? $args['exclude'] : array( $args['exclude'] );
+	}
+
+	$args['exclude'] = array_values(
+		array_unique(
+			array_filter(
+				array_map(
+					'absint',
+					array_merge( $existing_exclude, $cancelled_without_payment )
+				)
+			)
+		)
+	);
+
 	return $args;
 }
 add_filter( 'woocommerce_my_account_my_orders_query', 'gstore_my_account_orders_exclude_cancelled', 10, 1 );
