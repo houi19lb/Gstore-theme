@@ -11419,6 +11419,11 @@ function gstore_age_verification_modal() {
 			visibility: visible;
 			pointer-events: auto;
 		}
+
+		/* Defensivo mobile: evita filhos invisíveis capturarem toque quando fechado */
+		.gstore-age-modal[aria-hidden="true"] * {
+			pointer-events: none !important;
+		}
 		
 		.gstore-age-modal__overlay {
 			position: absolute;

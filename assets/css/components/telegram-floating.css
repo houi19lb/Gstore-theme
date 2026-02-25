@@ -123,6 +123,15 @@
 	pointer-events: auto;
 }
 
+/* Em alguns navegadores mobile, filhos com pointer-events:auto ainda podem
+ * capturar toque mesmo com o container invisível (opacity:0 + pointer-events:none).
+ * Forçamos bloqueio total enquanto o modal/chat estiver fechado.
+ */
+.Gstore-support-modal[aria-hidden="true"] *,
+.Gstore-support-chat-shell[aria-hidden="true"] * {
+	pointer-events: none !important;
+}
+
 .Gstore-support-modal__backdrop,
 .Gstore-support-chat-shell__backdrop {
 	position: absolute;
