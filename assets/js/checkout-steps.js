@@ -71,6 +71,7 @@
 	let lastBluOrderPaymentUrl = null; // URL do pagamento Blu do último pedido criado (para exibir aviso quando modal fecha)
 	let bluRedirectInProgress = false; // Evita abrir modal/redirect da Blu em duplicidade (ex.: submit + ajaxComplete)
 	let bluResumeState = null; // Estado persistente do link Blu para retomada no mobile/checkout
+	let checkoutDraftRestoreDone = false;
 
 	function escapeHtml(value) {
 		return String(value || '')
@@ -83,6 +84,159 @@
 
 	function getBluResumeConfig() {
 		return (window.gstoreCheckout && window.gstoreCheckout.bluResume) ? window.gstoreCheckout.bluResume : null;
+	}
+
+	function getCheckoutDraftStorageKey() {
+		const cfg = getBluResumeConfig() || {};
+		const prefix = cfg.storageKeyPrefix || 'gstore_blu_resume_checkout';
+		const version = cfg.version || 1;
+		const path = (window.location && window.location.pathname) ? window.location.pathname : 'checkout';
+		return `${prefix}:draft:v${version}:${path}`;
+	}
+
+	function loadCheckoutDraftState() {
+		const storage = getStorageObject('localStorage');
+		if (!storage) return null;
+		try {
+			const raw = storage.getItem(getCheckoutDraftStorageKey());
+			if (!raw) return null;
+			const data = JSON.parse(raw);
+			if (!data || typeof data !== 'object') return null;
+			return data;
+		} catch (e) {
+			return null;
+		}
+	}
+
+	function persistCheckoutDraftState(state) {
+		const storage = getStorageObject('localStorage');
+		if (!storage) return;
+		try {
+			if (!state) {
+				storage.removeItem(getCheckoutDraftStorageKey());
+				return;
+			}
+			storage.setItem(getCheckoutDraftStorageKey(), JSON.stringify(state));
+		} catch (e) {}
+	}
+
+	function clearCheckoutDraftState() {
+		persistCheckoutDraftState(null);
+	}
+
+	function collectCheckoutDraftFields() {
+		const fields = {};
+		const selectors = [
+			'input[id^="billing_"]',
+			'select[id^="billing_"]',
+			'textarea[id^="billing_"]',
+			'input[id^="shipping_"]',
+			'select[id^="shipping_"]',
+			'textarea[id^="shipping_"]',
+			'#gstore_blu_installments',
+			'#gstore_blu_installments_select',
+			'#gstore_contract_terms'
+		];
+		$(selectors.join(',')).each(function() {
+			const $el = $(this);
+			const id = $el.attr('id');
+			if (!id) return;
+			if ($el.is(':radio')) {
+				if ($el.is(':checked')) fields[id] = $el.val();
+				return;
+			}
+			if ($el.is(':checkbox')) {
+				fields[id] = $el.is(':checked') ? 1 : 0;
+				return;
+			}
+			const val = $el.val();
+			if (typeof val !== 'undefined' && val !== null && String(val) !== '') {
+				fields[id] = val;
+			}
+		});
+
+		const paymentMethod = String(lastSelectedPaymentMethod || $('input[name="payment_method"]:checked').val() || '');
+		if (paymentMethod) fields.payment_method = paymentMethod;
+
+		return fields;
+	}
+
+	function saveCheckoutDraftState(reason) {
+		const state = {
+			step: Number.isFinite(currentStep) ? currentStep : 0,
+			fields: collectCheckoutDraftFields(),
+			updated_at: Date.now(),
+			reason: String(reason || '')
+		};
+		persistCheckoutDraftState(state);
+	}
+
+	function applyCheckoutDraftFields(fields) {
+		if (!fields || typeof fields !== 'object') return;
+
+		Object.keys(fields).forEach(function(key) {
+			if (key === 'payment_method') return;
+			const $el = $('#' + key);
+			if (!$el.length) return;
+			const val = fields[key];
+
+			if ($el.is(':checkbox')) {
+				$el.prop('checked', !!val).triggerHandler('change');
+				return;
+			}
+
+			if ($el.is(':radio')) {
+				$(`input[id="${key}"][value="${val}"]`).prop('checked', true).triggerHandler('change');
+				return;
+			}
+
+			if (String($el.val() || '') !== String(val)) {
+				$el.val(val);
+				$el.triggerHandler('input');
+				$el.triggerHandler('change');
+			}
+		});
+
+		if (fields.payment_method) {
+			persistSelectedPaymentMethod(String(fields.payment_method));
+			const $radio = $('input[name="payment_method"]').filter(function() {
+				return String($(this).val()) === String(fields.payment_method);
+			}).first();
+			if ($radio.length) {
+				$radio.prop('checked', true).trigger('change');
+			}
+		}
+	}
+
+	function shouldRestoreCheckoutDraft() {
+		const draft = loadCheckoutDraftState();
+		if (!draft || !draft.updated_at) return false;
+		const maxAgeMs = 24 * 60 * 60 * 1000;
+		if ((Date.now() - Number(draft.updated_at || 0)) > maxAgeMs) {
+			persistCheckoutDraftState(null);
+			return false;
+		}
+		return true;
+	}
+
+	function restoreCheckoutDraftState() {
+		if (checkoutDraftRestoreDone) return false;
+		if (!shouldRestoreCheckoutDraft()) return false;
+
+		const draft = loadCheckoutDraftState();
+		if (!draft) return false;
+
+		applyCheckoutDraftFields(draft.fields || {});
+
+		const hasPendingBlu = !!(getBluResumeState() && getBluResumeState().payment_url);
+		const targetStep = hasPendingBlu ? (STEPS.length - 1) : Math.max(0, Math.min(STEPS.length - 1, parseInt(draft.step, 10) || 0));
+		checkoutDraftRestoreDone = true;
+		setTimeout(function() {
+			setActiveStep(targetStep, false);
+			setTimeout(ensureShippingAutofilled, 0);
+			renderBluResumeCard();
+		}, 100);
+		return true;
 	}
 
 	function getBluResumeStorageKey() {
@@ -918,6 +1072,16 @@ const subtotal = decodeHtmlEntities(stripHtmlText(it.subtotal || ''));
 
 		buildStepsUI();
 		bindEvents();
+		const restoredDraft = restoreCheckoutDraftState();
+		if (!restoredDraft) {
+			const pendingBlu = getBluResumeState();
+			if (pendingBlu && pendingBlu.payment_url) {
+				setTimeout(function() {
+					setActiveStep(STEPS.length - 1, false);
+					renderBluResumeCard();
+				}, 80);
+			}
+		}
 		// O primeiro load vem do evento updated_checkout (não carregar aqui para evitar totais sem CEP/frete)
 		$(document.body).trigger('update_checkout');
 		// Se o CEP já veio preenchido (sessão/autofill), calcula o frete imediatamente
@@ -2758,6 +2922,9 @@ function getInstallmentDisplayTotals(summaryData) {
 
 		// Trigger evento para outros scripts
 		$(document.body).trigger('gstore_checkout_step_changed', [index, STEPS[index]]);
+		if (initialized || checkoutDraftRestoreDone) {
+			saveCheckoutDraftState('step_change');
+		}
 	}
 
 	/**
@@ -3491,6 +3658,7 @@ function getInstallmentDisplayTotals(summaryData) {
 
 					if (orderStatus && ['processing', 'completed', 'refunded'].indexOf(orderStatus) !== -1) {
 						clearBluResumeState();
+						clearCheckoutDraftState();
 					}
 
 					if ((actionTaken === 'reused' || actionTaken === 'regenerated') && data.payment_url) {
@@ -3935,6 +4103,8 @@ function getInstallmentDisplayTotals(summaryData) {
 					updateProcessingStep(3);
 					
 						if (response.result === 'success') {
+							// Pedido criado com sucesso: limpa rascunho local para evitar restaurar dados antigos.
+							clearCheckoutDraftState();
 							if (response.gstore_blu_resume) {
 								storeBluResumeStateFromResponse(response.gstore_blu_resume);
 							}
@@ -4044,6 +4214,7 @@ function getInstallmentDisplayTotals(summaryData) {
 
 	function handleBluCheckoutRedirect(url) {
 		if (!url) return;
+		saveCheckoutDraftState('before_blu_redirect');
 
 		if (!isBluCheckoutSelected()) {
 			window.location.href = url;
@@ -4251,6 +4422,11 @@ function getInstallmentDisplayTotals(summaryData) {
 			setTimeout(loadCartSummary, 150);
 			setTimeout(renderBluResumeCard, 50);
 		}
+	});
+
+	// Persistência leve de rascunho do checkout para retorno após sair para a Blu
+	$(document).on('input change', 'form.checkout input, form.checkout select, form.checkout textarea, #gstore_blu_installments, #gstore_blu_installments_select', function() {
+		saveCheckoutDraftState('field_change');
 	});
 
 	// Variável para armazenar o método selecionado antes do update
