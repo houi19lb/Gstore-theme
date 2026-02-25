@@ -70,6 +70,7 @@
 	let lastInstallmentQuotesSignature = '';
 	let lastBluOrderPaymentUrl = null; // URL do pagamento Blu do último pedido criado (para exibir aviso quando modal fecha)
 	let bluRedirectInProgress = false; // Evita abrir modal/redirect da Blu em duplicidade (ex.: submit + ajaxComplete)
+	let bluResumeState = null; // Estado persistente do link Blu para retomada no mobile/checkout
 
 	function escapeHtml(value) {
 		return String(value || '')
@@ -78,6 +79,236 @@
 			.replace(/>/g, '&gt;')
 			.replace(/"/g, '&quot;')
 			.replace(/'/g, '&#039;');
+	}
+
+	function getBluResumeConfig() {
+		return (window.gstoreCheckout && window.gstoreCheckout.bluResume) ? window.gstoreCheckout.bluResume : null;
+	}
+
+	function getBluResumeStorageKey() {
+		const cfg = getBluResumeConfig() || {};
+		const prefix = cfg.storageKeyPrefix || 'gstore_blu_resume_checkout';
+		const version = cfg.version || 1;
+		const path = (window.location && window.location.pathname) ? window.location.pathname : 'checkout';
+		return `${prefix}:v${version}:${path}`;
+	}
+
+	function getStorageObject(kind) {
+		try {
+			return window[kind] || null;
+		} catch (e) {
+			return null;
+		}
+	}
+
+	function loadBluResumeStateFromStorage() {
+		const storage = getStorageObject('localStorage');
+		if (!storage) return null;
+		try {
+			const raw = storage.getItem(getBluResumeStorageKey());
+			if (!raw) return null;
+			const parsed = JSON.parse(raw);
+			return parsed && typeof parsed === 'object' ? parsed : null;
+		} catch (e) {
+			return null;
+		}
+	}
+
+	function persistBluResumeState(state) {
+		const storage = getStorageObject('localStorage');
+		if (!storage) return;
+		try {
+			if (!state) {
+				storage.removeItem(getBluResumeStorageKey());
+				return;
+			}
+			storage.setItem(getBluResumeStorageKey(), JSON.stringify(state));
+		} catch (e) {}
+	}
+
+	function getBluResumeState() {
+		if (bluResumeState && typeof bluResumeState === 'object') return bluResumeState;
+		bluResumeState = loadBluResumeStateFromStorage();
+		return bluResumeState;
+	}
+
+	function setBluResumeState(nextState) {
+		if (!nextState || typeof nextState !== 'object') return;
+		bluResumeState = Object.assign({}, nextState, { updated_at: Date.now() });
+		persistBluResumeState(bluResumeState);
+		renderBluResumeCard();
+	}
+
+	function clearBluResumeState() {
+		bluResumeState = null;
+		persistBluResumeState(null);
+		renderBluResumeCard();
+	}
+
+	function simpleHashString(input) {
+		let hash = 5381;
+		const str = String(input || '');
+		for (let i = 0; i < str.length; i++) {
+			hash = ((hash << 5) + hash) + str.charCodeAt(i);
+			hash = hash >>> 0;
+		}
+		return (`00000000${hash.toString(16)}`).slice(-8);
+	}
+
+	function getCurrentBluInstallmentsValue() {
+		return String($('#gstore_blu_installments').val() || $('#gstore_blu_installments_select').val() || '1');
+	}
+
+	function getCurrentBluResumeSignaturePayload() {
+		const summary = lastCartSummaryData || lastNonEmptyCartSummaryData || {};
+		const items = Array.isArray(summary.items) ? summary.items : [];
+		const coupons = Array.isArray(summary.coupons) ? summary.coupons : [];
+		const itemSignature = items.map(function(item) {
+			const pid = item && (item.product_id || item.id || item.key || '');
+			const vid = item && (item.variation_id || '');
+			const qty = item && (item.quantity || item.qty || 1);
+			return `${pid}:${vid}:${qty}`;
+		}).join('|');
+		const couponSignature = coupons.map(function(c) {
+			if (!c) return '';
+			return String(c.code || c.id || c);
+		}).filter(Boolean).sort().join('|');
+		const totalValue = (lastSummaryTotals && Number.isFinite(lastSummaryTotals.totalValue))
+			? Number(lastSummaryTotals.totalValue)
+			: (summary && summary.total ? parsePriceValue(summary.total) : 0);
+
+		return {
+			payment_method: String(lastSelectedPaymentMethod || $('input[name="payment_method"]:checked').val() || ''),
+			installments: getCurrentBluInstallmentsValue(),
+			total_value: Number.isFinite(totalValue) ? Number(totalValue.toFixed(2)) : 0,
+			shipping_mode: String(checkoutSelectedShippingMode || Object.values(checkoutSelectedShippingByItem || {})[0] || ''),
+			shipping_by_item: checkoutSelectedShippingByItem || {},
+			items_hash: simpleHashString(itemSignature),
+			coupons_hash: simpleHashString(couponSignature),
+			billing_postcode: String($('#billing_postcode').val() || '').replace(/\D/g, ''),
+			billing_state: String($('#billing_state').val() || '')
+		};
+	}
+
+	function buildBluResumeSignature(payload) {
+		if (!payload || typeof payload !== 'object') return '';
+		const normalized = {
+			payment_method: String(payload.payment_method || ''),
+			installments: String(payload.installments || '1'),
+			total_value: Number(payload.total_value || 0),
+			shipping_mode: String(payload.shipping_mode || ''),
+			items_hash: String(payload.items_hash || ''),
+			coupons_hash: String(payload.coupons_hash || ''),
+			billing_postcode: String(payload.billing_postcode || ''),
+			billing_state: String(payload.billing_state || '')
+		};
+		return simpleHashString(JSON.stringify(normalized));
+	}
+
+	function getCurrentBluResumeContext() {
+		const payload = getCurrentBluResumeSignaturePayload();
+		return {
+			payload: payload,
+			signature: buildBluResumeSignature(payload),
+			requestedInstallments: parseInt(payload.installments, 10) || 1,
+			requestedTotal: Number(payload.total_value || 0)
+		};
+	}
+
+	function storeBluResumeStateFromResponse(resume) {
+		if (!resume || typeof resume !== 'object') return;
+		const currentCtx = getCurrentBluResumeContext();
+		const next = {
+			order_id: parseInt(resume.order_id, 10) || 0,
+			order_key: String(resume.order_key || ''),
+			link_id: String(resume.link_id || ''),
+			payment_url: String(resume.payment_url || ''),
+			signature: String(resume.signature || currentCtx.signature || ''),
+			installments: String(resume.selected_installments || currentCtx.requestedInstallments || 1),
+			expires_at: String(resume.expires_at || ''),
+			status: String(resume.status || 'pending'),
+			generation: parseInt(resume.generation, 10) || 1
+		};
+		if (!next.payment_url) return;
+		setBluResumeState(next);
+		lastBluOrderPaymentUrl = next.payment_url;
+	}
+
+	function isBluResumeStateUsable(state) {
+		return !!(state && state.order_id && state.order_key && state.payment_url);
+	}
+
+	function shouldShowBluResumeCard() {
+		const state = getBluResumeState();
+		if (!state || !state.payment_url) return false;
+		return isBluCheckoutSelected();
+	}
+
+	function ensureBluResumeCardMount() {
+		const $paymentStep = $('[data-step="payment"] .Gstore-checkout-step__payment-container').first();
+		const $fallbackStep = $('[data-step="payment"] .Gstore-checkout-step').first();
+		const $mount = $paymentStep.length ? $paymentStep : $fallbackStep;
+		if (!$mount.length) return null;
+		let $card = $('#gstore-blu-resume-card');
+		if (!$card.length) {
+			$card = $('<div id="gstore-blu-resume-card" class="gstore-blu-resume-card" style="display:none;margin-bottom:16px;padding:14px;border:1px solid #dbe3ea;border-radius:12px;background:#f8fafc;"></div>');
+			$mount.prepend($card);
+		}
+		return $card;
+	}
+
+	function renderBluResumeCard(messageHtml) {
+		const $card = ensureBluResumeCardMount();
+		if (!$card || !$card.length) return;
+		const state = getBluResumeState();
+		if (!shouldShowBluResumeCard()) {
+			$card.hide().empty();
+			return;
+		}
+
+		const installments = parseInt(state.installments || state.selected_installments || '1', 10) || 1;
+		const statusText = String(state.status || 'pending').toUpperCase();
+		const canRegenerate = !!(state.order_id && state.order_key);
+		const expiresLine = state.expires_at ? `<div style="font-size:12px;color:#64748b;">Válido até: ${escapeHtml(state.expires_at)}</div>` : '';
+		const extraMsg = messageHtml ? `<div class="gstore-blu-resume-card__msg" style="margin-top:8px;font-size:12px;color:#334155;">${messageHtml}</div>` : '';
+		$card.html(`
+			<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;">
+				<div>
+					<div style="font-weight:700;color:#0f172a;">Pagamento pendente na Blu</div>
+					<div style="font-size:13px;color:#334155;margin-top:4px;">Pedido #${escapeHtml(state.order_id)} • ${installments}x • ${escapeHtml(statusText)}</div>
+					${expiresLine}
+				</div>
+				<div style="display:flex;gap:8px;flex-wrap:wrap;">
+					<button type="button" class="button alt gstore-blu-resume-card__continue">Continuar no link atual</button>
+					<button type="button" class="button gstore-blu-resume-card__regenerate" ${canRegenerate ? '' : 'disabled'}>Gerar novo link</button>
+				</div>
+			</div>
+			${extraMsg}
+		`).show();
+	}
+
+	function callBluResumeEndpoint(mode, overrides) {
+		const cfg = getBluResumeConfig();
+		const state = getBluResumeState();
+		const ctx = getCurrentBluResumeContext();
+		const payload = Object.assign({
+			action: (cfg && cfg.action) || 'gstore_blu_resume_payment_link',
+			nonce: (cfg && cfg.nonce) || '',
+			mode: mode,
+			order_id: state ? state.order_id : 0,
+			order_key: state ? state.order_key : '',
+			client_signature: ctx.signature || (state ? state.signature : ''),
+			requested_installments: ctx.requestedInstallments || (state ? state.installments : 1),
+			requested_total: ctx.requestedTotal || 0
+		}, overrides || {});
+
+		const ajaxUrl = (cfg && cfg.ajaxUrl) || (typeof wc_checkout_params !== 'undefined' ? wc_checkout_params.ajax_url : '/wp-admin/admin-ajax.php');
+		return $.ajax({
+			url: ajaxUrl,
+			type: 'POST',
+			dataType: 'json',
+			data: payload
+		});
 	}
 
 	function nl2brSafe(value) {
@@ -3230,6 +3461,108 @@ function getInstallmentDisplayTotals(summaryData) {
 			$(this).val(value);
 		});
 
+		function setBluResumeCardBusy(isBusy) {
+			const $card = $('#gstore-blu-resume-card');
+			if (!$card.length) return;
+			$card.toggleClass('is-busy', !!isBusy).css('opacity', isBusy ? '0.7' : '');
+			$card.find('button').prop('disabled', !!isBusy);
+		}
+
+		function handleBluResumeAjaxAction(mode, opts) {
+			const state = getBluResumeState();
+			if (!isBluResumeStateUsable(state)) return false;
+
+			setBluResumeCardBusy(true);
+			if (typeof showProcessingModal === 'function' && mode === 'regenerate') {
+				showProcessingModal();
+			}
+
+			callBluResumeEndpoint(mode, opts || {})
+				.done(function(resp) {
+					if (!(resp && resp.success && resp.data)) {
+						showNotice('Não foi possível retomar o link de pagamento agora.', 'error');
+						return;
+					}
+
+					const data = resp.data || {};
+					const actionTaken = String(data.action_taken || '');
+					const messages = Array.isArray(data.messages) ? data.messages.filter(Boolean) : [];
+					const orderStatus = String(data.order_status || '').toLowerCase();
+
+					if (orderStatus && ['processing', 'completed', 'refunded'].indexOf(orderStatus) !== -1) {
+						clearBluResumeState();
+					}
+
+					if ((actionTaken === 'reused' || actionTaken === 'regenerated') && data.payment_url) {
+						const current = getBluResumeState() || {};
+						setBluResumeState(Object.assign({}, current, {
+							link_id: String(data.link_id || current.link_id || ''),
+							payment_url: String(data.payment_url || current.payment_url || ''),
+							signature: String(data.signature || (opts && opts.client_signature) || current.signature || ''),
+							installments: String(data.selected_installments || current.installments || getCurrentBluInstallmentsValue()),
+							expires_at: String(data.expires_at || current.expires_at || ''),
+							status: String(data.order_status || current.status || 'pending')
+						}));
+
+						if (mode === 'regenerate') {
+							hideProcessingModal();
+						}
+						handleBluCheckoutRedirect(String(data.payment_url));
+						return;
+					}
+
+					if (mode === 'regenerate') {
+						hideProcessingModal();
+					}
+					if (messages.length) {
+						renderBluResumeCard(messages.map(escapeHtml).join('<br>'));
+						showNotice(messages[0], 'error');
+					} else {
+						showNotice('Não foi possível atualizar o link de pagamento.', 'error');
+					}
+				})
+				.fail(function() {
+					if (mode === 'regenerate') {
+						hideProcessingModal();
+					}
+					showNotice('Falha ao comunicar com o serviço de retomada do pagamento.', 'error');
+				})
+				.always(function() {
+					setBluResumeCardBusy(false);
+				});
+
+			return true;
+		}
+
+		function maybeHandleBluResumeBeforeSubmit() {
+			if (!isBluCheckoutSelected()) return false;
+			const state = getBluResumeState();
+			if (!isBluResumeStateUsable(state)) return false;
+
+			const ctx = getCurrentBluResumeContext();
+			const signaturesMatch = !!(ctx.signature && state.signature && ctx.signature === state.signature);
+			const installmentsMatch = String(state.installments || '') === String(ctx.requestedInstallments || '');
+
+			// Se nada mudou, reutiliza o link atual diretamente.
+			if (signaturesMatch || installmentsMatch) {
+				return handleBluResumeAjaxAction('reuse', {
+					client_signature: ctx.signature || state.signature || '',
+					requested_installments: ctx.requestedInstallments || (parseInt(state.installments, 10) || 1),
+					requested_total: ctx.requestedTotal || 0
+				});
+			}
+
+			if (!window.confirm('O parcelamento foi alterado. Deseja gerar um novo link de pagamento para este pedido?')) {
+				return true; // Interrompe o submit e mantém o cliente no checkout
+			}
+
+			return handleBluResumeAjaxAction('regenerate', {
+				client_signature: ctx.signature,
+				requested_installments: ctx.requestedInstallments,
+				requested_total: ctx.requestedTotal
+			});
+		}
+
 		// Garante que o botão de finalizar pedido funcione corretamente
 		$(document).on('click', '#place_order', function(e) {
 			const lastStepIndex = STEPS.length - 1;
@@ -3257,6 +3590,11 @@ function getInstallmentDisplayTotals(summaryData) {
 			}
 			
 			if ($checkoutForm.hasClass('processing')) {
+				e.preventDefault();
+				return false;
+			}
+
+			if (maybeHandleBluResumeBeforeSubmit()) {
 				e.preventDefault();
 				return false;
 			}
@@ -3575,6 +3913,15 @@ function getInstallmentDisplayTotals(summaryData) {
 			if (!formDataObj['shipping_country']) {
 				formDataObj['shipping_country'] = 'BR';
 			}
+
+			// 7.2 Contexto de retomada Blu (assinado no front para reuso/regeneração depois)
+			const bluResumeCtx = getCurrentBluResumeContext();
+			if (bluResumeCtx && bluResumeCtx.signature) {
+				formDataObj['gstore_blu_resume_signature'] = bluResumeCtx.signature;
+			}
+			if (bluResumeCtx && Number.isFinite(bluResumeCtx.requestedTotal) && bluResumeCtx.requestedTotal > 0) {
+				formDataObj['gstore_blu_resume_total'] = String(bluResumeCtx.requestedTotal);
+			}
 			
 			// Converte para query string
 			let formData = $.param(formDataObj);
@@ -3588,6 +3935,9 @@ function getInstallmentDisplayTotals(summaryData) {
 					updateProcessingStep(3);
 					
 						if (response.result === 'success') {
+							if (response.gstore_blu_resume) {
+								storeBluResumeStateFromResponse(response.gstore_blu_resume);
+							}
 							setTimeout(function() { showProcessingSuccess(); }, 500);
 							if (isBluCheckoutSelected()) {
 								setTimeout(function() {
@@ -3817,42 +4167,80 @@ function getInstallmentDisplayTotals(summaryData) {
 		// Atualiza o resumo do checkout (totais/parcelas) para refletir alterações antes do próximo submit.
 		$(document.body).trigger('update_checkout');
 
-		// Se havia um pedido Blu criado, mostra aviso com link para pagar
+		// Se havia um pedido Blu criado, mantém/mostra o card persistente para retomar pagamento.
 		if (lastBluOrderPaymentUrl) {
-			const paymentUrl = lastBluOrderPaymentUrl;
-			lastBluOrderPaymentUrl = null; // Limpa para não mostrar novamente
-
-			// Remove avisos anteriores
-			$('.gstore-blu-pending-notice').remove();
-
-			// Mostra aviso com link para o pagamento
-			const noticeHtml = `
-				<div class="gstore-blu-pending-notice woocommerce-info" style="margin-bottom: 20px;">
-					<strong>Seu pedido foi criado!</strong><br>
-					O pagamento ainda está pendente. 
-					<a href="${paymentUrl}" target="_blank" rel="noopener noreferrer" style="font-weight: bold;">Clique aqui para finalizar o pagamento</a>
-					 ou acesse "Minha Conta > Pedidos" para pagar depois.
-				</div>
-			`;
-
-			const $stepsContent = $('.Gstore-checkout-steps__content');
-			if ($stepsContent.length) {
-				$stepsContent.prepend(noticeHtml);
+			const state = getBluResumeState();
+			if (!state || !state.payment_url) {
+				setBluResumeState({
+					order_id: 0,
+					order_key: '',
+					link_id: '',
+					payment_url: lastBluOrderPaymentUrl,
+					signature: '',
+					installments: getCurrentBluInstallmentsValue(),
+					status: 'pending',
+					generation: 1
+				});
 			} else {
-				$form.prepend(noticeHtml);
+				renderBluResumeCard('Seu pedido já foi criado. Você pode continuar no link atual ou gerar um novo link se mudou as parcelas.');
 			}
 
-			// Scroll para o topo para ver o aviso
-			$('html, body').animate({
-				scrollTop: ($('.gstore-blu-pending-notice').offset() || { top: 0 }).top - 100
-			}, 300);
+			const $card = $('#gstore-blu-resume-card');
+			if ($card.length) {
+				$('html, body').animate({
+					scrollTop: ($card.offset() || { top: 0 }).top - 100
+				}, 300);
+			}
 		}
 	}
 
+	$(document).on('click', '.gstore-blu-resume-card__continue', function(e) {
+		e.preventDefault();
+		const state = getBluResumeState();
+		if (state && state.payment_url && !state.order_id) {
+			handleBluCheckoutRedirect(String(state.payment_url));
+			return false;
+		}
+		if (!isBluResumeStateUsable(state)) {
+			showNotice('Nenhum link de pagamento pendente foi encontrado.', 'error');
+			return false;
+		}
+		const ctx = getCurrentBluResumeContext();
+		handleBluResumeAjaxAction('reuse', {
+			client_signature: ctx.signature || state.signature || '',
+			requested_installments: ctx.requestedInstallments || (parseInt(state.installments, 10) || 1),
+			requested_total: ctx.requestedTotal || 0
+		});
+		return false;
+	});
+
+	$(document).on('click', '.gstore-blu-resume-card__regenerate', function(e) {
+		e.preventDefault();
+		const state = getBluResumeState();
+		if (!isBluResumeStateUsable(state)) {
+			showNotice('Não foi possível regenerar: falta a referência do pedido pendente.', 'error');
+			return false;
+		}
+		if (!window.confirm('Gerar um novo link de pagamento para este mesmo pedido com o parcelamento atual?')) {
+			return false;
+		}
+		const ctx = getCurrentBluResumeContext();
+		handleBluResumeAjaxAction('regenerate', {
+			client_signature: ctx.signature,
+			requested_installments: ctx.requestedInstallments,
+			requested_total: ctx.requestedTotal
+		});
+		return false;
+	});
+
 	// Inicializa quando o DOM estiver pronto
 	$(document).ready(function() {
+		bluResumeState = loadBluResumeStateFromStorage();
 		// Aguarda um momento para o WooCommerce carregar
-		setTimeout(init, 100);
+		setTimeout(function() {
+			init();
+			renderBluResumeCard();
+		}, 100);
 	});
 
 	// Persistência do método de pagamento em qualquer troca (fallback geral)
@@ -3861,6 +4249,7 @@ function getInstallmentDisplayTotals(summaryData) {
 		if (method) {
 			persistSelectedPaymentMethod(method);
 			setTimeout(loadCartSummary, 150);
+			setTimeout(renderBluResumeCard, 50);
 		}
 	});
 
@@ -3965,6 +4354,7 @@ function getInstallmentDisplayTotals(summaryData) {
 		// Re-aplica unificação dos métodos Blu após atualização
 		setTimeout(function() {
 			unifyBluPaymentMethods();
+			renderBluResumeCard();
 		}, 200);
 		
 		if (!initialized) {
@@ -3978,6 +4368,9 @@ function getInstallmentDisplayTotals(summaryData) {
 			try {
 				const response = JSON.parse(xhr.responseText);
 				if (response.result === 'success' && response.redirect) {
+					if (response.gstore_blu_resume) {
+						storeBluResumeStateFromResponse(response.gstore_blu_resume);
+					}
 					handleBluCheckoutRedirect(response.redirect);
 				}
 			} catch (e) {
@@ -4038,6 +4431,7 @@ function getInstallmentDisplayTotals(summaryData) {
 	$(document.body).on('updated_checkout', function() {
 		// Garante que os estilos do card Blu sejam mantidos
 		setTimeout(ensureBluCardStyles, 100);
+		setTimeout(renderBluResumeCard, 120);
 	});
 
 	// Também executa após o carregamento completo da página
