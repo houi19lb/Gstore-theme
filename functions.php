@@ -4884,8 +4884,8 @@ function gstore_my_account_get_orders_tab_status_label( WC_Order $order ) {
 }
 
 /**
- * Exclui pedidos cancelados da lista "Meus pedidos".
- * Mostra apenas a Ãºltima tentativa (pendente) e pedidos ativos; tentativas canceladas somem.
+ * Configura os status exibidos na lista "Meus pedidos".
+ * Hotfix temporÃ¡rio: inclui pedidos cancelados para evitar sumir pedido relevante.
  *
  * @param array $args Argumentos da query de pedidos do My Account.
  * @return array Argumentos atualizados.
@@ -4900,80 +4900,6 @@ function gstore_my_account_orders_exclude_cancelled( $args ) {
 		'wc-failed',
 		'wc-cancelled',
 	);
-
-	static $is_building_cancelled_exclusions = false;
-
-	if ( $is_building_cancelled_exclusions ) {
-		return $args;
-	}
-
-	$customer_id = 0;
-	if ( isset( $args['customer_id'] ) ) {
-		$customer_id = absint( $args['customer_id'] );
-	} elseif ( isset( $args['customer'] ) && is_numeric( $args['customer'] ) ) {
-		$customer_id = absint( $args['customer'] );
-	}
-
-	if ( ! $customer_id && function_exists( 'get_current_user_id' ) ) {
-		$customer_id = absint( get_current_user_id() );
-	}
-
-	if ( $customer_id <= 0 || ! function_exists( 'wc_get_orders' ) ) {
-		return $args;
-	}
-
-	$is_building_cancelled_exclusions = true;
-
-	try {
-		$cancelled_orders = wc_get_orders(
-			array(
-				'customer_id' => $customer_id,
-				'limit'       => -1,
-				'status'      => array( 'wc-cancelled' ),
-			)
-		);
-	} finally {
-		$is_building_cancelled_exclusions = false;
-	}
-
-	if ( empty( $cancelled_orders ) ) {
-		return $args;
-	}
-
-	$cancelled_without_payment = array();
-
-	foreach ( $cancelled_orders as $cancelled_order ) {
-		if ( ! $cancelled_order instanceof WC_Order ) {
-			continue;
-		}
-
-		if ( gstore_my_account_order_has_payment_evidence( $cancelled_order ) ) {
-			continue;
-		}
-
-		$cancelled_without_payment[] = $cancelled_order->get_id();
-	}
-
-	if ( empty( $cancelled_without_payment ) ) {
-		return $args;
-	}
-
-	$existing_exclude = array();
-	if ( isset( $args['exclude'] ) ) {
-		$existing_exclude = is_array( $args['exclude'] ) ? $args['exclude'] : array( $args['exclude'] );
-	}
-
-	$args['exclude'] = array_values(
-		array_unique(
-			array_filter(
-				array_map(
-					'absint',
-					array_merge( $existing_exclude, $cancelled_without_payment )
-				)
-			)
-		)
-	);
-
 	return $args;
 }
 add_filter( 'woocommerce_my_account_my_orders_query', 'gstore_my_account_orders_exclude_cancelled', 10, 1 );
