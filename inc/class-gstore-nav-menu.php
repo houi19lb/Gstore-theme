@@ -108,6 +108,39 @@ class Gstore_Nav_Menu_Walker extends Walker_Nav_Menu {
  * @param array  $block        Bloco parseado.
  * @return string
  */
+function gstore_lock_header_menu_titles( $items, $args ) {
+	$theme_location = isset( $args->theme_location ) ? (string) $args->theme_location : '';
+
+	if ( ! in_array( $theme_location, array( 'gstore_desktop', 'gstore_mobile' ), true ) ) {
+		return $items;
+	}
+
+	foreach ( $items as $item ) {
+		if ( empty( $item->ID ) ) {
+			continue;
+		}
+
+		$stored_title = get_post_field( 'post_title', (int) $item->ID, 'raw' );
+		$stored_title = is_string( $stored_title ) ? trim( $stored_title ) : '';
+
+		if ( '' !== $stored_title ) {
+			$item->post_title = $stored_title;
+			$item->title      = $stored_title;
+			continue;
+		}
+
+		if ( isset( $item->type, $item->object_id ) && 'post_type' === $item->type && ! empty( $item->object_id ) ) {
+			$object_title = get_post_field( 'post_title', (int) $item->object_id, 'raw' );
+			if ( is_string( $object_title ) && '' !== trim( $object_title ) ) {
+				$item->title = trim( $object_title );
+			}
+		}
+	}
+
+	return $items;
+}
+add_filter( 'wp_nav_menu_objects', 'gstore_lock_header_menu_titles', 999, 2 );
+
 function gstore_render_navigation_block_by_location( $block_content, $block ) {
 	if ( ! isset( $block['blockName'] ) || 'core/navigation' !== $block['blockName'] ) {
 		return $block_content;
