@@ -3455,6 +3455,14 @@ function gstore_enqueue_checkout_assets() {
 		$checkout_inline .= 'window.gstoreCheckout.processCheckoutNonce = ' . wp_json_encode( wp_create_nonce( 'woocommerce-process_checkout' ) ) . ';';
 		$checkout_inline .= 'window.gstoreCheckout.cartSummaryNonce = ' . wp_json_encode( wp_create_nonce( 'gstore_cart_summary' ) ) . ';';
 		$checkout_inline .= 'window.gstoreCheckout.homeUrl = ' . wp_json_encode( home_url( '/' ) ) . ';';
+		$checkout_inline .= 'window.gstoreCheckout.bluResume = ' . wp_json_encode( array(
+			'enabled'          => true,
+			'ajaxUrl'          => admin_url( 'admin-ajax.php' ),
+			'nonce'            => wp_create_nonce( 'gstore_blu_resume_payment_link' ),
+			'storageKeyPrefix' => 'gstore_blu_resume_checkout',
+			'version'          => 1,
+			'action'           => 'gstore_blu_resume_payment_link',
+		) ) . ';';
 		// Garante gstoreCartSummary (resumo do carrinho) com nonce vÃ¡lido para evitar 403 no admin-ajax.
 		$cart_summary_nonce = wp_create_nonce( 'gstore_cart_summary' );
 		$checkout_inline .= 'window.gstoreCartSummary = window.gstoreCartSummary || { ajaxUrl: ' . wp_json_encode( admin_url( 'admin-ajax.php' ) ) . ', nonce: ' . wp_json_encode( $cart_summary_nonce ) . ' };';

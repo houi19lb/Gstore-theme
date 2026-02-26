@@ -27,6 +27,12 @@ class Gstore_Blu_Payment_Gateway extends WC_Payment_Gateway {
 	const META_LAST_PAYLOAD   = '_gstore_blu_last_payload';
 	const META_SELECTED_INSTALLMENTS = '_gstore_blu_installments';
 	const META_INSTALLMENT_FEE       = '_gstore_blu_installment_fee';
+	const META_ACTIVE_SIGNATURE      = '_gstore_blu_active_signature';
+	const META_ACTIVE_INSTALLMENTS   = '_gstore_blu_active_installments';
+	const META_LINK_GENERATION       = '_gstore_blu_link_generation';
+	const META_LAST_RESUME_AT        = '_gstore_blu_last_resume_at';
+	const META_LINK_HISTORY          = '_gstore_blu_link_history';
+	const META_LINK_ID_ALIAS         = '_gstore_blu_link_id_alias';
 
 	/**
 	 * Token fornecido pela Blu.
@@ -194,6 +200,8 @@ class Gstore_Blu_Payment_Gateway extends WC_Payment_Gateway {
 	 * @return void
 	 */
 	public function init_form_fields() {
+		$webhook_url = rest_url( 'gstore-blu/v1/webhook' );
+
 		$this->form_fields = array(
 			'enabled'                => array(
 				'title'   => __( 'Ativar/Desativar', 'gstore' ),
@@ -367,7 +375,11 @@ class Gstore_Blu_Payment_Gateway extends WC_Payment_Gateway {
 			'webhook_secret'         => array(
 				'title'       => __( 'Token do webhook', 'gstore' ),
 				'type'        => 'password',
-				'description' => __( 'Opcional. Se preenchido, a Blu deve enviar este valor no header X-Gstore-Blu-Webhook.', 'gstore' ),
+				'description' => sprintf(
+					/* translators: %s: webhook endpoint URL */
+					__( 'Opcional. Se preenchido, a Blu deve enviar este valor no header X-Gstore-Blu-Webhook.<br>Endpoint do webhook (cadastre na Blu): <code>%s</code>', 'gstore' ),
+					esc_url( $webhook_url )
+				),
 				'default'     => '',
 			),
 			'debug_logging'          => array(
@@ -413,15 +425,23 @@ class Gstore_Blu_Payment_Gateway extends WC_Payment_Gateway {
 			return null;
 		}
 
-		$response = $this->create_payment_link( $order );
+		$initial_context = array(
+			'reason' => 'initial',
+		);
+		if ( isset( $_POST['gstore_blu_resume_signature'] ) ) {
+			$initial_context['signature'] = sanitize_text_field( wp_unslash( $_POST['gstore_blu_resume_signature'] ) );
+		}
+		if ( isset( $_POST['gstore_blu_resume_total'] ) ) {
+			$initial_context['requested_total'] = (float) wc_format_decimal( wp_unslash( $_POST['gstore_blu_resume_total'] ) );
+		}
+
+		$response = $this->create_and_store_payment_link_for_order( $order, $initial_context );
 
 		if ( is_wp_error( $response ) ) {
 			$this->log_error( 'Erro ao criar link Blu', array( 'error' => $response->get_error_message() ) );
 			wc_add_notice( $response->get_error_message(), 'error' );
 			return null;
 		}
-
-		$this->store_link_metadata( $order, $response );
 
 		// Verifica se é pré-checkout (dados incompletos)
 		$is_precheckout = empty( $order->get_billing_address_1() ) && empty( $order->get_billing_city() );
@@ -445,6 +465,145 @@ class Gstore_Blu_Payment_Gateway extends WC_Payment_Gateway {
 			'result'   => 'success',
 			'redirect' => $redirect_url,
 		);
+	}
+
+	/**
+	 * Cria link na Blu e armazena metadados no pedido (sem side effects de estoque/carrinho).
+	 *
+	 * @param WC_Order $order   Pedido.
+	 * @param array    $context Contexto opcional.
+	 * @return array|\WP_Error
+	 */
+	public function create_and_store_payment_link_for_order( WC_Order $order, array $context = array() ) {
+		$response = $this->create_payment_link( $order );
+
+		if ( is_wp_error( $response ) ) {
+			return $response;
+		}
+
+		$this->store_link_metadata( $order, $response, $context );
+
+		return $response;
+	}
+
+	/**
+	 * Retorna dados do link ativo no pedido.
+	 *
+	 * @param WC_Order $order Pedido.
+	 * @return array
+	 */
+	public function get_active_payment_link_data( WC_Order $order ) {
+		$link_id   = (string) $order->get_meta( self::META_LINK_ID );
+		$link_url  = (string) $order->get_meta( self::META_SMART_LINK_URL );
+		$raw_link  = (string) $order->get_meta( self::META_LINK_URL );
+		$status    = (string) $order->get_meta( self::META_STATUS );
+		$expires   = (string) $order->get_meta( self::META_EXPIRATION );
+		$signature = (string) $order->get_meta( self::META_ACTIVE_SIGNATURE );
+		$active_installments = (int) $order->get_meta( self::META_ACTIVE_INSTALLMENTS );
+		if ( $active_installments <= 0 ) {
+			$active_installments = (int) $order->get_meta( self::META_SELECTED_INSTALLMENTS );
+		}
+
+		if ( '' === $link_url ) {
+			$link_url = $raw_link;
+		}
+
+		return array(
+			'link_id'              => $link_id,
+			'payment_url'          => $link_url,
+			'raw_link_url'         => $raw_link,
+			'status'               => $status ?: (string) $order->get_status(),
+			'expires_at'           => $expires,
+			'selected_installments'=> max( 1, $active_installments ),
+			'signature'            => $signature,
+			'generation'           => (int) $order->get_meta( self::META_LINK_GENERATION ),
+		);
+	}
+
+	/**
+	 * Monta payload de retomada para enviar ao frontend.
+	 *
+	 * @param WC_Order $order Pedido.
+	 * @return array
+	 */
+	public function build_resume_payload( WC_Order $order ) {
+		$active = $this->get_active_payment_link_data( $order );
+
+		return array(
+			'order_id'             => $order->get_id(),
+			'order_key'            => $order->get_order_key(),
+			'payment_url'          => $active['payment_url'],
+			'link_id'              => $active['link_id'],
+			'selected_installments'=> (int) $active['selected_installments'],
+			'signature'            => (string) $active['signature'],
+			'expires_at'           => (string) $active['expires_at'],
+			'status'               => (string) $active['status'],
+			'generation'           => (int) $active['generation'],
+		);
+	}
+
+	/**
+	 * Regenera link Blu no mesmo pedido (sem reduzir estoque novamente).
+	 *
+	 * @param WC_Order $order         Pedido.
+	 * @param int      $installments  Parcelas desejadas.
+	 * @param array    $context       Contexto (assinatura, total etc.).
+	 * @return array|\WP_Error
+	 */
+	public function regenerate_payment_link_for_order( WC_Order $order, $installments, array $context = array() ) {
+		if ( ! $order instanceof WC_Order ) {
+			return new WP_Error( 'gstore_blu_invalid_order', __( 'Pedido inválido.', 'gstore' ) );
+		}
+
+		if ( $order->get_payment_method() !== $this->id ) {
+			return new WP_Error( 'gstore_blu_invalid_gateway', __( 'O pedido não pertence ao gateway Blu.', 'gstore' ) );
+		}
+
+		if ( $order->is_paid() || $order->has_status( array( 'processing', 'completed', 'refunded' ) ) ) {
+			return new WP_Error( 'gstore_blu_order_paid', __( 'Este pedido já foi pago/processado. Acesse "Minha Conta > Pedidos".', 'gstore' ) );
+		}
+
+		if ( ! $order->has_status( array( 'pending', 'on-hold', 'failed' ) ) ) {
+			return new WP_Error( 'gstore_blu_order_status', __( 'Este pedido não está em um status elegível para gerar novo link.', 'gstore' ) );
+		}
+
+		$installments = max( 1, min( 21, (int) $installments ) );
+		$order->update_meta_data( self::META_SELECTED_INSTALLMENTS, $installments );
+		$order->update_meta_data( self::META_ACTIVE_INSTALLMENTS, $installments );
+		$order->update_meta_data( self::META_LAST_RESUME_AT, gmdate( 'c' ) );
+
+		$recalc = $this->maybe_recalculate_order_for_resume( $order, $installments, $context );
+		if ( is_wp_error( $recalc ) ) {
+			return $recalc;
+		}
+
+		$this->archive_current_link_before_regeneration( $order, 'regenerate' );
+
+		$response = $this->create_and_store_payment_link_for_order(
+			$order,
+			array_merge(
+				$context,
+				array(
+					'reason' => 'regenerate',
+				)
+			)
+		);
+
+		if ( is_wp_error( $response ) ) {
+			// Se falhar, mantém o pedido com meta de parcelas solicitada, mas sem perder histórico já salvo.
+			return $response;
+		}
+
+		$order->add_order_note(
+			sprintf(
+				/* translators: %d: installments */
+				__( 'Link Blu regenerado no mesmo pedido com %d parcela(s).', 'gstore' ),
+				$installments
+			)
+		);
+		$order->save();
+
+		return $response;
 	}
 
 	/**
@@ -824,7 +983,16 @@ class Gstore_Blu_Payment_Gateway extends WC_Payment_Gateway {
 	 * @param array    $response Resposta Blu.
 	 * @return void
 	 */
-	protected function store_link_metadata( WC_Order $order, array $response ) {
+	protected function store_link_metadata( WC_Order $order, array $response, array $context = array() ) {
+		$reason = isset( $context['reason'] ) ? (string) $context['reason'] : 'initial';
+		$current_generation = (int) $order->get_meta( self::META_LINK_GENERATION );
+		$current_generation = max( 0, $current_generation );
+		if ( 'regenerate' === $reason ) {
+			$current_generation++;
+		} else {
+			$current_generation = max( 1, $current_generation ?: 1 );
+		}
+
 		$order->update_meta_data( self::META_LINK_ID, $response['id'] ?? '' );
 		$order->update_meta_data( self::META_LINK_URL, $response['link_url'] ?? '' );
 		$order->update_meta_data( self::META_SMART_LINK_URL, $response['smart_checkout_url'] ?? '' );
@@ -832,6 +1000,12 @@ class Gstore_Blu_Payment_Gateway extends WC_Payment_Gateway {
 		$order->update_meta_data( self::META_STATUS, $response['message'] ?? '' );
 		$order->update_meta_data( self::META_EXPIRATION, $response['expiration_date'] ?? '' );
 		$order->update_meta_data( self::META_LAST_PAYLOAD, wp_json_encode( $response ) );
+		$order->update_meta_data( self::META_LINK_GENERATION, $current_generation );
+		$order->update_meta_data( self::META_ACTIVE_INSTALLMENTS, (int) $order->get_meta( self::META_SELECTED_INSTALLMENTS ) ?: 1 );
+		$order->update_meta_data( self::META_ACTIVE_SIGNATURE, isset( $context['signature'] ) ? (string) $context['signature'] : (string) $order->get_meta( self::META_ACTIVE_SIGNATURE ) );
+		$order->update_meta_data( self::META_LAST_RESUME_AT, gmdate( 'c' ) );
+
+		$this->append_link_history_snapshot( $order, $response, $reason, $context );
 
 		$link = $response['smart_checkout_url'] ?? $response['link_url'] ?? '';
 		if ( $link ) {
@@ -843,6 +1017,135 @@ class Gstore_Blu_Payment_Gateway extends WC_Payment_Gateway {
 				)
 			);
 		}
+	}
+
+	/**
+	 * Arquiva o link ativo atual antes de substituí-lo.
+	 *
+	 * @param WC_Order $order  Pedido.
+	 * @param string   $reason Motivo.
+	 * @return void
+	 */
+	public function archive_current_link_before_regeneration( WC_Order $order, $reason = 'regenerate' ) {
+		$link_id = (string) $order->get_meta( self::META_LINK_ID );
+		if ( '' === $link_id ) {
+			return;
+		}
+
+		$link_url  = (string) $order->get_meta( self::META_LINK_URL );
+		$smart_url = (string) $order->get_meta( self::META_SMART_LINK_URL );
+		$signature = (string) $order->get_meta( self::META_ACTIVE_SIGNATURE );
+		$installments = (int) $order->get_meta( self::META_ACTIVE_INSTALLMENTS );
+		if ( $installments <= 0 ) {
+			$installments = (int) $order->get_meta( self::META_SELECTED_INSTALLMENTS );
+		}
+
+		$history = $this->get_link_history( $order );
+		$found   = false;
+		foreach ( $history as &$entry ) {
+			if ( isset( $entry['link_id'] ) && (string) $entry['link_id'] === $link_id ) {
+				$entry['superseded_at'] = gmdate( 'c' );
+				$entry['reason']        = isset( $entry['reason'] ) ? $entry['reason'] : (string) $reason;
+				$found = true;
+				break;
+			}
+		}
+		unset( $entry );
+
+		if ( ! $found ) {
+			$history[] = array(
+				'link_id'          => $link_id,
+				'link_url'         => $link_url,
+				'smart_link_url'   => $smart_url,
+				'signature'        => $signature,
+				'installments'     => max( 1, $installments ),
+				'amount'           => (float) $order->get_total(),
+				'generated_at'     => gmdate( 'c' ),
+				'reason'           => (string) $reason,
+				'superseded_at'    => gmdate( 'c' ),
+			);
+		}
+
+		$order->update_meta_data( self::META_LINK_HISTORY, wp_json_encode( array_values( $history ) ) );
+		$order->add_meta_data( self::META_LINK_ID_ALIAS, $link_id, false );
+		$order->save();
+	}
+
+	/**
+	 * Recupera histórico de links já gerados.
+	 *
+	 * @param WC_Order $order Pedido.
+	 * @return array
+	 */
+	protected function get_link_history( WC_Order $order ) {
+		$raw = $order->get_meta( self::META_LINK_HISTORY, true );
+		if ( empty( $raw ) ) {
+			return array();
+		}
+		$data = json_decode( (string) $raw, true );
+		return is_array( $data ) ? $data : array();
+	}
+
+	/**
+	 * Adiciona snapshot de geração de link ao histórico.
+	 *
+	 * @param WC_Order $order    Pedido.
+	 * @param array    $response Resposta da Blu.
+	 * @param string   $reason   Motivo.
+	 * @param array    $context  Contexto.
+	 * @return void
+	 */
+	protected function append_link_history_snapshot( WC_Order $order, array $response, $reason, array $context = array() ) {
+		$link_id = isset( $response['id'] ) ? (string) $response['id'] : '';
+		if ( '' === $link_id ) {
+			return;
+		}
+
+		$history = $this->get_link_history( $order );
+		$history[] = array(
+			'link_id'        => $link_id,
+			'link_url'       => isset( $response['link_url'] ) ? (string) $response['link_url'] : '',
+			'smart_link_url' => isset( $response['smart_checkout_url'] ) ? (string) $response['smart_checkout_url'] : '',
+			'signature'      => isset( $context['signature'] ) ? (string) $context['signature'] : '',
+			'installments'   => (int) $order->get_meta( self::META_SELECTED_INSTALLMENTS ) ?: 1,
+			'amount'         => isset( $context['requested_total'] ) ? (float) $context['requested_total'] : (float) $order->get_total(),
+			'generated_at'   => gmdate( 'c' ),
+			'reason'         => (string) $reason,
+		);
+
+		$order->update_meta_data( self::META_LINK_HISTORY, wp_json_encode( array_values( $history ) ) );
+	}
+
+	/**
+	 * Tenta recalcular total do pedido para refletir novo parcelamento.
+	 * Preferência: filtros externos (gstore-core). Fallback: ajusta total manualmente quando informado.
+	 *
+	 * @param WC_Order $order        Pedido.
+	 * @param int      $installments Parcelas.
+	 * @param array    $context      Contexto.
+	 * @return true|\WP_Error
+	 */
+	protected function maybe_recalculate_order_for_resume( WC_Order $order, $installments, array $context = array() ) {
+		$result = apply_filters( 'gstore_blu_resume_recalculate_order_for_installments', null, $order, (int) $installments, $context, $this );
+		if ( true === $result || is_wp_error( $result ) ) {
+			return $result;
+		}
+
+		if ( is_array( $result ) && isset( $result['total'] ) && is_numeric( $result['total'] ) ) {
+			$order->set_total( (float) $result['total'] );
+			$order->save();
+			return true;
+		}
+
+		if ( isset( $context['requested_total'] ) && is_numeric( $context['requested_total'] ) && (float) $context['requested_total'] > 0 ) {
+			$order->set_total( (float) $context['requested_total'] );
+			$order->update_meta_data( '_gstore_blu_resume_total_override', (float) $context['requested_total'] );
+			$order->add_order_note( __( 'Total do pedido ajustado para regeneração do link Blu via fluxo de retomada.', 'gstore' ) );
+			$order->save();
+			return true;
+		}
+
+		return true;
 	}
 
 	/**
@@ -1266,20 +1569,23 @@ function gstore_blu_map_payment_intent_to_order( WC_Order $order, array $payment
  */
 function gstore_blu_apply_status_from_response( WC_Order $order, array $payload, $manual = false ) {
 	$status = isset( $payload['status'] ) ? strtolower( $payload['status'] ) : '';
+	$payload_link_id = isset( $payload['id'] ) ? (string) $payload['id'] : '';
+	$active_link_id  = (string) $order->get_meta( Gstore_Blu_Payment_Gateway::META_LINK_ID );
+	$is_active_link_payload = ( '' === $payload_link_id || '' === $active_link_id || $payload_link_id === $active_link_id );
 
-	if ( isset( $payload['link_url'] ) ) {
+	if ( $is_active_link_payload && isset( $payload['link_url'] ) ) {
 		$order->update_meta_data( Gstore_Blu_Payment_Gateway::META_LINK_URL, $payload['link_url'] );
 	}
 
-	if ( isset( $payload['smart_checkout_url'] ) ) {
+	if ( $is_active_link_payload && isset( $payload['smart_checkout_url'] ) ) {
 		$order->update_meta_data( Gstore_Blu_Payment_Gateway::META_SMART_LINK_URL, $payload['smart_checkout_url'] );
 	}
 
-	if ( isset( $payload['expiration_date'] ) ) {
+	if ( $is_active_link_payload && isset( $payload['expiration_date'] ) ) {
 		$order->update_meta_data( Gstore_Blu_Payment_Gateway::META_EXPIRATION, $payload['expiration_date'] );
 	}
 
-	if ( $status ) {
+	if ( $is_active_link_payload && $status ) {
 		$order->update_meta_data( Gstore_Blu_Payment_Gateway::META_STATUS, $status );
 	}
 
@@ -1339,10 +1645,29 @@ function gstore_blu_apply_status_from_response( WC_Order $order, array $payload,
  * @return WC_Order|false
  */
 function gstore_blu_find_order_by_link_id( $link_id ) {
+	$link_id = trim( (string) $link_id );
+	if ( '' === $link_id ) {
+		return false;
+	}
+
 	$orders = wc_get_orders(
 		array(
 			'limit'      => 1,
 			'meta_key'   => Gstore_Blu_Payment_Gateway::META_LINK_ID,
+			'meta_value' => $link_id,
+			'orderby'    => 'date',
+			'order'      => 'DESC',
+		)
+	);
+
+	if ( ! empty( $orders ) ) {
+		return $orders[0];
+	}
+
+	$orders = wc_get_orders(
+		array(
+			'limit'      => 1,
+			'meta_key'   => Gstore_Blu_Payment_Gateway::META_LINK_ID_ALIAS,
 			'meta_value' => $link_id,
 			'orderby'    => 'date',
 			'order'      => 'DESC',
@@ -1468,4 +1793,149 @@ function gstore_blu_cleanup_cron() {
 		wp_unschedule_event( $timestamp, 'gstore_blu_check_pending_links' );
 	}
 }
+
+/**
+ * Anexa payload de retomada Blu à resposta de sucesso do checkout.
+ *
+ * @param array $result   Resultado do checkout.
+ * @param int   $order_id ID do pedido.
+ * @return array
+ */
+function gstore_blu_attach_resume_data_to_checkout_result( $result, $order_id ) {
+	if ( empty( $result['result'] ) || 'success' !== $result['result'] ) {
+		return $result;
+	}
+
+	$order = wc_get_order( $order_id );
+	if ( ! $order instanceof WC_Order ) {
+		return $result;
+	}
+
+	if ( $order->get_payment_method() !== Gstore_Blu_Payment_Gateway::GATEWAY_ID ) {
+		return $result;
+	}
+
+	$gateway = gstore_blu_get_gateway_instance();
+	if ( ! $gateway ) {
+		$gateway = new Gstore_Blu_Payment_Gateway();
+	}
+
+	if ( method_exists( $gateway, 'build_resume_payload' ) ) {
+		$result['gstore_blu_resume'] = $gateway->build_resume_payload( $order );
+	}
+
+	return $result;
+}
+add_filter( 'woocommerce_payment_successful_result', 'gstore_blu_attach_resume_data_to_checkout_result', 20, 2 );
+
+/**
+ * Endpoint AJAX para retomar / regenerar link Blu no mesmo pedido.
+ *
+ * @return void
+ */
+function gstore_blu_ajax_resume_payment_link() {
+	check_ajax_referer( 'gstore_blu_resume_payment_link', 'nonce' );
+
+	$order_id   = isset( $_POST['order_id'] ) ? absint( wp_unslash( $_POST['order_id'] ) ) : 0;
+	$order_key  = isset( $_POST['order_key'] ) ? wc_clean( wp_unslash( $_POST['order_key'] ) ) : '';
+	$mode       = isset( $_POST['mode'] ) ? sanitize_key( wp_unslash( $_POST['mode'] ) ) : 'status';
+	$signature  = isset( $_POST['client_signature'] ) ? sanitize_text_field( wp_unslash( $_POST['client_signature'] ) ) : '';
+	$installments = isset( $_POST['requested_installments'] ) ? max( 1, min( 21, absint( wp_unslash( $_POST['requested_installments'] ) ) ) ) : 1;
+	$requested_total = isset( $_POST['requested_total'] ) ? (float) wc_format_decimal( wp_unslash( $_POST['requested_total'] ) ) : 0.0;
+
+	$order = $order_id ? wc_get_order( $order_id ) : false;
+	if ( ! $order instanceof WC_Order ) {
+		wp_send_json_error( array( 'message' => __( 'Pedido não encontrado.', 'gstore' ) ), 404 );
+	}
+
+	if ( $order_key && ! hash_equals( (string) $order->get_order_key(), (string) $order_key ) ) {
+		wp_send_json_error( array( 'message' => __( 'Chave do pedido inválida.', 'gstore' ) ), 403 );
+	}
+
+	if ( $order->get_payment_method() !== Gstore_Blu_Payment_Gateway::GATEWAY_ID ) {
+		wp_send_json_error( array( 'message' => __( 'Pedido não é do checkout Blu.', 'gstore' ) ), 400 );
+	}
+
+	$gateway = gstore_blu_get_gateway_instance();
+	if ( ! $gateway ) {
+		$gateway = new Gstore_Blu_Payment_Gateway();
+	}
+
+	$active = method_exists( $gateway, 'get_active_payment_link_data' )
+		? $gateway->get_active_payment_link_data( $order )
+		: array();
+
+	$context = array(
+		'signature'       => $signature,
+		'requested_total' => $requested_total,
+		'reason'          => 'resume_ajax',
+	);
+
+	$response_payload = array(
+		'order_id'              => $order->get_id(),
+		'order_status'          => $order->get_status(),
+		'action_taken'          => 'rejected',
+		'payment_url'           => isset( $active['payment_url'] ) ? $active['payment_url'] : '',
+		'link_id'               => isset( $active['link_id'] ) ? $active['link_id'] : '',
+		'signature'             => isset( $active['signature'] ) ? $active['signature'] : '',
+		'selected_installments' => isset( $active['selected_installments'] ) ? (int) $active['selected_installments'] : 1,
+		'expires_at'            => isset( $active['expires_at'] ) ? $active['expires_at'] : '',
+		'messages'              => array(),
+	);
+
+	if ( $order->is_paid() || $order->has_status( array( 'processing', 'completed', 'refunded' ) ) ) {
+		$response_payload['messages'][] = __( 'Este pedido já foi pago/processado. Use Minha Conta > Pedidos.', 'gstore' );
+		wp_send_json_success( $response_payload );
+	}
+
+	if ( 'status' === $mode ) {
+		$response_payload['action_taken'] = 'status';
+		wp_send_json_success( $response_payload );
+	}
+
+	$active_signature = isset( $active['signature'] ) ? (string) $active['signature'] : '';
+	$signature_matches = ( '' !== $signature && '' !== $active_signature && hash_equals( $active_signature, $signature ) );
+	$requested_matches_installments = (int) $response_payload['selected_installments'] === (int) $installments;
+
+	if ( 'reuse' === $mode ) {
+		if ( empty( $response_payload['payment_url'] ) ) {
+			$response_payload['messages'][] = __( 'Nenhum link Blu ativo encontrado para este pedido.', 'gstore' );
+			wp_send_json_success( $response_payload );
+		}
+
+		$response_payload['action_taken'] = ( $signature_matches || $requested_matches_installments ) ? 'reused' : 'rejected';
+		if ( 'rejected' === $response_payload['action_taken'] ) {
+			$response_payload['messages'][] = __( 'O parcelamento mudou. Gere um novo link para continuar.', 'gstore' );
+		}
+		$order->update_meta_data( Gstore_Blu_Payment_Gateway::META_LAST_RESUME_AT, gmdate( 'c' ) );
+		$order->save();
+		wp_send_json_success( $response_payload );
+	}
+
+	if ( 'regenerate' === $mode ) {
+		if ( ! method_exists( $gateway, 'regenerate_payment_link_for_order' ) ) {
+			wp_send_json_error( array( 'message' => __( 'Regeneração de link não disponível.', 'gstore' ) ), 500 );
+		}
+
+		$result = $gateway->regenerate_payment_link_for_order( $order, $installments, $context );
+		if ( is_wp_error( $result ) ) {
+			$response_payload['messages'][] = $result->get_error_message();
+			wp_send_json_success( $response_payload );
+		}
+
+		$active = $gateway->get_active_payment_link_data( $order );
+		$response_payload['action_taken']          = 'regenerated';
+		$response_payload['payment_url']           = $active['payment_url'];
+		$response_payload['link_id']               = $active['link_id'];
+		$response_payload['signature']             = $active['signature'];
+		$response_payload['selected_installments'] = (int) $active['selected_installments'];
+		$response_payload['expires_at']            = $active['expires_at'];
+		$response_payload['order_status']          = $order->get_status();
+		wp_send_json_success( $response_payload );
+	}
+
+	wp_send_json_error( array( 'message' => __( 'Modo de retomada inválido.', 'gstore' ) ), 400 );
+}
+add_action( 'wp_ajax_gstore_blu_resume_payment_link', 'gstore_blu_ajax_resume_payment_link' );
+add_action( 'wp_ajax_nopriv_gstore_blu_resume_payment_link', 'gstore_blu_ajax_resume_payment_link' );
 
