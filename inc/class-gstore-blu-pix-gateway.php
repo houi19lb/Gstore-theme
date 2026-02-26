@@ -113,6 +113,8 @@ class Gstore_Blu_Pix_Gateway extends WC_Payment_Gateway {
 	 * @return void
 	 */
 	public function init_form_fields() {
+		$webhook_url = rest_url( 'gstore-blu/v1/pix-webhook' );
+
 		$this->form_fields = array(
 			'enabled'                => array(
 				'title'   => __( 'Ativar/Desativar', 'gstore' ),
@@ -181,7 +183,11 @@ class Gstore_Blu_Pix_Gateway extends WC_Payment_Gateway {
 			'webhook_secret'         => array(
 				'title'       => __( 'Token do webhook', 'gstore' ),
 				'type'        => 'password',
-				'description' => __( 'Opcional. Se preenchido, a Blu deve enviar este valor no header X-Gstore-Blu-Webhook.', 'gstore' ),
+				'description' => sprintf(
+					/* translators: %s: webhook endpoint URL */
+					__( 'Opcional. Se preenchido, a Blu deve enviar este valor no header X-Gstore-Blu-Webhook.<br>Endpoint do webhook (cadastre na Blu): <code>%s</code>', 'gstore' ),
+					esc_url( $webhook_url )
+				),
 				'default'     => '',
 			),
 			'debug_logging'          => array(
