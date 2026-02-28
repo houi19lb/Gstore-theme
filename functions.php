@@ -1217,35 +1217,45 @@ function gstore_enqueue_scripts() {
 		$gstore_account_urls
 	);
 
-	if ( is_front_page() ) {
-		$home_hero_js_path    = get_theme_file_path( 'assets/js/home-hero.js' );
-		$home_hero_js_version = file_exists( $home_hero_js_path ) ? (string) filemtime( $home_hero_js_path ) : wp_get_theme()->get( 'Version' );
-		wp_enqueue_script(
-			'gstore-home-hero',
-			get_theme_file_uri( 'assets/js/home-hero.js' ),
-			array(),
-			$home_hero_js_version,
-			true
-		);
+		if ( is_front_page() ) {
+			$home_hero_js_path    = get_theme_file_path( 'assets/js/home-hero.js' );
+			$home_hero_js_version = file_exists( $home_hero_js_path ) ? (string) filemtime( $home_hero_js_path ) : wp_get_theme()->get( 'Version' );
+			wp_enqueue_script(
+				'gstore-home-hero',
+				get_theme_file_uri( 'assets/js/home-hero.js' ),
+				array(),
+				$home_hero_js_version,
+				true
+			);
 
-		$home_benefits_js_path    = get_theme_file_path( 'assets/js/home-benefits.js' );
-		$home_benefits_js_version = file_exists( $home_benefits_js_path ) ? (string) filemtime( $home_benefits_js_path ) : wp_get_theme()->get( 'Version' );
-		wp_enqueue_script(
-			'gstore-home-benefits',
-			get_theme_file_uri( 'assets/js/home-benefits.js' ),
-			array(),
-			$home_benefits_js_version,
-			true
-		);
+			$home_benefits_js_path    = get_theme_file_path( 'assets/js/home-benefits.js' );
+			$home_benefits_js_version = file_exists( $home_benefits_js_path ) ? (string) filemtime( $home_benefits_js_path ) : wp_get_theme()->get( 'Version' );
+			wp_enqueue_script(
+				'gstore-home-benefits',
+				get_theme_file_uri( 'assets/js/home-benefits.js' ),
+				array(),
+				$home_benefits_js_version,
+				true
+			);
 
-		wp_enqueue_script(
-			'gstore-home-products-carousel',
-			get_theme_file_uri( 'assets/js/home-products-carousel.js' ),
-			array(),
-			wp_get_theme()->get( 'Version' ),
-			true
-		);
-	}
+			wp_enqueue_script(
+				'gstore-home-products-carousel',
+				get_theme_file_uri( 'assets/js/home-products-carousel.js' ),
+				array(),
+				wp_get_theme()->get( 'Version' ),
+				true
+			);
+
+			$home_blog_pagination_js_path    = get_theme_file_path( 'assets/js/home-blog-pagination.js' );
+			$home_blog_pagination_js_version = file_exists( $home_blog_pagination_js_path ) ? (string) filemtime( $home_blog_pagination_js_path ) : wp_get_theme()->get( 'Version' );
+			wp_enqueue_script(
+				'gstore-home-blog-pagination',
+				get_theme_file_uri( 'assets/js/home-blog-pagination.js' ),
+				array(),
+				$home_blog_pagination_js_version,
+				true
+			);
+		}
 
 	// Script para posts Ãºnicos do blog
 	if ( is_single() && get_post_type() === 'post' ) {

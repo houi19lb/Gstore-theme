@@ -4609,12 +4609,62 @@ main:not(.Gstore-blog-shell):not(.Gstore-blog-single-shell) {
 	font-size: 0.95rem;
 }
 
+.Gstore-home-blog__pagination {
+	margin-top: 20px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	flex-wrap: wrap;
+	gap: 10px;
+}
+
+.Gstore-home-blog__pagination .wp-block-query-pagination-numbers {
+	display: flex;
+	flex-direction: row;
+	flex-wrap: wrap;
+	gap: 8px;
+	align-items: center;
+	justify-content: center;
+}
+
+.Gstore-home-blog__pagination .wp-block-query-pagination-numbers a,
+.Gstore-home-blog__pagination .wp-block-query-pagination-numbers span {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-width: 36px;
+	min-height: 36px;
+	padding: 6px 10px;
+	border-radius: 4px;
+	text-decoration: none;
+	color: var(--text-main);
+	font-weight: 600;
+}
+
+.Gstore-home-blog__pagination .wp-block-query-pagination-numbers .page-numbers.current {
+	background: var(--gstore-color-accent, #ff5c00);
+	color: #ffffff;
+}
+
 .Gstore-home-blog__pagination .wp-block-query-pagination-previous,
 .Gstore-home-blog__pagination .wp-block-query-pagination-next {
-	color: var(--gstore-color-accent);
+	color: var(--gstore-color-accent, #ff5c00);
 	text-transform: uppercase;
 	font-weight: 700;
 	letter-spacing: 0.08em;
+	text-decoration: none;
+}
+
+.Gstore-home-blog__pagination .wp-block-query-pagination-previous:hover,
+.Gstore-home-blog__pagination .wp-block-query-pagination-next:hover,
+.Gstore-home-blog__pagination .wp-block-query-pagination-numbers a:hover {
+	color: var(--gstore-color-accent-hover, #e05000);
+}
+
+.Gstore-home-blog__query.is-loading {
+	opacity: 0.6;
+	pointer-events: none;
+	transition: opacity 0.2s ease;
 }
 
 @media (max-width: 960px) {
