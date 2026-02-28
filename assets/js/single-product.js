@@ -865,6 +865,11 @@ document.addEventListener('DOMContentLoaded', () => {
 		const stockTitle = stockBlock?.querySelector('[data-gstore-stock-title]');
 		const stockSubtitle = stockBlock?.querySelector('[data-gstore-stock-subtitle]');
 		const warning = document.querySelector('[data-gstore-variation-warning]');
+		const priceHeader = document.querySelector('[data-gstore-price-header]');
+		const priceUnavailableNotice = document.querySelector('[data-gstore-price-unavailable-notice]');
+		const oosPriceMode = String(priceHeader?.dataset?.gstoreOosPriceMode || 'hide').toLowerCase() === 'show'
+			? 'show'
+			: 'hide';
 
 		// Se não tem o card de indisponível, não há o que controlar
 		if (!oosCard || !buybox) {
@@ -895,6 +900,35 @@ document.addEventListener('DOMContentLoaded', () => {
 		};
 
 		const setOutOfStockState = (isOos) => {
+			const syncPriceHeaderState = (stateIsOos) => {
+				if (!priceHeader) {
+					return;
+				}
+
+				if (stateIsOos) {
+					if (oosPriceMode === 'show') {
+						priceHeader.hidden = false;
+						priceHeader.classList.add('is-unavailable');
+						if (priceUnavailableNotice) {
+							priceUnavailableNotice.hidden = false;
+						}
+						return;
+					}
+
+					priceHeader.hidden = true;
+					if (priceUnavailableNotice) {
+						priceUnavailableNotice.hidden = true;
+					}
+					return;
+				}
+
+				priceHeader.hidden = false;
+				priceHeader.classList.remove('is-unavailable');
+				if (priceUnavailableNotice) {
+					priceUnavailableNotice.hidden = true;
+				}
+			};
+
 			if (isOos) {
 				// Mostrar card de indisponível
 				oosCard.hidden = false;
@@ -919,6 +953,8 @@ document.addEventListener('DOMContentLoaded', () => {
 				if (warning) {
 					warning.hidden = true;
 				}
+
+				syncPriceHeaderState(true);
 			} else {
 				// Esconder card de indisponível
 				oosCard.hidden = true;
@@ -938,6 +974,8 @@ document.addEventListener('DOMContentLoaded', () => {
 				if (stockSubtitle) {
 					stockSubtitle.textContent = defaultSubtitle;
 				}
+
+				syncPriceHeaderState(false);
 			}
 		};
 

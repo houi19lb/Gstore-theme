@@ -397,6 +397,8 @@ $is_out_of_stock   = 'outofstock' === $stock_status;
 $is_on_backorder   = 'onbackorder' === $stock_status;
 $is_in_stock       = 'instock' === $stock_status;
 $buybox_stock_class = $is_out_of_stock ? 'is-out-of-stock' : ( $is_in_stock ? 'is-in-stock' : 'is-on-order' );
+$show_price_oos     = 'yes' === (string) get_option( 'gstore_show_price_out_of_stock', 'no' );
+$oos_price_mode     = $show_price_oos ? 'show' : 'hide';
 
 // Disponibilidade (seleção do admin via plugin GSTORE).
 $product_id = (int) $product->get_id();
@@ -761,10 +763,14 @@ if ( $reviews_has_value ) {
 				<div class="Gstore-single-product__summary">
 					<div class="Gstore-single-product__summary-card Gstore-single-product__buybox buybox <?php echo esc_attr( $buybox_stock_class ); ?>">
 						<!-- Preço -->
-						<?php if ( ! $is_out_of_stock ) : ?>
-							<div class="buybox-header">
+						<?php if ( ! $is_out_of_stock || $show_price_oos ) : ?>
+							<div
+								class="buybox-header<?php echo ( $is_out_of_stock && $show_price_oos ) ? ' is-unavailable' : ''; ?>"
+								data-gstore-price-header
+								data-gstore-oos-price-mode="<?php echo esc_attr( $oos_price_mode ); ?>"
+							>
 								<div>
-							<div class="price-label"><?php esc_html_e( 'À vista no PIX', 'gstore' ); ?></div>
+									<div class="price-label"><?php esc_html_e( 'À vista no PIX', 'gstore' ); ?></div>
 								<?php if ( $pix_discount_price ) : ?>
 									<?php
 									// Com desconto Pix: preço riscado + preço Pix, no mesmo padrão visual do WooCommerce (del/ins).
@@ -809,6 +815,12 @@ if ( $reviews_has_value ) {
 								<button type="button" class="btn-secondary" data-gstore-reset-purchase>
 									<?php esc_html_e( 'Limpar', 'gstore' ); ?>
 								</button>
+								<?php if ( $show_price_oos ) : ?>
+									<div class="price-unavailable-notice" data-gstore-price-unavailable-notice<?php echo $is_out_of_stock ? '' : ' hidden'; ?>>
+										<i class="fa-solid fa-circle-info" aria-hidden="true"></i>
+										<?php esc_html_e( 'Preço de referência (produto indisponível)', 'gstore' ); ?>
+									</div>
+								<?php endif; ?>
 							</div>
 						<?php endif; ?>
 

@@ -40,6 +40,7 @@ if ( $is_variable_product && $all_variations_out_of_stock ) {
 }
 
 $is_out_of_stock = 'outofstock' === $stock_status;
+$show_price_oos = 'yes' === (string) get_option( 'gstore_show_price_out_of_stock', 'no' );
 
 $regular_price_amount  = $is_variable_product ? (float) $product->get_variation_regular_price( 'min', true ) : (float) $product->get_regular_price();
 $sale_price_amount     = $is_variable_product ? (float) $product->get_variation_sale_price( 'min', true ) : (float) $product->get_sale_price();
@@ -150,7 +151,7 @@ $pix_discount_percent    = $pix_discount_active ? (float) $pix_discount_config['
 					</a>
 				</h3>
 			</div>
-			<?php if ( ! $is_out_of_stock ) : ?>
+			<?php if ( ! $is_out_of_stock || $show_price_oos ) : ?>
 				<div class="Gstore-product-card__price-section">
 					<?php if ( $pix_discount_price_html ) : ?>
 						<?php
@@ -185,9 +186,9 @@ $pix_discount_percent    = $pix_discount_active ? (float) $pix_discount_config['
 							</div>
 						<?php endif; ?>
 					<?php endif; ?>
-				<?php if ( $installment_label ) : ?>
-					<div class="Gstore-product-card__price-details">
-						<strong class="Gstore-product-card__price-details-label"><?php esc_html_e( 'à vista no Pix', 'gstore' ); ?></strong>
+					<?php if ( $installment_label ) : ?>
+						<div class="Gstore-product-card__price-details">
+							<strong class="Gstore-product-card__price-details-label"><?php esc_html_e( 'à vista no Pix', 'gstore' ); ?></strong>
 						<div class="Gstore-product-card__installments" data-gstore-installment-wrapper>
 							<span
 								class="Gstore-product-card__installments-text"
@@ -203,6 +204,11 @@ $pix_discount_percent    = $pix_discount_active ? (float) $pix_discount_config['
 							</div>
 						</div>
 					<?php endif; ?>
+					<?php if ( $is_out_of_stock && $show_price_oos ) : ?>
+						<div class="Gstore-product-card__price-details">
+							<strong class="Gstore-product-card__price-details-label"><?php esc_html_e( 'Sem estoque no momento', 'gstore' ); ?></strong>
+						</div>
+					<?php endif; ?>
 				</div>
 			<?php endif; ?>
 		</div>
@@ -213,4 +219,3 @@ $pix_discount_percent    = $pix_discount_active ? (float) $pix_discount_config['
 		</div>
 	</div>
 </li>
-
