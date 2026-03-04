@@ -4754,21 +4754,11 @@ function gstore_handle_expired_register_nonce() {
 add_action( 'wp_loaded', 'gstore_handle_expired_register_nonce', 5 );
 
 /**
- * Redirects registration attempts with an existing email to lost-password.
+ * Returns a valid registration nonce from POST when available.
  *
- * @param string   $username          Submitted username.
- * @param string   $email             Submitted email.
- * @param WP_Error $validation_errors Current validation errors.
+ * @return string
  */
-function gstore_redirect_existing_account_to_lost_password( $username, $email, $validation_errors ) {
-	if ( is_user_logged_in() ) {
-		return;
-	}
-
-	if ( empty( $_POST['register'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Missing
-		return;
-	}
-
+function gstore_get_registration_nonce_from_post() {
 	$nonce_value = '';
 
 	if ( isset( $_POST['woocommerce-register-nonce'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Missing
@@ -4777,6 +4767,32 @@ function gstore_redirect_existing_account_to_lost_password( $username, $email, $
 		$nonce_value = sanitize_text_field( wp_unslash( $_POST['_wpnonce'] ) );
 	}
 
+	return $nonce_value;
+}
+
+/**
+ * Redirects registration attempts with an existing email to lost-password.
+ *
+ * This is intentionally reusable from different hooks because environments can
+ * process registration in different orders.
+ *
+ * @param string $fallback_email Optional email from hook context.
+ * @return void
+ */
+function gstore_maybe_redirect_existing_account_registration( $fallback_email = '' ) {
+	if ( is_user_logged_in() ) {
+		return;
+	}
+
+	if ( function_exists( 'wp_doing_ajax' ) && wp_doing_ajax() ) {
+		return;
+	}
+
+	if ( empty( $_POST['register'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Missing
+		return;
+	}
+
+	$nonce_value = gstore_get_registration_nonce_from_post();
 	if ( ! $nonce_value || ! wp_verify_nonce( $nonce_value, 'woocommerce-register' ) ) {
 		return;
 	}
@@ -4785,8 +4801,8 @@ function gstore_redirect_existing_account_to_lost_password( $username, $email, $
 
 	if ( isset( $_POST['email'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Missing
 		$posted_email = sanitize_email( wp_unslash( $_POST['email'] ) );
-	} elseif ( is_string( $email ) ) {
-		$posted_email = sanitize_email( $email );
+	} elseif ( is_string( $fallback_email ) ) {
+		$posted_email = sanitize_email( $fallback_email );
 	}
 
 	if ( '' === $posted_email || ! is_email( $posted_email ) ) {
@@ -4806,6 +4822,28 @@ function gstore_redirect_existing_account_to_lost_password( $username, $email, $
 
 	wp_safe_redirect( $target );
 	exit;
+}
+
+/**
+ * Early interception before WooCommerce default registration flow.
+ *
+ * This avoids duplicate-email notices in environments where inner WC hooks
+ * are bypassed or delayed by customizations.
+ */
+function gstore_redirect_existing_account_from_wp_loaded() {
+	gstore_maybe_redirect_existing_account_registration();
+}
+add_action( 'wp_loaded', 'gstore_redirect_existing_account_from_wp_loaded', 4 );
+
+/**
+ * WooCommerce registration hook fallback.
+ *
+ * @param string   $username          Submitted username.
+ * @param string   $email             Submitted email.
+ * @param WP_Error $validation_errors Current validation errors.
+ */
+function gstore_redirect_existing_account_to_lost_password( $username, $email, $validation_errors ) {
+	gstore_maybe_redirect_existing_account_registration( is_string( $email ) ? $email : '' );
 }
 add_action( 'woocommerce_register_post', 'gstore_redirect_existing_account_to_lost_password', 1, 3 );
 

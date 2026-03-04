@@ -20,6 +20,7 @@ if ( isset( $_GET['gstore_existing_account'] ) ) { // phpcs:ignore WordPress.Sec
 }
 
 $prefilled_user_login = '';
+$used_session_email   = false;
 
 if ( ! empty( $_POST['user_login'] ) && is_string( $_POST['user_login'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Missing
 	$prefilled_user_login = wp_unslash( $_POST['user_login'] ); // phpcs:ignore WordPress.Security.NonceVerification.Missing
@@ -28,7 +29,12 @@ if ( ! empty( $_POST['user_login'] ) && is_string( $_POST['user_login'] ) ) { //
 
 	if ( is_string( $session_email ) && is_email( $session_email ) ) {
 		$prefilled_user_login = $session_email;
+		$used_session_email   = true;
 	}
+}
+
+if ( $used_session_email ) {
+	$existing_account_flow = true;
 }
 
 if ( function_exists( 'WC' ) && WC()->session ) {

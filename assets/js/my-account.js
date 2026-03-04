@@ -421,6 +421,117 @@
 		});
 	}
 
+	/**
+	 * Fallback para fluxo de conta já existente:
+	 * - Captura e-mail no submit do cadastro
+	 * - Se WooCommerce exibir erro de e-mail já cadastrado, redireciona para lost-password
+	 * - Pré-preenche o campo de recuperação via sessionStorage
+	 */
+	function initExistingAccountRecoveryFallback() {
+		const storageKey = 'gstore_existing_account_email';
+
+		function isLostPasswordPage() {
+			return window.location.pathname.indexOf('lost-password') !== -1;
+		}
+
+		function getLostPasswordUrl() {
+			const lostPasswordAnchor = document.querySelector('.woocommerce-LostPassword a[href]');
+			if (lostPasswordAnchor && lostPasswordAnchor.href) {
+				return lostPasswordAnchor.href;
+			}
+
+			if (window.gstoreAccountUrls && window.gstoreAccountUrls.myAccount) {
+				const base = String(window.gstoreAccountUrls.myAccount).replace(/\/+$/, '/');
+				return `${base}lost-password/`;
+			}
+
+			return '/minha-conta/lost-password/';
+		}
+
+		function readStoredEmail() {
+			try {
+				return sessionStorage.getItem(storageKey) || '';
+			} catch (e) {
+				return '';
+			}
+		}
+
+		function writeStoredEmail(email) {
+			if (!email) return;
+			try {
+				sessionStorage.setItem(storageKey, email);
+			} catch (e) {
+				// no-op
+			}
+		}
+
+		function clearStoredEmail() {
+			try {
+				sessionStorage.removeItem(storageKey);
+			} catch (e) {
+				// no-op
+			}
+		}
+
+		const registerForm = document.querySelector('form.woocommerce-form-register');
+		const registerEmailInput = document.querySelector('#reg_email');
+
+		if (registerForm && registerEmailInput) {
+			registerForm.addEventListener('submit', function() {
+				const email = (registerEmailInput.value || '').trim();
+				if (email) {
+					writeStoredEmail(email);
+				}
+			});
+		}
+
+		if (!isLostPasswordPage()) {
+			const duplicateNoticeEl = document.querySelector('.woocommerce-error, .wc-block-components-notice-banner.is-error');
+			const duplicateText = duplicateNoticeEl ? (duplicateNoticeEl.textContent || '').toLowerCase() : '';
+			const isDuplicateEmailError =
+				duplicateText.indexOf('já existe uma conta cadastrada') !== -1 ||
+				duplicateText.indexOf('already registered') !== -1 ||
+				duplicateText.indexOf('account is already registered') !== -1;
+
+			if (isDuplicateEmailError) {
+				const matchedEmail = duplicateText.match(/[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}/i);
+				if (matchedEmail && matchedEmail[0]) {
+					writeStoredEmail(matchedEmail[0]);
+				} else if (registerEmailInput && registerEmailInput.value) {
+					writeStoredEmail(registerEmailInput.value.trim());
+				}
+
+				const target = new URL(getLostPasswordUrl(), window.location.origin);
+				target.searchParams.set('gstore_existing_account', '1');
+				window.location.replace(target.toString());
+			}
+		}
+
+		if (isLostPasswordPage()) {
+			const params = new URLSearchParams(window.location.search);
+			const hasExistingAccountFlag = params.get('gstore_existing_account') === '1';
+			if (hasExistingAccountFlag) {
+				const lostForm = document.querySelector('form.woocommerce-ResetPassword');
+				const hasBanner = !!document.querySelector('.gstore-lost-password__notice');
+				if (lostForm && !hasBanner) {
+					const notice = document.createElement('div');
+					notice.className = 'gstore-lost-password__notice';
+					notice.setAttribute('role', 'status');
+					notice.setAttribute('aria-live', 'polite');
+					notice.innerHTML = '<p>Este e-mail já está cadastrado. Para acessar sua conta, recupere sua senha abaixo. Depois de clicar em "Redefinir senha", você receberá um e-mail com o link para criar uma nova senha.</p>';
+					lostForm.insertBefore(notice, lostForm.firstChild);
+				}
+			}
+
+			const loginInput = document.querySelector('#user_login');
+			const storedEmail = readStoredEmail();
+			if (loginInput && !loginInput.value && storedEmail) {
+				loginInput.value = storedEmail;
+				clearStoredEmail();
+			}
+		}
+	}
+
 	// Inicializa quando o DOM estiver pronto
 	function init() {
 		initRegisterInfoModal();
@@ -432,6 +543,7 @@
 		initCharacterCounters();
 		initFormLoadingStates();
 		initRegisterButton();
+		initExistingAccountRecoveryFallback();
 	}
 
 	if (document.readyState === 'loading') {
