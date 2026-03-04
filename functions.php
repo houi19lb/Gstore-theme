@@ -4754,6 +4754,62 @@ function gstore_handle_expired_register_nonce() {
 add_action( 'wp_loaded', 'gstore_handle_expired_register_nonce', 5 );
 
 /**
+ * Redirects registration attempts with an existing email to lost-password.
+ *
+ * @param string   $username          Submitted username.
+ * @param string   $email             Submitted email.
+ * @param WP_Error $validation_errors Current validation errors.
+ */
+function gstore_redirect_existing_account_to_lost_password( $username, $email, $validation_errors ) {
+	if ( is_user_logged_in() ) {
+		return;
+	}
+
+	if ( empty( $_POST['register'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Missing
+		return;
+	}
+
+	$nonce_value = '';
+
+	if ( isset( $_POST['woocommerce-register-nonce'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Missing
+		$nonce_value = sanitize_text_field( wp_unslash( $_POST['woocommerce-register-nonce'] ) );
+	} elseif ( isset( $_POST['_wpnonce'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Missing
+		$nonce_value = sanitize_text_field( wp_unslash( $_POST['_wpnonce'] ) );
+	}
+
+	if ( ! $nonce_value || ! wp_verify_nonce( $nonce_value, 'woocommerce-register' ) ) {
+		return;
+	}
+
+	$posted_email = '';
+
+	if ( isset( $_POST['email'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Missing
+		$posted_email = sanitize_email( wp_unslash( $_POST['email'] ) );
+	} elseif ( is_string( $email ) ) {
+		$posted_email = sanitize_email( $email );
+	}
+
+	if ( '' === $posted_email || ! is_email( $posted_email ) ) {
+		return;
+	}
+
+	if ( ! function_exists( 'email_exists' ) || ! email_exists( $posted_email ) ) {
+		return;
+	}
+
+	if ( class_exists( 'WooCommerce' ) && function_exists( 'WC' ) && WC()->session ) {
+		WC()->session->set( 'gstore_existing_account_email', $posted_email );
+	}
+
+	$lost_password_url = function_exists( 'wc_lostpassword_url' ) ? wc_lostpassword_url() : wp_lostpassword_url();
+	$target            = add_query_arg( 'gstore_existing_account', '1', $lost_password_url );
+
+	wp_safe_redirect( $target );
+	exit;
+}
+add_action( 'woocommerce_register_post', 'gstore_redirect_existing_account_to_lost_password', 1, 3 );
+
+/**
  * Remove o wrapper padrÃ£o do WooCommerce na pÃ¡gina minha conta
  * para usarmos nosso prÃ³prio layout.
  */

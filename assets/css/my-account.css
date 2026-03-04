@@ -1608,6 +1608,123 @@ form.woocommerce-form {
 }
 
 /* ========================================
+   LOST PASSWORD (ACCESSIBLE)
+   ======================================== */
+
+.gstore-lost-password {
+	max-width: 720px;
+	margin: clamp(20px, 4vw, 40px) auto;
+	padding: 0 clamp(12px, 3vw, 20px);
+}
+
+.gstore-lost-password__form {
+	background: var(--gstore-color-bg-light, #fff);
+	border: 1px solid var(--gstore-color-border, #d9d9d9);
+	border-radius: var(--gstore-radius-lg, 8px);
+	box-shadow: var(--gstore-shadow-sm);
+	padding: clamp(20px, 4vw, 36px);
+}
+
+.gstore-lost-password__notice {
+	margin-bottom: 20px;
+	padding: 14px 16px;
+	border: 1px solid #f1c7ad;
+	border: 1px solid color-mix(in srgb, var(--gstore-color-accent, #ff5c00) 30%, #ffffff);
+	border-left: 5px solid var(--gstore-color-accent, #ff5c00);
+	border-radius: var(--gstore-radius-base, 4px);
+	background: #fff6ef;
+	background: color-mix(in srgb, var(--gstore-color-accent, #ff5c00) 10%, #ffffff);
+}
+
+.gstore-lost-password__notice p {
+	margin: 0;
+	font-size: clamp(1rem, 1.8vw, 1.0625rem);
+	line-height: 1.55;
+	font-weight: var(--gstore-font-weight-semibold, 600);
+	color: var(--gstore-color-text-primary, #161616);
+}
+
+.gstore-lost-password__intro {
+	margin: 0 0 20px 0;
+	font-size: clamp(1rem, 1.8vw, 1.125rem);
+	line-height: 1.6;
+	color: var(--gstore-color-text-primary, #1a1a1a);
+}
+
+.gstore-lost-password .form-row {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	margin-bottom: 18px;
+}
+
+.gstore-lost-password .form-row label {
+	font-size: clamp(1rem, 1.8vw, 1.0625rem);
+	font-weight: var(--gstore-font-weight-semibold, 600);
+	line-height: 1.4;
+	color: var(--gstore-color-text-primary, #1a1a1a);
+}
+
+.gstore-lost-password .input-text {
+	width: 100%;
+	min-height: 52px;
+	padding: 12px 14px;
+	border: 1.5px solid var(--gstore-color-border, #b8b8b8);
+	border-radius: var(--gstore-radius-base, 4px);
+	background: #fff;
+	color: var(--gstore-color-text-primary, #1a1a1a);
+	font-size: clamp(1rem, 1.8vw, 1.0625rem);
+	line-height: 1.4;
+}
+
+.gstore-lost-password .input-text:focus {
+	border-color: var(--gstore-color-accent, #ff5c00);
+	outline: 3px solid rgba(255, 92, 0, 0.3);
+	outline: 3px solid color-mix(in srgb, var(--gstore-color-accent, #ff5c00) 30%, transparent);
+	outline-offset: 1px;
+	box-shadow: 0 0 0 1px rgba(255, 92, 0, 0.35);
+	box-shadow: 0 0 0 1px color-mix(in srgb, var(--gstore-color-accent, #ff5c00) 45%, #ffffff);
+}
+
+.gstore-lost-password__actions {
+	margin: 4px 0 0 0 !important;
+}
+
+.gstore-lost-password__actions .button,
+.gstore-lost-password__actions .woocommerce-Button {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-height: 52px;
+	padding: 12px 24px;
+	border-radius: var(--gstore-radius-base, 4px);
+	font-size: clamp(1rem, 1.8vw, 1.0625rem);
+	font-weight: var(--gstore-font-weight-semibold, 600);
+}
+
+.gstore-lost-password__actions .button:focus-visible,
+.gstore-lost-password__actions .woocommerce-Button:focus-visible {
+	outline: 3px solid rgba(255, 92, 0, 0.35);
+	outline: 3px solid color-mix(in srgb, var(--gstore-color-accent, #ff5c00) 35%, transparent);
+	outline-offset: 2px;
+}
+
+@media (max-width: 640px) {
+	.gstore-lost-password {
+		padding: 0 12px;
+	}
+
+	.gstore-lost-password__form {
+		padding: 20px 16px;
+	}
+
+	.gstore-lost-password__actions .button,
+	.gstore-lost-password__actions .woocommerce-Button {
+		width: 100%;
+	}
+}
+
+/* ========================================
    ORDER DETAILS PAGE
    ======================================== */
 
