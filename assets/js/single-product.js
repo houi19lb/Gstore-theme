@@ -228,29 +228,7 @@ document.addEventListener('DOMContentLoaded', () => {
 			const option = document.createElement('option');
 			option.value = String(installments);
 
-			let optionText = `${installments}x de ${quote.per_installment_text}`;
-			const totalRaw = Number(quote.total_raw ?? quote.total);
-			const totalText = quote.total_text || quote.totalText || (Number.isFinite(totalRaw) ? formatCurrency(totalRaw) : '');
-			const originalTotal = Number(quote.original_total ?? quote.originalTotal);
-			const jurosValue = Number.isFinite(totalRaw) && Number.isFinite(originalTotal)
-				? totalRaw - originalTotal
-				: NaN;
-			const details = [];
-			if (totalText) {
-				details.push(`total: ${totalText}`);
-			}
-			// Removido: exibição de juros conforme solicitado
-			// if (Number.isFinite(jurosValue) && jurosValue > 0) {
-			// 	const jurosText = formatCurrency(jurosValue);
-			// 	if (jurosText) {
-			// 		details.push(`juros: ${jurosText}`);
-			// 	}
-			// }
-			if (details.length) {
-				optionText += ` (${details.join(', ')})`;
-			}
-
-			option.textContent = optionText;
+			option.textContent = `${installments}x de ${quote.per_installment_text}`;
 			option.selected = Number(selectedInstallments) === installments;
 			select.appendChild(option);
 		});
