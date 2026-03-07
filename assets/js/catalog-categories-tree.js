@@ -111,10 +111,18 @@ const __GSTORE_TREE_RUN_ID = 'tree_' + Date.now() + '_' + Math.random().toString
 			}
 		});
 
-		// Ordena por nome
-		const sortByName = (a, b) => a.name.localeCompare(b.name);
-		tree.sort(sortByName);
-		Object.values(categoryMap).forEach(cat => cat.children.sort(sortByName));
+		// Ordena por ordem manual (menu_order) e, em empate, por nome.
+		const getOrderValue = (cat) => {
+			const parsed = Number.parseInt(cat && cat.menu_order, 10);
+			return Number.isFinite(parsed) ? parsed : 0;
+		};
+		const sortByOrderThenName = (a, b) => {
+			const orderDiff = getOrderValue(a) - getOrderValue(b);
+			if (orderDiff !== 0) return orderDiff;
+			return a.name.localeCompare(b.name);
+		};
+		tree.sort(sortByOrderThenName);
+		Object.values(categoryMap).forEach(cat => cat.children.sort(sortByOrderThenName));
 
 		return tree;
 	}

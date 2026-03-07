@@ -24,6 +24,11 @@ class GStore_Category_Filter {
 	private $selected_slugs = [];
 
 	/**
+	 * Meta key da ordem manual das categorias (WooCommerce).
+	 */
+	private const CATEGORY_ORDER_META_KEY = 'order';
+
+	/**
 	 * Construtor.
 	 */
 	private function __construct() {
@@ -241,6 +246,15 @@ class GStore_Category_Filter {
 			return [];
 		}
 
+		$term_ids = array_values(
+			array_filter(
+				array_map( 'intval', wp_list_pluck( $terms, 'term_id' ) )
+			)
+		);
+		if ( ! empty( $term_ids ) ) {
+			update_meta_cache( 'term', $term_ids );
+		}
+
 		$tree = [];
 		$term_map = [];
 
@@ -251,6 +265,7 @@ class GStore_Category_Filter {
 				'slug'     => $term->slug,
 				'parent'   => $term->parent,
 				'count'    => $term->count,
+				'sort_order' => $this->get_term_sort_order( $term->term_id ),
 				'children' => [],
 			];
 		}
@@ -286,6 +301,8 @@ class GStore_Category_Filter {
 				}
 			}
 		}
+
+		$this->sort_tree_nodes( $tree );
 
 		return $tree;
 	}
@@ -524,6 +541,53 @@ class GStore_Category_Filter {
 		}
 
 		return $out;
+	}
+
+	/**
+	 * Obtém o número de ordenação manual da categoria.
+	 *
+	 * @param int $term_id ID da categoria.
+	 * @return int
+	 */
+	private function get_term_sort_order( $term_id ) {
+		$term_id = absint( $term_id );
+		if ( $term_id <= 0 ) {
+			return 0;
+		}
+
+		return (int) get_term_meta( $term_id, self::CATEGORY_ORDER_META_KEY, true );
+	}
+
+	/**
+	 * Ordena a árvore recursivamente por número de ordenação e, em empate, por nome.
+	 *
+	 * @param array<int,object> $nodes Nós da árvore (passagem por referência).
+	 * @return void
+	 */
+	private function sort_tree_nodes( &$nodes ) {
+		if ( empty( $nodes ) || ! is_array( $nodes ) ) {
+			return;
+		}
+
+		usort(
+			$nodes,
+			static function( $left, $right ) {
+				$left_order  = isset( $left->sort_order ) ? (int) $left->sort_order : 0;
+				$right_order = isset( $right->sort_order ) ? (int) $right->sort_order : 0;
+
+				if ( $left_order !== $right_order ) {
+					return $left_order <=> $right_order;
+				}
+
+				return strcasecmp( (string) ( $left->name ?? '' ), (string) ( $right->name ?? '' ) );
+			}
+		);
+
+		foreach ( $nodes as $node ) {
+			if ( ! empty( $node->children ) ) {
+				$this->sort_tree_nodes( $node->children );
+			}
+		}
 	}
 
 	/**

@@ -7752,6 +7752,21 @@ function gstore_is_catalog_context() {
 }
 
 /**
+ * Define "popularidade" como ordenacao padrao no catalogo.
+ *
+ * @param string $default_orderby Ordenacao padrao atual.
+ * @return string
+ */
+add_filter( 'woocommerce_default_catalog_orderby', 'gstore_catalog_default_orderby_popularity', 20 );
+function gstore_catalog_default_orderby_popularity( $default_orderby ) {
+	if ( ! gstore_is_catalog_context() ) {
+		return $default_orderby;
+	}
+
+	return 'popularity';
+}
+
+/**
  * Marca queries de shortcode no catalogo para priorizar itens com estoque.
  */
 add_filter( 'woocommerce_shortcode_products_query', 'gstore_catalog_mark_shortcode_stock_priority', 35, 3 );

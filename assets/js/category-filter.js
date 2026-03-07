@@ -28,12 +28,6 @@ class CategoryFilterTree {
                 return;
             }
 
-            const checkbox = e.target.closest('.gstore-category-filter__checkbox');
-            if (checkbox) {
-                this.handleCheckbox(checkbox);
-                return;
-            }
-
             // Permitir clicar no nó inteiro para expandir se tiver filhos
             const node = e.target.closest('.gstore-category-filter__node');
             if (node && !e.target.closest('.gstore-category-filter__checkbox')) {
@@ -43,6 +37,12 @@ class CategoryFilterTree {
                     this.handleExpand(btn);
                 }
             }
+        });
+        this.tree.addEventListener('change', (e) => {
+            const checkbox = e.target.closest('.gstore-category-filter__checkbox');
+            if (!checkbox) return;
+            this.handleCheckbox(checkbox);
+            this.applyFilters();
         });
 
         // Evento de busca
