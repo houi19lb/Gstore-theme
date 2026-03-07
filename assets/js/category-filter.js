@@ -58,8 +58,13 @@ class CategoryFilterTree {
         this.chipsContainer.addEventListener('click', (e) => {
             const removeBtn = e.target.closest('.gstore-category-filter__chip-remove');
             if (removeBtn) {
+                e.preventDefault();
+                e.stopPropagation();
                 const slug = removeBtn.dataset.slug;
-                this.uncheckBySlug(slug);
+                const hasChanged = this.uncheckBySlug(slug);
+                if (hasChanged) {
+                    this.applyFilters();
+                }
             }
         });
 
@@ -199,9 +204,14 @@ class CategoryFilterTree {
     uncheckBySlug(slug) {
         const checkbox = this.tree.querySelector(`.gstore-category-filter__checkbox[value="${slug}"]`);
         if (checkbox) {
+            if (!checkbox.checked) {
+                return false;
+            }
             checkbox.checked = false;
             this.handleCheckbox(checkbox);
+            return true;
         }
+        return false;
     }
 
     expandSelectedPath() {

@@ -401,7 +401,26 @@ class GStore_Category_Filter {
 	}
 
 	/**
-	 * Calcula contexto de produtos/contagens para o escopo atual (scope + selecao em AND).
+	 * Retorna slugs selecionados normalizados para uso em tax_query.
+	 *
+	 * @return string[]
+	 */
+	private function get_selected_slugs_for_query() {
+		if ( empty( $this->selected_slugs ) ) {
+			return array();
+		}
+
+		return array_values(
+			array_unique(
+				array_filter(
+					array_map( 'sanitize_title', $this->selected_slugs )
+				)
+			)
+		);
+	}
+
+	/**
+	 * Calcula contexto de produtos/contagens para o escopo atual (scope + selecao em OR).
 	 *
 	 * @param \WP_Term $scope_term Termo de escopo.
 	 * @return array{product_ids:int[],counts:array<int,int>}
@@ -438,33 +457,28 @@ class GStore_Category_Filter {
 		}
 
 		$selected_term_ids = $this->get_selected_term_ids();
-		$selected_sets = array();
+		$selected_term_pool = array();
 		foreach ( $selected_term_ids as $selected_term_id ) {
-			$set = array_merge(
+			$selected_term_pool = array_merge(
+				$selected_term_pool,
 				array( (int) $selected_term_id ),
 				array_map( 'absint', get_term_children( (int) $selected_term_id, 'product_cat' ) )
 			);
-			$selected_sets[] = array_values( array_unique( array_filter( $set ) ) );
 		}
+		$selected_term_pool = array_values( array_unique( array_filter( $selected_term_pool ) ) );
 
 		$context_product_ids = array();
 		foreach ( $scope_product_ids as $pid ) {
-			$assigned = isset( $product_terms[ $pid ] ) ? array_keys( $product_terms[ $pid ] ) : array();
+			$assigned = isset( $product_terms[ $pid ] ) ? array_map( 'intval', array_keys( $product_terms[ $pid ] ) ) : array();
 			if ( empty( $assigned ) ) {
 				continue;
 			}
 
-			$matches_all_selected = true;
-			foreach ( $selected_sets as $term_set ) {
-				if ( empty( array_intersect( $assigned, $term_set ) ) ) {
-					$matches_all_selected = false;
-					break;
-				}
+			if ( ! empty( $selected_term_pool ) && empty( array_intersect( $assigned, $selected_term_pool ) ) ) {
+				continue;
 			}
 
-			if ( $matches_all_selected ) {
-				$context_product_ids[] = (int) $pid;
-			}
+			$context_product_ids[] = (int) $pid;
 		}
 
 		$context_product_ids = array_values( array_unique( array_filter( $context_product_ids ) ) );
@@ -636,7 +650,8 @@ class GStore_Category_Filter {
 	public function apply_category_filter( $query_args, $attr, $type ) {
 		$scope_term = $this->get_scope_term();
 		$has_scope = (bool) $scope_term;
-		$has_selected = ! empty( $this->selected_slugs );
+		$selected_slugs = $this->get_selected_slugs_for_query();
+		$has_selected = ! empty( $selected_slugs );
 
 		if ( ! $has_scope && ! $has_selected ) {
 			return $query_args;
@@ -657,15 +672,13 @@ class GStore_Category_Filter {
 		}
 
 		if ( $has_selected ) {
-			foreach ( $this->selected_slugs as $selected_slug ) {
-				$query_args['tax_query'][] = [
-					'taxonomy'         => 'product_cat',
-					'field'            => 'slug',
-					'terms'            => [ $selected_slug ],
-					'operator'         => 'IN',
-					'include_children' => true,
-				];
-			}
+			$query_args['tax_query'][] = [
+				'taxonomy'         => 'product_cat',
+				'field'            => 'slug',
+				'terms'            => $selected_slugs,
+				'operator'         => 'IN',
+				'include_children' => true,
+			];
 		}
 
 		return $query_args;
@@ -681,7 +694,8 @@ class GStore_Category_Filter {
 
 		$scope_term = $this->get_scope_term();
 		$has_scope = (bool) $scope_term;
-		$has_selected = ! empty( $this->selected_slugs );
+		$selected_slugs = $this->get_selected_slugs_for_query();
+		$has_selected = ! empty( $selected_slugs );
 
 		if ( ! $has_scope && ! $has_selected ) {
 			return;
@@ -703,15 +717,13 @@ class GStore_Category_Filter {
 		}
 
 		if ( $has_selected ) {
-			foreach ( $this->selected_slugs as $selected_slug ) {
-				$tax_query[] = [
-					'taxonomy'         => 'product_cat',
-					'field'            => 'slug',
-					'terms'            => [ $selected_slug ],
-					'operator'         => 'IN',
-					'include_children' => true,
-				];
-			}
+			$tax_query[] = [
+				'taxonomy'         => 'product_cat',
+				'field'            => 'slug',
+				'terms'            => $selected_slugs,
+				'operator'         => 'IN',
+				'include_children' => true,
+			];
 		}
 
 		$query->set( 'tax_query', $tax_query );
