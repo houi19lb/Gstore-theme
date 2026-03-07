@@ -2890,6 +2890,9 @@ function gstore_filter_home_products_by_stock( $query_args ) {
 		'compare' => '=',
 	);
 
+	// Marca as vitrines da home para priorizar produtos "Destaque".
+	$query_args['gstore_featured_first'] = 1;
+
 	return $query_args;
 }
 add_filter( 'woocommerce_shortcode_products_query', 'gstore_filter_home_products_by_stock', 10, 1 );
@@ -7776,6 +7779,7 @@ function gstore_catalog_mark_shortcode_stock_priority( $query_args, $attr, $type
 	}
 
 	$query_args['gstore_instock_first'] = 1;
+	$query_args['gstore_featured_first'] = 1;
 
 	return $query_args;
 }
@@ -7790,6 +7794,7 @@ function gstore_catalog_mark_main_query_stock_priority( $query ) {
 	}
 
 	$query->set( 'gstore_instock_first', 1 );
+	$query->set( 'gstore_featured_first', 1 );
 }
 
 /**
@@ -7801,12 +7806,15 @@ function gstore_catalog_order_by_stock_first( $clauses, $query ) {
 		return $clauses;
 	}
 
-	if ( 1 !== (int) $query->get( 'gstore_instock_first' ) ) {
+	$apply_stock_priority    = ( 1 === (int) $query->get( 'gstore_instock_first' ) );
+	$apply_featured_priority = ( 1 === (int) $query->get( 'gstore_featured_first' ) );
+
+	if ( ! $apply_stock_priority && ! $apply_featured_priority ) {
 		return $clauses;
 	}
 
 	$post_type = $query->get( 'post_type' );
-	if ( is_string( $post_type ) && $post_type !== 'product' ) {
+	if ( is_string( $post_type ) && '' !== $post_type && $post_type !== 'product' ) {
 		return $clauses;
 	}
 	if ( is_array( $post_type ) && ! in_array( 'product', $post_type, true ) ) {
@@ -7814,26 +7822,64 @@ function gstore_catalog_order_by_stock_first( $clauses, $query ) {
 	}
 
 	global $wpdb;
+	$order_parts = array();
 
-	$meta_alias = 'gstore_stock_order_meta';
-	if ( strpos( $clauses['join'], $meta_alias ) === false ) {
-		$clauses['join'] .= " LEFT JOIN {$wpdb->postmeta} AS {$meta_alias}
-			ON ({$wpdb->posts}.ID = {$meta_alias}.post_id AND {$meta_alias}.meta_key = '_stock_status')";
+	if ( $apply_featured_priority ) {
+		static $featured_term_taxonomy_id = null;
+		if ( null === $featured_term_taxonomy_id ) {
+			$featured_term_taxonomy_id = 0;
+			$featured_term = get_term_by( 'slug', 'featured', 'product_visibility' );
+			if ( $featured_term && ! is_wp_error( $featured_term ) && isset( $featured_term->term_taxonomy_id ) ) {
+				$featured_term_taxonomy_id = (int) $featured_term->term_taxonomy_id;
+			}
+		}
+
+		if ( $featured_term_taxonomy_id > 0 ) {
+			$featured_alias = 'gstore_featured_rel';
+			if ( strpos( $clauses['join'], $featured_alias ) === false ) {
+				$clauses['join'] .= " LEFT JOIN {$wpdb->term_relationships} AS {$featured_alias}
+					ON ({$wpdb->posts}.ID = {$featured_alias}.object_id AND {$featured_alias}.term_taxonomy_id = {$featured_term_taxonomy_id})";
+			}
+
+			$featured_sales_alias = 'gstore_featured_sales_meta';
+			if ( strpos( $clauses['join'], $featured_sales_alias ) === false ) {
+				$clauses['join'] .= " LEFT JOIN {$wpdb->postmeta} AS {$featured_sales_alias}
+					ON ({$wpdb->posts}.ID = {$featured_sales_alias}.post_id AND {$featured_sales_alias}.meta_key = 'total_sales')";
+			}
+
+			$featured_priority_sql   = "CASE WHEN {$featured_alias}.object_id IS NULL THEN 1 ELSE 0 END";
+			$featured_popularity_sql = "CASE WHEN {$featured_alias}.object_id IS NULL THEN -1 ELSE CAST(COALESCE(NULLIF({$featured_sales_alias}.meta_value, ''), '0') AS UNSIGNED) END";
+			$featured_title_sql      = "CASE WHEN {$featured_alias}.object_id IS NULL THEN '' ELSE {$wpdb->posts}.post_title END";
+
+			$order_parts[] = $featured_priority_sql . ' ASC';
+			$order_parts[] = $featured_popularity_sql . ' DESC';
+			$order_parts[] = $featured_title_sql . ' ASC';
+		}
 	}
 
-	$stock_priority_sql = "CASE {$meta_alias}.meta_value
-		WHEN 'instock' THEN 0
-		WHEN 'onbackorder' THEN 1
-		WHEN 'outofstock' THEN 2
-		ELSE 1
-	END";
+	if ( $apply_stock_priority ) {
+		$meta_alias = 'gstore_stock_order_meta';
+		if ( strpos( $clauses['join'], $meta_alias ) === false ) {
+			$clauses['join'] .= " LEFT JOIN {$wpdb->postmeta} AS {$meta_alias}
+				ON ({$wpdb->posts}.ID = {$meta_alias}.post_id AND {$meta_alias}.meta_key = '_stock_status')";
+		}
+
+		$stock_priority_sql = "CASE {$meta_alias}.meta_value
+			WHEN 'instock' THEN 0
+			WHEN 'onbackorder' THEN 1
+			WHEN 'outofstock' THEN 2
+			ELSE 1
+		END";
+		$order_parts[] = $stock_priority_sql . ' ASC';
+	}
 
 	$current_orderby = isset( $clauses['orderby'] ) ? trim( (string) $clauses['orderby'] ) : '';
 	if ( $current_orderby !== '' ) {
-		$clauses['orderby'] = $stock_priority_sql . ' ASC, ' . $current_orderby;
+		$order_parts[] = $current_orderby;
 	} else {
-		$clauses['orderby'] = $stock_priority_sql . " ASC, {$wpdb->posts}.post_title ASC";
+		$order_parts[] = "{$wpdb->posts}.post_title ASC";
 	}
+	$clauses['orderby'] = implode( ', ', $order_parts );
 
 	return $clauses;
 }
