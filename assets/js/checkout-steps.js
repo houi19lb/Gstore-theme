@@ -412,33 +412,8 @@
 	}
 
 	function renderBluResumeCard(messageHtml) {
-		const $card = ensureBluResumeCardMount();
-		if (!$card || !$card.length) return;
-		const state = getBluResumeState();
-		if (!shouldShowBluResumeCard()) {
-			$card.hide().empty();
-			return;
-		}
-
-		const installments = parseInt(state.installments || state.selected_installments || '1', 10) || 1;
-		const statusText = String(state.status || 'pending').toUpperCase();
-		const canRegenerate = !!(state.order_id && state.order_key);
-		const expiresLine = state.expires_at ? `<div style="font-size:12px;color:#64748b;">Válido até: ${escapeHtml(state.expires_at)}</div>` : '';
-		const extraMsg = messageHtml ? `<div class="gstore-blu-resume-card__msg" style="margin-top:8px;font-size:12px;color:#334155;">${messageHtml}</div>` : '';
-		$card.html(`
-			<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;">
-				<div>
-					<div style="font-weight:700;color:#0f172a;">Pagamento pendente na Blu</div>
-					<div style="font-size:13px;color:#334155;margin-top:4px;">Pedido #${escapeHtml(state.order_id)} • ${installments}x • ${escapeHtml(statusText)}</div>
-					${expiresLine}
-				</div>
-				<div style="display:flex;gap:8px;flex-wrap:wrap;">
-					<button type="button" class="button alt gstore-blu-resume-card__continue">Continuar no link atual</button>
-					<button type="button" class="button gstore-blu-resume-card__regenerate" ${canRegenerate ? '' : 'disabled'}>Gerar novo link</button>
-				</div>
-			</div>
-			${extraMsg}
-		`).show();
+		$('#gstore-blu-resume-card').remove();
+		return;
 	}
 
 	function callBluResumeEndpoint(mode, overrides) {
