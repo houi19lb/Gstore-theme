@@ -41,6 +41,7 @@ if ( $is_variable_product && $all_variations_out_of_stock ) {
 
 $is_out_of_stock = 'outofstock' === $stock_status;
 $show_price_oos = 'yes' === (string) get_option( 'gstore_show_price_out_of_stock', 'no' );
+$should_show_discount_badge = ! ( $is_out_of_stock && ! $show_price_oos );
 
 $regular_price_amount  = $is_variable_product ? (float) $product->get_variation_regular_price( 'min', true ) : (float) $product->get_regular_price();
 $sale_price_amount     = $is_variable_product ? (float) $product->get_variation_sale_price( 'min', true ) : (float) $product->get_sale_price();
@@ -86,7 +87,8 @@ $pix_discount_percent    = $pix_discount_active ? (float) $pix_discount_config['
 		<div class="Gstore-product-card__top">
 			<?php
 			// Discount Badge.
-			if ( $is_variable_product ) {
+			if ( $should_show_discount_badge ) {
+				if ( $is_variable_product ) {
 				// Variáveis: usar preços já calculados (linhas 44-48).
 				if ( $has_sale_value ) {
 					$discount_percentage = round( ( ( $regular_price_amount - $display_price_amount ) / $regular_price_amount ) * 100 );
@@ -109,6 +111,7 @@ $pix_discount_percent    = $pix_discount_active ? (float) $pix_discount_config['
 						<?php echo esc_html( $discount_percentage ); ?>% <?php esc_html_e( 'OFF', 'gstore' ); ?>
 					</div>
 					<?php
+				}
 				}
 			}
 			?>
