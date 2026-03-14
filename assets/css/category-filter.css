@@ -272,8 +272,7 @@
     margin-top: 8px;
 }
 
-.gstore-category-filter__btn-clear,
-.gstore-category-filter__btn-apply {
+.gstore-category-filter__btn-clear {
     width: 100%;
     padding: 10px 16px;
     border-radius: 6px;
@@ -315,17 +314,6 @@
 .gstore-category-filter__btn-clear:hover {
     background: #f8fafc;
     border-color: #cbd5e1;
-}
-
-.gstore-category-filter__btn-apply {
-    background: var(--filter-primary);
-    color: #fff;
-    border-color: var(--filter-primary);
-}
-
-.gstore-category-filter__btn-apply:hover {
-    filter: brightness(0.95);
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
 /* Busca ativa - ocultar itens */
@@ -388,8 +376,7 @@
         border-top: 1px solid #e6e6e6;
     }
 
-    .Gstore-catalog-sidebar__inner--collapsible .gstore-category-filter__btn-clear,
-    .Gstore-catalog-sidebar__inner--collapsible .gstore-category-filter__btn-apply {
+    .Gstore-catalog-sidebar__inner--collapsible .gstore-category-filter__btn-clear {
         padding: 10px 14px;
     }
 }

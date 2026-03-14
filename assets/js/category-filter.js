@@ -10,7 +10,6 @@ class CategoryFilterTree {
         this.tree = this.container.querySelector('.gstore-category-filter__tree');
         this.searchInput = this.container.querySelector('.gstore-category-filter__search');
         this.chipsContainer = this.container.querySelector('#gstore-category-filter-chips');
-        this.applyBtn = this.container.querySelector('#gstore-filter-apply');
         this.clearBtn = this.container.querySelector('#gstore-filter-clear');
         this.fullCatalogUrl = this.container.dataset.fullCatalogUrl || '';
 
@@ -83,7 +82,6 @@ class CategoryFilterTree {
             this.handleSearch(e.target.value);
         });
 
-        this.applyBtn.addEventListener('click', () => this.applyFilters());
         this.clearBtn.addEventListener('click', () => this.clearFilters());
 
         this.chipsContainer.addEventListener('click', (e) => {

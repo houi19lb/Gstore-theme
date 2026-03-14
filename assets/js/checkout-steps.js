@@ -86,6 +86,10 @@
 		return (window.gstoreCheckout && window.gstoreCheckout.bluResume) ? window.gstoreCheckout.bluResume : null;
 	}
 
+	function shouldResetCheckoutStateForBuyNow() {
+		return !!(window.gstoreCheckout && window.gstoreCheckout.buyNow && window.gstoreCheckout.buyNow.resetStateOnLoad);
+	}
+
 	function getCheckoutDraftStorageKey() {
 		const cfg = getBluResumeConfig() || {};
 		const prefix = cfg.storageKeyPrefix || 'gstore_blu_resume_checkout';
@@ -122,6 +126,12 @@
 
 	function clearCheckoutDraftState() {
 		persistCheckoutDraftState(null);
+	}
+
+	function resetCheckoutStateForFreshBuyNowEntry() {
+		clearCheckoutDraftState();
+		clearBluResumeState();
+		currentStep = 0;
 	}
 
 	function collectCheckoutDraftFields() {
@@ -1047,8 +1057,13 @@ const subtotal = decodeHtmlEntities(stripHtmlText(it.subtotal || ''));
 
 		buildStepsUI();
 		bindEvents();
-		const restoredDraft = restoreCheckoutDraftState();
-		if (!restoredDraft) {
+		const shouldResetForBuyNow = shouldResetCheckoutStateForBuyNow();
+		if (shouldResetForBuyNow) {
+			resetCheckoutStateForFreshBuyNowEntry();
+			setActiveStep(0, false);
+		}
+		const restoredDraft = shouldResetForBuyNow ? false : restoreCheckoutDraftState();
+		if (!restoredDraft && !shouldResetForBuyNow) {
 			const pendingBlu = getBluResumeState();
 			if (pendingBlu && pendingBlu.payment_url) {
 				setTimeout(function() {

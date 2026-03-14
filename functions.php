@@ -2432,6 +2432,10 @@ function gstore_save_cart_before_buy_now() {
 		return;
 	}
 
+	// A próxima abertura do checkout via "Comprar agora" deve começar limpa na etapa 1.
+	WC()->session->set( 'gstore_buy_now_checkout_reset', true );
+	WC()->session->set( 'gstore_checkout_step', 0 );
+
 	// Só salva se o carrinho não estiver vazio
 	if ( WC()->cart->is_empty() ) {
 		return;
@@ -2591,6 +2595,7 @@ function gstore_restore_saved_cart_if_needed() {
 	WC()->session->set( 'gstore_saved_cart_before_buy_now', null );
 	WC()->session->set( 'gstore_buy_now_active', false );
 	WC()->session->set( 'gstore_buy_now_product', null );
+	WC()->session->set( 'gstore_buy_now_checkout_reset', false );
 }
 add_action( 'template_redirect', 'gstore_restore_saved_cart_if_needed', 1 );
 
@@ -2612,15 +2617,39 @@ function gstore_clear_buy_now_flag_after_order( $order_id = 0 ) {
 		WC()->session->set( 'gstore_saved_cart_before_buy_now', null );
 		WC()->session->set( 'gstore_buy_now_active', false );
 		WC()->session->set( 'gstore_buy_now_product', null );
+		WC()->session->set( 'gstore_buy_now_checkout_reset', false );
 		return;
 	}
 
 	WC()->session->set( 'gstore_saved_cart_before_buy_now', null );
 	WC()->session->set( 'gstore_buy_now_active', false );
 	WC()->session->set( 'gstore_buy_now_product', null );
+	WC()->session->set( 'gstore_buy_now_checkout_reset', false );
 }
 add_action( 'woocommerce_thankyou', 'gstore_clear_buy_now_flag_after_order', 10 );
 add_action( 'woocommerce_checkout_order_processed', 'gstore_clear_buy_now_flag_after_order', 10 );
+
+/**
+ * Consome a flag de entrada do checkout via "Comprar agora".
+ *
+ * A flag é de uso único: na primeira carga do checkout, o frontend recebe a instrução
+ * para ignorar rascunhos/retomadas antigas e recomeçar da etapa 1.
+ *
+ * @return bool
+ */
+function gstore_consume_buy_now_checkout_reset_flag() {
+	if ( ! class_exists( 'WooCommerce' ) || ! function_exists( 'WC' ) || ! WC()->session ) {
+		return false;
+	}
+
+	$should_reset = (bool) WC()->session->get( 'gstore_buy_now_checkout_reset', false );
+	if ( $should_reset ) {
+		WC()->session->set( 'gstore_buy_now_checkout_reset', false );
+		WC()->session->set( 'gstore_checkout_step', 0 );
+	}
+
+	return $should_reset;
+}
 
 /**
  * Adiciona headers HTTP para evitar cache em requisições AJAX do carrinho.
@@ -3468,6 +3497,11 @@ function gstore_enqueue_checkout_assets() {
 		$checkout_inline .= 'window.gstoreCheckout.processCheckoutNonce = ' . wp_json_encode( wp_create_nonce( 'woocommerce-process_checkout' ) ) . ';';
 		$checkout_inline .= 'window.gstoreCheckout.cartSummaryNonce = ' . wp_json_encode( wp_create_nonce( 'gstore_cart_summary' ) ) . ';';
 		$checkout_inline .= 'window.gstoreCheckout.homeUrl = ' . wp_json_encode( home_url( '/' ) ) . ';';
+		$checkout_inline .= 'window.gstoreCheckout.buyNow = ' . wp_json_encode(
+			array(
+				'resetStateOnLoad' => gstore_consume_buy_now_checkout_reset_flag(),
+			)
+		) . ';';
 		$checkout_inline .= 'window.gstoreCheckout.bluResume = ' . wp_json_encode( array(
 			'enabled'          => true,
 			'ajaxUrl'          => admin_url( 'admin-ajax.php' ),

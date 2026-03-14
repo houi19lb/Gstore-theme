@@ -217,7 +217,6 @@ class GStore_Category_Filter {
 					<a class="gstore-category-filter__btn-full-catalog" href="<?php echo esc_url( $full_catalog_url ); ?>">Ver catálogo completo</a>
 				<?php endif; ?>
 				<button type="button" class="gstore-category-filter__btn-clear" id="gstore-filter-clear">Limpar</button>
-				<button type="button" class="gstore-category-filter__btn-apply" id="gstore-filter-apply">Aplicar</button>
 			</div>
 		</div>
 		<?php
