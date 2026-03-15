@@ -438,14 +438,21 @@ $current_price    = (float) $product->get_price();
 $has_discount     = $product->is_on_sale() && $regular_price > 0;
 $discount_percent = $has_discount ? round( ( ( $regular_price - $current_price ) / $regular_price ) * 100 ) : 0;
 $installments     = (int) apply_filters( 'armastore_single_product_installments', 21, $product );
-// Placeholder para parcelamento (valor real vem via AJAX).
-$formatted_installment = $installments > 0
+$installment_preview = gstore_get_product_installment_preview_data( $product, $installments, 1 );
+$formatted_installment = ! empty( $installment_preview['installments'] ) && ! empty( $installment_preview['per_installment_html'] )
+	? sprintf(
+		/* translators: 1: número de parcelas, 2: valor da parcela */
+		__( 'ou em até %1$dx de %2$s', 'gstore' ),
+		(int) $installment_preview['installments'],
+		$installment_preview['per_installment_html']
+	)
+	: ( $installments > 0
 	? sprintf(
 		/* translators: 1: número de parcelas */
 		__( 'ou em até %1$dx no cartão', 'gstore' ),
 		$installments
 	)
-	: '';
+	: '' );
 
 // Desconto Pix (apenas visual — não altera preço real, parcelas ou carrinho).
 $pix_discount_config  = function_exists( 'gstore_blu_pix_get_discount_config' ) ? gstore_blu_pix_get_discount_config() : array( 'enabled' => false );
@@ -794,7 +801,7 @@ if ( $reviews_has_value ) {
 											<div
 												class="price-sub"
 												data-gstore-installment-target="1"
-												data-product-id="<?php echo esc_attr( (string) gstore_get_product_id( $product ) ); ?>"
+												data-product-id="<?php echo esc_attr( (string) ( ! empty( $installment_preview['product_id'] ) ? $installment_preview['product_id'] : gstore_resolve_installment_product_id( $product ) ) ); ?>"
 												data-max-installments="<?php echo esc_attr( $installments ); ?>"
 												data-initial-text="<?php echo esc_attr( wp_strip_all_tags( (string) $formatted_installment ) ); ?>"
 											>

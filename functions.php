@@ -2717,6 +2717,261 @@ function gstore_remove_default_breadcrumb() {
 add_action( 'init', 'gstore_remove_default_breadcrumb' );
 
 /**
+ * Normaliza um path interno do site para comparacao.
+ *
+ * @param string $url URL absoluta ou relativa.
+ * @return string
+ */
+function gstore_normalize_internal_site_path( $url ) {
+	$url = is_string( $url ) ? trim( $url ) : '';
+	if ( '' === $url ) {
+		return '';
+	}
+
+	$parts = wp_parse_url( $url );
+	if ( false === $parts ) {
+		return '';
+	}
+
+	if ( ! empty( $parts['scheme'] ) ) {
+		$scheme = strtolower( (string) $parts['scheme'] );
+		if ( ! in_array( $scheme, array( 'http', 'https' ), true ) ) {
+			return '';
+		}
+	}
+
+	$home_parts = wp_parse_url( home_url( '/' ) );
+	$home_host  = isset( $home_parts['host'] ) ? strtolower( (string) $home_parts['host'] ) : '';
+	$home_port  = isset( $home_parts['port'] ) ? (int) $home_parts['port'] : 0;
+
+	if ( ! empty( $parts['host'] ) ) {
+		$url_host = strtolower( (string) $parts['host'] );
+		$url_port = isset( $parts['port'] ) ? (int) $parts['port'] : 0;
+
+		if ( '' !== $home_host && $url_host !== $home_host ) {
+			return '';
+		}
+
+		if ( $home_port > 0 && $url_port > 0 && $url_port !== $home_port ) {
+			return '';
+		}
+	}
+
+	$path = isset( $parts['path'] ) ? rawurldecode( (string) $parts['path'] ) : '/';
+	if ( '' === $path ) {
+		$path = '/';
+	}
+
+	if ( '/' !== $path ) {
+		$path = '/' . ltrim( $path, '/' );
+		$path = untrailingslashit( $path ) . '/';
+	}
+
+	return $path;
+}
+
+/**
+ * Extrai o slug de rotas raiz internas no formato "/{slug}/".
+ *
+ * @param string $url URL do item de menu.
+ * @return string
+ */
+function gstore_get_internal_root_slug_from_url( $url ) {
+	$parts = wp_parse_url( $url );
+	if ( false === $parts ) {
+		return '';
+	}
+
+	if ( ! empty( $parts['query'] ) || ! empty( $parts['fragment'] ) ) {
+		return '';
+	}
+
+	$path = gstore_normalize_internal_site_path( $url );
+	if ( '' === $path ) {
+		return '';
+	}
+
+	$home_path = wp_parse_url( home_url( '/' ), PHP_URL_PATH );
+	$home_path = is_string( $home_path ) && '' !== $home_path ? $home_path : '/';
+	$home_path = '/' === $home_path ? '/' : untrailingslashit( '/' . ltrim( $home_path, '/' ) ) . '/';
+
+	$relative_path = $path;
+	if ( '/' !== $home_path ) {
+		if ( 0 !== strpos( $path, $home_path ) ) {
+			return '';
+		}
+		$relative_path = '/' . ltrim( substr( $path, strlen( $home_path ) ), '/' );
+	}
+
+	$relative_path = trim( $relative_path, '/' );
+	if ( '' === $relative_path || false !== strpos( $relative_path, '/' ) ) {
+		return '';
+	}
+
+	return sanitize_title( rawurldecode( $relative_path ) );
+}
+
+/**
+ * Retorna o mapa de categorias expostas no menu do header.
+ *
+ * @return array<string, string>
+ */
+function gstore_get_header_menu_category_route_map() {
+	static $route_map = null;
+
+	if ( null !== $route_map ) {
+		return $route_map;
+	}
+
+	$route_map      = array();
+	$menu_locations = get_nav_menu_locations();
+	$theme_sources  = array( 'gstore_desktop', 'gstore_mobile' );
+
+	foreach ( $theme_sources as $theme_location ) {
+		$menu_id = isset( $menu_locations[ $theme_location ] ) ? (int) $menu_locations[ $theme_location ] : 0;
+		if ( $menu_id <= 0 ) {
+			continue;
+		}
+
+		$menu_items = wp_get_nav_menu_items( $menu_id );
+		if ( empty( $menu_items ) || is_wp_error( $menu_items ) ) {
+			continue;
+		}
+
+		foreach ( $menu_items as $menu_item ) {
+			if ( empty( $menu_item->url ) ) {
+				continue;
+			}
+
+			$slug = gstore_get_internal_root_slug_from_url( (string) $menu_item->url );
+			if ( '' === $slug || isset( $route_map[ $slug ] ) ) {
+				continue;
+			}
+
+			$route_map[ $slug ] = home_url( '/' . $slug . '/' );
+		}
+	}
+
+	return $route_map;
+}
+
+/**
+ * Retorna os termos de categoria relevantes para os crumbs do produto, indexados pelo path.
+ *
+ * @param int $product_id ID do produto.
+ * @return array<string, WP_Term>
+ */
+function gstore_get_single_product_breadcrumb_terms_by_path( $product_id ) {
+	$product_id = absint( $product_id );
+	if ( $product_id <= 0 ) {
+		return array();
+	}
+
+	$assigned_terms = wc_get_product_terms(
+		$product_id,
+		'product_cat',
+		array(
+			'fields' => 'all',
+		)
+	);
+
+	if ( empty( $assigned_terms ) || is_wp_error( $assigned_terms ) ) {
+		return array();
+	}
+
+	$term_ids = array();
+	foreach ( $assigned_terms as $term ) {
+		if ( ! $term instanceof WP_Term ) {
+			continue;
+		}
+
+		$term_ids[] = (int) $term->term_id;
+		$term_ids   = array_merge(
+			$term_ids,
+			array_map( 'absint', get_ancestors( (int) $term->term_id, 'product_cat', 'taxonomy' ) )
+		);
+	}
+
+	$term_ids = array_values( array_unique( array_filter( array_map( 'absint', $term_ids ) ) ) );
+	if ( empty( $term_ids ) ) {
+		return array();
+	}
+
+	$terms_by_path = array();
+	foreach ( $term_ids as $term_id ) {
+		$term = get_term( $term_id, 'product_cat' );
+		if ( ! $term instanceof WP_Term || is_wp_error( $term ) ) {
+			continue;
+		}
+
+		$term_link = get_term_link( $term );
+		if ( is_wp_error( $term_link ) ) {
+			continue;
+		}
+
+		$normalized_path = gstore_normalize_internal_site_path( $term_link );
+		if ( '' === $normalized_path ) {
+			continue;
+		}
+
+		$terms_by_path[ $normalized_path ] = $term;
+	}
+
+	return $terms_by_path;
+}
+
+/**
+ * Reescreve links de categorias no breadcrumb do produto para usar menu do header ou catalogo filtrado.
+ *
+ * @param array $crumbs     Breadcrumb gerado pelo WooCommerce.
+ * @param mixed $breadcrumb Instancia do breadcrumb.
+ * @return array
+ */
+function gstore_filter_product_breadcrumb_category_links( $crumbs, $breadcrumb ) {
+	if ( ! function_exists( 'is_product' ) || ! is_product() ) {
+		return $crumbs;
+	}
+
+	$product_id = get_queried_object_id();
+	if ( $product_id <= 0 || ! is_array( $crumbs ) || empty( $crumbs ) ) {
+		return $crumbs;
+	}
+
+	$terms_by_path = gstore_get_single_product_breadcrumb_terms_by_path( $product_id );
+	if ( empty( $terms_by_path ) ) {
+		return $crumbs;
+	}
+
+	$menu_route_map = gstore_get_header_menu_category_route_map();
+	$catalog_url    = home_url( '/catalogo/' );
+
+	foreach ( $crumbs as $index => $crumb ) {
+		if ( ! is_array( $crumb ) || empty( $crumb[1] ) || ! is_string( $crumb[1] ) ) {
+			continue;
+		}
+
+		$normalized_path = gstore_normalize_internal_site_path( $crumb[1] );
+		if ( '' === $normalized_path || ! isset( $terms_by_path[ $normalized_path ] ) ) {
+			continue;
+		}
+
+		$term = $terms_by_path[ $normalized_path ];
+		if ( ! $term instanceof WP_Term || empty( $term->slug ) ) {
+			continue;
+		}
+
+		$target_url = isset( $menu_route_map[ $term->slug ] )
+			? $menu_route_map[ $term->slug ]
+			: add_query_arg( array( 'filter_cat[]' => (string) $term->slug ), $catalog_url );
+
+		$crumbs[ $index ][1] = $target_url;
+	}
+
+	return $crumbs;
+}
+add_filter( 'woocommerce_get_breadcrumb', 'gstore_filter_product_breadcrumb_category_links', 20, 2 );
+
+/**
  * Remove o texto de privacidade do formulário de registro.
  * O texto será exibido em um modal ao invés de diretamente no formulário.
  */
@@ -2778,14 +3033,14 @@ add_filter( 'render_block_woocommerce/product-rating', 'gstore_always_show_ratin
 
 /**
  * ============================================
- * CÁLCULO DE PARCELAS (SEM JUROS)
+ * CÁLCULO DE PARCELAS
  * ============================================
- * O parcelamento do produto é exibido sem juros no tema.
- * A taxa/fee efetiva é aplicada apenas no checkout via plugin.
+ * O tema deve refletir a mesma regra do plugin/admin sempre que possível.
+ * A divisão simples permanece apenas como fallback quando o plugin não estiver disponível.
  */
 
 /**
- * Calcula o valor da parcela sem juros.
+ * Calcula o valor da parcela por divisão simples.
  *
  * @param float $price        Valor total do produto.
  * @param int   $installments Número de parcelas.
@@ -2800,6 +3055,173 @@ function gstore_calculate_installment_amount( $price, $installments = 12 ) {
 	}
 
 	return $price / $installments;
+}
+
+/**
+ * Resolve o ID usado para consultar parcelas do produto.
+ *
+ * Para variáveis, usa a variação mais barata para alinhar com a UI do card.
+ *
+ * @param WC_Product $product Produto.
+ * @return int
+ */
+function gstore_resolve_installment_product_id( $product ) {
+	if ( ! $product instanceof WC_Product ) {
+		return 0;
+	}
+
+	$installment_product_id = gstore_get_product_id( $product );
+
+	if ( $product->is_type( 'variable' ) && method_exists( $product, 'get_variation_prices' ) ) {
+		$variation_prices = $product->get_variation_prices( true );
+		if ( ! empty( $variation_prices['price'] ) ) {
+			reset( $variation_prices['price'] );
+			$cheapest_variation_id = (int) key( $variation_prices['price'] );
+			if ( $cheapest_variation_id > 0 ) {
+				$installment_product_id = $cheapest_variation_id;
+			}
+		}
+	}
+
+	return $installment_product_id;
+}
+
+/**
+ * Retorna o preço base usado no fallback do parcelamento.
+ *
+ * @param WC_Product $product Produto.
+ * @return float
+ */
+function gstore_get_installment_display_price( $product ) {
+	if ( ! $product instanceof WC_Product ) {
+		return 0.0;
+	}
+
+	$price = 0.0;
+
+	if ( $product->is_type( 'variable' ) && method_exists( $product, 'get_variation_price' ) ) {
+		$price = (float) $product->get_variation_price( 'min', true );
+	} else {
+		$raw_price = (float) $product->get_price();
+		if ( function_exists( 'wc_get_price_to_display' ) ) {
+			$price = (float) wc_get_price_to_display(
+				$product,
+				array(
+					'price' => $raw_price,
+					'qty'   => 1,
+				)
+			);
+		} else {
+			$price = $raw_price;
+		}
+	}
+
+	if ( $price <= 0 && method_exists( $product, 'get_price' ) ) {
+		$price = (float) $product->get_price();
+	}
+	if ( $price <= 0 && method_exists( $product, 'get_regular_price' ) ) {
+		$price = (float) $product->get_regular_price();
+	}
+
+	return max( 0.0, $price );
+}
+
+/**
+ * Seleciona a melhor quote para exibir no tema.
+ *
+ * @param array $quotes Quotes do plugin.
+ * @param int   $preferred_installments Parcela preferida.
+ * @return array
+ */
+function gstore_get_preferred_installment_quote( $quotes, $preferred_installments = 0 ) {
+	if ( ! is_array( $quotes ) || empty( $quotes ) ) {
+		return array();
+	}
+
+	$preferred_installments = absint( $preferred_installments );
+	if ( $preferred_installments > 0 ) {
+		$preferred_key = (string) $preferred_installments;
+		if ( isset( $quotes[ $preferred_key ] ) && is_array( $quotes[ $preferred_key ] ) ) {
+			return $quotes[ $preferred_key ];
+		}
+	}
+
+	$keys = array();
+	foreach ( array_keys( $quotes ) as $quote_key ) {
+		$quote_key = absint( $quote_key );
+		if ( $quote_key > 0 ) {
+			$keys[] = $quote_key;
+		}
+	}
+
+	if ( empty( $keys ) ) {
+		return array();
+	}
+
+	rsort( $keys, SORT_NUMERIC );
+	$selected_key = (string) $keys[0];
+
+	return isset( $quotes[ $selected_key ] ) && is_array( $quotes[ $selected_key ] )
+		? $quotes[ $selected_key ]
+		: array();
+}
+
+/**
+ * Retorna os dados de preview de parcelamento já alinhados ao plugin/admin.
+ *
+ * @param WC_Product $product Produto.
+ * @param int        $max_installments Parcelas máximas.
+ * @param int        $quantity Quantidade.
+ * @return array
+ */
+function gstore_get_product_installment_preview_data( $product, $max_installments = 21, $quantity = 1 ) {
+	$data = array(
+		'product_id'            => 0,
+		'installments'          => 0,
+		'per_installment_html'  => '',
+		'per_installment_text'  => '',
+		'total_html'            => '',
+		'total_text'            => '',
+	);
+
+	if ( ! $product instanceof WC_Product ) {
+		return $data;
+	}
+
+	$max_installments    = max( 1, (int) $max_installments );
+	$quantity            = max( 1, (int) $quantity );
+	$product_id          = gstore_resolve_installment_product_id( $product );
+	$data['product_id']  = $product_id;
+
+	if ( $product_id > 0 && function_exists( 'gstore_blu_get_product_installment_quotes_data' ) ) {
+		$quotes_data = gstore_blu_get_product_installment_quotes_data( $product_id, $quantity, $max_installments );
+		if ( ! is_wp_error( $quotes_data ) && ! empty( $quotes_data['quotes'] ) && is_array( $quotes_data['quotes'] ) ) {
+			$preferred_quote = gstore_get_preferred_installment_quote( $quotes_data['quotes'], $max_installments );
+			if ( ! empty( $preferred_quote['installments'] ) && ! empty( $preferred_quote['per_installment'] ) ) {
+				$data['installments']         = (int) $preferred_quote['installments'];
+				$data['per_installment_html'] = (string) $preferred_quote['per_installment'];
+				$data['per_installment_text'] = isset( $preferred_quote['per_installment_text'] ) ? (string) $preferred_quote['per_installment_text'] : '';
+				$data['total_html']           = isset( $preferred_quote['total'] ) ? (string) $preferred_quote['total'] : '';
+				$data['total_text']           = isset( $preferred_quote['total_text'] ) ? (string) $preferred_quote['total_text'] : '';
+				return $data;
+			}
+		}
+	}
+
+	$display_price = gstore_get_installment_display_price( $product );
+	if ( $display_price <= 0 ) {
+		return $data;
+	}
+
+	$installment_amount            = gstore_calculate_installment_amount( $display_price * $quantity, $max_installments );
+	$installment_amount_html       = $installment_amount > 0 ? wc_price( $installment_amount ) : '';
+	$data['installments']          = $max_installments;
+	$data['per_installment_html']  = $installment_amount_html;
+	$data['per_installment_text']  = $installment_amount_html ? html_entity_decode( wp_strip_all_tags( $installment_amount_html ) ) : '';
+	$data['total_html']            = wc_price( $display_price * $quantity );
+	$data['total_text']            = html_entity_decode( wp_strip_all_tags( $data['total_html'] ) );
+
+	return $data;
 }
 
 /**
@@ -2832,15 +3254,24 @@ function gstore_add_payment_info_to_price( $html, $block_content, $block ) {
 		global $product;
 	}
 	
-	// Calcula o valor da parcela sem juros (fee aplicada no checkout).
+	// Busca o preview alinhado ao plugin/admin; se indisponível, cai no fallback simples.
 	$installment_value = 0;
 	$installment_text_content = 'ou em até 21x no cartão';
 	
 	if ( $product && is_a( $product, 'WC_Product' ) ) {
-		$price_value = floatval( $product->get_price() );
-		if ( $price_value > 0 ) {
-			$installment_value = gstore_calculate_installment_amount( $price_value, 21 );
-			$installment_text_content = 'ou em até 21x de ' . wc_price( $installment_value );
+		$installment_preview = gstore_get_product_installment_preview_data( $product, 21, 1 );
+		if ( ! empty( $installment_preview['installments'] ) && ! empty( $installment_preview['per_installment_html'] ) ) {
+			$installment_text_content = sprintf(
+				'ou em até %1$dx de %2$s',
+				(int) $installment_preview['installments'],
+				$installment_preview['per_installment_html']
+			);
+		} else {
+			$price_value = gstore_get_installment_display_price( $product );
+			if ( $price_value > 0 ) {
+				$installment_value = gstore_calculate_installment_amount( $price_value, 21 );
+				$installment_text_content = 'ou em até 21x de ' . wc_price( $installment_value );
+			}
 		}
 	}
 	

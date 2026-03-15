@@ -48,29 +48,18 @@ $sale_price_amount     = $is_variable_product ? (float) $product->get_variation_
 $current_price_amount  = $is_variable_product ? (float) $product->get_variation_price( 'min', true ) : (float) $product->get_price();
 $has_sale_value        = $product->is_on_sale() && $regular_price_amount > 0 && $sale_price_amount > 0;
 $display_price_amount  = $has_sale_value ? $sale_price_amount : ( $current_price_amount > 0 ? $current_price_amount : $regular_price_amount );
-// Para variáveis, resolver o ID da variação com menor preço para o AJAX de parcelas.
-$installment_product_id = gstore_get_product_id( $product );
-if ( $is_variable_product && method_exists( $product, 'get_variation_prices' ) ) {
-	$variation_prices = $product->get_variation_prices( true );
-	if ( ! empty( $variation_prices['price'] ) ) {
-		reset( $variation_prices['price'] );
-		$cheapest_variation_id = (int) key( $variation_prices['price'] );
-		if ( $cheapest_variation_id > 0 ) {
-			$installment_product_id = $cheapest_variation_id;
-		}
-	}
-}
-// Calcula parcela sem juros (taxa efetiva só no checkout).
-$installments          = (int) apply_filters( 'armastore_single_product_installments', 21, $product );
-$installment_amount    = $display_price_amount > 0 ? gstore_calculate_installment_amount( $display_price_amount, $installments ) : 0;
+$installments           = (int) apply_filters( 'armastore_single_product_installments', 21, $product );
+$installment_preview    = gstore_get_product_installment_preview_data( $product, $installments, 1 );
+$installment_product_id = ! empty( $installment_preview['product_id'] ) ? (int) $installment_preview['product_id'] : gstore_resolve_installment_product_id( $product );
 $regular_price_html    = $regular_price_amount > 0 ? wc_price( $regular_price_amount ) : '';
 $display_price_html    = $display_price_amount > 0 ? wc_price( $display_price_amount ) : $product->get_price_html();
-$installment_price_html = $installment_amount > 0 ? wc_price( $installment_amount ) : '';
+$installment_price_html = ! empty( $installment_preview['per_installment_html'] ) ? (string) $installment_preview['per_installment_html'] : '';
+$installment_count      = ! empty( $installment_preview['installments'] ) ? (int) $installment_preview['installments'] : $installments;
 $installment_label       = $installment_price_html
 	? sprintf(
 		/* translators: 1: installments count, 2: installment value */
 		__( 'ou %1$dx de %2$s', 'gstore' ),
-		$installments,
+		$installment_count,
 		$installment_price_html
 	)
 	: '';
