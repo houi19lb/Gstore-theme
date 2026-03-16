@@ -433,10 +433,26 @@ $stock_label = sprintf(
 );
 
 // Preços e parcelamento.
-$regular_price    = (float) $product->get_regular_price();
-$current_price    = (float) $product->get_price();
-$has_discount     = $product->is_on_sale() && $regular_price > 0;
-$discount_percent = $has_discount ? round( ( ( $regular_price - $current_price ) / $regular_price ) * 100 ) : 0;
+$price_source_product = $product;
+
+if ( $is_variable ) {
+	$cheapest_variation_id = gstore_resolve_installment_product_id( $product );
+	$cheapest_variation    = $cheapest_variation_id > 0 ? wc_get_product( $cheapest_variation_id ) : false;
+
+	if ( $cheapest_variation instanceof WC_Product ) {
+		$price_source_product = $cheapest_variation;
+	}
+}
+
+$regular_price_raw = (float) $price_source_product->get_regular_price();
+$sale_price_raw    = (float) $price_source_product->get_sale_price();
+$current_price_raw = (float) $price_source_product->get_price();
+$regular_price     = function_exists( 'wc_get_price_to_display' ) && $regular_price_raw > 0 ? (float) wc_get_price_to_display( $price_source_product, array( 'price' => $regular_price_raw, 'qty' => 1 ) ) : $regular_price_raw;
+$sale_price        = function_exists( 'wc_get_price_to_display' ) && $sale_price_raw > 0 ? (float) wc_get_price_to_display( $price_source_product, array( 'price' => $sale_price_raw, 'qty' => 1 ) ) : $sale_price_raw;
+$current_price     = function_exists( 'wc_get_price_to_display' ) && $current_price_raw > 0 ? (float) wc_get_price_to_display( $price_source_product, array( 'price' => $current_price_raw, 'qty' => 1 ) ) : $current_price_raw;
+$has_discount      = $price_source_product->is_on_sale() && $regular_price > 0 && $sale_price > 0;
+$display_price     = $has_discount ? $sale_price : ( $current_price > 0 ? $current_price : $regular_price );
+$discount_percent  = $has_discount ? round( ( ( $regular_price - $display_price ) / $regular_price ) * 100 ) : 0;
 $installments     = (int) apply_filters( 'armastore_single_product_installments', 21, $product );
 $installment_preview = gstore_get_product_installment_preview_data( $product, $installments, 1 );
 $formatted_installment = ! empty( $installment_preview['installments'] ) && ! empty( $installment_preview['per_installment_html'] )
@@ -456,9 +472,25 @@ $formatted_installment = ! empty( $installment_preview['installments'] ) && ! em
 
 // Desconto Pix (apenas visual — não altera preço real, parcelas ou carrinho).
 $pix_discount_config  = function_exists( 'gstore_blu_pix_get_discount_config' ) ? gstore_blu_pix_get_discount_config() : array( 'enabled' => false );
-$pix_discount_active  = ! empty( $pix_discount_config['enabled'] ) && $current_price > 0;
+$pix_discount_active  = ! empty( $pix_discount_config['enabled'] ) && $display_price > 0;
 $pix_discount_percent = $pix_discount_active ? (float) $pix_discount_config['percent'] : 0;
-$pix_discount_price   = $pix_discount_active && function_exists( 'gstore_blu_pix_get_discounted_price' ) ? gstore_blu_pix_get_discounted_price( $current_price, $product->get_id() ) : false;
+$pix_discount_price   = $pix_discount_active && function_exists( 'gstore_blu_pix_get_discounted_price' ) ? gstore_blu_pix_get_discounted_price( $display_price, $product->get_id() ) : false;
+$show_variable_from_price = $is_variable && $display_price > 0;
+$variable_price_html      = '';
+
+if ( $is_variable ) {
+	if ( $has_discount && $regular_price > 0 && $display_price > 0 ) {
+		$variable_price_html = sprintf(
+			'<del>%1$s</del><ins>%2$s</ins>',
+			wc_price( $regular_price ),
+			wc_price( $display_price )
+		);
+	} elseif ( $display_price > 0 ) {
+		$variable_price_html = wc_price( $display_price );
+	} else {
+		$variable_price_html = $product->get_price_html();
+	}
+}
 
 /*
 |--------------------------------------------------------------------------
@@ -778,11 +810,14 @@ if ( $reviews_has_value ) {
 							>
 								<div>
 									<div class="price-label"><?php esc_html_e( 'À vista no PIX', 'gstore' ); ?></div>
+								<?php if ( $show_variable_from_price ) : ?>
+									<div class="price-prefix" data-gstore-price-prefix><?php esc_html_e( 'A partir de', 'gstore' ); ?></div>
+								<?php endif; ?>
 								<?php if ( $pix_discount_price ) : ?>
 									<?php
 									// Com desconto Pix: preço riscado + preço Pix, no mesmo padrão visual do WooCommerce (del/ins).
 									// Produto com promoção: riscado = regular. Sem promoção: riscado = current.
-									$pix_strikethrough = $has_discount ? $regular_price : $current_price;
+									$pix_strikethrough = $has_discount ? $regular_price : $display_price;
 									?>
 									<div class="price" id="price" data-gstore-price data-pix-percent="<?php echo esc_attr( $pix_discount_percent ); ?>">
 										<del><?php echo wp_kses_post( wc_price( $pix_strikethrough ) ); ?></del>
@@ -790,11 +825,12 @@ if ( $reviews_has_value ) {
 									</div>
 								<?php else : ?>
 									<div class="price" id="price" data-gstore-price data-pix-percent="0">
-										<?php woocommerce_template_single_price(); ?>
+										<?php if ( $is_variable ) : ?>
+											<?php echo wp_kses_post( $variable_price_html ); ?>
+										<?php else : ?>
+											<?php woocommerce_template_single_price(); ?>
+										<?php endif; ?>
 									</div>
-								<?php endif; ?>
-								<?php if ( $is_variable ) : ?>
-									<div class="price-sub"><?php esc_html_e( 'Preço muda conforme as opções', 'gstore' ); ?></div>
 								<?php endif; ?>
 									<?php if ( $formatted_installment ) : ?>
 										<div class="price-sub-wrapper" data-gstore-installment-wrapper>

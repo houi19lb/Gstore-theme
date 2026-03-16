@@ -714,6 +714,7 @@ document.addEventListener('DOMContentLoaded', () => {
 		const buyNowButton = form.querySelector('.Gstore-single-product__buy-now');
 		const addToCartButton = form.querySelector('.single_add_to_cart_button');
 		const priceEl = document.querySelector('[data-gstore-price]');
+		const pricePrefixEl = document.querySelector('[data-gstore-price-prefix]');
 		const initialPriceHtml = priceEl ? priceEl.innerHTML : '';
 		const pixPercent = priceEl ? parseFloat(priceEl.getAttribute('data-pix-percent') || '0') : 0;
 
@@ -745,6 +746,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
 			priceEl.innerHTML = '<del><span class="woocommerce-Price-amount amount"><bdi>' + fmtBRL(strikePrice) + '</bdi></span></del> ' +
 				'<ins><span class="woocommerce-Price-amount amount"><bdi>' + fmtBRL(pixPrice) + '</bdi></span></ins>';
+		};
+
+		const showStartingPrice = () => {
+			if (priceEl && initialPriceHtml) {
+				priceEl.innerHTML = initialPriceHtml;
+			}
+			if (pricePrefixEl) {
+				pricePrefixEl.hidden = false;
+			}
+		};
+
+		const hideStartingPrice = () => {
+			if (pricePrefixEl) {
+				pricePrefixEl.hidden = true;
+			}
 		};
 
 		const getPreviewText = () => {
@@ -804,12 +820,15 @@ document.addEventListener('DOMContentLoaded', () => {
 				} else if (priceEl && variation && typeof variation.price_html === 'string' && variation.price_html.trim().length) {
 					priceEl.innerHTML = variation.price_html;
 				}
+				hideStartingPrice();
 				setTimeout(update, 0);
 			});
 			$form.on('reset_data', () => {
-				if (priceEl && initialPriceHtml) {
-					priceEl.innerHTML = initialPriceHtml;
-				}
+				showStartingPrice();
+				setTimeout(update, 0);
+			});
+			$form.on('hide_variation', () => {
+				showStartingPrice();
 				setTimeout(update, 0);
 			});
 			$form.on('found_variation reset_data woocommerce_variation_has_changed', () => {

@@ -2851,6 +2851,15 @@ body.single-product .onsale {
 	font-weight: var(--gstore-font-weight-semibold);
 }
 
+.buybox .price-prefix {
+	margin-top: 6px;
+	font-size: var(--gstore-font-size-xs);
+	color: var(--gstore-color-text-gray-500);
+	text-transform: uppercase;
+	letter-spacing: 0.06em;
+	font-weight: var(--gstore-font-weight-semibold);
+}
+
 /* Bloco de preço: mesmo padrão do card — valor riscado em cima, oferta verde embaixo */
 .buybox .price {
 	margin-top: 4px;
