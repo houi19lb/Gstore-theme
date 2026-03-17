@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 /**
  * Funções principais do child theme Gstore.
  *
@@ -383,27 +383,32 @@ function gstore_get_admin_ordered_variation_values( $product, $attribute ) {
 }
 
 /**
- * Reordena o dropdown de variações do WooCommerce conforme a ordem salva no admin.
+ * Reordena o HTML do dropdown de variações conforme a ordem salva no admin.
  *
- * @param array $args Argumentos do dropdown.
- * @return array
+ * O WooCommerce ignora a ordem de $args['options'] para atributos de taxonomia:
+ * ele itera sobre os termos (ordenados por nome/ID) e apenas verifica pertencimento.
+ * Por isso reordenamos o HTML final das <option> tags.
+ *
+ * @param string $html      HTML gerado pelo WooCommerce.
+ * @param array  $args      Argumentos do dropdown.
+ * @return string
  */
-function gstore_sort_variation_dropdown_by_admin_order( $args ) {
-	$product = isset( $args['product'] ) ? $args['product'] : null;
-	if ( ! $product instanceof WC_Product || ! $product->is_type( 'variable' ) ) {
-		return $args;
+function gstore_sort_variation_dropdown_html_by_admin_order( $html, $args ) {
+	$product   = isset( $args['product'] ) ? $args['product'] : null;
+	$attribute = isset( $args['attribute'] ) ? $args['attribute'] : '';
+
+	if ( ! $product instanceof WC_Product || ! $product->is_type( 'variable' ) || '' === $attribute ) {
+		return $html;
 	}
 
-	$attribute = isset( $args['attribute'] ) ? gstore_normalize_variation_attribute_key( $args['attribute'] ) : '';
-	$options   = isset( $args['options'] ) && is_array( $args['options'] ) ? $args['options'] : array();
-
-	if ( '' === $attribute || empty( $options ) ) {
-		return $args;
+	$attribute = gstore_normalize_variation_attribute_key( $attribute );
+	if ( '' === $attribute ) {
+		return $html;
 	}
 
 	$ordered_values = gstore_get_admin_ordered_variation_values( $product, $attribute );
 	if ( empty( $ordered_values ) ) {
-		return $args;
+		return $html;
 	}
 
 	$is_taxonomy = taxonomy_exists( $attribute );
@@ -412,45 +417,66 @@ function gstore_sort_variation_dropdown_by_admin_order( $args ) {
 		return $is_taxonomy ? sanitize_title( $value ) : sanitize_text_field( $value );
 	};
 
-	$desired_keys = array();
+	$desired_order = array();
 	foreach ( $ordered_values as $value ) {
 		$key = $normalize( $value );
-		if ( '' === $key || isset( $desired_keys[ $key ] ) ) {
-			continue;
+		if ( '' !== $key && ! isset( $desired_order[ $key ] ) ) {
+			$desired_order[ $key ] = count( $desired_order );
 		}
-		$desired_keys[ $key ] = count( $desired_keys );
 	}
 
-	if ( empty( $desired_keys ) ) {
-		return $args;
+	if ( empty( $desired_order ) ) {
+		return $html;
+	}
+
+	if ( ! preg_match_all( '/<option\s[^>]*value="([^"]*)"[^>]*>[^<]*<\/option>/i', $html, $matches, PREG_SET_ORDER ) ) {
+		return $html;
+	}
+
+	$placeholder_options = array();
+	$value_options       = array();
+
+	foreach ( $matches as $m ) {
+		$full_tag    = $m[0];
+		$option_val  = $m[1];
+
+		if ( '' === $option_val ) {
+			$placeholder_options[] = $full_tag;
+		} else {
+			$value_options[] = array(
+				'html'  => $full_tag,
+				'value' => $option_val,
+			);
+		}
 	}
 
 	usort(
-		$options,
-		static function( $a, $b ) use ( $desired_keys, $normalize ) {
-			$key_a = $normalize( $a );
-			$key_b = $normalize( $b );
-			$has_a = array_key_exists( $key_a, $desired_keys );
-			$has_b = array_key_exists( $key_b, $desired_keys );
+		$value_options,
+		static function( $a, $b ) use ( $desired_order, $normalize ) {
+			$key_a = $normalize( $a['value'] );
+			$key_b = $normalize( $b['value'] );
+			$pos_a = isset( $desired_order[ $key_a ] ) ? $desired_order[ $key_a ] : PHP_INT_MAX;
+			$pos_b = isset( $desired_order[ $key_b ] ) ? $desired_order[ $key_b ] : PHP_INT_MAX;
 
-			if ( $has_a && $has_b ) {
-				return $desired_keys[ $key_a ] <=> $desired_keys[ $key_b ];
-			}
-			if ( $has_a ) {
-				return -1;
-			}
-			if ( $has_b ) {
-				return 1;
-			}
-
-			return 0;
+			return $pos_a <=> $pos_b;
 		}
 	);
 
-	$args['options'] = $options;
-	return $args;
+	$select_open = preg_match( '/^(<select[^>]*>)/i', $html, $sel_match ) ? $sel_match[1] : '<select>';
+	$new_html    = $select_open . "\n";
+
+	foreach ( $placeholder_options as $ph ) {
+		$new_html .= "\t" . $ph . "\n";
+	}
+	foreach ( $value_options as $vo ) {
+		$new_html .= "\t" . $vo['html'] . "\n";
+	}
+
+	$new_html .= '</select>';
+
+	return $new_html;
 }
-add_filter( 'woocommerce_dropdown_variation_attribute_options_args', 'gstore_sort_variation_dropdown_by_admin_order', 10, 1 );
+add_filter( 'woocommerce_dropdown_variation_attribute_options_html', 'gstore_sort_variation_dropdown_html_by_admin_order', 10, 2 );
 
 /**
  * SEO: título do documento na página single do produto.
