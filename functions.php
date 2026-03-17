@@ -249,6 +249,210 @@ function gstore_available_variation_stock_payload( $data, $product, $variation )
 add_filter( 'woocommerce_available_variation', 'gstore_available_variation_stock_payload', 10, 3 );
 
 /**
+ * Normaliza a chave de um atributo de variação.
+ *
+ * @param string $attribute Chave bruta.
+ * @return string
+ */
+function gstore_normalize_variation_attribute_key( $attribute ) {
+	$attribute = sanitize_key( (string) $attribute );
+	if ( '' === $attribute ) {
+		return '';
+	}
+
+	if ( 0 === strpos( $attribute, 'attribute_' ) ) {
+		$attribute = substr( $attribute, strlen( 'attribute_' ) );
+		$attribute = sanitize_key( (string) $attribute );
+		if ( '' === $attribute ) {
+			return '';
+		}
+	}
+
+	if ( 0 === strpos( $attribute, 'pa_' ) ) {
+		$base = preg_replace( '/^(pa_)+/', '', $attribute );
+		$base = sanitize_key( (string) $base );
+		return '' === $base ? '' : 'pa_' . $base;
+	}
+
+	return $attribute;
+}
+
+/**
+ * Busca a ordem salva no admin para os valores de um atributo de variação.
+ *
+ * Prioriza o meta `_gstore_variants` e faz fallback para `menu_order` das variações.
+ *
+ * @param WC_Product $product   Produto pai.
+ * @param string     $attribute Atributo do dropdown.
+ * @return array
+ */
+function gstore_get_admin_ordered_variation_values( $product, $attribute ) {
+	if ( ! $product instanceof WC_Product || ! $product->is_type( 'variable' ) ) {
+		return array();
+	}
+
+	$attribute = gstore_normalize_variation_attribute_key( $attribute );
+	if ( '' === $attribute ) {
+		return array();
+	}
+
+	$ordered_values = array();
+	$meta_raw       = (string) get_post_meta( $product->get_id(), '_gstore_variants', true );
+
+	if ( '' !== trim( $meta_raw ) ) {
+		$decoded = json_decode( $meta_raw, true );
+		if ( is_array( $decoded ) ) {
+			foreach ( $decoded as $variant ) {
+				if ( ! is_array( $variant ) ) {
+					continue;
+				}
+
+				$attrs = array();
+				if ( isset( $variant['attributes'] ) && is_array( $variant['attributes'] ) ) {
+					$attrs = $variant['attributes'];
+				} elseif ( isset( $variant['attrsByKey'] ) && is_array( $variant['attrsByKey'] ) ) {
+					$attrs = $variant['attrsByKey'];
+				}
+
+				if ( empty( $attrs ) ) {
+					continue;
+				}
+
+				foreach ( $attrs as $raw_key => $raw_value ) {
+					$key = gstore_normalize_variation_attribute_key( $raw_key );
+					if ( $key !== $attribute ) {
+						continue;
+					}
+
+					$value = sanitize_text_field( (string) $raw_value );
+					if ( '' !== $value ) {
+						$ordered_values[] = $value;
+					}
+					break;
+				}
+			}
+		}
+	}
+
+	if ( ! empty( $ordered_values ) ) {
+		return array_values( array_unique( $ordered_values ) );
+	}
+
+	$children = method_exists( $product, 'get_children' ) ? (array) $product->get_children() : array();
+	if ( empty( $children ) ) {
+		return array();
+	}
+
+	usort(
+		$children,
+		static function( $a, $b ) {
+			$a = (int) $a;
+			$b = (int) $b;
+
+			$order_a = (int) get_post_field( 'menu_order', $a );
+			$order_b = (int) get_post_field( 'menu_order', $b );
+
+			if ( $order_a === $order_b ) {
+				return $a <=> $b;
+			}
+
+			return $order_a <=> $order_b;
+		}
+	);
+
+	foreach ( $children as $child_id ) {
+		$child_id = (int) $child_id;
+		if ( $child_id <= 0 ) {
+			continue;
+		}
+
+		$value = (string) get_post_meta( $child_id, 'attribute_' . $attribute, true );
+		if ( '' === $value && 0 === strpos( $attribute, 'pa_' ) ) {
+			$base       = preg_replace( '/^pa_/', '', $attribute );
+			$legacy_key = 'pa_pa_' . $base;
+			$value      = (string) get_post_meta( $child_id, 'attribute_' . $legacy_key, true );
+		}
+
+		$value = sanitize_text_field( $value );
+		if ( '' !== $value ) {
+			$ordered_values[] = $value;
+		}
+	}
+
+	return array_values( array_unique( $ordered_values ) );
+}
+
+/**
+ * Reordena o dropdown de variações do WooCommerce conforme a ordem salva no admin.
+ *
+ * @param array $args Argumentos do dropdown.
+ * @return array
+ */
+function gstore_sort_variation_dropdown_by_admin_order( $args ) {
+	$product = isset( $args['product'] ) ? $args['product'] : null;
+	if ( ! $product instanceof WC_Product || ! $product->is_type( 'variable' ) ) {
+		return $args;
+	}
+
+	$attribute = isset( $args['attribute'] ) ? gstore_normalize_variation_attribute_key( $args['attribute'] ) : '';
+	$options   = isset( $args['options'] ) && is_array( $args['options'] ) ? $args['options'] : array();
+
+	if ( '' === $attribute || empty( $options ) ) {
+		return $args;
+	}
+
+	$ordered_values = gstore_get_admin_ordered_variation_values( $product, $attribute );
+	if ( empty( $ordered_values ) ) {
+		return $args;
+	}
+
+	$is_taxonomy = taxonomy_exists( $attribute );
+	$normalize   = static function( $value ) use ( $is_taxonomy ) {
+		$value = (string) $value;
+		return $is_taxonomy ? sanitize_title( $value ) : sanitize_text_field( $value );
+	};
+
+	$desired_keys = array();
+	foreach ( $ordered_values as $value ) {
+		$key = $normalize( $value );
+		if ( '' === $key || isset( $desired_keys[ $key ] ) ) {
+			continue;
+		}
+		$desired_keys[ $key ] = count( $desired_keys );
+	}
+
+	if ( empty( $desired_keys ) ) {
+		return $args;
+	}
+
+	usort(
+		$options,
+		static function( $a, $b ) use ( $desired_keys, $normalize ) {
+			$key_a = $normalize( $a );
+			$key_b = $normalize( $b );
+			$has_a = array_key_exists( $key_a, $desired_keys );
+			$has_b = array_key_exists( $key_b, $desired_keys );
+
+			if ( $has_a && $has_b ) {
+				return $desired_keys[ $key_a ] <=> $desired_keys[ $key_b ];
+			}
+			if ( $has_a ) {
+				return -1;
+			}
+			if ( $has_b ) {
+				return 1;
+			}
+
+			return 0;
+		}
+	);
+
+	$args['options'] = $options;
+	return $args;
+}
+add_filter( 'woocommerce_dropdown_variation_attribute_options_args', 'gstore_sort_variation_dropdown_by_admin_order', 10, 1 );
+
+/**
  * SEO: título do documento na página single do produto.
  * Usa meta _gstore_seo_title se preenchido; fallback = nome do produto.
  *
