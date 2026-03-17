@@ -242,8 +242,7 @@ class CategoryFilterTree {
     }
 
     clearFilters() {
-        const targetBase = this.fullCatalogUrl || null;
-        window.location.href = this.buildCatalogUrl([], targetBase);
+        window.location.href = this.buildCatalogUrl([]);
     }
 }
 

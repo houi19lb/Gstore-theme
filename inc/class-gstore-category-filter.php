@@ -90,6 +90,7 @@ class GStore_Category_Filter {
 	 */
 	private function get_scope_term() {
 		$skip_main_category_validation = false;
+		$is_archive_scope = false;
 
 		$scope_slug = get_query_var( 'gstore_catalog_scope', '' );
 		if ( '' === $scope_slug && isset( $_GET['gstore_catalog_scope'] ) ) {
@@ -124,6 +125,15 @@ class GStore_Category_Filter {
 			}
 		}
 
+		if ( '' === $scope_slug && function_exists( 'is_product_category' ) && is_product_category() ) {
+			$queried_term = get_queried_object();
+			if ( $queried_term instanceof \WP_Term && 'product_cat' === $queried_term->taxonomy ) {
+				$scope_slug = sanitize_title( (string) $queried_term->slug );
+				$skip_main_category_validation = true;
+				$is_archive_scope = true;
+			}
+		}
+
 		if ( '' === $scope_slug ) {
 			return null;
 		}
@@ -134,7 +144,7 @@ class GStore_Category_Filter {
 		}
 
 		// Escopo de catálogo por categoria principal (pai).
-		if ( (int) $term->parent !== 0 ) {
+		if ( ! $is_archive_scope && (int) $term->parent !== 0 ) {
 			return null;
 		}
 
@@ -231,8 +241,10 @@ class GStore_Category_Filter {
 		$terms = array();
 		if ( $scope_term ) {
 			$terms = $this->get_terms_for_scoped_products( $scope_term );
-		}
-		if ( empty( $terms ) ) {
+			if ( empty( $terms ) ) {
+				return array();
+			}
+		} else {
 			$terms = get_terms(
 				array(
 					'taxonomy'   => 'product_cat',
@@ -277,31 +289,16 @@ class GStore_Category_Filter {
 			}
 		}
 
-		if ( $scope_term ) {
-			$scope_slug = (string) $scope_term->slug;
-			$tree = array_values(
-				array_filter(
-					$tree,
-					static function( $node ) use ( $scope_slug ) {
-						return isset( $node->slug ) && (string) $node->slug !== $scope_slug;
-					}
-				)
-			);
-			foreach ( $term_map as $node ) {
-				if ( ! empty( $node->children ) ) {
-					$node->children = array_values(
-						array_filter(
-							$node->children,
-							static function( $child ) use ( $scope_slug ) {
-								return isset( $child->slug ) && (string) $child->slug !== $scope_slug;
-							}
-						)
-					);
-				}
-			}
-		}
-
 		$this->sort_tree_nodes( $tree );
+
+		if ( $scope_term ) {
+			$scope_term_id = (int) $scope_term->term_id;
+			if ( isset( $term_map[ $scope_term_id ] ) && ! empty( $term_map[ $scope_term_id ]->children ) ) {
+				return array_values( $term_map[ $scope_term_id ]->children );
+			}
+
+			return array();
+		}
 
 		return $tree;
 	}
