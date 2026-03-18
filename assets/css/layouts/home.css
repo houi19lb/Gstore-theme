@@ -103,7 +103,8 @@
 
 .Gstore-home-benefits {
 	background-color: var(--gstore-color-bg-dark);
-	padding: var(--gstore-spacing-6) 0;
+	padding: 0;
+	margin: 0;
 }
 
 .Gstore-home-benefits__inner {

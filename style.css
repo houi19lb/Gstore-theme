@@ -4311,7 +4311,9 @@ main:not(.Gstore-blog-shell):not(.Gstore-blog-single-shell) {
 
 @media (max-width: 900px) {
 	.Gstore-home-benefits {
-		padding: 0;
+		padding: 0 !important;
+		margin: 0 !important;
+		margin-block-end: 0 !important;
 	}
 
 	.Gstore-home-benefits .Gstore-home-benefits__inner {
@@ -4322,6 +4324,7 @@ main:not(.Gstore-blog-shell):not(.Gstore-blog-single-shell) {
 		display: block !important;
 		border-radius: 0;
 		overflow: hidden;
+		padding-bottom: 0 !important;
 	}
 
 	.Gstore-home-benefits__slider-slide {
