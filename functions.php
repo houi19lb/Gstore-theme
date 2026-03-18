@@ -6316,6 +6316,95 @@ function gstore_banner_youtube_shortcode() {
 add_shortcode( 'gstore_banner_youtube', 'gstore_banner_youtube_shortcode' );
 
 /**
+ * Renderiza a faixa de benefícios da Home com textos configuráveis via admin.
+ *
+ * Uso: [gstore_home_benefits]
+ *
+ * @return string HTML da faixa de benefícios.
+ */
+function gstore_home_benefits_shortcode() {
+	$defaults = array(
+		1 => array(
+			'title'    => 'Envio para todo o <strong>Brasil</strong>',
+			'subtitle' => 'Despacho garantido em até 48h úteis',
+			'icon'     => 'fa-truck-fast',
+		),
+		2 => array(
+			'title'    => '<strong>10%</strong> de desconto à vista',
+			'subtitle' => 'Condições especiais no Pix e boleto',
+			'icon'     => 'fa-percent',
+		),
+		3 => array(
+			'title'    => 'Parcelamento em até 21x',
+			'subtitle' => 'Cartões principais + garantia antifraude',
+			'icon'     => 'fa-credit-card',
+		),
+	);
+
+	$benefits = array();
+	foreach ( $defaults as $n => $default ) {
+		$benefits[ $n ] = array(
+			'title'    => wp_kses_post( get_option( "gstore_benefit_{$n}_title", $default['title'] ) ),
+			'subtitle' => esc_html( get_option( "gstore_benefit_{$n}_subtitle", $default['subtitle'] ) ),
+			'icon'     => $default['icon'],
+		);
+	}
+
+	ob_start();
+	?>
+	<div class="wp-block-group alignfull Gstore-home-benefits">
+		<div class="wp-block-group Gstore-home-benefits__inner">
+			<?php foreach ( $benefits as $b ) : ?>
+			<div class="wp-block-group Gstore-home-benefits__item">
+				<span class="Gstore-home-benefits__icon" aria-hidden="true">
+					<i class="fa-solid <?php echo esc_attr( $b['icon'] ); ?>"></i>
+				</span>
+				<div class="wp-block-group Gstore-home-benefits__content">
+					<p class="Gstore-home-benefits__title"><?php echo $b['title']; ?></p>
+					<p class="Gstore-home-benefits__subtitle"><?php echo $b['subtitle']; ?></p>
+				</div>
+			</div>
+			<?php endforeach; ?>
+		</div>
+		<div class="Gstore-home-benefits__slider" data-gstore-benefits-slider data-gstore-benefits-force-autoplay>
+			<div class="Gstore-home-benefits__slider-track" data-gstore-benefits-track>
+				<?php foreach ( $benefits as $b ) : ?>
+				<div class="Gstore-home-benefits__slider-slide" data-gstore-benefits-slide>
+					<div class="wp-block-group Gstore-home-benefits__item">
+						<span class="Gstore-home-benefits__icon" aria-hidden="true">
+							<i class="fa-solid <?php echo esc_attr( $b['icon'] ); ?>"></i>
+						</span>
+						<div class="wp-block-group Gstore-home-benefits__content">
+							<p class="Gstore-home-benefits__title"><?php echo $b['title']; ?></p>
+							<p class="Gstore-home-benefits__subtitle"><?php echo $b['subtitle']; ?></p>
+						</div>
+					</div>
+				</div>
+				<?php endforeach; ?>
+			</div>
+			<button class="Gstore-home-benefits__slider-control Gstore-home-benefits__slider-control--prev" type="button" aria-label="Benefício anterior" data-gstore-benefits-prev>
+				<span aria-hidden="true"><i class="fa-solid fa-chevron-left"></i></span>
+			</button>
+			<button class="Gstore-home-benefits__slider-control Gstore-home-benefits__slider-control--next" type="button" aria-label="Próximo benefício" data-gstore-benefits-next>
+				<span aria-hidden="true"><i class="fa-solid fa-chevron-right"></i></span>
+			</button>
+			<div class="Gstore-home-benefits__slider-dots" role="tablist">
+				<?php foreach ( $benefits as $n => $b ) :
+					$i = $n - 1;
+					$active    = ( 0 === $i ) ? ' is-active' : '';
+					$selected  = ( 0 === $i ) ? 'true' : 'false';
+				?>
+				<button class="Gstore-home-benefits__slider-dot<?php echo $active; ?>" type="button" role="tab" aria-label="Mostrar benefício <?php echo $n; ?>" aria-selected="<?php echo $selected; ?>" data-gstore-benefits-dot="<?php echo $i; ?>"></button>
+				<?php endforeach; ?>
+			</div>
+		</div>
+	</div>
+	<?php
+	return ob_get_clean();
+}
+add_shortcode( 'gstore_home_benefits', 'gstore_home_benefits_shortcode' );
+
+/**
  * Renderiza as seções da Home na ordem configurada no admin (via plugin),
  * com fallback para a ordem fixa quando o plugin estiver inativo/sem config.
  *
@@ -6693,7 +6782,7 @@ function gstore_register_theme_settings() {
 		'sanitize_callback' => 'esc_url_raw',
 		'default' => '',
 	) );
-	
+
 	// Logo do Site
 	register_setting( 'gstore_settings', 'gstore_logo_id', array(
 		'type' => 'integer',
@@ -6924,7 +7013,9 @@ function gstore_render_settings_page() {
 					</td>
 				</tr>
 			</table>
-			
+
+			<?php do_action( 'gstore_vitrine_settings_after_banners' ); ?>
+
 			<?php submit_button( __( 'Salvar Configurações', 'gstore' ) ); ?>
 		</form>
 		
