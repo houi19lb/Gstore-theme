@@ -5270,6 +5270,44 @@ main:not(.Gstore-blog-shell):not(.Gstore-blog-single-shell) {
 	gap: 2px;
 }
 
+.Gstore-product-card__reposicao {
+	background: #fff;
+	padding: 16px 20px;
+	margin: 0;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	text-align: center;
+	gap: 6px;
+}
+
+.Gstore-product-card__reposicao-badge {
+	display: inline-block;
+	background: #f5e9c0;
+	color: #7a6200;
+	font-size: var(--gstore-font-size-sm, 12px);
+	font-weight: 700;
+	letter-spacing: 0.05em;
+	padding: 3px 10px;
+	border-radius: 4px;
+}
+
+.Gstore-product-card__reposicao-text {
+	font-size: var(--gstore-font-size-sm, 12px);
+	color: var(--text-main);
+	font-weight: 600;
+	margin: 0;
+	line-height: 1.4;
+}
+
+.Gstore-product-card__reposicao-hint {
+	font-size: var(--gstore-font-size-sm, 12px);
+	color: var(--text-muted);
+	margin: 0;
+	line-height: 1.4;
+}
+
 .Gstore-product-card__price-original {
 	font-size: var(--gstore-font-size-sm);
 	color: var(--text-muted);
