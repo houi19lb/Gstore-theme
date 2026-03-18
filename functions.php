@@ -3556,8 +3556,10 @@ function gstore_add_payment_info_to_price( $html, $block_content, $block ) {
 add_filter( 'render_block_woocommerce/product-price', 'gstore_add_payment_info_to_price', 10, 3 );
 
 /**
- * Filtra produtos na home page para exibir apenas produtos em estoque.
- * Aplica tanto para queries principais quanto para shortcodes.
+ * Filtra produtos na home page priorizando produtos em estoque.
+ * Se houver menos de 4 produtos em estoque, completa até 4 slots com produtos
+ * sem estoque para evitar seções vazias. Se houver 4 ou mais em estoque,
+ * exibe apenas produtos em estoque normalmente.
  *
  * @param array $query_args Argumentos da query do WooCommerce.
  * @return array
@@ -3568,20 +3570,99 @@ function gstore_filter_home_products_by_stock( $query_args ) {
 		return $query_args;
 	}
 
-	// Força apenas produtos em estoque
-	if ( ! isset( $query_args['meta_query'] ) || ! is_array( $query_args['meta_query'] ) ) {
-		$query_args['meta_query'] = array();
+	// Marca as vitrines da home para priorizar produtos "Destaque".
+	$query_args['gstore_featured_first'] = 1;
+
+	// Prepara args base para as consultas de pré-verificação:
+	// remove gstore_featured_first, ativa modo rápido e limpa _stock_status herdado do shortcode.
+	$base_args = $query_args;
+	unset( $base_args['gstore_featured_first'] );
+	$base_args['fields']                 = 'ids';
+	$base_args['no_found_rows']          = true;
+	$base_args['update_post_meta_cache'] = false;
+	$base_args['update_post_term_cache'] = false;
+
+	if ( ! isset( $base_args['meta_query'] ) || ! is_array( $base_args['meta_query'] ) ) {
+		$base_args['meta_query'] = array();
+	} else {
+		foreach ( $base_args['meta_query'] as $k => $mq ) {
+			if ( isset( $mq['key'] ) && '_stock_status' === $mq['key'] ) {
+				unset( $base_args['meta_query'][ $k ] );
+			}
+		}
+		$base_args['meta_query'] = array_values( $base_args['meta_query'] );
 	}
 
-	// Adiciona filtro de estoque (mesmo que já tenha sido especificado no shortcode)
-	$query_args['meta_query'][] = array(
+	// Consulta até 4 produtos em estoque para verificar o threshold.
+	$instock_args                   = $base_args;
+	$instock_args['posts_per_page'] = 4;
+	$instock_args['meta_query'][]   = array(
 		'key'     => '_stock_status',
 		'value'   => 'instock',
 		'compare' => '=',
 	);
+	$instock_query = new WP_Query( $instock_args );
+	$instock_ids   = (array) $instock_query->posts;
+	$instock_count = count( $instock_ids );
 
-	// Marca as vitrines da home para priorizar produtos "Destaque".
-	$query_args['gstore_featured_first'] = 1;
+	if ( $instock_count >= 4 ) {
+		// Tem pelo menos 4 em estoque: exibe apenas produtos em estoque normalmente.
+		if ( ! isset( $query_args['meta_query'] ) || ! is_array( $query_args['meta_query'] ) ) {
+			$query_args['meta_query'] = array();
+		}
+		$query_args['meta_query'][] = array(
+			'key'     => '_stock_status',
+			'value'   => 'instock',
+			'compare' => '=',
+		);
+	} else {
+		// Menos de 4 em estoque: completa até 4 slots com produtos sem estoque.
+		$slots_to_fill  = 4 - $instock_count;
+		$outofstock_ids = array();
+
+		if ( $slots_to_fill > 0 ) {
+			$outofstock_args                   = $base_args;
+			$outofstock_args['posts_per_page'] = $slots_to_fill;
+			$outofstock_args['meta_query'][]   = array(
+				'key'     => '_stock_status',
+				'value'   => 'outofstock',
+				'compare' => '=',
+			);
+			if ( ! empty( $instock_ids ) ) {
+				$outofstock_args['post__not_in'] = $instock_ids;
+			}
+			$outofstock_query = new WP_Query( $outofstock_args );
+			$outofstock_ids   = (array) $outofstock_query->posts;
+		}
+
+		$combined_ids = array_merge( $instock_ids, $outofstock_ids );
+
+		if ( ! empty( $combined_ids ) ) {
+			// Define post__in com os IDs combinados (em estoque primeiro, depois sem estoque)
+			// e remove qualquer filtro _stock_status para permitir ambos os status.
+			$query_args['post__in'] = $combined_ids;
+			$query_args['orderby']  = 'post__in';
+
+			if ( isset( $query_args['meta_query'] ) && is_array( $query_args['meta_query'] ) ) {
+				foreach ( $query_args['meta_query'] as $k => $mq ) {
+					if ( isset( $mq['key'] ) && '_stock_status' === $mq['key'] ) {
+						unset( $query_args['meta_query'][ $k ] );
+					}
+				}
+				$query_args['meta_query'] = array_values( $query_args['meta_query'] );
+			}
+		} else {
+			// Nenhum produto disponível: mantém filtro de instock (retorna vazio).
+			if ( ! isset( $query_args['meta_query'] ) || ! is_array( $query_args['meta_query'] ) ) {
+				$query_args['meta_query'] = array();
+			}
+			$query_args['meta_query'][] = array(
+				'key'     => '_stock_status',
+				'value'   => 'instock',
+				'compare' => '=',
+			);
+		}
+	}
 
 	return $query_args;
 }
