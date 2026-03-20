@@ -13520,3 +13520,9 @@ function gstore_related_products_prioritize_in_stock( $related_posts, $product_i
 	return array_merge( $in_stock, $out_of_stock );
 }
 add_filter( 'woocommerce_related_products', 'gstore_related_products_prioritize_in_stock', 10, 3 );
+
+// Garante que o WP_Query respeite a ordem dos IDs retornada pelo filtro acima.
+add_filter( 'woocommerce_related_products_args', function( $args ) {
+	$args['orderby'] = 'post__in';
+	return $args;
+} );
