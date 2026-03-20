@@ -1864,6 +1864,51 @@ add_action( 'send_headers', function () {
 	}
 }, 1 );
 
+/* --- PASSO 7: Forçar no-cache no LiteSpeed para WC Store API ---
+ *
+ * O LiteSpeed Cache cacheia respostas REST por até 7 dias por padrão.
+ * Isso faz /wp-json/wc/store/v1/cart retornar um carrinho vazio em cache
+ * para todos os usuários, mesmo quem tem itens.
+ *
+ * Solução em duas camadas:
+ *  a) Hook oficial do plugin LiteSpeed Cache (litespeed_control_set_nocache)
+ *  b) Header X-LiteSpeed-Cache-Control: no-cache lido diretamente pelo servidor
+ */
+add_action( 'rest_api_init', function () {
+	add_filter( 'rest_pre_dispatch', function ( $result, $server, $request ) {
+		$route = $request->get_route();
+		if (
+			strpos( $route, '/wc/store' ) !== false ||
+			strpos( $route, '/wc/v' ) !== false
+		) {
+			// Hook do plugin LiteSpeed Cache – marca a resposta como não-cacheável.
+			do_action( 'litespeed_control_set_nocache', 'WC Store API – no cache' );
+
+			// Header direto para o servidor LiteSpeed (independente do plugin).
+			if ( ! headers_sent() ) {
+				header( 'X-LiteSpeed-Cache-Control: no-cache', true );
+				header( 'Cache-Control: no-store, no-cache, must-revalidate, max-age=0', true );
+				header( 'Pragma: no-cache', true );
+			}
+		}
+		return $result;
+	}, 1, 3 );
+}, 1 );
+
+/* --- PASSO 8: Não cachear páginas que contêm o bloco mini-cart ---
+ *
+ * O LiteSpeed pode cachear o HTML da página com o estado inicial do mini-cart
+ * (carrinho vazio) e servir esse HTML cacheado para todos os visitantes.
+ * Este filtro marca qualquer página com o bloco woocommerce/mini-cart
+ * como não-cacheável pelo LiteSpeed.
+ */
+add_filter( 'render_block', function ( $content, $block ) {
+	if ( isset( $block['blockName'] ) && 'woocommerce/mini-cart' === $block['blockName'] ) {
+		do_action( 'litespeed_control_set_nocache', 'Página contém bloco woocommerce/mini-cart' );
+	}
+	return $content;
+}, 10, 2 );
+
 /**
  * ============================
  * Favoritos (Meus Favoritos)
