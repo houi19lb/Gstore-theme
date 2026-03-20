@@ -5270,9 +5270,9 @@ main:not(.Gstore-blog-shell):not(.Gstore-blog-single-shell) {
 	margin: 0;
 	display: flex;
 	flex-direction: column;
-	align-items: center;
-	justify-content: center;
-	text-align: center;
+	align-items: flex-start;
+	justify-content: flex-start;
+	text-align: left;
 	gap: 6px;
 }
 
