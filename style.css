@@ -2055,10 +2055,7 @@ body.single-product .onsale {
 	padding-top: 8px;
 }
 
-/* Seção de vídeo do produto */
-.Gstore-single-product__video {
-	padding: 16px 0 0;
-}
+/* Vídeo do produto (coluna esquerda) */
 
 .Gstore-single-product__video-wrapper {
 	position: relative;

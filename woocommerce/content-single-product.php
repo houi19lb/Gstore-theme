@@ -797,6 +797,43 @@ if ( $reviews_has_value ) {
 							</div>
 						</article>
 					<?php endif; ?>
+
+					<?php
+					// Vídeo do produto
+					$gstore_video_url_raw = $product_id ? (string) get_post_meta( $product_id, '_gstore_video_url', true ) : '';
+					$gstore_video_embed_url = '';
+					if ( '' !== $gstore_video_url_raw ) {
+						$gstore_video_id = '';
+						if ( preg_match( '/(?:youtube\.com\/(?:watch\?(?:.*&)?v=|embed\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/', $gstore_video_url_raw, $gstore_vm ) ) {
+							$gstore_video_id = $gstore_vm[1];
+						}
+						if ( '' !== $gstore_video_id ) {
+							$gstore_video_embed_url = 'https://www.youtube-nocookie.com/embed/' . $gstore_video_id . '?rel=0';
+						}
+					}
+					$gstore_video_desc_raw  = $product_id ? (string) get_post_meta( $product_id, '_gstore_video_description', true ) : '';
+					$gstore_video_desc_html = ( '' !== $gstore_video_desc_raw ) ? apply_filters( 'the_content', $gstore_video_desc_raw ) : '';
+					?>
+					<?php if ( '' !== $gstore_video_embed_url ) : ?>
+					<div class="Gstore-single-product__video">
+						<div class="Gstore-single-product__video-wrapper">
+							<iframe
+								src="<?php echo esc_url( $gstore_video_embed_url ); ?>"
+								title="<?php echo esc_attr( get_the_title() ); ?>"
+								frameborder="0"
+								allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+								allowfullscreen
+								loading="lazy"
+							></iframe>
+						</div>
+						<?php if ( '' !== $gstore_video_desc_html ) : ?>
+						<div class="Gstore-single-product__video-description">
+							<?php echo wp_kses_post( $gstore_video_desc_html ); ?>
+						</div>
+						<?php endif; ?>
+					</div>
+					<?php endif; ?>
+
 				</div>
 
 				<div class="Gstore-single-product__summary">
@@ -1071,42 +1108,6 @@ if ( $reviews_has_value ) {
 							<div class="shipping-sub gstore-shipping-calculator__result" role="region" aria-live="polite"></div>
 							<div class="gstore-shipping-calculator__error" role="alert"></div>
 						</div>
-
-						<?php
-						// Vídeo do produto
-						$gstore_video_url_raw = $product_id ? (string) get_post_meta( $product_id, '_gstore_video_url', true ) : '';
-						$gstore_video_embed_url = '';
-						if ( '' !== $gstore_video_url_raw ) {
-							$gstore_video_id = '';
-							if ( preg_match( '/(?:youtube\.com\/(?:watch\?(?:.*&)?v=|embed\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/', $gstore_video_url_raw, $gstore_vm ) ) {
-								$gstore_video_id = $gstore_vm[1];
-							}
-							if ( '' !== $gstore_video_id ) {
-								$gstore_video_embed_url = 'https://www.youtube-nocookie.com/embed/' . $gstore_video_id . '?rel=0';
-							}
-						}
-						$gstore_video_desc_raw  = $product_id ? (string) get_post_meta( $product_id, '_gstore_video_description', true ) : '';
-						$gstore_video_desc_html = ( '' !== $gstore_video_desc_raw ) ? apply_filters( 'the_content', $gstore_video_desc_raw ) : '';
-						?>
-						<?php if ( '' !== $gstore_video_embed_url ) : ?>
-						<div class="Gstore-single-product__video">
-							<div class="Gstore-single-product__video-wrapper">
-								<iframe
-									src="<?php echo esc_url( $gstore_video_embed_url ); ?>"
-									title="<?php echo esc_attr( get_the_title() ); ?>"
-									frameborder="0"
-									allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-									allowfullscreen
-									loading="lazy"
-								></iframe>
-							</div>
-							<?php if ( '' !== $gstore_video_desc_html ) : ?>
-							<div class="Gstore-single-product__video-description">
-								<?php echo wp_kses_post( $gstore_video_desc_html ); ?>
-							</div>
-							<?php endif; ?>
-						</div>
-						<?php endif; ?>
 
 						<!-- Extra (hooks de plugins) -->
 						<div class="Gstore-single-product__summary-extra">
