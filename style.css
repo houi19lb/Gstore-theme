@@ -1151,9 +1151,8 @@ body.single-product .onsale {
 }
 
 .Gstore-single-product__summary-extra {
-	margin: 24px 0 0;
-	padding-top: 20px;
-	border-top: 1px solid #e5e5e5;
+	margin: 0;
+	padding-top: 0;
 }
 
 /* Ajustes específicos para produtos de pronta entrega */
