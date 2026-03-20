@@ -5175,6 +5175,7 @@ main:not(.Gstore-blog-shell):not(.Gstore-blog-single-shell) {
 	border-bottom: 1px solid var(--gray-border);
 	display: flex;
 	flex-direction: column;
+	gap: 4px;
 	height: 7em;
 	min-height: 7em;
 	box-sizing: border-box;
@@ -5211,7 +5212,7 @@ main:not(.Gstore-blog-shell):not(.Gstore-blog-single-shell) {
 	font-weight: 500;
 }
 
-/* Título - Dentro da área de meta */
+/* Título - Dentro da área de meta (reset para todos os contextos) */
 .woocommerce ul.products li.Gstore-product-card .woocommerce-loop-category__title,
 .woocommerce ul.products li.Gstore-product-card .woocommerce-loop-product__title,
 .woocommerce ul.products li.Gstore-product-card h3 {
@@ -5227,7 +5228,7 @@ main:not(.Gstore-blog-shell):not(.Gstore-blog-single-shell) {
 	min-height: auto;
 	color: var(--text-main);
 	margin: 0;
-	padding: 0 0 18px 0;
+	padding: 0 !important;
 	background: transparent;
 	border: 0;
 	display: -webkit-box;
