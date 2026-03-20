@@ -1998,7 +1998,31 @@ document.addEventListener('DOMContentLoaded', () => {
 				refreshFlexSliderLayout();
 				setupThumbsCarousel();
 				resetZoomForActiveSlide();
+				updateSummaryStickyTop();
 			}, 100);
 		});
 	}
+
+	/**
+	 * Sticky da coluna direita: começa a grudar somente quando o fundo
+	 * do sidebar chegaria ao limite inferior da viewport.
+	 */
+	function updateSummaryStickyTop() {
+		const summary = document.querySelector('.Gstore-single-product__summary');
+		if (!summary) return;
+
+		if (window.innerWidth < 1024) {
+			summary.style.top = '';
+			return;
+		}
+
+		const stickyOffset = parseInt(
+			getComputedStyle(document.documentElement).getPropertyValue('--gstore-sticky-offset') || '110',
+			10
+		);
+		const top = Math.max(stickyOffset, window.innerHeight - summary.offsetHeight);
+		summary.style.top = top + 'px';
+	}
+
+	updateSummaryStickyTop();
 });
