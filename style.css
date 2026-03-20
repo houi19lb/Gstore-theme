@@ -5257,7 +5257,7 @@ main:not(.Gstore-blog-shell):not(.Gstore-blog-single-shell) {
 /* BLOCO DE PREÇO - Wrapper branco separado */
 .Gstore-product-card__price-section {
 	background: #fff;
-	padding: 16px 20px 0;
+	padding: 16px 20px;
 	margin: 0;
 	display: flex;
 	flex-direction: column;
@@ -5266,7 +5266,7 @@ main:not(.Gstore-blog-shell):not(.Gstore-blog-single-shell) {
 
 .Gstore-product-card__reposicao {
 	background: #fff;
-	padding: 16px 20px 0;
+	padding: 16px 20px;
 	margin: 0;
 	display: flex;
 	flex-direction: column;
@@ -9141,7 +9141,30 @@ body:has(.Gstore-catalog-shell--light) main {
 	gap: 24px !important;
 }
 
-/* Os cards de produto herdam o estilo padrão do site - sem override */
+/* Correções de espaçamento dos cards no catálogo (contexto shortcode WooCommerce) */
+
+/* Reseta margem padrão do WooCommerce em parágrafos dentro do card */
+.Gstore-catalog-shell--light .Gstore-product-card__reposicao p,
+.Gstore-catalog-shell--light .Gstore-product-card__reposicao-text,
+.Gstore-catalog-shell--light .Gstore-product-card__reposicao-hint {
+	margin: 0 !important;
+	padding: 0 !important;
+}
+
+/* Remove o padding-bottom duplo (reposicao + footer) no catálogo */
+.Gstore-catalog-shell--light .Gstore-product-card__reposicao {
+	padding-bottom: 0 !important;
+}
+
+/* Mesmo alinhamento para preços no catálogo */
+.Gstore-catalog-shell--light .Gstore-product-card__price-section {
+	padding-bottom: 0 !important;
+}
+
+/* Negrito na primeira linha do reposicao */
+.Gstore-catalog-shell--light .Gstore-product-card__reposicao-text {
+	font-weight: 600 !important;
+}
 
 /* Badge de desconto */
 .Gstore-catalog-shell--light .onsale {
