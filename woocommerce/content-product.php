@@ -146,8 +146,8 @@ $pix_discount_percent    = $pix_discount_active ? (float) $pix_discount_config['
 			<?php if ( $is_out_of_stock && ! $show_price_oos ) : ?>
 				<div class="Gstore-product-card__reposicao">
 					<span class="Gstore-product-card__reposicao-badge"><?php esc_html_e( 'EM REPOSIÇÃO', 'gstore' ); ?></span>
-					<p class="Gstore-product-card__reposicao-text"><?php esc_html_e( 'Este item está temporariamente sem estoque.', 'gstore' ); ?></p>
-					<p class="Gstore-product-card__reposicao-hint"><?php esc_html_e( 'Consulte disponibilidade ou veja opções semelhantes.', 'gstore' ); ?></p>
+					<div class="Gstore-product-card__reposicao-text"><?php esc_html_e( 'Este item está temporariamente sem estoque.', 'gstore' ); ?></div>
+					<div class="Gstore-product-card__reposicao-hint"><?php esc_html_e( 'Consulte disponibilidade ou veja opções semelhantes.', 'gstore' ); ?></div>
 				</div>
 			<?php elseif ( ! $is_out_of_stock || $show_price_oos ) : ?>
 				<div class="Gstore-product-card__price-section">

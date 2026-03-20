@@ -5423,14 +5423,6 @@ main:not(.Gstore-blog-shell):not(.Gstore-blog-single-shell) {
 	margin: 0 !important;
 }
 
-/* Reset margens padrão do WooCommerce em parágrafos dentro do catálogo */
-.Gstore-products-grid ul.products li.product p,
-.Gstore-products-grid ul.products li.product .Gstore-product-card__reposicao-text,
-.Gstore-products-grid ul.products li.product .Gstore-product-card__reposicao-hint,
-.Gstore-products-grid ul.products li.product .Gstore-product-card__price-details {
-	margin: 0 !important;
-}
-
 /* Responsive */
 @media (max-width: 1024px) {
 
@@ -9141,30 +9133,7 @@ body:has(.Gstore-catalog-shell--light) main {
 	gap: 24px !important;
 }
 
-/* Correções de espaçamento dos cards no catálogo (contexto shortcode WooCommerce) */
-
-/* Reseta margem padrão do WooCommerce em parágrafos dentro do card */
-.Gstore-catalog-shell--light .Gstore-product-card__reposicao p,
-.Gstore-catalog-shell--light .Gstore-product-card__reposicao-text,
-.Gstore-catalog-shell--light .Gstore-product-card__reposicao-hint {
-	margin: 0 !important;
-	padding: 0 !important;
-}
-
-/* Remove o padding-bottom duplo (reposicao + footer) no catálogo */
-.Gstore-catalog-shell--light .Gstore-product-card__reposicao {
-	padding-bottom: 0 !important;
-}
-
-/* Mesmo alinhamento para preços no catálogo */
-.Gstore-catalog-shell--light .Gstore-product-card__price-section {
-	padding-bottom: 0 !important;
-}
-
-/* Negrito na primeira linha do reposicao */
-.Gstore-catalog-shell--light .Gstore-product-card__reposicao-text {
-	font-weight: 600 !important;
-}
+/* Os cards de produto herdam o estilo padrão do site - sem override adicional necessário */
 
 /* Badge de desconto */
 .Gstore-catalog-shell--light .onsale {
