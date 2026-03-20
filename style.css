@@ -5290,15 +5290,15 @@ main:not(.Gstore-blog-shell):not(.Gstore-blog-single-shell) {
 .Gstore-product-card__reposicao-text {
 	font-size: var(--gstore-font-size-sm, 12px);
 	color: var(--text-main);
-	font-weight: 600;
-	margin: 0;
+	font-weight: 400;
+	margin: 0 !important;
 	line-height: 1.4;
 }
 
 .Gstore-product-card__reposicao-hint {
 	font-size: var(--gstore-font-size-sm, 12px);
 	color: var(--text-muted);
-	margin: 0;
+	margin: 0 !important;
 	line-height: 1.4;
 }
 
@@ -5420,6 +5420,14 @@ main:not(.Gstore-blog-shell):not(.Gstore-blog-single-shell) {
 
 .Gstore-products-grid ul.products li.product a img {
 	width: auto !important;
+	margin: 0 !important;
+}
+
+/* Reset margens padrão do WooCommerce em parágrafos dentro do catálogo */
+.Gstore-products-grid ul.products li.product p,
+.Gstore-products-grid ul.products li.product .Gstore-product-card__reposicao-text,
+.Gstore-products-grid ul.products li.product .Gstore-product-card__reposicao-hint,
+.Gstore-products-grid ul.products li.product .Gstore-product-card__price-details {
 	margin: 0 !important;
 }
 
