@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(grep -rn \"gstore_video\\\\|video.*embed\\\\|youtube\" /c/Users/mathe/Gstore-theme/assets/js --include=*.js)"
+    ]
+  }
+}

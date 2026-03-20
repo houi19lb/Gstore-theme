@@ -2057,13 +2057,7 @@ body.single-product .onsale {
 
 /* Seção de vídeo do produto */
 .Gstore-single-product__video {
-	padding: clamp(32px, 5vw, 64px) 0;
-}
-
-.Gstore-single-product__video-inner {
-	max-width: 800px;
-	margin: 0 auto;
-	padding: 0 clamp(16px, 4vw, 48px);
+	padding: 16px 0 0;
 }
 
 .Gstore-single-product__video-wrapper {
@@ -2072,7 +2066,7 @@ body.single-product .onsale {
 	padding-bottom: 56.25%; /* 16:9 */
 	height: 0;
 	overflow: hidden;
-	border-radius: 12px;
+	border-radius: 4px;
 	background: #000;
 }
 
