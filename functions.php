@@ -13491,3 +13491,32 @@ function gstore_fix_menu_toggle_structure( $content ) {
 
 	return $content;
 }
+
+/**
+ * Ordena os produtos relacionados priorizando os que têm estoque.
+ * Produtos sem estoque aparecem apenas se não houver opções com estoque suficientes.
+ */
+function gstore_related_products_prioritize_in_stock( $related_posts, $product_id, $args ) {
+	if ( empty( $related_posts ) ) {
+		return $related_posts;
+	}
+
+	$in_stock     = array();
+	$out_of_stock = array();
+
+	foreach ( $related_posts as $related_id ) {
+		$product = wc_get_product( $related_id );
+		if ( ! $product ) {
+			continue;
+		}
+		if ( $product->is_in_stock() ) {
+			$in_stock[] = $related_id;
+		} else {
+			$out_of_stock[] = $related_id;
+		}
+	}
+
+	// Produtos com estoque primeiro; sem estoque como fallback no final.
+	return array_merge( $in_stock, $out_of_stock );
+}
+add_filter( 'woocommerce_related_products', 'gstore_related_products_prioritize_in_stock', 10, 3 );
