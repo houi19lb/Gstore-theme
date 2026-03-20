@@ -5257,7 +5257,7 @@ main:not(.Gstore-blog-shell):not(.Gstore-blog-single-shell) {
 /* BLOCO DE PREÇO - Wrapper branco separado */
 .Gstore-product-card__price-section {
 	background: #fff;
-	padding: 16px 20px;
+	padding: 16px 20px 0;
 	margin: 0;
 	display: flex;
 	flex-direction: column;
@@ -5266,7 +5266,7 @@ main:not(.Gstore-blog-shell):not(.Gstore-blog-single-shell) {
 
 .Gstore-product-card__reposicao {
 	background: #fff;
-	padding: 16px 20px;
+	padding: 16px 20px 0;
 	margin: 0;
 	display: flex;
 	flex-direction: column;
@@ -5290,7 +5290,7 @@ main:not(.Gstore-blog-shell):not(.Gstore-blog-single-shell) {
 .Gstore-product-card__reposicao-text {
 	font-size: var(--gstore-font-size-sm, 12px);
 	color: var(--text-main);
-	font-weight: 400;
+	font-weight: 600;
 	margin: 0 !important;
 	line-height: 1.4;
 }
