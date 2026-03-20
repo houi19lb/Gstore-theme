@@ -1895,19 +1895,6 @@ add_action( 'rest_api_init', function () {
 	}, 1, 3 );
 }, 1 );
 
-/* --- PASSO 8: Não cachear páginas que contêm o bloco mini-cart ---
- *
- * O LiteSpeed pode cachear o HTML da página com o estado inicial do mini-cart
- * (carrinho vazio) e servir esse HTML cacheado para todos os visitantes.
- * Este filtro marca qualquer página com o bloco woocommerce/mini-cart
- * como não-cacheável pelo LiteSpeed.
- */
-add_filter( 'render_block', function ( $content, $block ) {
-	if ( isset( $block['blockName'] ) && 'woocommerce/mini-cart' === $block['blockName'] ) {
-		do_action( 'litespeed_control_set_nocache', 'Página contém bloco woocommerce/mini-cart' );
-	}
-	return $content;
-}, 10, 2 );
 
 /**
  * ============================
