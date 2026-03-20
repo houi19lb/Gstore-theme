@@ -3,7 +3,8 @@
     "allow": [
       "Bash(grep -rn \"gstore_video\\\\|video.*embed\\\\|youtube\" /c/Users/mathe/Gstore-theme/assets/js --include=*.js)",
       "Bash(grep -r \"upsell\\\\|cross.sell\\\\|cross_sell\\\\|related_products\\\\|product_recommendations\" c:/Users/mathe/Gstore-theme --include=*.php --include=*.js --include=*.liquid --include=*.html)",
-      "Bash(grep -r \"upsell\\\\|cross.sell\\\\|cross_sell\\\\|related\" c:/Users/mathe/Gstore-theme/assets/css --include=*.css)"
+      "Bash(grep -r \"upsell\\\\|cross.sell\\\\|cross_sell\\\\|related\" c:/Users/mathe/Gstore-theme/assets/css --include=*.css)",
+      "WebFetch(domain:armastore.com.br)"
     ]
   }
 }

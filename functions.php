@@ -13521,8 +13521,13 @@ function gstore_related_products_prioritize_in_stock( $related_posts, $product_i
 }
 add_filter( 'woocommerce_related_products', 'gstore_related_products_prioritize_in_stock', 10, 3 );
 
-// Garante que o WP_Query respeite a ordem dos IDs retornada pelo filtro acima.
-add_filter( 'woocommerce_related_products_args', function( $args ) {
-	$args['orderby'] = 'post__in';
+// Impede o WooCommerce de embaralhar os IDs após nosso filtro de ordenação por estoque.
+add_filter( 'woocommerce_product_related_posts_shuffle', '__return_false' );
+
+// Impede o wc_products_array_orderby de re-embaralhar na renderização.
+// 'none' é um case explícito no WooCommerce que faz break sem sort; 'asc' evita array_reverse.
+add_filter( 'woocommerce_output_related_products_args', function( $args ) {
+	$args['orderby'] = 'none';
+	$args['order']   = 'asc';
 	return $args;
 } );
