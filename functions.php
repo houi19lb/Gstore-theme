@@ -4027,8 +4027,11 @@ add_filter( 'the_content', 'gstore_force_classic_cart_shortcode', 5 );
  * que não queremos na página do carrinho, pois já temos nosso header customizado.
  */
 function gstore_remove_cart_page_title( $title, $id = null ) {
-	// Só remove se estiver na página do carrinho
-	if ( function_exists( 'is_cart' ) && is_cart() && in_the_loop() && is_main_query() ) {
+	if ( ! function_exists( 'is_cart' ) || ! is_cart() || ! in_the_loop() || ! is_main_query() ) {
+		return $title;
+	}
+	// Só remove o título da própria página do carrinho, não de itens do menu nav.
+	if ( $id && (int) $id === get_queried_object_id() ) {
 		return '';
 	}
 	return $title;
