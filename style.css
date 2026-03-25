@@ -2079,7 +2079,7 @@ body.single-product .onsale {
 	margin-top: 16px;
 	color: var(--gstore-color-text-secondary, #666);
 	font-size: 0.9rem;
-	text-align: center;
+	text-align: left;
 }
 
 .Gstore-single-product__upsells {
