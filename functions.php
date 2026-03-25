@@ -3234,6 +3234,35 @@ function gstore_filter_product_breadcrumb_category_links( $crumbs, $breadcrumb )
 add_filter( 'woocommerce_get_breadcrumb', 'gstore_filter_product_breadcrumb_category_links', 20, 2 );
 
 /**
+ * Remove o último crumb duplicado do breadcrumb na página de produto.
+ *
+ * O WooCommerce adiciona o nome do produto como último item do breadcrumb,
+ * mas em alguns casos ele aparece duplicado. Esta função remove a duplicata.
+ *
+ * @param array $crumbs Breadcrumb gerado pelo WooCommerce.
+ * @return array
+ */
+function gstore_remove_duplicate_product_breadcrumb( $crumbs ) {
+	if ( ! function_exists( 'is_product' ) || ! is_product() ) {
+		return $crumbs;
+	}
+
+	if ( ! is_array( $crumbs ) || count( $crumbs ) < 2 ) {
+		return $crumbs;
+	}
+
+	$last  = end( $crumbs );
+	$prev  = prev( $crumbs );
+
+	if ( is_array( $last ) && is_array( $prev ) && $last[0] === $prev[0] ) {
+		array_pop( $crumbs );
+	}
+
+	return $crumbs;
+}
+add_filter( 'woocommerce_get_breadcrumb', 'gstore_remove_duplicate_product_breadcrumb', 30 );
+
+/**
  * Remove o texto de privacidade do formulário de registro.
  * O texto será exibido em um modal ao invés de diretamente no formulário.
  */
