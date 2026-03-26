@@ -23,6 +23,7 @@
 	var BODY_CHAT_CLASS = 'gstore-support-chat-open';
 	var AGE_MODAL_ID = 'gstore-age-modal';
 	var BODY_AGE_MODAL_CLASS = 'gstore-age-modal-open';
+	var BODY_CHATWOOT_WIDGET_OPEN_CLASS = 'gstore-chatwoot-widget-open';
 
 	var MINI_CART_DRAWER_SELECTOR = '.wc-block-mini-cart__drawer';
 	var MINI_CART_OVERLAY_SELECTOR = '.wc-block-components-drawer__screen-overlay';
@@ -832,9 +833,39 @@
 		}
 	}
 
+	function isChatwootWidgetOpen() {
+		var holder = document.querySelector('.woot-widget-holder');
+		if (!holder) return false;
+		if (holder.classList && holder.classList.contains('woot--hide')) return false;
+
+		try {
+			var style = window.getComputedStyle(holder);
+			if (!style) return false;
+			return (
+				style.display !== 'none' &&
+				style.visibility !== 'hidden' &&
+				style.opacity !== '0' &&
+				style.zIndex !== '-1'
+			);
+		} catch (e) {
+			return false;
+		}
+	}
+
+	function syncChatwootWidgetOpenState() {
+		var open = isChatwootWidgetOpen();
+		document.body.classList.toggle(BODY_CHATWOOT_WIDGET_OPEN_CLASS, open);
+		return open;
+	}
+
 	function toggleQuickActionVisibility() {
 		var quick = document.getElementById(FLOAT_ID);
 		if (!quick) return;
+
+		if (syncChatwootWidgetOpenState()) {
+			quick.style.display = 'none';
+			return;
+		}
 
 		if (isAgeModalOpen()) {
 			quick.style.display = 'none';
@@ -852,6 +883,45 @@
 		} else {
 			quick.style.display = '';
 		}
+	}
+
+	function observeChatwootWidgetState() {
+		if (document.__gstoreChatwootStateObserverBound) return;
+		document.__gstoreChatwootStateObserverBound = true;
+
+		function attachHolderObserver() {
+			var holder = document.querySelector('.woot-widget-holder');
+			if (!holder || holder.__gstoreStateObserved) return;
+
+			try {
+				var holderObs = new MutationObserver(function () {
+					syncChatwootWidgetOpenState();
+					toggleQuickActionVisibility();
+				});
+				holderObs.observe(holder, {
+					attributes: true,
+					attributeFilter: ['class', 'style']
+				});
+				holder.__gstoreStateObserved = true;
+			} catch (e) {}
+		}
+
+		try {
+			var bodyObs = new MutationObserver(function () {
+				attachHolderObserver();
+				syncChatwootWidgetOpenState();
+				toggleQuickActionVisibility();
+			});
+			bodyObs.observe(document.body, { childList: true, subtree: true });
+		} catch (e2) {}
+
+		window.addEventListener('resize', function () {
+			syncChatwootWidgetOpenState();
+			toggleQuickActionVisibility();
+		});
+
+		attachHolderObserver();
+		syncChatwootWidgetOpenState();
 	}
 
 	function observeAgeModalState() {
@@ -1061,6 +1131,7 @@
 		ensureSelectorModal();
 		ensureChatShellModal();
 
+		observeChatwootWidgetState();
 		observeAgeModalState();
 		if (!observeMiniCartDrawer()) observeMiniCartMount();
 		toggleQuickActionVisibility();
