@@ -21,6 +21,8 @@
 	var CHAT_MODAL_ID = 'gstore-support-chat-modal';
 	var BODY_MODAL_CLASS = 'gstore-support-modal-open';
 	var BODY_CHAT_CLASS = 'gstore-support-chat-open';
+	var AGE_MODAL_ID = 'gstore-age-modal';
+	var BODY_AGE_MODAL_CLASS = 'gstore-age-modal-open';
 
 	var MINI_CART_DRAWER_SELECTOR = '.wc-block-mini-cart__drawer';
 	var MINI_CART_OVERLAY_SELECTOR = '.wc-block-components-drawer__screen-overlay';
@@ -540,6 +542,14 @@
 	function onQuickActionClick(event) {
 		if (event) event.preventDefault();
 
+		if (isAgeModalOpen()) {
+			var confirmBtn = document.getElementById('gstore-age-confirm');
+			if (confirmBtn && typeof confirmBtn.focus === 'function') {
+				confirmBtn.focus();
+			}
+			return;
+		}
+
 		if (getEffectiveQuickActionType() === 'telegram') {
 			handleSelectTelegram();
 			return;
@@ -804,9 +814,32 @@
 		return false;
 	}
 
+	function isAgeModalOpen() {
+		if (document.body.classList.contains(BODY_AGE_MODAL_CLASS)) {
+			return true;
+		}
+
+		var modal = document.getElementById(AGE_MODAL_ID);
+		if (!modal) return false;
+		if (modal.getAttribute('aria-hidden') === 'false') return true;
+
+		try {
+			var style = window.getComputedStyle(modal);
+			if (!style) return false;
+			return style.display !== 'none' && style.visibility !== 'hidden' && style.pointerEvents !== 'none' && style.opacity !== '0';
+		} catch (e) {
+			return false;
+		}
+	}
+
 	function toggleQuickActionVisibility() {
 		var quick = document.getElementById(FLOAT_ID);
 		if (!quick) return;
+
+		if (isAgeModalOpen()) {
+			quick.style.display = 'none';
+			return;
+		}
 
 		if (document.body.classList.contains(BODY_CHAT_CLASS)) {
 			quick.style.display = 'none';
@@ -818,6 +851,40 @@
 			quick.style.display = 'none';
 		} else {
 			quick.style.display = '';
+		}
+	}
+
+	function observeAgeModalState() {
+		var quick = document.getElementById(FLOAT_ID);
+		if (!quick || quick.__gstoreAgeModalObserver) return false;
+
+		function syncAgeState() {
+			toggleQuickActionVisibility();
+		}
+
+		function bindModalObserver() {
+			var modal = document.getElementById(AGE_MODAL_ID);
+			if (!modal || modal.__gstoreAgeModalObserved) return;
+
+			try {
+				var modalObs = new MutationObserver(syncAgeState);
+				modalObs.observe(modal, { attributes: true, attributeFilter: ['aria-hidden', 'class', 'style'] });
+				modal.__gstoreAgeModalObserved = true;
+			} catch (e) {}
+		}
+
+		try {
+			var bodyObs = new MutationObserver(function () {
+				bindModalObserver();
+				syncAgeState();
+			});
+			bodyObs.observe(document.body, { attributes: true, attributeFilter: ['class'], childList: true });
+			bindModalObserver();
+			syncAgeState();
+			quick.__gstoreAgeModalObserver = true;
+			return true;
+		} catch (e) {
+			return false;
 		}
 	}
 
@@ -994,6 +1061,7 @@
 		ensureSelectorModal();
 		ensureChatShellModal();
 
+		observeAgeModalState();
 		if (!observeMiniCartDrawer()) observeMiniCartMount();
 		toggleQuickActionVisibility();
 
