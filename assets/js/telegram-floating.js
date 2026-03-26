@@ -545,6 +545,12 @@
 			return;
 		}
 
+		// If user already chose chat_site, skip selector and open chat directly.
+		if (state.preferredChannel === CHAT_PREF_VALUE && state.chatReady) {
+			openChatDirect();
+			return;
+		}
+
 		openSelectorModal();
 	}
 
