@@ -545,12 +545,6 @@
 			return;
 		}
 
-		// If user already chose chat_site, skip selector and open chat directly.
-		if (state.preferredChannel === CHAT_PREF_VALUE && state.chatReady) {
-			openChatDirect();
-			return;
-		}
-
 		openSelectorModal();
 	}
 
@@ -638,6 +632,21 @@
 		if (getEffectiveQuickActionType() === 'telegram') {
 			handleSelectTelegram();
 			return;
+		}
+
+		// Trigger SDK pre-load so the chat option becomes available while the
+		// user is looking at the selector (lazy load: SDK only loads on demand).
+		if (!state.chatReady) {
+			callBridge(['prepareSdk'], []);
+			// Poll until SDK is ready so we can enable the "Chat do site" button.
+			var readyPoll = window.setInterval(function () {
+				if (detectChatReady()) {
+					setChatReady(true);
+					window.clearInterval(readyPoll);
+				}
+			}, 500);
+			// Stop polling after 30s.
+			window.setTimeout(function () { window.clearInterval(readyPoll); }, 30000);
 		}
 
 		var modal = getSelectorModal();
