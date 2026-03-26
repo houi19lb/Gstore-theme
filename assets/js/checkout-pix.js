@@ -84,7 +84,7 @@
 			const selector = $btn.data('copy-target');
 			const $textarea = $(selector);
 			if (!$textarea.length) return;
-			const text = $textarea.val();
+			const text = normalizePixCode(String($textarea.val() || ''));
 			if (navigator.clipboard && navigator.clipboard.writeText) {
 				navigator.clipboard.writeText(text).then(function() { showCopySuccess($btn); }).catch(function() { fallbackCopy(text, $textarea, $btn); });
 			} else {
@@ -102,7 +102,7 @@
 				return;
 			}
 
-			const text = $textarea.val();
+			const text = normalizePixCode(String($textarea.val() || ''));
 
 			// Tenta usar Clipboard API
 			if (navigator.clipboard && navigator.clipboard.writeText) {
@@ -126,7 +126,7 @@
 				return;
 			}
 
-			const text = $textarea.val();
+			const text = normalizePixCode(String($textarea.val() || ''));
 
 			// Tenta usar Clipboard API
 			if (navigator.clipboard && navigator.clipboard.writeText) {
@@ -155,6 +155,18 @@
 			console.error('Erro ao copiar:', err);
 			alert('Não foi possível copiar. Por favor, selecione e copie manualmente.');
 		}
+	}
+
+	/**
+	 * Normaliza o código Pix antes de copiar.
+	 * Evita traços tipográficos e espaços invisíveis que quebram o EMV.
+	 */
+	function normalizePixCode(text) {
+		return String(text || '')
+			.trim()
+			.replace(/[\u00A0\u202F]/g, ' ')
+			.replace(/[\u200B\u200C\u200D\uFEFF]/g, '')
+			.replace(/[\u2010\u2011\u2012\u2013\u2014\u2015\u2212]/g, '-');
 	}
 
 	/**
@@ -190,4 +202,3 @@
 	});
 
 })(jQuery);
-
