@@ -1026,6 +1026,22 @@
 			updateQuickActionPresentation();
 		});
 
+		// When fresh user-specific data arrives (after LiteSpeed cache),
+		// re-sync preference and update button state.
+		window.addEventListener('gstore:support-dynamic-ready', function (e) {
+			var detail = e && e.detail ? e.detail : {};
+			if (detail.preference === CHAT_PREF_VALUE) {
+				state.preferredChannel = CHAT_PREF_VALUE;
+			} else {
+				// Also check localStorage as fallback.
+				state.preferredChannel = readLocalPreference();
+			}
+			syncQuickActionConfigFromBridge();
+			setChatReady(detectChatReady());
+			updateSelectorChatOptionStatus();
+			updateQuickActionPresentation();
+		});
+
 		window.addEventListener('resize', toggleQuickActionVisibility);
 		window.addEventListener('gstore:support:chat-shell-open', toggleQuickActionVisibility);
 		window.addEventListener('gstore:support:chat-shell-closed', toggleQuickActionVisibility);
