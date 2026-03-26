@@ -142,6 +142,30 @@
 	}
 
 	/**
+	 * Normaliza o valor exibido nos textareas do Pix.
+	 * Isso garante que copiar manualmente selecione o mesmo EMV válido
+	 * que o botão "Copiar código" já envia para a área de transferência.
+	 */
+	function normalizePixTextareas() {
+		document.querySelectorAll('.pix-box__code, .Gstore-pix-emv-code').forEach(function(el) {
+			const currentValue = 'value' in el ? el.value : (el.textContent || '');
+			const normalizedValue = normalizePixCode(currentValue);
+
+			if (normalizedValue === currentValue) {
+				return;
+			}
+
+			if ('value' in el) {
+				el.value = normalizedValue;
+			}
+
+			if (el.textContent !== normalizedValue) {
+				el.textContent = normalizedValue;
+			}
+		});
+	}
+
+	/**
 	 * Método fallback para copiar
 	 */
 	function fallbackCopy(text, $textarea, $btn) {
@@ -191,6 +215,7 @@
 		
 		// Aguarda um pouco para garantir que tudo está carregado
 		setTimeout(function() {
+			normalizePixTextareas();
 			initCopyButton();
 			initPixCountdown();
 		}, 100);
@@ -198,6 +223,7 @@
 
 	// Também inicializa após atualização do checkout (AJAX)
 	$(document.body).on('updated_checkout', function() {
+		normalizePixTextareas();
 		initPixCountdown();
 	});
 
