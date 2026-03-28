@@ -179,13 +179,15 @@ class GStore_Category_Filter {
 	 * Renderiza o HTML completo do filtro.
 	 */
 	public function render_filter_html() {
-		$categories = $this->get_category_tree();
-		$scope_term = $this->get_scope_term();
+		$categories       = $this->get_category_tree();
+		$scope_term       = $this->get_scope_term();
+		$is_ofertas       = $this->is_ofertas_page();
+		$has_scope        = $scope_term || $is_ofertas;
 		$full_catalog_url = home_url( '/catalogo/' );
-		
+
 		ob_start();
 		?>
-		<div class="gstore-category-filter" id="gstore-category-filter" <?php echo $scope_term ? 'data-full-catalog-url="' . esc_url( $full_catalog_url ) . '"' : ''; ?>>
+		<div class="gstore-category-filter" id="gstore-category-filter" <?php echo $has_scope ? 'data-full-catalog-url="' . esc_url( $full_catalog_url ) . '"' : ''; ?>>
 			<div class="gstore-category-filter__search-wrapper">
 				<input type="text" class="gstore-category-filter__search" placeholder="Buscar categoria..." aria-label="Buscar categoria">
 				<svg class="gstore-category-filter__search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -210,6 +212,15 @@ class GStore_Category_Filter {
 						<?php esc_html_e( 'Ver catalogo completo', 'gstore' ); ?>
 					</a>
 				</div>
+			<?php elseif ( $is_ofertas ) : ?>
+				<div class="gstore-category-filter__scope">
+					<span class="gstore-category-filter__scope-label">
+						<?php esc_html_e( 'Mostrando: Ofertas', 'gstore' ); ?>
+					</span>
+					<a class="gstore-category-filter__scope-link" href="<?php echo esc_url( $full_catalog_url ); ?>">
+						<?php esc_html_e( 'Ver catalogo completo', 'gstore' ); ?>
+					</a>
+				</div>
 			<?php endif; ?>
 
 			<div class="gstore-category-filter__chips" id="gstore-category-filter-chips">
@@ -223,7 +234,7 @@ class GStore_Category_Filter {
 			</div>
 
 			<div class="gstore-category-filter__actions">
-				<?php if ( $scope_term ) : ?>
+				<?php if ( $has_scope ) : ?>
 					<a class="gstore-category-filter__btn-full-catalog" href="<?php echo esc_url( $full_catalog_url ); ?>">Ver catálogo completo</a>
 				<?php endif; ?>
 				<button type="button" class="gstore-category-filter__btn-clear" id="gstore-filter-clear">Limpar</button>
@@ -234,13 +245,184 @@ class GStore_Category_Filter {
 	}
 
 	/**
+	 * Verifica se está na página de ofertas.
+	 *
+	 * @return bool
+	 */
+	private function is_ofertas_page() {
+		if ( ! function_exists( 'is_page' ) || ! is_page() ) {
+			return false;
+		}
+		$page = get_queried_object();
+		if ( ! $page instanceof \WP_Post ) {
+			return false;
+		}
+		return 'ofertas' === $page->post_name;
+	}
+
+	/**
+	 * Retorna IDs de produtos em oferta (publicados).
+	 *
+	 * @return int[]
+	 */
+	private function get_sale_product_ids() {
+		if ( ! function_exists( 'wc_get_product_ids_on_sale' ) ) {
+			return array();
+		}
+		$sale_ids = wc_get_product_ids_on_sale();
+		if ( empty( $sale_ids ) ) {
+			return array();
+		}
+		return $this->filter_published_product_ids( array_map( 'absint', $sale_ids ) );
+	}
+
+	/**
+	 * Calcula contexto de produtos/contagens para produtos em oferta (espelha get_scoped_context_data).
+	 *
+	 * @return array{product_ids:int[],counts:array<int,int>}
+	 */
+	private function get_sale_context_data() {
+		$sale_product_ids = $this->get_sale_product_ids();
+		if ( empty( $sale_product_ids ) ) {
+			return array( 'product_ids' => array(), 'counts' => array() );
+		}
+
+		$relations = wp_get_object_terms(
+			$sale_product_ids,
+			'product_cat',
+			array(
+				'fields'  => 'all_with_object_id',
+				'orderby' => 'none',
+			)
+		);
+		if ( is_wp_error( $relations ) || empty( $relations ) ) {
+			return array( 'product_ids' => array(), 'counts' => array() );
+		}
+
+		$product_terms = array();
+		foreach ( $relations as $row ) {
+			$pid = isset( $row->object_id ) ? (int) $row->object_id : 0;
+			$tid = isset( $row->term_id ) ? (int) $row->term_id : 0;
+			if ( $pid <= 0 || $tid <= 0 ) {
+				continue;
+			}
+			if ( ! isset( $product_terms[ $pid ] ) ) {
+				$product_terms[ $pid ] = array();
+			}
+			$product_terms[ $pid ][ $tid ] = true;
+		}
+
+		$selected_term_ids  = $this->get_selected_term_ids();
+		$selected_term_pool = array();
+		foreach ( $selected_term_ids as $selected_term_id ) {
+			$selected_term_pool = array_merge(
+				$selected_term_pool,
+				array( (int) $selected_term_id ),
+				array_map( 'absint', get_term_children( (int) $selected_term_id, 'product_cat' ) )
+			);
+		}
+		$selected_term_pool = array_values( array_unique( array_filter( $selected_term_pool ) ) );
+
+		$context_product_ids = array();
+		foreach ( $sale_product_ids as $pid ) {
+			$assigned = isset( $product_terms[ $pid ] ) ? array_map( 'intval', array_keys( $product_terms[ $pid ] ) ) : array();
+			if ( empty( $assigned ) ) {
+				continue;
+			}
+			if ( ! empty( $selected_term_pool ) && empty( array_intersect( $assigned, $selected_term_pool ) ) ) {
+				continue;
+			}
+			$context_product_ids[] = (int) $pid;
+		}
+
+		$context_product_ids = array_values( array_unique( array_filter( $context_product_ids ) ) );
+		if ( empty( $context_product_ids ) ) {
+			return array( 'product_ids' => array(), 'counts' => array() );
+		}
+
+		$counts         = array();
+		$ancestor_cache = array();
+		foreach ( $context_product_ids as $pid ) {
+			$assigned = isset( $product_terms[ $pid ] ) ? array_map( 'intval', array_keys( $product_terms[ $pid ] ) ) : array();
+			if ( empty( $assigned ) ) {
+				continue;
+			}
+			$expanded = array();
+			foreach ( $assigned as $term_id ) {
+				$expanded[ $term_id ] = true;
+				if ( ! isset( $ancestor_cache[ $term_id ] ) ) {
+					$ancestor_cache[ $term_id ] = array_map( 'absint', get_ancestors( $term_id, 'product_cat', 'taxonomy' ) );
+				}
+				foreach ( $ancestor_cache[ $term_id ] as $ancestor_id ) {
+					$expanded[ (int) $ancestor_id ] = true;
+				}
+			}
+			foreach ( array_keys( $expanded ) as $expanded_term_id ) {
+				$expanded_term_id = (int) $expanded_term_id;
+				if ( ! isset( $counts[ $expanded_term_id ] ) ) {
+					$counts[ $expanded_term_id ] = 0;
+				}
+				$counts[ $expanded_term_id ]++;
+			}
+		}
+
+		return array(
+			'product_ids' => $context_product_ids,
+			'counts'      => $counts,
+		);
+	}
+
+	/**
+	 * Carrega categorias presentes nos produtos em oferta e aplica contagem real do contexto.
+	 *
+	 * @return \WP_Term[]
+	 */
+	private function get_terms_for_sale_products() {
+		$context  = $this->get_sale_context_data();
+		$counts   = isset( $context['counts'] ) && is_array( $context['counts'] ) ? $context['counts'] : array();
+		$term_ids = array_values( array_map( 'intval', array_keys( $counts ) ) );
+		if ( empty( $term_ids ) ) {
+			return array();
+		}
+
+		$terms = get_terms(
+			array(
+				'taxonomy'   => 'product_cat',
+				'include'    => $term_ids,
+				'hide_empty' => false,
+			)
+		);
+
+		if ( is_wp_error( $terms ) || empty( $terms ) ) {
+			return array();
+		}
+
+		$out = array();
+		foreach ( $terms as $term ) {
+			$tid         = (int) $term->term_id;
+			$term->count = isset( $counts[ $tid ] ) ? (int) $counts[ $tid ] : 0;
+			if ( $term->count > 0 ) {
+				$out[] = $term;
+			}
+		}
+
+		return $out;
+	}
+
+	/**
 	 * Busca e organiza as categorias em árvore.
 	 */
 	private function get_category_tree() {
 		$scope_term = $this->get_scope_term();
-		$terms = array();
+		$is_ofertas = $this->is_ofertas_page();
+		$terms      = array();
 		if ( $scope_term ) {
 			$terms = $this->get_terms_for_scoped_products( $scope_term );
+			if ( empty( $terms ) ) {
+				return array();
+			}
+		} elseif ( $is_ofertas ) {
+			$terms = $this->get_terms_for_sale_products();
 			if ( empty( $terms ) ) {
 				return array();
 			}
