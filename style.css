@@ -6316,6 +6316,126 @@ main.wp-block-group.alignfull.is-layout-constrained.Gstore-blog-shell {
 	border-radius: 4px;
 }
 
+.Gstore-support-install[hidden] {
+	display: none !important;
+}
+
+.Gstore-support-install {
+	margin: 0;
+}
+
+.Gstore-pwa-install-card {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) auto;
+	gap: 24px;
+	align-items: center;
+	padding: clamp(24px, 3vw, 36px);
+	background: linear-gradient(135deg, rgba(181, 166, 66, 0.1), rgba(255, 255, 255, 0.98));
+	border: 1px solid rgba(181, 166, 66, 0.28);
+	border-radius: 4px;
+	box-shadow: none;
+}
+
+.Gstore-pwa-install-card__content {
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+}
+
+.Gstore-pwa-install-card__badge {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	margin: 0;
+	font-size: 0.82rem;
+	font-weight: 700;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	color: var(--gstore-color-accent, #b5a642);
+}
+
+.Gstore-pwa-install-card__title {
+	margin: 0;
+	font-size: clamp(1.35rem, 2vw, 1.8rem);
+	color: var(--text-main, #1a1a1a);
+}
+
+.Gstore-pwa-install-card__description,
+.Gstore-pwa-install-card__hint {
+	margin: 0;
+	line-height: 1.6;
+	color: var(--text-main, #1a1a1a);
+}
+
+.Gstore-pwa-install-card__hint {
+	color: var(--text-muted, #6b7280);
+	font-size: 0.95rem;
+}
+
+.Gstore-pwa-install-card__actions {
+	display: flex;
+	align-items: center;
+	justify-content: flex-end;
+}
+
+.Gstore-pwa-install-card__button {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-height: 48px;
+	padding: 0 22px;
+	border: 1px solid var(--gstore-color-accent, #b5a642);
+	border-radius: 4px;
+	background: var(--gstore-color-accent, #b5a642);
+	color: #ffffff;
+	font-weight: 700;
+	font-size: 0.98rem;
+	line-height: 1;
+	cursor: pointer;
+	transition: transform 0.2s ease, background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.Gstore-pwa-install-card__button:hover,
+.Gstore-pwa-install-card__button:focus-visible {
+	background: var(--gstore-color-accent-hover, #9c8f34);
+	border-color: var(--gstore-color-accent-hover, #9c8f34);
+	transform: translateY(-1px);
+}
+
+.Gstore-pwa-install-card__button:focus-visible {
+	outline: 2px solid rgba(181, 166, 66, 0.24);
+	outline-offset: 2px;
+}
+
+body.gstore-pwa-standalone {
+	padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+body.gstore-pwa-standalone .Gstore-header-shell,
+body.gstore-pwa-standalone .Gstore-header {
+	padding-top: env(safe-area-inset-top, 0px);
+}
+
+@media (max-width: 900px) {
+	.Gstore-pwa-install-card {
+		grid-template-columns: 1fr;
+	}
+
+	.Gstore-pwa-install-card__actions {
+		justify-content: flex-start;
+	}
+}
+
+@media (max-width: 640px) {
+	.Gstore-pwa-install-card {
+		padding: 20px;
+	}
+
+	.Gstore-pwa-install-card__button {
+		width: 100%;
+	}
+}
+
 /* Remove padding duplicado do WordPress block theme */
 .Gstore-blog-shell .wp-block-post-content,
 .Gstore-blog-shell .is-layout-constrained,

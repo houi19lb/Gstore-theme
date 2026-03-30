@@ -1355,6 +1355,506 @@ function gstore_add_permissions_policy_header() {
 add_action( 'send_headers', 'gstore_add_permissions_policy_header' );
 
 /**
+ * Verifica se a request atual está pedindo o manifest PWA.
+ *
+ * @return bool
+ */
+function gstore_is_pwa_manifest_request() {
+	return isset( $_GET['gstore_manifest'] ) && '1' === (string) wp_unslash( $_GET['gstore_manifest'] );
+}
+
+/**
+ * Verifica se a request atual está pedindo o service worker PWA.
+ *
+ * @return bool
+ */
+function gstore_is_pwa_service_worker_request() {
+	return isset( $_GET['gstore_sw'] ) && '1' === (string) wp_unslash( $_GET['gstore_sw'] );
+}
+
+/**
+ * Retorna a URL do manifest PWA.
+ *
+ * @return string
+ */
+function gstore_get_pwa_manifest_url() {
+	return home_url( '/?gstore_manifest=1' );
+}
+
+/**
+ * Retorna a URL do service worker PWA.
+ *
+ * @return string
+ */
+function gstore_get_pwa_service_worker_url() {
+	return home_url( '/?gstore_sw=1' );
+}
+
+/**
+ * Retorna a URL inicial do app instalado.
+ *
+ * @return string
+ */
+function gstore_get_pwa_start_url() {
+	return home_url( '/' );
+}
+
+/**
+ * Retorna a scope do app instalado.
+ *
+ * @return string
+ */
+function gstore_get_pwa_scope_url() {
+	return home_url( '/' );
+}
+
+/**
+ * Retorna o path da scope do app instalado.
+ *
+ * @return string
+ */
+function gstore_get_pwa_scope_path() {
+	$scope_path = wp_parse_url( gstore_get_pwa_scope_url(), PHP_URL_PATH );
+	return is_string( $scope_path ) && '' !== $scope_path ? trailingslashit( $scope_path ) : '/';
+}
+
+/**
+ * Retorna o nome da aplicação PWA.
+ *
+ * @return string
+ */
+function gstore_get_pwa_app_name() {
+	if ( function_exists( 'gstore_get_store_name' ) ) {
+		$name = trim( (string) gstore_get_store_name( 'display' ) );
+		if ( '' !== $name ) {
+			return $name;
+		}
+	}
+
+	$name = trim( wp_specialchars_decode( get_bloginfo( 'name' ), ENT_QUOTES ) );
+	return '' !== $name ? $name : 'GStore';
+}
+
+/**
+ * Retorna o nome curto da aplicação PWA.
+ *
+ * @return string
+ */
+function gstore_get_pwa_short_name() {
+	return gstore_get_pwa_app_name();
+}
+
+/**
+ * Retorna a cor principal do app instalado.
+ *
+ * @return string
+ */
+function gstore_get_pwa_theme_color() {
+	$accent = sanitize_hex_color( gstore_get_effective_accent_color() );
+	return $accent ? $accent : '#b5a642';
+}
+
+/**
+ * Retorna a cor de fundo do app instalado.
+ *
+ * @return string
+ */
+function gstore_get_pwa_background_color() {
+	return '#ffffff';
+}
+
+/**
+ * Adiciona um ícone ao manifest quando houver um attachment válido.
+ *
+ * @param array       $icons         Lista acumulada de ícones.
+ * @param int         $attachment_id ID do attachment.
+ * @param int|null    $size          Tamanho desejado.
+ * @param string|null $purpose       Purpose do ícone.
+ * @return array
+ */
+function gstore_maybe_add_pwa_icon_from_attachment( array $icons, $attachment_id, $size = null, $purpose = 'any' ) {
+	$attachment_id = absint( $attachment_id );
+	if ( $attachment_id <= 0 ) {
+		return $icons;
+	}
+
+	$image_args = null;
+	if ( null !== $size ) {
+		$image_args = array( (int) $size, (int) $size );
+	}
+
+	$src = $image_args ? wp_get_attachment_image_url( $attachment_id, $image_args ) : wp_get_attachment_image_url( $attachment_id, 'full' );
+	if ( ! $src ) {
+		return $icons;
+	}
+
+	$sizes = '';
+	if ( null !== $size ) {
+		$sizes = (int) $size . 'x' . (int) $size;
+	} else {
+		$metadata = wp_get_attachment_metadata( $attachment_id );
+		$width    = isset( $metadata['width'] ) ? absint( $metadata['width'] ) : 0;
+		$height   = isset( $metadata['height'] ) ? absint( $metadata['height'] ) : 0;
+		if ( $width > 0 && $height > 0 ) {
+			$sizes = $width . 'x' . $height;
+		}
+	}
+
+	$filetype = wp_check_filetype( (string) wp_parse_url( $src, PHP_URL_PATH ) );
+	$type     = ! empty( $filetype['type'] ) ? $filetype['type'] : 'image/png';
+
+	$key = $src . '|' . $sizes . '|' . (string) $purpose;
+	$icons[ $key ] = array(
+		'src'     => esc_url_raw( $src ),
+		'sizes'   => $sizes,
+		'type'    => $type,
+		'purpose' => $purpose ? (string) $purpose : 'any',
+	);
+
+	return $icons;
+}
+
+/**
+ * Retorna os ícones do manifest PWA.
+ *
+ * @return array<int, array<string, string>>
+ */
+function gstore_get_pwa_icon_entries() {
+	$icons        = array();
+	$site_icon_id = absint( get_option( 'site_icon', 0 ) );
+
+	if ( $site_icon_id > 0 ) {
+		$icons = gstore_maybe_add_pwa_icon_from_attachment( $icons, $site_icon_id, 192, 'any' );
+		$icons = gstore_maybe_add_pwa_icon_from_attachment( $icons, $site_icon_id, 512, 'any' );
+	}
+
+	if ( empty( $icons ) ) {
+		$custom_logo_id = absint( get_theme_mod( 'custom_logo' ) );
+		if ( $custom_logo_id > 0 ) {
+			$icons = gstore_maybe_add_pwa_icon_from_attachment( $icons, $custom_logo_id, null, 'any' );
+		}
+	}
+
+	return array_values( $icons );
+}
+
+/**
+ * Retorna os atalhos do manifest PWA.
+ *
+ * @return array<int, array<string, mixed>>
+ */
+function gstore_get_pwa_shortcuts() {
+	$icons         = gstore_get_pwa_icon_entries();
+	$shortcut_icon = ! empty( $icons ) ? array_slice( $icons, 0, 1 ) : array();
+	$home_url      = home_url( '/' );
+	$atendimento   = home_url( '/atendimento/' );
+	$myaccount     = home_url( '/minha-conta/' );
+
+	if ( class_exists( 'WooCommerce' ) && function_exists( 'wc_get_page_permalink' ) ) {
+		$myaccount_permalink = wc_get_page_permalink( 'myaccount' );
+		if ( $myaccount_permalink ) {
+			$myaccount = $myaccount_permalink;
+		}
+	}
+
+	return array(
+		array(
+			'name'        => __( 'Home', 'gstore' ),
+			'short_name'  => __( 'Home', 'gstore' ),
+			'description' => __( 'Abrir a home principal do site.', 'gstore' ),
+			'url'         => $home_url,
+			'icons'       => $shortcut_icon,
+		),
+		array(
+			'name'        => __( 'Atendimento', 'gstore' ),
+			'short_name'  => __( 'Atendimento', 'gstore' ),
+			'description' => __( 'Abrir a central de atendimento.', 'gstore' ),
+			'url'         => $atendimento,
+			'icons'       => $shortcut_icon,
+		),
+		array(
+			'name'        => __( 'Minha Conta', 'gstore' ),
+			'short_name'  => __( 'Conta', 'gstore' ),
+			'description' => __( 'Abrir a área da conta do cliente.', 'gstore' ),
+			'url'         => $myaccount,
+			'icons'       => $shortcut_icon,
+		),
+	);
+}
+
+/**
+ * Monta o payload do manifest PWA.
+ *
+ * @return array<string, mixed>
+ */
+function gstore_build_pwa_manifest() {
+	$app_name        = gstore_get_pwa_app_name();
+	$description     = function_exists( 'gstore_get_meta' ) ? trim( (string) gstore_get_meta( 'description' ) ) : '';
+	$description     = '' !== $description ? $description : get_bloginfo( 'description' );
+	$description     = trim( (string) $description );
+	$theme_color     = gstore_get_pwa_theme_color();
+	$background      = gstore_get_pwa_background_color();
+	$start_url       = gstore_get_pwa_start_url();
+	$scope_url       = gstore_get_pwa_scope_url();
+	$scope_path      = gstore_get_pwa_scope_path();
+	$start_url_path  = wp_parse_url( $start_url, PHP_URL_PATH );
+	$start_url_path  = is_string( $start_url_path ) && '' !== $start_url_path ? $start_url_path : '/';
+
+	return array(
+		'id'                           => trailingslashit( $start_url ),
+		'name'                         => $app_name,
+		'short_name'                   => gstore_get_pwa_short_name(),
+		'description'                  => $description,
+		'lang'                         => str_replace( '_', '-', get_locale() ),
+		'dir'                          => is_rtl() ? 'rtl' : 'ltr',
+		'start_url'                    => $start_url_path,
+		'scope'                        => $scope_path,
+		'display'                      => 'standalone',
+		'orientation'                  => 'any',
+		'theme_color'                  => $theme_color,
+		'background_color'             => $background,
+		'icons'                        => gstore_get_pwa_icon_entries(),
+		'shortcuts'                    => gstore_get_pwa_shortcuts(),
+		'prefer_related_applications'  => false,
+	);
+}
+
+/**
+ * Emite o manifest PWA.
+ *
+ * @return void
+ */
+function gstore_output_pwa_manifest() {
+	if ( ! gstore_is_pwa_manifest_request() ) {
+		return;
+	}
+
+	nocache_headers();
+	header( 'Content-Type: application/manifest+json; charset=utf-8' );
+	header( 'X-Robots-Tag: noindex, nofollow', true );
+
+	echo wp_json_encode( gstore_build_pwa_manifest(), JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE );
+	exit;
+}
+add_action( 'template_redirect', 'gstore_output_pwa_manifest', 0 );
+
+/**
+ * Monta o conteúdo do service worker PWA.
+ *
+ * @return string
+ */
+function gstore_build_pwa_service_worker() {
+	$version_seed = array(
+		wp_get_theme()->get( 'Version' ),
+		file_exists( get_theme_file_path( 'assets/js/pwa-install.js' ) ) ? (string) filemtime( get_theme_file_path( 'assets/js/pwa-install.js' ) ) : '',
+		file_exists( get_theme_file_path( 'style.css' ) ) ? (string) filemtime( get_theme_file_path( 'style.css' ) ) : '',
+	);
+
+	$config_json = wp_json_encode(
+		array(
+			'staticCacheName' => 'gstore-pwa-static-' . md5( implode( '|', $version_seed ) ),
+		),
+		JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE
+	);
+
+	return "const GSTORE_PWA_SW = " . $config_json . ";\n" . <<<'JS'
+const STATIC_CACHE_NAME = GSTORE_PWA_SW.staticCacheName;
+const STATIC_DESTINATIONS = new Set(['style', 'script', 'font', 'image']);
+const BYPASS_PATH_FRAGMENTS = [
+  '/wp-admin',
+  '/wp-login.php',
+  '/wp-json/',
+  '/cart',
+  '/checkout',
+  '/carrinho',
+  '/finalizar-compra',
+  '/minha-conta',
+  '/my-account'
+];
+const BYPASS_QUERY_KEYS = [
+  'wc-ajax',
+  'add-to-cart',
+  'remove_item',
+  'rest_route',
+  'gstore_manifest',
+  'gstore_sw'
+];
+
+function isSameOrigin(url) {
+  return url.origin === self.location.origin;
+}
+
+function hasBlockedPath(url) {
+  return BYPASS_PATH_FRAGMENTS.some((fragment) => url.pathname.indexOf(fragment) !== -1);
+}
+
+function hasBlockedQuery(url) {
+  return BYPASS_QUERY_KEYS.some((key) => url.searchParams.has(key));
+}
+
+function shouldBypass(request) {
+  if (request.method !== 'GET') {
+    return true;
+  }
+
+  const url = new URL(request.url);
+
+  if (!isSameOrigin(url)) {
+    return true;
+  }
+
+  if (hasBlockedPath(url) || hasBlockedQuery(url)) {
+    return true;
+  }
+
+  return false;
+}
+
+function isNavigationRequest(request) {
+  return request.mode === 'navigate' || request.destination === 'document';
+}
+
+function isStaticAssetRequest(request, url) {
+  if (STATIC_DESTINATIONS.has(request.destination)) {
+    return true;
+  }
+
+  return /\.(?:css|js|mjs|woff2?|ttf|otf|png|jpe?g|webp|gif|svg|avif|ico)$/i.test(url.pathname);
+}
+
+async function staleWhileRevalidate(request) {
+  const cache = await caches.open(STATIC_CACHE_NAME);
+  const cached = await cache.match(request);
+  const networkPromise = fetch(request)
+    .then((response) => {
+      if (response && response.ok && (response.type === 'basic' || response.type === 'cors')) {
+        cache.put(request, response.clone());
+      }
+      return response;
+    })
+    .catch(() => null);
+
+  if (cached) {
+    return cached;
+  }
+
+  const networkResponse = await networkPromise;
+  if (networkResponse) {
+    return networkResponse;
+  }
+
+  return fetch(request);
+}
+
+async function networkFirstNavigation(request) {
+  try {
+    return await fetch(request);
+  } catch (error) {
+    const cache = await caches.open(STATIC_CACHE_NAME);
+    const cached = await cache.match(request);
+    if (cached) {
+      return cached;
+    }
+    throw error;
+  }
+}
+
+self.addEventListener('install', (event) => {
+  event.waitUntil(self.skipWaiting());
+});
+
+self.addEventListener('activate', (event) => {
+  event.waitUntil(
+    caches.keys().then((keys) =>
+      Promise.all(
+        keys
+          .filter((key) => key.startsWith('gstore-pwa-static-') && key !== STATIC_CACHE_NAME)
+          .map((key) => caches.delete(key))
+      )
+    ).then(() => self.clients.claim())
+  );
+});
+
+self.addEventListener('message', (event) => {
+  if (event && event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
+});
+
+self.addEventListener('fetch', (event) => {
+  const request = event.request;
+
+  if (shouldBypass(request)) {
+    event.respondWith(fetch(request));
+    return;
+  }
+
+  const url = new URL(request.url);
+
+  if (isNavigationRequest(request)) {
+    event.respondWith(networkFirstNavigation(request));
+    return;
+  }
+
+  if (isStaticAssetRequest(request, url)) {
+    event.respondWith(staleWhileRevalidate(request));
+  }
+});
+JS;
+}
+
+/**
+ * Emite o service worker PWA.
+ *
+ * @return void
+ */
+function gstore_output_pwa_service_worker() {
+	if ( ! gstore_is_pwa_service_worker_request() ) {
+		return;
+	}
+
+	nocache_headers();
+	header( 'Content-Type: application/javascript; charset=utf-8' );
+	header( 'Service-Worker-Allowed: ' . gstore_get_pwa_scope_path() );
+	header( 'X-Robots-Tag: noindex, nofollow', true );
+
+	echo gstore_build_pwa_service_worker();
+	exit;
+}
+add_action( 'template_redirect', 'gstore_output_pwa_service_worker', 0 );
+
+/**
+ * Adiciona as meta tags PWA globais do site.
+ *
+ * @return void
+ */
+function gstore_add_pwa_meta_tags() {
+	if ( is_admin() ) {
+		return;
+	}
+
+	$manifest_url  = gstore_get_pwa_manifest_url();
+	$theme_color   = gstore_get_pwa_theme_color();
+	$background    = gstore_get_pwa_background_color();
+	$site_icon_180 = function_exists( 'get_site_icon_url' ) ? get_site_icon_url( 180 ) : '';
+	$app_name      = gstore_get_pwa_app_name();
+	?>
+	<link rel="manifest" href="<?php echo esc_url( $manifest_url ); ?>" />
+	<meta name="theme-color" content="<?php echo esc_attr( $theme_color ); ?>" />
+	<meta name="mobile-web-app-capable" content="yes" />
+	<meta name="apple-mobile-web-app-capable" content="yes" />
+	<meta name="apple-mobile-web-app-status-bar-style" content="default" />
+	<meta name="apple-mobile-web-app-title" content="<?php echo esc_attr( $app_name ); ?>" />
+	<meta name="application-name" content="<?php echo esc_attr( $app_name ); ?>" />
+	<meta name="msapplication-TileColor" content="<?php echo esc_attr( $background ); ?>" />
+	<?php if ( $site_icon_180 ) : ?>
+		<link rel="apple-touch-icon" href="<?php echo esc_url( $site_icon_180 ); ?>" />
+	<?php endif; ?>
+	<?php
+}
+add_action( 'wp_head', 'gstore_add_pwa_meta_tags', 2 );
+
+/**
  * Enfileira scripts customizados.
  */
 function gstore_enqueue_scripts() {
@@ -1367,6 +1867,48 @@ function gstore_enqueue_scripts() {
 		array(),
 		$header_js_version,
 		true
+	);
+
+	$pwa_install_js_path    = get_theme_file_path( 'assets/js/pwa-install.js' );
+	$pwa_install_js_version = file_exists( $pwa_install_js_path ) ? (string) filemtime( $pwa_install_js_path ) : wp_get_theme()->get( 'Version' );
+	wp_enqueue_script(
+		'gstore-pwa-install',
+		get_theme_file_uri( 'assets/js/pwa-install.js' ),
+		array(),
+		$pwa_install_js_version,
+		true
+	);
+
+	$pwa_myaccount_url = home_url( '/minha-conta/' );
+	if ( class_exists( 'WooCommerce' ) && function_exists( 'wc_get_page_permalink' ) ) {
+		$myaccount_permalink = wc_get_page_permalink( 'myaccount' );
+		if ( $myaccount_permalink ) {
+			$pwa_myaccount_url = $myaccount_permalink;
+		}
+	}
+
+	wp_localize_script(
+		'gstore-pwa-install',
+		'gstorePwaConfig',
+		array(
+			'manifestUrl'       => gstore_get_pwa_manifest_url(),
+			'serviceWorkerUrl'  => gstore_get_pwa_service_worker_url(),
+			'startUrl'          => gstore_get_pwa_start_url(),
+			'scopeUrl'          => gstore_get_pwa_scope_url(),
+			'scopePath'         => gstore_get_pwa_scope_path(),
+			'canShowInstallCta' => is_user_logged_in() && current_user_can( 'manage_options' ),
+			'isAtendimentoPage' => is_page( 'atendimento' ),
+			'atendimentoUrl'    => home_url( '/atendimento/' ),
+			'myAccountUrl'      => $pwa_myaccount_url,
+			'themeColor'        => gstore_get_pwa_theme_color(),
+			'texts'             => array(
+				'badge'       => __( 'Android App', 'gstore' ),
+				'title'       => __( 'Instalar o site como aplicativo', 'gstore' ),
+				'description' => __( 'Teste a versão instalada no Android para validar navegacao, atalhos e experiencia em modo app.', 'gstore' ),
+				'button'      => __( 'Instalar app', 'gstore' ),
+				'hint'        => __( 'O app abre na Home e mantem acesso normal a Atendimento e Minha Conta.', 'gstore' ),
+			),
+		)
 	);
 
 	// Autocomplete / Busca inteligente (produtos + categorias)
