@@ -1373,12 +1373,86 @@ function gstore_is_pwa_service_worker_request() {
 }
 
 /**
+ * Verifica se a request atual está pedindo um ícone PWA gerado pelo tema.
+ *
+ * @return bool
+ */
+function gstore_is_pwa_icon_request() {
+	return gstore_get_pwa_icon_request_size() > 0;
+}
+
+/**
+ * Retorna o tamanho solicitado para o ícone PWA.
+ *
+ * @return int
+ */
+function gstore_get_pwa_icon_request_size() {
+	if ( ! isset( $_GET['gstore_pwa_icon'] ) ) {
+		return 0;
+	}
+
+	$size = absint( wp_unslash( $_GET['gstore_pwa_icon'] ) );
+	if ( $size < 64 || $size > 1024 ) {
+		return 0;
+	}
+
+	return $size;
+}
+
+/**
+ * Retorna uma versão curta do branding PWA para quebrar cache de manifest/ícones.
+ *
+ * @return string
+ */
+function gstore_get_pwa_branding_version() {
+	static $version = null;
+
+	if ( null !== $version ) {
+		return $version;
+	}
+
+	$attachment_id = gstore_get_pwa_icon_source_attachment_id();
+	$parts         = array(
+		'pwa-branding-v2',
+		(string) get_option( 'blogname', '' ),
+		(string) get_option( 'site_icon', 0 ),
+		(string) get_option( 'gstore_logo_id', 0 ),
+		(string) $attachment_id,
+		(string) wp_get_theme()->get( 'Version' ),
+	);
+
+	if ( $attachment_id > 0 ) {
+		$attachment_meta = wp_get_attachment_metadata( $attachment_id );
+		if ( ! empty( $attachment_meta ) ) {
+			$parts[] = wp_json_encode( $attachment_meta );
+		}
+
+		$attachment_file = get_attached_file( $attachment_id );
+		if ( is_string( $attachment_file ) && '' !== $attachment_file && file_exists( $attachment_file ) ) {
+			$parts[] = (string) filemtime( $attachment_file );
+			$parts[] = (string) filesize( $attachment_file );
+		}
+	}
+
+	$version = substr( md5( implode( '|', $parts ) ), 0, 12 );
+	return $version;
+}
+
+/**
  * Retorna a URL do manifest PWA.
  *
  * @return string
  */
 function gstore_get_pwa_manifest_url() {
-	return home_url( '/?gstore_manifest=1' );
+	return esc_url_raw(
+		add_query_arg(
+			array(
+				'gstore_manifest' => '1',
+				'v'               => gstore_get_pwa_branding_version(),
+			),
+			home_url( '/' )
+		)
+	);
 }
 
 /**
@@ -1424,14 +1498,11 @@ function gstore_get_pwa_scope_path() {
  * @return string
  */
 function gstore_get_pwa_app_name() {
-	if ( function_exists( 'gstore_get_store_name' ) ) {
-		$name = trim( (string) gstore_get_store_name( 'display' ) );
-		if ( '' !== $name ) {
-			return $name;
-		}
+	$name = trim( wp_specialchars_decode( (string) get_option( 'blogname', '' ), ENT_QUOTES ) );
+	if ( '' === $name ) {
+		$name = trim( wp_specialchars_decode( get_bloginfo( 'name' ), ENT_QUOTES ) );
 	}
 
-	$name = trim( wp_specialchars_decode( get_bloginfo( 'name' ), ENT_QUOTES ) );
 	return '' !== $name ? $name : 'GStore';
 }
 
@@ -1515,27 +1586,102 @@ function gstore_maybe_add_pwa_icon_from_attachment( array $icons, $attachment_id
 }
 
 /**
+ * Retorna o attachment usado como fonte para os ícones PWA.
+ *
+ * @return int
+ */
+function gstore_get_pwa_icon_source_attachment_id() {
+	$site_icon_id = absint( get_option( 'site_icon', 0 ) );
+	if ( $site_icon_id > 0 ) {
+		return $site_icon_id;
+	}
+
+	if ( function_exists( 'gstore_get_logo_id' ) ) {
+		$logo_id = absint( gstore_get_logo_id() );
+		if ( $logo_id > 0 ) {
+			return $logo_id;
+		}
+	}
+
+	return absint( get_theme_mod( 'custom_logo' ) );
+}
+
+/**
+ * Retorna a URL de ícone PWA para um tamanho exato.
+ *
+ * @param int $size Tamanho desejado.
+ * @return string
+ */
+function gstore_get_pwa_icon_url_for_size( $size ) {
+	$size = absint( $size );
+	if ( $size <= 0 ) {
+		return '';
+	}
+
+	$site_icon_id = absint( get_option( 'site_icon', 0 ) );
+	if ( $site_icon_id > 0 && function_exists( 'get_site_icon_url' ) ) {
+		$site_icon_url = get_site_icon_url( $size );
+		if ( $site_icon_url ) {
+			return esc_url_raw(
+				add_query_arg(
+					array(
+						'v' => gstore_get_pwa_branding_version(),
+					),
+					$site_icon_url
+				)
+			);
+		}
+	}
+
+	$attachment_id = gstore_get_pwa_icon_source_attachment_id();
+	if ( $attachment_id <= 0 ) {
+		return '';
+	}
+
+	return esc_url_raw(
+		add_query_arg(
+			array(
+				'gstore_pwa_icon' => $size,
+				'v'               => gstore_get_pwa_branding_version(),
+			),
+			home_url( '/' )
+		)
+	);
+}
+
+/**
+ * Retorna o tipo MIME mais provável do ícone PWA.
+ *
+ * @param string $url URL do ícone.
+ * @return string
+ */
+function gstore_get_pwa_icon_mime_type( $url ) {
+	$filetype = wp_check_filetype( (string) wp_parse_url( $url, PHP_URL_PATH ) );
+	return ! empty( $filetype['type'] ) ? $filetype['type'] : 'image/png';
+}
+
+/**
  * Retorna os ícones do manifest PWA.
  *
  * @return array<int, array<string, string>>
  */
 function gstore_get_pwa_icon_entries() {
-	$icons        = array();
-	$site_icon_id = absint( get_option( 'site_icon', 0 ) );
-
-	if ( $site_icon_id > 0 ) {
-		$icons = gstore_maybe_add_pwa_icon_from_attachment( $icons, $site_icon_id, 192, 'any' );
-		$icons = gstore_maybe_add_pwa_icon_from_attachment( $icons, $site_icon_id, 512, 'any' );
-	}
-
-	if ( empty( $icons ) ) {
-		$custom_logo_id = absint( get_theme_mod( 'custom_logo' ) );
-		if ( $custom_logo_id > 0 ) {
-			$icons = gstore_maybe_add_pwa_icon_from_attachment( $icons, $custom_logo_id, null, 'any' );
+	$icons = array();
+	foreach ( array( 192, 512 ) as $size ) {
+		$src = gstore_get_pwa_icon_url_for_size( $size );
+		if ( ! $src ) {
+			continue;
 		}
+
+		$icons[] = array(
+			'src'     => $src,
+			'sizes'   => $size . 'x' . $size,
+			'type'    => gstore_get_pwa_icon_mime_type( $src ),
+			'purpose' => 'any maskable',
+		);
 	}
 
-	return array_values( $icons );
+	return $icons;
 }
 
 /**
@@ -1639,6 +1785,155 @@ function gstore_output_pwa_manifest() {
 add_action( 'template_redirect', 'gstore_output_pwa_manifest', 0 );
 
 /**
+ * Emite um ícone PWA quadrado em PNG quando não houver site icon nativo.
+ *
+ * @return void
+ */
+function gstore_output_pwa_icon() {
+	if ( ! gstore_is_pwa_icon_request() ) {
+		return;
+	}
+
+	$size          = gstore_get_pwa_icon_request_size();
+	$attachment_id = gstore_get_pwa_icon_source_attachment_id();
+	if ( $size <= 0 || $attachment_id <= 0 ) {
+		status_header( 404 );
+		exit;
+	}
+
+	$fallback_url = wp_get_attachment_image_url( $attachment_id, array( $size, $size ) );
+	if ( ! $fallback_url ) {
+		$fallback_url = gstore_get_image_url( $attachment_id, 'full' );
+	}
+
+	if ( ! function_exists( 'imagecreatetruecolor' ) || ! function_exists( 'imagecreatefromstring' ) || ! function_exists( 'imagepng' ) ) {
+		if ( $fallback_url ) {
+			wp_safe_redirect( $fallback_url, 302 );
+			exit;
+		}
+
+		status_header( 404 );
+		exit;
+	}
+
+	$source_path = get_attached_file( $attachment_id );
+	if ( ( ! is_string( $source_path ) || '' === $source_path || ! file_exists( $source_path ) ) && function_exists( 'wp_get_original_image_path' ) ) {
+		$source_path = wp_get_original_image_path( $attachment_id );
+	}
+
+	if ( ! is_string( $source_path ) || '' === $source_path || ! file_exists( $source_path ) || ! is_readable( $source_path ) ) {
+		if ( $fallback_url ) {
+			wp_safe_redirect( $fallback_url, 302 );
+			exit;
+		}
+
+		status_header( 404 );
+		exit;
+	}
+
+	$image_data = file_get_contents( $source_path );
+	if ( false === $image_data ) {
+		if ( $fallback_url ) {
+			wp_safe_redirect( $fallback_url, 302 );
+			exit;
+		}
+
+		status_header( 404 );
+		exit;
+	}
+
+	$source_image = @imagecreatefromstring( $image_data );
+	if ( false === $source_image ) {
+		if ( $fallback_url ) {
+			wp_safe_redirect( $fallback_url, 302 );
+			exit;
+		}
+
+		status_header( 404 );
+		exit;
+	}
+
+	$source_width  = imagesx( $source_image );
+	$source_height = imagesy( $source_image );
+	if ( $source_width <= 0 || $source_height <= 0 ) {
+		imagedestroy( $source_image );
+		if ( $fallback_url ) {
+			wp_safe_redirect( $fallback_url, 302 );
+			exit;
+		}
+
+		status_header( 404 );
+		exit;
+	}
+
+	$canvas = imagecreatetruecolor( $size, $size );
+	if ( false === $canvas ) {
+		imagedestroy( $source_image );
+		if ( $fallback_url ) {
+			wp_safe_redirect( $fallback_url, 302 );
+			exit;
+		}
+
+		status_header( 404 );
+		exit;
+	}
+
+	$background_rgb = gstore_hex_to_rgb( gstore_get_pwa_background_color() );
+	if ( ! is_array( $background_rgb ) || ! isset( $background_rgb['r'], $background_rgb['g'], $background_rgb['b'] ) ) {
+		$background_rgb = array(
+			'r' => 255,
+			'g' => 255,
+			'b' => 255,
+		);
+	}
+
+	imagealphablending( $canvas, false );
+	imagesavealpha( $canvas, true );
+
+	$background = imagecolorallocate( $canvas, (int) $background_rgb['r'], (int) $background_rgb['g'], (int) $background_rgb['b'] );
+	imagefilledrectangle( $canvas, 0, 0, $size, $size, $background );
+
+	imagealphablending( $canvas, true );
+	imagealphablending( $source_image, true );
+	imagesavealpha( $source_image, true );
+
+	$max_target_size = (int) floor( $size * 0.72 );
+	$max_target_size = max( $max_target_size, (int) floor( $size * 0.5 ) );
+	$scale           = min( $max_target_size / $source_width, $max_target_size / $source_height );
+	$scale           = $scale > 0 ? $scale : 1;
+	$target_width    = max( 1, (int) round( $source_width * $scale ) );
+	$target_height   = max( 1, (int) round( $source_height * $scale ) );
+	$target_x        = (int) floor( ( $size - $target_width ) / 2 );
+	$target_y        = (int) floor( ( $size - $target_height ) / 2 );
+
+	imagecopyresampled(
+		$canvas,
+		$source_image,
+		$target_x,
+		$target_y,
+		0,
+		0,
+		$target_width,
+		$target_height,
+		$source_width,
+		$source_height
+	);
+
+	status_header( 200 );
+	header( 'Content-Type: image/png' );
+	header( 'Cache-Control: public, max-age=31536000, immutable' );
+	header( 'Expires: ' . gmdate( 'D, d M Y H:i:s', time() + YEAR_IN_SECONDS ) . ' GMT' );
+	header( 'X-Robots-Tag: noindex, nofollow', true );
+
+	imagepng( $canvas );
+
+	imagedestroy( $canvas );
+	imagedestroy( $source_image );
+	exit;
+}
+add_action( 'template_redirect', 'gstore_output_pwa_icon', 0 );
+
+/**
  * Monta o conteúdo do service worker PWA.
  *
  * @return string
@@ -1677,7 +1972,8 @@ const BYPASS_QUERY_KEYS = [
   'remove_item',
   'rest_route',
   'gstore_manifest',
-  'gstore_sw'
+  'gstore_sw',
+  'gstore_pwa_icon'
 ];
 
 function isSameOrigin(url) {
@@ -1836,7 +2132,8 @@ function gstore_add_pwa_meta_tags() {
 	$manifest_url  = gstore_get_pwa_manifest_url();
 	$theme_color   = gstore_get_pwa_theme_color();
 	$background    = gstore_get_pwa_background_color();
-	$site_icon_180 = function_exists( 'get_site_icon_url' ) ? get_site_icon_url( 180 ) : '';
+	$site_icon_192 = gstore_get_pwa_icon_url_for_size( 192 );
+	$site_icon_180 = gstore_get_pwa_icon_url_for_size( 180 );
 	$app_name      = gstore_get_pwa_app_name();
 	?>
 	<link rel="manifest" href="<?php echo esc_url( $manifest_url ); ?>" />
@@ -1847,6 +2144,9 @@ function gstore_add_pwa_meta_tags() {
 	<meta name="apple-mobile-web-app-title" content="<?php echo esc_attr( $app_name ); ?>" />
 	<meta name="application-name" content="<?php echo esc_attr( $app_name ); ?>" />
 	<meta name="msapplication-TileColor" content="<?php echo esc_attr( $background ); ?>" />
+	<?php if ( $site_icon_192 ) : ?>
+		<link rel="icon" sizes="192x192" href="<?php echo esc_url( $site_icon_192 ); ?>" />
+	<?php endif; ?>
 	<?php if ( $site_icon_180 ) : ?>
 		<link rel="apple-touch-icon" href="<?php echo esc_url( $site_icon_180 ); ?>" />
 	<?php endif; ?>
@@ -1906,6 +2206,7 @@ function gstore_enqueue_scripts() {
 				'title'       => __( 'Instalar o site como aplicativo', 'gstore' ),
 				'description' => __( 'Teste a versão instalada no Android para validar navegacao, atalhos e experiencia em modo app.', 'gstore' ),
 				'button'      => __( 'Instalar app', 'gstore' ),
+				'close'       => __( 'Fechar', 'gstore' ),
 				'hint'        => __( 'O app abre na Home e mantem acesso normal a Atendimento e Minha Conta.', 'gstore' ),
 			),
 		)

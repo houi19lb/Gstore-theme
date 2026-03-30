@@ -6316,95 +6316,107 @@ main.wp-block-group.alignfull.is-layout-constrained.Gstore-blog-shell {
 	border-radius: 4px;
 }
 
-.Gstore-support-install[hidden] {
-	display: none !important;
+.Gstore-pwa-install-modal {
+	position: fixed;
+	top: calc(env(safe-area-inset-top, 0px) + 14px);
+	left: 50%;
+	width: min(560px, calc(100vw - 24px));
+	transform: translate(-50%, calc(-100% - 32px));
+	opacity: 0;
+	pointer-events: none;
+	z-index: 2147482500;
+	transition: transform 0.28s ease, opacity 0.22s ease;
 }
 
-.Gstore-support-install {
-	margin: 0;
+.Gstore-pwa-install-modal.is-visible {
+	transform: translate(-50%, 0);
+	opacity: 1;
+	pointer-events: auto;
 }
 
-.Gstore-pwa-install-card {
-	display: grid;
-	grid-template-columns: minmax(0, 1fr) auto;
-	gap: 24px;
-	align-items: center;
-	padding: clamp(24px, 3vw, 36px);
-	background: linear-gradient(135deg, rgba(181, 166, 66, 0.1), rgba(255, 255, 255, 0.98));
-	border: 1px solid rgba(181, 166, 66, 0.28);
-	border-radius: 4px;
-	box-shadow: none;
-}
-
-.Gstore-pwa-install-card__content {
+.Gstore-pwa-install-modal__panel {
+	position: relative;
 	display: flex;
 	flex-direction: column;
-	gap: 10px;
+	gap: 12px;
+	padding: 20px 22px 22px;
+	background: #ffffff;
+	border: 1px solid rgba(181, 166, 66, 0.32);
+	border-radius: 4px;
+	box-shadow: 0 18px 36px rgba(0, 0, 0, 0.14);
 }
 
-.Gstore-pwa-install-card__badge {
-	display: inline-flex;
-	align-items: center;
-	gap: 8px;
+.Gstore-pwa-install-modal__badge {
 	margin: 0;
-	font-size: 0.82rem;
+	font-size: 0.78rem;
 	font-weight: 700;
 	letter-spacing: 0.08em;
 	text-transform: uppercase;
 	color: var(--gstore-color-accent, #b5a642);
 }
 
-.Gstore-pwa-install-card__title {
+.Gstore-pwa-install-modal__title {
 	margin: 0;
-	font-size: clamp(1.35rem, 2vw, 1.8rem);
+	padding-right: 28px;
+	font-size: clamp(1.15rem, 2vw, 1.45rem);
 	color: var(--text-main, #1a1a1a);
 }
 
-.Gstore-pwa-install-card__description,
-.Gstore-pwa-install-card__hint {
+.Gstore-pwa-install-modal__description {
 	margin: 0;
-	line-height: 1.6;
-	color: var(--text-main, #1a1a1a);
-}
-
-.Gstore-pwa-install-card__hint {
+	line-height: 1.55;
 	color: var(--text-muted, #6b7280);
-	font-size: 0.95rem;
 }
 
-.Gstore-pwa-install-card__actions {
+.Gstore-pwa-install-modal__actions {
 	display: flex;
 	align-items: center;
-	justify-content: flex-end;
+	justify-content: flex-start;
 }
 
-.Gstore-pwa-install-card__button {
+.Gstore-pwa-install-modal__button {
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
-	min-height: 48px;
-	padding: 0 22px;
+	min-height: 44px;
+	padding: 0 20px;
 	border: 1px solid var(--gstore-color-accent, #b5a642);
 	border-radius: 4px;
 	background: var(--gstore-color-accent, #b5a642);
 	color: #ffffff;
 	font-weight: 700;
-	font-size: 0.98rem;
+	font-size: 0.96rem;
 	line-height: 1;
 	cursor: pointer;
 	transition: transform 0.2s ease, background-color 0.2s ease, border-color 0.2s ease;
 }
 
-.Gstore-pwa-install-card__button:hover,
-.Gstore-pwa-install-card__button:focus-visible {
+.Gstore-pwa-install-modal__button:hover,
+.Gstore-pwa-install-modal__button:focus-visible {
 	background: var(--gstore-color-accent-hover, #9c8f34);
 	border-color: var(--gstore-color-accent-hover, #9c8f34);
 	transform: translateY(-1px);
 }
 
-.Gstore-pwa-install-card__button:focus-visible {
+.Gstore-pwa-install-modal__button:focus-visible,
+.Gstore-pwa-install-modal__close:focus-visible {
 	outline: 2px solid rgba(181, 166, 66, 0.24);
 	outline-offset: 2px;
+}
+
+.Gstore-pwa-install-modal__close {
+	position: absolute;
+	top: 10px;
+	right: 10px;
+	width: 32px;
+	height: 32px;
+	padding: 0;
+	border: 0;
+	background: transparent;
+	color: var(--text-muted, #6b7280);
+	font-size: 1.5rem;
+	line-height: 1;
+	cursor: pointer;
 }
 
 body.gstore-pwa-standalone {
@@ -6416,22 +6428,17 @@ body.gstore-pwa-standalone .Gstore-header {
 	padding-top: env(safe-area-inset-top, 0px);
 }
 
-@media (max-width: 900px) {
-	.Gstore-pwa-install-card {
-		grid-template-columns: 1fr;
-	}
-
-	.Gstore-pwa-install-card__actions {
-		justify-content: flex-start;
-	}
-}
-
 @media (max-width: 640px) {
-	.Gstore-pwa-install-card {
-		padding: 20px;
+	.Gstore-pwa-install-modal {
+		top: calc(env(safe-area-inset-top, 0px) + 10px);
+		width: calc(100vw - 16px);
 	}
 
-	.Gstore-pwa-install-card__button {
+	.Gstore-pwa-install-modal__panel {
+		padding: 18px 18px 18px;
+	}
+
+	.Gstore-pwa-install-modal__button {
 		width: 100%;
 	}
 }

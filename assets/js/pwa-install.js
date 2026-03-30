@@ -3,7 +3,7 @@
 
 	var config = window.gstorePwaConfig || {};
 	var deferredPrompt = null;
-	var placeholder = null;
+	var modal = null;
 	var ctaVisible = false;
 	var mediaQuery = null;
 
@@ -80,57 +80,81 @@
 		return fallback;
 	}
 
-	function getPlaceholder() {
-		if (placeholder) return placeholder;
-		placeholder = document.querySelector('[data-gstore-pwa-cta]');
-		return placeholder;
-	}
+	function getModal() {
+		if (modal) return modal;
+		if (!document.body || !canShowPageCta()) return null;
 
-	function renderCtaMarkup() {
-		var el = getPlaceholder();
-		if (!el) return;
-
-		el.innerHTML =
-			'<div class="Gstore-pwa-install-card">' +
-				'<div class="Gstore-pwa-install-card__content">' +
-					'<p class="Gstore-pwa-install-card__badge">' + getText('badge', 'Android App') + '</p>' +
-					'<h2 class="Gstore-pwa-install-card__title">' + getText('title', 'Instalar o site como aplicativo') + '</h2>' +
-					'<p class="Gstore-pwa-install-card__description">' + getText('description', 'Teste a versao instalada no Android para validar navegacao, atalhos e experiencia em modo app.') + '</p>' +
-					'<p class="Gstore-pwa-install-card__hint">' + getText('hint', 'O app abre na Home e mantem acesso normal a Atendimento e Minha Conta.') + '</p>' +
-				'</div>' +
-				'<div class="Gstore-pwa-install-card__actions">' +
-					'<button type="button" class="Gstore-pwa-install-card__button" data-gstore-pwa-install-button>' + getText('button', 'Instalar app') + '</button>' +
+		modal = document.createElement('div');
+		modal.className = 'Gstore-pwa-install-modal';
+		modal.hidden = true;
+		modal.setAttribute('aria-hidden', 'true');
+		modal.innerHTML =
+			'<div class="Gstore-pwa-install-modal__panel" role="dialog" aria-modal="true" aria-labelledby="gstore-pwa-install-title">' +
+				'<button type="button" class="Gstore-pwa-install-modal__close" data-gstore-pwa-close aria-label="' + getText('close', 'Fechar') + '">&times;</button>' +
+				'<p class="Gstore-pwa-install-modal__badge">' + getText('badge', 'Android App') + '</p>' +
+				'<h2 id="gstore-pwa-install-title" class="Gstore-pwa-install-modal__title">' + getText('title', 'Instalar o site como aplicativo') + '</h2>' +
+				'<p class="Gstore-pwa-install-modal__description">' + getText('description', 'Teste a versao instalada no Android para validar navegacao, atalhos e experiencia em modo app.') + '</p>' +
+				'<div class="Gstore-pwa-install-modal__actions">' +
+					'<button type="button" class="Gstore-pwa-install-modal__button" data-gstore-pwa-install-button>' + getText('button', 'Instalar app') + '</button>' +
 				'</div>' +
 			'</div>';
 
-		var button = el.querySelector('[data-gstore-pwa-install-button]');
-		if (button) {
-			button.addEventListener('click', function () {
+		document.body.appendChild(modal);
+
+		var installButton = modal.querySelector('[data-gstore-pwa-install-button]');
+		if (installButton) {
+			installButton.addEventListener('click', function () {
 				if (!window.gstorePwa || typeof window.gstorePwa.promptInstall !== 'function') return;
 
 				window.gstorePwa.promptInstall().catch(function () {
-					// Sem acao: se o prompt nao existir mais, o CTA permanece oculto.
+					// Sem acao: se o prompt nao existir mais, o modal permanece oculto.
 				});
 			});
 		}
+
+		var closeButton = modal.querySelector('[data-gstore-pwa-close]');
+		if (closeButton) {
+			closeButton.addEventListener('click', function () {
+				hideCta();
+			});
+		}
+
+		document.addEventListener('keydown', function (event) {
+			if (event.key === 'Escape' && ctaVisible) {
+				hideCta();
+			}
+		});
+
+		return modal;
 	}
 
 	function showCta() {
-		var el = getPlaceholder();
+		var el = getModal();
 		if (!el || ctaVisible || !canShowPageCta() || !deferredPrompt || isStandaloneMode()) {
 			return;
 		}
 
-		renderCtaMarkup();
 		el.hidden = false;
+		el.setAttribute('aria-hidden', 'false');
+		document.body.classList.add('gstore-pwa-install-modal-open');
+		window.requestAnimationFrame(function () {
+			el.classList.add('is-visible');
+		});
 		ctaVisible = true;
 	}
 
 	function hideCta() {
-		var el = getPlaceholder();
+		var el = getModal();
 		if (!el) return;
 
-		el.hidden = true;
+		el.classList.remove('is-visible');
+		el.setAttribute('aria-hidden', 'true');
+		document.body.classList.remove('gstore-pwa-install-modal-open');
+		window.setTimeout(function () {
+			if (!el.classList.contains('is-visible')) {
+				el.hidden = true;
+			}
+		}, 260);
 		ctaVisible = false;
 	}
 
