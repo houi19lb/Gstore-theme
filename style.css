@@ -2979,6 +2979,71 @@ body.single-product .onsale {
 	box-shadow: 0 0 0 3px rgba(255, 92, 0, 0.15);
 }
 
+.gstore-hidden-price {
+	display: inline-flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: 6px;
+	max-width: 100%;
+}
+
+.gstore-hidden-price__eyebrow {
+	font-size: var(--gstore-font-size-xs);
+	color: var(--gstore-color-text-gray-500, #6b7280);
+	text-transform: uppercase;
+	letter-spacing: 0.08em;
+	font-weight: 700;
+}
+
+.gstore-hidden-price__value {
+	display: inline-block;
+	font-weight: 900;
+	line-height: 1;
+	letter-spacing: 0.12em;
+	filter: blur(11px);
+	opacity: 0.9;
+	user-select: none;
+	pointer-events: none;
+	white-space: nowrap;
+}
+
+.gstore-hidden-price__hint {
+	font-size: var(--gstore-font-size-xs);
+	color: var(--gstore-color-text-gray-600, #4b5563);
+}
+
+.gstore-hidden-price--inline {
+	display: inline-flex;
+	gap: 0;
+}
+
+.gstore-hidden-price--inline .gstore-hidden-price__eyebrow,
+.gstore-hidden-price--inline .gstore-hidden-price__hint {
+	display: none;
+}
+
+.gstore-hidden-price--inline .gstore-hidden-price__value {
+	font-size: inherit;
+	filter: blur(8px);
+}
+
+.gstore-hidden-price--card,
+.gstore-hidden-price--block,
+.gstore-hidden-price--single {
+	width: 100%;
+}
+
+.gstore-hidden-price--card .gstore-hidden-price__value,
+.gstore-hidden-price--block .gstore-hidden-price__value,
+.gstore-hidden-price--single .gstore-hidden-price__value {
+	font-size: clamp(28px, 2vw + 12px, 32px);
+	color: var(--green);
+}
+
+.buybox-header.is-price-hidden {
+	align-items: flex-start;
+}
+
 .buybox .btn-secondary {
 	height: 36px;
 	padding: 0 14px;

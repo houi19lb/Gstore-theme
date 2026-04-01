@@ -152,6 +152,66 @@ function gstore_get_product_id( $product ) {
 }
 
 /**
+ * Verifica se o produto está com preço oculto via plugin/admin.
+ *
+ * @param WC_Product|int|null $product Produto, variação ou ID.
+ * @return bool
+ */
+function gstore_product_hides_price( $product ) {
+	$product_id = gstore_get_product_id( $product );
+	if ( $product_id <= 0 ) {
+		return false;
+	}
+
+	if ( class_exists( '\GStore\Services\Hidden_Price_Service' ) ) {
+		return \GStore\Services\Hidden_Price_Service::product_has_hidden_price( $product );
+	}
+
+	if ( function_exists( 'wc_get_product' ) ) {
+		$product_object = $product instanceof WC_Product ? $product : wc_get_product( $product_id );
+		if ( $product_object instanceof WC_Product_Variation && method_exists( $product_object, 'get_parent_id' ) ) {
+			$parent_id = (int) $product_object->get_parent_id();
+			if ( $parent_id > 0 ) {
+				$product_id = $parent_id;
+			}
+		}
+	}
+
+	return (bool) get_post_meta( $product_id, '_gstore_hide_price', true );
+}
+
+/**
+ * Retorna o HTML da máscara visual do preço oculto.
+ *
+ * @param string $context Contexto visual: inline, card, single ou block.
+ * @return string
+ */
+function gstore_get_hidden_price_mask_html( $context = 'inline' ) {
+	if ( class_exists( '\GStore\Services\Hidden_Price_Service' ) ) {
+		return \GStore\Services\Hidden_Price_Service::get_mask_html( $context );
+	}
+
+	$allowed_contexts = array( 'inline', 'card', 'single', 'block' );
+	$context          = in_array( $context, $allowed_contexts, true ) ? $context : 'inline';
+	$classes          = 'gstore-hidden-price gstore-hidden-price--' . $context;
+	$aria_label       = __( 'Preço oculto', 'gstore' );
+	$eyebrow_text     = 'single' === $context ? __( 'Preço oculto no site', 'gstore' ) : __( 'Preço oculto', 'gstore' );
+	$hint_text        = 'single' === $context
+		? __( 'Consulte nossa equipe para preço e condições.', 'gstore' )
+		: __( 'Compra online desativada.', 'gstore' );
+	$eyebrow_html     = 'inline' === $context ? '' : '<span class="gstore-hidden-price__eyebrow">' . esc_html( $eyebrow_text ) . '</span>';
+	$hint_html        = 'inline' === $context ? '' : '<span class="gstore-hidden-price__hint">' . esc_html( $hint_text ) . '</span>';
+
+	return sprintf(
+		'<span class="%1$s" aria-label="%2$s">%3$s<span class="gstore-hidden-price__value" aria-hidden="true">R$ 000.000,00</span>%4$s</span>',
+		esc_attr( $classes ),
+		esc_attr( $aria_label ),
+		$eyebrow_html,
+		$hint_html
+	);
+}
+
+/**
  * Desativa o crop das imagens de produto do WooCommerce.
  * Garante que as miniaturas mantenham a proporção original.
  */
@@ -4230,6 +4290,9 @@ function gstore_get_installment_display_price( $product ) {
 	if ( ! $product instanceof WC_Product ) {
 		return 0.0;
 	}
+	if ( gstore_product_hides_price( $product ) ) {
+		return 0.0;
+	}
 
 	$price = 0.0;
 
@@ -4321,6 +4384,9 @@ function gstore_get_product_installment_preview_data( $product, $max_installment
 	if ( ! $product instanceof WC_Product ) {
 		return $data;
 	}
+	if ( gstore_product_hides_price( $product ) ) {
+		return $data;
+	}
 
 	$max_installments    = max( 1, (int) $max_installments );
 	$quantity            = max( 1, (int) $quantity );
@@ -4387,7 +4453,10 @@ function gstore_add_payment_info_to_price( $html, $block_content, $block ) {
 	if ( ! $product ) {
 		global $product;
 	}
-	
+	if ( $product && is_a( $product, 'WC_Product' ) && gstore_product_hides_price( $product ) ) {
+		return gstore_get_hidden_price_mask_html( 'block' );
+	}
+
 	// Busca o preview alinhado ao plugin/admin; se indisponível, cai no fallback simples.
 	$installment_value = 0;
 	$installment_text_content = 'ou em até 21x no cartão';

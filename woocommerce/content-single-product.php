@@ -402,6 +402,7 @@ $oos_price_mode     = $show_price_oos ? 'show' : 'hide';
 
 // Disponibilidade (seleção do admin via plugin GSTORE).
 $product_id = (int) $product->get_id();
+$hide_price = function_exists( 'gstore_product_hides_price' ) ? gstore_product_hides_price( $product ) : (bool) get_post_meta( $product_id, '_gstore_hide_price', true );
 
 // Chave correta: _gstore_availability (com underline no começo).
 $slug_disponibilidade = $product_id ? (string) get_post_meta( $product_id, '_gstore_availability', true ) : '';
@@ -469,13 +470,16 @@ $formatted_installment = ! empty( $installment_preview['installments'] ) && ! em
 		$installments
 	)
 	: '' );
+if ( $hide_price ) {
+	$formatted_installment = '';
+}
 
 // Desconto Pix (apenas visual — não altera preço real, parcelas ou carrinho).
 $pix_discount_config  = function_exists( 'gstore_blu_pix_get_discount_config' ) ? gstore_blu_pix_get_discount_config() : array( 'enabled' => false );
-$pix_discount_active  = ! empty( $pix_discount_config['enabled'] ) && $display_price > 0;
+$pix_discount_active  = ! $hide_price && ! empty( $pix_discount_config['enabled'] ) && $display_price > 0;
 $pix_discount_percent = $pix_discount_active ? (float) $pix_discount_config['percent'] : 0;
 $pix_discount_price   = $pix_discount_active && function_exists( 'gstore_blu_pix_get_discounted_price' ) ? gstore_blu_pix_get_discounted_price( $display_price, $product->get_id() ) : false;
-$show_variable_from_price = $is_variable && $display_price > 0;
+$show_variable_from_price = ! $hide_price && $is_variable && $display_price > 0;
 $variable_price_html      = '';
 
 if ( $is_variable ) {
@@ -526,6 +530,10 @@ $benefit_items = array(
 );
 
 $hero_meta_cards   = gstore_get_hero_meta_cards( $stock_label, $formatted_installment );
+if ( $hide_price && isset( $hero_meta_cards[1] ) && is_array( $hero_meta_cards[1] ) ) {
+	$hero_meta_cards[1]['text']       = __( 'Condições sob consulta com nosso atendimento.', 'gstore' );
+	$hero_meta_cards[1]['allow_html'] = false;
+}
 $contact_entries   = gstore_get_contact_entries();
 $guarantee_badges  = gstore_get_guarantee_badges();
 
@@ -713,7 +721,7 @@ if ( $reviews_has_value ) {
 											</div>
 											<div
 												class="Gstore-single-product__info-sub"
-												<?php if ( ! empty( $card['is_installment'] ) ) : ?>
+												<?php if ( ! $hide_price && ! empty( $card['is_installment'] ) ) : ?>
 													data-gstore-installment-target="1"
 													data-product-id="<?php echo esc_attr( (string) gstore_get_product_id( $product ) ); ?>"
 													data-max-installments="<?php echo esc_attr( $installments ); ?>"
@@ -839,63 +847,73 @@ if ( $reviews_has_value ) {
 				<div class="Gstore-single-product__summary">
 					<div class="Gstore-single-product__summary-card Gstore-single-product__buybox buybox <?php echo esc_attr( $buybox_stock_class ); ?>">
 						<!-- Preço -->
-						<?php if ( ! $is_out_of_stock || $show_price_oos ) : ?>
+						<?php if ( $hide_price || ! $is_out_of_stock || $show_price_oos ) : ?>
 							<div
-								class="buybox-header<?php echo ( $is_out_of_stock && $show_price_oos ) ? ' is-unavailable' : ''; ?>"
+								class="buybox-header<?php echo ( $is_out_of_stock && $show_price_oos && ! $hide_price ) ? ' is-unavailable' : ''; ?><?php echo $hide_price ? ' is-price-hidden' : ''; ?>"
 								data-gstore-price-header
 								data-gstore-oos-price-mode="<?php echo esc_attr( $oos_price_mode ); ?>"
+								data-gstore-hide-price="<?php echo $hide_price ? '1' : '0'; ?>"
 							>
 								<div>
-									<div class="price-label"><?php esc_html_e( 'À vista no PIX', 'gstore' ); ?></div>
-								<?php if ( $show_variable_from_price ) : ?>
-									<div class="price-prefix" data-gstore-price-prefix><?php esc_html_e( 'A partir de', 'gstore' ); ?></div>
-								<?php endif; ?>
-								<?php if ( $pix_discount_price ) : ?>
-									<?php
-									// Com desconto Pix: preço riscado + preço Pix, no mesmo padrão visual do WooCommerce (del/ins).
-									// Produto com promoção: riscado = regular. Sem promoção: riscado = current.
-									$pix_strikethrough = $has_discount ? $regular_price : $display_price;
-									?>
-									<div class="price" id="price" data-gstore-price data-pix-percent="<?php echo esc_attr( $pix_discount_percent ); ?>">
-										<del><?php echo wp_kses_post( wc_price( $pix_strikethrough ) ); ?></del>
-										<ins><?php echo wp_kses_post( wc_price( $pix_discount_price ) ); ?></ins>
-									</div>
-								<?php else : ?>
-									<div class="price" id="price" data-gstore-price data-pix-percent="0">
-										<?php if ( $is_variable ) : ?>
-											<?php echo wp_kses_post( $variable_price_html ); ?>
-										<?php else : ?>
-											<?php woocommerce_template_single_price(); ?>
-										<?php endif; ?>
-									</div>
-								<?php endif; ?>
-									<?php if ( $formatted_installment ) : ?>
-										<div class="price-sub-wrapper" data-gstore-installment-wrapper>
-											<div
-												class="price-sub"
-												data-gstore-installment-target="1"
-												data-product-id="<?php echo esc_attr( (string) ( ! empty( $installment_preview['product_id'] ) ? $installment_preview['product_id'] : gstore_resolve_installment_product_id( $product ) ) ); ?>"
-												data-max-installments="<?php echo esc_attr( $installments ); ?>"
-												data-initial-text="<?php echo esc_attr( wp_strip_all_tags( (string) $formatted_installment ) ); ?>"
-											>
-												<?php echo wp_kses_post( $formatted_installment ); ?>
-											</div>
-											<select
-												class="price-sub-installments-select"
-												data-gstore-installment-select
-												aria-label="<?php esc_attr_e( 'Selecione o número de parcelas', 'gstore' ); ?>"
-												style="display: none;"
-											>
-												<option value=""><?php esc_html_e( 'Carregando...', 'gstore' ); ?></option>
-											</select>
+									<?php if ( $hide_price ) : ?>
+										<div class="price-label"><?php esc_html_e( 'Preço oculto no site', 'gstore' ); ?></div>
+										<div class="price" id="price" data-gstore-price data-pix-percent="0">
+											<?php echo wp_kses_post( gstore_get_hidden_price_mask_html( 'single' ) ); ?>
 										</div>
+									<?php else : ?>
+										<div class="price-label"><?php esc_html_e( 'À vista no PIX', 'gstore' ); ?></div>
+									<?php if ( $show_variable_from_price ) : ?>
+										<div class="price-prefix" data-gstore-price-prefix><?php esc_html_e( 'A partir de', 'gstore' ); ?></div>
+									<?php endif; ?>
+									<?php if ( $pix_discount_price ) : ?>
+										<?php
+										// Com desconto Pix: preço riscado + preço Pix, no mesmo padrão visual do WooCommerce (del/ins).
+										// Produto com promoção: riscado = regular. Sem promoção: riscado = current.
+										$pix_strikethrough = $has_discount ? $regular_price : $display_price;
+										?>
+										<div class="price" id="price" data-gstore-price data-pix-percent="<?php echo esc_attr( $pix_discount_percent ); ?>">
+											<del><?php echo wp_kses_post( wc_price( $pix_strikethrough ) ); ?></del>
+											<ins><?php echo wp_kses_post( wc_price( $pix_discount_price ) ); ?></ins>
+										</div>
+									<?php else : ?>
+										<div class="price" id="price" data-gstore-price data-pix-percent="0">
+											<?php if ( $is_variable ) : ?>
+												<?php echo wp_kses_post( $variable_price_html ); ?>
+											<?php else : ?>
+												<?php woocommerce_template_single_price(); ?>
+											<?php endif; ?>
+										</div>
+									<?php endif; ?>
+										<?php if ( $formatted_installment ) : ?>
+											<div class="price-sub-wrapper" data-gstore-installment-wrapper>
+												<div
+													class="price-sub"
+													data-gstore-installment-target="1"
+													data-product-id="<?php echo esc_attr( (string) ( ! empty( $installment_preview['product_id'] ) ? $installment_preview['product_id'] : gstore_resolve_installment_product_id( $product ) ) ); ?>"
+													data-max-installments="<?php echo esc_attr( $installments ); ?>"
+													data-initial-text="<?php echo esc_attr( wp_strip_all_tags( (string) $formatted_installment ) ); ?>"
+												>
+													<?php echo wp_kses_post( $formatted_installment ); ?>
+												</div>
+												<select
+													class="price-sub-installments-select"
+													data-gstore-installment-select
+													aria-label="<?php esc_attr_e( 'Selecione o número de parcelas', 'gstore' ); ?>"
+													style="display: none;"
+												>
+													<option value=""><?php esc_html_e( 'Carregando...', 'gstore' ); ?></option>
+												</select>
+											</div>
+										<?php endif; ?>
 									<?php endif; ?>
 								</div>
 
-								<button type="button" class="btn-secondary" data-gstore-reset-purchase>
-									<?php esc_html_e( 'Limpar', 'gstore' ); ?>
-								</button>
-								<?php if ( $show_price_oos ) : ?>
+								<?php if ( ! $hide_price ) : ?>
+									<button type="button" class="btn-secondary" data-gstore-reset-purchase>
+										<?php esc_html_e( 'Limpar', 'gstore' ); ?>
+									</button>
+								<?php endif; ?>
+								<?php if ( ! $hide_price && $show_price_oos ) : ?>
 									<div class="price-unavailable-notice" data-gstore-price-unavailable-notice<?php echo $is_out_of_stock ? '' : ' hidden'; ?>>
 										<i class="fa-solid fa-circle-info" aria-hidden="true"></i>
 										<?php esc_html_e( 'Preço de referência (produto indisponível)', 'gstore' ); ?>
@@ -947,6 +965,19 @@ if ( $reviews_has_value ) {
 							<?php
 							$att_page = get_page_by_path( 'atendimento' );
 							$att_url  = $att_page ? get_permalink( $att_page ) : home_url( '/atendimento/' );
+							if ( $hide_price ) :
+								?>
+								<div class="Gstore-oos-card Gstore-oos-card--hidden-price" role="region" aria-label="<?php esc_attr_e( 'Produto com preço oculto', 'gstore' ); ?>">
+									<div class="Gstore-oos-card__title"><?php esc_html_e( 'Compra online desativada para este produto', 'gstore' ); ?></div>
+									<div class="Gstore-oos-card__text">
+										<?php esc_html_e( 'O valor está oculto no site. Fale com nossa equipe para consultar preço, disponibilidade e condições.', 'gstore' ); ?>
+									</div>
+									<a class="Gstore-oos-card__cta" href="<?php echo esc_url( $att_url ); ?>">
+										<?php esc_html_e( 'Falar com atendimento', 'gstore' ); ?>
+									</a>
+								</div>
+								<?php
+							else :
 
 							$warning_text = $is_out_of_stock
 								? __( 'Selecione marca, cor, tamanho para enviar sua escolha ao atendimento.', 'gstore' )
@@ -1048,6 +1079,7 @@ if ( $reviews_has_value ) {
 								</a>
 							</div>
 							<?php
+						endif;
 						endif;
 						?>
 						</div>

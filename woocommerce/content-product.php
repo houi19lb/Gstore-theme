@@ -41,7 +41,8 @@ if ( $is_variable_product && $all_variations_out_of_stock ) {
 
 $is_out_of_stock = 'outofstock' === $stock_status;
 $show_price_oos = 'yes' === (string) get_option( 'gstore_show_price_out_of_stock', 'no' );
-$should_show_discount_badge = ! ( $is_out_of_stock && ! $show_price_oos );
+$hide_price = function_exists( 'gstore_product_hides_price' ) ? gstore_product_hides_price( $product ) : (bool) get_post_meta( $product->get_id(), '_gstore_hide_price', true );
+$should_show_discount_badge = ! $hide_price && ! ( $is_out_of_stock && ! $show_price_oos );
 
 $regular_price_amount  = $is_variable_product ? (float) $product->get_variation_regular_price( 'min', true ) : (float) $product->get_regular_price();
 $sale_price_amount     = $is_variable_product ? (float) $product->get_variation_sale_price( 'min', true ) : (float) $product->get_sale_price();
@@ -71,7 +72,7 @@ $pix_discount_price      = $pix_discount_active && function_exists( 'gstore_blu_
 $pix_discount_price_html = $pix_discount_price ? wc_price( $pix_discount_price ) : '';
 $pix_discount_percent    = $pix_discount_active ? (float) $pix_discount_config['percent'] : 0;
 ?>
-<li <?php wc_product_class( 'Gstore-product-card', $product ); ?>>
+<li <?php wc_product_class( 'Gstore-product-card' . ( $hide_price ? ' Gstore-product-card--price-hidden' : '' ), $product ); ?>>
 	<div class="Gstore-product-card__inner">
 		<div class="Gstore-product-card__top">
 			<?php
@@ -143,7 +144,11 @@ $pix_discount_percent    = $pix_discount_active ? (float) $pix_discount_config['
 					</a>
 				</h3>
 			</div>
-			<?php if ( $is_out_of_stock && ! $show_price_oos ) : ?>
+			<?php if ( $hide_price ) : ?>
+				<div class="Gstore-product-card__price-section Gstore-product-card__price-section--masked">
+					<?php echo wp_kses_post( gstore_get_hidden_price_mask_html( 'card' ) ); ?>
+				</div>
+			<?php elseif ( $is_out_of_stock && ! $show_price_oos ) : ?>
 				<div class="Gstore-product-card__reposicao">
 					<span class="Gstore-product-card__reposicao-badge"><?php esc_html_e( 'EM REPOSIÇÃO', 'gstore' ); ?></span>
 					<div class="Gstore-product-card__reposicao-text"><?php esc_html_e( 'Este item está temporariamente sem estoque.', 'gstore' ); ?></div>
