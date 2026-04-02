@@ -177,10 +177,6 @@ function gstore_product_hides_price( $product ) {
 		}
 	}
 
-	if ( is_user_logged_in() && current_user_can( 'edit_post', $product_id ) ) {
-		return false;
-	}
-
 	if ( is_admin() ) {
 		return false;
 	}
