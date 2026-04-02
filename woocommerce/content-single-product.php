@@ -531,7 +531,7 @@ $benefit_items = array(
 
 $hero_meta_cards   = gstore_get_hero_meta_cards( $stock_label, $formatted_installment );
 if ( $hide_price && isset( $hero_meta_cards[1] ) && is_array( $hero_meta_cards[1] ) ) {
-	$hero_meta_cards[1]['text']       = __( 'Condições sob consulta com nosso atendimento.', 'gstore' );
+	$hero_meta_cards[1]['text']       = __( 'O valor aparece apenas na etapa final do checkout.', 'gstore' );
 	$hero_meta_cards[1]['allow_html'] = false;
 }
 $contact_entries   = gstore_get_contact_entries();
@@ -965,20 +965,6 @@ if ( $reviews_has_value ) {
 							<?php
 							$att_page = get_page_by_path( 'atendimento' );
 							$att_url  = $att_page ? get_permalink( $att_page ) : home_url( '/atendimento/' );
-							if ( $hide_price ) :
-								?>
-								<div class="Gstore-oos-card Gstore-oos-card--hidden-price" role="region" aria-label="<?php esc_attr_e( 'Produto com preço oculto', 'gstore' ); ?>">
-									<div class="Gstore-oos-card__title"><?php esc_html_e( 'Compra online desativada para este produto', 'gstore' ); ?></div>
-									<div class="Gstore-oos-card__text">
-										<?php esc_html_e( 'O valor está oculto no site. Fale com nossa equipe para consultar preço, disponibilidade e condições.', 'gstore' ); ?>
-									</div>
-									<a class="Gstore-oos-card__cta" href="<?php echo esc_url( $att_url ); ?>">
-										<?php esc_html_e( 'Falar com atendimento', 'gstore' ); ?>
-									</a>
-								</div>
-								<?php
-							else :
-
 							$warning_text = $is_out_of_stock
 								? __( 'Selecione marca, cor, tamanho para enviar sua escolha ao atendimento.', 'gstore' )
 								: __( 'Selecione todas as opções para liberar o botão', 'gstore' );
@@ -1079,7 +1065,6 @@ if ( $reviews_has_value ) {
 								</a>
 							</div>
 							<?php
-						endif;
 						endif;
 						?>
 						</div>

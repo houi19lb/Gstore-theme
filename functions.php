@@ -164,7 +164,7 @@ function gstore_product_hides_price( $product ) {
 	}
 
 	if ( class_exists( '\GStore\Services\Hidden_Price_Service' ) ) {
-		return \GStore\Services\Hidden_Price_Service::product_has_hidden_price( $product );
+		return \GStore\Services\Hidden_Price_Service::should_hide_price_on_current_request( $product );
 	}
 
 	if ( function_exists( 'wc_get_product' ) ) {
@@ -175,6 +175,14 @@ function gstore_product_hides_price( $product ) {
 				$product_id = $parent_id;
 			}
 		}
+	}
+
+	if ( is_user_logged_in() && current_user_can( 'edit_post', $product_id ) ) {
+		return false;
+	}
+
+	if ( is_admin() ) {
+		return false;
 	}
 
 	return (bool) get_post_meta( $product_id, '_gstore_hide_price', true );
@@ -197,8 +205,8 @@ function gstore_get_hidden_price_mask_html( $context = 'inline' ) {
 	$aria_label       = __( 'Preço oculto', 'gstore' );
 	$eyebrow_text     = 'single' === $context ? __( 'Preço oculto no site', 'gstore' ) : __( 'Preço oculto', 'gstore' );
 	$hint_text        = 'single' === $context
-		? __( 'Consulte nossa equipe para preço e condições.', 'gstore' )
-		: __( 'Compra online desativada.', 'gstore' );
+		? __( 'O valor aparece apenas na etapa final do checkout.', 'gstore' )
+		: __( 'Valor exibido apenas no checkout final.', 'gstore' );
 	$eyebrow_html     = 'inline' === $context ? '' : '<span class="gstore-hidden-price__eyebrow">' . esc_html( $eyebrow_text ) . '</span>';
 	$hint_html        = 'inline' === $context ? '' : '<span class="gstore-hidden-price__hint">' . esc_html( $hint_text ) . '</span>';
 
