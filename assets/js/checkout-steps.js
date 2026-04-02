@@ -3151,6 +3151,7 @@ function getInstallmentDisplayTotals(summaryData) {
 				nonce: nonce,
 				payment_method: paymentMethod,
 				gstore_blu_installments: installmentsValue,
+				gstore_checkout_step: (typeof currentStep !== 'undefined' && Number.isFinite(currentStep)) ? currentStep : 0,
 				post_data: postData
 			},
 			success: function(response) {
