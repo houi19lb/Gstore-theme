@@ -2582,6 +2582,45 @@ body.single-product .onsale {
 	font-family: var(--gstore-font-family-content, "Hind Guntur", sans-serif);
 }
 
+.Gstore-single-product__tab-content p {
+	margin: 0 0 12px;
+}
+
+.Gstore-single-product__tab-content p:last-child {
+	margin-bottom: 0;
+}
+
+.Gstore-single-product__tab-content ul {
+	margin: 1.25em 0;
+	padding-left: 2em;
+	line-height: 1.8;
+	list-style-type: disc;
+}
+
+.Gstore-single-product__tab-content ol {
+	margin: 1.25em 0;
+	padding-left: 2em;
+	line-height: 1.8;
+	list-style-type: decimal;
+}
+
+.Gstore-single-product__tab-content li {
+	margin-bottom: 0.65em;
+	display: list-item;
+}
+
+.Gstore-single-product__tab-content ul ul,
+.Gstore-single-product__tab-content ol ul {
+	margin: 0.5em 0;
+	list-style-type: circle;
+}
+
+.Gstore-single-product__tab-content ul ol,
+.Gstore-single-product__tab-content ol ol {
+	margin: 0.5em 0;
+	list-style-type: lower-alpha;
+}
+
 /* Accordion header/content existe no DOM (JS), mas só aparece no mobile */
 .Gstore-single-product__accordion-header {
 	display: none;
