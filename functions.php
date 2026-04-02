@@ -13018,6 +13018,41 @@ function gstore_get_social_link( $network ) {
 }
 
 /**
+ * Obtém o username do Telegram a partir do JSON.
+ *
+ * Prioriza o campo de contato e usa o grupo social como fallback.
+ *
+ * @return string
+ */
+function gstore_get_telegram_username() {
+	$username = gstore_store_info()->get_value( 'contact.telegram', '' );
+
+	if ( empty( $username ) ) {
+		$username = gstore_get_social( 'telegram_group' );
+	}
+
+	$username = trim( (string) $username );
+	$username = preg_replace( '#^(https?://)?(www\.)?(t\.me|telegram\.me)/#i', '', $username );
+
+	return ltrim( $username, '@/ ' );
+}
+
+/**
+ * Gera o link do Telegram a partir do username configurado.
+ *
+ * @return string
+ */
+function gstore_get_telegram_link() {
+	$username = gstore_get_telegram_username();
+
+	if ( empty( $username ) ) {
+		return '';
+	}
+
+	return 'https://t.me/' . $username;
+}
+
+/**
  * Obtém o endereço formatado.
  *
  * @param string $format 'full', 'street', 'city_state', ou 'short'.
@@ -13411,8 +13446,8 @@ function gstore_process_store_info_placeholders( $content ) {
 		'{{instagram_link}}'      => gstore_get_social_link( 'instagram' ),
 		'{{facebook_link}}'       => gstore_get_social_link( 'facebook' ),
 		'{{youtube_link}}'        => gstore_get_social_link( 'youtube' ),
-		'{{telegram}}'            => gstore_get_social( 'telegram_group' ),
-		'{{telegram_link}}'       => gstore_get_social_link( 'telegram_group' ),
+		'{{telegram}}'            => gstore_get_telegram_username(),
+		'{{telegram_link}}'       => gstore_get_telegram_link(),
 		
 		// Address
 		'{{address_street}}'      => gstore_get_address( 'street' ),
