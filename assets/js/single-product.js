@@ -347,6 +347,7 @@ document.addEventListener('DOMContentLoaded', () => {
 			body.set('product_id', currentProductId);
 			body.set('quantity', String(quantity));
 			body.set('max', String(max));
+			body.set('gstore_price_context', 'single');
 
 			const fetchPromise = fetch(ajaxUrl, {
 				method: 'POST',

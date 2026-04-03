@@ -41,7 +41,7 @@ if ( $is_variable_product && $all_variations_out_of_stock ) {
 
 $is_out_of_stock = 'outofstock' === $stock_status;
 $show_price_oos = 'yes' === (string) get_option( 'gstore_show_price_out_of_stock', 'no' );
-$hide_price = function_exists( 'gstore_product_hides_price' ) ? gstore_product_hides_price( $product ) : (bool) get_post_meta( $product->get_id(), '_gstore_hide_price', true );
+$hide_price = function_exists( 'gstore_product_hides_price' ) ? gstore_product_hides_price( $product, 'card' ) : (bool) get_post_meta( $product->get_id(), '_gstore_hide_price', true );
 $should_show_discount_badge = ! $hide_price && ! ( $is_out_of_stock && ! $show_price_oos );
 
 $regular_price_amount  = $is_variable_product ? (float) $product->get_variation_regular_price( 'min', true ) : (float) $product->get_regular_price();
@@ -50,7 +50,7 @@ $current_price_amount  = $is_variable_product ? (float) $product->get_variation_
 $has_sale_value        = $product->is_on_sale() && $regular_price_amount > 0 && $sale_price_amount > 0;
 $display_price_amount  = $has_sale_value ? $sale_price_amount : ( $current_price_amount > 0 ? $current_price_amount : $regular_price_amount );
 $installments           = (int) apply_filters( 'armastore_single_product_installments', 21, $product );
-$installment_preview    = gstore_get_product_installment_preview_data( $product, $installments, 1 );
+$installment_preview    = gstore_get_product_installment_preview_data( $product, $installments, 1, 'card' );
 $installment_product_id = ! empty( $installment_preview['product_id'] ) ? (int) $installment_preview['product_id'] : gstore_resolve_installment_product_id( $product );
 $regular_price_html    = $regular_price_amount > 0 ? wc_price( $regular_price_amount ) : '';
 $display_price_html    = $display_price_amount > 0 ? wc_price( $display_price_amount ) : $product->get_price_html();

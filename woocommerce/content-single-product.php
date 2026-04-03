@@ -402,7 +402,7 @@ $oos_price_mode     = $show_price_oos ? 'show' : 'hide';
 
 // Disponibilidade (seleção do admin via plugin GSTORE).
 $product_id = (int) $product->get_id();
-$hide_price = function_exists( 'gstore_product_hides_price' ) ? gstore_product_hides_price( $product ) : (bool) get_post_meta( $product_id, '_gstore_hide_price', true );
+$hide_price = function_exists( 'gstore_product_hides_price' ) ? gstore_product_hides_price( $product, 'single' ) : (bool) get_post_meta( $product_id, '_gstore_hide_price', true );
 
 // Chave correta: _gstore_availability (com underline no começo).
 $slug_disponibilidade = $product_id ? (string) get_post_meta( $product_id, '_gstore_availability', true ) : '';
@@ -455,7 +455,7 @@ $has_discount      = $price_source_product->is_on_sale() && $regular_price > 0 &
 $display_price     = $has_discount ? $sale_price : ( $current_price > 0 ? $current_price : $regular_price );
 $discount_percent  = $has_discount ? round( ( ( $regular_price - $display_price ) / $regular_price ) * 100 ) : 0;
 $installments     = (int) apply_filters( 'armastore_single_product_installments', 21, $product );
-$installment_preview = gstore_get_product_installment_preview_data( $product, $installments, 1 );
+$installment_preview = gstore_get_product_installment_preview_data( $product, $installments, 1, 'single' );
 $formatted_installment = ! empty( $installment_preview['installments'] ) && ! empty( $installment_preview['per_installment_html'] )
 	? sprintf(
 		/* translators: 1: número de parcelas, 2: valor da parcela */
@@ -531,7 +531,7 @@ $benefit_items = array(
 
 $hero_meta_cards   = gstore_get_hero_meta_cards( $stock_label, $formatted_installment );
 if ( $hide_price && isset( $hero_meta_cards[1] ) && is_array( $hero_meta_cards[1] ) ) {
-	$hero_meta_cards[1]['text']       = __( 'O valor aparece apenas na etapa final do checkout.', 'gstore' );
+	$hero_meta_cards[1]['text']       = __( 'O valor continua disponível nas áreas liberadas para este produto.', 'gstore' );
 	$hero_meta_cards[1]['allow_html'] = false;
 }
 $contact_entries   = gstore_get_contact_entries();

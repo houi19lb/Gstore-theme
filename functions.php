@@ -152,19 +152,74 @@ function gstore_get_product_id( $product ) {
 }
 
 /**
- * Verifica se o produto está com preço oculto via plugin/admin.
+ * Normaliza um contexto de ocultação de preço no tema.
  *
- * @param WC_Product|int|null $product Produto, variação ou ID.
- * @return bool
+ * @param string $context Contexto bruto.
+ * @return string
  */
-function gstore_product_hides_price( $product ) {
-	$product_id = gstore_get_product_id( $product );
-	if ( $product_id <= 0 ) {
-		return false;
+function gstore_normalize_hidden_price_context( $context ) {
+	$context = sanitize_key( (string) $context );
+
+	if ( 'product' === $context ) {
+		$context = 'single';
 	}
 
+	$allowed = array( 'card', 'search', 'single', 'cart', 'checkout' );
+
+	return in_array( $context, $allowed, true ) ? $context : '';
+}
+
+/**
+ * Sanitiza a lista de contextos de ocultação do preço.
+ *
+ * @param mixed $raw_contexts Valor bruto salvo.
+ * @return array<int, string>
+ */
+function gstore_sanitize_hidden_price_contexts( $raw_contexts ) {
 	if ( class_exists( '\GStore\Services\Hidden_Price_Service' ) ) {
-		return \GStore\Services\Hidden_Price_Service::should_hide_price_on_current_request( $product );
+		return \GStore\Services\Hidden_Price_Service::sanitize_hidden_price_contexts( $raw_contexts );
+	}
+
+	$contexts = array();
+
+	if ( is_array( $raw_contexts ) ) {
+		$contexts = $raw_contexts;
+	} elseif ( is_string( $raw_contexts ) ) {
+		$raw_contexts = trim( $raw_contexts );
+
+		if ( '' !== $raw_contexts ) {
+			$decoded = json_decode( $raw_contexts, true );
+			if ( JSON_ERROR_NONE === json_last_error() && is_array( $decoded ) ) {
+				$contexts = $decoded;
+			} else {
+				$contexts = preg_split( '/[\s,|]+/', $raw_contexts );
+			}
+		}
+	}
+
+	$sanitized = array();
+
+	foreach ( $contexts as $context ) {
+		$normalized = gstore_normalize_hidden_price_context( $context );
+		if ( '' === $normalized || in_array( $normalized, $sanitized, true ) ) {
+			continue;
+		}
+		$sanitized[] = $normalized;
+	}
+
+	return $sanitized;
+}
+
+/**
+ * Retorna os contextos configurados para o produto.
+ *
+ * @param WC_Product|int|null $product Produto, variação ou ID.
+ * @return array<int, string>
+ */
+function gstore_get_product_hidden_price_contexts( $product ) {
+	$product_id = gstore_get_product_id( $product );
+	if ( $product_id <= 0 ) {
+		return array();
 	}
 
 	if ( function_exists( 'wc_get_product' ) ) {
@@ -177,11 +232,90 @@ function gstore_product_hides_price( $product ) {
 		}
 	}
 
+	$contexts = gstore_sanitize_hidden_price_contexts( get_post_meta( $product_id, '_gstore_hide_price_contexts', true ) );
+
+	if ( empty( $contexts ) && (bool) get_post_meta( $product_id, '_gstore_hide_price', true ) ) {
+		$contexts = array( 'card', 'search', 'single', 'cart', 'checkout' );
+	}
+
+	return $contexts;
+}
+
+/**
+ * Verifica se o produto está com preço oculto via plugin/admin.
+ *
+ * @param WC_Product|int|null $product Produto, variação ou ID.
+ * @param string              $context Contexto desejado ou `auto`.
+ * @return bool
+ */
+function gstore_product_hides_price( $product, $context = 'auto' ) {
+	$product_id = gstore_get_product_id( $product );
+	if ( $product_id <= 0 ) {
+		return false;
+	}
+
+	if ( class_exists( '\GStore\Services\Hidden_Price_Service' ) ) {
+		return \GStore\Services\Hidden_Price_Service::should_hide_price_on_current_request( $product, $context );
+	}
+
 	if ( is_admin() ) {
 		return false;
 	}
 
-	return (bool) get_post_meta( $product_id, '_gstore_hide_price', true );
+	$contexts = gstore_get_product_hidden_price_contexts( $product );
+	if ( empty( $contexts ) ) {
+		return false;
+	}
+
+	if ( 'auto' === $context || '' === $context || null === $context ) {
+		if ( function_exists( 'is_checkout' ) && is_checkout() ) {
+			$context = 'checkout';
+		} elseif ( function_exists( 'is_cart' ) && is_cart() ) {
+			$context = 'cart';
+		} elseif ( function_exists( 'is_product' ) && is_product() ) {
+			$context = 'single';
+		} else {
+			$context = 'card';
+		}
+	}
+
+	$context = gstore_normalize_hidden_price_context( $context );
+
+	return '' !== $context && in_array( $context, $contexts, true );
+}
+
+/**
+ * Verifica se algum item do carrinho está ocultando preço no contexto informado.
+ *
+ * @param string $context Contexto desejado.
+ * @return bool
+ */
+function gstore_cart_hides_price( $context ) {
+	if ( ! function_exists( 'WC' ) ) {
+		return false;
+	}
+
+	$wc = WC();
+	if ( ! $wc || ! isset( $wc->cart ) || ! $wc->cart ) {
+		return false;
+	}
+
+	$cart = $wc->cart->get_cart();
+	if ( ! is_array( $cart ) || empty( $cart ) ) {
+		return false;
+	}
+
+	foreach ( $cart as $cart_item ) {
+		$check_id = isset( $cart_item['variation_id'] ) && (int) $cart_item['variation_id'] > 0
+			? (int) $cart_item['variation_id']
+			: ( isset( $cart_item['product_id'] ) ? (int) $cart_item['product_id'] : 0 );
+
+		if ( $check_id > 0 && gstore_product_hides_price( $check_id, $context ) ) {
+			return true;
+		}
+	}
+
+	return false;
 }
 
 /**
@@ -199,10 +333,10 @@ function gstore_get_hidden_price_mask_html( $context = 'inline' ) {
 	$context          = in_array( $context, $allowed_contexts, true ) ? $context : 'inline';
 	$classes          = 'gstore-hidden-price gstore-hidden-price--' . $context;
 	$aria_label       = __( 'Preço oculto', 'gstore' );
-	$eyebrow_text     = 'single' === $context ? __( 'Preço oculto no site', 'gstore' ) : __( 'Preço oculto', 'gstore' );
+	$eyebrow_text     = 'single' === $context ? __( 'Preço oculto nesta página', 'gstore' ) : __( 'Preço oculto nesta área', 'gstore' );
 	$hint_text        = 'single' === $context
-		? __( 'O valor aparece apenas na etapa final do checkout.', 'gstore' )
-		: __( 'Valor exibido apenas no checkout final.', 'gstore' );
+		? __( 'O valor continua disponível nas áreas liberadas para este produto.', 'gstore' )
+		: __( 'O valor aparece apenas nas áreas liberadas para este produto.', 'gstore' );
 	$eyebrow_html     = 'inline' === $context ? '' : '<span class="gstore-hidden-price__eyebrow">' . esc_html( $eyebrow_text ) . '</span>';
 	$hint_html        = 'inline' === $context ? '' : '<span class="gstore-hidden-price__hint">' . esc_html( $hint_text ) . '</span>';
 
@@ -4288,13 +4422,14 @@ function gstore_resolve_installment_product_id( $product ) {
  * Retorna o preço base usado no fallback do parcelamento.
  *
  * @param WC_Product $product Produto.
+ * @param string     $context Contexto desejado.
  * @return float
  */
-function gstore_get_installment_display_price( $product ) {
+function gstore_get_installment_display_price( $product, $context = 'auto' ) {
 	if ( ! $product instanceof WC_Product ) {
 		return 0.0;
 	}
-	if ( gstore_product_hides_price( $product ) ) {
+	if ( gstore_product_hides_price( $product, $context ) ) {
 		return 0.0;
 	}
 
@@ -4373,9 +4508,10 @@ function gstore_get_preferred_installment_quote( $quotes, $preferred_installment
  * @param WC_Product $product Produto.
  * @param int        $max_installments Parcelas máximas.
  * @param int        $quantity Quantidade.
+ * @param string     $context Contexto desejado.
  * @return array
  */
-function gstore_get_product_installment_preview_data( $product, $max_installments = 21, $quantity = 1 ) {
+function gstore_get_product_installment_preview_data( $product, $max_installments = 21, $quantity = 1, $context = 'auto' ) {
 	$data = array(
 		'product_id'            => 0,
 		'installments'          => 0,
@@ -4388,7 +4524,7 @@ function gstore_get_product_installment_preview_data( $product, $max_installment
 	if ( ! $product instanceof WC_Product ) {
 		return $data;
 	}
-	if ( gstore_product_hides_price( $product ) ) {
+	if ( gstore_product_hides_price( $product, $context ) ) {
 		return $data;
 	}
 
@@ -4412,7 +4548,7 @@ function gstore_get_product_installment_preview_data( $product, $max_installment
 		}
 	}
 
-	$display_price = gstore_get_installment_display_price( $product );
+	$display_price = gstore_get_installment_display_price( $product, $context );
 	if ( $display_price <= 0 ) {
 		return $data;
 	}
@@ -4457,7 +4593,7 @@ function gstore_add_payment_info_to_price( $html, $block_content, $block ) {
 	if ( ! $product ) {
 		global $product;
 	}
-	if ( $product && is_a( $product, 'WC_Product' ) && gstore_product_hides_price( $product ) ) {
+	if ( $product && is_a( $product, 'WC_Product' ) && gstore_product_hides_price( $product, 'card' ) ) {
 		return gstore_get_hidden_price_mask_html( 'block' );
 	}
 
@@ -4466,7 +4602,7 @@ function gstore_add_payment_info_to_price( $html, $block_content, $block ) {
 	$installment_text_content = 'ou em até 21x no cartão';
 	
 	if ( $product && is_a( $product, 'WC_Product' ) ) {
-		$installment_preview = gstore_get_product_installment_preview_data( $product, 21, 1 );
+		$installment_preview = gstore_get_product_installment_preview_data( $product, 21, 1, 'card' );
 		if ( ! empty( $installment_preview['installments'] ) && ! empty( $installment_preview['per_installment_html'] ) ) {
 			$installment_text_content = sprintf(
 				'ou em até %1$dx de %2$s',
@@ -4474,7 +4610,7 @@ function gstore_add_payment_info_to_price( $html, $block_content, $block ) {
 				$installment_preview['per_installment_html']
 			);
 		} else {
-			$price_value = gstore_get_installment_display_price( $product );
+			$price_value = gstore_get_installment_display_price( $product, 'card' );
 			if ( $price_value > 0 ) {
 				$installment_value = gstore_calculate_installment_amount( $price_value, 21 );
 				$installment_text_content = 'ou em até 21x de ' . wc_price( $installment_value );
@@ -4875,7 +5011,9 @@ function gstore_wrap_checkout_order_summary_block( $block_content, $block ) {
 
 	$totals          = $cart->get_totals();
 	$raw_total       = isset( $totals['total'] ) ? (float) $totals['total'] : 0;
-	$formatted_total = wc_price( $raw_total );
+	$formatted_total = gstore_cart_hides_price( 'checkout' )
+		? gstore_get_hidden_price_mask_html( 'inline' )
+		: wc_price( $raw_total );
 	$items_count     = max( 0, $cart->get_cart_contents_count() );
 	$items_meta      = sprintf(
 		_n( 'Inclui %d item. Frete e descontos detalhados abaixo.', 'Inclui %d itens. Frete e descontos detalhados abaixo.', $items_count, 'gstore' ),
@@ -9864,7 +10002,9 @@ function gstore_handle_search_suggest( WP_REST_Request $request ) {
 			'name'       => $product->get_name(),
 			'permalink'  => get_permalink( $product_id ),
 			'image'      => $image_url ? $image_url : '',
-			'price_html' => $product->get_price_html(),
+			'price_html' => gstore_product_hides_price( $product, 'search' )
+				? gstore_get_hidden_price_mask_html( 'inline' )
+				: $product->get_price_html(),
 			'in_stock'   => $product->is_in_stock(),
 		);
 	}
