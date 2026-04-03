@@ -9629,83 +9629,123 @@ function gstore_catalog_apply_search_to_products_shortcode( $query_args, $attr, 
 		return $query_args;
 	}
 
-	// Aplica busca textual padrão do WP/WooCommerce.
-	$query_args['s'] = $search_term;
+	// -----------------------------------------------------------
+	// Coleta IDs de produtos por 3 vias (OR) em vez de usar
+	// 's' + tax_query juntos (que gera AND e restringe resultados).
+	// -----------------------------------------------------------
 
-	// Se o usuário já selecionou categoria via filter_cat[], não forçamos match automático.
-	$has_manual_category_filter = isset( $_GET['filter_cat'] ) || isset( $_GET['filter_cat[]'] );
-	if ( $has_manual_category_filter ) {
-		return $query_args;
-	}
-
-	// Tenta associar o termo a categorias (tolerante a acentos).
-	$needle = strtolower( remove_accents( $search_term ) );
-	if ( $needle === '' ) {
-		return $query_args;
-	}
-
-	$terms = array();
-	$terms_a = get_terms(
+	// 1. Busca textual padrao do WordPress.
+	$text_ids = get_posts(
 		array(
-			'taxonomy'   => 'product_cat',
-			'hide_empty' => true,
-			'number'     => 20,
-			'search'     => $search_term,
+			'post_type'              => 'product',
+			'post_status'            => 'publish',
+			'posts_per_page'         => 200,
+			'no_found_rows'          => true,
+			'ignore_sticky_posts'    => true,
+			's'                      => $search_term,
+			'fields'                 => 'ids',
+			'update_post_meta_cache' => false,
+			'update_post_term_cache' => false,
 		)
 	);
-	if ( ! is_wp_error( $terms_a ) && ! empty( $terms_a ) ) {
-		$terms = array_merge( $terms, $terms_a );
-	}
+	$text_ids = is_array( $text_ids ) ? array_map( 'intval', $text_ids ) : array();
 
-	$search_no_accents = remove_accents( $search_term );
-	if ( $search_no_accents && $search_no_accents !== $search_term ) {
-		$terms_b = get_terms(
-			array(
-				'taxonomy'   => 'product_cat',
-				'hide_empty' => true,
-				'number'     => 20,
-				'search'     => $search_no_accents,
-			)
-		);
-		if ( ! is_wp_error( $terms_b ) && ! empty( $terms_b ) ) {
-			$terms = array_merge( $terms, $terms_b );
+	// 2. Busca por categorias que correspondam ao termo (OR, nao AND).
+	$cat_product_ids = array();
+	$has_manual_category_filter = isset( $_GET['filter_cat'] ) || isset( $_GET['filter_cat[]'] );
+
+	if ( ! $has_manual_category_filter ) {
+		$needle = strtolower( remove_accents( $search_term ) );
+
+		if ( $needle !== '' ) {
+			$terms   = array();
+			$terms_a = get_terms(
+				array(
+					'taxonomy'   => 'product_cat',
+					'hide_empty' => true,
+					'number'     => 20,
+					'search'     => $search_term,
+				)
+			);
+			if ( ! is_wp_error( $terms_a ) && ! empty( $terms_a ) ) {
+				$terms = array_merge( $terms, $terms_a );
+			}
+
+			$search_no_accents = remove_accents( $search_term );
+			if ( $search_no_accents && $search_no_accents !== $search_term ) {
+				$terms_b = get_terms(
+					array(
+						'taxonomy'   => 'product_cat',
+						'hide_empty' => true,
+						'number'     => 20,
+						'search'     => $search_no_accents,
+					)
+				);
+				if ( ! is_wp_error( $terms_b ) && ! empty( $terms_b ) ) {
+					$terms = array_merge( $terms, $terms_b );
+				}
+			}
+
+			$matched_term_ids = array();
+			foreach ( $terms as $term ) {
+				if ( empty( $term ) || ! isset( $term->term_id ) ) {
+					continue;
+				}
+				$name_norm = strtolower( remove_accents( (string) $term->name ) );
+				$slug_norm = strtolower( remove_accents( (string) $term->slug ) );
+				if ( strpos( $name_norm, $needle ) !== false || strpos( $slug_norm, $needle ) !== false ) {
+					$matched_term_ids[] = (int) $term->term_id;
+				}
+			}
+
+			$matched_term_ids = array_values( array_unique( array_filter( $matched_term_ids ) ) );
+
+			if ( ! empty( $matched_term_ids ) ) {
+				$cat_product_ids = get_posts(
+					array(
+						'post_type'              => 'product',
+						'post_status'            => 'publish',
+						'posts_per_page'         => 200,
+						'no_found_rows'          => true,
+						'ignore_sticky_posts'    => true,
+						'fields'                 => 'ids',
+						'update_post_meta_cache' => false,
+						'update_post_term_cache' => false,
+						'tax_query'              => array(
+							array(
+								'taxonomy'         => 'product_cat',
+								'field'            => 'term_id',
+								'terms'            => $matched_term_ids,
+								'operator'         => 'IN',
+								'include_children' => true,
+							),
+						),
+					)
+				);
+				$cat_product_ids = is_array( $cat_product_ids ) ? array_map( 'intval', $cat_product_ids ) : array();
+			}
 		}
 	}
 
-	if ( empty( $terms ) ) {
+	// 3. Busca fuzzy (tolerancia a erros de digitacao).
+	$fuzzy_ids = array();
+	if ( function_exists( 'gstore_fuzzy_search_products' ) ) {
+		$fuzzy_ids = gstore_fuzzy_search_products( $search_term, 40, $text_ids );
+	}
+
+	// Mescla todos os IDs (logica OR).
+	$all_ids = array_values( array_unique( array_merge( $text_ids, $cat_product_ids, $fuzzy_ids ) ) );
+
+	if ( empty( $all_ids ) ) {
+		// Forca nenhum resultado em vez de mostrar tudo.
+		$query_args['post__in'] = array( 0 );
 		return $query_args;
 	}
 
-	$matched_term_ids = array();
-	foreach ( $terms as $term ) {
-		if ( empty( $term ) || ! isset( $term->term_id ) ) {
-			continue;
-		}
+	$query_args['post__in'] = $all_ids;
 
-		$name_norm = strtolower( remove_accents( (string) $term->name ) );
-		$slug_norm = strtolower( remove_accents( (string) $term->slug ) );
-
-		if ( strpos( $name_norm, $needle ) !== false || strpos( $slug_norm, $needle ) !== false ) {
-			$matched_term_ids[] = (int) $term->term_id;
-		}
-	}
-
-	$matched_term_ids = array_values( array_unique( array_filter( $matched_term_ids ) ) );
-	if ( empty( $matched_term_ids ) ) {
-		return $query_args;
-	}
-
-	if ( ! isset( $query_args['tax_query'] ) || ! is_array( $query_args['tax_query'] ) ) {
-		$query_args['tax_query'] = array();
-	}
-
-	$query_args['tax_query'][] = array(
-		'taxonomy'         => 'product_cat',
-		'field'            => 'term_id',
-		'terms'            => $matched_term_ids,
-		'operator'         => 'IN',
-		'include_children' => true,
-	);
+	// Nao usamos 's' junto com post__in para evitar AND indesejado.
+	// Os IDs ja representam a uniao de todas as fontes de busca.
 
 	return $query_args;
 }
@@ -9987,6 +10027,12 @@ function gstore_handle_search_suggest( WP_REST_Request $request ) {
 		$product_ids = array_map( 'intval', $query->posts );
 	}
 
+	// Busca fuzzy complementar quando a busca exata retorna poucos resultados.
+	if ( count( $product_ids ) < $limit && function_exists( 'gstore_fuzzy_search_products' ) ) {
+		$fuzzy_ids  = gstore_fuzzy_search_products( $term, $limit - count( $product_ids ), $product_ids );
+		$product_ids = array_merge( $product_ids, $fuzzy_ids );
+	}
+
 	$products = array();
 	foreach ( $product_ids as $product_id ) {
 		$product = wc_get_product( $product_id );
@@ -10076,8 +10122,134 @@ function gstore_handle_search_suggest( WP_REST_Request $request ) {
 }
 
 /**
+ * Busca fuzzy de produtos por titulo.
+ *
+ * Compara o termo de busca com os titulos dos produtos usando Levenshtein,
+ * retornando IDs de produtos similares que nao seriam encontrados pela
+ * busca exata do WordPress. Util para tolerar erros de digitacao
+ * (ex: "pitola" encontra "pistola").
+ *
+ * @param string $search_term Termo digitado pelo usuario.
+ * @param int    $limit       Maximo de IDs a retornar.
+ * @param array  $exclude_ids IDs a excluir (ja encontrados pela busca exata).
+ * @return int[] IDs de produtos ordenados por relevancia.
+ */
+function gstore_fuzzy_search_products( $search_term, $limit = 20, $exclude_ids = array() ) {
+	global $wpdb;
+
+	$needle = function_exists( 'mb_strtolower' )
+		? mb_strtolower( remove_accents( trim( $search_term ) ) )
+		: strtolower( remove_accents( trim( $search_term ) ) );
+
+	$needle_len = function_exists( 'mb_strlen' ) ? mb_strlen( $needle ) : strlen( $needle );
+	if ( $needle === '' || $needle_len < 2 ) {
+		return array();
+	}
+
+	$cache_key = 'gstore_fuzzy_' . md5( $needle . '_' . implode( ',', $exclude_ids ) . '_' . $limit );
+	$cached    = get_transient( $cache_key );
+	if ( is_array( $cached ) ) {
+		return $cached;
+	}
+
+	// Busca todos os titulos de produtos publicados.
+	$products = $wpdb->get_results(
+		"SELECT ID, post_title FROM {$wpdb->posts} WHERE post_type = 'product' AND post_status = 'publish'"
+	);
+
+	if ( empty( $products ) ) {
+		return array();
+	}
+
+	$exclude_map = array_flip( $exclude_ids );
+	$needle_words = preg_split( '/[\s\-_\.]+/', $needle, -1, PREG_SPLIT_NO_EMPTY );
+	$scored = array();
+
+	foreach ( $products as $product ) {
+		if ( isset( $exclude_map[ (int) $product->ID ] ) ) {
+			continue;
+		}
+
+		$title = function_exists( 'mb_strtolower' )
+			? mb_strtolower( remove_accents( $product->post_title ) )
+			: strtolower( remove_accents( $product->post_title ) );
+
+		// Pula se ja eh match exato por substring (WP_Query ja encontra).
+		if ( strpos( $title, $needle ) !== false ) {
+			continue;
+		}
+
+		$best_score = 0;
+		$title_words = preg_split( '/[\s\-_\.]+/', $title, -1, PREG_SPLIT_NO_EMPTY );
+
+		// Compara cada palavra do termo com cada palavra do titulo.
+		foreach ( $needle_words as $nw ) {
+			$nw_len = function_exists( 'mb_strlen' ) ? mb_strlen( $nw ) : strlen( $nw );
+			if ( $nw_len < 2 ) {
+				continue;
+			}
+
+			foreach ( $title_words as $tw ) {
+				$tw_len = function_exists( 'mb_strlen' ) ? mb_strlen( $tw ) : strlen( $tw );
+				if ( $tw_len < 2 ) {
+					continue;
+				}
+
+				// Levenshtein entre palavras individuais.
+				$lev  = levenshtein( $nw, $tw );
+				$mlen = max( $nw_len, $tw_len );
+				if ( $mlen > 0 ) {
+					$sim = 1 - ( $lev / $mlen );
+					$best_score = max( $best_score, $sim );
+				}
+
+				// Se a palavra do needle esta contida na do titulo ou vice-versa.
+				if ( strpos( $tw, $nw ) !== false || strpos( $nw, $tw ) !== false ) {
+					$best_score = max( $best_score, 0.75 );
+				}
+			}
+		}
+
+		// Levenshtein do termo completo contra o titulo completo (para termos curtos).
+		if ( $needle_len <= 15 ) {
+			foreach ( $title_words as $tw ) {
+				$tw_len = function_exists( 'mb_strlen' ) ? mb_strlen( $tw ) : strlen( $tw );
+				$lev  = levenshtein( $needle, $tw );
+				$mlen = max( $needle_len, $tw_len );
+				if ( $mlen > 0 ) {
+					$sim = 1 - ( $lev / $mlen );
+					$best_score = max( $best_score, $sim );
+				}
+			}
+		}
+
+		// Limiar: pelo menos 60% de similaridade.
+		if ( $best_score >= 0.6 ) {
+			$scored[] = array(
+				'id'    => (int) $product->ID,
+				'score' => $best_score,
+			);
+		}
+	}
+
+	usort( $scored, function ( $a, $b ) {
+		return $b['score'] <=> $a['score'];
+	} );
+
+	$result = array();
+	$count  = min( count( $scored ), $limit );
+	for ( $i = 0; $i < $count; $i++ ) {
+		$result[] = $scored[ $i ]['id'];
+	}
+
+	set_transient( $cache_key, $result, 120 );
+
+	return $result;
+}
+
+/**
  * Filtro para processar blocos de imagem do Gutenberg.
- * 
+ *
  * Processa placeholders em blocos de imagem.
  */
 add_filter( 'render_block_core/image', 'gstore_process_image_block', 10, 2 );
