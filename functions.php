@@ -8073,151 +8073,453 @@ function gstore_render_settings_page() {
 				</tr>
 			</table>
 			
-			<h2 class="title"><?php _e( 'Hero Slider - Slides da Página Inicial', 'gstore' ); ?></h2>
-			<p class="description"><?php _e( 'Configure as imagens do slider principal da página inicial. Os slides de Desktop e Mobile são configurados separadamente para otimização de performance e experiência do usuário.', 'gstore' ); ?></p>
-			
-			<!-- Configuração de Quantidade de Slides -->
-			<div class="gstore-slider-config" style="display: flex; gap: 30px; margin: 20px 0; flex-wrap: wrap;">
-				<div style="flex: 1; min-width: 200px;">
-					<label for="gstore_hero_slides_desktop_count" style="display: block; font-weight: 600; margin-bottom: 8px;">
-						<span class="dashicons dashicons-desktop" style="vertical-align: middle;"></span>
-						<?php _e( 'Quantidade de Slides Desktop', 'gstore' ); ?>
-					</label>
-					<select id="gstore_hero_slides_desktop_count" name="gstore_hero_slides_desktop_count" class="regular-text">
-						<?php $desktop_count = absint( get_option( 'gstore_hero_slides_desktop_count', 2 ) ); ?>
-						<?php for ( $i = 1; $i <= 10; $i++ ) : ?>
-							<option value="<?php echo $i; ?>" <?php selected( $desktop_count, $i ); ?>>
-								<?php echo $i; ?> <?php echo $i === 1 ? 'slide' : 'slides'; ?>
-							</option>
-						<?php endfor; ?>
-					</select>
-				</div>
-				<div style="flex: 1; min-width: 200px;">
-					<label for="gstore_hero_slides_mobile_count" style="display: block; font-weight: 600; margin-bottom: 8px;">
-						<span class="dashicons dashicons-smartphone" style="vertical-align: middle;"></span>
-						<?php _e( 'Quantidade de Slides Mobile', 'gstore' ); ?>
-					</label>
-					<select id="gstore_hero_slides_mobile_count" name="gstore_hero_slides_mobile_count" class="regular-text">
-						<?php $mobile_count = absint( get_option( 'gstore_hero_slides_mobile_count', 2 ) ); ?>
-						<?php for ( $i = 1; $i <= 10; $i++ ) : ?>
-							<option value="<?php echo $i; ?>" <?php selected( $mobile_count, $i ); ?>>
-								<?php echo $i; ?> <?php echo $i === 1 ? 'slide' : 'slides'; ?>
-							</option>
-						<?php endfor; ?>
-					</select>
-				</div>
-			</div>
-			
-			<!-- Tabs para Desktop/Mobile -->
-			<div class="gstore-slider-tabs" style="margin-top: 30px;">
-				<nav class="nav-tab-wrapper">
-					<a href="#gstore-desktop-slides" class="nav-tab nav-tab-active" data-tab="desktop">
-						<span class="dashicons dashicons-desktop" style="vertical-align: middle;"></span>
+			<h2 class="title"><?php _e( 'Hero Slider - Slides da Pag. Inicial', 'gstore' ); ?></h2>
+			<p class="description"><?php _e( 'Configure as imagens do slider principal. Arraste os slides para reordenar ou use as setas.', 'gstore' ); ?></p>
+
+			<?php
+			$desktop_count = absint( get_option( 'gstore_hero_slides_desktop_count', 2 ) );
+			$mobile_count  = absint( get_option( 'gstore_hero_slides_mobile_count', 2 ) );
+			?>
+
+			<!-- Hidden fields para armazenar a ordem dos slides -->
+			<?php for ( $i = 1; $i <= 10; $i++ ) : ?>
+				<input type="hidden" name="gstore_hero_desktop_slide_<?php echo $i; ?>_order" value="<?php echo $i; ?>" class="gstore-slide-order-field" data-device="desktop" data-slot="<?php echo $i; ?>" />
+				<input type="hidden" name="gstore_hero_mobile_slide_<?php echo $i; ?>_order" value="<?php echo $i; ?>" class="gstore-slide-order-field" data-device="mobile" data-slot="<?php echo $i; ?>" />
+			<?php endfor; ?>
+
+			<style>
+				.gstore-hero-manager { margin-top: 20px; max-width: 1000px; }
+
+				/* Tab buttons grandes e com cor diferente por device */
+				.gstore-hero-tabs { display: flex; gap: 0; margin-bottom: 0; }
+				.gstore-hero-tab-btn {
+					display: flex; align-items: center; gap: 8px;
+					padding: 14px 28px; border: 2px solid #c3c4c7; border-bottom: none;
+					border-radius: 8px 8px 0 0; cursor: pointer;
+					font-size: 14px; font-weight: 700; transition: all .2s;
+					background: #f6f7f7; color: #50575e; position: relative;
+				}
+				.gstore-hero-tab-btn .dashicons { font-size: 22px; width: 22px; height: 22px; }
+				.gstore-hero-tab-btn:hover { background: #e8e8e8; }
+				.gstore-hero-tab-btn.active[data-device="desktop"] {
+					background: #e7f3ff; color: #0a4b78; border-color: #2271b1;
+					z-index: 2;
+				}
+				.gstore-hero-tab-btn.active[data-device="mobile"] {
+					background: #fef3e7; color: #6e3a00; border-color: #dba617;
+					z-index: 2;
+				}
+
+				/* Painel do conteúdo - cor muda com o device ativo */
+				.gstore-hero-panel {
+					border: 2px solid #c3c4c7; border-radius: 0 8px 8px 8px;
+					padding: 0; display: none; position: relative; margin-top: -2px;
+				}
+				.gstore-hero-panel.active { display: block; }
+				.gstore-hero-panel[data-device="desktop"] { border-color: #2271b1; }
+				.gstore-hero-panel[data-device="mobile"]  { border-color: #dba617; }
+
+				/* Device banner no topo do painel */
+				.gstore-hero-panel-header {
+					padding: 14px 20px; display: flex; align-items: center; justify-content: space-between;
+					gap: 16px; flex-wrap: wrap;
+				}
+				.gstore-hero-panel[data-device="desktop"] .gstore-hero-panel-header { background: #e7f3ff; }
+				.gstore-hero-panel[data-device="mobile"]  .gstore-hero-panel-header { background: #fef3e7; }
+
+				.gstore-hero-device-badge {
+					display: inline-flex; align-items: center; gap: 6px;
+					padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 700;
+					text-transform: uppercase; letter-spacing: .5px;
+				}
+				.gstore-hero-panel[data-device="desktop"] .gstore-hero-device-badge {
+					background: #2271b1; color: #fff;
+				}
+				.gstore-hero-panel[data-device="mobile"] .gstore-hero-device-badge {
+					background: #dba617; color: #fff;
+				}
+				.gstore-hero-device-badge .dashicons { font-size: 16px; width: 16px; height: 16px; }
+
+				.gstore-hero-panel-header .gstore-hero-size-hint {
+					font-size: 12px; color: #646970; display: flex; align-items: center; gap: 4px;
+				}
+				.gstore-hero-panel-header .gstore-hero-count-wrap {
+					display: flex; align-items: center; gap: 8px;
+				}
+				.gstore-hero-panel-header .gstore-hero-count-wrap label {
+					font-size: 13px; font-weight: 600; white-space: nowrap;
+				}
+				.gstore-hero-panel-header .gstore-hero-count-wrap select {
+					min-width: 100px;
+				}
+
+				/* Lista de slides (drag & drop) */
+				.gstore-hero-slides-list {
+					padding: 16px 20px; display: flex; flex-direction: column; gap: 12px;
+				}
+
+				/* Card de cada slide */
+				.gstore-hero-slide-card {
+					display: grid; grid-template-columns: 40px 130px 1fr auto; gap: 14px;
+					align-items: start; padding: 14px; background: #fff; border: 1px solid #dcdcde;
+					border-radius: 6px; cursor: grab; transition: box-shadow .15s, opacity .15s;
+				}
+				.gstore-hero-slide-card:hover { box-shadow: 0 2px 8px rgba(0,0,0,.08); }
+				.gstore-hero-slide-card.dragging { opacity: .4; }
+				.gstore-hero-slide-card.drag-over { border-color: #2271b1; box-shadow: 0 0 0 2px rgba(34,113,177,.25); }
+				.gstore-hero-panel[data-device="mobile"] .gstore-hero-slide-card.drag-over {
+					border-color: #dba617; box-shadow: 0 0 0 2px rgba(219,166,23,.25);
+				}
+
+				/* Handle + posicao */
+				.gstore-hero-slide-handle {
+					display: flex; flex-direction: column; align-items: center; gap: 4px;
+					padding-top: 4px;
+				}
+				.gstore-hero-slide-handle .gstore-drag-icon {
+					font-size: 20px; color: #a0a5aa; line-height: 1; cursor: grab;
+				}
+				.gstore-hero-slide-position {
+					background: #f0f0f1; color: #50575e; font-size: 11px; font-weight: 700;
+					width: 24px; height: 24px; border-radius: 50%; display: flex;
+					align-items: center; justify-content: center;
+				}
+				.gstore-hero-slide-arrows {
+					display: flex; flex-direction: column; gap: 2px;
+				}
+				.gstore-hero-slide-arrows button {
+					background: none; border: 1px solid #dcdcde; border-radius: 3px;
+					cursor: pointer; padding: 0; width: 22px; height: 18px;
+					display: flex; align-items: center; justify-content: center;
+					color: #50575e; font-size: 14px; line-height: 1;
+				}
+				.gstore-hero-slide-arrows button:hover { background: #f0f0f1; }
+				.gstore-hero-slide-arrows button:disabled { opacity: .3; cursor: default; }
+
+				/* Preview da imagem */
+				.gstore-hero-slide-preview {
+					width: 130px; height: 80px; border: 2px dashed #ccc; border-radius: 4px;
+					display: flex; align-items: center; justify-content: center;
+					background: #f9f9f9; overflow: hidden; flex-shrink: 0;
+				}
+				.gstore-hero-slide-preview.has-image { border-color: #2271b1; border-style: solid; }
+				.gstore-hero-panel[data-device="mobile"] .gstore-hero-slide-preview.has-image {
+					border-color: #dba617;
+				}
+				.gstore-hero-slide-preview img { width: 100%; height: 100%; object-fit: cover; }
+				.gstore-hero-slide-preview .gstore-no-img { font-size: 11px; color: #999; text-align: center; padding: 4px; }
+
+				/* Campos do slide */
+				.gstore-hero-slide-fields { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+				.gstore-hero-slide-fields .gstore-field-row {
+					display: flex; flex-direction: column; gap: 3px;
+				}
+				.gstore-hero-slide-fields label { font-size: 11px; font-weight: 600; color: #1d2327; }
+				.gstore-hero-slide-fields input[type="text"],
+				.gstore-hero-slide-fields input[type="url"] {
+					width: 100%; padding: 4px 8px; font-size: 13px;
+				}
+				.gstore-hero-slide-fields .gstore-slide-btns {
+					display: flex; gap: 6px; flex-wrap: wrap; margin-top: 2px;
+				}
+				.gstore-hero-slide-fields .gstore-slide-btns .button { font-size: 12px; padding: 2px 10px; }
+				.gstore-hero-slide-fields .gstore-slide-img-id { font-size: 11px; color: #646970; }
+
+				/* Acao remover (coluna da direita) */
+				.gstore-hero-slide-actions {
+					display: flex; flex-direction: column; align-items: center; gap: 6px; padding-top: 4px;
+				}
+				.gstore-hero-slide-actions .button-link-delete { font-size: 11px; }
+
+				@media (max-width: 782px) {
+					.gstore-hero-slide-card {
+						grid-template-columns: 36px 90px 1fr;
+						gap: 10px;
+					}
+					.gstore-hero-slide-actions { grid-column: 1 / -1; flex-direction: row; justify-content: flex-end; }
+					.gstore-hero-tabs { flex-direction: column; }
+					.gstore-hero-tab-btn { border-radius: 0; border-bottom: none; }
+					.gstore-hero-tab-btn:first-child { border-radius: 8px 8px 0 0; }
+					.gstore-hero-panel { border-radius: 0 0 8px 8px; }
+				}
+			</style>
+
+			<div class="gstore-hero-manager">
+				<!-- Tabs -->
+				<div class="gstore-hero-tabs">
+					<div class="gstore-hero-tab-btn active" data-device="desktop">
+						<span class="dashicons dashicons-desktop"></span>
 						<?php _e( 'Slides Desktop', 'gstore' ); ?>
-					</a>
-					<a href="#gstore-mobile-slides" class="nav-tab" data-tab="mobile">
-						<span class="dashicons dashicons-smartphone" style="vertical-align: middle;"></span>
+						<span style="font-size: 11px; font-weight: 400; opacity: .7;">(<?php echo $desktop_count; ?>)</span>
+					</div>
+					<div class="gstore-hero-tab-btn" data-device="mobile">
+						<span class="dashicons dashicons-smartphone"></span>
 						<?php _e( 'Slides Mobile', 'gstore' ); ?>
-					</a>
-				</nav>
-				
-				<!-- Desktop Slides -->
-				<div id="gstore-desktop-slides" class="gstore-tab-content" style="background: #fff; border: 1px solid #c3c4c7; border-top: none; padding: 20px;">
-					<p class="description" style="margin-top: 0;">
-						<span class="dashicons dashicons-info" style="color: #2271b1;"></span>
-						<?php _e( 'Imagens recomendadas: 1920x600px ou proporção similar para desktop.', 'gstore' ); ?>
-					</p>
-					<table class="form-table" role="presentation">
-						<?php for ( $i = 1; $i <= 10; $i++ ) : 
-							$slide_id = get_option( "gstore_hero_desktop_slide_{$i}_id", 0 );
-							$slide_alt = get_option( "gstore_hero_desktop_slide_{$i}_alt", '' );
-							$slide_link = get_option( "gstore_hero_desktop_slide_{$i}_link", '' );
-							$is_visible = $i <= $desktop_count;
-						?>
-							<tr class="gstore-desktop-slide-row" data-slide="<?php echo $i; ?>" style="<?php echo ! $is_visible ? 'display: none;' : ''; ?>">
-								<th scope="row">
-									<label for="gstore_hero_desktop_slide_<?php echo $i; ?>_id">
-										<?php printf( __( 'Slide %d', 'gstore' ), $i ); ?>
-									</label>
-								</th>
-								<td>
-									<?php gstore_render_media_selector_with_link( 
-										"gstore_hero_desktop_slide_{$i}_id", 
-										"gstore_hero_desktop_slide_{$i}_alt",
-										"gstore_hero_desktop_slide_{$i}_link",
-										$slide_id, 
-										$slide_alt,
-										$slide_link
-									); ?>
-								</td>
-							</tr>
-						<?php endfor; ?>
-					</table>
+						<span style="font-size: 11px; font-weight: 400; opacity: .7;">(<?php echo $mobile_count; ?>)</span>
+					</div>
 				</div>
-				
-				<!-- Mobile Slides -->
-				<div id="gstore-mobile-slides" class="gstore-tab-content" style="background: #fff; border: 1px solid #c3c4c7; border-top: none; padding: 20px; display: none;">
-					<p class="description" style="margin-top: 0;">
-						<span class="dashicons dashicons-info" style="color: #2271b1;"></span>
-						<?php _e( 'Imagens recomendadas: 768x900px ou proporção vertical para mobile.', 'gstore' ); ?>
-					</p>
-					<table class="form-table" role="presentation">
-						<?php for ( $i = 1; $i <= 10; $i++ ) : 
-							$slide_id = get_option( "gstore_hero_mobile_slide_{$i}_id", 0 );
-							$slide_alt = get_option( "gstore_hero_mobile_slide_{$i}_alt", '' );
-							$slide_link = get_option( "gstore_hero_mobile_slide_{$i}_link", '' );
-							$is_visible = $i <= $mobile_count;
+
+				<?php foreach ( array( 'desktop', 'mobile' ) as $device ) :
+					$count_key   = "gstore_hero_slides_{$device}_count";
+					$count_val   = $device === 'desktop' ? $desktop_count : $mobile_count;
+					$icon        = $device === 'desktop' ? 'dashicons-desktop' : 'dashicons-smartphone';
+					$size_hint   = $device === 'desktop' ? '1920x600px' : '768x900px (vertical)';
+					$is_active   = $device === 'desktop' ? ' active' : '';
+				?>
+				<!-- Painel <?php echo ucfirst( $device ); ?> -->
+				<div class="gstore-hero-panel<?php echo $is_active; ?>" data-device="<?php echo $device; ?>">
+					<div class="gstore-hero-panel-header">
+						<div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+							<span class="gstore-hero-device-badge">
+								<span class="dashicons <?php echo $icon; ?>"></span>
+								<?php echo $device === 'desktop' ? 'Desktop' : 'Mobile'; ?>
+							</span>
+							<span class="gstore-hero-size-hint">
+								<span class="dashicons dashicons-info-outline" style="font-size: 16px; width: 16px; height: 16px;"></span>
+								<?php printf( __( 'Tamanho recomendado: %s', 'gstore' ), $size_hint ); ?>
+							</span>
+						</div>
+						<div class="gstore-hero-count-wrap">
+							<label for="<?php echo esc_attr( $count_key ); ?>">
+								<?php _e( 'Qtd. de slides:', 'gstore' ); ?>
+							</label>
+							<select id="<?php echo esc_attr( $count_key ); ?>" name="<?php echo esc_attr( $count_key ); ?>" class="gstore-hero-count-select" data-device="<?php echo $device; ?>">
+								<?php for ( $i = 1; $i <= 10; $i++ ) : ?>
+									<option value="<?php echo $i; ?>" <?php selected( $count_val, $i ); ?>>
+										<?php echo $i; ?>
+									</option>
+								<?php endfor; ?>
+							</select>
+						</div>
+					</div>
+
+					<div class="gstore-hero-slides-list" data-device="<?php echo $device; ?>">
+						<?php for ( $i = 1; $i <= 10; $i++ ) :
+							$prefix    = "gstore_hero_{$device}_slide_{$i}";
+							$slide_id  = absint( get_option( "{$prefix}_id", 0 ) );
+							$slide_alt = get_option( "{$prefix}_alt", '' );
+							$slide_link = get_option( "{$prefix}_link", '' );
+							$is_visible = $i <= $count_val;
+							$has_image  = $slide_id > 0;
+							$image_url  = $has_image ? wp_get_attachment_image_url( $slide_id, 'medium' ) : '';
 						?>
-							<tr class="gstore-mobile-slide-row" data-slide="<?php echo $i; ?>" style="<?php echo ! $is_visible ? 'display: none;' : ''; ?>">
-								<th scope="row">
-									<label for="gstore_hero_mobile_slide_<?php echo $i; ?>_id">
-										<?php printf( __( 'Slide %d', 'gstore' ), $i ); ?>
-									</label>
-								</th>
-								<td>
-									<?php gstore_render_media_selector_with_link( 
-										"gstore_hero_mobile_slide_{$i}_id", 
-										"gstore_hero_mobile_slide_{$i}_alt",
-										"gstore_hero_mobile_slide_{$i}_link",
-										$slide_id, 
-										$slide_alt,
-										$slide_link
-									); ?>
-								</td>
-							</tr>
+						<div class="gstore-hero-slide-card" data-slot="<?php echo $i; ?>" data-device="<?php echo $device; ?>" style="<?php echo ! $is_visible ? 'display:none;' : ''; ?>" draggable="true">
+							<!-- Handle + posicao -->
+							<div class="gstore-hero-slide-handle">
+								<span class="gstore-drag-icon" title="<?php esc_attr_e( 'Arraste para reordenar', 'gstore' ); ?>">&#x2630;</span>
+								<span class="gstore-hero-slide-position"><?php echo $i; ?></span>
+								<div class="gstore-hero-slide-arrows">
+									<button type="button" class="gstore-slide-move-up" title="<?php esc_attr_e( 'Mover para cima', 'gstore' ); ?>" <?php echo $i === 1 ? 'disabled' : ''; ?>>&uarr;</button>
+									<button type="button" class="gstore-slide-move-down" title="<?php esc_attr_e( 'Mover para baixo', 'gstore' ); ?>" <?php echo $i === $count_val ? 'disabled' : ''; ?>>&darr;</button>
+								</div>
+							</div>
+
+							<!-- Preview -->
+							<div class="gstore-hero-slide-preview<?php echo $has_image ? ' has-image' : ''; ?>" id="<?php echo esc_attr( $prefix ); ?>_box_preview" data-input-id="<?php echo esc_attr( $prefix ); ?>_id">
+								<?php if ( $image_url ) : ?>
+									<img src="<?php echo esc_url( $image_url ); ?>" alt="<?php echo esc_attr( $slide_alt ); ?>" />
+								<?php else : ?>
+									<span class="gstore-no-img"><?php _e( 'Sem imagem', 'gstore' ); ?></span>
+								<?php endif; ?>
+							</div>
+
+							<!-- Campos -->
+							<div class="gstore-hero-slide-fields">
+								<input type="hidden" id="<?php echo esc_attr( $prefix ); ?>_id" name="<?php echo esc_attr( $prefix ); ?>_id" value="<?php echo esc_attr( $slide_id ); ?>" />
+
+								<div class="gstore-slide-btns">
+									<button type="button" class="button gstore-select-media" data-input-id="<?php echo esc_attr( $prefix ); ?>_id" data-preview-id="<?php echo esc_attr( $prefix ); ?>_box_preview">
+										<?php _e( 'Selecionar Imagem', 'gstore' ); ?>
+									</button>
+									<button type="button" class="button gstore-remove-media" data-input-id="<?php echo esc_attr( $prefix ); ?>_id" data-preview-id="<?php echo esc_attr( $prefix ); ?>_box_preview" style="<?php echo $has_image ? '' : 'display:none;'; ?>">
+										<?php _e( 'Remover', 'gstore' ); ?>
+									</button>
+									<span class="gstore-slide-img-id">
+										ID: <strong><?php echo $slide_id ? $slide_id : '---'; ?></strong>
+									</span>
+								</div>
+
+								<div class="gstore-field-row">
+									<label for="<?php echo esc_attr( $prefix ); ?>_alt"><?php _e( 'Texto Alt', 'gstore' ); ?></label>
+									<input type="text" id="<?php echo esc_attr( $prefix ); ?>_alt" name="<?php echo esc_attr( $prefix ); ?>_alt" value="<?php echo esc_attr( $slide_alt ); ?>" placeholder="<?php esc_attr_e( 'Descricao da imagem', 'gstore' ); ?>" />
+								</div>
+
+								<div class="gstore-field-row">
+									<label for="<?php echo esc_attr( $prefix ); ?>_link"><?php _e( 'Link (opcional)', 'gstore' ); ?></label>
+									<input type="url" id="<?php echo esc_attr( $prefix ); ?>_link" name="<?php echo esc_attr( $prefix ); ?>_link" value="<?php echo esc_attr( $slide_link ); ?>" placeholder="https://..." />
+								</div>
+							</div>
+						</div>
 						<?php endfor; ?>
-					</table>
+					</div>
 				</div>
+				<?php endforeach; ?>
 			</div>
-			
+
 			<script>
 			jQuery(document).ready(function($) {
-				// Tabs Desktop/Mobile
-				$('.gstore-slider-tabs .nav-tab').on('click', function(e) {
+				// === Tabs ===
+				$('.gstore-hero-tab-btn').on('click', function() {
+					var device = $(this).data('device');
+					$('.gstore-hero-tab-btn').removeClass('active');
+					$(this).addClass('active');
+					$('.gstore-hero-panel').removeClass('active');
+					$('.gstore-hero-panel[data-device="' + device + '"]').addClass('active');
+				});
+
+				// === Quantidade de slides ===
+				$('.gstore-hero-count-select').on('change', function() {
+					var device = $(this).data('device');
+					var count = parseInt($(this).val());
+					var $list = $('.gstore-hero-slides-list[data-device="' + device + '"]');
+					$list.find('.gstore-hero-slide-card').each(function() {
+						var slot = parseInt($(this).data('slot'));
+						$(this).toggle(slot <= count);
+					});
+					// Atualiza label da tab
+					$('.gstore-hero-tab-btn[data-device="' + device + '"] span:last').text('(' + count + ')');
+					// Atualiza setas
+					updateArrows(device);
+				});
+
+				// === Setas mover cima/baixo ===
+				$(document).on('click', '.gstore-slide-move-up', function(e) {
+					e.stopPropagation();
+					var $card = $(this).closest('.gstore-hero-slide-card');
+					var $prev = $card.prevAll('.gstore-hero-slide-card:visible').first();
+					if ($prev.length) {
+						$card.insertBefore($prev);
+						syncAfterReorder($card.closest('.gstore-hero-slides-list').data('device'));
+					}
+				});
+				$(document).on('click', '.gstore-slide-move-down', function(e) {
+					e.stopPropagation();
+					var $card = $(this).closest('.gstore-hero-slide-card');
+					var $next = $card.nextAll('.gstore-hero-slide-card:visible').first();
+					if ($next.length) {
+						$card.insertAfter($next);
+						syncAfterReorder($card.closest('.gstore-hero-slides-list').data('device'));
+					}
+				});
+
+				// === Drag & Drop ===
+				var dragSrc = null;
+
+				$(document).on('dragstart', '.gstore-hero-slide-card', function(e) {
+					dragSrc = this;
+					$(this).addClass('dragging');
+					e.originalEvent.dataTransfer.effectAllowed = 'move';
+					e.originalEvent.dataTransfer.setData('text/plain', '');
+				});
+				$(document).on('dragend', '.gstore-hero-slide-card', function() {
+					$(this).removeClass('dragging');
+					$('.gstore-hero-slide-card').removeClass('drag-over');
+					dragSrc = null;
+				});
+				$(document).on('dragover', '.gstore-hero-slide-card', function(e) {
 					e.preventDefault();
-					var tab = $(this).data('tab');
-					$('.gstore-slider-tabs .nav-tab').removeClass('nav-tab-active');
-					$(this).addClass('nav-tab-active');
-					$('.gstore-tab-content').hide();
-					$('#gstore-' + tab + '-slides').show();
+					e.originalEvent.dataTransfer.dropEffect = 'move';
+					if (this !== dragSrc && $(this).is(':visible')) {
+						$('.gstore-hero-slide-card').removeClass('drag-over');
+						$(this).addClass('drag-over');
+					}
 				});
-				
-				// Mostra/esconde slides baseado na quantidade selecionada
-				$('#gstore_hero_slides_desktop_count').on('change', function() {
-					var count = parseInt($(this).val());
-					$('.gstore-desktop-slide-row').each(function() {
-						var slideNum = parseInt($(this).data('slide'));
-						$(this).toggle(slideNum <= count);
+				$(document).on('dragleave', '.gstore-hero-slide-card', function() {
+					$(this).removeClass('drag-over');
+				});
+				$(document).on('drop', '.gstore-hero-slide-card', function(e) {
+					e.preventDefault();
+					e.stopPropagation();
+					if (dragSrc && this !== dragSrc) {
+						var $src = $(dragSrc);
+						var $dst = $(this);
+						// Verifica se mesmo device
+						if ($src.closest('.gstore-hero-slides-list').data('device') !== $dst.closest('.gstore-hero-slides-list').data('device')) return;
+
+						var srcRect = dragSrc.getBoundingClientRect();
+						var dstRect = this.getBoundingClientRect();
+						if (srcRect.top < dstRect.top) {
+							$src.insertAfter($dst);
+						} else {
+							$src.insertBefore($dst);
+						}
+						syncAfterReorder($src.closest('.gstore-hero-slides-list').data('device'));
+					}
+					$('.gstore-hero-slide-card').removeClass('drag-over');
+				});
+
+				// === Sync apos reordenar ===
+				function syncAfterReorder(device) {
+					var $list = $('.gstore-hero-slides-list[data-device="' + device + '"]');
+					var visibleIdx = 1;
+
+					$list.find('.gstore-hero-slide-card').each(function() {
+						var $card = $(this);
+						if ($card.is(':visible')) {
+							// Atualiza o numero de posicao visual
+							$card.find('.gstore-hero-slide-position').text(visibleIdx);
+
+							// Atualiza os name attributes dos campos para o novo slot
+							var oldSlot = $card.data('slot');
+							var newSlot = visibleIdx;
+
+							if (oldSlot !== newSlot) {
+								$card.data('slot', newSlot);
+								// Renomeia todos os inputs/selects dentro do card
+								$card.find('input, select').each(function() {
+									var $input = $(this);
+									var name = $input.attr('name');
+									var id = $input.attr('id');
+									if (name) {
+										$input.attr('name', name.replace(/_slide_\d+_/, '_slide_' + newSlot + '_'));
+									}
+									if (id) {
+										$input.attr('id', id.replace(/_slide_\d+_/, '_slide_' + newSlot + '_'));
+									}
+								});
+								// Renomeia labels
+								$card.find('label').each(function() {
+									var $label = $(this);
+									var forAttr = $label.attr('for');
+									if (forAttr) {
+										$label.attr('for', forAttr.replace(/_slide_\d+_/, '_slide_' + newSlot + '_'));
+									}
+								});
+								// Renomeia preview id e data attributes dos botoes
+								$card.find('.gstore-hero-slide-preview').each(function() {
+									var $p = $(this);
+									var pid = $p.attr('id');
+									if (pid) $p.attr('id', pid.replace(/_slide_\d+_/, '_slide_' + newSlot + '_'));
+									var did = $p.data('input-id');
+									if (did) $p.data('input-id', did.replace(/_slide_\d+_/, '_slide_' + newSlot + '_'));
+								});
+								$card.find('.gstore-select-media, .gstore-remove-media').each(function() {
+									var $b = $(this);
+									var di = $b.data('input-id');
+									var dp = $b.data('preview-id');
+									if (di) $b.data('input-id', di.replace(/_slide_\d+_/, '_slide_' + newSlot + '_'));
+									if (dp) $b.data('preview-id', dp.replace(/_slide_\d+_/, '_slide_' + newSlot + '_'));
+								});
+							}
+
+							visibleIdx++;
+						}
 					});
-				});
-				
-				$('#gstore_hero_slides_mobile_count').on('change', function() {
-					var count = parseInt($(this).val());
-					$('.gstore-mobile-slide-row').each(function() {
-						var slideNum = parseInt($(this).data('slide'));
-						$(this).toggle(slideNum <= count);
-					});
-				});
+					updateArrows(device);
+				}
+
+				function updateArrows(device) {
+					var $list = $('.gstore-hero-slides-list[data-device="' + device + '"]');
+					var $visible = $list.find('.gstore-hero-slide-card:visible');
+					$visible.find('.gstore-slide-move-up').prop('disabled', false);
+					$visible.find('.gstore-slide-move-down').prop('disabled', false);
+					$visible.first().find('.gstore-slide-move-up').prop('disabled', true);
+					$visible.last().find('.gstore-slide-move-down').prop('disabled', true);
+				}
+
+				// Init arrows
+				updateArrows('desktop');
+				updateArrows('mobile');
 			});
 			</script>
 			
