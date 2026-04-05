@@ -29,12 +29,22 @@ class CategoryFilterTree {
         return normalized || '/';
     }
 
+    isSearchParamKey(key) {
+        return ['q', 's'].includes(String(key || '').trim());
+    }
+
     buildCatalogUrl(selectedSlugs, baseUrl) {
         const url = new URL(window.location.href);
         const params = new URLSearchParams();
+        const hasFilters = selectedSlugs.length > 0;
 
         url.searchParams.forEach((value, key) => {
             if (this.isFilterParamKey(key) || this.isPaginationParamKey(key)) {
+                return;
+            }
+
+            // Remove search query when category filters are applied
+            if (hasFilters && this.isSearchParamKey(key)) {
                 return;
             }
 
