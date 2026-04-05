@@ -14905,7 +14905,50 @@ function gstore_get_order_fulfillment_stage( $order ) {
 		return '';
 	}
 	$stage = $order->get_meta( '_gstore_fulfillment_stage' );
-	return ( is_string( $stage ) && '' !== $stage ) ? $stage : '';
+	if ( is_string( $stage ) && '' !== $stage ) {
+		return $stage;
+	}
+
+	// Auto-inicializa pedidos existentes via Service (plugin) se disponível.
+	if ( class_exists( '\GStore\Services\Fulfillment_Service' ) ) {
+		return \GStore\Services\Fulfillment_Service::initialize_existing_order( $order );
+	}
+
+	// Fallback: computa etapa a partir do status WC sem salvar.
+	return gstore_fulfillment_compute_stage_from_wc_status( $order );
+}
+
+/**
+ * Fallback: computa etapa a partir do status WooCommerce (sem plugin).
+ *
+ * @param WC_Order $order
+ * @return string
+ */
+function gstore_fulfillment_compute_stage_from_wc_status( $order ) {
+	$wc_status = $order->get_status();
+	$map = array(
+		'pending'    => 'processando_pagamento',
+		'on-hold'    => 'processando_pagamento',
+		'failed'     => 'processando_pagamento',
+		'processing' => 'pagamento_confirmado',
+		'completed'  => 'enviado',
+		'cancelled'  => 'processando_pagamento',
+		'refunded'   => 'processando_pagamento',
+	);
+
+	$stage = isset( $map[ $wc_status ] ) ? $map[ $wc_status ] : 'processando_pagamento';
+
+	// Se processing e tem doc_profile, ajusta etapa.
+	if ( 'processing' === $wc_status ) {
+		$profile = gstore_get_order_doc_profile( $order );
+		if ( 'none' !== $profile ) {
+			$stage = 'aguardando_documentacao';
+		} else {
+			$stage = 'preparando_entrega';
+		}
+	}
+
+	return $stage;
 }
 
 /**
