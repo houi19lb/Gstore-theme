@@ -2804,7 +2804,22 @@ function gstore_enqueue_scripts() {
 			true
 		);
 
-		// Localizar nonce e configurações como fallback para o mini-cart fix
+		// Interceptador de nonce expirado para a WC Store API (mini-cart drawer)
+		wp_enqueue_script(
+			'gstore-store-api-nonce-refresh',
+			get_theme_file_uri( 'assets/js/store-api-nonce-refresh.js' ),
+			array(),
+			wp_get_theme()->get( 'Version' ),
+			false // No <head> para interceptar fetch antes do WC Blocks
+		);
+
+		wp_localize_script(
+			'gstore-store-api-nonce-refresh',
+			'gstoreNonceRefresh',
+			array(
+				'ajaxUrl' => admin_url( 'admin-ajax.php' ),
+			)
+		);
 	}
 
 	// Localizar script para AJAX do WooCommerce
@@ -4035,6 +4050,20 @@ add_action( 'wp_ajax_nopriv_woocommerce_update_cart', 'gstore_prevent_cart_ajax_
 add_action( 'wc_ajax_add_to_cart', 'gstore_prevent_cart_ajax_cache', 1 );
 add_action( 'wc_ajax_remove_from_cart', 'gstore_prevent_cart_ajax_cache', 1 );
 add_action( 'wc_ajax_update_cart', 'gstore_prevent_cart_ajax_cache', 1 );
+
+/**
+ * Endpoint AJAX para renovar o nonce da WC Store API.
+ *
+ * Quando o nonce expira (comum com LiteSpeed Cache / sessão longa),
+ * o JS interceptador chama este endpoint para obter um nonce fresco
+ * e repetir a requisição que falhou.
+ */
+function gstore_refresh_store_api_nonce() {
+	$nonce = wp_create_nonce( 'wc_store_api' );
+	wp_send_json_success( array( 'nonce' => $nonce ) );
+}
+add_action( 'wp_ajax_gstore_refresh_store_api_nonce', 'gstore_refresh_store_api_nonce' );
+add_action( 'wp_ajax_nopriv_gstore_refresh_store_api_nonce', 'gstore_refresh_store_api_nonce' );
 
 /**
  * Garante que fragmentos sejam sempre retornados após remoção de item.
