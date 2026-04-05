@@ -1470,6 +1470,16 @@ function gstore_enqueue_styles() {
 			array( 'gstore-style' ),
 			$theme_version
 		);
+
+		// Fulfillment timeline (apenas na página de detalhes do pedido).
+		if ( function_exists( 'is_wc_endpoint_url' ) && is_wc_endpoint_url( 'view-order' ) ) {
+			wp_enqueue_style(
+				'gstore-fulfillment-timeline-css',
+				get_theme_file_uri( 'assets/css/fulfillment-timeline.css' ),
+				array( 'gstore-my-account-css' ),
+				$theme_version
+			);
+		}
 	}
 
 	// CSS da página de como comprar arma
@@ -2702,6 +2712,27 @@ function gstore_enqueue_scripts() {
 				wp_get_theme()->get( 'Version' ),
 				true
 			);
+
+			// Fulfillment timeline JS (apenas na página de detalhes do pedido).
+			if ( function_exists( 'is_wc_endpoint_url' ) && is_wc_endpoint_url( 'view-order' ) ) {
+				$view_order_id = absint( get_query_var( 'view-order' ) );
+				if ( $view_order_id > 0 ) {
+					wp_enqueue_script(
+						'gstore-fulfillment-timeline',
+						get_theme_file_uri( 'assets/js/fulfillment-timeline.js' ),
+						array(),
+						wp_get_theme()->get( 'Version' ),
+						true
+					);
+					wp_localize_script( 'gstore-fulfillment-timeline', 'gstoreFulfillment', array(
+						'restUrl'      => esc_url_raw( rest_url( 'gstore/v1/' ) ),
+						'nonce'        => wp_create_nonce( 'wp_rest' ),
+						'orderId'      => $view_order_id,
+						'maxFileSize'  => 10 * 1024 * 1024,
+						'allowedTypes' => array( 'application/pdf', 'image/png', 'image/jpeg' ),
+					) );
+				}
+			}
 		}
 
 		// Script da página de catálogo (filtros retráteis mobile)
@@ -14858,3 +14889,86 @@ add_filter( 'woocommerce_output_related_products_args', function( $args ) {
 	$args['order']   = 'asc';
 	return $args;
 } );
+
+/* ═══════════════════════════════════════════════
+ * FULFILLMENT — Helpers para o template view-order.php
+ * ═══════════════════════════════════════════════ */
+
+/**
+ * Retorna a etapa de fulfillment do pedido.
+ *
+ * @param WC_Order $order
+ * @return string Slug da etapa ou string vazia.
+ */
+function gstore_get_order_fulfillment_stage( $order ) {
+	if ( ! $order instanceof WC_Order ) {
+		return '';
+	}
+	$stage = $order->get_meta( '_gstore_fulfillment_stage' );
+	return ( is_string( $stage ) && '' !== $stage ) ? $stage : '';
+}
+
+/**
+ * Retorna os documentos de fulfillment do pedido.
+ *
+ * @param WC_Order $order
+ * @return array
+ */
+function gstore_get_order_fulfillment_documents( $order ) {
+	if ( ! $order instanceof WC_Order ) {
+		return array();
+	}
+	$raw = $order->get_meta( '_gstore_fulfillment_documents' );
+	if ( is_string( $raw ) && '' !== $raw ) {
+		$decoded = json_decode( $raw, true );
+		if ( is_array( $decoded ) ) {
+			return $decoded;
+		}
+	}
+	return array();
+}
+
+/**
+ * Retorna o perfil de documentação do pedido.
+ *
+ * @param WC_Order $order
+ * @return string 'arma', 'municao', 'arma_municao' ou 'none'.
+ */
+function gstore_get_order_doc_profile( $order ) {
+	if ( ! $order instanceof WC_Order ) {
+		return 'none';
+	}
+	$profile = $order->get_meta( '_gstore_fulfillment_doc_profile' );
+	return ( is_string( $profile ) && '' !== $profile ) ? $profile : 'none';
+}
+
+/**
+ * Retorna a lista de documentos requeridos para o pedido.
+ *
+ * @param WC_Order $order
+ * @return array<int, array{key:string, label:string, optional?:bool}>
+ */
+function gstore_get_order_required_documents( $order ) {
+	$profile = gstore_get_order_doc_profile( $order );
+
+	$requirements = array(
+		'arma'   => array(
+			array( 'key' => 'autorizacao_compra', 'label' => 'Autorização de Compra' ),
+		),
+		'municao' => array(
+			array( 'key' => 'rg_cpf_cnh',  'label' => 'RG / CPF ou CNH' ),
+			array( 'key' => 'craf',         'label' => 'CRAF (mesmo calibre, válido)' ),
+			array( 'key' => 'cr',           'label' => 'CR (apenas CAC)', 'optional' => true ),
+		),
+	);
+
+	$result = array();
+	if ( 'arma' === $profile || 'arma_municao' === $profile ) {
+		$result = array_merge( $result, $requirements['arma'] );
+	}
+	if ( 'municao' === $profile || 'arma_municao' === $profile ) {
+		$result = array_merge( $result, $requirements['municao'] );
+	}
+
+	return $result;
+}
