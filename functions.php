@@ -1477,7 +1477,7 @@ function gstore_enqueue_styles() {
 				'gstore-fulfillment-timeline-css',
 				get_theme_file_uri( 'assets/css/fulfillment-timeline.css' ),
 				array( 'gstore-my-account-css' ),
-				$theme_version
+				filemtime( get_theme_file_path( 'assets/css/fulfillment-timeline.css' ) )
 			);
 		}
 	}
@@ -2721,7 +2721,7 @@ function gstore_enqueue_scripts() {
 						'gstore-fulfillment-timeline',
 						get_theme_file_uri( 'assets/js/fulfillment-timeline.js' ),
 						array(),
-						wp_get_theme()->get( 'Version' ),
+						filemtime( get_theme_file_path( 'assets/js/fulfillment-timeline.js' ) ),
 						true
 					);
 					wp_localize_script( 'gstore-fulfillment-timeline', 'gstoreFulfillment', array(
