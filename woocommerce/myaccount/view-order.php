@@ -81,7 +81,10 @@ $can_upload_more = $total_docs_count < $max_docs;
 
 	<!-- ════════════ Upload de Documentos ════════════ -->
 	<?php if ( 'aguardando_documentacao' === $fulfillment_stage ) : ?>
-	<div class="gstore-fulfillment-upload" id="gstore-fulfillment-upload">
+	<div class="gstore-fulfillment-upload" id="gstore-fulfillment-upload"
+	     data-order-id="<?php echo esc_attr( $order_id ); ?>"
+	     data-max-docs="<?php echo esc_attr( $max_docs ); ?>"
+	     data-docs="<?php echo esc_attr( wp_json_encode( $fulfillment_documents ) ); ?>">
 		<h3 class="gstore-fulfillment-upload__title">Envie seus documentos</h3>
 		<p class="gstore-fulfillment-upload__desc">
 			Para prosseguir com seu pedido, precisamos da sua documentação.
@@ -90,60 +93,9 @@ $can_upload_more = $total_docs_count < $max_docs;
 			<br>Formatos aceitos: <strong>PDF, PNG ou JPG</strong> (máximo 10 MB por arquivo, até <?php echo esc_html( $max_docs ); ?> documentos).
 		</p>
 
-		<p class="gstore-fulfillment-upload__counter">
-			<?php echo esc_html( $total_docs_count ); ?> de <?php echo esc_html( $max_docs ); ?> documentos enviados
-		</p>
-
-		<!-- Documentos já enviados -->
-		<?php if ( ! empty( $fulfillment_documents ) ) : ?>
-		<div class="gstore-fulfillment-upload__files">
-			<?php
-			$status_labels = array(
-				'pending'  => 'Pendente',
-				'approved' => 'Aprovado',
-				'rejected' => 'Rejeitado',
-			);
-			foreach ( $fulfillment_documents as $doc ) : ?>
-				<div class="gstore-fulfillment-upload__file-row gstore-fulfillment-upload__file-row--<?php echo esc_attr( $doc['status'] ); ?>">
-					<div class="gstore-fulfillment-upload__file-info">
-						<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
-						<span class="gstore-fulfillment-upload__filename"><?php echo esc_html( $doc['filename'] ); ?></span>
-					</div>
-					<span class="gstore-fulfillment-upload__status-badge gstore-fulfillment-upload__status-badge--<?php echo esc_attr( $doc['status'] ); ?>">
-						<?php echo esc_html( $status_labels[ $doc['status'] ] ?? $doc['status'] ); ?>
-					</span>
-					<?php if ( ! empty( $doc['review_note'] ) ) : ?>
-						<p class="gstore-fulfillment-upload__review-note"><?php echo esc_html( $doc['review_note'] ); ?></p>
-					<?php endif; ?>
-				</div>
-			<?php endforeach; ?>
-		</div>
-		<?php endif; ?>
-
-		<!-- Dropzone para novo upload (se ainda não atingiu o limite) -->
-		<?php if ( $can_upload_more ) : ?>
-		<div class="gstore-fulfillment-upload__slot"
-		     data-doc-type="documento_geral"
-		     data-order-id="<?php echo esc_attr( $order_id ); ?>">
-			<div class="gstore-fulfillment-upload__dropzone" tabindex="0" role="button"
-			     aria-label="Clique ou arraste para enviar documento">
-				<input type="file" class="gstore-fulfillment-upload__input" accept=".pdf,.png,.jpg,.jpeg" />
-				<div class="gstore-fulfillment-upload__dropzone-content">
-					<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
-					<span>Clique ou arraste o arquivo aqui</span>
-					<span class="gstore-fulfillment-upload__hint">PDF, PNG ou JPG — máximo 10 MB</span>
-				</div>
-				<div class="gstore-fulfillment-upload__progress" style="display:none;">
-					<div class="gstore-fulfillment-upload__progress-bar"></div>
-					<span class="gstore-fulfillment-upload__progress-text">Enviando...</span>
-				</div>
-			</div>
-		</div>
-		<?php else : ?>
-		<p class="gstore-fulfillment-upload__limit-reached">
-			Limite de <?php echo esc_html( $max_docs ); ?> documentos atingido.
-		</p>
-		<?php endif; ?>
+		<!-- JS renderiza a lista de docs + dropzone aqui -->
+		<div id="gstore-fulfillment-docs-list"></div>
+		<div id="gstore-fulfillment-dropzone-area"></div>
 	</div>
 	<?php endif; ?>
 

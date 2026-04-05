@@ -292,6 +292,69 @@
 	color: #991b1b;
 }
 
+/* Action buttons */
+.gstore-fulfillment-upload__file-actions {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	flex-shrink: 0;
+}
+
+.gstore-fulfillment-upload__btn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 30px;
+	height: 30px;
+	border: 1px solid var(--gstore-color-border, #e6e6e6);
+	border-radius: var(--gstore-radius-sm, 8px);
+	background: var(--gstore-color-bg-light, #fff);
+	cursor: pointer;
+	transition: all 0.15s ease;
+	padding: 0;
+	color: var(--gstore-color-text-secondary, #6b6b6b);
+}
+
+.gstore-fulfillment-upload__btn:hover {
+	border-color: var(--gstore-color-accent, #ff5c00);
+	color: var(--gstore-color-accent, #ff5c00);
+}
+
+.gstore-fulfillment-upload__btn--delete:hover {
+	border-color: var(--gstore-color-error, #ff4757);
+	color: var(--gstore-color-error, #ff4757);
+	background: #fff5f5;
+}
+
+.gstore-fulfillment-upload__btn:disabled {
+	opacity: 0.5;
+	cursor: not-allowed;
+}
+
+/* File icon */
+.gstore-fulfillment-upload__file-icon {
+	display: flex;
+	align-items: center;
+	flex-shrink: 0;
+	color: var(--gstore-color-text-muted, #7a7a7a);
+}
+
+/* Global error toast */
+.gstore-fulfillment-upload__global-error {
+	background: #fee2e2;
+	color: #991b1b;
+	padding: 10px 16px;
+	border-radius: var(--gstore-radius-sm, 8px);
+	font-size: 0.85rem;
+	margin-bottom: 12px;
+	animation: gstore-fade-in 0.2s ease;
+}
+
+@keyframes gstore-fade-in {
+	from { opacity: 0; transform: translateY(-4px); }
+	to { opacity: 1; transform: translateY(0); }
+}
+
 /* Existing file display */
 .gstore-fulfillment-upload__existing {
 	margin-bottom: 12px;
