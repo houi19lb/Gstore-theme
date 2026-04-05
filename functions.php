@@ -8035,6 +8035,34 @@ function gstore_register_theme_settings() {
 add_action( 'admin_init', 'gstore_register_theme_settings' );
 
 /**
+ * Limpa o cache do LiteSpeed (homepage) quando opções de slides/banners da Vitrine são atualizadas.
+ * Usa do_action('litespeed_purge', ...) que é seguro mesmo sem o plugin ativo.
+ */
+function gstore_purge_litespeed_on_slide_change( $old_value, $new_value ) {
+	if ( $old_value === $new_value ) {
+		return;
+	}
+	// Purge homepage (onde os banners aparecem)
+	do_action( 'litespeed_purge', 'frontpage' );
+}
+
+// Registra o hook para todas as opções de slides desktop, mobile e banner youtube
+add_action( 'admin_init', function() {
+	$options_to_watch = array( 'gstore_hero_slides_desktop_count', 'gstore_hero_slides_mobile_count', 'gstore_banner_youtube_id', 'gstore_banner_youtube_alt', 'gstore_banner_youtube_link' );
+	for ( $i = 1; $i <= 10; $i++ ) {
+		$options_to_watch[] = "gstore_hero_desktop_slide_{$i}_id";
+		$options_to_watch[] = "gstore_hero_desktop_slide_{$i}_alt";
+		$options_to_watch[] = "gstore_hero_desktop_slide_{$i}_link";
+		$options_to_watch[] = "gstore_hero_mobile_slide_{$i}_id";
+		$options_to_watch[] = "gstore_hero_mobile_slide_{$i}_alt";
+		$options_to_watch[] = "gstore_hero_mobile_slide_{$i}_link";
+	}
+	foreach ( $options_to_watch as $opt ) {
+		add_action( "update_option_{$opt}", 'gstore_purge_litespeed_on_slide_change', 10, 2 );
+	}
+} );
+
+/**
  * Renderiza a página de configurações.
  */
 function gstore_render_settings_page() {
