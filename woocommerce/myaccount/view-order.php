@@ -33,13 +33,17 @@ $stages = array(
 $stage_keys   = array_keys( $stages );
 $current_idx  = $has_fulfillment ? array_search( $fulfillment_stage, $stage_keys, true ) : -1;
 
-// Documentos já enviados indexados por tipo.
+// Documentos já enviados agrupados por tipo (múltiplos por tipo permitidos).
 $uploaded_by_type = array();
+$total_docs_count = 0;
+$max_docs         = 5;
 foreach ( $fulfillment_documents as $doc ) {
+	$uploaded_by_type[ $doc['doc_type'] ][] = $doc;
 	if ( 'rejected' !== $doc['status'] ) {
-		$uploaded_by_type[ $doc['doc_type'] ] = $doc;
+		$total_docs_count++;
 	}
 }
+$can_upload_more = $total_docs_count < $max_docs;
 ?>
 
 <div class="gstore-view-order">
@@ -80,79 +84,66 @@ foreach ( $fulfillment_documents as $doc ) {
 	<div class="gstore-fulfillment-upload" id="gstore-fulfillment-upload">
 		<h3 class="gstore-fulfillment-upload__title">Envie seus documentos</h3>
 		<p class="gstore-fulfillment-upload__desc">
-			Para prosseguir com seu pedido, precisamos dos seguintes documentos.
-			Formatos aceitos: <strong>PDF, PNG ou JPG</strong> (máximo 10 MB).
+			Para prosseguir com seu pedido, precisamos da sua documentação.
+			Consulte os documentos necessários na nossa
+			<a href="<?php echo esc_url( home_url( '/informativo/' ) ); ?>" target="_blank" rel="noopener noreferrer" class="gstore-fulfillment-upload__link">página de informações</a>.
+			<br>Formatos aceitos: <strong>PDF, PNG ou JPG</strong> (máximo 10 MB por arquivo, até <?php echo esc_html( $max_docs ); ?> documentos).
 		</p>
 
-		<div class="gstore-fulfillment-upload__slots">
+		<p class="gstore-fulfillment-upload__counter">
+			<?php echo esc_html( $total_docs_count ); ?> de <?php echo esc_html( $max_docs ); ?> documentos enviados
+		</p>
+
+		<!-- Documentos já enviados -->
+		<?php if ( ! empty( $fulfillment_documents ) ) : ?>
+		<div class="gstore-fulfillment-upload__files">
 			<?php
-			// Se não há docs específicos, cria um slot genérico.
-			$upload_slots = ! empty( $required_docs ) ? $required_docs : array(
-				array( 'key' => 'documento_geral', 'label' => 'Documento' ),
+			$status_labels = array(
+				'pending'  => 'Pendente',
+				'approved' => 'Aprovado',
+				'rejected' => 'Rejeitado',
 			);
-
-			foreach ( $upload_slots as $req ) :
-				$is_optional = ! empty( $req['optional'] );
-				$existing    = $uploaded_by_type[ $req['key'] ] ?? null;
-				$slot_class  = $existing ? 'has-file' : '';
-				?>
-				<div class="gstore-fulfillment-upload__slot <?php echo esc_attr( $slot_class ); ?>"
-				     data-doc-type="<?php echo esc_attr( $req['key'] ); ?>"
-				     data-order-id="<?php echo esc_attr( $order_id ); ?>">
-
-					<div class="gstore-fulfillment-upload__slot-header">
-						<span class="gstore-fulfillment-upload__slot-label">
-							<?php echo esc_html( $req['label'] ); ?>
-							<?php if ( $is_optional ) : ?>
-								<span class="gstore-fulfillment-upload__optional">(opcional)</span>
-							<?php endif; ?>
-						</span>
-						<?php if ( $existing ) : ?>
-							<span class="gstore-fulfillment-upload__status-badge gstore-fulfillment-upload__status-badge--<?php echo esc_attr( $existing['status'] ); ?>">
-								<?php
-								$status_labels = array(
-									'pending'  => 'Pendente',
-									'approved' => 'Aprovado',
-									'rejected' => 'Rejeitado',
-								);
-								echo esc_html( $status_labels[ $existing['status'] ] ?? $existing['status'] );
-								?>
-							</span>
-						<?php endif; ?>
+			foreach ( $fulfillment_documents as $doc ) : ?>
+				<div class="gstore-fulfillment-upload__file-row gstore-fulfillment-upload__file-row--<?php echo esc_attr( $doc['status'] ); ?>">
+					<div class="gstore-fulfillment-upload__file-info">
+						<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+						<span class="gstore-fulfillment-upload__filename"><?php echo esc_html( $doc['filename'] ); ?></span>
 					</div>
-
-					<?php if ( $existing ) : ?>
-						<div class="gstore-fulfillment-upload__existing">
-							<div class="gstore-fulfillment-upload__file-info">
-								<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
-								<span class="gstore-fulfillment-upload__filename"><?php echo esc_html( $existing['filename'] ); ?></span>
-							</div>
-							<?php if ( ! empty( $existing['review_note'] ) ) : ?>
-								<p class="gstore-fulfillment-upload__review-note"><?php echo esc_html( $existing['review_note'] ); ?></p>
-							<?php endif; ?>
-							<?php if ( 'rejected' === $existing['status'] ) : ?>
-								<p class="gstore-fulfillment-upload__rejected-hint">Envie novamente o documento corrigido abaixo.</p>
-							<?php endif; ?>
-						</div>
-					<?php endif; ?>
-
-					<?php if ( ! $existing || 'rejected' === ( $existing['status'] ?? '' ) ) : ?>
-						<div class="gstore-fulfillment-upload__dropzone" tabindex="0" role="button"
-						     aria-label="Clique ou arraste para enviar <?php echo esc_attr( $req['label'] ); ?>">
-							<input type="file" class="gstore-fulfillment-upload__input" accept=".pdf,.png,.jpg,.jpeg" />
-							<div class="gstore-fulfillment-upload__dropzone-content">
-								<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
-								<span>Clique ou arraste o arquivo aqui</span>
-							</div>
-							<div class="gstore-fulfillment-upload__progress" style="display:none;">
-								<div class="gstore-fulfillment-upload__progress-bar"></div>
-								<span class="gstore-fulfillment-upload__progress-text">Enviando...</span>
-							</div>
-						</div>
+					<span class="gstore-fulfillment-upload__status-badge gstore-fulfillment-upload__status-badge--<?php echo esc_attr( $doc['status'] ); ?>">
+						<?php echo esc_html( $status_labels[ $doc['status'] ] ?? $doc['status'] ); ?>
+					</span>
+					<?php if ( ! empty( $doc['review_note'] ) ) : ?>
+						<p class="gstore-fulfillment-upload__review-note"><?php echo esc_html( $doc['review_note'] ); ?></p>
 					<?php endif; ?>
 				</div>
 			<?php endforeach; ?>
 		</div>
+		<?php endif; ?>
+
+		<!-- Dropzone para novo upload (se ainda não atingiu o limite) -->
+		<?php if ( $can_upload_more ) : ?>
+		<div class="gstore-fulfillment-upload__slot"
+		     data-doc-type="documento_geral"
+		     data-order-id="<?php echo esc_attr( $order_id ); ?>">
+			<div class="gstore-fulfillment-upload__dropzone" tabindex="0" role="button"
+			     aria-label="Clique ou arraste para enviar documento">
+				<input type="file" class="gstore-fulfillment-upload__input" accept=".pdf,.png,.jpg,.jpeg" />
+				<div class="gstore-fulfillment-upload__dropzone-content">
+					<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+					<span>Clique ou arraste o arquivo aqui</span>
+					<span class="gstore-fulfillment-upload__hint">PDF, PNG ou JPG — máximo 10 MB</span>
+				</div>
+				<div class="gstore-fulfillment-upload__progress" style="display:none;">
+					<div class="gstore-fulfillment-upload__progress-bar"></div>
+					<span class="gstore-fulfillment-upload__progress-text">Enviando...</span>
+				</div>
+			</div>
+		</div>
+		<?php else : ?>
+		<p class="gstore-fulfillment-upload__limit-reached">
+			Limite de <?php echo esc_html( $max_docs ); ?> documentos atingido.
+		</p>
+		<?php endif; ?>
 	</div>
 	<?php endif; ?>
 

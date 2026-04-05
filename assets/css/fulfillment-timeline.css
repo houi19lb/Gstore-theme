@@ -193,6 +193,78 @@
 	font-size: 0.8rem;
 }
 
+.gstore-fulfillment-upload__link {
+	color: var(--gstore-color-accent, #ff5c00);
+	font-weight: 600;
+	text-decoration: underline;
+	text-underline-offset: 2px;
+}
+
+.gstore-fulfillment-upload__link:hover {
+	color: var(--gstore-color-accent-hover, #e05000);
+}
+
+.gstore-fulfillment-upload__counter {
+	font-size: 0.8rem;
+	color: var(--gstore-color-text-muted, #7a7a7a);
+	margin: 0 0 16px;
+	font-weight: 500;
+}
+
+.gstore-fulfillment-upload__hint {
+	font-size: 0.75rem;
+	color: var(--gstore-color-text-muted, #7a7a7a);
+}
+
+.gstore-fulfillment-upload__limit-reached {
+	font-size: 0.85rem;
+	color: var(--gstore-color-text-muted, #7a7a7a);
+	text-align: center;
+	padding: 16px;
+	background: var(--gstore-color-bg-muted, #f0f2f5);
+	border-radius: var(--gstore-radius-md, 12px);
+	margin-top: 12px;
+}
+
+/* Lista de arquivos enviados */
+.gstore-fulfillment-upload__files {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	margin-bottom: 16px;
+}
+
+.gstore-fulfillment-upload__file-row {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	padding: 10px 14px;
+	border-radius: var(--gstore-radius-sm, 8px);
+	background: var(--gstore-color-bg-muted, #f0f2f5);
+	border: 1px solid var(--gstore-color-border, #e6e6e6);
+	flex-wrap: wrap;
+}
+
+.gstore-fulfillment-upload__file-row--approved {
+	background: #f0fdf4;
+	border-color: var(--gstore-color-success, #2e9b3b);
+}
+
+.gstore-fulfillment-upload__file-row--rejected {
+	background: #fff5f5;
+	border-color: var(--gstore-color-error, #ff4757);
+}
+
+.gstore-fulfillment-upload__file-row .gstore-fulfillment-upload__file-info {
+	flex: 1;
+	min-width: 0;
+}
+
+.gstore-fulfillment-upload__file-row .gstore-fulfillment-upload__review-note {
+	width: 100%;
+	margin: 4px 0 0;
+}
+
 /* Status badges */
 .gstore-fulfillment-upload__status-badge {
 	display: inline-flex;
