@@ -14930,25 +14930,13 @@ function gstore_fulfillment_compute_stage_from_wc_status( $order ) {
 		'pending'    => 'processando_pagamento',
 		'on-hold'    => 'processando_pagamento',
 		'failed'     => 'processando_pagamento',
-		'processing' => 'pagamento_confirmado',
+		'processing' => 'aguardando_documentacao',
 		'completed'  => 'enviado',
 		'cancelled'  => 'processando_pagamento',
 		'refunded'   => 'processando_pagamento',
 	);
 
-	$stage = isset( $map[ $wc_status ] ) ? $map[ $wc_status ] : 'processando_pagamento';
-
-	// Se processing e tem doc_profile, ajusta etapa.
-	if ( 'processing' === $wc_status ) {
-		$profile = gstore_get_order_doc_profile( $order );
-		if ( 'none' !== $profile ) {
-			$stage = 'aguardando_documentacao';
-		} else {
-			$stage = 'preparando_entrega';
-		}
-	}
-
-	return $stage;
+	return isset( $map[ $wc_status ] ) ? $map[ $wc_status ] : 'processando_pagamento';
 }
 
 /**

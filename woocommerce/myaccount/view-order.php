@@ -76,7 +76,7 @@ foreach ( $fulfillment_documents as $doc ) {
 	</div>
 
 	<!-- ════════════ Upload de Documentos ════════════ -->
-	<?php if ( 'aguardando_documentacao' === $fulfillment_stage && ! empty( $required_docs ) ) : ?>
+	<?php if ( 'aguardando_documentacao' === $fulfillment_stage ) : ?>
 	<div class="gstore-fulfillment-upload" id="gstore-fulfillment-upload">
 		<h3 class="gstore-fulfillment-upload__title">Envie seus documentos</h3>
 		<p class="gstore-fulfillment-upload__desc">
@@ -85,7 +85,13 @@ foreach ( $fulfillment_documents as $doc ) {
 		</p>
 
 		<div class="gstore-fulfillment-upload__slots">
-			<?php foreach ( $required_docs as $req ) :
+			<?php
+			// Se não há docs específicos, cria um slot genérico.
+			$upload_slots = ! empty( $required_docs ) ? $required_docs : array(
+				array( 'key' => 'documento_geral', 'label' => 'Documento' ),
+			);
+
+			foreach ( $upload_slots as $req ) :
 				$is_optional = ! empty( $req['optional'] );
 				$existing    = $uploaded_by_type[ $req['key'] ] ?? null;
 				$slot_class  = $existing ? 'has-file' : '';
@@ -148,13 +154,6 @@ foreach ( $fulfillment_documents as $doc ) {
 			<?php endforeach; ?>
 		</div>
 	</div>
-	<?php endif; ?>
-
-	<!-- Info quando não precisa de documentação -->
-	<?php if ( $has_fulfillment && 'none' === $doc_profile ) : ?>
-		<div class="gstore-fulfillment-info">
-			<p>Este pedido não requer documentação adicional.</p>
-		</div>
 	<?php endif; ?>
 
 	<!-- Documentos já enviados (visível em todas as etapas, se houver) -->
