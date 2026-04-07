@@ -142,16 +142,9 @@ $customer_orders = wc_get_orders( array(
 			<?php foreach ( $customer_orders as $order ) : ?>
 				<?php
 				$order_status = $order->get_status();
-				$status_labels = array(
-					'pending'    => __( 'Pendente', 'gstore' ),
-					'processing' => __( 'Processando', 'gstore' ),
-					'on-hold'    => __( 'Aguardando', 'gstore' ),
-					'completed'  => __( 'Concluído', 'gstore' ),
-					'cancelled'  => __( 'Cancelado', 'gstore' ),
-					'refunded'   => __( 'Reembolsado', 'gstore' ),
-					'failed'     => __( 'Falhou', 'gstore' ),
-				);
-				$status_label = isset( $status_labels[ $order_status ] ) ? $status_labels[ $order_status ] : $order_status;
+				$status_label = function_exists( 'gstore_my_account_get_orders_tab_status_label' )
+					? gstore_my_account_get_orders_tab_status_label( $order )
+					: wc_get_order_status_name( $order_status );
 				?>
 				<div class="gstore-dashboard__order-card">
 					<div class="gstore-dashboard__order-header">
