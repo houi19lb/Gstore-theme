@@ -1191,3 +1191,148 @@ body.gstore-cart-template .return-to-shop .button:hover {
 		padding: 12px 4px !important;
 	}
 }
+
+/* ==========================================
+   CARRINHO MISTO - AVISO E BADGES
+   ========================================== */
+
+.Gstore-cart-mixed-warning {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: flex-start;
+	gap: 16px;
+	padding: 20px 24px;
+	margin-bottom: 24px;
+	background: #fef3c7;
+	border: 1px solid #f59e0b;
+	border-radius: var(--gstore-cart-radius);
+	color: #92400e;
+}
+
+.Gstore-cart-mixed-warning__icon {
+	flex-shrink: 0;
+	color: #f59e0b;
+	margin-top: 2px;
+}
+
+.Gstore-cart-mixed-warning__content {
+	flex: 1;
+	min-width: 200px;
+}
+
+.Gstore-cart-mixed-warning__content h2 {
+	margin: 0 0 6px;
+	font-size: 16px;
+	font-weight: 700;
+	color: #92400e;
+	line-height: 1.3;
+}
+
+.Gstore-cart-mixed-warning__content p {
+	margin: 0;
+	font-size: 14px;
+	line-height: 1.5;
+	color: #a16207;
+}
+
+.Gstore-cart-mixed-warning__actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 12px;
+	width: 100%;
+	margin-top: 4px;
+}
+
+.Gstore-cart-mixed-warning__actions .Gstore-cart-btn {
+	flex: 1;
+	min-width: 200px;
+	padding: 12px 20px;
+	font-size: 14px;
+	font-weight: 600;
+	text-align: center;
+	border: 2px solid;
+	border-radius: var(--gstore-cart-radius);
+	cursor: pointer;
+	transition: background 0.2s, color 0.2s, border-color 0.2s;
+}
+
+.Gstore-cart-btn--partner {
+	background: var(--gstore-cart-accent);
+	border-color: var(--gstore-cart-accent);
+	color: #fff;
+}
+
+.Gstore-cart-btn--partner:hover {
+	background: var(--gstore-cart-accent-hover);
+	border-color: var(--gstore-cart-accent-hover);
+}
+
+.Gstore-cart-btn--store {
+	background: #fff;
+	border-color: var(--gstore-cart-text);
+	color: var(--gstore-cart-text);
+}
+
+.Gstore-cart-btn--store:hover {
+	background: var(--gstore-cart-text);
+	color: #fff;
+}
+
+.Gstore-cart-btn--loading {
+	opacity: 0.6;
+	cursor: wait;
+	pointer-events: none;
+}
+
+.Gstore-cart-btn--disabled {
+	opacity: 0.5;
+	pointer-events: none;
+}
+
+/* Badge de grupo nos cards */
+.Gstore-cart-card__token-badge {
+	display: inline-block;
+	padding: 3px 10px;
+	font-size: 11px;
+	font-weight: 700;
+	text-transform: uppercase;
+	letter-spacing: 0.5px;
+	border-radius: 3px;
+	line-height: 1.4;
+}
+
+.Gstore-cart-card__token-badge--partner {
+	background: #fef3c7;
+	color: #92400e;
+	border: 1px solid #f59e0b;
+}
+
+.Gstore-cart-card__token-badge--store {
+	background: #eff6ff;
+	color: #1e40af;
+	border: 1px solid #3b82f6;
+}
+
+/* Borda lateral colorida nos cards mistos */
+.Gstore-cart-card--partner {
+	border-left: 4px solid #f59e0b !important;
+}
+
+.Gstore-cart-card--store {
+	border-left: 4px solid #3b82f6 !important;
+}
+
+@media (max-width: 600px) {
+	.Gstore-cart-mixed-warning {
+		flex-direction: column;
+		padding: 16px;
+	}
+
+	.Gstore-cart-mixed-warning__actions {
+		flex-direction: column;
+	}
+
+	.Gstore-cart-mixed-warning__actions .Gstore-cart-btn {
+		min-width: unset;
+	}
+}

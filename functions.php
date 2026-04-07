@@ -2828,14 +2828,44 @@ function gstore_enqueue_scripts() {
 			'gstore-header',
 			'gstore_wc',
 			array(
-				'ajax_url'   => admin_url( 'admin-ajax.php' ),
-				'cart_url'   => wc_get_cart_url(),
-				'cart_count' => WC()->cart->get_cart_contents_count(),
+				'ajax_url'        => admin_url( 'admin-ajax.php' ),
+				'cart_url'        => wc_get_cart_url(),
+				'cart_count'      => WC()->cart->get_cart_contents_count(),
+				'mixed_cart'      => function_exists( 'gstore_blu_get_cart_token_groups' ) ? gstore_blu_get_cart_token_groups() : array( 'is_mixed' => false ),
+				'mixed_cart_nonce' => wp_create_nonce( 'gstore_cart_token_group' ),
 			)
 		);
+
+		// Intercepta botao checkout do minicart quando carrinho misto.
+		wp_add_inline_script( 'gstore-header', '
+			(function(){
+				if(!window.gstore_wc||!window.gstore_wc.mixed_cart||!window.gstore_wc.mixed_cart.is_mixed)return;
+				document.addEventListener("click",function(e){
+					var btn=e.target.closest(".wc-block-mini-cart__footer-actions a, .wp-block-woocommerce-mini-cart-checkout-button-block");
+					if(btn){e.preventDefault();e.stopPropagation();window.location.href=window.gstore_wc.cart_url;}
+				},true);
+			})();
+		' );
 	}
 }
 add_action( 'wp_enqueue_scripts', 'gstore_enqueue_scripts' );
+
+/**
+ * Redireciona checkout para carrinho quando há mistura de tokens Blu.
+ */
+add_action( 'template_redirect', function () {
+	if (
+		function_exists( 'is_checkout' ) && is_checkout()
+		&& ! is_order_received_page()
+		&& function_exists( 'gstore_blu_get_cart_token_groups' )
+	) {
+		$groups = gstore_blu_get_cart_token_groups();
+		if ( ! empty( $groups['is_mixed'] ) ) {
+			wp_safe_redirect( add_query_arg( 'mixed_cart', '1', wc_get_cart_url() ) );
+			exit;
+		}
+	}
+} );
 
 /**
  * ============================================================

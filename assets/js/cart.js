@@ -1235,4 +1235,58 @@
 	} else {
 		restoreCartCep();
 	}
+
+	/* ── Carrinho misto: escolha de grupo de tokens ── */
+	document.querySelectorAll('[data-gstore-keep-group]').forEach(function (btn) {
+		btn.addEventListener('click', function () {
+			var keepGroup = btn.getAttribute('data-gstore-keep-group');
+			if (!keepGroup) return;
+
+			var allBtns = document.querySelectorAll('[data-gstore-keep-group]');
+			allBtns.forEach(function (b) {
+				b.disabled = true;
+				b.classList.add('Gstore-cart-btn--loading');
+			});
+
+			jQuery.ajax({
+				url: window.gstore_wc.ajax_url,
+				type: 'POST',
+				data: {
+					action: 'gstore_remove_cart_token_group',
+					nonce: window.gstore_wc.mixed_cart_nonce,
+					keep_group: keepGroup,
+				},
+				success: function (response) {
+					if (response.success) {
+						window.location.reload();
+					} else {
+						var msg = response.data && response.data.message ? response.data.message : 'Erro ao processar.';
+						alert(msg);
+						allBtns.forEach(function (b) {
+							b.disabled = false;
+							b.classList.remove('Gstore-cart-btn--loading');
+						});
+					}
+				},
+				error: function () {
+					alert('Erro de conexão. Tente novamente.');
+					allBtns.forEach(function (b) {
+						b.disabled = false;
+						b.classList.remove('Gstore-cart-btn--loading');
+					});
+				},
+			});
+		});
+	});
+
+	/* Desabilitar botão de checkout quando carrinho misto */
+	if (document.querySelector('[data-gstore-mixed-cart]')) {
+		var checkoutBtns = document.querySelectorAll('.checkout-button, .wc-proceed-to-checkout .button');
+		checkoutBtns.forEach(function (btn) {
+			btn.dataset.gstoreDisabled = 'true';
+			btn.classList.add('Gstore-cart-btn--disabled');
+			btn.style.pointerEvents = 'none';
+			btn.style.opacity = '0.5';
+		});
+	}
 })();

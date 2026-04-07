@@ -35,6 +35,32 @@ if ( function_exists( 'wc_wp_theme_get_element_class_name' ) ) {
 			<h1><?php esc_html_e( 'Revise seus itens antes de finalizar', 'gstore' ); ?></h1>
 		</header>
 
+		<?php
+		$gstore_mixed_cart = function_exists( 'gstore_blu_get_cart_token_groups' )
+			? gstore_blu_get_cart_token_groups()
+			: array( 'is_mixed' => false );
+
+		if ( ! empty( $gstore_mixed_cart['is_mixed'] ) ) :
+		?>
+		<div class="Gstore-cart-mixed-warning" role="alert" data-gstore-mixed-cart>
+			<div class="Gstore-cart-mixed-warning__icon">
+				<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+			</div>
+			<div class="Gstore-cart-mixed-warning__content">
+				<h2><?php esc_html_e( 'Produtos do programa não podem ser finalizados junto com outros produtos', 'gstore' ); ?></h2>
+				<p><?php esc_html_e( 'Escolha qual grupo de produtos deseja finalizar agora. Os demais serão removidos do carrinho.', 'gstore' ); ?></p>
+			</div>
+			<div class="Gstore-cart-mixed-warning__actions">
+				<button type="button" class="Gstore-cart-btn Gstore-cart-btn--partner" data-gstore-keep-group="partner">
+					<?php esc_html_e( 'Escolher produtos do programa', 'gstore' ); ?>
+				</button>
+				<button type="button" class="Gstore-cart-btn Gstore-cart-btn--store" data-gstore-keep-group="store">
+					<?php esc_html_e( 'Escolher produtos da loja', 'gstore' ); ?>
+				</button>
+			</div>
+		</div>
+		<?php endif; ?>
+
 		<form class="woocommerce-cart-form Gstore-cart-form" action="<?php echo esc_url( $cart_url ); ?>" method="post">
 			<?php do_action( 'woocommerce_before_cart_table' ); ?>
 
@@ -53,9 +79,25 @@ if ( function_exists( 'wc_wp_theme_get_element_class_name' ) ) {
 								$product_permalink = apply_filters( 'woocommerce_cart_item_permalink', $_product->is_visible() ? $_product->get_permalink( $cart_item ) : '', $cart_item, $cart_item_key );
 								$thumbnail         = apply_filters( 'woocommerce_cart_item_thumbnail', $_product->get_image( 'woocommerce_thumbnail' ), $cart_item, $cart_item_key );
 								$cart_item_class   = implode( ' ', array_map( 'sanitize_html_class', explode( ' ', apply_filters( 'woocommerce_cart_item_class', 'cart_item', $cart_item, $cart_item_key ) ) ) );
+
+								$item_token_group = '';
+								if ( ! empty( $gstore_mixed_cart['is_mixed'] ) ) {
+									$partner_keys = isset( $gstore_mixed_cart['groups']['partner']['cart_item_keys'] ) ? $gstore_mixed_cart['groups']['partner']['cart_item_keys'] : array();
+									$store_keys   = isset( $gstore_mixed_cart['groups']['store']['cart_item_keys'] ) ? $gstore_mixed_cart['groups']['store']['cart_item_keys'] : array();
+									if ( in_array( $cart_item_key, $partner_keys, true ) ) {
+										$item_token_group = 'partner';
+									} elseif ( in_array( $cart_item_key, $store_keys, true ) ) {
+										$item_token_group = 'store';
+									}
+								}
 								?>
 
-								<article class="Gstore-cart-card <?php echo esc_attr( $cart_item_class ); ?>" role="listitem" data-cart-item-key="<?php echo esc_attr( $cart_item_key ); ?>" data-product-id="<?php echo esc_attr( $product_id ); ?>" data-quantity="<?php echo esc_attr( $cart_item['quantity'] ); ?>">
+								<article class="Gstore-cart-card <?php echo esc_attr( $cart_item_class ); ?><?php echo '' !== $item_token_group ? ' Gstore-cart-card--' . esc_attr( $item_token_group ) : ''; ?>" role="listitem" data-cart-item-key="<?php echo esc_attr( $cart_item_key ); ?>" data-product-id="<?php echo esc_attr( $product_id ); ?>" data-quantity="<?php echo esc_attr( $cart_item['quantity'] ); ?>"<?php echo '' !== $item_token_group ? ' data-token-group="' . esc_attr( $item_token_group ) . '"' : ''; ?>>
+								<?php if ( '' !== $item_token_group ) : ?>
+									<span class="Gstore-cart-card__token-badge Gstore-cart-card__token-badge--<?php echo esc_attr( $item_token_group ); ?>">
+										<?php echo 'partner' === $item_token_group ? esc_html__( 'Programa', 'gstore' ) : esc_html__( 'Loja', 'gstore' ); ?>
+									</span>
+								<?php endif; ?>
 									<div class="Gstore-cart-card__media">
 										<?php
 										if ( ! $product_permalink ) {
