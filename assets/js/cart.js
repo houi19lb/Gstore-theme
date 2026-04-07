@@ -9,6 +9,7 @@
 	let ratesSyncInProgress = false;
 	let shippingChoicesDelegated = false;
 	let initialRatesHydrated = false;
+	let mixedCartActionsDelegated = false;
 	const CART_CEP_STORAGE_KEY = 'gstore_cart_cep';
 	const CART_MODE_STORAGE_KEY = 'gstore_cart_shipping_mode';
 	const CART_CALCULATED_SESSION_KEY = 'gstore_cart_shipping_calculated_session';
@@ -297,6 +298,21 @@
 			return wc_checkout_params.ajax_url;
 		}
 		return '/wp-admin/admin-ajax.php';
+	}
+
+	function getMixedCartConfig() {
+		const localizedCartData = typeof window !== 'undefined' && window.gstoreCartData && typeof window.gstoreCartData === 'object'
+			? window.gstoreCartData
+			: {};
+		const localizedWooData = typeof window !== 'undefined' && window.gstore_wc && typeof window.gstore_wc === 'object'
+			? window.gstore_wc
+			: {};
+
+		return {
+			ajaxUrl: localizedCartData.ajax_url || localizedWooData.ajax_url || getShippingAjaxUrl(),
+			mixedCartNonce: localizedCartData.mixed_cart_nonce || localizedWooData.mixed_cart_nonce || '',
+			checkoutUrl: localizedCartData.checkout_url || '',
+		};
 	}
 
 	function parsePriceValue(rawText) {
@@ -1162,6 +1178,7 @@
 		initShippingChoices();
 		setupMutationObserver();
 		ensureShippingBlocksExist();
+		initMixedCartActions();
 		restoreShippingRatesFromStorage();
 		updateCartTotalsSummary();
 		updateCheckoutAvailability();
@@ -1174,6 +1191,73 @@
 				}, 120);
 			}
 		}
+	}
+
+	function initMixedCartActions() {
+		if (mixedCartActionsDelegated || typeof jQuery === 'undefined') {
+			return;
+		}
+
+		document.addEventListener('click', (event) => {
+			const btn = event.target instanceof Element ? event.target.closest('[data-gstore-keep-group]') : null;
+			if (!(btn instanceof HTMLButtonElement)) {
+				return;
+			}
+
+			event.preventDefault();
+
+			const keepGroup = btn.getAttribute('data-gstore-keep-group');
+			if (!keepGroup) {
+				return;
+			}
+
+			const config = getMixedCartConfig();
+			if (!config.ajaxUrl || !config.mixedCartNonce) {
+				window.alert('Nao foi possivel preparar a separacao do carrinho. Recarregue a pagina e tente novamente.');
+				return;
+			}
+
+			const allBtns = document.querySelectorAll('[data-gstore-keep-group]');
+			allBtns.forEach((buttonEl) => {
+				buttonEl.disabled = true;
+				buttonEl.classList.add('Gstore-cart-btn--loading');
+			});
+
+			jQuery.ajax({
+				url: config.ajaxUrl,
+				type: 'POST',
+				data: {
+					action: 'gstore_remove_cart_token_group',
+					nonce: config.mixedCartNonce,
+					keep_group: keepGroup,
+				},
+				success(response) {
+					if (response && response.success) {
+						const redirectUrl = response.data && response.data.redirect_url ? response.data.redirect_url : config.checkoutUrl || window.location.href;
+						window.location.href = redirectUrl;
+						return;
+					}
+
+					const message = response && response.data && response.data.message
+						? response.data.message
+						: 'Erro ao processar.';
+					window.alert(message);
+					allBtns.forEach((buttonEl) => {
+						buttonEl.disabled = false;
+						buttonEl.classList.remove('Gstore-cart-btn--loading');
+					});
+				},
+				error() {
+					window.alert('Erro de conexao. Tente novamente.');
+					allBtns.forEach((buttonEl) => {
+						buttonEl.disabled = false;
+						buttonEl.classList.remove('Gstore-cart-btn--loading');
+					});
+				},
+			});
+		});
+
+		mixedCartActionsDelegated = true;
 	}
 
 	if (document.readyState === 'loading') {
@@ -1235,49 +1319,6 @@
 	} else {
 		restoreCartCep();
 	}
-
-	/* ── Carrinho misto: escolha de grupo de tokens ── */
-	document.querySelectorAll('[data-gstore-keep-group]').forEach(function (btn) {
-		btn.addEventListener('click', function () {
-			var keepGroup = btn.getAttribute('data-gstore-keep-group');
-			if (!keepGroup) return;
-
-			var allBtns = document.querySelectorAll('[data-gstore-keep-group]');
-			allBtns.forEach(function (b) {
-				b.disabled = true;
-				b.classList.add('Gstore-cart-btn--loading');
-			});
-
-			jQuery.ajax({
-				url: window.gstore_wc.ajax_url,
-				type: 'POST',
-				data: {
-					action: 'gstore_remove_cart_token_group',
-					nonce: window.gstore_wc.mixed_cart_nonce,
-					keep_group: keepGroup,
-				},
-				success: function (response) {
-					if (response.success) {
-						window.location.reload();
-					} else {
-						var msg = response.data && response.data.message ? response.data.message : 'Erro ao processar.';
-						alert(msg);
-						allBtns.forEach(function (b) {
-							b.disabled = false;
-							b.classList.remove('Gstore-cart-btn--loading');
-						});
-					}
-				},
-				error: function () {
-					alert('Erro de conexão. Tente novamente.');
-					allBtns.forEach(function (b) {
-						b.disabled = false;
-						b.classList.remove('Gstore-cart-btn--loading');
-					});
-				},
-			});
-		});
-	});
 
 	/* Desabilitar botão de checkout quando carrinho misto */
 	if (document.querySelector('[data-gstore-mixed-cart]')) {

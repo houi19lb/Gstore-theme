@@ -300,7 +300,15 @@ div.woocommerce section.Gstore-cart-shell div.Gstore-cart-container {
 }
 
 .Gstore-cart-card.cart_item {
-	flex-direction: row;
+	flex-direction: column;
+	align-items: stretch;
+	gap: 0;
+	padding: 0;
+	overflow: hidden;
+}
+
+.Gstore-cart-card__content {
+	display: flex;
 	align-items: stretch;
 	gap: 24px;
 	padding: 20px;
@@ -1111,6 +1119,11 @@ body.gstore-cart-template .return-to-shop .button:hover {
 
 	.Gstore-cart-card.cart_item {
 		flex-direction: column;
+		padding: 0;
+	}
+
+	.Gstore-cart-card__content {
+		flex-direction: column;
 		padding: 16px;
 	}
 
@@ -1209,19 +1222,28 @@ body.gstore-cart-template .return-to-shop .button:hover {
 	color: #92400e;
 }
 
-.Gstore-cart-mixed-warning__icon {
-	flex-shrink: 0;
-	color: #f59e0b;
-	margin-top: 2px;
+.Gstore-cart-mixed-warning__content {
+	flex: 1 1 100%;
+	min-width: 0;
 }
 
-.Gstore-cart-mixed-warning__content {
-	flex: 1;
-	min-width: 200px;
+.Gstore-cart-mixed-warning__headline {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	margin: 0 0 6px;
+}
+
+.Gstore-cart-mixed-warning__icon {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	flex-shrink: 0;
+	color: #f59e0b;
 }
 
 .Gstore-cart-mixed-warning__content h2 {
-	margin: 0 0 6px;
+	margin: 0;
 	font-size: 16px;
 	font-weight: 700;
 	color: #92400e;
@@ -1240,7 +1262,7 @@ body.gstore-cart-template .return-to-shop .button:hover {
 	flex-wrap: wrap;
 	gap: 12px;
 	width: 100%;
-	margin-top: 4px;
+	margin-top: 0;
 }
 
 .Gstore-cart-mixed-warning__actions .Gstore-cart-btn {
@@ -1289,28 +1311,24 @@ body.gstore-cart-template .return-to-shop .button:hover {
 	pointer-events: none;
 }
 
-/* Badge de grupo nos cards */
-.Gstore-cart-card__token-badge {
-	display: inline-block;
-	padding: 3px 10px;
-	font-size: 11px;
+/* Titulo de grupo no topo do card */
+.Gstore-cart-card__group-heading {
+	padding: 12px 20px;
+	font-size: 12px;
 	font-weight: 700;
 	text-transform: uppercase;
-	letter-spacing: 0.5px;
-	border-radius: 3px;
-	line-height: 1.4;
+	letter-spacing: 0.08em;
+	border-bottom: 1px solid currentColor;
 }
 
-.Gstore-cart-card__token-badge--partner {
+.Gstore-cart-card__group-heading--partner {
 	background: #fef3c7;
 	color: #92400e;
-	border: 1px solid #f59e0b;
 }
 
-.Gstore-cart-card__token-badge--store {
+.Gstore-cart-card__group-heading--store {
 	background: #eff6ff;
 	color: #1e40af;
-	border: 1px solid #3b82f6;
 }
 
 /* Borda lateral colorida nos cards mistos */
@@ -1326,6 +1344,10 @@ body.gstore-cart-template .return-to-shop .button:hover {
 	.Gstore-cart-mixed-warning {
 		flex-direction: column;
 		padding: 16px;
+	}
+
+	.Gstore-cart-mixed-warning__headline {
+		align-items: flex-start;
 	}
 
 	.Gstore-cart-mixed-warning__actions {

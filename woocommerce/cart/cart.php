@@ -43,11 +43,13 @@ if ( function_exists( 'wc_wp_theme_get_element_class_name' ) ) {
 		if ( ! empty( $gstore_mixed_cart['is_mixed'] ) ) :
 		?>
 		<div class="Gstore-cart-mixed-warning" role="alert" data-gstore-mixed-cart>
-			<div class="Gstore-cart-mixed-warning__icon">
-				<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-			</div>
 			<div class="Gstore-cart-mixed-warning__content">
-				<h2><?php esc_html_e( 'Produtos do programa não podem ser finalizados junto com outros produtos', 'gstore' ); ?></h2>
+				<div class="Gstore-cart-mixed-warning__headline">
+					<div class="Gstore-cart-mixed-warning__icon">
+						<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+					</div>
+					<h2><?php esc_html_e( 'Produtos do programa não podem ser finalizados junto com outros produtos', 'gstore' ); ?></h2>
+				</div>
 				<p><?php esc_html_e( 'Escolha qual grupo de produtos deseja finalizar agora. Os demais serão removidos do carrinho.', 'gstore' ); ?></p>
 			</div>
 			<div class="Gstore-cart-mixed-warning__actions">
@@ -94,10 +96,11 @@ if ( function_exists( 'wc_wp_theme_get_element_class_name' ) ) {
 
 								<article class="Gstore-cart-card <?php echo esc_attr( $cart_item_class ); ?><?php echo '' !== $item_token_group ? ' Gstore-cart-card--' . esc_attr( $item_token_group ) : ''; ?>" role="listitem" data-cart-item-key="<?php echo esc_attr( $cart_item_key ); ?>" data-product-id="<?php echo esc_attr( $product_id ); ?>" data-quantity="<?php echo esc_attr( $cart_item['quantity'] ); ?>"<?php echo '' !== $item_token_group ? ' data-token-group="' . esc_attr( $item_token_group ) . '"' : ''; ?>>
 								<?php if ( '' !== $item_token_group ) : ?>
-									<span class="Gstore-cart-card__token-badge Gstore-cart-card__token-badge--<?php echo esc_attr( $item_token_group ); ?>">
+									<div class="Gstore-cart-card__group-heading Gstore-cart-card__group-heading--<?php echo esc_attr( $item_token_group ); ?>">
 										<?php echo 'partner' === $item_token_group ? esc_html__( 'Programa', 'gstore' ) : esc_html__( 'Loja', 'gstore' ); ?>
-									</span>
+									</div>
 								<?php endif; ?>
+									<div class="Gstore-cart-card__content">
 									<div class="Gstore-cart-card__media">
 										<?php
 										if ( ! $product_permalink ) {
@@ -294,6 +297,7 @@ if ( function_exists( 'wc_wp_theme_get_element_class_name' ) ) {
 												</div>
 											<?php endif; ?>
 										</div>
+									</div>
 									</div>
 								</article>
 								<?php

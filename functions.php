@@ -2694,12 +2694,25 @@ function gstore_enqueue_scripts() {
 		}
 
 		if ( function_exists( 'is_cart' ) && is_cart() ) {
+			$cart_js_path    = get_theme_file_path( 'assets/js/cart.js' );
+			$cart_js_version = file_exists( $cart_js_path ) ? (string) filemtime( $cart_js_path ) : wp_get_theme()->get( 'Version' );
+
 			wp_enqueue_script(
 				'gstore-cart',
 				get_theme_file_uri( 'assets/js/cart.js' ),
-				array(),
-				wp_get_theme()->get( 'Version' ),
+				array( 'jquery' ),
+				$cart_js_version,
 				true
+			);
+			wp_localize_script(
+				'gstore-cart',
+				'gstoreCartData',
+				array(
+					'ajax_url'         => admin_url( 'admin-ajax.php' ),
+					'mixed_cart_nonce' => wp_create_nonce( 'gstore_cart_token_group' ),
+					'cart_url'         => wc_get_cart_url(),
+					'checkout_url'     => wc_get_checkout_url(),
+				)
 			);
 		}
 
@@ -2828,10 +2841,10 @@ function gstore_enqueue_scripts() {
 			'gstore-header',
 			'gstore_wc',
 			array(
-				'ajax_url'        => admin_url( 'admin-ajax.php' ),
-				'cart_url'        => wc_get_cart_url(),
-				'cart_count'      => WC()->cart->get_cart_contents_count(),
-				'mixed_cart'      => function_exists( 'gstore_blu_get_cart_token_groups' ) ? gstore_blu_get_cart_token_groups() : array( 'is_mixed' => false ),
+				'ajax_url'         => admin_url( 'admin-ajax.php' ),
+				'cart_url'         => wc_get_cart_url(),
+				'cart_count'       => WC()->cart->get_cart_contents_count(),
+				'mixed_cart'       => function_exists( 'gstore_blu_get_cart_token_groups' ) ? gstore_blu_get_cart_token_groups() : array( 'is_mixed' => false ),
 				'mixed_cart_nonce' => wp_create_nonce( 'gstore_cart_token_group' ),
 			)
 		);
