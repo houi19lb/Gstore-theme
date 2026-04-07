@@ -95,25 +95,27 @@ if ( function_exists( 'wc_wp_theme_get_element_class_name' ) ) {
 								?>
 
 								<article class="Gstore-cart-card <?php echo esc_attr( $cart_item_class ); ?><?php echo '' !== $item_token_group ? ' Gstore-cart-card--' . esc_attr( $item_token_group ) : ''; ?>" role="listitem" data-cart-item-key="<?php echo esc_attr( $cart_item_key ); ?>" data-product-id="<?php echo esc_attr( $product_id ); ?>" data-quantity="<?php echo esc_attr( $cart_item['quantity'] ); ?>"<?php echo '' !== $item_token_group ? ' data-token-group="' . esc_attr( $item_token_group ) . '"' : ''; ?>>
-								<?php if ( '' !== $item_token_group ) : ?>
-									<div class="Gstore-cart-card__group-heading Gstore-cart-card__group-heading--<?php echo esc_attr( $item_token_group ); ?>">
-										<?php echo 'partner' === $item_token_group ? esc_html__( 'Programa', 'gstore' ) : esc_html__( 'Loja', 'gstore' ); ?>
-									</div>
-								<?php endif; ?>
 									<div class="Gstore-cart-card__content">
-									<div class="Gstore-cart-card__media">
-										<?php
-										if ( ! $product_permalink ) {
-											echo $thumbnail; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-										} else {
-											printf(
-												'<a class="Gstore-cart-card__thumb" href="%1$s">%2$s</a>',
-												esc_url( $product_permalink ),
-												$thumbnail // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-											);
-										}
-										?>
-									</div>
+										<div class="Gstore-cart-card__media-column">
+											<?php if ( '' !== $item_token_group ) : ?>
+												<div class="Gstore-cart-card__group-label Gstore-cart-card__group-label--<?php echo esc_attr( $item_token_group ); ?>">
+													<?php echo 'partner' === $item_token_group ? esc_html__( 'Programa', 'gstore' ) : esc_html__( 'Loja', 'gstore' ); ?>
+												</div>
+											<?php endif; ?>
+											<div class="Gstore-cart-card__media">
+												<?php
+												if ( ! $product_permalink ) {
+													echo $thumbnail; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+												} else {
+													printf(
+														'<a class="Gstore-cart-card__thumb" href="%1$s">%2$s</a>',
+														esc_url( $product_permalink ),
+														$thumbnail // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+													);
+												}
+												?>
+											</div>
+										</div>
 
 									<div class="Gstore-cart-card__body">
 										<div class="Gstore-cart-card__top">
