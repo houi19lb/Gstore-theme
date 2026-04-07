@@ -5565,11 +5565,14 @@ function gstore_enqueue_checkout_assets() {
 	}
 
 	if ( function_exists( 'is_cart' ) && is_cart() ) {
+		$cart_css_path    = get_theme_file_path( 'assets/css/cart.css' );
+		$cart_css_version = file_exists( $cart_css_path ) ? (string) filemtime( $cart_css_path ) : $theme_version;
+
 		wp_enqueue_style(
 			'gstore-cart',
 			get_theme_file_uri( 'assets/css/cart.css' ),
 			array( 'gstore-style', 'gstore-fontawesome' ),
-			$theme_version
+			$cart_css_version
 		);
 	}
 
