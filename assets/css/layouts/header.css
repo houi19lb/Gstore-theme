@@ -956,6 +956,12 @@ body:has(.Gstore-header-shell) {
 	opacity: 0.8;
 }
 
+.Gstore-search-suggest__out-of-stock {
+	color: #b91c1c;
+	font-size: 0.78rem;
+	font-weight: 600;
+}
+
 /* Drawer (tema escuro) */
 .Gstore-mobile-drawer .Gstore-search-suggest {
 	background: var(--gstore-color-bg-dark, #0a0a0a);
@@ -975,4 +981,8 @@ body:has(.Gstore-header-shell) {
 
 .Gstore-mobile-drawer .Gstore-search-suggest__price {
 	color: rgba(255, 255, 255, 0.7);
+}
+
+.Gstore-mobile-drawer .Gstore-search-suggest__out-of-stock {
+	color: #f87171;
 }

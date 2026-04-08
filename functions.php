@@ -10530,15 +10530,23 @@ function gstore_handle_search_suggest( WP_REST_Request $request ) {
 		$image_id  = $product->get_image_id();
 		$image_url = $image_id ? wp_get_attachment_image_url( $image_id, 'woocommerce_thumbnail' ) : '';
 
+		$in_stock = $product->is_in_stock();
+
+		if ( ! $in_stock ) {
+			$price_html = '<span class="Gstore-search-suggest__out-of-stock">Indisponível</span>';
+		} elseif ( gstore_product_hides_price( $product, 'search' ) ) {
+			$price_html = gstore_get_hidden_price_mask_html( 'inline' );
+		} else {
+			$price_html = $product->get_price_html();
+		}
+
 		$products[] = array(
 			'id'         => $product_id,
 			'name'       => $product->get_name(),
 			'permalink'  => get_permalink( $product_id ),
 			'image'      => $image_url ? $image_url : '',
-			'price_html' => gstore_product_hides_price( $product, 'search' )
-				? gstore_get_hidden_price_mask_html( 'inline' )
-				: $product->get_price_html(),
-			'in_stock'   => $product->is_in_stock(),
+			'price_html' => $price_html,
+			'in_stock'   => $in_stock,
 		);
 	}
 
