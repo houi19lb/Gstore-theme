@@ -5973,6 +5973,13 @@ if ( ! function_exists( 'gstore_get_cart_item_shipping_mode' ) ) {
 	}
 }
 
+if ( ! function_exists( 'gstore_get_cart_item_selected_shipping_rate' ) ) {
+	function gstore_get_cart_item_selected_shipping_rate( $cart_item ) {
+		$rate_id = isset( $cart_item['gstore_selected_shipping_rate'] ) ? sanitize_text_field( (string) $cart_item['gstore_selected_shipping_rate'] ) : '';
+		return 0 === strpos( $rate_id, 'gstore_custom_shipping:' ) ? $rate_id : '';
+	}
+}
+
 if ( ! function_exists( 'gstore_get_freight_mode_options' ) ) {
 	function gstore_get_freight_mode_options( $variation, $type ) {
 		$options = array();
@@ -6100,8 +6107,11 @@ if ( ! function_exists( 'gstore_normalize_cart_rates' ) ) {
 			}
 
 			$normalized[] = array(
+				'rate_id'        => isset( $rate['rate_id'] ) ? sanitize_text_field( (string) $rate['rate_id'] ) : ( isset( $rate['id'] ) ? sanitize_text_field( (string) $rate['id'] ) : '' ),
 				'mode'           => $mode,
 				'label'          => $label,
+				'carrier_id'     => isset( $rate['carrier_id'] ) ? sanitize_text_field( (string) $rate['carrier_id'] ) : '',
+				'service_id'     => isset( $rate['service_id'] ) ? sanitize_text_field( (string) $rate['service_id'] ) : '',
 				'cost'           => $cost,
 				'cost_formatted' => $cost_formatted,
 			);
@@ -6113,6 +6123,13 @@ if ( ! function_exists( 'gstore_normalize_cart_rates' ) ) {
 
 if ( ! function_exists( 'gstore_restore_cart_item_shipping_mode' ) ) {
 	function gstore_restore_cart_item_shipping_mode( $cart_item, $values ) {
+		if ( isset( $values['gstore_selected_shipping_rate'] ) ) {
+			$selected_rate = sanitize_text_field( (string) $values['gstore_selected_shipping_rate'] );
+			if ( 0 === strpos( $selected_rate, 'gstore_custom_shipping:' ) ) {
+				$cart_item['gstore_selected_shipping_rate'] = $selected_rate;
+			}
+		}
+
 		if ( isset( $values['gstore_shipping_mode'] ) ) {
 			$mode = gstore_normalize_shipping_mode( $values['gstore_shipping_mode'] );
 			$cart_item['gstore_shipping_mode'] = '' !== $mode ? $mode : 'land';
@@ -6195,6 +6212,11 @@ if ( ! function_exists( 'gstore_sync_cart_shipping_modes' ) ) {
 			WC()->cart->cart_contents[ $cart_item_key ]['gstore_shipping_rates'] = $normalized_rates;
 		}
 
+		$posted_selected_rates = ! empty( $_POST['gstore_selected_shipping_rate'] ) // phpcs:ignore WordPress.Security.NonceVerification.Missing
+			? wp_unslash( $_POST['gstore_selected_shipping_rate'] ) // phpcs:ignore WordPress.Security.NonceVerification.Missing
+			: array();
+		$posted_selected_rates = is_array( $posted_selected_rates ) ? $posted_selected_rates : array();
+
 		foreach ( $posted_modes as $cart_item_key => $mode ) {
 			$cart_item_key = (string) $cart_item_key;
 			$mode          = gstore_normalize_shipping_mode( $mode );
@@ -6232,6 +6254,35 @@ if ( ! function_exists( 'gstore_sync_cart_shipping_modes' ) ) {
 			}
 
 			WC()->cart->cart_contents[ $cart_item_key ]['gstore_shipping_mode'] = $mode;
+		}
+
+		foreach ( $posted_selected_rates as $cart_item_key => $rate_id ) {
+			$cart_item_key = (string) $cart_item_key;
+			$rate_id = sanitize_text_field( (string) $rate_id );
+			if ( 0 !== strpos( $rate_id, 'gstore_custom_shipping:' ) ) {
+				continue;
+			}
+			if ( ! isset( WC()->cart->cart_contents[ $cart_item_key ] ) ) {
+				continue;
+			}
+
+			$previous = isset( WC()->cart->cart_contents[ $cart_item_key ]['gstore_selected_shipping_rate'] )
+				? (string) WC()->cart->cart_contents[ $cart_item_key ]['gstore_selected_shipping_rate']
+				: '';
+			if ( $previous !== $rate_id ) {
+				$dirty = true;
+			}
+			WC()->cart->cart_contents[ $cart_item_key ]['gstore_selected_shipping_rate'] = $rate_id;
+
+			$rates = isset( WC()->cart->cart_contents[ $cart_item_key ]['gstore_shipping_rates'] )
+				? gstore_normalize_cart_rates( WC()->cart->cart_contents[ $cart_item_key ]['gstore_shipping_rates'] )
+				: array();
+			foreach ( $rates as $rate ) {
+				if ( isset( $rate['rate_id'] ) && $rate['rate_id'] === $rate_id && ! empty( $rate['mode'] ) ) {
+					WC()->cart->cart_contents[ $cart_item_key ]['gstore_shipping_mode'] = $rate['mode'];
+					break;
+				}
+			}
 		}
 
 		if ( $dirty ) {

@@ -12,6 +12,7 @@
 	let mixedCartActionsDelegated = false;
 	const CART_CEP_STORAGE_KEY = 'gstore_cart_cep';
 	const CART_MODE_STORAGE_KEY = 'gstore_cart_shipping_mode';
+	const CART_SELECTED_RATE_STORAGE_KEY = 'gstore_cart_selected_shipping_rate';
 	const CART_CALCULATED_SESSION_KEY = 'gstore_cart_shipping_calculated_session';
 	const CART_RATES_STORAGE_KEY = 'gstore_cart_shipping_rates';
 
@@ -95,6 +96,26 @@
 		}
 	}
 
+	function getStoredSelectedRateId(cartItemKey) {
+		if (typeof window === 'undefined' || !window.localStorage || !cartItemKey) {
+			return '';
+		}
+
+		try {
+			const raw = window.localStorage.getItem(CART_SELECTED_RATE_STORAGE_KEY);
+			if (!raw) {
+				return '';
+			}
+			const parsed = JSON.parse(raw);
+			if (!parsed || typeof parsed !== 'object') {
+				return '';
+			}
+			return parsed[cartItemKey] || '';
+		} catch (e) {
+			return '';
+		}
+	}
+
 	function storeShippingMode(cartItemKey, mode) {
 		if (typeof window === 'undefined' || !window.localStorage || !cartItemKey) {
 			return;
@@ -116,6 +137,32 @@
 		payload[cartItemKey] = normalized;
 		try {
 			window.localStorage.setItem(CART_MODE_STORAGE_KEY, JSON.stringify(payload));
+		} catch (e) {
+			// ignore storage errors
+		}
+	}
+
+	function storeSelectedRateId(cartItemKey, rateId) {
+		if (typeof window === 'undefined' || !window.localStorage || !cartItemKey) {
+			return;
+		}
+
+		const normalized = String(rateId || '').trim();
+		if (!normalized) {
+			return;
+		}
+
+		let payload = {};
+		try {
+			const raw = window.localStorage.getItem(CART_SELECTED_RATE_STORAGE_KEY);
+			payload = raw ? JSON.parse(raw) : {};
+		} catch (e) {
+			payload = {};
+		}
+
+		payload[cartItemKey] = normalized;
+		try {
+			window.localStorage.setItem(CART_SELECTED_RATE_STORAGE_KEY, JSON.stringify(payload));
 		} catch (e) {
 			// ignore storage errors
 		}
@@ -144,12 +191,15 @@
 		const rates = Array.isArray(rawRates) ? rawRates : [];
 		return rates
 			.map((rate) => ({
+				rate_id: rate && typeof rate === 'object' ? String(rate.rate_id || rate.id || '') : '',
 				mode: normalizeRateMode(rate && (rate.mode || rate.label || '')),
 				label: rate && rate.label ? String(rate.label) : '',
+				carrier_id: rate && rate.carrier_id ? String(rate.carrier_id) : '',
+				service_id: rate && rate.service_id ? String(rate.service_id) : '',
 				cost: rate && typeof rate === 'object' && 'cost' in rate ? rate.cost : '',
 				cost_formatted: rate && typeof rate === 'object' && 'cost_formatted' in rate ? rate.cost_formatted : '',
 			}))
-			.filter((rate) => rate.mode);
+			.filter((rate) => rate.mode && rate.rate_id);
 	}
 
 	function parseRatesFromInputValue(rawValue) {
@@ -220,6 +270,7 @@
 
 		prunePayload(CART_RATES_STORAGE_KEY);
 		prunePayload(CART_MODE_STORAGE_KEY);
+		prunePayload(CART_SELECTED_RATE_STORAGE_KEY);
 	}
 
 	function syncDomShippingRatesToStorage() {
@@ -449,19 +500,21 @@
 		}
 	}
 
-	function resolveSelectedMode(shippingBlock, cartItemKey, rates) {
+	function resolveSelectedRate(shippingBlock, cartItemKey, rates) {
 		const selectedInput = shippingBlock.querySelector('input[type="radio"]:checked');
 		const hiddenMode = shippingBlock.querySelector(`input[type="hidden"][name="gstore_shipping_mode[${cartItemKey}]"]`);
+		const hiddenRateId = shippingBlock.querySelector(`input[type="hidden"][name="gstore_selected_shipping_rate[${cartItemKey}]"]`);
 		const storedMode = getStoredShippingMode(cartItemKey);
-		let mode = selectedInput
-			? selectedInput.value
-			: (hiddenMode && hiddenMode.value) || storedMode || shippingBlock.dataset.lastSelectedMode || '';
-		mode = normalizeRateMode(mode);
-		const modes = (rates || []).map((rate) => normalizeRateMode(rate.mode)).filter(Boolean);
-		if (!mode || (modes.length && !modes.includes(mode))) {
-			mode = modes[0] || '';
+		const storedRateId = getStoredSelectedRateId(cartItemKey);
+		const selectedRateId = selectedInput
+			? String(selectedInput.value || '')
+			: (hiddenRateId && hiddenRateId.value) || storedRateId || shippingBlock.dataset.lastSelectedRateId || '';
+		let selectedRate = (rates || []).find((rate) => String(rate.rate_id || '') === selectedRateId);
+		if (!selectedRate) {
+			const fallbackMode = normalizeRateMode((hiddenMode && hiddenMode.value) || storedMode || shippingBlock.dataset.lastSelectedMode || '');
+			selectedRate = (rates || []).find((rate) => normalizeRateMode(rate.mode) === fallbackMode) || (rates || [])[0] || null;
 		}
-		return mode;
+		return selectedRate;
 	}
 
 	function ensureTotalsRow(table, className, label) {
@@ -518,24 +571,21 @@
 				return;
 			}
 
-			const selectedMode = resolveSelectedMode(shippingBlock, cartItemKey, rates);
-			if (selectedMode) {
+			const selectedRate = resolveSelectedRate(shippingBlock, cartItemKey, rates);
+			if (selectedRate) {
+				const selectedMode = normalizeRateMode(selectedRate.mode);
 				selectedModes.add(selectedMode);
-				const selectedRate = rates.find((rate) => normalizeRateMode(rate.mode) === selectedMode);
-				if (selectedRate) {
-					const selectedCost = Number.isFinite(Number(selectedRate.cost))
-						? Number(selectedRate.cost)
-						: parsePriceValue(selectedRate.cost_formatted || '');
-					if (Number.isFinite(selectedCost)) {
-						selectedTotal += selectedCost;
-						// Soma apenas o frete selecionado no total correspondente
-						if (selectedMode === 'land') {
-							groundTotal += selectedCost;
-							hasGround = true;
-						} else if (selectedMode === 'air') {
-							airTotal += selectedCost;
-							hasAir = true;
-						}
+				const selectedCost = Number.isFinite(Number(selectedRate.cost))
+					? Number(selectedRate.cost)
+					: parsePriceValue(selectedRate.cost_formatted || '');
+				if (Number.isFinite(selectedCost)) {
+					selectedTotal += selectedCost;
+					if (selectedMode === 'land') {
+						groundTotal += selectedCost;
+						hasGround = true;
+					} else if (selectedMode === 'air') {
+						airTotal += selectedCost;
+						hasAir = true;
 					}
 				}
 			}
@@ -630,13 +680,16 @@
 
 		const normalizedRates = (rates || [])
 			.map((rate) => ({
+				rate_id: String(rate.rate_id || rate.id || ''),
 				// Alinha com o checkout: quando mode não vier preenchido, tenta inferir pelo label.
 				mode: normalizeRateMode(rate.mode || rate.label || ''),
 				label: rate.label || '',
+				carrier_id: rate.carrier_id || '',
+				service_id: rate.service_id || '',
 				cost: rate.cost || '',
 				cost_formatted: rate.cost_formatted || '',
 			}))
-			.filter((rate) => rate.mode);
+			.filter((rate) => rate.mode && rate.rate_id);
 		storeShippingRates(cartItemKey, normalizedRates);
 
 		if (!ratesInput) {
@@ -652,24 +705,27 @@
 		}
 
 		const hasMultiple = normalizedRates.length > 1;
-		const modes = normalizedRates.map((rate) => rate.mode);
-		let resolvedMode = normalizeRateMode(selectedMode);
-		if (!resolvedMode || !modes.includes(resolvedMode)) {
-			resolvedMode = modes[0] || '';
-		}
-		if (resolvedMode) {
-			shippingBlock.dataset.lastSelectedMode = resolvedMode;
-			storeShippingMode(cartItemKey, resolvedMode);
+		const storedRateId = getStoredSelectedRateId(cartItemKey);
+		let resolvedRate = normalizedRates.find((rate) => rate.rate_id === selectedMode)
+			|| normalizedRates.find((rate) => rate.rate_id === storedRateId)
+			|| normalizedRates.find((rate) => normalizeRateMode(rate.mode) === normalizeRateMode(selectedMode))
+			|| normalizedRates[0]
+			|| null;
+		if (resolvedRate) {
+			shippingBlock.dataset.lastSelectedMode = resolvedRate.mode;
+			shippingBlock.dataset.lastSelectedRateId = resolvedRate.rate_id;
+			storeShippingMode(cartItemKey, resolvedRate.mode);
+			storeSelectedRateId(cartItemKey, resolvedRate.rate_id);
 		}
 		const optionsHtml = hasMultiple
 			? normalizedRates.map((rate) => {
 					const mode = rate.mode;
 					const label = rate.label || (mode === 'air' ? 'Frete Aéreo' : mode === 'pickup' ? 'Retirada na loja' : 'Frete Terrestre');
 					const cost = rate.cost_formatted || '-';
-					const checked = resolvedMode === mode ? 'checked' : '';
+				const checked = resolvedRate && resolvedRate.rate_id === rate.rate_id ? 'checked' : '';
 					return `
 					<label class="Gstore-cart-card__shipping-option">
-						<input type="radio" name="gstore_shipping_mode[${cartItemKey}]" value="${mode}" ${checked} />
+						<input type="radio" name="gstore_selected_shipping_rate[${cartItemKey}]" value="${rate.rate_id}" data-gstore-mode="${mode}" ${checked} />
 						<span class="Gstore-cart-card__shipping-text">${label}</span>
 						<span class="Gstore-cart-card__shipping-price">${cost}</span>
 					</label>
@@ -683,9 +739,11 @@
 				const label = onlyRate.label || (onlyRate.mode === 'air' ? 'Frete Aéreo' : onlyRate.mode === 'pickup' ? 'Retirada na loja' : 'Frete Terrestre');
 				const cost = onlyRate.cost_formatted || '-';
 				storeShippingMode(cartItemKey, onlyRate.mode);
+				storeSelectedRateId(cartItemKey, onlyRate.rate_id);
 				return `
 					<span class="Gstore-cart-card__shipping-text">${label}</span>
 					<span class="Gstore-cart-card__shipping-price">${cost}</span>
+					<input type="hidden" name="gstore_selected_shipping_rate[${cartItemKey}]" value="${onlyRate.rate_id}" />
 					<input type="hidden" name="gstore_shipping_mode[${cartItemKey}]" value="${onlyRate.mode}" />
 				`;
 			})()
@@ -790,9 +848,13 @@
 
 			const selectedInput = shippingBlock.querySelector('input[type="radio"]:checked');
 			const hiddenMode = shippingBlock.querySelector(`input[type="hidden"][name="gstore_shipping_mode[${cartItemKey}]"]`);
+			const hiddenRateId = shippingBlock.querySelector(`input[type="hidden"][name="gstore_selected_shipping_rate[${cartItemKey}]"]`);
 			const storedMode = getStoredShippingMode(cartItemKey);
+			const selectedRateId = selectedInput
+				? String(selectedInput.value || '')
+				: (hiddenRateId && hiddenRateId.value) || getStoredSelectedRateId(cartItemKey) || '';
 			const selectedMode = selectedInput
-				? selectedInput.value
+				? String(selectedInput.dataset.gstoreMode || '')
 				: (hiddenMode && hiddenMode.value) || storedMode || shippingBlock.dataset.lastSelectedMode || 'land';
 
 			requests.push(
@@ -800,7 +862,7 @@
 					if (!rates) {
 						return;
 					}
-					updateShippingBlock(shippingBlock, rates, cartItemKey, selectedMode);
+					updateShippingBlock(shippingBlock, rates, cartItemKey, selectedRateId || selectedMode);
 				})
 			);
 		});
@@ -1139,8 +1201,12 @@
 				return;
 			}
 
-			shippingBlock.dataset.lastSelectedMode = target.value;
-			storeShippingMode(cartItemKey, target.value);
+			const selectedRateId = String(target.value || '');
+			const selectedMode = normalizeRateMode(target.dataset.gstoreMode || '');
+			shippingBlock.dataset.lastSelectedMode = selectedMode;
+			shippingBlock.dataset.lastSelectedRateId = selectedRateId;
+			storeShippingMode(cartItemKey, selectedMode);
+			storeSelectedRateId(cartItemKey, selectedRateId);
 
 			let hiddenModeInput = shippingBlock.querySelector(`input[data-gstore-mode-hidden="true"][name="gstore_shipping_mode[${cartItemKey}]"]`);
 			if (!hiddenModeInput) {
@@ -1150,7 +1216,17 @@
 				hiddenModeInput.setAttribute('data-gstore-mode-hidden', 'true');
 				shippingBlock.appendChild(hiddenModeInput);
 			}
-			hiddenModeInput.value = target.value;
+			hiddenModeInput.value = selectedMode;
+
+			let hiddenRateInput = shippingBlock.querySelector(`input[data-gstore-rate-hidden="true"][name="gstore_selected_shipping_rate[${cartItemKey}]"]`);
+			if (!hiddenRateInput) {
+				hiddenRateInput = document.createElement('input');
+				hiddenRateInput.type = 'hidden';
+				hiddenRateInput.name = `gstore_selected_shipping_rate[${cartItemKey}]`;
+				hiddenRateInput.setAttribute('data-gstore-rate-hidden', 'true');
+				shippingBlock.appendChild(hiddenRateInput);
+			}
+			hiddenRateInput.value = selectedRateId;
 
 			updateCartTotalsSummary();
 			updateCheckoutAvailability();

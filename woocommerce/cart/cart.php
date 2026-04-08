@@ -229,6 +229,9 @@ if ( function_exists( 'wc_wp_theme_get_element_class_name' ) ) {
 										$selected_mode = function_exists( 'gstore_get_cart_item_shipping_mode' )
 											? gstore_get_cart_item_shipping_mode( $cart_item )
 											: 'land';
+										$selected_rate_id = function_exists( 'gstore_get_cart_item_selected_shipping_rate' )
+											? gstore_get_cart_item_selected_shipping_rate( $cart_item )
+											: '';
 
 										if ( is_cart() && isset( $_POST['gstore_shipping_mode'][ $cart_item_key ] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Missing
 											$posted_mode = sanitize_text_field( wp_unslash( $_POST['gstore_shipping_mode'][ $cart_item_key ] ) ); // phpcs:ignore WordPress.Security.NonceVerification.Missing
@@ -240,6 +243,9 @@ if ( function_exists( 'wc_wp_theme_get_element_class_name' ) ) {
 											} else {
 												$selected_mode = in_array( $posted_mode, array( 'air', 'pickup' ), true ) ? $posted_mode : 'land';
 											}
+										}
+										if ( is_cart() && isset( $_POST['gstore_selected_shipping_rate'][ $cart_item_key ] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Missing
+											$selected_rate_id = sanitize_text_field( wp_unslash( $_POST['gstore_selected_shipping_rate'][ $cart_item_key ] ) ); // phpcs:ignore WordPress.Security.NonceVerification.Missing
 										}
 										$freight_costs = array();
 										foreach ( $freight_rates as $rate ) {
@@ -264,14 +270,19 @@ if ( function_exists( 'wc_wp_theme_get_element_class_name' ) ) {
 														<?php foreach ( $freight_rates as $rate ) : ?>
 															<?php
 															$mode = isset( $rate['mode'] ) ? $rate['mode'] : 'land';
+															$rate_id = isset( $rate['rate_id'] ) ? (string) $rate['rate_id'] : ( isset( $rate['id'] ) ? (string) $rate['id'] : '' );
 															$label = isset( $rate['label'] ) ? $rate['label'] : ( function_exists( 'gstore_get_cart_item_shipping_label' ) ? gstore_get_cart_item_shipping_label( $mode ) : $mode );
+															$is_checked = '' !== $selected_rate_id
+																? $selected_rate_id === $rate_id
+																: $selected_mode === $mode;
 															?>
 															<label class="Gstore-cart-card__shipping-option">
 																<input
 																	type="radio"
-																	name="gstore_shipping_mode[<?php echo esc_attr( $cart_item_key ); ?>]"
-																	value="<?php echo esc_attr( $mode ); ?>"
-																	<?php checked( $selected_mode, $mode ); ?>
+																	name="gstore_selected_shipping_rate[<?php echo esc_attr( $cart_item_key ); ?>]"
+																	value="<?php echo esc_attr( $rate_id ); ?>"
+																	data-gstore-mode="<?php echo esc_attr( $mode ); ?>"
+																	<?php checked( $is_checked, true ); ?>
 																/>
 																<span class="Gstore-cart-card__shipping-text"><?php echo esc_html( $label ); ?></span>
 																<span class="Gstore-cart-card__shipping-price">
@@ -291,6 +302,8 @@ if ( function_exists( 'wc_wp_theme_get_element_class_name' ) ) {
 														<span class="Gstore-cart-card__shipping-price">
 															<?php echo $has_shipping_postcode && ! empty( $freight_costs[ $only_mode ] ) ? wp_kses_post( $freight_costs[ $only_mode ] ) : '-'; ?>
 														</span>
+														<input type="hidden" name="gstore_selected_shipping_rate[<?php echo esc_attr( $cart_item_key ); ?>]" value="<?php echo esc_attr( isset( $only_rate['rate_id'] ) ? $only_rate['rate_id'] : ( $only_rate['id'] ?? '' ) ); ?>" />
+														<input type="hidden" name="gstore_shipping_mode[<?php echo esc_attr( $cart_item_key ); ?>]" value="<?php echo esc_attr( $only_mode ); ?>" />
 													</div>
 												<?php endif; ?>
 											<?php else : ?>

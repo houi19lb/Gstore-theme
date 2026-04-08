@@ -55,6 +55,7 @@
 	let lastRequestedShippingCep = ''; // CEP (somente dígitos) da última requisição de frete disparada
 	let lastCalculatedDestination = null; // Destino (cidade/UF) do último frete calculado
 	const CART_MODE_STORAGE_KEY = 'gstore_cart_shipping_mode';
+	const CART_SELECTED_RATE_STORAGE_KEY = 'gstore_cart_selected_shipping_rate';
 	const CART_RATES_STORAGE_KEY = 'gstore_cart_shipping_rates';
 	let checkoutSelectedShippingMode = 'land';
 	let checkoutShippingRates = [];
@@ -62,6 +63,7 @@
 	let checkoutShippingError = '';
 	let checkoutShippingRatesByItem = {};
 	let checkoutSelectedShippingByItem = {};
+	let checkoutSelectedShippingRateByItem = {};
 	let lastSummaryTotals = null;
 	let lastCartSummaryData = null;
 	let lastNonEmptyCartSummaryData = null; // Mantém o último resumo com itens para não zerar o topo quando o Woo esvazia o carrinho
@@ -1992,6 +1994,25 @@ function getInstallmentDisplayTotals(summaryData) {
 		}
 	}
 
+	function getStoredSelectedRateForItem(cartItemKey) {
+		if (typeof window === 'undefined' || !window.localStorage || !cartItemKey) {
+			return '';
+		}
+		try {
+			const raw = window.localStorage.getItem(CART_SELECTED_RATE_STORAGE_KEY);
+			if (!raw) {
+				return '';
+			}
+			const parsed = JSON.parse(raw);
+			if (!parsed || typeof parsed !== 'object') {
+				return '';
+			}
+			return String(parsed[cartItemKey] || '');
+		} catch (e) {
+			return '';
+		}
+	}
+
 	function getStoredRatesByItem() {
 		if (typeof window === 'undefined' || !window.localStorage) {
 			return {};
@@ -2010,12 +2031,15 @@ function getInstallmentDisplayTotals(summaryData) {
 				const rates = Array.isArray(parsed[key]) ? parsed[key] : [];
 				output[key] = rates
 					.map((rate) => ({
+						rate_id: String(rate.rate_id || rate.id || ''),
 						mode: normalizeRateMode(rate.mode),
 						label: rate.label || '',
+						carrier_id: rate.carrier_id || '',
+						service_id: rate.service_id || '',
 						cost: rate.cost || '',
 						cost_formatted: rate.cost_formatted || '',
 					}))
-					.filter((rate) => rate.mode);
+					.filter((rate) => rate.mode && rate.rate_id);
 			});
 			return output;
 		} catch (e) {
@@ -2041,6 +2065,29 @@ function getInstallmentDisplayTotals(summaryData) {
 		payload[cartItemKey] = normalized;
 		try {
 			window.localStorage.setItem(CART_MODE_STORAGE_KEY, JSON.stringify(payload));
+		} catch (e) {
+			// ignore storage errors
+		}
+	}
+
+	function persistSelectedRateForItem(cartItemKey, rateId) {
+		if (typeof window === 'undefined' || !window.localStorage || !cartItemKey) {
+			return;
+		}
+		const normalized = String(rateId || '').trim();
+		if (!normalized) {
+			return;
+		}
+		let payload = {};
+		try {
+			const raw = window.localStorage.getItem(CART_SELECTED_RATE_STORAGE_KEY);
+			payload = raw ? JSON.parse(raw) : {};
+		} catch (e) {
+			payload = {};
+		}
+		payload[cartItemKey] = normalized;
+		try {
+			window.localStorage.setItem(CART_SELECTED_RATE_STORAGE_KEY, JSON.stringify(payload));
 		} catch (e) {
 			// ignore storage errors
 		}
@@ -2092,6 +2139,16 @@ function getInstallmentDisplayTotals(summaryData) {
 		return modes[0] || 'land';
 	}
 
+	function resolveCheckoutSelectedRate(rates, preferredRateId, preferredMode) {
+		const normalizedRates = Array.isArray(rates) ? rates : [];
+		const selectedByRateId = normalizedRates.find((rate) => String(rate.rate_id || '') === String(preferredRateId || ''));
+		if (selectedByRateId) {
+			return selectedByRateId;
+		}
+		const resolvedMode = resolveCheckoutShippingMode(normalizedRates, preferredMode);
+		return normalizedRates.find((rate) => normalizeRateMode(rate.mode) === resolvedMode) || normalizedRates[0] || null;
+	}
+
 	function getNormalizedRatesFromShippingData(data) {
 		const rates = data && Array.isArray(data.rates) ? data.rates : [];
 		return rates
@@ -2099,13 +2156,16 @@ function getInstallmentDisplayTotals(summaryData) {
 				const mode = normalizeRateMode(rate.mode || rate.label || '');
 				const label = rate.label || (mode === 'air' ? 'Frete Aéreo' : mode === 'pickup' ? 'Retirada na loja' : 'Frete Terrestre');
 				return {
+					rate_id: String(rate.rate_id || rate.id || ''),
 					mode,
 					label,
+					carrier_id: rate.carrier_id || '',
+					service_id: rate.service_id || '',
 					cost: rate.cost,
 					cost_formatted: rate.cost_formatted || rate.costFormatted || '',
 				};
 			})
-			.filter((rate) => rate.mode);
+			.filter((rate) => rate.mode && rate.rate_id);
 	}
 
 	function getSelectedShippingCost(rates, selectedMode) {
@@ -2149,6 +2209,7 @@ function getInstallmentDisplayTotals(summaryData) {
 
 		// Remove campos antigos
 		$checkoutForm.find('input[name^="gstore_shipping_mode["]').remove();
+		$checkoutForm.find('input[name^="gstore_selected_shipping_rate["]').remove();
 		$checkoutForm.find('input[name^="gstore_shipping_rates["]').remove();
 
 		// Adiciona campos para cada item do carrinho com frete selecionado
@@ -2162,11 +2223,19 @@ function getInstallmentDisplayTotals(summaryData) {
 
 			// Obtém o modo de frete selecionado para este item
 			const selectedMode = checkoutSelectedShippingByItem[cartItemKey] || 'land';
+			const selectedRateId = checkoutSelectedShippingRateByItem[cartItemKey] || '';
 			
 			// Obtém as rates disponíveis para este item
 			const rates = checkoutShippingRatesByItem[cartItemKey] || [];
 			
 			if (rates.length > 0) {
+				$checkoutForm.append(
+					$('<input>', {
+						type: 'hidden',
+						name: `gstore_selected_shipping_rate[${cartItemKey}]`,
+						value: selectedRateId
+					})
+				);
 				// Adiciona campo hidden com o modo selecionado
 				$checkoutForm.append(
 					$('<input>', {
@@ -2194,14 +2263,19 @@ function getInstallmentDisplayTotals(summaryData) {
 		// Sem data-index, o WC ignora nosso campo e usa o radio/hidden nativo do template
 		// cart-shipping.php, que pode ter o valor antigo (ex.: air quando o usuário escolheu land).
 		const allModes = new Set();
+		const allRateIds = new Set();
 		items.forEach((item) => {
 			const key = item.key || item.cart_item_key || item.cartItemKey || '';
 			if (key) {
 				allModes.add(checkoutSelectedShippingByItem[key] || 'land');
+				if (checkoutSelectedShippingRateByItem[key]) {
+					allRateIds.add(checkoutSelectedShippingRateByItem[key]);
+				}
 			}
 		});
-		const suffix = allModes.size > 1 ? 'mixed' : (allModes.values().next().value || 'land');
-		const gstoreRateId = 'gstore_custom_shipping:' + suffix;
+		const gstoreRateId = allRateIds.size === 1
+			? Array.from(allRateIds)[0]
+			: 'gstore_custom_shipping:' + (allModes.size > 1 ? 'mixed' : (allModes.values().next().value || 'land'));
 
 		// Remove TODOS os inputs shipping_method[0] existentes (nossos E os nativos do WC)
 		// para evitar conflito de valores no serialize() do form.
@@ -2221,6 +2295,7 @@ function getInstallmentDisplayTotals(summaryData) {
 	function syncShippingFromStorage(data) {
 		checkoutShippingRatesByItem = getStoredRatesByItem();
 		checkoutSelectedShippingByItem = {};
+		checkoutSelectedShippingRateByItem = {};
 		const items = data && Array.isArray(data.items) ? data.items : [];
 		items.forEach((item) => {
 			const cartItemKey = item.key || item.cart_item_key || item.cartItemKey || '';
@@ -2228,7 +2303,9 @@ function getInstallmentDisplayTotals(summaryData) {
 				return;
 			}
 			const storedMode = getStoredShippingModeForItem(cartItemKey);
+			const storedRateId = getStoredSelectedRateForItem(cartItemKey);
 			checkoutSelectedShippingByItem[cartItemKey] = storedMode || 'land';
+			checkoutSelectedShippingRateByItem[cartItemKey] = storedRateId || '';
 		});
 	}
 
@@ -2246,18 +2323,22 @@ function getInstallmentDisplayTotals(summaryData) {
 			}
 			const rates = checkoutShippingRatesByItem[cartItemKey] || [];
 			let selectedMode = checkoutSelectedShippingByItem[cartItemKey] || 'land';
+			let selectedRateId = checkoutSelectedShippingRateByItem[cartItemKey] || '';
 			if (rates.length) {
-				selectedMode = resolveCheckoutShippingMode(rates, selectedMode);
+				const selectedRate = resolveCheckoutSelectedRate(rates, selectedRateId, selectedMode);
+				selectedMode = selectedRate ? normalizeRateMode(selectedRate.mode) : resolveCheckoutShippingMode(rates, selectedMode);
+				selectedRateId = selectedRate ? String(selectedRate.rate_id || '') : '';
 				checkoutSelectedShippingByItem[cartItemKey] = selectedMode;
+				checkoutSelectedShippingRateByItem[cartItemKey] = selectedRateId;
 			}
 			const optionsHtml = rates.length
 				? rates.map((rate) => {
 						const label = rate.label || (rate.mode === 'air' ? 'Frete Aéreo' : rate.mode === 'pickup' ? 'Retirada na loja' : 'Frete Terrestre');
 						const cost = rate.cost_formatted || '-';
-						const checked = normalizeRateMode(rate.mode) === selectedMode ? 'checked' : '';
+						const checked = String(rate.rate_id || '') === String(selectedRateId || '') ? 'checked' : '';
 						return `
 							<label class="Gstore-checkout-item-shipping-option">
-								<input type="radio" name="gstore_checkout_shipping_mode[${cartItemKey}]" data-cart-item-key="${cartItemKey}" value="${rate.mode}" ${checked} />
+								<input type="radio" name="gstore_selected_shipping_rate[${cartItemKey}]" data-cart-item-key="${cartItemKey}" data-gstore-mode="${rate.mode}" value="${rate.rate_id}" ${checked} />
 								<span class="Gstore-checkout-item-shipping-option__label">${label}</span>
 								<span class="Gstore-checkout-item-shipping-option__price">${cost}</span>
 							</label>
@@ -2341,7 +2422,8 @@ function getInstallmentDisplayTotals(summaryData) {
 				});
 				const selectedModeForItem = checkoutSelectedShippingByItem[cartItemKey] || resolveCheckoutShippingMode(itemRates, 'land');
 				selectedModes.add(selectedModeForItem);
-				const selectedRate = itemRates.find((rate) => normalizeRateMode(rate.mode) === selectedModeForItem);
+				const selectedRateId = checkoutSelectedShippingRateByItem[cartItemKey] || '';
+				const selectedRate = resolveCheckoutSelectedRate(itemRates, selectedRateId, selectedModeForItem);
 					if (selectedRate) {
 						const selectedCost = Number.isFinite(Number(selectedRate.cost))
 							? Number(selectedRate.cost)
@@ -2644,16 +2726,25 @@ function getInstallmentDisplayTotals(summaryData) {
 					hasAnyRates = true;
 					const normalizedRates = result.rates.map(function(rate) {
 						return {
+							rate_id: String(rate.rate_id || rate.id || ''),
 							mode: normalizeRateMode(rate.mode),
 							label: rate.label || '',
+							carrier_id: rate.carrier_id || '',
+							service_id: rate.service_id || '',
 							cost: rate.cost,
 							cost_formatted: rate.cost_formatted || '',
 						};
-					}).filter(function(rate) { return rate.mode; });
+					}).filter(function(rate) { return rate.mode && rate.rate_id; });
 					
 					// Usa cartItemKey ou gera uma chave baseada no productId/index
 					const key = result.cartItemKey || ('item_' + (result.productId || index));
 					checkoutShippingRatesByItem[key] = normalizedRates;
+					if (!checkoutSelectedShippingRateByItem[key] && normalizedRates.length) {
+						checkoutSelectedShippingRateByItem[key] = normalizedRates[0].rate_id;
+					}
+					if (!checkoutSelectedShippingByItem[key] && normalizedRates.length) {
+						checkoutSelectedShippingByItem[key] = normalizeRateMode(normalizedRates[0].mode) || 'land';
+					}
 				}
 			});
 			
@@ -3431,13 +3522,15 @@ function getInstallmentDisplayTotals(summaryData) {
 		});
 
 		// Seleção do frete por item no resumo
-		$(document).on('change', 'input[name^="gstore_checkout_shipping_mode["]', function() {
-			const cartItemKey = $(this).data('cart-item-key') || String($(this).attr('name') || '').replace(/^gstore_checkout_shipping_mode\[|\]$/g, '');
+		$(document).on('change', 'input[name^="gstore_selected_shipping_rate["]', function() {
+			const cartItemKey = $(this).data('cart-item-key') || String($(this).attr('name') || '').replace(/^gstore_selected_shipping_rate\[|\]$/g, '');
 			const value = $(this).val();
 			if (cartItemKey) {
-				const normalizedMode = normalizeRateMode(value) || 'land';
+				const normalizedMode = normalizeRateMode($(this).data('gstore-mode') || '') || 'land';
 				checkoutSelectedShippingByItem[cartItemKey] = normalizedMode;
-				persistShippingModeForItem(cartItemKey, value);
+				checkoutSelectedShippingRateByItem[cartItemKey] = String(value || '');
+				persistShippingModeForItem(cartItemKey, normalizedMode);
+				persistSelectedRateForItem(cartItemKey, String(value || ''));
 
 				// Invalida cache de quotes de parcelamento (frete mudou, base de cálculo diferente)
 				installmentQuotes = null;
