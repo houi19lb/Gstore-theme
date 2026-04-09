@@ -2898,7 +2898,6 @@ body.gstore-blu-checkout-modal-open {
 }
 
 .Gstore-checkout-item-shipping-option__label {
-	flex: 1 1 auto;
 	color: var(--gstore-text-muted);
 	font-weight: var(--gstore-font-weight-medium);
 }
@@ -2910,13 +2909,15 @@ body.gstore-blu-checkout-modal-open {
 
 .Gstore-summary-item .Gstore-checkout-item-shipping-option {
 	display: grid;
-	grid-template-columns: 16px minmax(0, 1fr) auto;
+	grid-template-columns: 16px max-content max-content;
 	align-items: center;
-	gap: 8px 10px;
+	justify-content: flex-start;
+	gap: 8px;
 	font-size: var(--gstore-font-size-sm);
 	color: var(--gstore-foreground);
 	white-space: normal;
-	width: 100%;
+	width: fit-content;
+	max-width: 100%;
 	flex: none;
 }
 
