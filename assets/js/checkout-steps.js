@@ -1844,6 +1844,56 @@ const subtotal = decodeHtmlEntities(stripHtmlText(it.subtotal || ''));
 		return '';
 	}
 
+	function getRateModeLabel(mode) {
+		const normalized = normalizeRateMode(mode);
+		if (normalized === 'air') {
+			return 'Aéreo';
+		}
+		if (normalized === 'pickup') {
+			return 'Retirada na loja';
+		}
+		return 'Terrestre';
+	}
+
+	function getRateDisplayLabel(rate) {
+		const mode = normalizeRateMode(rate && rate.mode);
+		const kind = String((rate && rate.rate_kind) || '');
+		const label = String((rate && rate.label) || '').trim();
+		const rateId = String((rate && rate.rate_id) || '').trim();
+		const isLegacyRate = kind === 'legacy_mode'
+			|| rateId === 'gstore_custom_shipping:land'
+			|| rateId === 'gstore_custom_shipping:air';
+		if (isLegacyRate) {
+			return 'Transportadora padrão';
+		}
+		if (kind === 'pickup' || mode === 'pickup') {
+			return label || 'Retirada na loja';
+		}
+		return label || getRateModeLabel(mode);
+	}
+
+	function groupRatesByMode(rates) {
+		const groups = new Map();
+		(rates || []).forEach((rate) => {
+			const mode = normalizeRateMode(rate && rate.mode);
+			if (!mode) {
+				return;
+			}
+			if (!groups.has(mode)) {
+				groups.set(mode, []);
+			}
+			groups.get(mode).push(rate);
+		});
+
+		return ['land', 'air', 'pickup']
+			.filter((mode) => groups.has(mode))
+			.map((mode) => ({
+				mode,
+				label: getRateModeLabel(mode),
+				rates: groups.get(mode) || [],
+			}));
+	}
+
 	/**
 	 * Busca rates de frete para um item específico do carrinho
 	 * Similar ao fetchRatesForItem do cart.js
@@ -2332,34 +2382,60 @@ function getInstallmentDisplayTotals(summaryData) {
 				checkoutSelectedShippingRateByItem[cartItemKey] = selectedRateId;
 			}
 			const optionsHtml = rates.length
-				? rates.map((rate) => {
-						const label = rate.label || (rate.mode === 'air' ? 'Frete Aéreo' : rate.mode === 'pickup' ? 'Retirada na loja' : 'Frete Terrestre');
+				? groupRatesByMode(rates).map((group) => {
+					const groupOptionsHtml = group.rates.map((rate) => {
 						const cost = rate.cost_formatted || '-';
 						const checked = String(rate.rate_id || '') === String(selectedRateId || '') ? 'checked' : '';
+						const label = getRateDisplayLabel(rate);
 						return `
 							<label class="Gstore-checkout-item-shipping-option">
-								<input type="radio" name="gstore_selected_shipping_rate[${cartItemKey}]" data-cart-item-key="${cartItemKey}" data-gstore-mode="${rate.mode}" value="${rate.rate_id}" ${checked} />
+								<input type="radio" name="gstore_selected_shipping_rate[${cartItemKey}]" data-cart-item-key="${cartItemKey}" data-gstore-mode="${group.mode}" value="${rate.rate_id}" ${checked} />
 								<span class="Gstore-checkout-item-shipping-option__label">${label}</span>
 								<span class="Gstore-checkout-item-shipping-option__price">${cost}</span>
 							</label>
 						`;
-					}).join('')
+					}).join('');
+
+					return `
+						<div class="Gstore-checkout-item-shipping-group Gstore-checkout-item-shipping-group--${group.mode}">
+							<div class="Gstore-checkout-item-shipping-group__title">${group.label}</div>
+							<div class="Gstore-checkout-item-shipping-group__options">
+								${groupOptionsHtml}
+							</div>
+						</div>
+					`;
+				}).join('')
 				: `
-					<label class="Gstore-checkout-item-shipping-option">
-						<input type="radio" name="gstore_checkout_shipping_mode[${cartItemKey}]" data-cart-item-key="${cartItemKey}" value="land" ${selectedMode === 'land' ? 'checked' : ''} />
-						<span class="Gstore-checkout-item-shipping-option__label">Frete Terrestre</span>
-						<span class="Gstore-checkout-item-shipping-option__price">-</span>
-					</label>
-					<label class="Gstore-checkout-item-shipping-option">
-						<input type="radio" name="gstore_checkout_shipping_mode[${cartItemKey}]" data-cart-item-key="${cartItemKey}" value="air" ${selectedMode === 'air' ? 'checked' : ''} />
-						<span class="Gstore-checkout-item-shipping-option__label">Frete Aéreo</span>
-						<span class="Gstore-checkout-item-shipping-option__price">-</span>
-					</label>
-					<label class="Gstore-checkout-item-shipping-option">
-						<input type="radio" name="gstore_checkout_shipping_mode[${cartItemKey}]" data-cart-item-key="${cartItemKey}" value="pickup" ${selectedMode === 'pickup' ? 'checked' : ''} />
-						<span class="Gstore-checkout-item-shipping-option__label">Retirada na loja</span>
-						<span class="Gstore-checkout-item-shipping-option__price">-</span>
-					</label>
+					<div class="Gstore-checkout-item-shipping-group Gstore-checkout-item-shipping-group--land">
+						<div class="Gstore-checkout-item-shipping-group__title">Terrestre</div>
+						<div class="Gstore-checkout-item-shipping-group__options">
+							<label class="Gstore-checkout-item-shipping-option">
+								<input type="radio" name="gstore_checkout_shipping_mode[${cartItemKey}]" data-cart-item-key="${cartItemKey}" value="land" ${selectedMode === 'land' ? 'checked' : ''} />
+								<span class="Gstore-checkout-item-shipping-option__label">Transportadora padrão</span>
+								<span class="Gstore-checkout-item-shipping-option__price">-</span>
+							</label>
+						</div>
+					</div>
+					<div class="Gstore-checkout-item-shipping-group Gstore-checkout-item-shipping-group--air">
+						<div class="Gstore-checkout-item-shipping-group__title">Aéreo</div>
+						<div class="Gstore-checkout-item-shipping-group__options">
+							<label class="Gstore-checkout-item-shipping-option">
+								<input type="radio" name="gstore_checkout_shipping_mode[${cartItemKey}]" data-cart-item-key="${cartItemKey}" value="air" ${selectedMode === 'air' ? 'checked' : ''} />
+								<span class="Gstore-checkout-item-shipping-option__label">Transportadora padrão</span>
+								<span class="Gstore-checkout-item-shipping-option__price">-</span>
+							</label>
+						</div>
+					</div>
+					<div class="Gstore-checkout-item-shipping-group Gstore-checkout-item-shipping-group--pickup">
+						<div class="Gstore-checkout-item-shipping-group__title">Retirada na loja</div>
+						<div class="Gstore-checkout-item-shipping-group__options">
+							<label class="Gstore-checkout-item-shipping-option">
+								<input type="radio" name="gstore_checkout_shipping_mode[${cartItemKey}]" data-cart-item-key="${cartItemKey}" value="pickup" ${selectedMode === 'pickup' ? 'checked' : ''} />
+								<span class="Gstore-checkout-item-shipping-option__label">Retirada na loja</span>
+								<span class="Gstore-checkout-item-shipping-option__price">-</span>
+							</label>
+						</div>
+					</div>
 				`;
 			$slot.html(optionsHtml);
 		});
