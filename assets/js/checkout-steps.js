@@ -1847,12 +1847,12 @@ const subtotal = decodeHtmlEntities(stripHtmlText(it.subtotal || ''));
 	function getRateModeLabel(mode) {
 		const normalized = normalizeRateMode(mode);
 		if (normalized === 'air') {
-			return 'Aéreo';
+			return 'Frete Aéreo';
 		}
 		if (normalized === 'pickup') {
 			return 'Retirada na loja';
 		}
-		return 'Terrestre';
+		return 'Frete Terrestre';
 	}
 
 	function getRateDisplayLabel(rate) {
@@ -1864,7 +1864,7 @@ const subtotal = decodeHtmlEntities(stripHtmlText(it.subtotal || ''));
 			|| rateId === 'gstore_custom_shipping:land'
 			|| rateId === 'gstore_custom_shipping:air';
 		if (isLegacyRate) {
-			return label || 'Transportadora padrão';
+			return label || getRateModeLabel(mode);
 		}
 		if (kind === 'pickup' || mode === 'pickup') {
 			return label || 'Retirada na loja';
@@ -2411,7 +2411,7 @@ function getInstallmentDisplayTotals(summaryData) {
 						<div class="Gstore-checkout-item-shipping-group__options">
 							<label class="Gstore-checkout-item-shipping-option">
 								<input type="radio" name="gstore_checkout_shipping_mode[${cartItemKey}]" data-cart-item-key="${cartItemKey}" value="land" ${selectedMode === 'land' ? 'checked' : ''} />
-								<span class="Gstore-checkout-item-shipping-option__label">Transportadora padrão</span>
+								<span class="Gstore-checkout-item-shipping-option__label">Frete Terrestre</span>
 								<span class="Gstore-checkout-item-shipping-option__price">-</span>
 							</label>
 						</div>
@@ -2421,7 +2421,7 @@ function getInstallmentDisplayTotals(summaryData) {
 						<div class="Gstore-checkout-item-shipping-group__options">
 							<label class="Gstore-checkout-item-shipping-option">
 								<input type="radio" name="gstore_checkout_shipping_mode[${cartItemKey}]" data-cart-item-key="${cartItemKey}" value="air" ${selectedMode === 'air' ? 'checked' : ''} />
-								<span class="Gstore-checkout-item-shipping-option__label">Transportadora padrão</span>
+								<span class="Gstore-checkout-item-shipping-option__label">Frete Aéreo</span>
 								<span class="Gstore-checkout-item-shipping-option__price">-</span>
 							</label>
 						</div>

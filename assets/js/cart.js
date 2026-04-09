@@ -662,7 +662,7 @@
 			|| rateId === 'gstore_custom_shipping:land'
 			|| rateId === 'gstore_custom_shipping:air';
 		if (isLegacyRate) {
-			return label || 'Transportadora padrão';
+			return label || getRateModeLabel(mode);
 		}
 		if (kind === 'pickup' || mode === 'pickup') {
 			return label || 'Retirada na loja';
