@@ -2863,7 +2863,7 @@ body.gstore-blu-checkout-modal-open {
 
 .Gstore-summary-item [data-gstore-item-shipping] {
 	display: grid;
-	grid-template-columns: repeat(2, minmax(0, 1fr));
+	grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
 	gap: 14px 20px;
 	width: 100%;
 }
@@ -2875,10 +2875,6 @@ body.gstore-blu-checkout-modal-open {
 	gap: 10px;
 	width: 100%;
 	min-width: 0;
-}
-
-.Gstore-summary-item .Gstore-checkout-item-shipping-group--pickup {
-	grid-column: 1 / -1;
 }
 
 .Gstore-summary-item .Gstore-checkout-item-shipping-group__title {
@@ -2927,10 +2923,6 @@ body.gstore-blu-checkout-modal-open {
 @media (max-width: 700px) {
 	.Gstore-summary-item [data-gstore-item-shipping] {
 		grid-template-columns: 1fr;
-	}
-
-	.Gstore-summary-item .Gstore-checkout-item-shipping-group--pickup {
-		grid-column: auto;
 	}
 }
 
