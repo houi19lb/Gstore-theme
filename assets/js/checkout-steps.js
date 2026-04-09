@@ -3772,20 +3772,33 @@ function getInstallmentDisplayTotals(summaryData) {
 			}
 		});
 
-		// Máscara para telefone
+		// Máscara para telefone — aceita 11 dígitos (DDD+num) ou 13 (55+DDD+num).
 		$(document).on('input', '#billing_phone', function() {
-			let value = $(this).val().replace(/\D/g, '');
-			if (value.length > 11) value = value.slice(0, 11);
-			
-			if (value.length > 10) {
-				value = value.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3');
-			} else if (value.length > 6) {
-				value = value.replace(/(\d{2})(\d{4,5})(\d{0,4})/, '($1) $2-$3');
-			} else if (value.length > 2) {
-				value = value.replace(/(\d{2})(\d{0,5})/, '($1) $2');
+			let raw = $(this).val().replace(/\D/g, '');
+			if (raw.length > 13) raw = raw.slice(0, 13);
+
+			let formatted = '';
+			if (raw.length <= 2) {
+				formatted = raw;
+			} else if (raw.length <= 7) {
+				formatted = '(' + raw.substring(0,2) + ') ' + raw.substring(2);
+			} else if (raw.length <= 11) {
+				formatted = '(' + raw.substring(0,2) + ') ' + raw.substring(2,7) + '-' + raw.substring(7);
+			} else {
+				// Com código do país (ex: 5521988874200 → +55 (21) 98887-4200)
+				const cc = raw.substring(0, raw.length - 11);
+				const rest = raw.substring(raw.length - 11);
+				formatted = '+' + cc + ' (' + rest.substring(0,2) + ') ' + rest.substring(2,7) + '-' + rest.substring(7);
 			}
-			
-			$(this).val(value);
+
+			const el = this;
+			const pos = el.selectionStart;
+			const diff = formatted.length - el.value.length;
+			$(this).val(formatted);
+			let np = pos + diff;
+			if (np < 0) np = 0;
+			if (np > formatted.length) np = formatted.length;
+			el.setSelectionRange(np, np);
 		});
 
 		function setBluResumeCardBusy(isBusy) {
