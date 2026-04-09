@@ -1864,7 +1864,7 @@ const subtotal = decodeHtmlEntities(stripHtmlText(it.subtotal || ''));
 			|| rateId === 'gstore_custom_shipping:land'
 			|| rateId === 'gstore_custom_shipping:air';
 		if (isLegacyRate) {
-			return 'Transportadora padrão';
+			return label || 'Transportadora padrão';
 		}
 		if (kind === 'pickup' || mode === 'pickup') {
 			return label || 'Retirada na loja';
