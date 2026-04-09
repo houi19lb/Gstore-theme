@@ -1368,59 +1368,59 @@ body.gstore-cart-template .return-to-shop .button:hover {
 		padding: 16px;
 	}
 
-	.Gstore-cart-card__content {
+	.Gstore-cart-card.cart_item > .Gstore-cart-card__content {
 		display: grid;
 		grid-template-columns: 1fr;
 		gap: 16px;
 		width: 100%;
 	}
 
-	.Gstore-cart-card__media-column {
+	.Gstore-cart-card.cart_item > .Gstore-cart-card__content > .Gstore-cart-card__media-column {
 		gap: 6px;
 		width: 100%;
 		align-self: stretch;
 	}
 
-	.Gstore-cart-card__media {
+	.Gstore-cart-card.cart_item .Gstore-cart-card__media {
 		flex: none;
 		width: 100%;
 		max-width: 200px;
 		margin: 0 auto;
 	}
 
-	.Gstore-cart-card__body {
+	.Gstore-cart-card.cart_item .Gstore-cart-card__body {
 		width: 100%;
 		min-width: 0;
 		align-self: stretch;
 		justify-self: stretch;
 	}
 
-	.Gstore-cart-card__top,
-	.Gstore-cart-card__details,
-	.Gstore-cart-card__shipping,
-	.Gstore-cart-card__shipping-options,
-	.Gstore-cart-card__shipping-group,
-	.Gstore-cart-card__shipping-group-options {
+	.Gstore-cart-card.cart_item .Gstore-cart-card__top,
+	.Gstore-cart-card.cart_item .Gstore-cart-card__details,
+	.Gstore-cart-card.cart_item .Gstore-cart-card__shipping,
+	.Gstore-cart-card.cart_item .Gstore-cart-card__shipping-options,
+	.Gstore-cart-card.cart_item .Gstore-cart-card__shipping-group,
+	.Gstore-cart-card.cart_item .Gstore-cart-card__shipping-group-options {
 		width: 100%;
 		max-width: none;
 		align-self: stretch;
 		justify-self: stretch;
 	}
 
-	.Gstore-cart-card__details,
-	.Gstore-cart-card__shipping {
+	.Gstore-cart-card.cart_item .Gstore-cart-card__details,
+	.Gstore-cart-card.cart_item .Gstore-cart-card__shipping {
 		margin-left: 0;
 		margin-right: 0;
 	}
 
-	.Gstore-cart-card__shipping-group-options {
+	.Gstore-cart-card.cart_item .Gstore-cart-card__shipping-group-options {
 		flex-direction: column;
 		align-items: flex-start;
 		gap: 10px;
 	}
 
-	.Gstore-cart-card__shipping-option,
-	.Gstore-cart-card__shipping-fixed-option {
+	.Gstore-cart-card.cart_item .Gstore-cart-card__shipping-option,
+	.Gstore-cart-card.cart_item .Gstore-cart-card__shipping-fixed-option {
 		width: 100%;
 		justify-content: flex-start;
 	}
