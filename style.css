@@ -4019,6 +4019,27 @@ main:not(.Gstore-blog-shell):not(.Gstore-blog-single-shell) {
 	padding-top: 0 !important;
 }
 
+.Gstore-home-banner--youtube {
+	padding: 0 !important;
+	background: transparent !important;
+	overflow: hidden;
+}
+
+.Gstore-home-banner--youtube .wp-block-image {
+	margin: 0;
+	line-height: 0;
+}
+
+.Gstore-home-banner--youtube .wp-block-image a,
+.Gstore-home-banner--youtube .wp-block-image img {
+	display: block;
+	width: 100%;
+}
+
+.Gstore-home-banner--youtube .wp-block-image img {
+	height: auto;
+}
+
 .Gstore-home-section__header {
 	text-align: center;
 	margin-bottom: clamp(32px, 5vw, 56px) !important;

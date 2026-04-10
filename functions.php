@@ -7637,11 +7637,15 @@ function gstore_banner_youtube_shortcode() {
 	$banner_url = wp_get_attachment_url( $banner_id );
 	$banner_alt = esc_attr( get_option( 'gstore_banner_youtube_alt', 'Conheça o conteúdo da CAC Armas no YouTube' ) );
 	$banner_link = esc_url( get_option( 'gstore_banner_youtube_link', '' ) );
-	
+
 	if ( empty( $banner_url ) ) {
 		return '';
 	}
-	
+
+	// Cache-busting: adiciona versão à URL para forçar atualização
+	$cache_version = absint( get_option( 'gstore_banner_cache_version', 0 ) );
+	$banner_url = add_query_arg( 'v', $cache_version, $banner_url );
+
 	$img_tag = sprintf(
 		'<img src="%s" alt="%s" />',
 		esc_url( $banner_url ),
@@ -7658,16 +7662,21 @@ function gstore_banner_youtube_shortcode() {
 	}
 	
 	$html = sprintf(
-		'<figure class="wp-block-image alignfull Gstore-home-transition">
-			%s
-		</figure>',
+		'<section class="wp-block-group alignfull Gstore-home-section Gstore-home-banner Gstore-home-banner--youtube" aria-label="%s">
+			<figure class="wp-block-image alignfull Gstore-home-transition">
+				%s
+			</figure>
+		</section>',
+		esc_attr__( 'Banner do YouTube', 'gstore' ),
 		$img_tag
 	);
 	
 	// Remove <br> tags dentro do figure
 	$html = preg_replace( '#<br\s*/?>#i', '', $html );
 	
-	return $html;
+	return function_exists( 'gstore_normalize_home_section_output' )
+		? gstore_normalize_home_section_output( $html )
+		: $html;
 }
 add_shortcode( 'gstore_banner_youtube', 'gstore_banner_youtube_shortcode' );
 
@@ -7761,6 +7770,123 @@ function gstore_home_benefits_shortcode() {
 add_shortcode( 'gstore_home_benefits', 'gstore_home_benefits_shortcode' );
 
 /**
+ * Normaliza o HTML das seções da Home para evitar que wrappers inválidos
+ * (<p>, <br> ou declaração XML vazando do DOMDocument) quebrem a montagem
+ * quando uma seção dinâmica é posicionada após o banner do YouTube.
+ *
+ * @param string $html HTML bruto da seção.
+ * @return string HTML normalizado.
+ */
+function gstore_normalize_home_section_output( $html ) {
+	if ( ! is_string( $html ) ) {
+		return '';
+	}
+
+	$html = trim( $html );
+	if ( '' === $html ) {
+		return '';
+	}
+
+	// Remove declarações XML que podem vazar do DOMDocument no meio da Home.
+	$html = preg_replace( '#<\?xml[^>]*\?>#i', '', $html );
+
+	if ( function_exists( 'gstore_cleanup_shortcode_paragraphs' ) ) {
+		$html = gstore_cleanup_shortcode_paragraphs( $html );
+	}
+
+	$html = gstore_remove_br_from_banner_figure( $html );
+
+	if ( class_exists( 'DOMDocument' ) ) {
+		libxml_use_internal_errors( true );
+
+		$dom        = new DOMDocument();
+		$wrapper_id = 'gstore-home-fragment-root';
+		$loaded     = $dom->loadHTML(
+			'<?xml encoding="UTF-8"?><div id="' . $wrapper_id . '">' . $html . '</div>',
+			LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD
+		);
+
+		if ( $loaded ) {
+			$xpath      = new DOMXPath( $dom );
+			$root_nodes = $xpath->query( '//*[@id="' . $wrapper_id . '"]' );
+			$root       = ( $root_nodes instanceof DOMNodeList && $root_nodes->length > 0 ) ? $root_nodes->item( 0 ) : null;
+
+			if ( $root instanceof DOMNode ) {
+				$paragraph_nodes = $xpath->query( './/p', $root );
+				$paragraphs      = array();
+
+				if ( $paragraph_nodes instanceof DOMNodeList ) {
+					foreach ( $paragraph_nodes as $paragraph ) {
+						if ( $paragraph instanceof DOMElement ) {
+							$paragraphs[] = $paragraph;
+						}
+					}
+				}
+
+				$block_tags = array(
+					'article',
+					'div',
+					'figure',
+					'footer',
+					'h1',
+					'h2',
+					'h3',
+					'h4',
+					'h5',
+					'h6',
+					'header',
+					'nav',
+					'ol',
+					'section',
+					'style',
+					'ul',
+				);
+
+				foreach ( $paragraphs as $paragraph ) {
+					$has_block_child = false;
+
+					foreach ( $block_tags as $tag_name ) {
+						if ( $paragraph->getElementsByTagName( $tag_name )->length > 0 ) {
+							$has_block_child = true;
+							break;
+						}
+					}
+
+					$text_content = trim( preg_replace( '/\s+/u', ' ', (string) $paragraph->textContent ) );
+					$should_unwrap = $has_block_child || '' === $text_content;
+
+					if ( ! $should_unwrap || ! $paragraph->parentNode ) {
+						continue;
+					}
+
+					while ( $paragraph->firstChild ) {
+						$paragraph->parentNode->insertBefore( $paragraph->firstChild, $paragraph );
+					}
+
+					$paragraph->parentNode->removeChild( $paragraph );
+				}
+
+				$normalized = '';
+				foreach ( $root->childNodes as $child ) {
+					$normalized .= $dom->saveHTML( $child );
+				}
+
+				if ( '' !== trim( $normalized ) ) {
+					$html = $normalized;
+				}
+			}
+		}
+
+		libxml_clear_errors();
+	}
+
+	$html = preg_replace( '#<\?xml[^>]*\?>#i', '', $html );
+	$html = preg_replace( '#<p>\s*</p>#i', '', $html );
+
+	return trim( gstore_resolve_home_relative_urls( $html ) );
+}
+
+/**
  * Renderiza as seções da Home na ordem configurada no admin (via plugin),
  * com fallback para a ordem fixa quando o plugin estiver inativo/sem config.
  *
@@ -7769,6 +7895,12 @@ add_shortcode( 'gstore_home_benefits', 'gstore_home_benefits_shortcode' );
  * @return string
  */
 function gstore_home_sections_shortcode() {
+	$normalize_output = function( $html ) {
+		return function_exists( 'gstore_normalize_home_section_output' )
+			? gstore_normalize_home_section_output( $html )
+			: $html;
+	};
+
 	$fallback_render = function() {
 		// Helper local: carrega um template part HTML do tema e renderiza os blocos.
 		$render_part = function( $template_path ) {
@@ -7823,12 +7955,12 @@ function gstore_home_sections_shortcode() {
 			? gstore_get_home_sections_config()
 			: array();
 	} catch ( Throwable $e ) {
-		return $fallback_render();
+		return $normalize_output( $fallback_render() );
 	}
 
 	// Fallback: mantém exatamente a ordem antiga quando não houver configuração.
 	if ( empty( $sections ) ) {
-		return $fallback_render();
+		return $normalize_output( $fallback_render() );
 	}
 
 	// Permite o plugin retornar objeto/estrutura aninhada.
@@ -7836,7 +7968,7 @@ function gstore_home_sections_shortcode() {
 		$sections = (array) $sections;
 	}
 	if ( ! is_array( $sections ) ) {
-		return $fallback_render();
+		return $normalize_output( $fallback_render() );
 	}
 	if ( isset( $sections['sections'] ) && ( is_array( $sections['sections'] ) || is_object( $sections['sections'] ) ) ) {
 		$sections = is_object( $sections['sections'] ) ? (array) $sections['sections'] : $sections['sections'];
@@ -7893,19 +8025,19 @@ function gstore_home_sections_shortcode() {
 
 			switch ( $key ) {
 				case 'lancamentos':
-					$out .= $render_part( 'parts/home-lancamentos.html' );
+					$out .= $normalize_output( $render_part( 'parts/home-lancamentos.html' ) );
 					break;
 				case 'promocoes':
-					$out .= $render_part( 'parts/home-promocoes.html' );
+					$out .= $normalize_output( $render_part( 'parts/home-promocoes.html' ) );
 					break;
 				case 'equipamentos_taticos':
-					$out .= $render_part( 'parts/home-equipamentos.html' );
+					$out .= $normalize_output( $render_part( 'parts/home-equipamentos.html' ) );
 					break;
 				case 'blog':
-					$out .= $render_part( 'parts/home-blog.html' );
+					$out .= $normalize_output( $render_part( 'parts/home-blog.html' ) );
 					break;
 				case 'youtube_banner':
-					$out .= do_shortcode( '[gstore_banner_youtube]' );
+					$out .= $normalize_output( do_shortcode( '[gstore_banner_youtube]' ) );
 					break;
 				default:
 					// Tipo/key desconhecidos não podem matar a Home.
@@ -7916,7 +8048,7 @@ function gstore_home_sections_shortcode() {
 			if ( $cat_id > 0 ) {
 				$title = (string) ( $section['title'] ?? '' );
 				if ( function_exists( 'gstore_render_home_category_section' ) ) {
-					$out .= gstore_render_home_category_section( $cat_id, $title );
+					$out .= $normalize_output( gstore_render_home_category_section( $cat_id, $title ) );
 				}
 			}
 		} else {
@@ -7926,7 +8058,7 @@ function gstore_home_sections_shortcode() {
 	}
 
 	// Se por algum motivo não renderizou nada, cai no fallback (evita Home vazia).
-	return '' !== trim( $out ) ? $out : $fallback_render();
+	return '' !== trim( $out ) ? $normalize_output( $out ) : $normalize_output( $fallback_render() );
 }
 add_shortcode( 'gstore_home_sections', 'gstore_home_sections_shortcode' );
 
@@ -8016,7 +8148,11 @@ function gstore_render_home_category_section( $cat_id, $title = '' ) {
 	$rendered = do_shortcode( $rendered );
 	// Resolve links relativos (href="/...") para instalações em subdiretório.
 	$rendered = gstore_resolve_home_relative_urls( $rendered );
-	return preg_replace( '#<br\s*/?>#i', '', $rendered );
+	$rendered = preg_replace( '#<br\s*/?>#i', '', $rendered );
+
+	return function_exists( 'gstore_normalize_home_section_output' )
+		? gstore_normalize_home_section_output( $rendered )
+		: $rendered;
 }
 
 /**
@@ -8168,8 +8304,18 @@ function gstore_purge_litespeed_on_slide_change( $old_value, $new_value ) {
 	if ( $old_value === $new_value ) {
 		return;
 	}
-	// Purge homepage (onde os banners aparecem)
+
+	// Incrementa versão do banner para cache-busting nas URLs das imagens
+	$version = absint( get_option( 'gstore_banner_cache_version', 0 ) );
+	update_option( 'gstore_banner_cache_version', $version + 1, true );
+
+	// Purge LiteSpeed cache — múltiplos métodos para garantir limpeza completa
 	do_action( 'litespeed_purge', 'frontpage' );
+	do_action( 'litespeed_purge', 'home' );
+	do_action( 'litespeed_purge_url', home_url( '/' ) );
+
+	// Limpa object cache do WordPress para as opções de banner
+	wp_cache_flush();
 }
 
 // Registra o hook para todas as opções de slides desktop, mobile e banner youtube
@@ -9655,6 +9801,9 @@ function gstore_get_hero_image_tag( $attachment_id, $alt = '', $is_first_slide =
 		return '';
 	}
 
+	// Versão para cache-busting (muda a cada atualização de banner)
+	$cache_version = absint( get_option( 'gstore_banner_cache_version', 0 ) );
+
 	// Gera srcset com múltiplos tamanhos
 	$srcset_sizes = array( 'medium_large', 'large', 'full' );
 	$srcset_array = array();
@@ -9663,9 +9812,10 @@ function gstore_get_hero_image_tag( $attachment_id, $alt = '', $is_first_slide =
 	foreach ( $srcset_sizes as $size ) {
 		$size_url = gstore_get_image_url( $attachment_id, $size );
 		$size_src = wp_get_attachment_image_src( $attachment_id, $size );
-		
+
 		if ( $size_url && $size_src && isset( $size_src[1] ) ) {
-			$srcset_array[] = esc_url( $size_url ) . ' ' . $size_src[1] . 'w';
+			$busted_url = add_query_arg( 'v', $cache_version, $size_url );
+			$srcset_array[] = esc_url( $busted_url ) . ' ' . $size_src[1] . 'w';
 		}
 	}
 
@@ -9674,6 +9824,7 @@ function gstore_get_hero_image_tag( $attachment_id, $alt = '', $is_first_slide =
 	if ( empty( $src_url ) ) {
 		return '';
 	}
+	$src_url = add_query_arg( 'v', $cache_version, $src_url );
 
 	// Atributos base
 	$attr = array(
@@ -9759,6 +9910,8 @@ function gstore_process_image_placeholders( $content ) {
 		// Fallback: substitui apenas URL se tag não foi encontrada (para compatibilidade)
 		if ( strpos( $content, '{{gstore_hero_slide_1}}' ) !== false ) {
 			$hero_slide_1_url = wp_get_attachment_url( $hero_slide_1_id );
+			$cache_v = absint( get_option( 'gstore_banner_cache_version', 0 ) );
+			$hero_slide_1_url = add_query_arg( 'v', $cache_v, $hero_slide_1_url );
 			$content = str_replace( '{{gstore_hero_slide_1}}', $hero_slide_1_url, $content );
 		}
 	} else {
@@ -9776,6 +9929,8 @@ function gstore_process_image_placeholders( $content ) {
 		// Fallback: substitui apenas URL se tag não foi encontrada (para compatibilidade)
 		if ( strpos( $content, '{{gstore_hero_slide_2}}' ) !== false ) {
 			$hero_slide_2_url = wp_get_attachment_url( $hero_slide_2_id );
+			$cache_v = absint( get_option( 'gstore_banner_cache_version', 0 ) );
+			$hero_slide_2_url = add_query_arg( 'v', $cache_v, $hero_slide_2_url );
 			$content = str_replace( '{{gstore_hero_slide_2}}', $hero_slide_2_url, $content );
 		}
 	} else {
@@ -9785,9 +9940,11 @@ function gstore_process_image_placeholders( $content ) {
 	// Banner YouTube (não precisa de srcset, não é LCP)
 	if ( $banner_youtube_id > 0 ) {
 		$banner_youtube_url = wp_get_attachment_url( $banner_youtube_id );
+		$cache_v = absint( get_option( 'gstore_banner_cache_version', 0 ) );
+		$banner_youtube_url = add_query_arg( 'v', $cache_v, $banner_youtube_url );
 		$banner_youtube_alt = esc_attr( get_option( 'gstore_banner_youtube_alt', 'Conheça o conteúdo da CAC Armas no YouTube' ) );
 		$banner_youtube_link = esc_url( get_option( 'gstore_banner_youtube_link', '' ) );
-		
+
 		$img_tag = sprintf(
 			'<img src="%s" alt="%s" />',
 			esc_url( $banner_youtube_url ),

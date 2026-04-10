@@ -164,6 +164,27 @@
 	padding: clamp(var(--gstore-spacing-8), 4vw, var(--gstore-spacing-16)) 0;
 }
 
+.Gstore-home-banner--youtube {
+	padding: 0 !important;
+	background: transparent !important;
+	overflow: hidden;
+}
+
+.Gstore-home-banner--youtube .wp-block-image {
+	margin: 0;
+	line-height: 0;
+}
+
+.Gstore-home-banner--youtube .wp-block-image a,
+.Gstore-home-banner--youtube .wp-block-image img {
+	display: block;
+	width: 100%;
+}
+
+.Gstore-home-banner--youtube .wp-block-image img {
+	height: auto;
+}
+
 /* Garantir contraste para títulos na seção de produtos */
 .Gstore-home-products .wp-block-heading,
 .Gstore-home-products h1,
