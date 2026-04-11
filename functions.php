@@ -10073,10 +10073,12 @@ function gstore_process_template_part_block( $block_content, $block ) {
 }
 
 /**
- * Garante que a busca do tema (core/search) envia para /catalogo (produtos).
+ * Garante que a busca do tema (core/search) sempre envie para /catalogo (produtos).
  *
  * Importante: só altera blocos core/search com classes do tema (Gstore-*),
  * para não afetar outras buscas (ex.: blog, widgets etc.).
+ * Mesmo em páginas de categoria geradas (ex.: /clube-de-tiro/), a busca
+ * deve ser global no catálogo completo.
  */
 add_filter( 'render_block_core/search', 'gstore_search_block_action_to_catalog', 10, 2 );
 function gstore_search_block_action_to_catalog( $block_content, $block ) {
@@ -10105,17 +10107,7 @@ function gstore_search_block_action_to_catalog( $block_content, $block ) {
 		return $block_content;
 	}
 
-	$target_url = home_url( '/catalogo/' );
-	if (
-		function_exists( 'gstore_is_generated_category_catalog_page' ) &&
-		gstore_is_generated_category_catalog_page() &&
-		function_exists( 'get_queried_object_id' ) &&
-		get_queried_object_id()
-	) {
-		$target_url = get_permalink( get_queried_object_id() );
-	}
-
-	$catalog_url = esc_url( $target_url );
+	$catalog_url = esc_url( home_url( '/catalogo/' ) );
 
 	// Substitui o action do form.
 	$updated = preg_replace(
