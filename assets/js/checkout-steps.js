@@ -239,12 +239,11 @@
 		if (!draft) return false;
 
 		applyCheckoutDraftFields(draft.fields || {});
-
-		const hasPendingBlu = !!(getBluResumeState() && getBluResumeState().payment_url);
-		const targetStep = hasPendingBlu ? (STEPS.length - 1) : Math.max(0, Math.min(STEPS.length - 1, parseInt(draft.step, 10) || 0));
 		checkoutDraftRestoreDone = true;
 		setTimeout(function() {
-			setActiveStep(targetStep, false);
+			// Restauramos os campos do cliente, mas a entrada no checkout deve
+			// sempre começar na primeira etapa.
+			setActiveStep(0, false);
 			setTimeout(ensureShippingAutofilled, 0);
 			renderBluResumeCard();
 		}, 100);
@@ -1069,7 +1068,6 @@ const subtotal = decodeHtmlEntities(stripHtmlText(it.subtotal || ''));
 			const pendingBlu = getBluResumeState();
 			if (pendingBlu && pendingBlu.payment_url) {
 				setTimeout(function() {
-					setActiveStep(STEPS.length - 1, false);
 					renderBluResumeCard();
 				}, 80);
 			}
