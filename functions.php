@@ -10265,6 +10265,16 @@ function gstore_catalog_apply_search_to_products_shortcode( $query_args, $attr, 
 		return $query_args;
 	}
 
+	// Para SKU, prioriza match estritamente exato e ignora fuzzy/proximidade.
+	$exact_sku_ids = function_exists( 'gstore_find_product_ids_by_exact_sku' )
+		? gstore_find_product_ids_by_exact_sku( $search_term, 40 )
+		: array();
+
+	if ( ! empty( $exact_sku_ids ) ) {
+		$query_args['post__in'] = $exact_sku_ids;
+		return $query_args;
+	}
+
 	// -----------------------------------------------------------
 	// Coleta IDs de produtos por 3 vias (OR) em vez de usar
 	// 's' + tax_query juntos (que gera AND e restringe resultados).
@@ -10645,28 +10655,34 @@ function gstore_handle_search_suggest( WP_REST_Request $request ) {
 	$limit = 8;
 
 	// Produtos
-	$product_ids = array();
-	$query       = new WP_Query(
-		array(
-			'post_type'              => 'product',
-			'post_status'            => 'publish',
-			'posts_per_page'         => $limit,
-			'no_found_rows'          => true,
-			'ignore_sticky_posts'    => true,
-			's'                      => $term,
-			'fields'                 => 'ids',
-			'update_post_meta_cache' => false,
-			'update_post_term_cache' => false,
-		)
-	);
-	if ( $query->have_posts() ) {
-		$product_ids = array_map( 'intval', $query->posts );
-	}
+	$product_ids        = function_exists( 'gstore_find_product_ids_by_exact_sku' )
+		? gstore_find_product_ids_by_exact_sku( $term, $limit )
+		: array();
+	$has_exact_sku_hit = ! empty( $product_ids );
 
-	// Busca fuzzy complementar quando a busca exata retorna poucos resultados.
-	if ( count( $product_ids ) < $limit && function_exists( 'gstore_fuzzy_search_products' ) ) {
-		$fuzzy_ids  = gstore_fuzzy_search_products( $term, $limit - count( $product_ids ), $product_ids );
-		$product_ids = array_merge( $product_ids, $fuzzy_ids );
+	if ( ! $has_exact_sku_hit ) {
+		$query = new WP_Query(
+			array(
+				'post_type'              => 'product',
+				'post_status'            => 'publish',
+				'posts_per_page'         => $limit,
+				'no_found_rows'          => true,
+				'ignore_sticky_posts'    => true,
+				's'                      => $term,
+				'fields'                 => 'ids',
+				'update_post_meta_cache' => false,
+				'update_post_term_cache' => false,
+			)
+		);
+		if ( $query->have_posts() ) {
+			$product_ids = array_map( 'intval', $query->posts );
+		}
+
+		// Busca fuzzy complementar quando a busca exata retorna poucos resultados.
+		if ( count( $product_ids ) < $limit && function_exists( 'gstore_fuzzy_search_products' ) ) {
+			$fuzzy_ids  = gstore_fuzzy_search_products( $term, $limit - count( $product_ids ), $product_ids );
+			$product_ids = array_merge( $product_ids, $fuzzy_ids );
+		}
 	}
 
 	$products = array();
@@ -10701,30 +10717,32 @@ function gstore_handle_search_suggest( WP_REST_Request $request ) {
 
 	// Categorias
 	$terms = array();
-	$terms_a = get_terms(
-		array(
-			'taxonomy'   => 'product_cat',
-			'hide_empty' => true,
-			'number'     => $limit,
-			'search'     => $term,
-		)
-	);
-	if ( ! is_wp_error( $terms_a ) && ! empty( $terms_a ) ) {
-		$terms = array_merge( $terms, $terms_a );
-	}
-
-	$term_no_accents = remove_accents( $term );
-	if ( $term_no_accents && $term_no_accents !== $term ) {
-		$terms_b = get_terms(
+	if ( ! $has_exact_sku_hit ) {
+		$terms_a = get_terms(
 			array(
 				'taxonomy'   => 'product_cat',
 				'hide_empty' => true,
 				'number'     => $limit,
-				'search'     => $term_no_accents,
+				'search'     => $term,
 			)
 		);
-		if ( ! is_wp_error( $terms_b ) && ! empty( $terms_b ) ) {
-			$terms = array_merge( $terms, $terms_b );
+		if ( ! is_wp_error( $terms_a ) && ! empty( $terms_a ) ) {
+			$terms = array_merge( $terms, $terms_a );
+		}
+
+		$term_no_accents = remove_accents( $term );
+		if ( $term_no_accents && $term_no_accents !== $term ) {
+			$terms_b = get_terms(
+				array(
+					'taxonomy'   => 'product_cat',
+					'hide_empty' => true,
+					'number'     => $limit,
+					'search'     => $term_no_accents,
+				)
+			);
+			if ( ! is_wp_error( $terms_b ) && ! empty( $terms_b ) ) {
+				$terms = array_merge( $terms, $terms_b );
+			}
 		}
 	}
 
@@ -10763,6 +10781,83 @@ function gstore_handle_search_suggest( WP_REST_Request $request ) {
 	set_transient( $cache_key, $payload, 60 );
 
 	return new WP_REST_Response( $payload, 200 );
+}
+
+/**
+ * Busca produtos por SKU com correspondencia estritamente exata.
+ *
+ * Procura em produtos e variacoes. Quando o SKU pertence a uma variacao,
+ * retorna o produto pai para manter compatibilidade com o catalogo.
+ *
+ * @param string $search_term Termo digitado pelo usuario.
+ * @param int    $limit       Maximo de IDs a retornar. Use 0 para sem limite.
+ * @return int[] IDs de produtos publicados.
+ */
+function gstore_find_product_ids_by_exact_sku( $search_term, $limit = 0 ) {
+	global $wpdb;
+
+	$sku = trim( (string) $search_term );
+	if ( '' === $sku ) {
+		return array();
+	}
+
+	$limit     = max( 0, (int) $limit );
+	$cache_key = 'gstore_exact_sku_' . md5( strtolower( $sku ) . '|' . $limit );
+	$cached    = get_transient( $cache_key );
+	if ( is_array( $cached ) ) {
+		return $cached;
+	}
+
+	$sql = "
+		SELECT posts.ID, posts.post_parent, posts.post_type
+		FROM {$wpdb->posts} AS posts
+		INNER JOIN {$wpdb->postmeta} AS sku_meta
+			ON posts.ID = sku_meta.post_id
+		WHERE posts.post_type IN ('product', 'product_variation')
+			AND posts.post_status = 'publish'
+			AND sku_meta.meta_key = '_sku'
+			AND sku_meta.meta_value = %s
+		ORDER BY posts.post_type ASC, posts.ID DESC
+	";
+
+	if ( $limit > 0 ) {
+		$sql .= $wpdb->prepare( ' LIMIT %d', $limit * 3 );
+	}
+
+	$rows = $wpdb->get_results( $wpdb->prepare( $sql, $sku ) );
+	if ( empty( $rows ) ) {
+		set_transient( $cache_key, array(), 120 );
+		return array();
+	}
+
+	$product_ids = array();
+	foreach ( $rows as $row ) {
+		$post_id   = isset( $row->ID ) ? (int) $row->ID : 0;
+		$post_type = isset( $row->post_type ) ? (string) $row->post_type : '';
+
+		if ( $post_id <= 0 ) {
+			continue;
+		}
+
+		if ( 'product_variation' === $post_type ) {
+			$parent_id = isset( $row->post_parent ) ? (int) $row->post_parent : 0;
+			if ( $parent_id <= 0 || 'publish' !== get_post_status( $parent_id ) ) {
+				continue;
+			}
+			$post_id = $parent_id;
+		}
+
+		$product_ids[] = $post_id;
+	}
+
+	$product_ids = array_values( array_unique( array_filter( array_map( 'intval', $product_ids ) ) ) );
+	if ( $limit > 0 && count( $product_ids ) > $limit ) {
+		$product_ids = array_slice( $product_ids, 0, $limit );
+	}
+
+	set_transient( $cache_key, $product_ids, 120 );
+
+	return $product_ids;
 }
 
 /**
