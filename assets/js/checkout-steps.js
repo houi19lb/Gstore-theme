@@ -1580,6 +1580,9 @@ const subtotal = decodeHtmlEntities(stripHtmlText(it.subtotal || ''));
 				if (res && res.success && res.data && res.data.quotes) {
 					installmentQuotes = res.data.quotes;
 					applyInstallmentQuotesToSelect();
+					if (lastCartSummaryData) {
+						updateInstallmentsPreview(lastCartSummaryData);
+					}
 				}
 			},
 			error: function() {
@@ -1592,7 +1595,6 @@ const subtotal = decodeHtmlEntities(stripHtmlText(it.subtotal || ''));
 		const $select = $('#gstore_blu_installments_select');
 		if (!$select.length) return;
 		if (!installmentQuotes) return;
-	const displayTotals = getInstallmentDisplayTotals(lastCartSummaryData);
 
 		$select.find('option').each(function() {
 			const $opt = $(this);
@@ -1615,6 +1617,39 @@ const subtotal = decodeHtmlEntities(stripHtmlText(it.subtotal || ''));
 		const totalText = totalValue > 0 ? formatCurrency(totalValue) : (q.total_text || q.total || '');
 		$opt.text(`${installments}x de ${perText} — total ${totalText}`);
 		});
+	}
+
+	function getInstallmentQuoteValues(installments) {
+		if (!installmentQuotes) {
+			return null;
+		}
+		const quote = installmentQuotes[String(installments || '')];
+		if (!quote) {
+			return null;
+		}
+
+		const quoteInstallments = parseInt(quote.installments, 10) || parseInt(installments, 10) || 1;
+		let totalValue = Number.isFinite(quote.total_raw) ? quote.total_raw : parsePriceValue(quote.total_text || quote.total || '');
+		if (!Number.isFinite(totalValue) || totalValue <= 0) {
+			totalValue = parsePriceValue(quote.total || '');
+		}
+
+		let perValue = Number.isFinite(quote.per_installment_raw) ? quote.per_installment_raw : parsePriceValue(quote.per_installment_text || quote.per_installment || '');
+		if ((!Number.isFinite(perValue) || perValue <= 0) && totalValue > 0) {
+			perValue = totalValue / quoteInstallments;
+		}
+
+		if (!Number.isFinite(totalValue) || totalValue <= 0) {
+			return null;
+		}
+
+		return {
+			installments: quoteInstallments,
+			totalValue,
+			perValue: Number.isFinite(perValue) ? perValue : 0,
+			totalText: totalValue > 0 ? formatCurrency(totalValue) : (quote.total_text || quote.total || ''),
+			perText: perValue > 0 ? formatCurrency(perValue) : (quote.per_installment_text || quote.per_installment || '')
+		};
 	}
 
 	// Campos de billing completos (usados quando Pix é selecionado)
@@ -2441,6 +2476,36 @@ function getInstallmentDisplayTotals(summaryData) {
 		});
 	}
 
+	function normalizeSummaryRowLabel(label) {
+		return String(label || '')
+			.replace(/\s+/g, ' ')
+			.trim()
+			.toLowerCase();
+	}
+
+	function getOrderReviewFeeRows() {
+		const fees = [];
+		$('.woocommerce-checkout-review-order-table tr.fee').each(function () {
+			const $row = $(this);
+			const label = $row.find('th').first().text().trim();
+			const valueText = $row.find('td').first().text().trim();
+			const total = parsePriceValue(valueText || '0');
+			if (!label || !Number.isFinite(total)) {
+				return;
+			}
+			fees.push({ label, total });
+		});
+		return fees;
+	}
+
+	function getOrderReviewTotalValue() {
+		const totalText = $('.woocommerce-checkout-review-order-table .order-total .woocommerce-Price-amount, .woocommerce-checkout-review-order-table .order-total .amount')
+			.first()
+			.text()
+			.trim();
+		return totalText ? parsePriceValue(totalText) : 0;
+	}
+
 	function renderShippingSummary(data) {
 		const $shippingSummary = $('[data-gstore-shipping-summary]');
 		if (!$shippingSummary.length) {
@@ -2546,7 +2611,31 @@ function getInstallmentDisplayTotals(summaryData) {
 			feesTotal += total;
 		});
 
-		const totalValue = subtotalValue + selectedTotal - discountValue + feesTotal;
+		let totalValue = subtotalValue + selectedTotal - discountValue + feesTotal;
+		const summaryTotalValue = data && data.total ? parsePriceValue(data.total) : 0;
+		const orderReviewTotalValue = getOrderReviewTotalValue();
+		const knownFeeLabels = new Set(otherFees.map((fee) => normalizeSummaryRowLabel(fee.label)));
+		const missingOrderReviewFees = getOrderReviewFeeRows().filter((fee) => {
+			const normalizedLabel = normalizeSummaryRowLabel(fee.label);
+			return normalizedLabel
+				&& normalizedLabel.indexOf('frete') === -1
+				&& !knownFeeLabels.has(normalizedLabel);
+		});
+		const missingOrderReviewFeesTotal = missingOrderReviewFees.reduce((sum, fee) => sum + fee.total, 0);
+		const deltaToSummaryTotal = summaryTotalValue > 0 ? (summaryTotalValue - totalValue) : 0;
+		const deltaToOrderReviewTotal = orderReviewTotalValue > 0 ? (orderReviewTotalValue - totalValue) : 0;
+		const shouldMergeOrderReviewFees = missingOrderReviewFees.length > 0 && (
+			(summaryTotalValue > 0 && Math.abs(deltaToSummaryTotal - missingOrderReviewFeesTotal) <= 0.02) ||
+			(orderReviewTotalValue > 0 && Math.abs(deltaToOrderReviewTotal - missingOrderReviewFeesTotal) <= 0.02)
+		);
+		if (shouldMergeOrderReviewFees) {
+			missingOrderReviewFees.forEach((fee) => {
+				otherFees.push(fee);
+				feesTotal += fee.total;
+			});
+			totalValue = subtotalValue + selectedTotal - discountValue + feesTotal;
+		}
+
 		if (subtotalValue > 0) {
 			$('.Gstore-checkout-summary-top__total-amount').html(formatCurrency(totalValue));
 		}
@@ -2701,7 +2790,8 @@ function getInstallmentDisplayTotals(summaryData) {
 		if ($subtotalRow.length && rowsHtml) {
 			$subtotalRow.after(rowsHtml);
 		}
-		if ($orderTotal.length) {
+		const hasNativeFeeRows = getOrderReviewFeeRows().length > 0;
+		if ($orderTotal.length && !hasNativeFeeRows) {
 			$orderTotal.html(formatCurrency(lastSummaryTotals.totalValue || 0));
 		}
 	}
@@ -3412,11 +3502,12 @@ function getInstallmentDisplayTotals(summaryData) {
 		// Usa getInstallmentDisplayTotals para incluir frete quando o API retorna total sem frete
 		const selectedN = parseInt((data.installments && data.installments.selected) ? data.installments.selected : '1', 10) || 1;
 		if (data.payment_method === 'blu_checkout' && selectedN > 1) {
+			const quoteValues = getInstallmentQuoteValues(selectedN);
 			const displayTotals = getInstallmentDisplayTotals(data);
-			const totalToShow = displayTotals.displayTotal > 0 ? displayTotals.displayTotal : parsePriceValue(data.total || 0);
-			const perToShow = totalToShow / selectedN;
-			const perText = perToShow > 0 ? formatCurrency(perToShow) : (data.installments && data.installments.per_installment) || '';
-			const totalText = totalToShow > 0 ? formatCurrency(totalToShow) : (data.total || '');
+			const totalToShow = quoteValues ? quoteValues.totalValue : (displayTotals.displayTotal > 0 ? displayTotals.displayTotal : parsePriceValue(data.total || 0));
+			const perToShow = quoteValues ? quoteValues.perValue : (totalToShow / selectedN);
+			const perText = quoteValues ? quoteValues.perText : (perToShow > 0 ? formatCurrency(perToShow) : (data.installments && data.installments.per_installment) || '');
+			const totalText = quoteValues ? quoteValues.totalText : (totalToShow > 0 ? formatCurrency(totalToShow) : (data.total || ''));
 			totalsHtml += `
 				<div class="Gstore-summary-row Gstore-summary-row--payable">
 					<span>Você pagará</span>
@@ -3456,7 +3547,8 @@ function getInstallmentDisplayTotals(summaryData) {
 		}
 
 		const selected = parseInt(data.installments.selected, 10) || 1;
-	const displayTotals = getInstallmentDisplayTotals(data);
+		const quoteValues = getInstallmentQuoteValues(selected);
+		const displayTotals = getInstallmentDisplayTotals(data);
 		if (selected <= 1) {
 			$preview.html('');
 			return;
@@ -3468,12 +3560,12 @@ function getInstallmentDisplayTotals(summaryData) {
 			hasFee = data.totals.fees.some(f => f && f.label && String(f.label).toLowerCase().indexOf('taxa') !== -1);
 		}
 
-	const suffix = hasFee ? ' (valores já com taxa — a taxa pode variar conforme as parcelas)' : '';
-	const totalValue = displayTotals.displayTotal || displayTotals.rawTotal;
-	const perValue = totalValue > 0 ? (totalValue / selected) : 0;
-	const perText = perValue > 0 ? formatCurrency(perValue) : data.installments.per_installment;
-	const totalText = totalValue > 0 ? formatCurrency(totalValue) : data.total;
-	$preview.html(`${selected}x de <strong>${perText}</strong> — total <strong>${totalText}</strong>${suffix}`);
+		const suffix = hasFee ? ' (valores já com taxa — a taxa pode variar conforme as parcelas)' : '';
+		const totalValue = quoteValues ? quoteValues.totalValue : (displayTotals.displayTotal || displayTotals.rawTotal);
+		const perValue = quoteValues ? quoteValues.perValue : (totalValue > 0 ? (totalValue / selected) : 0);
+		const perText = quoteValues ? quoteValues.perText : (perValue > 0 ? formatCurrency(perValue) : data.installments.per_installment);
+		const totalText = quoteValues ? quoteValues.totalText : (totalValue > 0 ? formatCurrency(totalValue) : data.total);
+		$preview.html(`${selected}x de <strong>${perText}</strong> — total <strong>${totalText}</strong>${suffix}`);
 	}
 
 	/**
