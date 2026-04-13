@@ -908,11 +908,6 @@ if ( $reviews_has_value ) {
 									<?php endif; ?>
 								</div>
 
-								<?php if ( ! $hide_price ) : ?>
-									<button type="button" class="btn-secondary" data-gstore-reset-purchase>
-										<?php esc_html_e( 'Limpar', 'gstore' ); ?>
-									</button>
-								<?php endif; ?>
 								<?php if ( ! $hide_price && $show_price_oos ) : ?>
 									<div class="price-unavailable-notice" data-gstore-price-unavailable-notice<?php echo $is_out_of_stock ? '' : ' hidden'; ?>>
 										<i class="fa-solid fa-circle-info" aria-hidden="true"></i>
