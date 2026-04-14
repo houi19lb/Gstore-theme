@@ -2284,6 +2284,71 @@ function getInstallmentDisplayTotals(summaryData) {
 	 * Atualiza campos hidden no formulário de checkout com os dados de frete selecionados
 	 * Esses campos são enviados ao backend via update_order_review
 	 */
+	function resolveUnifiedShippingMethodValue(items) {
+		const summaryItems = Array.isArray(items)
+			? items
+			: (lastCartSummaryData && Array.isArray(lastCartSummaryData.items) ? lastCartSummaryData.items : []);
+		const allModes = new Set();
+		const allRateIds = new Set();
+
+		summaryItems.forEach((item) => {
+			const key = item.key || item.cart_item_key || item.cartItemKey || '';
+			if (!key) {
+				return;
+			}
+
+			const selectedMode = normalizeRateMode(checkoutSelectedShippingByItem[key] || '');
+			const selectedRateId = String(checkoutSelectedShippingRateByItem[key] || '').trim();
+
+			if (selectedMode) {
+				allModes.add(selectedMode);
+			}
+
+			if (selectedRateId) {
+				allRateIds.add(selectedRateId);
+			}
+		});
+
+		if (allRateIds.size === 1) {
+			return Array.from(allRateIds)[0];
+		}
+
+		if (allRateIds.size > 1 || allModes.size > 1) {
+			return 'gstore_custom_shipping:mixed';
+		}
+
+		const fallbackMode = normalizeRateMode(checkoutSelectedShippingMode || '')
+			|| Array.from(allModes)[0]
+			|| 'land';
+
+		return 'gstore_custom_shipping:' + fallbackMode;
+	}
+
+	function syncCheckoutShippingMethodField(items) {
+		const $checkoutForm = $('form.checkout');
+		if (!$checkoutForm.length) {
+			return '';
+		}
+
+		const shippingMethodValue = resolveUnifiedShippingMethodValue(items);
+		if (!shippingMethodValue) {
+			return '';
+		}
+
+		$checkoutForm.find('input[name="shipping_method[0]"]').remove();
+		$checkoutForm.append(
+			$('<input>', {
+				type: 'hidden',
+				name: 'shipping_method[0]',
+				'data-index': '0',
+				'class': 'shipping_method',
+				value: shippingMethodValue
+			})
+		);
+
+		return shippingMethodValue;
+	}
+
 	function updateCheckoutShippingHiddenFields() {
 		const $checkoutForm = $('form.checkout');
 		if (!$checkoutForm.length) {
@@ -2345,34 +2410,9 @@ function getInstallmentDisplayTotals(summaryData) {
 		// (update-checkout.js) leia corretamente o valor ao montar o POST de update_order_review.
 		// Sem data-index, o WC ignora nosso campo e usa o radio/hidden nativo do template
 		// cart-shipping.php, que pode ter o valor antigo (ex.: air quando o usuário escolheu land).
-		const allModes = new Set();
-		const allRateIds = new Set();
-		items.forEach((item) => {
-			const key = item.key || item.cart_item_key || item.cartItemKey || '';
-			if (key) {
-				allModes.add(checkoutSelectedShippingByItem[key] || 'land');
-				if (checkoutSelectedShippingRateByItem[key]) {
-					allRateIds.add(checkoutSelectedShippingRateByItem[key]);
-				}
-			}
-		});
-		const gstoreRateId = allRateIds.size === 1
-			? Array.from(allRateIds)[0]
-			: 'gstore_custom_shipping:' + (allModes.size > 1 ? 'mixed' : (allModes.values().next().value || 'land'));
-
-		// Remove TODOS os inputs shipping_method[0] existentes (nossos E os nativos do WC)
-		// para evitar conflito de valores no serialize() do form.
-		$checkoutForm.find('input[name="shipping_method[0]"]').remove();
-		$checkoutForm.append(
-			$('<input>', {
-				type: 'hidden',
-				name: 'shipping_method[0]',
-				'data-index': '0',
-				'class': 'shipping_method',
-				value: gstoreRateId
-			})
-		);
-
+		// Mantém um único shipping_method[0] no form, sempre alinhado com as rates
+		// selecionadas por item.
+		syncCheckoutShippingMethodField(items);
 	}
 
 	function syncShippingFromStorage(data) {
@@ -3008,21 +3048,20 @@ function getInstallmentDisplayTotals(summaryData) {
 	function updateSummaryWithShipping(shippingData) {
 		// Atualiza o endereço no WooCommerce para que ele calcule o frete oficialmente
 		const $postcodeField = $('#billing_postcode');
-		const $checkoutForm = $('form.checkout');
 		
 		if ($postcodeField.length && $postcodeField.val()) {
-			// Garante que o campo de método de envio existe no formulário
-			let $shippingMethodField = $checkoutForm.find('input[name="shipping_method[0]"]');
-			if (!$shippingMethodField.length) {
-				// Cria campo hidden para o método de envio
-				$checkoutForm.append('<input type="hidden" name="shipping_method[0]" value="gstore_custom_shipping" />');
+			// Antes de disparar update_checkout, reescreve os campos hidden usando a
+			// seleção real por item. Isso evita que um shipping_method genérico/antigo
+			// sobrescreva o frete correto em carrinhos com múltiplos produtos.
+			if (typeof updateCheckoutShippingHiddenFields === 'function') {
+				updateCheckoutShippingHiddenFields();
 			} else {
-				$shippingMethodField.val('gstore_custom_shipping');
+				syncCheckoutShippingMethodField();
 			}
 			
 			// Dispara evento para atualizar checkout do WooCommerce
 			// Isso fará com que o WooCommerce calcule o frete oficialmente
-			persistSelectedPaymentMethod(resolveSelectedPaymentMethod($checkoutForm));
+			persistSelectedPaymentMethod(resolveSelectedPaymentMethod($('form.checkout')));
 			$(document.body).trigger('update_checkout');
 			// loadCartSummary já é chamado pelo handler global de updated_checkout
 			// Após CEP/frete mudar, atualiza preview de parcelas e quotes
@@ -3393,6 +3432,9 @@ function getInstallmentDisplayTotals(summaryData) {
 	function loadCartSummary(onSuccess) {
 		const installmentsValue = $('#gstore_blu_installments').val() || $('#gstore_blu_installments_select').val() || '';
 		const $form = $('form.checkout').first();
+		if ($form.length && typeof updateCheckoutShippingHiddenFields === 'function') {
+			updateCheckoutShippingHiddenFields();
+		}
 		const paymentMethod = resolveSelectedPaymentMethod($form);
 		const postData = $form.length ? $form.serialize() : '';
 		const cartSummaryConfig = window.gstoreCartSummary;
@@ -4752,21 +4794,8 @@ function getInstallmentDisplayTotals(summaryData) {
 				console.log('[Gstore DEBUG] Campo global adicionado no update_checkout:', lastSelectedMode);
 			}
 
-			// Garante shipping_method[0] com rate ID completo para persistir frete ao fechar modal Blu.
-			// Remove inputs WC nativos conflitantes e recria com data-index para compatibilidade.
-			let mode = checkoutSelectedShippingMode || (Object.values(checkoutSelectedShippingByItem)[0]) || 'land';
-			if (mode !== 'land' && mode !== 'air' && mode !== 'pickup') mode = 'land';
-			const rateId = 'gstore_custom_shipping:' + mode;
-			$checkoutForm.find('input[name="shipping_method[0]"]').remove();
-			$checkoutForm.append(
-				$('<input>', {
-					type: 'hidden',
-					name: 'shipping_method[0]',
-					'data-index': '0',
-					'class': 'shipping_method',
-					value: rateId
-				})
-			);
+			// Regrava o shipping_method[0] usando a seleção exata/mixed atual do checkout.
+			syncCheckoutShippingMethodField();
 		}
 	});
 	
