@@ -1931,8 +1931,14 @@ const subtotal = decodeHtmlEntities(stripHtmlText(it.subtotal || ''));
 	 * Busca rates de frete para um item específico do carrinho
 	 * Similar ao fetchRatesForItem do cart.js
 	 */
-	function fetchCheckoutRatesForItem(productId, quantity, postcode, nonce, ajaxUrl) {
-		if (!productId || !postcode) {
+	function fetchCheckoutRatesForGroup(request, postcode, nonce, ajaxUrl) {
+		const payload = Object.assign({
+			action: 'gstore_calculate_shipping',
+			nonce: nonce,
+			postcode: postcode
+		}, request || {});
+		const hasCartKeys = Array.isArray(payload.cart_item_keys) && payload.cart_item_keys.length > 0;
+		if ((!payload.product_id && !hasCartKeys) || !postcode) {
 			return Promise.resolve(null);
 		}
 
@@ -1940,13 +1946,7 @@ const subtotal = decodeHtmlEntities(stripHtmlText(it.subtotal || ''));
 			url: ajaxUrl,
 			type: 'POST',
 			dataType: 'json',
-			data: {
-				action: 'gstore_calculate_shipping',
-				nonce: nonce,
-				postcode: postcode,
-				product_id: productId,
-				quantity: quantity || 1,
-			},
+			data: payload,
 		}).then(function(response) {
 			if (!response || !response.success || !response.data || !Array.isArray(response.data.rates)) {
 				return null;
@@ -1955,6 +1955,151 @@ const subtotal = decodeHtmlEntities(stripHtmlText(it.subtotal || ''));
 		}).catch(function() {
 			return null;
 		});
+	}
+
+	function fetchCheckoutRatesForItem(productId, quantity, postcode, nonce, ajaxUrl) {
+		return fetchCheckoutRatesForGroup({
+			product_id: productId,
+			quantity: quantity || 1,
+		}, postcode, nonce, ajaxUrl);
+	}
+
+	function getCartItemKey(item) {
+		return item && (item.key || item.cart_item_key || item.cartItemKey || '') || '';
+	}
+
+	function getItemShippingBillingMode(item) {
+		const mode = String(item && (item.shipping_billing_mode || item.shippingBillingMode || '') || '').trim();
+		return mode === 'per_variation' ? 'per_variation' : 'per_item';
+	}
+
+	function getItemShippingGroupKey(item) {
+		const cartItemKey = getCartItemKey(item);
+		const explicitGroupKey = String(item && (item.shipping_group_key || item.shippingGroupKey || '') || '').trim();
+		if (explicitGroupKey) {
+			return explicitGroupKey;
+		}
+		const variationId = String(item && (item.shipping_variation_id || item.shippingVariationId || '') || '').trim();
+		if (variationId && getItemShippingBillingMode(item) === 'per_variation') {
+			return `variation:${variationId}`;
+		}
+		return cartItemKey ? `item:${cartItemKey}` : '';
+	}
+
+	function getShippingGroupMemberKeys(cartItemKey, items) {
+		const summaryItems = Array.isArray(items)
+			? items
+			: (lastCartSummaryData && Array.isArray(lastCartSummaryData.items) ? lastCartSummaryData.items : []);
+		const sourceItem = summaryItems.find((item) => getCartItemKey(item) === cartItemKey);
+		if (!sourceItem) {
+			return cartItemKey ? [cartItemKey] : [];
+		}
+		if (getItemShippingBillingMode(sourceItem) !== 'per_variation') {
+			return cartItemKey ? [cartItemKey] : [];
+		}
+		const groupKey = getItemShippingGroupKey(sourceItem);
+		if (!groupKey) {
+			return cartItemKey ? [cartItemKey] : [];
+		}
+		const members = summaryItems
+			.filter((item) => getItemShippingGroupKey(item) === groupKey)
+			.map((item) => getCartItemKey(item))
+			.filter(Boolean);
+		return members.length ? members : (cartItemKey ? [cartItemKey] : []);
+	}
+
+	function synchronizeSharedShippingSelections(items, persistSelection) {
+		const summaryItems = Array.isArray(items) ? items : [];
+		const groups = {};
+		summaryItems.forEach((item) => {
+			if (getItemShippingBillingMode(item) !== 'per_variation') {
+				return;
+			}
+			const groupKey = getItemShippingGroupKey(item);
+			const cartItemKey = getCartItemKey(item);
+			if (!groupKey || !cartItemKey) {
+				return;
+			}
+			if (!groups[groupKey]) {
+				groups[groupKey] = [];
+			}
+			groups[groupKey].push(cartItemKey);
+		});
+
+		Object.keys(groups).forEach((groupKey) => {
+			const memberKeys = groups[groupKey];
+			if (!Array.isArray(memberKeys) || memberKeys.length < 2) {
+				return;
+			}
+			let selectedRateId = '';
+			let selectedMode = '';
+			memberKeys.forEach((key) => {
+				if (!selectedRateId && checkoutSelectedShippingRateByItem[key]) {
+					selectedRateId = String(checkoutSelectedShippingRateByItem[key] || '');
+				}
+				if (!selectedMode && checkoutSelectedShippingByItem[key]) {
+					selectedMode = normalizeRateMode(checkoutSelectedShippingByItem[key] || '');
+				}
+			});
+			memberKeys.forEach((key) => {
+				if (selectedRateId) {
+					checkoutSelectedShippingRateByItem[key] = selectedRateId;
+					if (persistSelection) {
+						persistSelectedRateForItem(key, selectedRateId);
+					}
+				}
+				if (selectedMode) {
+					checkoutSelectedShippingByItem[key] = selectedMode;
+					if (persistSelection) {
+						persistShippingModeForItem(key, selectedMode);
+					}
+				}
+			});
+		});
+	}
+
+	function applyShippingSelectionToGroup(cartItemKey, rateId, mode, persistSelection) {
+		const memberKeys = getShippingGroupMemberKeys(cartItemKey);
+		const selectedRateId = String(rateId || '').trim();
+		const selectedMode = normalizeRateMode(mode) || 'land';
+		memberKeys.forEach((key) => {
+			checkoutSelectedShippingRateByItem[key] = selectedRateId;
+			checkoutSelectedShippingByItem[key] = selectedMode;
+			if (persistSelection) {
+				persistSelectedRateForItem(key, selectedRateId);
+				persistShippingModeForItem(key, selectedMode);
+			}
+		});
+		return memberKeys;
+	}
+
+	function buildShippingCalculationGroups(items) {
+		const groups = {};
+		(items || []).forEach((item) => {
+			const cartItemKey = getCartItemKey(item);
+			if (!cartItemKey) {
+				return;
+			}
+			const groupKey = getItemShippingGroupKey(item) || `item:${cartItemKey}`;
+			if (!groups[groupKey]) {
+				groups[groupKey] = {
+					groupKey: groupKey,
+					cartItemKeys: [],
+					items: [],
+					productId: 0,
+					quantity: 0,
+				};
+			}
+			const productId = parseInt(item.product_id || item.productId || item.id, 10) || 0;
+			const quantity = parseInt(item.quantity, 10) || 1;
+			groups[groupKey].cartItemKeys.push(cartItemKey);
+			groups[groupKey].items.push(item);
+			if (!groups[groupKey].productId && productId) {
+				groups[groupKey].productId = productId;
+			}
+			groups[groupKey].quantity += quantity;
+		});
+		return Object.keys(groups).map((key) => groups[key]);
 	}
 
 	function parsePriceValue(rawText) {
@@ -2430,6 +2575,7 @@ function getInstallmentDisplayTotals(summaryData) {
 			checkoutSelectedShippingByItem[cartItemKey] = storedMode || 'land';
 			checkoutSelectedShippingRateByItem[cartItemKey] = storedRateId || '';
 		});
+		synchronizeSharedShippingSelections(items, false);
 	}
 
 	function renderItemShippingOptions(data) {
@@ -2570,13 +2716,14 @@ function getInstallmentDisplayTotals(summaryData) {
 		const discountValue = data && data.totals && data.totals.discount
 			? parsePriceValue(data.totals.discount)
 			: 0;
-			let selectedTotal = 0;
-			let groundTotal = 0;
-			let airTotal = 0;
-			let selectedLandTotal = 0;
-			let selectedAirTotal = 0;
-			let selectedPickupTotal = 0;
-			const selectedModes = new Set();
+		let selectedTotal = 0;
+		let groundTotal = 0;
+		let airTotal = 0;
+		let selectedLandTotal = 0;
+		let selectedAirTotal = 0;
+		let selectedPickupTotal = 0;
+		const selectedModes = new Set();
+		const processedSelectionGroups = new Set();
 
 		if (hasItemRates && items.length) {
 			items.forEach((item) => {
@@ -2584,6 +2731,13 @@ function getInstallmentDisplayTotals(summaryData) {
 				if (!cartItemKey || !ratesByItem[cartItemKey]) {
 					return;
 				}
+				const selectionGroupKey = getItemShippingBillingMode(item) === 'per_variation'
+					? (getItemShippingGroupKey(item) || `item:${cartItemKey}`)
+					: `item:${cartItemKey}`;
+				if (processedSelectionGroups.has(selectionGroupKey)) {
+					return;
+				}
+				processedSelectionGroups.add(selectionGroupKey);
 				const itemRates = ratesByItem[cartItemKey] || [];
 				itemRates.forEach((rate) => {
 					const mode = normalizeRateMode(rate.mode);
@@ -2903,15 +3057,20 @@ function getInstallmentDisplayTotals(summaryData) {
 			return;
 		}
 		
-		// Faz chamadas AJAX individuais para cada item do carrinho
-		const requests = items.map(function(item) {
-			const cartItemKey = item.key || item.cart_item_key || item.cartItemKey || '';
-			const productId = parseInt(item.product_id || item.productId || item.id, 10) || 0;
-			const quantity = parseInt(item.quantity, 10) || 1;
+		// Faz chamadas AJAX por grupo de frete do carrinho. Itens per_variation
+		// compartilham a mesma consulta para evitar duplicação do frete.
+		const groups = buildShippingCalculationGroups(items);
+		const requests = groups.map(function(group) {
+			const requestData = Array.isArray(group.cartItemKeys) && group.cartItemKeys.length
+				? { cart_item_keys: group.cartItemKeys }
+				: {
+					product_id: group.productId || 0,
+					quantity: group.quantity || 1,
+				};
 			
-			return fetchCheckoutRatesForItem(productId, quantity, cleanCep, nonce, ajaxUrl)
+			return fetchCheckoutRatesForGroup(requestData, cleanCep, nonce, ajaxUrl)
 				.then(function(rates) {
-					return { cartItemKey: cartItemKey, productId: productId, rates: rates };
+					return { group: group, rates: rates };
 				});
 		});
 		
@@ -2919,13 +3078,13 @@ function getInstallmentDisplayTotals(summaryData) {
 			isCalculatingShipping = false;
 			
 			let hasAnyRates = false;
-			let firstDestination = null;
 			
 			// Limpa rates anteriores
 			checkoutShippingRatesByItem = {};
 			
-			// Processa cada resultado individualmente
-			results.forEach(function(result, index) {
+			// Processa cada resultado por grupo e replica as rates para todos os itens
+			// que compartilham a mesma cobrança.
+			results.forEach(function(result) {
 				if (result && result.rates && result.rates.length > 0) {
 					hasAnyRates = true;
 					const normalizedRates = result.rates.map(function(rate) {
@@ -2940,17 +3099,39 @@ function getInstallmentDisplayTotals(summaryData) {
 						};
 					}).filter(function(rate) { return rate.mode && rate.rate_id; });
 					
-					// Usa cartItemKey ou gera uma chave baseada no productId/index
-					const key = result.cartItemKey || ('item_' + (result.productId || index));
-					checkoutShippingRatesByItem[key] = normalizedRates;
-					if (!checkoutSelectedShippingRateByItem[key] && normalizedRates.length) {
-						checkoutSelectedShippingRateByItem[key] = normalizedRates[0].rate_id;
-					}
-					if (!checkoutSelectedShippingByItem[key] && normalizedRates.length) {
-						checkoutSelectedShippingByItem[key] = normalizeRateMode(normalizedRates[0].mode) || 'land';
+					const groupItems = result.group && Array.isArray(result.group.items) ? result.group.items : [];
+					const memberKeys = groupItems.map(function(item) {
+						return getCartItemKey(item);
+					}).filter(Boolean);
+					
+					memberKeys.forEach(function(key) {
+						checkoutShippingRatesByItem[key] = normalizedRates;
+					});
+
+					if (memberKeys.length && normalizedRates.length) {
+						let preferredRateId = '';
+						let preferredMode = '';
+						memberKeys.forEach(function(key) {
+							if (!preferredRateId && checkoutSelectedShippingRateByItem[key]) {
+								preferredRateId = String(checkoutSelectedShippingRateByItem[key] || '');
+							}
+							if (!preferredMode && checkoutSelectedShippingByItem[key]) {
+								preferredMode = normalizeRateMode(checkoutSelectedShippingByItem[key] || '');
+							}
+						});
+
+						const selectedRate = resolveCheckoutSelectedRate(normalizedRates, preferredRateId, preferredMode);
+						const selectedRateId = selectedRate ? String(selectedRate.rate_id || '') : String(normalizedRates[0].rate_id || '');
+						const selectedMode = selectedRate
+							? normalizeRateMode(selectedRate.mode)
+							: (normalizeRateMode(normalizedRates[0].mode) || 'land');
+
+						applyShippingSelectionToGroup(memberKeys[0], selectedRateId, selectedMode, false);
 					}
 				}
 			});
+
+			synchronizeSharedShippingSelections(items, false);
 			
 			if (!hasAnyRates) {
 				showShippingError('Não foi possível calcular o frete para este destino.');
@@ -3735,10 +3916,7 @@ function getInstallmentDisplayTotals(summaryData) {
 			const value = $(this).val();
 			if (cartItemKey) {
 				const normalizedMode = normalizeRateMode($(this).data('gstore-mode') || '') || 'land';
-				checkoutSelectedShippingByItem[cartItemKey] = normalizedMode;
-				checkoutSelectedShippingRateByItem[cartItemKey] = String(value || '');
-				persistShippingModeForItem(cartItemKey, normalizedMode);
-				persistSelectedRateForItem(cartItemKey, String(value || ''));
+				applyShippingSelectionToGroup(cartItemKey, String(value || ''), normalizedMode, true);
 
 				// Invalida cache de quotes de parcelamento (frete mudou, base de cálculo diferente)
 				installmentQuotes = null;
@@ -3791,6 +3969,7 @@ function getInstallmentDisplayTotals(summaryData) {
 					}, 100);
 				});
 				
+				renderItemShippingOptions(lastCartSummaryData);
 				renderShippingSummary(lastCartSummaryData);
 			}
 		});
