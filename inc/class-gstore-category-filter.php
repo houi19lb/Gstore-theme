@@ -789,13 +789,8 @@ class GStore_Category_Filter {
 		foreach ( $nodes as $node ) {
 			$has_children = ! empty( $node->children );
 			$is_selected = in_array( $node->slug, $this->selected_slugs );
-
-			$item_classes = array( 'gstore-category-filter__item' );
-			if ( $has_children ) {
-				$item_classes[] = 'gstore-category-filter__item--has-children';
-			}
-
-			echo '<li class="' . esc_attr( implode( ' ', $item_classes ) ) . '" data-id="' . esc_attr( $node->id ) . '" data-slug="' . esc_attr( $node->slug ) . '" data-level="' . esc_attr( $level ) . '">';
+			
+			echo '<li class="gstore-category-filter__item" data-id="' . esc_attr( $node->id ) . '" data-slug="' . esc_attr( $node->slug ) . '" data-level="' . esc_attr( $level ) . '">';
 			
 			echo '<div class="gstore-category-filter__node">';
 			
