@@ -9,6 +9,18 @@
 	background-color: var(--gstore-color-accent, #b5a642) !important;
 }
 
+/* O style.css legado força o badge do header a ficar visível e com texto na cor do accent.
+ * Aqui restauramos o comportamento correto do bloco: escondido quando [hidden] e legível quando visível.
+ */
+.Gstore-header__mini-cart .wc-block-mini-cart__badge {
+	color: var(--gstore-color-black, #0a0a0a) !important;
+	line-height: 1 !important;
+}
+
+.Gstore-header__mini-cart .wc-block-mini-cart__badge[hidden] {
+	display: none !important;
+}
+
 body .wc-block-components-drawer__screen-overlay {
 	background-color: rgba(10, 10, 10, 0.2) !important;
 	backdrop-filter: blur(2px);
