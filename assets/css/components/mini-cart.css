@@ -13,8 +13,20 @@
  * Aqui restauramos o comportamento correto do bloco: escondido quando [hidden] e legível quando visível.
  */
 .Gstore-header__mini-cart .wc-block-mini-cart__badge {
+	background: transparent !important;
+	background-color: transparent !important;
 	color: var(--gstore-color-black, #0a0a0a) !important;
 	line-height: 1 !important;
+	padding: 0 !important;
+	min-width: auto !important;
+	width: auto !important;
+	height: auto !important;
+	top: 2px !important;
+	right: 4px !important;
+	left: auto !important;
+	bottom: auto !important;
+	margin: 0 !important;
+	transform: none !important;
 }
 
 .Gstore-header__mini-cart .wc-block-mini-cart__badge[hidden] {
