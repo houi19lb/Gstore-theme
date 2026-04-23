@@ -17,21 +17,22 @@
 	background-color: var(--gstore-color-black, #0a0a0a) !important;
 	color: var(--gstore-color-accent, #b5a642) !important;
 	line-height: 1 !important;
-	border-radius: 999px !important;
-	left: 100% !important;
-	right: auto !important;
-	top: 0 !important;
+	border-radius: 4px !important;
+	left: auto !important;
+	right: -8px !important;
+	top: -6px !important;
 	bottom: auto !important;
-	margin-left: -10% !important;
-	transform: translate(-15%, -35%) !important;
+	margin-left: 0 !important;
+	transform: none !important;
 	min-width: 18px !important;
 	height: 18px !important;
-	padding: 0 5px !important;
+	padding: 0 4px !important;
 	display: inline-flex !important;
 	align-items: center !important;
 	justify-content: center !important;
 	font-size: 11px !important;
 	font-weight: 700 !important;
+	z-index: 2 !important;
 	box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08) !important;
 }
 
