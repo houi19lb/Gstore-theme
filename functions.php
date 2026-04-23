@@ -1454,6 +1454,17 @@ function gstore_enqueue_styles() {
 		$header_css_version
 	);
 
+	// Mini-cart CSS dedicado.
+	// Carrega separadamente com filemtime para evitar stale cache do @import em gstore-main.css.
+	$mini_cart_css_file = get_theme_file_path( 'assets/css/components/mini-cart.css' );
+	$mini_cart_css_version = file_exists( $mini_cart_css_file ) ? (string) filemtime( $mini_cart_css_file ) : $theme_version;
+	wp_enqueue_style(
+		'gstore-mini-cart-css',
+		get_theme_file_uri( 'assets/css/components/mini-cart.css' ),
+		array( 'gstore-header-css' ),
+		$mini_cart_css_version
+	);
+
 	// Botão flutuante do Telegram (usa href dinâmico da top bar; sem hardcode)
 	wp_enqueue_style(
 		'gstore-telegram-floating-css',

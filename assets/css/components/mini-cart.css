@@ -28,8 +28,9 @@ body .wc-block-mini-cart__drawer .wp-block-woocommerce-empty-mini-cart-contents-
 body .wc-block-mini-cart__drawer .wc-block-mini-cart__empty-cart-wrapper,
 body .wc-block-mini-cart__drawer .wc-block-mini-cart__items,
 body .wc-block-mini-cart__drawer .wc-block-mini-cart__footer {
-	background-color: var(--gstore-color-bg-light, #ffffff);
-	color: var(--gstore-color-text-primary, #1a1a1a);
+	background: var(--gstore-color-bg-light, #ffffff) !important;
+	background-color: var(--gstore-color-bg-light, #ffffff) !important;
+	color: var(--gstore-color-text-primary, #1a1a1a) !important;
 }
 
 body .wc-block-mini-cart__drawer .wc-block-mini-cart__items,
@@ -37,7 +38,7 @@ body .wc-block-mini-cart__drawer .wc-block-cart-items {
 	border: 1px solid var(--gstore-color-border-light, #e8e8e6);
 	border-radius: var(--gstore-radius-base, 4px);
 	padding: var(--gstore-spacing-sm, 0.75rem);
-	background-color: var(--gstore-color-bg-muted, #f0f2f5);
+	background-color: var(--gstore-color-bg-muted, #f0f2f5) !important;
 }
 
 body .wc-block-mini-cart__drawer .wc-block-mini-cart__footer {
@@ -50,7 +51,7 @@ body .wc-block-mini-cart__drawer .wc-block-mini-cart__totals td,
 body .wc-block-mini-cart__drawer .wc-block-mini-cart__title,
 body .wc-block-mini-cart__drawer .wc-block-mini-cart__amount,
 body .wc-block-mini-cart__drawer .wc-block-mini-cart__tax-label {
-	color: var(--gstore-color-text-primary, #1a1a1a);
+	color: var(--gstore-color-text-primary, #1a1a1a) !important;
 }
 
 body .wc-block-mini-cart__drawer .wc-block-components-button,
