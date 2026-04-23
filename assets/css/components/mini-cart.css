@@ -85,6 +85,13 @@ body .wc-block-mini-cart__drawer .wc-block-mini-cart__tax-label {
 	color: var(--gstore-color-text-primary, #1a1a1a) !important;
 }
 
+/* O bloco do Woo puxa a lista para cima com margin-bottom negativo no titulo.
+ * Zeramos isso para evitar o "fantasma" dos produtos sob o cabecalho do drawer.
+ */
+body .wc-block-mini-cart__drawer .wc-block-mini-cart__title {
+	margin-bottom: 0 !important;
+}
+
 body .wc-block-mini-cart__drawer .wc-block-components-button,
 body .wc-block-mini-cart__drawer .wp-element-button {
 	border-radius: var(--gstore-radius-base, 4px);
