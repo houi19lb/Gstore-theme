@@ -19,8 +19,13 @@ body .wc-block-mini-cart__drawer {
 	color: var(--gstore-color-text-primary, #1a1a1a);
 }
 
+body .wc-block-mini-cart__drawer .wc-block-components-drawer__content,
+body .wc-block-mini-cart__drawer .wc-block-components-drawer__close-wrapper,
 body .wc-block-mini-cart__drawer .wc-block-mini-cart__template-part,
 body .wc-block-mini-cart__drawer .wp-block-woocommerce-mini-cart-contents,
+body .wc-block-mini-cart__drawer .wp-block-woocommerce-filled-mini-cart-contents-block,
+body .wc-block-mini-cart__drawer .wp-block-woocommerce-empty-mini-cart-contents-block,
+body .wc-block-mini-cart__drawer .wc-block-mini-cart__empty-cart-wrapper,
 body .wc-block-mini-cart__drawer .wc-block-mini-cart__items,
 body .wc-block-mini-cart__drawer .wc-block-mini-cart__footer {
 	background-color: var(--gstore-color-bg-light, #ffffff);

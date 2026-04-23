@@ -2817,6 +2817,16 @@ function gstore_enqueue_scripts() {
 			true
 		);
 
+		// Ponte entre eventos jQuery do WooCommerce e o mini-cart block.
+		// Necessário quando otimizações/cache impedem o bridge nativo do bloco.
+		wp_enqueue_script(
+			'gstore-mini-cart-block-bridge',
+			get_theme_file_uri( 'assets/js/mini-cart-block-bridge.js' ),
+			array( 'jquery' ),
+			(string) @filemtime( get_theme_file_path( 'assets/js/mini-cart-block-bridge.js' ) ),
+			true
+		);
+
 		// Interceptador de nonce expirado para a WC Store API (mini-cart drawer)
 		wp_enqueue_script(
 			'gstore-store-api-nonce-refresh',
