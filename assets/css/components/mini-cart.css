@@ -17,16 +17,15 @@
 	background-color: transparent !important;
 	color: var(--gstore-color-black, #0a0a0a) !important;
 	line-height: 1 !important;
-	padding: 0 !important;
-	min-width: auto !important;
-	width: auto !important;
-	height: auto !important;
-	top: 2px !important;
-	right: 4px !important;
-	left: auto !important;
+	left: 100% !important;
+	right: auto !important;
+	top: auto !important;
 	bottom: auto !important;
-	margin: 0 !important;
-	transform: none !important;
+	margin-left: -44% !important;
+	transform: translateY(-50%) !important;
+	min-width: 1.42857em !important;
+	height: 1.42857em !important;
+	padding: 0 0.25em !important;
 }
 
 .Gstore-header__mini-cart .wc-block-mini-cart__badge[hidden] {
