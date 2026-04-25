@@ -61,6 +61,7 @@
 	let checkoutShippingRates = [];
 	let checkoutShippingStatus = 'idle';
 	let checkoutShippingError = '';
+	let shippingSummaryHighlightTimer = null;
 	let checkoutShippingRatesByItem = {};
 	let checkoutSelectedShippingByItem = {};
 	let checkoutSelectedShippingRateByItem = {};
@@ -1137,16 +1138,16 @@ const subtotal = decodeHtmlEntities(stripHtmlText(it.subtotal || ''));
 					<div class="Gstore-checkout-summary-top__actions">
 						<span class="Gstore-checkout-summary-top__total-amount" aria-live="polite">R$ --,--</span>
 						<span class="Gstore-checkout-summary-top__actions-divider" aria-hidden="true"></span>
-						<button type="button" class="Gstore-checkout-summary-top__toggle">
+						<button type="button" class="Gstore-checkout-summary-top__toggle" aria-expanded="false" aria-controls="gstore-checkout-summary-top-details">
 							Ver detalhes
 							<i class="fa-solid fa-chevron-down"></i>
 						</button>
 					</div>
 				</div>
-				<div class="Gstore-checkout-summary-top__details">
+				<div class="Gstore-checkout-summary-top__details" id="gstore-checkout-summary-top-details">
 					<div class="Gstore-checkout-summary-top__items"></div>
 					<div class="Gstore-checkout-summary-top__shipping" data-gstore-shipping-summary>
-						<div class="Gstore-checkout-summary-top__shipping-title">Frete</div>
+						<div class="Gstore-checkout-summary-top__shipping-title">Frete selecionado</div>
 						<div class="Gstore-checkout-summary-top__shipping-options" data-gstore-shipping-options></div>
 						<div class="Gstore-checkout-summary-top__shipping-totals" data-gstore-shipping-totals></div>
 					</div>
@@ -1154,6 +1155,84 @@ const subtotal = decodeHtmlEntities(stripHtmlText(it.subtotal || ''));
 				</div>
 			</div>
 		`;
+	}
+
+	function getShippingChangeButtonHtml() {
+		return `
+			<button type="button" class="Gstore-shipping-change-btn" data-gstore-shipping-change aria-label="Alterar opcao de frete">
+				<i class="fa-solid fa-pencil" aria-hidden="true"></i>
+				<span>Alterar</span>
+			</button>
+		`;
+	}
+
+	function getShippingTotalsLabelHtml(label) {
+		return `
+			<span class="Gstore-checkout-shipping-totals__label">
+				<span>${label}</span>
+				${getShippingChangeButtonHtml()}
+			</span>
+		`;
+	}
+
+	function getOrderReviewShippingLabelHtml(label) {
+		return `
+			<span class="Gstore-order-review-shipping-row">
+				<span class="Gstore-order-review-shipping-row__label">${label}</span>
+				${getShippingChangeButtonHtml()}
+			</span>
+		`;
+	}
+
+	function setSummaryDetailsOpen(isOpen) {
+		const $toggle = $('.Gstore-checkout-summary-top__toggle');
+		const $details = $('.Gstore-checkout-summary-top__details');
+		if (!$toggle.length || !$details.length) {
+			return;
+		}
+
+		$toggle.toggleClass('is-open', !!isOpen);
+		$toggle.attr('aria-expanded', isOpen ? 'true' : 'false');
+		$details.toggleClass('is-visible', !!isOpen);
+		$toggle.html(
+			(isOpen ? 'Ocultar detalhes' : 'Ver detalhes') +
+			' <i class="fa-solid fa-chevron-down"></i>'
+		);
+	}
+
+	function openShippingSummaryDetails(shouldScroll = true) {
+		setSummaryDetailsOpen(true);
+
+		const $summaryTop = $('.Gstore-checkout-summary-top').first();
+		const $shippingSummary = $('[data-gstore-shipping-summary]').first();
+		if (!$summaryTop.length || !$shippingSummary.length) {
+			return;
+		}
+
+		if (shippingSummaryHighlightTimer) {
+			clearTimeout(shippingSummaryHighlightTimer);
+		}
+		$shippingSummary.addClass('is-highlighted');
+		shippingSummaryHighlightTimer = setTimeout(function() {
+			$shippingSummary.removeClass('is-highlighted');
+			shippingSummaryHighlightTimer = null;
+		}, 1600);
+
+		const focusShippingOption = function() {
+			const $checked = $shippingSummary.find('input[type="radio"]:checked').first();
+			const $target = $checked.length ? $checked : $shippingSummary.find('input[type="radio"]').first();
+			if ($target.length) {
+				$target.trigger('focus');
+			}
+		};
+
+		if (shouldScroll) {
+			$('html, body').animate({
+				scrollTop: Math.max(0, $summaryTop.offset().top - 90)
+			}, 300, focusShippingOption);
+		} else {
+			focusShippingOption();
+		}
 	}
 
 	/**
@@ -2605,9 +2684,10 @@ function getInstallmentDisplayTotals(summaryData) {
 					const groupOptionsHtml = group.rates.map((rate) => {
 						const cost = rate.cost_formatted || '-';
 						const checked = String(rate.rate_id || '') === String(selectedRateId || '') ? 'checked' : '';
+						const selectedClass = checked ? ' is-selected' : '';
 						const label = getRateDisplayLabel(rate);
 						return `
-							<label class="Gstore-checkout-item-shipping-option">
+							<label class="Gstore-checkout-item-shipping-option${selectedClass}">
 								<input type="radio" name="gstore_selected_shipping_rate[${cartItemKey}]" data-cart-item-key="${cartItemKey}" data-gstore-mode="${group.mode}" value="${rate.rate_id}" ${checked} />
 								<span class="Gstore-checkout-item-shipping-option__label">${label}</span>
 								<span class="Gstore-checkout-item-shipping-option__price">${cost}</span>
@@ -2628,7 +2708,7 @@ function getInstallmentDisplayTotals(summaryData) {
 					<div class="Gstore-checkout-item-shipping-group Gstore-checkout-item-shipping-group--land">
 						<div class="Gstore-checkout-item-shipping-group__title">Terrestre</div>
 						<div class="Gstore-checkout-item-shipping-group__options">
-							<label class="Gstore-checkout-item-shipping-option">
+							<label class="Gstore-checkout-item-shipping-option${selectedMode === 'land' ? ' is-selected' : ''}">
 								<input type="radio" name="gstore_checkout_shipping_mode[${cartItemKey}]" data-cart-item-key="${cartItemKey}" value="land" ${selectedMode === 'land' ? 'checked' : ''} />
 								<span class="Gstore-checkout-item-shipping-option__label">Frete Terrestre</span>
 								<span class="Gstore-checkout-item-shipping-option__price">-</span>
@@ -2638,7 +2718,7 @@ function getInstallmentDisplayTotals(summaryData) {
 					<div class="Gstore-checkout-item-shipping-group Gstore-checkout-item-shipping-group--air">
 						<div class="Gstore-checkout-item-shipping-group__title">Aéreo</div>
 						<div class="Gstore-checkout-item-shipping-group__options">
-							<label class="Gstore-checkout-item-shipping-option">
+							<label class="Gstore-checkout-item-shipping-option${selectedMode === 'air' ? ' is-selected' : ''}">
 								<input type="radio" name="gstore_checkout_shipping_mode[${cartItemKey}]" data-cart-item-key="${cartItemKey}" value="air" ${selectedMode === 'air' ? 'checked' : ''} />
 								<span class="Gstore-checkout-item-shipping-option__label">Frete Aéreo</span>
 								<span class="Gstore-checkout-item-shipping-option__price">-</span>
@@ -2648,7 +2728,7 @@ function getInstallmentDisplayTotals(summaryData) {
 					<div class="Gstore-checkout-item-shipping-group Gstore-checkout-item-shipping-group--pickup">
 						<div class="Gstore-checkout-item-shipping-group__title">Retirada na loja</div>
 						<div class="Gstore-checkout-item-shipping-group__options">
-							<label class="Gstore-checkout-item-shipping-option">
+							<label class="Gstore-checkout-item-shipping-option${selectedMode === 'pickup' ? ' is-selected' : ''}">
 								<input type="radio" name="gstore_checkout_shipping_mode[${cartItemKey}]" data-cart-item-key="${cartItemKey}" value="pickup" ${selectedMode === 'pickup' ? 'checked' : ''} />
 								<span class="Gstore-checkout-item-shipping-option__label">Retirada na loja</span>
 								<span class="Gstore-checkout-item-shipping-option__price">-</span>
@@ -2860,8 +2940,8 @@ function getInstallmentDisplayTotals(summaryData) {
 						return;
 					}
 					totalsHtml += `
-						<div class="Gstore-checkout-shipping-totals__row">
-							<span>${row.label}</span>
+						<div class="Gstore-checkout-shipping-totals__row Gstore-checkout-shipping-totals__row--shipping">
+							${getShippingTotalsLabelHtml(row.label)}
 							<span>${formatCurrency(row.value || 0)}</span>
 						</div>
 					`;
@@ -2879,8 +2959,8 @@ function getInstallmentDisplayTotals(summaryData) {
 						? 'Retirada na loja'
 						: 'Frete terrestre';
 				totalsHtml += `
-					<div class="Gstore-checkout-shipping-totals__row">
-						<span>${onlyModeLabel}</span>
+					<div class="Gstore-checkout-shipping-totals__row Gstore-checkout-shipping-totals__row--shipping">
+						${getShippingTotalsLabelHtml(onlyModeLabel)}
 						<span>${formatCurrency(singleValue || 0)}</span>
 					</div>
 				`;
@@ -2958,7 +3038,7 @@ function getInstallmentDisplayTotals(summaryData) {
 					}
 					rowsHtml += `
 						<tr class="gstore-shipping-${row.key}">
-							<th>${row.label}</th>
+							<th>${getOrderReviewShippingLabelHtml(row.label)}</th>
 							<td>${formatCurrency(row.value)}</td>
 						</tr>
 					`;
@@ -2973,7 +3053,7 @@ function getInstallmentDisplayTotals(summaryData) {
 						: lastSummaryTotals.selectedLandTotal;
 				rowsHtml += `
 					<tr class="gstore-shipping-${modeKey}">
-						<th>${onlyLabel}</th>
+						<th>${getOrderReviewShippingLabelHtml(onlyLabel)}</th>
 						<td>${formatCurrency(onlyValue || 0)}</td>
 					</tr>
 				`;
@@ -3364,6 +3444,7 @@ function getInstallmentDisplayTotals(summaryData) {
 		// Atualiza quando entrar na última etapa
 		// NÃO dispara update_checkout aqui pois nextStep() já o faz (evita duplo refresh que causa race conditions)
 		if (index === lastStepIndex) {
+			setSummaryDetailsOpen(true);
 			setTimeout(function() {
 				updateOrderReviewTotals();
 				
@@ -3878,18 +3959,12 @@ function getInstallmentDisplayTotals(summaryData) {
 
 		// Toggle do resumo
 		$(document).on('click', '.Gstore-checkout-summary-top__toggle', function() {
-			const $toggle = $(this);
-			const $details = $('.Gstore-checkout-summary-top__details');
-			
-			$toggle.toggleClass('is-open');
-			$details.toggleClass('is-visible');
-			
-			// Atualiza texto e ícone
-			const isOpen = $toggle.hasClass('is-open');
-			$toggle.html(
-				(isOpen ? 'Ocultar detalhes' : 'Ver detalhes') +
-				' <i class="fa-solid fa-chevron-down"></i>'
-			);
+			setSummaryDetailsOpen(!$(this).hasClass('is-open'));
+		});
+
+		$(document).on('click', '[data-gstore-shipping-change]', function(e) {
+			e.preventDefault();
+			openShippingSummaryDetails(true);
 		});
 
 		// Remove erro do checkbox de contrato quando marcado

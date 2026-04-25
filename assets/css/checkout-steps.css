@@ -854,6 +854,21 @@ body.woocommerce-checkout .Gstore-checkout-steps-shell {
 	color: var(--gstore-foreground);
 }
 
+.Gstore-checkout-step[data-step="payment"] .Gstore-checkout-step__order-review-slot #order_review tfoot tr.gstore-shipping-land th,
+.Gstore-checkout-step[data-step="payment"] .Gstore-checkout-step__order-review-slot #order_review tfoot tr.gstore-shipping-air th,
+.Gstore-checkout-step[data-step="payment"] .Gstore-checkout-step__order-review-slot #order_review tfoot tr.gstore-shipping-pickup th {
+	padding-right: 12px;
+}
+
+.Gstore-checkout-step[data-step="payment"] .Gstore-checkout-step__order-review-slot #order_review tfoot tr.gstore-shipping-land th,
+.Gstore-checkout-step[data-step="payment"] .Gstore-checkout-step__order-review-slot #order_review tfoot tr.gstore-shipping-land td,
+.Gstore-checkout-step[data-step="payment"] .Gstore-checkout-step__order-review-slot #order_review tfoot tr.gstore-shipping-air th,
+.Gstore-checkout-step[data-step="payment"] .Gstore-checkout-step__order-review-slot #order_review tfoot tr.gstore-shipping-air td,
+.Gstore-checkout-step[data-step="payment"] .Gstore-checkout-step__order-review-slot #order_review tfoot tr.gstore-shipping-pickup th,
+.Gstore-checkout-step[data-step="payment"] .Gstore-checkout-step__order-review-slot #order_review tfoot tr.gstore-shipping-pickup td {
+	background: rgba(90, 137, 0, 0.04);
+}
+
 .Gstore-checkout-step[data-step="payment"] .Gstore-checkout-step__order-review-slot #order_review tfoot tr.order-total th,
 .Gstore-checkout-step[data-step="payment"] .Gstore-checkout-step__order-review-slot #order_review tfoot tr.order-total td {
 	border-bottom: none;
@@ -2815,6 +2830,13 @@ body.gstore-blu-checkout-modal-open {
 	display: flex;
 	flex-direction: column;
 	gap: 12px;
+	transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+}
+
+.Gstore-checkout-summary-top__shipping.is-highlighted {
+	border-color: var(--gstore-brass);
+	background: #fff;
+	box-shadow: 0 0 0 3px rgba(201, 184, 140, 0.18);
 }
 
 .Gstore-checkout-summary-top__shipping-title {
@@ -2913,12 +2935,32 @@ body.gstore-blu-checkout-modal-open {
 	align-items: center;
 	justify-content: flex-start;
 	gap: 8px;
+	padding: 8px 10px;
+	border: 1px solid var(--gstore-muted);
+	border-radius: var(--gstore-border-radius);
+	background: #fff;
 	font-size: var(--gstore-font-size-sm);
 	color: var(--gstore-foreground);
 	white-space: normal;
 	width: fit-content;
 	max-width: 100%;
 	flex: none;
+	transition: border-color 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.Gstore-summary-item .Gstore-checkout-item-shipping-option:hover {
+	border-color: var(--gstore-brass);
+}
+
+.Gstore-summary-item .Gstore-checkout-item-shipping-option.is-selected {
+	border-color: var(--gstore-green);
+	background: rgba(90, 137, 0, 0.07);
+	box-shadow: inset 0 0 0 1px rgba(90, 137, 0, 0.16);
+}
+
+.Gstore-summary-item .Gstore-checkout-item-shipping-option.is-selected .Gstore-checkout-item-shipping-option__label {
+	color: var(--gstore-foreground);
+	font-weight: var(--gstore-font-weight-bold);
 }
 
 @media (max-width: 700px) {
@@ -2954,6 +2996,70 @@ body.gstore-blu-checkout-modal-open {
 	align-items: center;
 	justify-content: space-between;
 	gap: 12px;
+}
+
+.Gstore-checkout-shipping-totals__row--shipping {
+	padding: 10px 12px;
+	background: #fff;
+	border: 1px solid rgba(90, 137, 0, 0.24);
+	border-radius: var(--gstore-border-radius);
+}
+
+.Gstore-checkout-shipping-totals__label,
+.Gstore-order-review-shipping-row {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	flex-wrap: wrap;
+	min-width: 0;
+}
+
+.Gstore-shipping-change-btn {
+	appearance: none;
+	border: 1px solid var(--gstore-brass);
+	border-radius: 4px;
+	background: #fff;
+	color: var(--gstore-brass-dark);
+	cursor: pointer;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 6px;
+	min-height: 30px;
+	padding: 5px 9px;
+	font-size: var(--gstore-font-size-xs);
+	font-weight: var(--gstore-font-weight-bold);
+	line-height: 1;
+	white-space: nowrap;
+	transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+.Gstore-shipping-change-btn:hover,
+.Gstore-shipping-change-btn:focus-visible {
+	background: var(--gstore-brass);
+	border-color: var(--gstore-brass);
+	color: #fff;
+	outline: none;
+}
+
+.Gstore-shipping-change-btn i {
+	font-size: 0.86em;
+}
+
+@media (max-width: 700px) {
+	.Gstore-checkout-shipping-totals__row--shipping {
+		align-items: flex-start;
+		flex-wrap: wrap;
+	}
+
+	.Gstore-checkout-shipping-totals__row--shipping > span:last-child {
+		margin-left: auto;
+	}
+
+	.Gstore-shipping-change-btn {
+		min-height: 28px;
+		padding: 5px 8px;
+	}
 }
 
 .Gstore-checkout-shipping-totals__row--total {
