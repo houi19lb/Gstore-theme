@@ -13970,22 +13970,112 @@ add_action( 'wp_footer', function() {
 // ============================================
 
 /**
+ * Retorna partes do nome atual do site para fallbacks white-label.
+ *
+ * @return array{name: string, display: string, highlight: string}
+ */
+function gstore_get_current_site_name_parts() {
+	$site_name = trim( wp_strip_all_tags( (string) get_option( 'blogname', '' ) ) );
+	if ( '' === $site_name ) {
+		$site_name = 'Minha Loja';
+	}
+
+	$highlight = $site_name;
+	$parts     = preg_split( '/\s+/', $site_name );
+	if ( is_array( $parts ) ) {
+		$parts = array_values( array_filter( $parts, 'strlen' ) );
+		if ( ! empty( $parts ) ) {
+			$highlight = (string) end( $parts );
+		}
+	}
+
+	if ( function_exists( 'mb_strtoupper' ) ) {
+		$highlight = mb_strtoupper( $highlight, 'UTF-8' );
+	} else {
+		$highlight = strtoupper( $highlight );
+	}
+
+	return array(
+		'name'      => $site_name,
+		'display'   => $site_name,
+		'highlight' => $highlight,
+	);
+}
+
+/**
+ * Detecta valores legados de nome da loja que vieram hardcoded no tema.
+ *
+ * @param string $value Valor salvo.
+ * @return bool
+ */
+function gstore_is_legacy_store_name_value( $value ) {
+	return in_array( trim( (string) $value ), array( 'CAC ARMAS', 'CAC Armas', 'ARMAS' ), true );
+}
+
+/**
+ * Indica se os defaults legados da CAC ARMAS devem ser ignorados nesta loja.
+ *
+ * @return bool
+ */
+function gstore_should_ignore_legacy_store_defaults() {
+	$site_name_parts = gstore_get_current_site_name_parts();
+
+	return ! in_array( $site_name_parts['name'], array( 'CAC ARMAS', 'CAC Armas' ), true );
+}
+
+/**
+ * Obtém fallback de endereço a partir das configurações atuais do WooCommerce.
+ *
+ * @return array{street: string, neighborhood: string, city: string, state: string, zipcode: string}
+ */
+function gstore_get_woocommerce_store_address_parts() {
+	$country_state = trim( (string) get_option( 'woocommerce_default_country', '' ) );
+	$state         = '';
+	if ( false !== strpos( $country_state, ':' ) ) {
+		list( , $state ) = array_map( 'trim', explode( ':', $country_state, 2 ) );
+	}
+
+	return array(
+		'street'       => trim( implode( ', ', array_filter( array(
+			trim( (string) get_option( 'woocommerce_store_address', '' ) ),
+			trim( (string) get_option( 'woocommerce_store_address_2', '' ) ),
+		), 'strlen' ) ) ),
+		'neighborhood' => '',
+		'city'         => trim( (string) get_option( 'woocommerce_store_city', '' ) ),
+		'state'        => $state,
+		'zipcode'      => trim( (string) get_option( 'woocommerce_store_postcode', '' ) ),
+	);
+}
+
+/**
  * Obtém o nome da loja.
  *
- * @param string $format 'name' (CAC ARMAS), 'display' (CAC Armas), ou 'highlight' (ARMAS).
+ * @param string $format 'name', 'display' ou 'highlight'.
  * @return string
  */
 function gstore_get_store_name( $format = 'name' ) {
-	$store_info = gstore_store_info();
-	
+	$store_info      = gstore_store_info();
+	$site_name_parts = gstore_get_current_site_name_parts();
+	$store_info_key  = 'store.name';
+	$fallback_key    = 'name';
+
 	switch ( $format ) {
 		case 'display':
-			return $store_info->get_value( 'store.display_name', 'CAC Armas' );
+			$store_info_key = 'store.display_name';
+			$fallback_key   = 'display';
+			break;
 		case 'highlight':
-			return $store_info->get_value( 'store.name_highlight', 'ARMAS' );
-		default:
-			return $store_info->get_value( 'store.name', 'CAC ARMAS' );
+			$store_info_key = 'store.name_highlight';
+			$fallback_key   = 'highlight';
+			break;
 	}
+
+	$value = trim( (string) $store_info->get_value( $store_info_key, '' ) );
+	if ( '' === $value || gstore_is_legacy_store_name_value( $value ) ) {
+		return $site_name_parts[ $fallback_key ];
+	}
+
+	return $value;
 }
 
 /**
@@ -13994,7 +14084,12 @@ function gstore_get_store_name( $format = 'name' ) {
  * @return string
  */
 function gstore_get_cnpj() {
-	return gstore_store_info()->get_value( 'store.cnpj', '' );
+	$cnpj = trim( (string) gstore_store_info()->get_value( 'store.cnpj', '' ) );
+	if ( gstore_should_ignore_legacy_store_defaults() && '41.132.692/0001-09' === $cnpj ) {
+		return '';
+	}
+
+	return $cnpj;
 }
 
 /**
@@ -14005,12 +14100,24 @@ function gstore_get_cnpj() {
  */
 function gstore_get_whatsapp( $format = 'raw' ) {
 	$store_info = gstore_store_info();
-	
+
+	$legacy_display = '+55 62 9663-5633';
+	$legacy_raw     = '556296635633';
 	if ( 'display' === $format ) {
-		return $store_info->get_value( 'contact.whatsapp_display', '+55 62 9663-5633' );
+		$value = trim( (string) $store_info->get_value( 'contact.whatsapp_display', '' ) );
+		if ( gstore_should_ignore_legacy_store_defaults() && $legacy_display === $value ) {
+			return '';
+		}
+
+		return $value;
 	}
-	
-	return $store_info->get_value( 'contact.whatsapp', '556296635633' );
+
+	$value = trim( (string) $store_info->get_value( 'contact.whatsapp', '' ) );
+	if ( gstore_should_ignore_legacy_store_defaults() && $legacy_raw === $value ) {
+		return '';
+	}
+
+	return $value;
 }
 
 /**
@@ -14038,12 +14145,22 @@ function gstore_get_whatsapp_link( $message = '' ) {
  */
 function gstore_get_phone( $format = 'display' ) {
 	$store_info = gstore_store_info();
-	
+
 	if ( 'raw' === $format ) {
-		return $store_info->get_value( 'contact.phone_raw', '' );
+		$value = trim( (string) $store_info->get_value( 'contact.phone_raw', '' ) );
+		if ( gstore_should_ignore_legacy_store_defaults() && '556296635633' === $value ) {
+			return '';
+		}
+
+		return $value;
 	}
-	
-	return $store_info->get_value( 'contact.phone', '' );
+
+	$value = trim( (string) $store_info->get_value( 'contact.phone', '' ) );
+	if ( gstore_should_ignore_legacy_store_defaults() && '+55 62 9663-5633' === $value ) {
+		return '';
+	}
+
+	return $value;
 }
 
 /**
@@ -14133,9 +14250,20 @@ function gstore_get_telegram_link() {
 function gstore_get_address( $format = 'full' ) {
 	$store_info = gstore_store_info();
 	$address = $store_info->get_value( 'address' );
-	
+
 	if ( ! is_array( $address ) ) {
 		return '';
+	}
+
+	if ( gstore_should_ignore_legacy_store_defaults() ) {
+		$is_legacy_address = 'Avenida Transbrasiliana, 368' === ( $address['street'] ?? '' )
+			|| 'Parque Amazônia' === ( $address['neighborhood'] ?? '' )
+			|| 'Goiânia' === ( $address['city'] ?? '' )
+			|| '74.835-300' === ( $address['zipcode'] ?? '' );
+
+		if ( $is_legacy_address ) {
+			$address = array_merge( $address, gstore_get_woocommerce_store_address_parts() );
+		}
 	}
 	
 	switch ( $format ) {
@@ -14218,13 +14346,26 @@ function gstore_get_footer_info( $key = '' ) {
  * @return string
  */
 function gstore_get_copyright() {
-	$template = gstore_store_info()->get_value( 'footer.copyright_text', 'Copyright © {year} {store_name}. Todos os direitos reservados.' );
-	
+	$template = trim( (string) gstore_store_info()->get_value( 'footer.copyright_text', '' ) );
+	if ( '' === $template ) {
+		$template = 'Copyright © {year} {store_name}. Todos os direitos reservados.';
+	}
+
+	if ( false === strpos( $template, '{year}' ) ) {
+		$template = preg_replace( '/20\d{2}/', '{year}', $template, 1 );
+	}
+	if ( false === strpos( $template, '{store_name}' ) ) {
+		$template = preg_replace( '/CAC\s*ARMAS|CAC\s*Armas|ARMA\s*STORE|Armastore/i', '{store_name}', $template, 1 );
+	}
+	if ( false === strpos( $template, '{year}' ) || false === strpos( $template, '{store_name}' ) ) {
+		$template = 'Copyright © {year} {store_name}. Todos os direitos reservados.';
+	}
+
 	$replacements = array(
 		'{year}'       => date( 'Y' ),
 		'{store_name}' => gstore_get_store_name(),
 	);
-	
+
 	return str_replace( array_keys( $replacements ), array_values( $replacements ), $template );
 }
 

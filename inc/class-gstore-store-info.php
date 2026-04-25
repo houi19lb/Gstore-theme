@@ -403,54 +403,92 @@ class GStore_Store_Info {
 	 * @return array
 	 */
 	public function get_default_structure() {
+		$site_name = trim( wp_strip_all_tags( (string) get_option( 'blogname', '' ) ) );
+		if ( '' === $site_name ) {
+			$site_name = 'Minha Loja';
+		}
+
+		$site_highlight = $site_name;
+		$site_parts     = preg_split( '/\s+/', $site_name );
+		if ( is_array( $site_parts ) ) {
+			$site_parts = array_values( array_filter( $site_parts, 'strlen' ) );
+			if ( ! empty( $site_parts ) ) {
+				$site_highlight = (string) end( $site_parts );
+			}
+		}
+		if ( function_exists( 'mb_strtoupper' ) ) {
+			$site_highlight = mb_strtoupper( $site_highlight, 'UTF-8' );
+		} else {
+			$site_highlight = strtoupper( $site_highlight );
+		}
+
+		$store_address_1 = trim( (string) get_option( 'woocommerce_store_address', '' ) );
+		$store_address_2 = trim( (string) get_option( 'woocommerce_store_address_2', '' ) );
+		$street          = trim( implode( ', ', array_filter( array( $store_address_1, $store_address_2 ), 'strlen' ) ) );
+		$city            = trim( (string) get_option( 'woocommerce_store_city', '' ) );
+		$zipcode         = trim( (string) get_option( 'woocommerce_store_postcode', '' ) );
+		$country_state   = trim( (string) get_option( 'woocommerce_default_country', '' ) );
+		$country         = '';
+		$state           = '';
+		if ( false !== strpos( $country_state, ':' ) ) {
+			list( $country, $state ) = array_map( 'trim', explode( ':', $country_state, 2 ) );
+		} else {
+			$country = $country_state;
+		}
+
+		$maps_query = trim( implode( ', ', array_filter( array( $street, $city, $state, $zipcode, $country ), 'strlen' ) ) );
+		$maps_url   = '' !== $maps_query
+			? 'https://www.google.com/maps/search/?api=1&query=' . rawurlencode( $maps_query )
+			: '';
+
 		return array(
 			'store' => array(
-				'name'           => 'CAC ARMAS',
-				'display_name'   => 'CAC Armas',
-				'name_highlight' => 'ARMAS',
-				'founded_year'   => '2010',
-				'cnpj'           => '41.132.692/0001-09',
+				'name'           => $site_name,
+				'display_name'   => $site_name,
+				'name_highlight' => $site_highlight,
+				'founded_year'   => '',
+				'cnpj'           => '',
 				'slogan'         => '',
 			),
 			'contact' => array(
-				'phone'           => '+55 62 9663-5633',
-				'phone_raw'       => '556296635633',
-				'whatsapp'        => '556296635633',
-				'whatsapp_display' => '+55 62 9663-5633',
-				'telegram'        => 'grupocacarmas',
-				'email'           => '',
+				'phone'           => '',
+				'phone_raw'       => '',
+				'whatsapp'        => '',
+				'whatsapp_display' => '',
+				'telegram'        => '',
+				'email'           => (string) get_option( 'admin_email', '' ),
 			),
 			'address' => array(
-				'street'       => 'Avenida Transbrasiliana, 368',
-				'neighborhood' => 'Parque Amazônia',
-				'city'         => 'Goiânia',
-				'state'        => 'GO',
-				'zipcode'      => '74.835-300',
-				'country'      => 'Brasil',
-				'maps_url'     => 'https://www.google.com/maps/place/R.+Ca%C3%A7ador,+214+-+Rio+Branco,+Novo+Hamburgo',
+				'street'       => $street,
+				'neighborhood' => '',
+				'city'         => $city,
+				'state'        => $state,
+				'zipcode'      => $zipcode,
+				'country'      => $country,
+				'maps_url'     => $maps_url,
 			),
 			'social' => array(
-				'instagram'      => 'grupocacarmas',
-				'instagram_alt'  => 'armastoreoficial',
-				'facebook'       => '100094019667432',
-				'youtube'        => 'armastore',
-				'telegram_group' => 'grupocacarmas',
+				'instagram'      => '',
+				'instagram_alt'  => '',
+				'facebook'       => '',
+				'youtube'        => '',
+				'telegram_group' => '',
 				'twitter'        => '',
 				'tiktok'         => '',
 			),
 			'business_hours' => array(
-				'weekdays'    => 'Segunda a Sexta-feira das 11:30 às 21:00',
-				'saturday'    => 'Sábados das 9h às 16h',
+				'weekdays'    => '',
+				'saturday'    => '',
 				'sunday'      => '',
-				'full_text'   => 'Segunda a Sexta-feira das 11:30 às 21:00, e aos sábados das 9h às 16h',
-				'support_hours' => 'Seg-Sex, 9h às 18h',
+				'full_text'   => '',
+				'support_hours' => '',
 			),
 			'footer' => array(
-				'about_title' => 'CAC ARMAS',
+				'about_title' => $site_name,
 				'about_paragraphs' => array(
 					'Em um mercado tão competitivo, é imprescindível a qualidade no atendimento, produtos e serviços oferecidos para agilizar e contribuir com o seu crescimento e sucesso no seu esporte, atividade de lazer ou trabalho.',
 					'Atuando desde 2010 contamos com atendimento diferenciado, oferecendo serviços de consultoria, vendas e serviços de reparo e manutenção.',
-					'Por isso a CAC Armas vem atuando no mercado, procurando sempre oferecer serviços e soluções que atendam às necessidades dos nossos clientes.',
+					'Por isso seguimos buscando oferecer serviços e soluções que atendam às necessidades dos nossos clientes.',
 					'Dentre as várias linhas de atuação, destacamos nossa especialização em vendas de produtos para a prática de Airsoft, Carabinas de Pressão, Armas de Fogo e Artigos Militares.',
 				),
 				'newsletter' => array(
@@ -475,14 +513,14 @@ class GStore_Store_Info {
 				'copyright_text' => 'Copyright © {year} {store_name}. Todos os direitos reservados.',
 			),
 			'meta' => array(
-				'description' => 'Loja especializada em vendas de produtos para a prática de Airsoft, Carabinas de Pressão, Armas de Fogo e Artigos Militares.',
-				'keywords'    => 'armas, airsoft, carabinas, pressão, artigos militares, tiro esportivo, CAC',
+				'description' => sprintf( 'Conheça os produtos, ofertas e novidades da %s.', $site_name ),
+				'keywords'    => '',
 				'og_image'    => '',
 			),
 			'branding' => array(
 				'accent_color'   => '#b5a642',
 				'primary_color'  => '#0a0a0a',
-				'logo_alt'       => 'Logo CAC Armas',
+				'logo_alt'       => 'Logo ' . $site_name,
 			),
 		);
 	}
