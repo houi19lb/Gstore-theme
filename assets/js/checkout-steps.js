@@ -3444,7 +3444,6 @@ function getInstallmentDisplayTotals(summaryData) {
 		// Atualiza quando entrar na última etapa
 		// NÃO dispara update_checkout aqui pois nextStep() já o faz (evita duplo refresh que causa race conditions)
 		if (index === lastStepIndex) {
-			setSummaryDetailsOpen(true);
 			setTimeout(function() {
 				updateOrderReviewTotals();
 				
