@@ -4712,11 +4712,14 @@ main:not(.Gstore-blog-shell):not(.Gstore-blog-single-shell) {
    HOME BLOG
    ======================================== */
 .Gstore-home-blog {
-	margin-block-start: clamp(24px, 4vw, 48px) !important;
 	background: #fff;
 	border-radius: var(--gstore-radius-base);
 	border: 1px solid var(--gray-border);
 	box-shadow: var(--shadow-sm);
+}
+
+.Gstore-home-section.Gstore-home-blog {
+	padding-top: clamp(32px, 4vw, 64px) !important;
 }
 
 .Gstore-home-blog__query {
