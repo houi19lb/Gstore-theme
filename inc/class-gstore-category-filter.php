@@ -183,7 +183,7 @@ class GStore_Category_Filter {
 		$scope_term       = $this->get_scope_term();
 		$is_ofertas       = $this->is_ofertas_page();
 		$has_scope        = $scope_term || $is_ofertas;
-		$full_catalog_url = home_url( '/catalogo/' );
+		$full_catalog_url = function_exists( 'gstore_get_catalog_url' ) ? gstore_get_catalog_url() : home_url( '/catalogo/' );
 
 		ob_start();
 		?>

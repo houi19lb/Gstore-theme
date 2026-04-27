@@ -98,6 +98,181 @@ function gstore_get_default_accent_color() {
 }
 
 /**
+ * Retorna a URL publica do catalogo usada pelo tema.
+ *
+ * @return string URL do catalogo.
+ */
+function gstore_get_catalog_url() {
+	$catalog_url  = '';
+	$catalog_page = get_page_by_path( 'catalogo' );
+
+	if ( $catalog_page instanceof WP_Post && 'publish' === $catalog_page->post_status ) {
+		$catalog_url = get_permalink( $catalog_page->ID );
+	}
+
+	if ( ! $catalog_url && function_exists( 'wc_get_page_permalink' ) ) {
+		$shop_url = wc_get_page_permalink( 'shop' );
+		if ( is_string( $shop_url ) && '' !== $shop_url && ! is_wp_error( $shop_url ) ) {
+			$catalog_url = $shop_url;
+		}
+	}
+
+	if ( ! $catalog_url ) {
+		$catalog_url = home_url( '/catalogo/' );
+	}
+
+	return apply_filters( 'gstore_catalog_url', user_trailingslashit( $catalog_url ) );
+}
+
+/**
+ * Escolhe o sitemap publico anunciado no robots.txt.
+ *
+ * @return string URL absoluta do sitemap.
+ */
+function gstore_get_public_sitemap_url() {
+	if ( defined( 'WPSEO_VERSION' ) ) {
+		$sitemap_url = home_url( '/sitemap_index.xml' );
+	} elseif (
+		defined( 'RANK_MATH_VERSION' )
+		|| function_exists( 'rank_math' )
+		|| defined( 'THE_SEO_FRAMEWORK_VERSION' )
+		|| function_exists( 'the_seo_framework' )
+		|| defined( 'AIOSEO_VERSION' )
+	) {
+		$sitemap_url = home_url( '/sitemap.xml' );
+	} elseif ( function_exists( 'wp_sitemaps_get_server' ) && apply_filters( 'wp_sitemaps_enabled', true ) ) {
+		$sitemap_url = home_url( '/wp-sitemap.xml' );
+	} else {
+		$sitemap_url = home_url( '/sitemap.xml' );
+	}
+
+	return apply_filters( 'gstore_public_sitemap_url', $sitemap_url );
+}
+
+/**
+ * Mantem apenas um Sitemap: valido no robots.txt.
+ *
+ * @param string $output Conteudo original.
+ * @param bool   $public Se o site esta publico.
+ * @return string
+ */
+function gstore_filter_robots_sitemap( $output, $public ) {
+	$output = preg_replace( '/^\s*Sitemap:\s*.*(?:\r?\n)?/mi', '', (string) $output );
+
+	if ( ! $public ) {
+		return rtrim( (string) $output ) . "\n";
+	}
+
+	$sitemap_url = esc_url_raw( gstore_get_public_sitemap_url() );
+	if ( '' === $sitemap_url ) {
+		return $output;
+	}
+
+	$output = rtrim( (string) $output );
+
+	return $output . "\n\nSitemap: " . $sitemap_url . "\n";
+}
+add_filter( 'robots_txt', 'gstore_filter_robots_sitemap', 20, 2 );
+
+/**
+ * Indica se a URL atual e uma pagina de catalogo ou filtro que nao deve indexar.
+ *
+ * @return bool
+ */
+function gstore_should_noindex_catalog_request() {
+	if ( is_admin() || wp_doing_ajax() || wp_doing_cron() ) {
+		return false;
+	}
+
+	if ( function_exists( 'is_page' ) && is_page( 'favoritos' ) ) {
+		return true;
+	}
+
+	$filter_keys = array(
+		'filter_cat',
+		'filter_cat[]',
+		'filter',
+		'orderby',
+		'min_price',
+		'max_price',
+		'rating_filter',
+		'q',
+		's',
+	);
+
+	$has_filter_query = false;
+	foreach ( $filter_keys as $key ) {
+		if ( isset( $_GET[ $key ] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			$has_filter_query = true;
+			break;
+		}
+	}
+
+	if ( ! $has_filter_query ) {
+		return false;
+	}
+
+	if ( function_exists( 'is_shop' ) && is_shop() ) {
+		return true;
+	}
+
+	if ( function_exists( 'is_page' ) && is_page( array( 'catalogo', 'ofertas' ) ) ) {
+		return true;
+	}
+
+	return function_exists( 'gstore_is_generated_category_catalog_page' ) && gstore_is_generated_category_catalog_page();
+}
+
+/**
+ * Adiciona noindex,follow em filtros, buscas de catalogo e paginas pessoais vazias.
+ *
+ * @param array<string, bool|string> $robots Regras atuais.
+ * @return array<string, bool|string>
+ */
+function gstore_catalog_robots_directives( $robots ) {
+	if ( ! gstore_should_noindex_catalog_request() ) {
+		return $robots;
+	}
+
+	unset( $robots['index'], $robots['nofollow'] );
+	$robots['noindex'] = true;
+	$robots['follow']  = true;
+
+	return $robots;
+}
+add_filter( 'wp_robots', 'gstore_catalog_robots_directives', 20 );
+
+/**
+ * Canonical limpo para URLs filtradas do catalogo.
+ *
+ * @param string  $canonical_url URL canonica original.
+ * @param WP_Post $post          Post consultado.
+ * @return string
+ */
+function gstore_catalog_query_canonical_url( $canonical_url, $post ) {
+	if ( ! gstore_should_noindex_catalog_request() || ( function_exists( 'is_page' ) && is_page( 'favoritos' ) ) ) {
+		return $canonical_url;
+	}
+
+	if ( $post instanceof WP_Post ) {
+		$permalink = get_permalink( $post->ID );
+		if ( $permalink ) {
+			return $permalink;
+		}
+	}
+
+	if ( function_exists( 'is_shop' ) && is_shop() ) {
+		return gstore_get_catalog_url();
+	}
+
+	$request_uri = isset( $_SERVER['REQUEST_URI'] ) ? (string) wp_unslash( $_SERVER['REQUEST_URI'] ) : '';
+	$path        = $request_uri ? (string) wp_parse_url( $request_uri, PHP_URL_PATH ) : '';
+
+	return $path ? home_url( $path ) : $canonical_url;
+}
+add_filter( 'get_canonical_url', 'gstore_catalog_query_canonical_url', 20, 2 );
+
+/**
  * Obtém a cor de accent efetiva (salva no admin ou fallback do tema).
  *
  * @return string Cor hex.
@@ -2446,7 +2621,7 @@ function gstore_enqueue_scripts() {
 		'gstoreProductSearch',
 		array(
 			'endpoint'   => rest_url( 'gstore/v1/search-suggest' ),
-			'catalogUrl' => home_url( '/catalogo/' ),
+			'catalogUrl' => gstore_get_catalog_url(),
 			'minChars'   => 2,
 			'limit'      => 8,
 		)
@@ -2600,7 +2775,7 @@ function gstore_enqueue_scripts() {
 				'nonce'       => wp_create_nonce( 'gstore_favorites' ),
 				'isLoggedIn'  => is_user_logged_in(),
 				'initialIds'  => $initial_favorite_ids,
-				'catalogUrl'  => home_url( '/catalogo/' ),
+				'catalogUrl'  => gstore_get_catalog_url(),
 				'favoritesUrl'=> home_url( '/favoritos/' ),
 			)
 		);
@@ -3475,6 +3650,43 @@ function gstore_loop_variable_product_link( $html, $product, $args ) {
 	);
 }
 add_filter( 'woocommerce_loop_add_to_cart_link', 'gstore_loop_variable_product_link', 10, 3 );
+
+/**
+ * Mantem AJAX de adicionar ao carrinho, mas nao expõe ?add-to-cart=ID como href rastreavel.
+ *
+ * @param string     $html    HTML do botao.
+ * @param WC_Product $product Produto do loop.
+ * @param array      $args    Argumentos do botao.
+ * @return string
+ */
+function gstore_loop_public_add_to_cart_permalink( $html, $product, $args ) {
+	if ( ! $product instanceof WC_Product || $product->is_type( 'variable' ) ) {
+		return $html;
+	}
+
+	if ( false === strpos( (string) $html, 'add-to-cart=' ) ) {
+		return $html;
+	}
+
+	$permalink = $product->get_permalink();
+	if ( ! $permalink ) {
+		return $html;
+	}
+
+	$permalink = esc_url( $permalink );
+
+	$updated = preg_replace_callback(
+		'/(<a\b[^>]*\bhref=)(["\']).*?\2/i',
+		static function( $matches ) use ( $permalink ) {
+			return $matches[1] . $matches[2] . $permalink . $matches[2];
+		},
+		(string) $html,
+		1
+	);
+
+	return is_string( $updated ) ? $updated : $html;
+}
+add_filter( 'woocommerce_loop_add_to_cart_link', 'gstore_loop_public_add_to_cart_permalink', 20, 3 );
 
 /**
  * Garante que os eventos WooCommerce sejam disparados corretamente.
@@ -4370,7 +4582,7 @@ function gstore_filter_product_breadcrumb_category_links( $crumbs, $breadcrumb )
 	}
 
 	$menu_route_map = gstore_get_header_menu_category_route_map();
-	$catalog_url    = home_url( '/catalogo/' );
+	$catalog_url    = gstore_get_catalog_url();
 
 	foreach ( $crumbs as $index => $crumb ) {
 		if ( ! is_array( $crumb ) || empty( $crumb[1] ) || ! is_string( $crumb[1] ) ) {
@@ -6750,7 +6962,7 @@ add_action( 'template_redirect', 'gstore_disable_account_page_cache', 0 );
 function gstore_redirect_loja_to_catalogo() {
 	// Verifica se é a página "loja" pelo slug
 	if ( is_page( 'loja' ) ) {
-		$catalogo_url = home_url( '/catalogo' );
+		$catalogo_url = gstore_get_catalog_url();
 		wp_safe_redirect( $catalogo_url, 301 );
 		exit;
 	}
@@ -6761,7 +6973,7 @@ function gstore_redirect_loja_to_catalogo() {
 		if ( $shop_page_id ) {
 			$shop_page = get_post( $shop_page_id );
 			if ( $shop_page && 'loja' === $shop_page->post_name ) {
-				$catalogo_url = home_url( '/catalogo' );
+				$catalogo_url = gstore_get_catalog_url();
 				wp_safe_redirect( $catalogo_url, 301 );
 				exit;
 			}
@@ -6781,7 +6993,7 @@ function gstore_return_to_shop_url( $url ) {
 	if ( $catalogo_page ) {
 		return get_permalink( $catalogo_page->ID );
 	}
-	return home_url( '/catalogo' );
+	return gstore_get_catalog_url();
 }
 add_filter( 'woocommerce_return_to_shop_redirect', 'gstore_return_to_shop_url' );
 
@@ -10128,7 +10340,7 @@ function gstore_search_block_action_to_catalog( $block_content, $block ) {
 		return $block_content;
 	}
 
-	$catalog_url = esc_url( home_url( '/catalogo/' ) );
+	$catalog_url = esc_url( gstore_get_catalog_url() );
 
 	// Substitui o action do form.
 	$updated = preg_replace(
@@ -10591,7 +10803,9 @@ function gstore_catalog_redirect_s_to_q() {
 	}
 
 	$request_uri = isset( $_SERVER['REQUEST_URI'] ) ? (string) wp_unslash( $_SERVER['REQUEST_URI'] ) : '';
-	if ( $request_uri === '' || stripos( $request_uri, '/catalogo' ) === false ) {
+	$catalog_path = (string) wp_parse_url( gstore_get_catalog_url(), PHP_URL_PATH );
+	$catalog_path = '/' . trim( $catalog_path ? $catalog_path : '/catalogo/', '/' );
+	if ( $request_uri === '' || 0 !== stripos( '/' . ltrim( $request_uri, '/' ), $catalog_path ) ) {
 		return;
 	}
 
@@ -10614,7 +10828,7 @@ function gstore_catalog_redirect_s_to_q() {
 	}
 	$params['q'] = sanitize_text_field( wp_unslash( $_GET['s'] ) );
 
-	$target = add_query_arg( $params, home_url( '/catalogo/' ) );
+	$target = add_query_arg( $params, gstore_get_catalog_url() );
 	wp_safe_redirect( $target, 302 );
 	exit;
 }
@@ -10789,7 +11003,7 @@ function gstore_handle_search_suggest( WP_REST_Request $request ) {
 			'term_id' => (int) $t->term_id,
 			'slug'    => (string) $t->slug,
 			'name'    => (string) $t->name,
-			'url'     => add_query_arg( array( 'filter_cat[]' => (string) $t->slug ), home_url( '/catalogo/' ) ),
+			'url'     => add_query_arg( array( 'filter_cat[]' => (string) $t->slug ), gstore_get_catalog_url() ),
 		);
 	}
 

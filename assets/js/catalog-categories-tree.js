@@ -127,6 +127,24 @@ const __GSTORE_TREE_RUN_ID = 'tree_' + Date.now() + '_' + Math.random().toString
 		return tree;
 	}
 
+	function getCatalogFilterUrl(slug) {
+		const configuredCatalogUrl = (window.gstoreProductSearch && window.gstoreProductSearch.catalogUrl)
+			? window.gstoreProductSearch.catalogUrl
+			: '';
+		const homeUrl = (window.gstoreAccountUrls && window.gstoreAccountUrls.homeUrl)
+			? window.gstoreAccountUrls.homeUrl
+			: '/';
+		const base = configuredCatalogUrl || (String(homeUrl).replace(/\/?$/, '/') + 'catalogo/');
+
+		try {
+			const url = new URL(base, window.location.origin);
+			url.searchParams.append('filter_cat[]', slug);
+			return url.toString();
+		} catch (error) {
+			return String(base).replace(/\/?$/, '/') + '?filter_cat%5B%5D=' + encodeURIComponent(slug);
+		}
+	}
+
 	/**
 	 * Renderiza a árvore de categorias em HTML
 	 */
@@ -149,8 +167,7 @@ const __GSTORE_TREE_RUN_ID = 'tree_' + Date.now() + '_' + Math.random().toString
 				</button>`;
 			}
 
-			var categoryBase = (typeof gstoreAccountUrls !== 'undefined' && gstoreAccountUrls.homeUrl) ? gstoreAccountUrls.homeUrl : '/';
-			html += `<a href="${categoryBase}categoria-produto/${slug}/">
+			html += `<a href="${getCatalogFilterUrl(slug)}">
 				<span class="wc-block-product-categories-list-item__name">${cat.name}</span>
 			</a>`;
 			html += `<span class="wc-block-product-categories-list-item-count">
