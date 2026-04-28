@@ -125,6 +125,85 @@ function gstore_get_catalog_url() {
 }
 
 /**
+ * Resolve links internos antigos de categoria para URLs publicas atuais.
+ *
+ * @param string $legacy_url URL encontrada no HTML.
+ * @return string URL corrigida ou string vazia.
+ */
+function gstore_resolve_legacy_category_public_url( $legacy_url ) {
+	$path = (string) wp_parse_url( (string) $legacy_url, PHP_URL_PATH );
+	if ( '' === $path || false === strpos( $path, '/categoria-produto/' ) ) {
+		return '';
+	}
+
+	$legacy_path = trim( (string) preg_replace( '#^.*?/categoria-produto/#', '', $path ), '/' );
+	if ( '' === $legacy_path ) {
+		return '';
+	}
+
+	$segments = array_values( array_filter( explode( '/', $legacy_path ) ) );
+	if ( count( $segments ) >= 3 && 'page' === strtolower( (string) $segments[ count( $segments ) - 2 ] ) && ctype_digit( (string) end( $segments ) ) ) {
+		$segments = array_slice( $segments, 0, -2 );
+	}
+	$legacy_path = implode( '/', array_map( 'sanitize_title', $segments ) );
+	$leaf        = ! empty( $segments ) ? sanitize_title( (string) end( $segments ) ) : '';
+
+	$clean_pages = array(
+		'promocoes'     => '/ofertas/',
+		'ofertas'       => '/ofertas/',
+		'programas'     => '/programas/',
+		'pro-training'  => '/pro-training/',
+		'clube-de-tiro' => '/clube-de-tiro/',
+	);
+	if ( isset( $clean_pages[ $legacy_path ] ) ) {
+		return home_url( $clean_pages[ $legacy_path ] );
+	}
+	if ( isset( $clean_pages[ $leaf ] ) ) {
+		return home_url( $clean_pages[ $leaf ] );
+	}
+
+	$catalog_filters = array(
+		'tiro-longo' => 'tiro-longo',
+		'lancamento' => 'lancamento',
+	);
+	if ( isset( $catalog_filters[ $legacy_path ] ) ) {
+		return add_query_arg( 'filter_cat[]', $catalog_filters[ $legacy_path ], gstore_get_catalog_url() );
+	}
+	if ( isset( $catalog_filters[ $leaf ] ) ) {
+		return add_query_arg( 'filter_cat[]', $catalog_filters[ $leaf ], gstore_get_catalog_url() );
+	}
+
+	return '';
+}
+
+/**
+ * Remove links publicados para /categoria-produto/ sem depender de editar blocos salvos.
+ *
+ * @param string $content HTML renderizado.
+ * @return string
+ */
+function gstore_rewrite_legacy_category_links( $content ) {
+	if ( ! is_string( $content ) || false === strpos( $content, 'categoria-produto' ) ) {
+		return $content;
+	}
+
+	return (string) preg_replace_callback(
+		'/(href\s*=\s*)(["\'])([^"\']*\/categoria-produto\/[^"\']*)\2/i',
+		static function ( $matches ) {
+			$target = gstore_resolve_legacy_category_public_url( html_entity_decode( (string) $matches[3], ENT_QUOTES, 'UTF-8' ) );
+			if ( '' === $target ) {
+				return $matches[0];
+			}
+
+			return $matches[1] . $matches[2] . esc_url( $target ) . $matches[2];
+		},
+		$content
+	);
+}
+add_filter( 'render_block', 'gstore_rewrite_legacy_category_links', 20 );
+add_filter( 'the_content', 'gstore_rewrite_legacy_category_links', 20 );
+
+/**
  * Escolhe o sitemap publico anunciado no robots.txt.
  *
  * @return string URL absoluta do sitemap.
@@ -156,6 +235,20 @@ function gstore_get_public_sitemap_url() {
  */
 function gstore_filter_robots_sitemap( $output, $public ) {
 	$output = preg_replace( '/^\s*Sitemap:\s*.*(?:\r?\n)?/mi', '', (string) $output );
+	$output = preg_replace(
+		array(
+			'/^\s*Disallow:\s*\/\*\?add-to-cart=.*(?:\r?\n)?/mi',
+			'/^\s*Disallow:\s*\/\*\?orderby=.*(?:\r?\n)?/mi',
+			'/^\s*Disallow:\s*\/\*\?filter_.*(?:\r?\n)?/mi',
+			'/^\s*Disallow:\s*\/\*\?rating_filter=.*(?:\r?\n)?/mi',
+			'/^\s*Disallow:\s*\/\*\?min_price=.*(?:\r?\n)?/mi',
+			'/^\s*Disallow:\s*\/\*\?max_price=.*(?:\r?\n)?/mi',
+			'/^\s*Disallow:\s*\/\*\?s=.*(?:\r?\n)?/mi',
+			'/^\s*Disallow:\s*\/\*\?post_type=product.*(?:\r?\n)?/mi',
+		),
+		'',
+		$output
+	);
 
 	if ( ! $public ) {
 		return rtrim( (string) $output ) . "\n";

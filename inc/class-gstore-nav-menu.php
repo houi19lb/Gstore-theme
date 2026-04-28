@@ -141,6 +141,201 @@ function gstore_lock_header_menu_titles( $items, $args ) {
 }
 add_filter( 'wp_nav_menu_objects', 'gstore_lock_header_menu_titles', 999, 2 );
 
+/**
+ * Normaliza valores de filter_cat vindos de querystrings.
+ *
+ * @param mixed $value Valor bruto do parametro.
+ * @return array<int, string>
+ */
+function gstore_nav_menu_normalize_filter_cat_slugs( $value ) {
+	$slugs = array();
+	$stack = is_array( $value ) ? $value : array( $value );
+
+	while ( ! empty( $stack ) ) {
+		$current = array_shift( $stack );
+
+		if ( is_array( $current ) ) {
+			foreach ( $current as $nested ) {
+				$stack[] = $nested;
+			}
+			continue;
+		}
+
+		if ( ! is_scalar( $current ) ) {
+			continue;
+		}
+
+		$slug = sanitize_title( wp_unslash( (string) $current ) );
+		if ( '' !== $slug ) {
+			$slugs[] = $slug;
+		}
+	}
+
+	$slugs = array_values( array_unique( $slugs ) );
+	sort( $slugs );
+
+	return $slugs;
+}
+
+/**
+ * Extrai filter_cat de um array de query params.
+ *
+ * @param array $query_args Query params.
+ * @return array<int, string>
+ */
+function gstore_nav_menu_get_filter_cat_slugs_from_query_args( $query_args ) {
+	if ( ! is_array( $query_args ) ) {
+		return array();
+	}
+
+	$values = array();
+
+	if ( isset( $query_args['filter_cat'] ) ) {
+		$values[] = $query_args['filter_cat'];
+	}
+
+	if ( isset( $query_args['filter_cat[]'] ) ) {
+		$values[] = $query_args['filter_cat[]'];
+	}
+
+	return gstore_nav_menu_normalize_filter_cat_slugs( $values );
+}
+
+/**
+ * Extrai filter_cat de uma URL de item de menu.
+ *
+ * @param string $url URL do item.
+ * @return array<int, string>
+ */
+function gstore_nav_menu_get_filter_cat_slugs_from_url( $url ) {
+	$url = is_string( $url ) ? html_entity_decode( trim( $url ), ENT_QUOTES, 'UTF-8' ) : '';
+	if ( '' === $url ) {
+		return array();
+	}
+
+	$parts = wp_parse_url( $url );
+	if ( false === $parts || empty( $parts['query'] ) ) {
+		return array();
+	}
+
+	$query_args = array();
+	wp_parse_str( (string) $parts['query'], $query_args );
+
+	return gstore_nav_menu_get_filter_cat_slugs_from_query_args( $query_args );
+}
+
+/**
+ * Compara listas de slugs ja normalizadas.
+ *
+ * @param array $left  Lista A.
+ * @param array $right Lista B.
+ * @return bool
+ */
+function gstore_nav_menu_filter_cat_slugs_match( $left, $right ) {
+	return ! empty( $left ) && ! empty( $right ) && $left === $right;
+}
+
+/**
+ * Retorna os slugs filtrados da pagina de catalogo atual.
+ *
+ * @return array<int, string>
+ */
+function gstore_nav_menu_get_current_catalog_filter_cat_slugs() {
+	static $current_slugs = null;
+
+	if ( null !== $current_slugs ) {
+		return $current_slugs;
+	}
+
+	$current_slugs = gstore_nav_menu_get_filter_cat_slugs_from_query_args( $_GET );
+	if ( empty( $current_slugs ) ) {
+		return $current_slugs;
+	}
+
+	if ( ! function_exists( 'gstore_normalize_internal_site_path' ) || ! function_exists( 'gstore_get_catalog_url' ) ) {
+		return $current_slugs;
+	}
+
+	$request_uri = isset( $_SERVER['REQUEST_URI'] ) ? wp_unslash( (string) $_SERVER['REQUEST_URI'] ) : '';
+	$request_path = gstore_normalize_internal_site_path( $request_uri );
+	$catalog_path = gstore_normalize_internal_site_path( gstore_get_catalog_url() );
+
+	if ( '' === $request_path || '' === $catalog_path || $request_path !== $catalog_path ) {
+		$current_slugs = array();
+	}
+
+	return $current_slugs;
+}
+
+/**
+ * Em URLs do catalogo filtrado, deixa ativo apenas o item que representa o filtro clicado.
+ *
+ * @param array $items Itens do menu.
+ * @param object $args Argumentos do wp_nav_menu.
+ * @return array
+ */
+function gstore_prefer_filtered_catalog_nav_menu_item( $items, $args ) {
+	$theme_location = isset( $args->theme_location ) ? (string) $args->theme_location : '';
+
+	if ( ! in_array( $theme_location, array( 'gstore_desktop', 'gstore_mobile' ), true ) ) {
+		return $items;
+	}
+
+	$current_filter_slugs = gstore_nav_menu_get_current_catalog_filter_cat_slugs();
+	if ( empty( $current_filter_slugs ) ) {
+		return $items;
+	}
+
+	$catalog_path      = function_exists( 'gstore_normalize_internal_site_path' ) && function_exists( 'gstore_get_catalog_url' )
+		? gstore_normalize_internal_site_path( gstore_get_catalog_url() )
+		: '';
+	$active_item_ids   = array();
+	$current_classes   = array(
+		'current-menu-item',
+		'current_page_item',
+		'current-menu-parent',
+		'current_page_parent',
+		'current-menu-ancestor',
+		'current_page_ancestor',
+	);
+
+	foreach ( $items as $item ) {
+		if ( empty( $item->url ) || empty( $item->ID ) ) {
+			continue;
+		}
+
+		if ( '' !== $catalog_path && function_exists( 'gstore_normalize_internal_site_path' ) ) {
+			$item_path = gstore_normalize_internal_site_path( (string) $item->url );
+			if ( $item_path !== $catalog_path ) {
+				continue;
+			}
+		}
+
+		$item_filter_slugs = gstore_nav_menu_get_filter_cat_slugs_from_url( (string) $item->url );
+		if ( gstore_nav_menu_filter_cat_slugs_match( $item_filter_slugs, $current_filter_slugs ) ) {
+			$active_item_ids[] = (int) $item->ID;
+		}
+	}
+
+	if ( empty( $active_item_ids ) ) {
+		return $items;
+	}
+
+	foreach ( $items as $item ) {
+		$classes = empty( $item->classes ) ? array() : (array) $item->classes;
+		$classes = array_values( array_diff( $classes, $current_classes ) );
+
+		if ( ! empty( $item->ID ) && in_array( (int) $item->ID, $active_item_ids, true ) ) {
+			$classes[] = 'current-menu-item';
+		}
+
+		$item->classes = array_values( array_unique( array_filter( $classes ) ) );
+	}
+
+	return $items;
+}
+add_filter( 'wp_nav_menu_objects', 'gstore_prefer_filtered_catalog_nav_menu_item', 1000, 2 );
+
 function gstore_render_navigation_block_by_location( $block_content, $block ) {
 	if ( ! isset( $block['blockName'] ) || 'core/navigation' !== $block['blockName'] ) {
 		return $block_content;
