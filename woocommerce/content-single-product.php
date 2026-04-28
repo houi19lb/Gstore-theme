@@ -622,6 +622,13 @@ if ( $reviews_has_value ) {
 	);
 }
 
+$gstore_tab_next_cta_labels = array(
+	'description'     => __( 'Continuar para descrição completa', 'gstore' ),
+	'key-attributes'  => __( 'Ver principais atributos', 'gstore' ),
+	'important-notes' => __( 'Ver observações importantes', 'gstore' ),
+	'reviews'         => __( 'Ver avaliações do produto', 'gstore' ),
+);
+
 ?>
 <div class="Gstore-single-product-shell">
 	<div class="Gstore-single-product-shell__inner">
@@ -776,6 +783,9 @@ if ( $reviews_has_value ) {
 									$label     = isset( $tab['label'] ) ? (string) $tab['label'] : '';
 									$content   = isset( $tab['content'] ) ? (string) $tab['content'] : '';
 									$is_active = 0 === (int) $index;
+									$next_tab  = isset( $gstore_product_tabs[ $index + 1 ] ) && is_array( $gstore_product_tabs[ $index + 1 ] ) ? $gstore_product_tabs[ $index + 1 ] : array();
+									$next_slug = isset( $next_tab['slug'] ) ? (string) $next_tab['slug'] : '';
+									$next_cta  = isset( $gstore_tab_next_cta_labels[ $next_slug ] ) ? (string) $gstore_tab_next_cta_labels[ $next_slug ] : '';
 
 									if ( '' === $slug || '' === $label ) {
 										continue;
@@ -798,6 +808,17 @@ if ( $reviews_has_value ) {
 												<div class="Gstore-single-product__tab-content">
 													<?php echo wp_kses_post( $content ); ?>
 												</div>
+												<?php if ( '' !== $next_slug && '' !== $next_cta ) : ?>
+													<button
+														type="button"
+														class="Gstore-single-product__tab-next"
+														data-gstore-tab-next="<?php echo esc_attr( $next_slug ); ?>"
+														aria-controls="gstore-tab-<?php echo esc_attr( $next_slug ); ?>"
+													>
+														<span><?php echo esc_html( $next_cta ); ?></span>
+														<span class="Gstore-single-product__tab-next-icon" aria-hidden="true">→</span>
+													</button>
+												<?php endif; ?>
 											</section>
 										<?php endif; ?>
 									</div>

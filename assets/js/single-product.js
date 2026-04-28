@@ -437,6 +437,47 @@ document.addEventListener('DOMContentLoaded', () => {
 		const isMobileQuery = window.matchMedia('(max-width: 1024px)');
 		const getPanelId = (tab) => `gstore-tab-${tab}`;
 		const getTabFromPanel = (panel) => String(panel.id || '').replace(/^gstore-tab-/, '');
+		const desktopTabsAnchor = document.createComment('gstore-product-tabs-desktop-anchor');
+		const originalTabsParent = root.parentNode;
+		if (originalTabsParent) {
+			originalTabsParent.insertBefore(desktopTabsAnchor, root);
+		}
+
+		const summaryCard = document.querySelector('.Gstore-single-product__summary-card');
+		const mobileTabsAnchor = summaryCard
+			? summaryCard.querySelector('.read-before, .help, .shipping, .Gstore-single-product__summary-extra')
+			: null;
+
+		const syncTabsPlacement = () => {
+			if (isMobileQuery.matches && mobileTabsAnchor?.parentNode) {
+				if (root.parentNode !== mobileTabsAnchor.parentNode || root.nextSibling !== mobileTabsAnchor) {
+					mobileTabsAnchor.parentNode.insertBefore(root, mobileTabsAnchor);
+				}
+				return;
+			}
+
+			if (desktopTabsAnchor.parentNode && root.previousSibling !== desktopTabsAnchor) {
+				desktopTabsAnchor.parentNode.insertBefore(root, desktopTabsAnchor.nextSibling);
+			}
+		};
+
+		const scrollToTab = (tab) => {
+			const panel = document.getElementById(getPanelId(tab));
+			const target = isMobileQuery.matches
+				? (panel?.querySelector('.Gstore-single-product__accordion-header') || panel)
+				: root;
+
+			if (!target) {
+				return;
+			}
+
+			const preferredOffset = Number(document.body.dataset.gstoreStickyOffset || 120);
+			const offset = Number.isFinite(preferredOffset) ? preferredOffset : 120;
+			window.scrollTo({
+				top: target.getBoundingClientRect().top + window.scrollY - offset,
+				behavior: 'smooth',
+			});
+		};
 
 		const ensureAccordionMarkup = () => {
 			if (root.dataset.gstoreAccordionReady === '1') {
@@ -549,6 +590,11 @@ document.addEventListener('DOMContentLoaded', () => {
 			updateUI();
 		};
 
+		const updateForMode = () => {
+			syncTabsPlacement();
+			updateUI();
+		};
+
 		// Tabs (desktop)
 		buttons.forEach((btn) => {
 			btn.addEventListener('click', () => {
@@ -561,6 +607,19 @@ document.addEventListener('DOMContentLoaded', () => {
 		// Accordions (mobile)
 		ensureAccordionMarkup();
 		root.addEventListener('click', (event) => {
+			const nextButton = event.target?.closest?.('[data-gstore-tab-next]');
+			if (nextButton && root.contains(nextButton)) {
+				event.preventDefault();
+				const nextTab = String(nextButton.dataset.gstoreTabNext || '');
+				if (!nextTab) {
+					return;
+				}
+
+				setActiveTab(nextTab);
+				window.requestAnimationFrame(() => scrollToTab(nextTab));
+				return;
+			}
+
 			const header = event.target?.closest?.('.Gstore-single-product__accordion-header');
 			if (!header || !root.contains(header)) {
 				return;
@@ -582,14 +641,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
 		// Atualiza ao trocar breakpoint (ex.: resize)
 		if (typeof isMobileQuery.addEventListener === 'function') {
-			isMobileQuery.addEventListener('change', updateUI);
+			isMobileQuery.addEventListener('change', updateForMode);
 		} else if (typeof isMobileQuery.addListener === 'function') {
 			// Safari antigo
-			isMobileQuery.addListener(updateUI);
+			isMobileQuery.addListener(updateForMode);
 		}
 
 		// Estado inicial consistente
-		updateUI();
+		updateForMode();
 	};
 
 	/**

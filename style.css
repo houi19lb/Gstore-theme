@@ -2538,6 +2538,7 @@ body.single-product .onsale {
 
 .Gstore-single-product__tab-buttons {
 	display: flex;
+	flex-wrap: wrap;
 	gap: 8px;
 	border-bottom: 1px solid var(--gstore-color-border-divider, var(--gstore-color-border));
 	padding: 12px;
@@ -2552,12 +2553,22 @@ body.single-product .onsale {
 	cursor: pointer;
 	font-weight: var(--gstore-font-weight-semibold);
 	color: var(--gstore-color-text-primary);
+	transition: background var(--gstore-transition-fast), border-color var(--gstore-transition-fast), color var(--gstore-transition-fast), box-shadow var(--gstore-transition-fast);
+}
+
+.Gstore-single-product__tab-buttons button:hover,
+.Gstore-single-product__tab-buttons button:focus-visible {
+	background: var(--gstore-color-accent-10, rgba(181, 166, 66, 0.1));
+	border-color: var(--gstore-color-accent, #b5a642);
+	color: var(--gstore-color-accent, #b5a642);
+	outline: none;
 }
 
 .Gstore-single-product__tab-buttons button.is-active {
-	background: var(--gstore-color-bg-dark);
-	color: var(--gstore-color-text-light);
-	border-color: var(--gstore-color-bg-dark);
+	background: var(--gstore-color-accent, #b5a642);
+	color: var(--gstore-color-white, #ffffff);
+	border-color: var(--gstore-color-accent, #b5a642);
+	box-shadow: 0 0 0 2px var(--gstore-color-accent-15, rgba(181, 166, 66, 0.15));
 }
 
 .Gstore-single-product__tab-panels {
@@ -2619,6 +2630,39 @@ body.single-product .onsale {
 .Gstore-single-product__tab-content ol ol {
 	margin: 0.5em 0;
 	list-style-type: lower-alpha;
+}
+
+.Gstore-single-product__tab-next {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 8px;
+	min-height: 44px;
+	margin-top: 16px;
+	padding: 0 16px;
+	border: 1px solid var(--gstore-color-accent, #b5a642);
+	border-radius: var(--gstore-radius-base);
+	background: var(--gstore-color-accent-10, rgba(181, 166, 66, 0.1));
+	color: var(--gstore-color-accent-dark, #8f812e);
+	font-size: var(--gstore-font-size-sm);
+	font-weight: var(--gstore-font-weight-bold);
+	cursor: pointer;
+	text-decoration: none;
+	transition: background var(--gstore-transition-fast), border-color var(--gstore-transition-fast), color var(--gstore-transition-fast), transform var(--gstore-transition-fast);
+}
+
+.Gstore-single-product__tab-next:hover,
+.Gstore-single-product__tab-next:focus-visible {
+	background: var(--gstore-color-accent, #b5a642);
+	border-color: var(--gstore-color-accent, #b5a642);
+	color: var(--gstore-color-white, #ffffff);
+	outline: none;
+	transform: translateX(2px);
+}
+
+.Gstore-single-product__tab-next-icon {
+	font-size: 1.1em;
+	line-height: 1;
 }
 
 /* Accordion header/content existe no DOM (JS), mas só aparece no mobile */
