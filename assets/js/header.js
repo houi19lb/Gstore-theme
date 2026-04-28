@@ -9,7 +9,9 @@
 	var lastScrollTop = 0;
 	var scrollThreshold = 100; // Distância mínima para começar a esconder/mostrar
 	var isScrollingDown = false;
-	var headerHeight = 0; // Altura do header (calculada uma vez)
+	var headerHeight = 0;
+	var paddingAdjustFrame = null;
+	var headerResizeObserver = null;
 
 	/**
 	 * Resolve URLs de conta com fallback para instalações em subdiretório.
@@ -69,36 +71,38 @@
 	}
 
 	/**
-	 * Calcula a altura do header uma vez
+	 * Calcula a altura atual do header.
 	 */
 	function calculateHeaderHeight() {
 		if (!headerShell) {
 			return 0;
 		}
 
-		// Remove transform temporariamente para medir altura real
-		var originalTransform = headerShell.style.transform;
-		var originalVisibility = headerShell.style.visibility;
-		
-		headerShell.style.transform = 'translateY(0)';
-		headerShell.style.visibility = 'visible';
-		headerShell.style.position = 'absolute';
-		headerShell.style.top = '0';
-		
-		// Força recalculo do layout
-		void headerShell.offsetHeight;
-		
-		// Mede a altura usando getBoundingClientRect para maior precisão
 		var rect = headerShell.getBoundingClientRect();
-		var height = Math.round(rect.height);
-		
-		// Restaura estilos
-		headerShell.style.transform = originalTransform;
-		headerShell.style.visibility = originalVisibility;
-		headerShell.style.position = 'fixed';
-		
+		var height = rect.height || headerShell.offsetHeight || 0;
+
 		// Limita altura máxima a 200px para evitar espaços excessivos
 		return Math.min(height, 200);
+	}
+
+	/**
+	 * Agenda o ajuste para depois do layout atual estabilizar.
+	 */
+	function scheduleBodyPaddingAdjust() {
+		if (paddingAdjustFrame && window.cancelAnimationFrame) {
+			window.cancelAnimationFrame(paddingAdjustFrame);
+		}
+
+		var run = function() {
+			paddingAdjustFrame = null;
+			adjustBodyPadding();
+		};
+
+		if (window.requestAnimationFrame) {
+			paddingAdjustFrame = window.requestAnimationFrame(run);
+		} else {
+			window.setTimeout(run, 0);
+		}
 	}
 
 	/**
@@ -109,10 +113,7 @@
 			return;
 		}
 
-		// Calcula altura apenas se ainda não foi calculada ou se a janela foi redimensionada
-		if (headerHeight === 0) {
-			headerHeight = calculateHeaderHeight();
-		}
+		headerHeight = calculateHeaderHeight();
 		
 		// Aplica padding-top apenas no wp-site-blocks (não no body para evitar duplicação)
 		var siteBlocks = document.querySelector('.wp-site-blocks');
@@ -288,14 +289,29 @@
 			return;
 		}
 
-		// Ajusta o padding do body
+		// Ajusta o padding inicial e revisa após estilos/fontes/blocks estabilizarem.
 		adjustBodyPadding();
+		[0, 50, 250, 1000].forEach(function(delay) {
+			window.setTimeout(scheduleBodyPaddingAdjust, delay);
+		});
 
 		// Recalcula altura e padding quando a janela é redimensionada
 		window.addEventListener('resize', function() {
-			headerHeight = 0; // Força recálculo da altura
-			adjustBodyPadding();
+			scheduleBodyPaddingAdjust();
 		});
+
+		if (document.fonts && document.fonts.ready) {
+			document.fonts.ready.then(scheduleBodyPaddingAdjust).catch(function() {});
+		}
+
+		if (window.ResizeObserver) {
+			headerResizeObserver = new ResizeObserver(function() {
+				scheduleBodyPaddingAdjust();
+			});
+			headerResizeObserver.observe(headerShell);
+		}
+
+		window.addEventListener('load', scheduleBodyPaddingAdjust, { once: true });
 
 		// Inicializa como visível
 		headerShell.classList.add('is-visible');
@@ -320,7 +336,7 @@
 					headerShell.classList.remove('is-visible');
 					headerShell.classList.add('is-hidden');
 					// Recalcula padding após esconder
-					setTimeout(adjustBodyPadding, 300);
+					setTimeout(scheduleBodyPaddingAdjust, 300);
 				}
 			} else if (currentScrollTop < lastScrollTop) {
 				// Rolando para cima
@@ -329,7 +345,7 @@
 					headerShell.classList.add('is-visible');
 					headerShell.classList.remove('is-hidden');
 					// Recalcula padding após mostrar
-					setTimeout(adjustBodyPadding, 300);
+					setTimeout(scheduleBodyPaddingAdjust, 300);
 				}
 			}
 
@@ -375,7 +391,7 @@
 				isScrollingDown = false;
 				
 				// Recalcula padding após mostrar
-				setTimeout(adjustBodyPadding, 300);
+				setTimeout(scheduleBodyPaddingAdjust, 300);
 			});
 		}
 
@@ -387,7 +403,7 @@
 			isScrollingDown = false;
 			
 			// Recalcula padding após mostrar
-			setTimeout(adjustBodyPadding, 300);
+			setTimeout(scheduleBodyPaddingAdjust, 300);
 		});
 	}
 

@@ -140,8 +140,6 @@ function gstore_get_public_sitemap_url() {
 		|| defined( 'AIOSEO_VERSION' )
 	) {
 		$sitemap_url = home_url( '/sitemap.xml' );
-	} elseif ( function_exists( 'wp_sitemaps_get_server' ) && apply_filters( 'wp_sitemaps_enabled', true ) ) {
-		$sitemap_url = home_url( '/wp-sitemap.xml' );
 	} else {
 		$sitemap_url = home_url( '/sitemap.xml' );
 	}
@@ -243,6 +241,65 @@ function gstore_catalog_robots_directives( $robots ) {
 add_filter( 'wp_robots', 'gstore_catalog_robots_directives', 20 );
 
 /**
+ * Compatibilidade com plugins SEO que substituem a meta robots nativa.
+ *
+ * @param string $robots Regras em string.
+ * @return string
+ */
+function gstore_catalog_wpseo_robots_directives( $robots ) {
+	if ( ! gstore_should_noindex_catalog_request() ) {
+		return $robots;
+	}
+
+	$parts = array_filter( array_map( 'trim', explode( ',', (string) $robots ) ) );
+	$parts = array_filter(
+		$parts,
+		static function ( $part ) {
+			$part = strtolower( (string) $part );
+			return ! in_array( $part, array( 'index', 'nofollow' ), true );
+		}
+	);
+	$parts[] = 'noindex';
+	$parts[] = 'follow';
+
+	return implode( ', ', array_values( array_unique( $parts ) ) );
+}
+add_filter( 'wpseo_robots', 'gstore_catalog_wpseo_robots_directives', 20 );
+
+/**
+ * Compatibilidade com Rank Math/AIOSEO para filtros de catalogo.
+ *
+ * @param array $robots Regras.
+ * @return array
+ */
+function gstore_catalog_array_robots_directives( $robots ) {
+	if ( ! gstore_should_noindex_catalog_request() ) {
+		return $robots;
+	}
+
+	$robots = is_array( $robots ) ? $robots : array();
+	unset( $robots['index'], $robots['nofollow'] );
+	$robots['noindex'] = true;
+	$robots['follow']  = true;
+
+	return $robots;
+}
+add_filter( 'rank_math/frontend/robots', 'gstore_catalog_array_robots_directives', 20 );
+add_filter( 'aioseo_robots_meta', 'gstore_catalog_array_robots_directives', 20 );
+
+/**
+ * Fallback para ambientes em que o plugin SEO nao fornece filtro publico.
+ */
+function gstore_catalog_print_noindex_fallback() {
+	if ( ! gstore_should_noindex_catalog_request() ) {
+		return;
+	}
+
+	echo '<meta name="robots" content="noindex,follow" />' . "\n";
+}
+add_action( 'wp_head', 'gstore_catalog_print_noindex_fallback', 1 );
+
+/**
  * Canonical limpo para URLs filtradas do catalogo.
  *
  * @param string  $canonical_url URL canonica original.
@@ -254,6 +311,18 @@ function gstore_catalog_query_canonical_url( $canonical_url, $post ) {
 		return $canonical_url;
 	}
 
+	return gstore_get_catalog_query_canonical_url( $canonical_url, $post );
+}
+add_filter( 'get_canonical_url', 'gstore_catalog_query_canonical_url', 20, 2 );
+
+/**
+ * Retorna canonical limpo para URLs filtradas do catalogo.
+ *
+ * @param string       $canonical_url URL atual.
+ * @param WP_Post|null $post          Post atual.
+ * @return string
+ */
+function gstore_get_catalog_query_canonical_url( $canonical_url, $post = null ) {
 	if ( $post instanceof WP_Post ) {
 		$permalink = get_permalink( $post->ID );
 		if ( $permalink ) {
@@ -270,7 +339,23 @@ function gstore_catalog_query_canonical_url( $canonical_url, $post ) {
 
 	return $path ? home_url( $path ) : $canonical_url;
 }
-add_filter( 'get_canonical_url', 'gstore_catalog_query_canonical_url', 20, 2 );
+
+/**
+ * Compatibilidade com canonical de plugins SEO.
+ *
+ * @param string $canonical_url URL canonica.
+ * @return string
+ */
+function gstore_catalog_query_canonical_url_for_seo_plugins( $canonical_url ) {
+	if ( ! gstore_should_noindex_catalog_request() || ( function_exists( 'is_page' ) && is_page( 'favoritos' ) ) ) {
+		return $canonical_url;
+	}
+
+	$post = get_queried_object();
+	return gstore_get_catalog_query_canonical_url( $canonical_url, $post instanceof WP_Post ? $post : null );
+}
+add_filter( 'wpseo_canonical', 'gstore_catalog_query_canonical_url_for_seo_plugins', 20 );
+add_filter( 'rank_math/frontend/canonical', 'gstore_catalog_query_canonical_url_for_seo_plugins', 20 );
 
 /**
  * Obtém a cor de accent efetiva (salva no admin ou fallback do tema).
