@@ -2044,11 +2044,13 @@ function gstore_enqueue_styles() {
 
 	// CSS da página de minha conta (login/registro)
 	if ( class_exists( 'WooCommerce' ) && function_exists( 'is_account_page' ) && is_account_page() ) {
+		$my_account_css_file    = get_theme_file_path( 'assets/css/my-account.css' );
+		$my_account_css_version = file_exists( $my_account_css_file ) ? (string) filemtime( $my_account_css_file ) : $theme_version;
 		wp_enqueue_style(
 			'gstore-my-account-css',
 			get_theme_file_uri( 'assets/css/my-account.css' ),
 			array( 'gstore-style' ),
-			$theme_version
+			$my_account_css_version
 		);
 
 		// Fulfillment timeline (apenas na página de detalhes do pedido).

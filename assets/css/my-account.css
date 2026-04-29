@@ -46,9 +46,7 @@ body.woocommerce-account .wp-block-group.alignfull {
 }
 
 /* Garante que o header e footer permaneçam separados */
-body.woocommerce-account header,
-body.woocommerce-account .Gstore-header,
-body.woocommerce-account .Gstore-header-shell {
+body.woocommerce-account header:not(.Gstore-header-shell) {
 	position: relative;
 	z-index: 10;
 }
