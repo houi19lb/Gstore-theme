@@ -257,16 +257,16 @@ if ( ! function_exists( 'gstore_get_contact_entries' ) ) :
 	 * @return array
 	 */
 	function gstore_get_contact_entries() {
-		$support_email  = get_option( 'admin_email' );
-		$my_account_url = function_exists( 'wc_get_page_permalink' ) ? wc_get_page_permalink( 'myaccount' ) : '';
+		$support_email_link = function_exists( 'gstore_get_store_email_link' ) ? gstore_get_store_email_link() : '';
+		$my_account_url     = function_exists( 'wc_get_page_permalink' ) ? wc_get_page_permalink( 'myaccount' ) : '';
 
 		$entries = array(
 			array(
 				'icon'  => 'fa-headset',
 				'label' => __( 'Atendimento dedicado', 'gstore' ),
 				'value' => __( 'Nosso time responde em até 2h úteis via WhatsApp ou e-mail.', 'gstore' ),
-				'cta'   => $support_email ? __( 'Enviar mensagem', 'gstore' ) : '',
-				'href'  => $support_email ? 'mailto:' . $support_email : '',
+				'cta'   => $support_email_link ? __( 'Enviar mensagem', 'gstore' ) : '',
+				'href'  => $support_email_link,
 			),
 			array(
 				'icon'  => 'fa-user-shield',

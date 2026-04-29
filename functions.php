@@ -1238,7 +1238,7 @@ function gstore_sobre_nos_json_ld() {
 		$organization['telephone'] = $phone;
 	}
 
-	$email = trim( (string) gstore_store_info()->get_value( 'contact.email', '' ) );
+	$email = gstore_get_store_email();
 	if ( '' !== $email ) {
 		$organization['email'] = $email;
 	}
@@ -14704,6 +14704,29 @@ function gstore_get_whatsapp_link( $message = '' ) {
 }
 
 /**
+ * Obtem o e-mail de atendimento configurado nas informacoes da loja.
+ *
+ * @return string
+ */
+function gstore_get_store_email() {
+	$email = trim( (string) gstore_store_info()->get_value( 'contact.email', '' ) );
+	$email = sanitize_email( $email );
+
+	return is_email( $email ) ? $email : '';
+}
+
+/**
+ * Gera o link mailto do e-mail de atendimento da loja.
+ *
+ * @return string
+ */
+function gstore_get_store_email_link() {
+	$email = gstore_get_store_email();
+
+	return '' !== $email ? 'mailto:' . $email : '';
+}
+
+/**
  * Obtém o telefone da loja.
  *
  * @param string $format 'raw' ou 'display'.
@@ -15215,9 +15238,9 @@ function gstore_process_store_info_placeholders( $content ) {
 	if ( empty( $contact_primary_link ) ) {
 		$contact_primary_link = gstore_get_whatsapp_link();
 	}
-	$email      = trim( (string) gstore_store_info()->get_value( 'contact.email', '' ) );
+	$email      = gstore_get_store_email();
 	$phone_raw  = trim( (string) gstore_get_phone( 'raw' ) );
-	$email_link = '' !== $email ? 'mailto:' . sanitize_email( $email ) : '';
+	$email_link = gstore_get_store_email_link();
 	$phone_link = '' !== $phone_raw ? 'tel:+' . preg_replace( '/\D/', '', $phone_raw ) : '';
 	
 	// Lista de placeholders e seus valores
