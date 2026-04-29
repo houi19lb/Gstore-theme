@@ -1084,6 +1084,221 @@ function gstore_product_meta_description() {
 }
 add_action( 'wp_head', 'gstore_product_meta_description', 1 );
 
+/**
+ * Verifica se a página atual é a página institucional Sobre nós.
+ *
+ * @return bool
+ */
+function gstore_is_sobre_nos_page() {
+	return function_exists( 'is_page' ) && is_page( 'sobre-nos' );
+}
+
+/**
+ * Retorna a descrição SEO da página Sobre nós.
+ *
+ * @return string
+ */
+function gstore_get_sobre_nos_seo_description() {
+	$store_name = trim( (string) gstore_get_store_name( 'display' ) );
+	$city_state = trim( (string) gstore_get_address( 'city_state' ) );
+	$location   = '' !== $city_state ? ' em ' . $city_state : '';
+
+	$description = sprintf(
+		'Conheça a %s%s: dados da empresa, compra legal de arma, documentação, CRAF, Guia de Tráfego, CAC, prazos e envio.',
+		$store_name,
+		$location
+	);
+
+	if ( function_exists( 'mb_strlen' ) && function_exists( 'mb_substr' ) ) {
+		if ( mb_strlen( $description, 'UTF-8' ) > 160 ) {
+			return rtrim( mb_substr( $description, 0, 157, 'UTF-8' ) ) . '...';
+		}
+		return $description;
+	}
+
+	if ( strlen( $description ) > 160 ) {
+		return rtrim( substr( $description, 0, 157 ) ) . '...';
+	}
+
+	return $description;
+}
+
+/**
+ * SEO: título do documento na página Sobre nós.
+ *
+ * @param array $title_parts Partes do título.
+ * @return array
+ */
+function gstore_sobre_nos_document_title_parts( $title_parts ) {
+	if ( ! gstore_is_sobre_nos_page() ) {
+		return $title_parts;
+	}
+
+	$title_parts['title'] = sprintf(
+		'Sobre a %s e compra legal',
+		gstore_get_store_name( 'display' )
+	);
+
+	return $title_parts;
+}
+add_filter( 'document_title_parts', 'gstore_sobre_nos_document_title_parts', 10, 1 );
+
+/**
+ * SEO: meta description da página Sobre nós.
+ */
+function gstore_sobre_nos_meta_description() {
+	if ( ! gstore_is_sobre_nos_page() ) {
+		return;
+	}
+
+	echo '<meta name="description" content="' . esc_attr( gstore_get_sobre_nos_seo_description() ) . '" />' . "\n";
+}
+add_action( 'wp_head', 'gstore_sobre_nos_meta_description', 1 );
+
+/**
+ * Perguntas usadas no JSON-LD FAQPage da página Sobre nós.
+ *
+ * @return array<int, array{question:string, answer:string}>
+ */
+function gstore_get_sobre_nos_faq_items() {
+	$store_name = gstore_get_store_name( 'display' );
+
+	return array(
+		array(
+			'question' => 'Comprar arma pela internet é legal?',
+			'answer'   => 'Sim, desde que a venda seja feita por empresa regularizada e o comprador cumpra todas as exigências legais. A compra de arma de fogo depende de autorização, registro e liberação antes do envio ou retirada.',
+		),
+		array(
+			'question' => 'Quais documentos preciso para comprar uma arma?',
+			'answer'   => 'Depende do perfil. Cidadãos normalmente precisam de autorização de aquisição da Polícia Federal e documentos pessoais. CACs seguem exigências vinculadas ao CR, autorização, CRAF e regras do acervo.',
+		),
+		array(
+			'question' => 'Qual é a diferença entre cidadão e CAC?',
+			'answer'   => 'O cidadão compra para finalidade permitida em processo próprio. CAC é colecionador, atirador desportivo ou caçador com Certificado de Registro e regras específicas para acervo, aquisição e transporte.',
+		),
+		array(
+			'question' => 'Quando a nota fiscal é emitida?',
+			'answer'   => 'A nota fiscal de produto controlado é emitida conforme a etapa documental aplicável, normalmente depois da conferência da autorização ou documentação necessária para o processo.',
+		),
+		array(
+			'question' => 'Quando a arma ou munição é enviada?',
+			'answer'   => 'O envio ocorre somente após a liberação documental, emissão dos documentos exigidos e confirmação da modalidade de transporte disponível para o destino.',
+		),
+		array(
+			'question' => 'Posso comprar munição online?',
+			'answer'   => 'Pode, desde que apresente a documentação exigida para o calibre e perfil de compra, como documento pessoal, CRAF válido e CR quando aplicável.',
+		),
+		array(
+			'question' => 'Carabina de pressão e airsoft têm o mesmo processo?',
+			'answer'   => 'Não. Esses produtos seguem regras próprias e normalmente não passam pelo mesmo processo de arma de fogo, mas podem exigir documento, idade mínima e cuidados de transporte.',
+		),
+		array(
+			'question' => 'A loja ajuda com a documentação?',
+			'answer'   => sprintf( 'Sim. A %s orienta sobre os documentos esperados, confere o material recebido e indica os próximos passos, sem substituir a análise do órgão competente.', $store_name ),
+		),
+	);
+}
+
+/**
+ * SEO: JSON-LD Organization + FAQPage da página Sobre nós.
+ */
+function gstore_sobre_nos_json_ld() {
+	if ( ! gstore_is_sobre_nos_page() ) {
+		return;
+	}
+
+	$store_name  = gstore_get_store_name( 'display' );
+	$description = gstore_get_sobre_nos_seo_description();
+	$logo_id     = (int) get_theme_mod( 'custom_logo' );
+	$logo_url    = $logo_id > 0 ? wp_get_attachment_image_url( $logo_id, 'full' ) : '';
+
+	if ( ! $logo_url && function_exists( 'get_site_icon_url' ) ) {
+		$logo_url = get_site_icon_url( 512 );
+	}
+
+	$organization = array(
+		'@type'       => 'Organization',
+		'@id'         => home_url( '/#organization' ),
+		'name'        => $store_name,
+		'url'         => home_url( '/' ),
+		'description' => $description,
+	);
+
+	if ( $logo_url ) {
+		$organization['logo'] = esc_url_raw( $logo_url );
+	}
+
+	$cnpj = trim( (string) gstore_get_cnpj() );
+	if ( '' !== $cnpj ) {
+		$organization['taxID'] = $cnpj;
+	}
+
+	$phone = trim( (string) gstore_get_phone() );
+	if ( '' !== $phone ) {
+		$organization['telephone'] = $phone;
+	}
+
+	$email = trim( (string) gstore_store_info()->get_value( 'contact.email', '' ) );
+	if ( '' !== $email ) {
+		$organization['email'] = $email;
+	}
+
+	$address = gstore_store_info()->get_value( 'address' );
+	if ( is_array( $address ) ) {
+		$organization['address'] = array_filter(
+			array(
+				'@type'           => 'PostalAddress',
+				'streetAddress'   => trim( implode( ', ', array_filter( array( $address['street'] ?? '', $address['neighborhood'] ?? '' ), 'strlen' ) ) ),
+				'addressLocality' => $address['city'] ?? '',
+				'addressRegion'   => $address['state'] ?? '',
+				'postalCode'      => $address['zipcode'] ?? '',
+				'addressCountry'  => $address['country'] ?? 'Brasil',
+			)
+		);
+	}
+
+	$same_as = array_filter(
+		array(
+			gstore_get_social_link( 'instagram' ),
+			gstore_get_social_link( 'facebook' ),
+			gstore_get_social_link( 'youtube' ),
+			gstore_get_telegram_link(),
+		)
+	);
+
+	if ( ! empty( $same_as ) ) {
+		$organization['sameAs'] = array_values( $same_as );
+	}
+
+	$faq_entities = array();
+	foreach ( gstore_get_sobre_nos_faq_items() as $item ) {
+		$faq_entities[] = array(
+			'@type'          => 'Question',
+			'name'           => wp_strip_all_tags( $item['question'] ),
+			'acceptedAnswer' => array(
+				'@type' => 'Answer',
+				'text'  => wp_strip_all_tags( $item['answer'] ),
+			),
+		);
+	}
+
+	$schema = array(
+		'@context' => 'https://schema.org',
+		'@graph'   => array(
+			$organization,
+			array(
+				'@type'      => 'FAQPage',
+				'@id'        => home_url( '/sobre-nos/#faq' ),
+				'url'        => home_url( '/sobre-nos/' ),
+				'mainEntity' => $faq_entities,
+			),
+		),
+	);
+
+	echo '<script type="application/ld+json">' . wp_json_encode( $schema, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES ) . '</script>' . "\n";
+}
+add_action( 'wp_head', 'gstore_sobre_nos_json_ld', 30 );
+
 // 5. Atualizar opções do banco de dados (executa apenas uma vez para garantir robustez)
 function gstore_force_woocommerce_image_options() {
 	// Executa apenas uma vez (ou quando necessário)
@@ -1343,7 +1558,8 @@ function gstore_defer_non_critical_css( $tag, $handle, $href, $media ) {
 		// CSS de páginas específicas
 		'gstore-my-account-css',
 		'gstore-como-comprar-arma-css',
-	'gstore-informativo-css',
+		'gstore-informativo-css',
+		'gstore-sobre-nos-css',
 		'gstore-notices-css',
 		
 		// CSS de layouts que não estão acima da dobra
@@ -1863,6 +2079,18 @@ function gstore_enqueue_styles() {
 			get_theme_file_uri( 'assets/css/informativo.css' ),
 			array( 'gstore-style' ),
 			$theme_version
+		);
+	}
+
+	// CSS da página Sobre nós
+	if ( is_page( 'sobre-nos' ) ) {
+		$sobre_nos_css_file = get_theme_file_path( 'assets/css/sobre-nos.css' );
+		$sobre_nos_css_version = file_exists( $sobre_nos_css_file ) ? (string) filemtime( $sobre_nos_css_file ) : $theme_version;
+		wp_enqueue_style(
+			'gstore-sobre-nos-css',
+			get_theme_file_uri( 'assets/css/sobre-nos.css' ),
+			array( 'gstore-style' ),
+			$sobre_nos_css_version
 		);
 	}
 
@@ -11617,6 +11845,14 @@ function gstore_get_required_pages() {
 			'description' => 'Central de atendimento com todos os canais de contato.',
 			'wc_option'   => null,
 		),
+		'sobre-nos' => array(
+			'title'       => 'Sobre nós',
+			'slug'        => 'sobre-nos',
+			'template'    => 'page-sobre-nos',
+			'content'     => '',
+			'description' => 'Página institucional com dados da empresa, compra legal, documentação, prazos e envio.',
+			'wc_option'   => null,
+		),
 		'como-comprar-arma' => array(
 			'title'       => 'Passos para Compra de Arma',
 			'slug'        => 'como-comprar-arma',
@@ -15020,10 +15256,13 @@ function gstore_process_store_info_placeholders( $content ) {
 		'{{store_name}}'          => gstore_get_store_name(),
 		'{{store_display_name}}'  => gstore_get_store_name( 'display' ),
 		'{{store_name_highlight}}' => gstore_get_store_name( 'highlight' ),
+		'{{store_slogan}}'        => gstore_store_info()->get_value( 'store.slogan', '' ),
 		'{{cnpj}}'                => gstore_get_cnpj(),
 		'{{founded_year}}'        => gstore_get_founded_year(),
 		
 		// Contact
+		'{{email}}'               => gstore_store_info()->get_value( 'contact.email', '' ),
+		'{{email_link}}'          => 'mailto:' . sanitize_email( gstore_store_info()->get_value( 'contact.email', '' ) ),
 		'{{phone}}'               => gstore_get_phone(),
 		'{{phone_raw}}'           => gstore_get_phone( 'raw' ),
 		'{{whatsapp}}'            => gstore_get_whatsapp(),

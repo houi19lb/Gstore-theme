@@ -81,12 +81,12 @@
             ],
             "institucional": [
                 {
-                    "label": "Institucional",
-                    "url": "#"
+                    "label": "Sobre nós",
+                    "url": "/sobre-nos/"
                 },
                 {
                     "label": "A empresa",
-                    "url": "#"
+                    "url": "/sobre-nos/#quem-somos"
                 },
                 {
                     "label": "Localização",

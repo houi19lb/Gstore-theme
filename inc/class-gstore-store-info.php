@@ -505,8 +505,8 @@ class GStore_Store_Info {
 						array( 'label' => 'Fale conosco', 'url' => '/atendimento/' ),
 					),
 					'institucional' => array(
-						array( 'label' => 'Institucional', 'url' => '#' ),
-						array( 'label' => 'A empresa', 'url' => '#' ),
+						array( 'label' => 'Sobre nós', 'url' => '/sobre-nos/' ),
+						array( 'label' => 'A empresa', 'url' => '/sobre-nos/#quem-somos' ),
 						array( 'label' => 'Localização', 'url' => '' ), // URL preenchida dinamicamente
 					),
 				),
