@@ -388,7 +388,7 @@ body:has(.Gstore-header-shell) {
 
 .Gstore-nav-shell {
 	background-color: var(--gstore-color-bg-darker, #1a1a1a);
-	border-bottom: 1px solid var(--gstore-color-white-10);
+	border-bottom: 0 !important;
 	border-top: 0 !important;
 }
 

@@ -7945,7 +7945,7 @@ main.Gstore-blog-single-shell .wp-block-group.is-layout-constrained:not(.Gstore-
    ======================================== */
 .Gstore-top-bar {
 	background-color: var(--gstore-color-bg-darker);
-	border-bottom: 1px solid var(--gstore-color-border);
+	border-bottom: 0;
 	font-size: var(--gstore-font-size-sm);
 	padding: 4px 0;
 }
@@ -8021,9 +8021,9 @@ main.Gstore-blog-single-shell .wp-block-group.is-layout-constrained:not(.Gstore-
 .Gstore-header {
 	background-color: var(--gstore-color-bg-dark);
 	padding: 6px 0;
-	border-bottom: 1px solid var(--gstore-color-border);
-	position: sticky;
-	top: 0;
+	border-bottom: 0;
+	position: static;
+	top: auto;
 	z-index: 100;
 }
 
@@ -8660,7 +8660,7 @@ main.Gstore-blog-single-shell .wp-block-group.is-layout-constrained:not(.Gstore-
    ======================================== */
 .Gstore-nav-shell {
 	background-color: var(--gstore-color-bg-darker);
-	border-bottom: 1px solid var(--gstore-color-border);
+	border-bottom: 0;
 }
 
 /* Pesquisa mobile - escondida no desktop */
