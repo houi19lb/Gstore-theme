@@ -114,7 +114,7 @@ main.Gstore-about-shell .wp-block-group.is-layout-constrained {
 	align-self: center;
 	justify-content: flex-start;
 	min-width: 0;
-	padding: clamp(22px, 3vw, 30px);
+	padding: clamp(18px, 2.4vw, 24px);
 	background: #ffffff;
 	border: 1px solid var(--gstore-color-border, #e5e7eb);
 	border-radius: 4px;
@@ -122,13 +122,17 @@ main.Gstore-about-shell .wp-block-group.is-layout-constrained {
 }
 
 .Gstore-about-trust__logo {
-	min-height: 0;
+	min-height: 128px;
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	padding: 8px 0 24px;
-	margin-bottom: 6px;
-	border-bottom: 1px solid var(--gstore-color-border, #e5e7eb);
+	padding: 26px;
+	margin-bottom: 18px;
+	background:
+		radial-gradient(circle at 18% 0%, rgba(255, 255, 255, 0.12), transparent 34%),
+		linear-gradient(135deg, var(--gstore-color-bg-dark, #0a0a0a), var(--gstore-color-bg-darker, #1a1a1a));
+	border: 1px solid var(--gstore-color-border-dark, #2a2a2a);
+	border-radius: 4px;
 }
 
 .Gstore-about-trust__logo img {
@@ -136,6 +140,15 @@ main.Gstore-about-shell .wp-block-group.is-layout-constrained {
 	max-height: 96px;
 	height: auto;
 	object-fit: contain;
+	filter: drop-shadow(0 8px 18px rgba(0, 0, 0, 0.28));
+}
+
+.Gstore-about-trust__logo .wp-block-site-logo,
+.Gstore-about-trust__logo .Gstore-about-logo,
+.Gstore-about-trust__logo a {
+	display: flex;
+	align-items: center;
+	justify-content: center;
 }
 
 .Gstore-about-trust__items {
