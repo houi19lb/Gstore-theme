@@ -497,12 +497,12 @@ class GStore_Store_Info {
 				),
 				'menu_links' => array(
 					'duvidas' => array(
-						array( 'label' => 'Dúvidas', 'url' => '/atendimento/' ),
-						array( 'label' => 'Formas de pagamento', 'url' => '/atendimento/' ),
-						array( 'label' => 'Entrega', 'url' => '/atendimento/' ),
-						array( 'label' => 'Troca e devolução', 'url' => '/atendimento/' ),
-						array( 'label' => 'Política de privacidade', 'url' => '#' ),
-						array( 'label' => 'Fale conosco', 'url' => '/atendimento/' ),
+						array( 'label' => 'Dúvidas', 'url' => '/sobre-nos/#faq' ),
+						array( 'label' => 'Formas de pagamento', 'url' => '/atendimento/#formas-de-pagamento' ),
+						array( 'label' => 'Entrega', 'url' => '/sobre-nos/#prazos-envio' ),
+						array( 'label' => 'Troca e devolução', 'url' => '/atendimento/#trocas-devolucoes' ),
+						array( 'label' => 'Política de privacidade', 'url' => '{{privacy_policy_url}}' ),
+						array( 'label' => 'Fale conosco', 'url' => '/atendimento/#canais-atendimento' ),
 					),
 					'institucional' => array(
 						array( 'label' => 'Sobre nós', 'url' => '/sobre-nos/' ),

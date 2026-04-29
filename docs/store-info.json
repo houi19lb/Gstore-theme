@@ -56,27 +56,27 @@
             "duvidas": [
                 {
                     "label": "Dúvidas",
-                    "url": "/atendimento/"
+                    "url": "/sobre-nos/#faq"
                 },
                 {
                     "label": "Formas de pagamento",
-                    "url": "/atendimento/"
+                    "url": "/atendimento/#formas-de-pagamento"
                 },
                 {
                     "label": "Entrega",
-                    "url": "/atendimento/"
+                    "url": "/sobre-nos/#prazos-envio"
                 },
                 {
                     "label": "Troca e devolução",
-                    "url": "/atendimento/"
+                    "url": "/atendimento/#trocas-devolucoes"
                 },
                 {
                     "label": "Política de privacidade",
-                    "url": "#"
+                    "url": "{{privacy_policy_url}}"
                 },
                 {
                     "label": "Fale conosco",
-                    "url": "/atendimento/"
+                    "url": "/atendimento/#canais-atendimento"
                 }
             ],
             "institucional": [
