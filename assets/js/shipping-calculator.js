@@ -18,6 +18,7 @@
 				quantity: 1,
 				ajaxUrl: '',
 				nonce: '',
+				context: '',
 				i18n: {}
 			}, options);
 
@@ -93,8 +94,43 @@
 			return '/wp-admin/admin-ajax.php';
 		}
 
+		resolveContext() {
+			const context = this.container.data('gstoreShippingContext') || this.container.attr('data-gstore-shipping-context') || this.options.context || '';
+			if (context) {
+				return String(context);
+			}
+			return $('body').hasClass('single-product') ? 'single_product' : '';
+		}
+
+		resolveProductId() {
+			const scopedProductId = parseInt(this.container.data('productId') || this.container.attr('data-product-id') || 0, 10);
+			if (scopedProductId > 0) {
+				return scopedProductId;
+			}
+
+			const productId = parseInt(this.options.productId || 0, 10);
+			return productId > 0 ? productId : 0;
+		}
+
+		resolveQuantity() {
+			const $scope = this.container.closest('.Gstore-single-product__summary-card, .summary, .product');
+			const $searchScope = $scope.length ? $scope : $(document);
+			const $quantityInput = $searchScope.find('form.cart input[name="quantity"], form.cart .quantity input').first();
+
+			if ($quantityInput.length) {
+				const qty = parseInt($quantityInput.val(), 10);
+				if (qty > 0) {
+					return qty;
+				}
+			}
+
+			const quantity = parseInt(this.options.quantity || 1, 10);
+			return quantity > 0 ? quantity : 1;
+		}
+
 		calculate() {
 			const cep = this.cepInput.val().trim();
+			const context = this.resolveContext();
 
 			// Valida CEP
 			if (!this.validateCep(cep)) {
@@ -114,18 +150,11 @@
 				action: 'gstore_calculate_shipping',
 				nonce: this.options.nonce,
 				postcode: cep.replace(/\D/g, ''),
-				product_id: this.options.productId || 0,
-				quantity: this.options.quantity || 1
+				product_id: this.resolveProductId(),
+				quantity: this.resolveQuantity(),
+				calculation_context: context,
+				isolated_product: context === 'single_product' ? 1 : 0
 			};
-
-			// Tenta obter quantidade do formulário de produto
-			const quantityInput = $('input[name="quantity"], .quantity input');
-			if (quantityInput.length) {
-				const qty = parseInt(quantityInput.val(), 10);
-				if (qty > 0) {
-					data.quantity = qty;
-				}
-			}
 
 			// Faz requisição AJAX
 			$.ajax({
@@ -245,7 +274,9 @@
 	function initProductPage() {
 		const $calculator = $('.gstore-shipping-calculator');
 		if ($calculator.length) {
-			new ShippingCalculator($calculator);
+			$calculator.each(function() {
+				new ShippingCalculator(this, { context: 'single_product' });
+			});
 		}
 	}
 
@@ -288,7 +319,9 @@
 		}
 
 		if ($calculator.length) {
-			new ShippingCalculator($calculator);
+			$calculator.each(function() {
+				new ShippingCalculator(this);
+			});
 		}
 
 		// Sincroniza CEP do checkout com o calculador
@@ -329,7 +362,9 @@
 	function initCart() {
 		const $calculator = $('.gstore-shipping-calculator');
 		if ($calculator.length) {
-			new ShippingCalculator($calculator);
+			$calculator.each(function() {
+				new ShippingCalculator(this);
+			});
 		}
 	}
 
@@ -356,8 +391,3 @@
 	});
 
 })(jQuery);
-
-
-
-
-

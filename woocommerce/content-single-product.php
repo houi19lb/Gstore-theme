@@ -1121,7 +1121,11 @@ $gstore_tab_next_cta_labels = array(
 						<?php endif; ?>
 
 						<!-- Entrega (calculador de frete) -->
-						<div class="shipping gstore-shipping-calculator">
+						<div
+							class="shipping gstore-shipping-calculator"
+							data-gstore-shipping-context="single_product"
+							data-product-id="<?php echo esc_attr( (string) $product_id ); ?>"
+						>
 							<strong><?php esc_html_e( 'Entrega', 'gstore' ); ?></strong>
 
 							<div class="shipping-row gstore-shipping-calculator__form">
