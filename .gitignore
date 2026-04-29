@@ -18,6 +18,8 @@ vendor/
 # Local backups / bundles
 GSTORE.zip
 GSTORE/
+temp_live*.html
+temp_header_live.css
 
 # Large exports (keep out of repo)
 woocommerce-products-categorias-pai-filho_COMMA(out).csv

@@ -1,11 +1,11 @@
 {
   "openapi": "3.1.0",
   "info": {
-    "title": "Armastore API",
+    "title": "Gstore API",
     "description": "",
     "version": "6.8.3",
     "contact": {
-      "name": "armastore",
+      "name": "gstore",
       "url": "http://localhost:10005",
       "email": "dev-email@wpengine.local"
     }

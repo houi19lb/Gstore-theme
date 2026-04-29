@@ -206,7 +206,7 @@ if ( ! function_exists( 'gstore_get_details_info_rows' ) ) :
 			array(
 				'icon'       => 'fa-circle-info',
 				'title'      => __( 'Resumo do produto', 'gstore' ),
-				'content'    => $short_description ? $short_description : __( 'Produto selecionado pela curadoria CAC Armas, com materiais premium e suporte dedicado em todas as etapas.', 'gstore' ),
+				'content'    => $short_description ? $short_description : __( 'Produto selecionado com materiais premium e suporte dedicado em todas as etapas.', 'gstore' ),
 				'allow_html' => (bool) $short_description,
 			),
 		);
@@ -351,7 +351,7 @@ if ( post_password_required() ) {
 */
 
 // Categoria do produto.
-$category_label = __( 'Linha destaque CAC Armas', 'gstore' );
+$category_label = __( 'Linha destaque', 'gstore' );
 $categories     = get_the_terms( gstore_get_product_id( $product ), 'product_cat' );
 
 if ( ! empty( $categories ) && ! is_wp_error( $categories ) ) {
@@ -525,7 +525,7 @@ if ( ! empty( $attribute_data ) && ! empty( $attribute_data[0]['value'] ) ) {
 
 $benefit_items = array(
 	__( 'Entrega rápida com rastreamento em tempo real.', 'gstore' ),
-	__( 'Garantia oficial CAC Armas com suporte humano.', 'gstore' ),
+	__( 'Garantia oficial com suporte humano.', 'gstore' ),
 	__( 'Parcelamento e pagamento instantâneo via PIX.', 'gstore' ),
 );
 

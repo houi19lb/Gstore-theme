@@ -422,25 +422,6 @@ class GStore_Store_Info {
 			$site_highlight = strtoupper( $site_highlight );
 		}
 
-		$store_address_1 = trim( (string) get_option( 'woocommerce_store_address', '' ) );
-		$store_address_2 = trim( (string) get_option( 'woocommerce_store_address_2', '' ) );
-		$street          = trim( implode( ', ', array_filter( array( $store_address_1, $store_address_2 ), 'strlen' ) ) );
-		$city            = trim( (string) get_option( 'woocommerce_store_city', '' ) );
-		$zipcode         = trim( (string) get_option( 'woocommerce_store_postcode', '' ) );
-		$country_state   = trim( (string) get_option( 'woocommerce_default_country', '' ) );
-		$country         = '';
-		$state           = '';
-		if ( false !== strpos( $country_state, ':' ) ) {
-			list( $country, $state ) = array_map( 'trim', explode( ':', $country_state, 2 ) );
-		} else {
-			$country = $country_state;
-		}
-
-		$maps_query = trim( implode( ', ', array_filter( array( $street, $city, $state, $zipcode, $country ), 'strlen' ) ) );
-		$maps_url   = '' !== $maps_query
-			? 'https://www.google.com/maps/search/?api=1&query=' . rawurlencode( $maps_query )
-			: '';
-
 		return array(
 			'store' => array(
 				'name'           => $site_name,
@@ -456,16 +437,16 @@ class GStore_Store_Info {
 				'whatsapp'        => '',
 				'whatsapp_display' => '',
 				'telegram'        => '',
-				'email'           => (string) get_option( 'admin_email', '' ),
+				'email'           => '',
 			),
 			'address' => array(
-				'street'       => $street,
+				'street'       => '',
 				'neighborhood' => '',
-				'city'         => $city,
-				'state'        => $state,
-				'zipcode'      => $zipcode,
-				'country'      => $country,
-				'maps_url'     => $maps_url,
+				'city'         => '',
+				'state'        => '',
+				'zipcode'      => '',
+				'country'      => '',
+				'maps_url'     => '',
 			),
 			'social' => array(
 				'instagram'      => '',

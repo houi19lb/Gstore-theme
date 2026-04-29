@@ -1,6 +1,6 @@
 /**
  * ==========================================
- * GSTORE FOOTER STYLES (CAC ARMAS)
+ * GSTORE FOOTER STYLES
  * ==========================================
  * Migrado do style.css para o sistema modular.
  *
@@ -10,7 +10,7 @@
  */
 
 /* ========================================
-   FOOTER CAC ARMAS
+   FOOTER GSTORE
    ======================================== */
 .armastore-footer {
 	background-color: #0f0f0f;
@@ -349,4 +349,3 @@
 		gap: 20px;
 	}
 }
-

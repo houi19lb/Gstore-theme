@@ -2007,7 +2007,7 @@ function gstore_enqueue_styles() {
 		$stylesheet_version
 	);
 
-	// Footer CAC Armas (migrado do style.css para módulo dedicado)
+	// Footer Gstore (migrado do style.css para módulo dedicado)
 	wp_enqueue_style(
 		'gstore-footer-css',
 		get_theme_file_uri( 'assets/css/layouts/footer.css' ),
@@ -5783,7 +5783,7 @@ function gstore_wrap_checkout_order_summary_block( $block_content, $block ) {
 			<?php echo $block_content; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
 		</div>
 
-		<div class="Gstore-order-summary-card__assurance-grid" aria-label="<?php esc_attr_e( 'Garantias CAC Armas', 'gstore' ); ?>">
+		<div class="Gstore-order-summary-card__assurance-grid" aria-label="<?php esc_attr_e( 'Garantias da loja', 'gstore' ); ?>">
 			<div class="Gstore-order-summary-card__assurance-card">
 				<i class="fa-solid fa-headset" aria-hidden="true"></i>
 				<div>
@@ -8274,7 +8274,7 @@ function gstore_banner_youtube_shortcode() {
 	}
 	
 	$banner_url = wp_get_attachment_url( $banner_id );
-	$banner_alt = esc_attr( get_option( 'gstore_banner_youtube_alt', 'Conheça o conteúdo da CAC Armas no YouTube' ) );
+	$banner_alt = esc_attr( get_option( 'gstore_banner_youtube_alt', 'Banner do YouTube' ) );
 	$banner_link = esc_url( get_option( 'gstore_banner_youtube_link', '' ) );
 
 	if ( empty( $banner_url ) ) {
@@ -8906,7 +8906,7 @@ function gstore_register_theme_settings() {
 	register_setting( 'gstore_settings', 'gstore_banner_youtube_alt', array(
 		'type' => 'string',
 		'sanitize_callback' => 'sanitize_text_field',
-		'default' => 'Conheça o conteúdo da CAC Armas no YouTube',
+		'default' => 'Banner do YouTube',
 	) );
 	register_setting( 'gstore_settings', 'gstore_banner_youtube_link', array(
 		'type' => 'string',
@@ -8923,7 +8923,7 @@ function gstore_register_theme_settings() {
 	register_setting( 'gstore_settings', 'gstore_logo_alt', array(
 		'type' => 'string',
 		'sanitize_callback' => 'sanitize_text_field',
-		'default' => 'Logo CAC Armas',
+		'default' => 'Logo da loja',
 	) );
 	
 	// Cor de Accent para Design Tokens
@@ -9007,7 +9007,7 @@ function gstore_render_settings_page() {
 						<label for="gstore_logo_id"><?php _e( 'Logo', 'gstore' ); ?></label>
 					</th>
 					<td>
-						<?php gstore_render_media_selector( 'gstore_logo_id', 'gstore_logo_alt', get_option( 'gstore_logo_id', 0 ), get_option( 'gstore_logo_alt', 'Logo CAC Armas' ) ); ?>
+						<?php gstore_render_media_selector( 'gstore_logo_id', 'gstore_logo_alt', get_option( 'gstore_logo_id', 0 ), get_option( 'gstore_logo_alt', 'Logo da loja' ) ); ?>
 					</td>
 				</tr>
 			</table>
@@ -9471,7 +9471,7 @@ function gstore_render_settings_page() {
 						<label for="gstore_banner_youtube_id"><?php _e( 'Banner YouTube', 'gstore' ); ?></label>
 					</th>
 					<td>
-						<?php gstore_render_media_selector( 'gstore_banner_youtube_id', 'gstore_banner_youtube_alt', get_option( 'gstore_banner_youtube_id', 0 ), get_option( 'gstore_banner_youtube_alt', 'Conheça o conteúdo da CAC Armas no YouTube' ) ); ?>
+						<?php gstore_render_media_selector( 'gstore_banner_youtube_id', 'gstore_banner_youtube_alt', get_option( 'gstore_banner_youtube_id', 0 ), get_option( 'gstore_banner_youtube_alt', 'Banner do YouTube' ) ); ?>
 					</td>
 				</tr>
 				<tr>
@@ -10112,7 +10112,7 @@ function gstore_custom_site_logo_block( $block_content, $block ) {
 	
 	if ( $logo_id > 0 ) {
 		$logo_url = gstore_get_image_url( $logo_id, 'full' );
-		$logo_alt = get_option( 'gstore_logo_alt', 'Logo CAC Armas' );
+		$logo_alt = get_option( 'gstore_logo_alt', 'Logo da loja' );
 		
 		// Valida se a URL é válida
 		if ( $logo_url && filter_var( $logo_url, FILTER_VALIDATE_URL ) ) {
@@ -10169,7 +10169,7 @@ function gstore_custom_footer_logo_block( $block_content, $block ) {
 	
 	if ( $logo_id > 0 ) {
 		$logo_url = gstore_get_image_url( $logo_id, 'full' );
-		$logo_alt = get_option( 'gstore_logo_alt', 'Logo CAC Armas' );
+		$logo_alt = get_option( 'gstore_logo_alt', 'Logo da loja' );
 		
 		// Valida se a URL é válida
 		if ( $logo_url && filter_var( $logo_url, FILTER_VALIDATE_URL ) ) {
@@ -10226,7 +10226,7 @@ function gstore_custom_checkout_header_logo_block( $block_content, $block ) {
 	
 	if ( $logo_id > 0 ) {
 		$logo_url = gstore_get_image_url( $logo_id, 'full' );
-		$logo_alt = get_option( 'gstore_logo_alt', 'Logo CAC Armas' );
+		$logo_alt = get_option( 'gstore_logo_alt', 'Logo da loja' );
 		
 		// Valida se a URL é válida
 		if ( $logo_url && filter_var( $logo_url, FILTER_VALIDATE_URL ) ) {
@@ -10291,7 +10291,7 @@ function gstore_replace_header_logo_html( $content ) {
 	}
 	
 	$logo_url = gstore_get_image_url( $logo_id, 'full' );
-	$logo_alt = get_option( 'gstore_logo_alt', 'Logo CAC Armas' );
+	$logo_alt = get_option( 'gstore_logo_alt', 'Logo da loja' );
 	
 	// Valida se a URL é válida
 	if ( ! $logo_url || ! filter_var( $logo_url, FILTER_VALIDATE_URL ) ) {
@@ -10370,7 +10370,7 @@ function gstore_replace_footer_logo_html( $content ) {
 	}
 	
 	$logo_url = gstore_get_image_url( $logo_id, 'full' );
-	$logo_alt = get_option( 'gstore_logo_alt', 'Logo CAC Armas' );
+	$logo_alt = get_option( 'gstore_logo_alt', 'Logo da loja' );
 	
 	// Valida se a URL é válida
 	if ( ! $logo_url || ! filter_var( $logo_url, FILTER_VALIDATE_URL ) ) {
@@ -10402,12 +10402,6 @@ function gstore_replace_footer_logo_html( $content ) {
 			// Substitui o bloco site-logo se existir
 			$pattern1 = '/<div\s+[^>]*class="[^"]*wp-block-site-logo[^"]*footer-logo[^"]*"[^>]*>.*?<\/div>/is';
 			$footer_column_content_new = preg_replace( $pattern1, $logo_html, $footer_column_content, 1 );
-			
-			// Se não encontrou o bloco site-logo, tenta substituir um h3 com texto "CAC" no início
-			if ( $footer_column_content_new === $footer_column_content ) {
-				$pattern2 = '/<h3[^>]*>CAC\s*<span[^>]*>.*?<\/span><\/h3>/is';
-				$footer_column_content_new = preg_replace( $pattern2, $logo_html, $footer_column_content, 1 );
-			}
 			
 			// Se houve substituição, atualiza o conteúdo
 			if ( $footer_column_content_new !== $footer_column_content ) {
@@ -10539,7 +10533,7 @@ function gstore_process_image_placeholders( $content ) {
 	
 	// Processa hero slides com otimização (srcset + priorização)
 	if ( $hero_slide_1_id > 0 ) {
-		$hero_slide_1_alt = esc_attr( get_option( 'gstore_hero_slide_1_alt', 'Campanha Excedente Black Week CAC Armas' ) );
+		$hero_slide_1_alt = esc_attr( get_option( 'gstore_hero_slide_1_alt', 'Banner principal da loja' ) );
 		$hero_slide_1_tag = gstore_get_hero_image_tag( $hero_slide_1_id, $hero_slide_1_alt, true );
 		
 		// Substitui tag img completa que contém o placeholder (flexível com qualquer ordem de atributos)
@@ -10558,7 +10552,7 @@ function gstore_process_image_placeholders( $content ) {
 	}
 	
 	if ( $hero_slide_2_id > 0 ) {
-		$hero_slide_2_alt = esc_attr( get_option( 'gstore_hero_slide_2_alt', 'Produtos da Black Week com a mesma condição CAC Armas' ) );
+		$hero_slide_2_alt = esc_attr( get_option( 'gstore_hero_slide_2_alt', 'Banner promocional da loja' ) );
 		$hero_slide_2_tag = gstore_get_hero_image_tag( $hero_slide_2_id, $hero_slide_2_alt, false );
 		
 		// Substitui tag img completa que contém o placeholder (flexível com qualquer ordem de atributos)
@@ -10581,7 +10575,7 @@ function gstore_process_image_placeholders( $content ) {
 		$banner_youtube_url = wp_get_attachment_url( $banner_youtube_id );
 		$cache_v = absint( get_option( 'gstore_banner_cache_version', 0 ) );
 		$banner_youtube_url = add_query_arg( 'v', $cache_v, $banner_youtube_url );
-		$banner_youtube_alt = esc_attr( get_option( 'gstore_banner_youtube_alt', 'Conheça o conteúdo da CAC Armas no YouTube' ) );
+		$banner_youtube_alt = esc_attr( get_option( 'gstore_banner_youtube_alt', 'Banner do YouTube' ) );
 		$banner_youtube_link = esc_url( get_option( 'gstore_banner_youtube_link', '' ) );
 
 		$img_tag = sprintf(
@@ -10612,9 +10606,9 @@ function gstore_process_image_placeholders( $content ) {
 	}
 	
 	// Placeholders para textos alternativos (para uso em outros contextos)
-	$content = str_replace( '{{gstore_hero_slide_1_alt}}', esc_attr( get_option( 'gstore_hero_slide_1_alt', 'Campanha Excedente Black Week CAC Armas' ) ), $content );
-	$content = str_replace( '{{gstore_hero_slide_2_alt}}', esc_attr( get_option( 'gstore_hero_slide_2_alt', 'Produtos da Black Week com a mesma condição CAC Armas' ) ), $content );
-	$content = str_replace( '{{gstore_banner_youtube_alt}}', esc_attr( get_option( 'gstore_banner_youtube_alt', 'Conheça o conteúdo da CAC Armas no YouTube' ) ), $content );
+	$content = str_replace( '{{gstore_hero_slide_1_alt}}', esc_attr( get_option( 'gstore_hero_slide_1_alt', 'Banner principal da loja' ) ), $content );
+	$content = str_replace( '{{gstore_hero_slide_2_alt}}', esc_attr( get_option( 'gstore_hero_slide_2_alt', 'Banner promocional da loja' ) ), $content );
+	$content = str_replace( '{{gstore_banner_youtube_alt}}', esc_attr( get_option( 'gstore_banner_youtube_alt', 'Banner do YouTube' ) ), $content );
 	
 	// Padrão: {{gstore_image:ID:size}} para URL apenas
 	$pattern = '/\{\{gstore_image:(\d+)(?::([^}]+))?\}\}/';
@@ -14631,51 +14625,6 @@ function gstore_get_current_site_name_parts() {
 }
 
 /**
- * Detecta valores legados de nome da loja que vieram hardcoded no tema.
- *
- * @param string $value Valor salvo.
- * @return bool
- */
-function gstore_is_legacy_store_name_value( $value ) {
-	return in_array( trim( (string) $value ), array( 'CAC ARMAS', 'CAC Armas', 'ARMAS' ), true );
-}
-
-/**
- * Indica se os defaults legados da CAC ARMAS devem ser ignorados nesta loja.
- *
- * @return bool
- */
-function gstore_should_ignore_legacy_store_defaults() {
-	$site_name_parts = gstore_get_current_site_name_parts();
-
-	return ! in_array( $site_name_parts['name'], array( 'CAC ARMAS', 'CAC Armas' ), true );
-}
-
-/**
- * Obtém fallback de endereço a partir das configurações atuais do WooCommerce.
- *
- * @return array{street: string, neighborhood: string, city: string, state: string, zipcode: string}
- */
-function gstore_get_woocommerce_store_address_parts() {
-	$country_state = trim( (string) get_option( 'woocommerce_default_country', '' ) );
-	$state         = '';
-	if ( false !== strpos( $country_state, ':' ) ) {
-		list( , $state ) = array_map( 'trim', explode( ':', $country_state, 2 ) );
-	}
-
-	return array(
-		'street'       => trim( implode( ', ', array_filter( array(
-			trim( (string) get_option( 'woocommerce_store_address', '' ) ),
-			trim( (string) get_option( 'woocommerce_store_address_2', '' ) ),
-		), 'strlen' ) ) ),
-		'neighborhood' => '',
-		'city'         => trim( (string) get_option( 'woocommerce_store_city', '' ) ),
-		'state'        => $state,
-		'zipcode'      => trim( (string) get_option( 'woocommerce_store_postcode', '' ) ),
-	);
-}
-
-/**
  * Obtém o nome da loja.
  *
  * @param string $format 'name', 'display' ou 'highlight'.
@@ -14699,7 +14648,7 @@ function gstore_get_store_name( $format = 'name' ) {
 	}
 
 	$value = trim( (string) $store_info->get_value( $store_info_key, '' ) );
-	if ( '' === $value || gstore_is_legacy_store_name_value( $value ) ) {
+	if ( '' === $value ) {
 		return $site_name_parts[ $fallback_key ];
 	}
 
@@ -14712,40 +14661,23 @@ function gstore_get_store_name( $format = 'name' ) {
  * @return string
  */
 function gstore_get_cnpj() {
-	$cnpj = trim( (string) gstore_store_info()->get_value( 'store.cnpj', '' ) );
-	if ( gstore_should_ignore_legacy_store_defaults() && '41.132.692/0001-09' === $cnpj ) {
-		return '';
-	}
-
-	return $cnpj;
+	return trim( (string) gstore_store_info()->get_value( 'store.cnpj', '' ) );
 }
 
 /**
  * Obtém o número do WhatsApp.
  *
- * @param string $format 'raw' (556296635633) ou 'display' (+55 62 9663-5633).
+ * @param string $format 'raw' ou 'display'.
  * @return string
  */
 function gstore_get_whatsapp( $format = 'raw' ) {
 	$store_info = gstore_store_info();
 
-	$legacy_display = '+55 62 9663-5633';
-	$legacy_raw     = '556296635633';
 	if ( 'display' === $format ) {
-		$value = trim( (string) $store_info->get_value( 'contact.whatsapp_display', '' ) );
-		if ( gstore_should_ignore_legacy_store_defaults() && $legacy_display === $value ) {
-			return '';
-		}
-
-		return $value;
+		return trim( (string) $store_info->get_value( 'contact.whatsapp_display', '' ) );
 	}
 
-	$value = trim( (string) $store_info->get_value( 'contact.whatsapp', '' ) );
-	if ( gstore_should_ignore_legacy_store_defaults() && $legacy_raw === $value ) {
-		return '';
-	}
-
-	return $value;
+	return trim( (string) $store_info->get_value( 'contact.whatsapp', '' ) );
 }
 
 /**
@@ -14756,6 +14688,10 @@ function gstore_get_whatsapp( $format = 'raw' ) {
  */
 function gstore_get_whatsapp_link( $message = '' ) {
 	$whatsapp = gstore_get_whatsapp( 'raw' );
+	if ( empty( $whatsapp ) ) {
+		return '';
+	}
+
 	$url = 'https://wa.me/' . $whatsapp;
 	
 	if ( ! empty( $message ) ) {
@@ -14775,20 +14711,10 @@ function gstore_get_phone( $format = 'display' ) {
 	$store_info = gstore_store_info();
 
 	if ( 'raw' === $format ) {
-		$value = trim( (string) $store_info->get_value( 'contact.phone_raw', '' ) );
-		if ( gstore_should_ignore_legacy_store_defaults() && '556296635633' === $value ) {
-			return '';
-		}
-
-		return $value;
+		return trim( (string) $store_info->get_value( 'contact.phone_raw', '' ) );
 	}
 
-	$value = trim( (string) $store_info->get_value( 'contact.phone', '' ) );
-	if ( gstore_should_ignore_legacy_store_defaults() && '+55 62 9663-5633' === $value ) {
-		return '';
-	}
-
-	return $value;
+	return trim( (string) $store_info->get_value( 'contact.phone', '' ) );
 }
 
 /**
@@ -14882,42 +14808,40 @@ function gstore_get_address( $format = 'full' ) {
 	if ( ! is_array( $address ) ) {
 		return '';
 	}
-
-	if ( gstore_should_ignore_legacy_store_defaults() ) {
-		$is_legacy_address = 'Avenida Transbrasiliana, 368' === ( $address['street'] ?? '' )
-			|| 'Parque Amazônia' === ( $address['neighborhood'] ?? '' )
-			|| 'Goiânia' === ( $address['city'] ?? '' )
-			|| '74.835-300' === ( $address['zipcode'] ?? '' );
-
-		if ( $is_legacy_address ) {
-			$address = array_merge( $address, gstore_get_woocommerce_store_address_parts() );
-		}
-	}
 	
 	switch ( $format ) {
 		case 'street':
-			return $address['street'] ?? '';
+			return trim( (string) ( $address['street'] ?? '' ) );
 		case 'city_state':
-			return sprintf( '%s - %s', $address['city'] ?? '', $address['state'] ?? '' );
+			return implode( ' - ', array_filter( array(
+				trim( (string) ( $address['city'] ?? '' ) ),
+				trim( (string) ( $address['state'] ?? '' ) ),
+			), 'strlen' ) );
 		case 'short':
-			return sprintf(
-				'%s - %s - CEP: %s - %s - %s',
-				$address['street'] ?? '',
-				$address['neighborhood'] ?? '',
-				$address['zipcode'] ?? '',
-				$address['city'] ?? '',
-				$address['state'] ?? ''
-			);
+			$city_state = implode( ' - ', array_filter( array(
+				trim( (string) ( $address['city'] ?? '' ) ),
+				trim( (string) ( $address['state'] ?? '' ) ),
+			), 'strlen' ) );
+
+			return implode( ' - ', array_filter( array(
+				trim( (string) ( $address['street'] ?? '' ) ),
+				trim( (string) ( $address['neighborhood'] ?? '' ) ),
+				! empty( $address['zipcode'] ) ? 'CEP: ' . trim( (string) $address['zipcode'] ) : '',
+				$city_state,
+			), 'strlen' ) );
 		case 'full':
 		default:
-			return sprintf(
-				"%s - %s\nCEP: %s - %s - %s",
-				$address['street'] ?? '',
-				$address['neighborhood'] ?? '',
-				$address['zipcode'] ?? '',
-				$address['city'] ?? '',
-				$address['state'] ?? ''
-			);
+			$line_1 = implode( ' - ', array_filter( array(
+				trim( (string) ( $address['street'] ?? '' ) ),
+				trim( (string) ( $address['neighborhood'] ?? '' ) ),
+			), 'strlen' ) );
+			$line_2 = implode( ' - ', array_filter( array(
+				! empty( $address['zipcode'] ) ? 'CEP: ' . trim( (string) $address['zipcode'] ) : '',
+				trim( (string) ( $address['city'] ?? '' ) ),
+				trim( (string) ( $address['state'] ?? '' ) ),
+			), 'strlen' ) );
+
+			return implode( "\n", array_filter( array( $line_1, $line_2 ), 'strlen' ) );
 	}
 }
 
@@ -14969,6 +14893,46 @@ function gstore_get_footer_info( $key = '' ) {
 }
 
 /**
+ * Obtém a linha principal de contato do rodapé sem separadores vazios.
+ *
+ * @return string
+ */
+function gstore_get_footer_contact_line() {
+	return implode( ' | ', array_filter( array(
+		trim( (string) gstore_get_store_name() ),
+		trim( (string) gstore_get_whatsapp( 'display' ) ),
+	), 'strlen' ) );
+}
+
+/**
+ * Obtém a linha de horário do rodapé somente quando houver horário configurado.
+ *
+ * @return string
+ */
+function gstore_get_footer_business_hours_line() {
+	$business_hours = trim( (string) gstore_get_business_hours() );
+
+	return '' !== $business_hours ? 'Horário de atendimento: ' . $business_hours : '';
+}
+
+/**
+ * Obtém a linha legal do rodapé sem rótulos vazios.
+ *
+ * @return string
+ */
+function gstore_get_footer_legal_line() {
+	$store_name = trim( (string) gstore_get_store_name() );
+	$cnpj       = trim( (string) gstore_get_cnpj() );
+	$address    = trim( (string) gstore_get_address( 'short' ) );
+
+	return implode( ' | ', array_filter( array(
+		$store_name,
+		'' !== $cnpj ? 'CNPJ: ' . $cnpj : '',
+		$address,
+	), 'strlen' ) );
+}
+
+/**
  * Obtém o texto de copyright com ano atual.
  *
  * @return string
@@ -14983,7 +14947,7 @@ function gstore_get_copyright() {
 		$template = preg_replace( '/20\d{2}/', '{year}', $template, 1 );
 	}
 	if ( false === strpos( $template, '{store_name}' ) ) {
-		$template = preg_replace( '/CAC\s*ARMAS|CAC\s*Armas|ARMA\s*STORE|Armastore/i', '{store_name}', $template, 1 );
+		$template = 'Copyright © {year} {store_name}. Todos os direitos reservados.';
 	}
 	if ( false === strpos( $template, '{year}' ) || false === strpos( $template, '{store_name}' ) ) {
 		$template = 'Copyright © {year} {store_name}. Todos os direitos reservados.';
@@ -15249,6 +15213,10 @@ function gstore_process_store_info_placeholders( $content ) {
 	if ( empty( $contact_primary_link ) ) {
 		$contact_primary_link = gstore_get_whatsapp_link();
 	}
+	$email      = trim( (string) gstore_store_info()->get_value( 'contact.email', '' ) );
+	$phone_raw  = trim( (string) gstore_get_phone( 'raw' ) );
+	$email_link = '' !== $email ? 'mailto:' . sanitize_email( $email ) : '';
+	$phone_link = '' !== $phone_raw ? 'tel:+' . preg_replace( '/\D/', '', $phone_raw ) : '';
 	
 	// Lista de placeholders e seus valores
 	$placeholders = array(
@@ -15261,8 +15229,8 @@ function gstore_process_store_info_placeholders( $content ) {
 		'{{founded_year}}'        => gstore_get_founded_year(),
 		
 		// Contact
-		'{{email}}'               => gstore_store_info()->get_value( 'contact.email', '' ),
-		'{{email_link}}'          => 'mailto:' . sanitize_email( gstore_store_info()->get_value( 'contact.email', '' ) ),
+		'{{email}}'               => $email,
+		'{{email_link}}'          => $email_link,
 		'{{phone}}'               => gstore_get_phone(),
 		'{{phone_raw}}'           => gstore_get_phone( 'raw' ),
 		'{{whatsapp}}'            => gstore_get_whatsapp(),
@@ -15278,7 +15246,7 @@ function gstore_process_store_info_placeholders( $content ) {
 		'{{instagram_label}}' => gstore_store_info()->get_value( 'contact.instagram_label', 'Instagram' ),
 		
 		// Phone link (tel:)
-		'{{phone_link}}'      => 'tel:+' . preg_replace( '/\D/', '', gstore_get_phone( 'raw' ) ),
+		'{{phone_link}}'      => $phone_link,
 		
 		// Contact primary link (header/footer): usa o valor do JSON ou fallback para whatsapp_link
 		'{{contact_primary_link}}' => $contact_primary_link,
@@ -15306,6 +15274,9 @@ function gstore_process_store_info_placeholders( $content ) {
 		
 		// Footer
 		'{{copyright}}'           => gstore_get_copyright(),
+		'{{footer_contact_line}}' => gstore_get_footer_contact_line(),
+		'{{footer_business_hours_line}}' => gstore_get_footer_business_hours_line(),
+		'{{footer_legal_line}}'   => gstore_get_footer_legal_line(),
 		
 		// Meta
 		'{{meta_description}}'    => gstore_get_meta( 'description' ),
@@ -15327,6 +15298,10 @@ function gstore_process_store_info_placeholders( $content ) {
 	
 	// Substitui os placeholders
 	$content = str_replace( array_keys( $placeholders ), array_values( $placeholders ), $content );
+	$content = preg_replace( '/<a\b(?=[^>]*class="[^"]*\bGstore-top-bar__link\b[^"]*")[^>]*href=""[^>]*>.*?<\/a>\s*/is', '', $content );
+	$content = preg_replace( '/<div\s+class="contact-item">\s*<i\b[^>]*><\/i>\s*<a\b[^>]*href=""[^>]*>.*?<\/a>\s*<\/div>\s*/is', '', $content );
+	$content = preg_replace( '/<div\s+class="contact-item">\s*<i\b[^>]*><\/i>\s*<\/div>\s*/is', '', $content );
+	$content = preg_replace( '/<a\b[^>]*href=""[^>]*>\s*<i\b[^>]*fa-brands[^>]*><\/i>\s*<\/a>\s*/is', '', $content );
 	
 	return $content;
 }

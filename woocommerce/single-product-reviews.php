@@ -282,7 +282,7 @@ $load_more_nonce       = wp_create_nonce( 'gstore_load_reviews_' . $product_id )
 						echo $form_markup; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 						?>
 						<p class="Gstore-review-form__disclaimer">
-							<?php esc_html_e( 'A CAC Armas se reserva ao direito de moderar comentários que violem a legislação vigente ou incentivem o uso irresponsável de armas e munições.', 'gstore' ); ?>
+							<?php esc_html_e( 'A loja se reserva ao direito de moderar comentários que violem a legislação vigente ou incentivem o uso irresponsável de armas e munições.', 'gstore' ); ?>
 						</p>
 					</div>
 				<?php else : ?>
@@ -295,4 +295,3 @@ $load_more_nonce       = wp_create_nonce( 'gstore_load_reviews_' . $product_id )
 		</article>
 	</div>
 </section>
-
