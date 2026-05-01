@@ -41,8 +41,7 @@ class Gstore_Debug_Logger {
 		
 		$this->log_file = $log_dir . '/debug.log';
 		
-		// Registra hooks
-		add_action( 'admin_menu', array( $this, 'add_admin_menu' ) );
+		// Registra hooks. A tela "Debug Logs" não é mais exibida no menu.
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_admin_scripts' ) );
 		add_action( 'wp_ajax_gstore_get_debug_logs', array( $this, 'ajax_get_logs' ) );
 		add_action( 'wp_ajax_gstore_clear_debug_logs', array( $this, 'ajax_clear_logs' ) );
@@ -68,14 +67,7 @@ class Gstore_Debug_Logger {
 	 * Adiciona menu no admin.
 	 */
 	public function add_admin_menu() {
-		add_submenu_page(
-			'gstore-setup',
-			__( 'Debug Logs', 'gstore' ),
-			__( 'Debug Logs', 'gstore' ),
-			'manage_options',
-			'gstore-debug-logs',
-			array( $this, 'render_admin_page' )
-		);
+		return;
 	}
 
 	/**
