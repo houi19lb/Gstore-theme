@@ -8822,18 +8822,13 @@ add_filter( 'render_block', 'gstore_remove_br_from_banner_figure', 20 );
  */
 
 /**
- * Adiciona página de configurações do tema no menu do admin.
+ * Compatibilidade: a tela administrativa da Vitrine foi migrada para o plugin.
  */
 function gstore_add_theme_settings_page() {
-	add_theme_page(
-		__( 'Configurações do Tema Gstore', 'gstore' ),
-		__( 'Configurações Gstore', 'gstore' ),
-		'manage_woocommerce',
-		'gstore-settings',
-		'gstore_render_settings_page'
-	);
+	// Tela migrada para o plugin em Loja -> Vitrine.
 }
-add_action( 'admin_menu', 'gstore_add_theme_settings_page' );
+// A tela administrativa da Vitrine agora e registrada pelo plugin em Loja -> Vitrine.
+// Mantemos a funcao e as opcoes abaixo como compatibilidade para o frontend do tema.
 
 /**
  * Define o capability necessário para salvar/alterar opções do grupo gstore_settings via options.php.
@@ -8981,6 +8976,11 @@ add_action( 'admin_init', function() {
 function gstore_render_settings_page() {
 	if ( ! current_user_can( 'manage_woocommerce' ) ) {
 		return;
+	}
+
+	if ( is_admin() ) {
+		wp_safe_redirect( admin_url( 'admin.php?page=gstore-vitrine' ) );
+		exit;
 	}
 	
 	// Verifica se o formulário foi submetido
