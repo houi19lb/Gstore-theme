@@ -11990,6 +11990,14 @@ function gstore_render_design_tokens_page() {
 						</td>
 					</tr>
 				</table>
+
+				<p class="submit gstore-accent-actions">
+					<button type="submit" class="button button-primary button-hero" id="gstore-save-accent-color">
+						<?php echo esc_html( __( 'Salvar Cor e Atualizar Tokens', 'gstore' ) ); ?>
+					</button>
+					<span class="spinner" id="gstore-accent-color-spinner" style="float: none; margin-left: 10px;"></span>
+				</p>
+				<div id="gstore-accent-color-message" style="margin-top: 10px;"></div>
 				
 				<!-- Preview dos Tokens Derivados -->
 				<div class="gstore-derived-tokens-preview" style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #ddd;">
@@ -12012,14 +12020,6 @@ function gstore_render_design_tokens_page() {
 						<?php endforeach; ?>
 					</div>
 				</div>
-				
-				<p class="submit">
-					<button type="submit" class="button button-primary" id="gstore-save-accent-color">
-						<?php echo esc_html( __( 'Salvar Cor e Atualizar Tokens', 'gstore' ) ); ?>
-					</button>
-					<span class="spinner" id="gstore-accent-color-spinner" style="float: none; margin-left: 10px;"></span>
-				</p>
-				<div id="gstore-accent-color-message" style="margin-top: 10px;"></div>
 			</form>
 		</div>
 		
@@ -12090,6 +12090,22 @@ function gstore_render_design_tokens_page() {
 			font-size: 12px;
 			color: #646970;
 			margin-top: 5px;
+		}
+		.gstore-accent-actions {
+			display: flex;
+			align-items: center;
+			gap: 10px;
+			margin: 18px 0 0;
+			padding: 14px 0 0;
+			border-top: 1px solid #f0f0f1;
+		}
+		.gstore-accent-actions .button {
+			display: inline-flex !important;
+			align-items: center;
+			justify-content: center;
+			min-height: 40px;
+			visibility: visible !important;
+			opacity: 1 !important;
 		}
 		.gstore-token-copy-message {
 			position: fixed;
