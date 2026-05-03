@@ -238,6 +238,14 @@
 	gap: 20px;
 }
 
+.footer-column .payment-security {
+	display: block;
+	border-top: 0;
+	padding-top: 0;
+	margin-top: 20px;
+	gap: 0;
+}
+
 .payment-methods img,
 .security-badges img {
 	height: 24px;
@@ -269,6 +277,58 @@
 	font-size: var(--gstore-font-size-xs);
 	color: #666;
 	margin-top: 5px;
+}
+
+.footer-discovery {
+	display: flex;
+	align-items: flex-start;
+	gap: 16px;
+	border-top: 1px solid #222;
+	border-bottom: 1px solid #222;
+	margin-top: 32px;
+	padding: 22px 0;
+	color: #bdbdbd;
+}
+
+.footer-discovery__icon {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	flex: 0 0 32px;
+	width: 32px;
+	height: 32px;
+	border: 1px solid var(--gstore-color-accent, #ff5c00);
+	border-radius: 50%;
+	color: var(--gstore-color-accent, #ff5c00);
+	font-size: var(--gstore-font-size-sm);
+}
+
+.footer-discovery__content h3 {
+	margin: 0 0 7px;
+	color: #a8a8a8;
+	font-size: var(--gstore-font-size-xs);
+	font-weight: 700;
+	line-height: 1.2;
+	text-transform: uppercase;
+	letter-spacing: 0;
+}
+
+.footer-discovery__content p {
+	max-width: 1120px;
+	margin: 0;
+	color: #d4d4d4;
+	font-size: var(--gstore-font-size-xs);
+	line-height: 1.55;
+}
+
+.footer-discovery__content a {
+	color: var(--gstore-color-accent, #ff5c00);
+	font-weight: 600;
+	text-decoration: none;
+}
+
+.footer-discovery__content a:hover {
+	text-decoration: underline;
 }
 
 .footer-bottom {
@@ -347,5 +407,17 @@
 	.payment-security {
 		flex-direction: column;
 		gap: 20px;
+	}
+
+	.footer-discovery {
+		gap: 12px;
+		margin-top: 24px;
+		padding: 18px 0;
+	}
+
+	.footer-discovery__icon {
+		flex-basis: 30px;
+		width: 30px;
+		height: 30px;
 	}
 }

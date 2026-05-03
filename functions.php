@@ -14958,6 +14958,368 @@ function gstore_get_footer_legal_line() {
 }
 
 /**
+ * Normaliza textos curtos usados no ranking de categorias e marcas do footer.
+ *
+ * @param string $value Texto a normalizar.
+ * @return string
+ */
+function gstore_normalize_footer_discovery_text( $value ) {
+	$value = wp_strip_all_tags( (string) $value );
+
+	if ( function_exists( 'remove_accents' ) ) {
+		$value = remove_accents( $value );
+	}
+
+	if ( function_exists( 'mb_strtolower' ) ) {
+		return mb_strtolower( $value, 'UTF-8' );
+	}
+
+	return strtolower( $value );
+}
+
+/**
+ * Lista de palavras que indicam categorias comercialmente fortes no footer.
+ *
+ * @return array
+ */
+function gstore_get_footer_category_keyword_weights() {
+	$weights = array(
+		'fuzil'       => 62,
+		'fuzis'       => 62,
+		'pistola'     => 58,
+		'pistolas'    => 58,
+		'carabina'    => 54,
+		'carabinas'   => 54,
+		'pcp'         => 48,
+		'airsoft'     => 46,
+		'arma'        => 40,
+		'armas'       => 40,
+		'municao'     => 38,
+		'municoes'    => 38,
+		'luneta'      => 36,
+		'lunetas'     => 36,
+		'pressao'     => 34,
+		'chumbinho'   => 32,
+		'chumbinhos'  => 32,
+		'chumbo'      => 30,
+		'co2'         => 30,
+		'coldre'      => 28,
+		'coldres'     => 28,
+		'carregador'  => 26,
+		'carregadores' => 26,
+		'tatico'      => 24,
+		'tatica'      => 24,
+		'militar'     => 24,
+		'militares'   => 24,
+		'acessorio'   => 22,
+		'acessorios'  => 22,
+		'capa'        => 18,
+		'capas'       => 18,
+		'case'        => 18,
+		'cases'       => 18,
+	);
+
+	return apply_filters( 'gstore_footer_category_keyword_weights', $weights );
+}
+
+/**
+ * Lista de marcas que recebem reforço quando existirem como termos no catálogo.
+ *
+ * @return array
+ */
+function gstore_get_footer_brand_keyword_weights() {
+	$weights = array(
+		'rossi'   => 34,
+		'cbc'     => 34,
+		'hatsan'  => 32,
+		'artemis' => 30,
+		'umarex'  => 30,
+		'gamo'    => 30,
+		'beeman'  => 28,
+		'qgk'     => 28,
+		'taurus'  => 26,
+		'beretta' => 24,
+		'glock'   => 24,
+		'cz'      => 22,
+		'ruger'   => 22,
+		'walther' => 22,
+	);
+
+	return apply_filters( 'gstore_footer_brand_keyword_weights', $weights );
+}
+
+/**
+ * Detecta taxonomias de marcas usadas pelo WooCommerce ou plugins de marca.
+ *
+ * @return array
+ */
+function gstore_get_footer_brand_taxonomies() {
+	$candidates = array(
+		'product_brand',
+		'product_brands',
+		'pwb-brand',
+		'yith_product_brand',
+		'berocket_brand',
+		'pa_marca',
+		'pa_marcas',
+		'pa_brand',
+		'pa_fabricante',
+		'pa_manufacturer',
+	);
+
+	if ( function_exists( 'wc_get_attribute_taxonomies' ) ) {
+		$attributes = wc_get_attribute_taxonomies();
+
+		if ( is_array( $attributes ) ) {
+			foreach ( $attributes as $attribute ) {
+				$name  = isset( $attribute->attribute_name ) ? (string) $attribute->attribute_name : '';
+				$label = isset( $attribute->attribute_label ) ? (string) $attribute->attribute_label : '';
+
+				if ( '' === $name ) {
+					continue;
+				}
+
+				$haystack = gstore_normalize_footer_discovery_text( $name . ' ' . $label );
+				if ( false === strpos( $haystack, 'marca' ) && false === strpos( $haystack, 'brand' ) && false === strpos( $haystack, 'fabricante' ) && false === strpos( $haystack, 'manufacturer' ) ) {
+					continue;
+				}
+
+				$candidates[] = function_exists( 'wc_attribute_taxonomy_name' ) ? wc_attribute_taxonomy_name( $name ) : 'pa_' . $name;
+			}
+		}
+	}
+
+	$candidates = apply_filters( 'gstore_footer_brand_taxonomies', $candidates );
+	$taxonomies = array();
+
+	foreach ( array_unique( array_filter( array_map( 'trim', (array) $candidates ) ) ) as $taxonomy ) {
+		if ( taxonomy_exists( $taxonomy ) ) {
+			$taxonomies[] = $taxonomy;
+		}
+	}
+
+	return $taxonomies;
+}
+
+/**
+ * Pontua um termo por volume de produtos e força comercial do nome.
+ *
+ * @param WP_Term $term            Termo de categoria ou marca.
+ * @param array   $keyword_weights Palavras fortes e pesos.
+ * @return float
+ */
+function gstore_get_footer_discovery_term_score( $term, $keyword_weights ) {
+	$count = isset( $term->count ) ? max( 0, (int) $term->count ) : 0;
+	$score = min( 70, log( $count + 1 ) * 14 );
+
+	$haystack = gstore_normalize_footer_discovery_text( ( $term->name ?? '' ) . ' ' . ( $term->slug ?? '' ) );
+	foreach ( (array) $keyword_weights as $keyword => $weight ) {
+		$keyword = gstore_normalize_footer_discovery_text( (string) $keyword );
+
+		if ( '' !== $keyword && false !== strpos( $haystack, $keyword ) ) {
+			$score += (float) $weight;
+		}
+	}
+
+	if ( isset( $term->taxonomy ) && 'product_cat' === $term->taxonomy ) {
+		$score += empty( $term->parent ) ? 6 : 2;
+	}
+
+	return $score;
+}
+
+/**
+ * Resolve a URL mais adequada para um termo exibido no texto do footer.
+ *
+ * @param WP_Term $term Termo de categoria ou marca.
+ * @return string
+ */
+function gstore_get_footer_discovery_term_link( $term ) {
+	if ( isset( $term->taxonomy ) && 'product_cat' === $term->taxonomy && ! empty( $term->slug ) && function_exists( 'gstore_get_catalog_url' ) ) {
+		$route_map = function_exists( 'gstore_get_header_menu_category_route_map' ) ? gstore_get_header_menu_category_route_map() : array();
+
+		if ( isset( $route_map[ $term->slug ] ) ) {
+			return $route_map[ $term->slug ];
+		}
+
+		return add_query_arg( array( 'filter_cat[]' => (string) $term->slug ), gstore_get_catalog_url() );
+	}
+
+	$link = get_term_link( $term );
+	if ( is_wp_error( $link ) ) {
+		return '';
+	}
+
+	return (string) $link;
+}
+
+/**
+ * Busca termos ranqueados para a seção de categorias e marcas do footer.
+ *
+ * @param array|string $taxonomies      Taxonomias a pesquisar.
+ * @param int          $limit           Limite de termos.
+ * @param array        $keyword_weights Palavras fortes e pesos.
+ * @param array        $excluded_slugs  Slugs que não devem aparecer.
+ * @return array
+ */
+function gstore_get_footer_discovery_ranked_terms( $taxonomies, $limit, $keyword_weights, $excluded_slugs = array() ) {
+	$limit = max( 1, absint( $limit ) );
+	$items = array();
+
+	foreach ( array_unique( array_filter( (array) $taxonomies ) ) as $taxonomy ) {
+		if ( ! taxonomy_exists( $taxonomy ) ) {
+			continue;
+		}
+
+		$terms = get_terms(
+			array(
+				'taxonomy'   => $taxonomy,
+				'hide_empty' => true,
+				'orderby'    => 'count',
+				'order'      => 'DESC',
+			)
+		);
+
+		if ( empty( $terms ) || is_wp_error( $terms ) ) {
+			continue;
+		}
+
+		foreach ( $terms as $term ) {
+			if ( empty( $term->name ) || empty( $term->slug ) || ( isset( $term->count ) && (int) $term->count < 1 ) ) {
+				continue;
+			}
+
+			$slug = sanitize_title( (string) $term->slug );
+			if ( in_array( $slug, $excluded_slugs, true ) ) {
+				continue;
+			}
+
+			$link = gstore_get_footer_discovery_term_link( $term );
+			if ( '' === $link ) {
+				continue;
+			}
+
+			$label = trim( wp_strip_all_tags( (string) $term->name ) );
+			if ( '' === $label ) {
+				continue;
+			}
+
+			$key = sanitize_title( gstore_normalize_footer_discovery_text( $label ) );
+			$item = array(
+				'label' => $label,
+				'html'  => sprintf( '<a href="%s">%s</a>', esc_url( $link ), esc_html( $label ) ),
+				'score' => gstore_get_footer_discovery_term_score( $term, $keyword_weights ),
+				'count' => isset( $term->count ) ? (int) $term->count : 0,
+			);
+
+			if ( ! isset( $items[ $key ] ) || $item['score'] > $items[ $key ]['score'] ) {
+				$items[ $key ] = $item;
+			}
+		}
+	}
+
+	uasort(
+		$items,
+		function ( $a, $b ) {
+			if ( $a['score'] === $b['score'] ) {
+				if ( $a['count'] === $b['count'] ) {
+					return strcasecmp( $a['label'], $b['label'] );
+				}
+
+				return ( $a['count'] < $b['count'] ) ? 1 : -1;
+			}
+
+			return ( $a['score'] < $b['score'] ) ? 1 : -1;
+		}
+	);
+
+	return array_slice( array_values( $items ), 0, $limit );
+}
+
+/**
+ * Junta links em português, usando vírgulas e "e" antes do último item.
+ *
+ * @param array $items Itens com chave html.
+ * @return string
+ */
+function gstore_join_footer_discovery_links( $items ) {
+	$links = array();
+
+	foreach ( (array) $items as $item ) {
+		if ( ! empty( $item['html'] ) ) {
+			$links[] = $item['html'];
+		}
+	}
+
+	$count = count( $links );
+	if ( 0 === $count ) {
+		return '';
+	}
+	if ( 1 === $count ) {
+		return $links[0];
+	}
+	if ( 2 === $count ) {
+		return $links[0] . ' e ' . $links[1];
+	}
+
+	$last = array_pop( $links );
+	return implode( ', ', $links ) . ' e ' . $last;
+}
+
+/**
+ * Monta o texto dinâmico de categorias e marcas para o footer.
+ *
+ * @return string HTML seguro.
+ */
+function gstore_get_footer_category_brand_summary() {
+	if ( ! apply_filters( 'gstore_footer_discovery_enabled', true ) ) {
+		return '';
+	}
+
+	$store_name = trim( (string) gstore_get_store_name( 'display' ) );
+	if ( '' === $store_name ) {
+		$store_name = get_bloginfo( 'name' );
+	}
+
+	$category_limit = max( 1, absint( apply_filters( 'gstore_footer_discovery_category_limit', 15 ) ) );
+	$brand_limit    = max( 1, absint( apply_filters( 'gstore_footer_discovery_brand_limit', 10 ) ) );
+
+	$categories = taxonomy_exists( 'product_cat' )
+		? gstore_get_footer_discovery_ranked_terms(
+			'product_cat',
+			$category_limit,
+			gstore_get_footer_category_keyword_weights(),
+			array( 'sem-categoria', 'uncategorized' )
+		)
+		: array();
+
+	$brands = gstore_get_footer_discovery_ranked_terms(
+		gstore_get_footer_brand_taxonomies(),
+		$brand_limit,
+		gstore_get_footer_brand_keyword_weights()
+	);
+
+	$category_links = gstore_join_footer_discovery_links( $categories );
+	$brand_links    = gstore_join_footer_discovery_links( $brands );
+	$sentences      = array(
+		sprintf(
+			'Na %s, você encontra produtos selecionados para tiro esportivo, airsoft, caça, defesa e lazer, com atendimento especializado e foco em compra segura.',
+			esc_html( $store_name )
+		),
+	);
+
+	if ( '' !== $category_links && '' !== $brand_links ) {
+		$sentences[] = 'Trabalhamos com ' . $category_links . ', reunindo marcas reconhecidas como ' . $brand_links . ' para atender diferentes perfis de uso.';
+	} elseif ( '' !== $category_links ) {
+		$sentences[] = 'Trabalhamos com ' . $category_links . ' para atender diferentes perfis de uso.';
+	} elseif ( '' !== $brand_links ) {
+		$sentences[] = 'Trabalhamos com marcas reconhecidas como ' . $brand_links . ' para atender diferentes perfis de uso.';
+	}
+
+	return implode( ' ', $sentences );
+}
+
+/**
  * Obtém o texto de copyright com ano atual.
  *
  * @return string
@@ -15242,6 +15604,7 @@ function gstore_process_store_info_placeholders( $content ) {
 	$phone_raw  = trim( (string) gstore_get_phone( 'raw' ) );
 	$email_link = gstore_get_store_email_link();
 	$phone_link = '' !== $phone_raw ? 'tel:+' . preg_replace( '/\D/', '', $phone_raw ) : '';
+	$footer_category_brand_summary = false !== strpos( $content, '{{footer_category_brand_summary}}' ) ? gstore_get_footer_category_brand_summary() : '';
 	
 	// Lista de placeholders e seus valores
 	$placeholders = array(
@@ -15302,6 +15665,7 @@ function gstore_process_store_info_placeholders( $content ) {
 		'{{footer_contact_line}}' => gstore_get_footer_contact_line(),
 		'{{footer_business_hours_line}}' => gstore_get_footer_business_hours_line(),
 		'{{footer_legal_line}}'   => gstore_get_footer_legal_line(),
+		'{{footer_category_brand_summary}}' => $footer_category_brand_summary,
 		
 		// Meta
 		'{{meta_description}}'    => gstore_get_meta( 'description' ),
