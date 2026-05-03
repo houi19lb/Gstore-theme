@@ -14728,7 +14728,13 @@ function gstore_get_store_email() {
 	$email = trim( (string) gstore_store_info()->get_value( 'contact.email', '' ) );
 	$email = sanitize_email( $email );
 
-	return is_email( $email ) ? $email : '';
+	if ( is_email( $email ) ) {
+		return $email;
+	}
+
+	$admin_email = sanitize_email( (string) get_option( 'admin_email', '' ) );
+
+	return is_email( $admin_email ) ? $admin_email : '';
 }
 
 /**
