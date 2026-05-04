@@ -3019,6 +3019,16 @@ function gstore_enqueue_scripts() {
 		true
 	);
 
+	$blog_image_fit_js_path    = get_theme_file_path( 'assets/js/blog-image-fit.js' );
+	$blog_image_fit_js_version = file_exists( $blog_image_fit_js_path ) ? (string) filemtime( $blog_image_fit_js_path ) : wp_get_theme()->get( 'Version' );
+	wp_enqueue_script(
+		'gstore-blog-image-fit',
+		get_theme_file_uri( 'assets/js/blog-image-fit.js' ),
+		array(),
+		$blog_image_fit_js_version,
+		true
+	);
+
 	$pwa_myaccount_url = home_url( '/minha-conta/' );
 	if ( class_exists( 'WooCommerce' ) && function_exists( 'wc_get_page_permalink' ) ) {
 		$myaccount_permalink = wc_get_page_permalink( 'myaccount' );
