@@ -11234,7 +11234,7 @@ function gstore_handle_search_suggest( WP_REST_Request $request ) {
 		);
 	}
 
-	$cache_key = 'gstore_search_suggest_v2_' . md5( strtolower( remove_accents( $term ) ) );
+	$cache_key = 'gstore_search_suggest_v3_' . md5( strtolower( remove_accents( $term ) ) );
 	$cached    = get_transient( $cache_key );
 	if ( is_array( $cached ) ) {
 		return new WP_REST_Response( $cached, 200 );
@@ -11515,6 +11515,38 @@ function gstore_search_token_in_text( $token, $text ) {
 	}
 
 	return false;
+}
+
+/**
+ * Pontua erro pequeno em codigos curtos de modelo, como gxc -> g2c.
+ *
+ * @param string $needle_word Palavra digitada.
+ * @param string $title_word  Palavra do titulo.
+ * @return float Similaridade especial ou zero.
+ */
+function gstore_get_short_model_token_fuzzy_score( $needle_word, $title_word ) {
+	$needle_word = (string) $needle_word;
+	$title_word  = (string) $title_word;
+
+	if ( '' === $needle_word || '' === $title_word ) {
+		return 0;
+	}
+
+	if ( ! preg_match( '/^[a-z0-9]{3,5}$/', $needle_word ) || ! preg_match( '/^[a-z0-9]{3,5}$/', $title_word ) ) {
+		return 0;
+	}
+
+	$needle_len = strlen( $needle_word );
+	$title_len  = strlen( $title_word );
+	if ( $needle_len !== $title_len || levenshtein( $needle_word, $title_word ) !== 1 ) {
+		return 0;
+	}
+
+	if ( $needle_len <= 3 ) {
+		return ( $needle_word[0] === $title_word[0] && $needle_word[ $needle_len - 1 ] === $title_word[ $title_len - 1 ] ) ? 0.9 : 0;
+	}
+
+	return ( $needle_word[0] === $title_word[0] || $needle_word[ $needle_len - 1 ] === $title_word[ $title_len - 1 ] ) ? 0.88 : 0;
 }
 
 /**
@@ -11931,7 +11963,7 @@ function gstore_find_relevant_product_ids_for_search( $search_term, $limit = 80 
 	$candidate_ids = array_values( array_unique( array_filter( array_merge( $title_ids, $text_ids, $term_ids ) ) ) );
 	$ranked_ids    = gstore_rank_product_ids_by_search_precision( $search_term, $candidate_ids, $limit );
 
-	$fuzzy_floor = min( 12, $limit );
+	$fuzzy_floor = empty( $ranked_ids ) ? min( 40, $limit ) : min( 12, $limit );
 	if ( count( $ranked_ids ) < $fuzzy_floor && function_exists( 'gstore_fuzzy_search_products' ) ) {
 		$fuzzy_ids = gstore_fuzzy_search_products( $search_term, $fuzzy_floor - count( $ranked_ids ), $ranked_ids );
 		if ( ! empty( $fuzzy_ids ) ) {
@@ -11967,7 +11999,7 @@ function gstore_fuzzy_search_products( $search_term, $limit = 20, $exclude_ids =
 	}
 
 	$exclude_ids = array_values( array_unique( array_filter( array_map( 'absint', (array) $exclude_ids ) ) ) );
-	$cache_key   = 'gstore_fuzzy_v2_' . md5( $needle . '_' . implode( ',', $exclude_ids ) . '_' . $limit );
+	$cache_key   = 'gstore_fuzzy_v3_' . md5( $needle . '_' . implode( ',', $exclude_ids ) . '_' . $limit );
 	$cached    = get_transient( $cache_key );
 	if ( is_array( $cached ) ) {
 		return $cached;
@@ -12021,6 +12053,10 @@ function gstore_fuzzy_search_products( $search_term, $limit = 20, $exclude_ids =
 				if ( $tw === $nw ) {
 					$best_score = 1;
 					break;
+				}
+
+				if ( function_exists( 'gstore_get_short_model_token_fuzzy_score' ) ) {
+					$best_score = max( $best_score, gstore_get_short_model_token_fuzzy_score( $nw, $tw ) );
 				}
 
 				if ( $nw_len >= 4 && 0 === strpos( $tw, $nw ) ) {
