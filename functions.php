@@ -1,23 +1,23 @@
-﻿<?php
+<?php
 /**
  * Funções principais do child theme Gstore.
  *
  * @package Gstore
- * 
+ *
  * ============================================
  * CONFIGURAÇÃO DO WOOCOMMERCE
  * ============================================
  * Sistema: Blocos Gutenberg (Product Collection)
  * Versão WooCommerce: 9.4.0+
  * Verificado em: 2025-11-15
- * 
+ *
  * IMPORTANTE:
  * - Este projeto usa BLOCOS do WooCommerce, não loop clássico
  * - Páginas criadas no Editor de Blocos (Gutenberg)
  * - Templates PHP clássicos (content-product.php) NÃO são usados
  * - Customizações de produtos via CSS (.wc-block-*)
  * - Estilos críticos inline via wp_head (linhas 140-224)
- * 
+ *
  * ARQUIVOS RELEVANTES:
  * - style.css (linhas 473-671) - Estilos para blocos
  * - functions.php (linhas 140-224) - Estilos críticos inline
@@ -48,7 +48,7 @@ function gstore_after_setup_theme() {
 	add_theme_support( 'wc-product-gallery-zoom' );
 	add_theme_support( 'wc-product-gallery-lightbox' );
 	add_theme_support( 'wc-product-gallery-slider' );
-	
+
 	// Tamanho de imagem específico para banners (alta qualidade, sem crop)
 	// Usa dimensões grandes mas sem forçar crop, permitindo que a imagem original seja usada
 	add_image_size( 'gstore-banner-full', 2560, 1440, false );
@@ -461,10 +461,32 @@ function gstore_get_effective_accent_color() {
 }
 
 /**
+ * Garante que a cor de accent esteja persistida no banco antes de confiar nos arquivos.
+ *
+ * @return string Cor hex persistida ou fallback seguro.
+ */
+function gstore_ensure_persisted_accent_color() {
+	$saved_color = sanitize_hex_color( (string) get_option( 'gstore_accent_color', '' ) );
+
+	if ( $saved_color ) {
+		return $saved_color;
+	}
+
+	$file_color       = gstore_get_accent_color_from_tokens_file();
+	$is_legacy_orange = $file_color && in_array( strtolower( $file_color ), array( '#ff5c00', '#ff5500' ), true );
+	$default_color    = gstore_get_default_accent_color();
+	$accent_color     = $file_color && ! $is_legacy_orange ? $file_color : $default_color;
+
+	update_option( 'gstore_accent_color', $accent_color, true );
+
+	return $accent_color;
+}
+
+/**
  * Reaplica a cor de accent salva quando a atualização do tema sobrescreve os tokens.
  */
 function gstore_maybe_restore_saved_accent_tokens() {
-	$saved_color = sanitize_hex_color( (string) get_option( 'gstore_accent_color', '' ) );
+	$saved_color = gstore_ensure_persisted_accent_color();
 	if ( ! $saved_color ) {
 		return;
 	}
@@ -487,6 +509,22 @@ function gstore_maybe_restore_saved_accent_tokens() {
 	}
 }
 add_action( 'after_setup_theme', 'gstore_maybe_restore_saved_accent_tokens', 99 );
+add_action( 'after_switch_theme', 'gstore_maybe_restore_saved_accent_tokens', 20 );
+
+/**
+ * Reaplica a cor salva também depois de atualizações feitas pelo atualizador nativo.
+ *
+ * @param WP_Upgrader $upgrader   Instância do upgrader.
+ * @param array       $hook_extra Dados do processo.
+ */
+function gstore_restore_saved_accent_tokens_after_upgrade( $upgrader, $hook_extra ) {
+	if ( empty( $hook_extra['type'] ) || 'theme' !== $hook_extra['type'] ) {
+		return;
+	}
+
+	gstore_maybe_restore_saved_accent_tokens();
+}
+add_action( 'upgrader_process_complete', 'gstore_restore_saved_accent_tokens_after_upgrade', 20, 2 );
 
 /**
  * Retorna o ID do produto a partir de um objeto WC_Product.
@@ -1305,14 +1343,14 @@ function gstore_force_woocommerce_image_options() {
 	if ( get_option( 'gstore_image_options_set' ) === 'v2' ) {
 		return;
 	}
-	
+
 	// Opção principal de crop
 	update_option( 'woocommerce_thumbnail_cropping', 'uncropped' );
-	
+
 	// Opções de tamanho (formato antigo, ainda respeitado)
 	update_option( 'woocommerce_thumbnail_image_width', 300 );
 	update_option( 'woocommerce_single_image_width', 1000 );
-	
+
 	// Marca como configurado
 	update_option( 'gstore_image_options_set', 'v2' );
 }
@@ -1320,14 +1358,14 @@ add_action( 'init', 'gstore_force_woocommerce_image_options' );
 
 /**
  * Adiciona resource hints (preconnect, dns-prefetch) para melhorar performance.
- * 
+ *
  * Adiciona preconnect para CDNs e recursos externos para reduzir latência
  * na primeira conexão. Isso pode economizar ~300ms no tempo de carregamento.
  */
 function gstore_add_resource_hints() {
 	// Preconnect para FontAwesome CDN (prioridade alta)
 	echo '<link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>' . "\n";
-	
+
 	// DNS-prefetch para outras origens externas (menos crítico)
 	echo '<link rel="dns-prefetch" href="https://upload.wikimedia.org">' . "\n";
 	echo '<link rel="dns-prefetch" href="https://secure.gravatar.com">' . "\n";
@@ -1336,7 +1374,7 @@ add_action( 'wp_head', 'gstore_add_resource_hints', 1 );
 
 /**
  * Adiciona font-display: swap para FontAwesome para melhorar FCP.
- * 
+ *
  * Isso garante que o texto seja visível imediatamente enquanto as fontes carregam,
  * evitando FOIT (Flash of Invisible Text) e melhorando a percepção de velocidade.
  */
@@ -1369,7 +1407,7 @@ add_action( 'wp_head', 'gstore_fontawesome_font_display', 2 );
 
 /**
  * Adiciona preload para Font Awesome CSS para melhorar performance.
- * 
+ *
  * Preload permite que o navegador baixe o recurso com prioridade alta
  * sem bloquear a renderização inicial.
  */
@@ -1383,7 +1421,7 @@ add_action( 'wp_head', 'gstore_preload_fontawesome', 1 );
 
 /**
  * Inline CSS crítico acima da dobra (header e hero básico).
- * 
+ *
  * Isso reduz render blocking ao colocar estilos essenciais diretamente no HTML,
  * permitindo que o header e hero sejam renderizados imediatamente.
  */
@@ -1398,14 +1436,14 @@ function gstore_inline_critical_css() {
 			margin: 0 !important;
 			padding: 0 !important;
 		}
-		
+
 		/* Top bar básico */
 		.Gstore-top-bar {
 			background-color: #0a0a0a;
 			color: #fff;
 			font-size: 14px;
 		}
-		
+
 		.Gstore-top-bar__inner {
 			max-width: 1280px;
 			margin: 0 auto;
@@ -1416,7 +1454,7 @@ function gstore_inline_critical_css() {
 			align-items: center;
 			gap: 16px;
 		}
-		
+
 		.Gstore-top-bar__link {
 			display: inline-flex;
 			align-items: center;
@@ -1424,12 +1462,12 @@ function gstore_inline_critical_css() {
 			color: #fff;
 			text-decoration: none;
 		}
-		
+
 		/* Header principal básico */
 		.Gstore-header {
 			background-color: #0a0a0a;
 		}
-		
+
 		.Gstore-header__inner {
 			max-width: 1280px;
 			margin: 0 auto;
@@ -1439,44 +1477,44 @@ function gstore_inline_critical_css() {
 			justify-content: space-between;
 			gap: 16px;
 		}
-		
+
 		.Gstore-header__logo {
 			color: #fff;
 			text-decoration: none;
 			font-weight: bold;
 			font-size: 20px;
 		}
-		
+
 		/* Hero slider básico */
 		.Gstore-hero-slider {
 			position: relative;
 			width: 100%;
 			overflow: hidden;
 		}
-		
+
 		.Gstore-hero-slider__track {
 			display: flex;
 			transition: transform 0.5s ease;
 		}
-		
+
 		.Gstore-hero-slider__slide {
 			min-width: 100%;
 			margin: 0;
 			padding: 0;
 		}
-		
+
 		.Gstore-hero-slider__slide img {
 			width: 100%;
 			height: auto;
 			display: block;
 		}
 	';
-	
+
 	// Minifica o CSS crítico (remove espaços extras)
 	$critical_css = preg_replace( '/\s+/', ' ', $critical_css );
 	$critical_css = str_replace( array( '; ', ' {', '{ ', ' }', '} ', ': ' ), array( ';', '{', '{', '}', '}', ':' ), $critical_css );
 	$critical_css = trim( $critical_css );
-	
+
 	?>
 	<style id="gstore-critical-css">
 		<?php echo $critical_css; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
@@ -1487,7 +1525,7 @@ add_action( 'wp_head', 'gstore_inline_critical_css', 3 );
 
 /**
  * Adiciona preload para recursos críticos (imagens hero, fontes, etc).
- * 
+ *
  * Preload ajuda o navegador a priorizar recursos críticos,
  * melhorando LCP e FCP.
  */
@@ -1529,7 +1567,7 @@ add_action( 'wp_head', 'gstore_add_preload_resources', 1 );
 
 /**
  * Expandida lista de CSS não crítico que pode ser deferido.
- * 
+ *
  * Adiciona mais CSS à lista de defer, incluindo layouts e componentes
  * que não são necessários para renderização inicial.
  */
@@ -1554,20 +1592,20 @@ function gstore_defer_non_critical_css( $tag, $handle, $href, $media ) {
 	$non_critical_css = array(
 		// Font Awesome - não crítico para renderização inicial (ícones podem carregar depois)
 		'gstore-fontawesome',
-		
+
 		// CSS de páginas específicas
 		'gstore-my-account-css',
 		'gstore-como-comprar-arma-css',
 		'gstore-informativo-css',
 		'gstore-sobre-nos-css',
 		'gstore-notices-css',
-		
+
 		// CSS de layouts que não estão acima da dobra
 		'gstore-header-css',      // Já inlinado como crítico, pode defer o resto
-		
+
 		// CSS de componentes não críticos
 		'gstore-product-card-css', // Não está acima da dobra na home
-		
+
 		// CSS do WooCommerce que não é crítico
 		'woocommerce-layout',
 		'woocommerce-smallscreen',
@@ -1580,7 +1618,7 @@ function gstore_defer_non_critical_css( $tag, $handle, $href, $media ) {
 		'blocks-mini-cart-contents-css',
 		'woocommerce-general',    // CSS geral do WooCommerce
 		'woocommerce-inline',     // CSS inline do WooCommerce
-		
+
 		// CSS de layouts específicos
 		'gstore-home-css',         // Pode defer se não for home ou se hero já foi renderizado
 	);
@@ -1636,7 +1674,7 @@ function gstore_defer_non_critical_css( $tag, $handle, $href, $media ) {
 		);
 		$noscript_tag = str_replace( 'media="print"', 'media="' . $media . '"', $original_tag );
 	}
-	
+
 	// Adiciona noscript fallback para browsers sem JS
 	$deferred_tag .= '<noscript>' . $noscript_tag . '</noscript>';
 
@@ -1678,7 +1716,7 @@ add_action( 'wp_head', 'gstore_deferred_css_fallback_script', 4 );
 
 /**
  * Otimiza carregamento de scripts para reduzir main-thread work.
- * 
+ *
  * Aplica defer/async quando apropriado, especialmente para scripts
  * que não são necessários para renderização inicial.
  */
@@ -1723,7 +1761,7 @@ add_filter( 'script_loader_tag', 'gstore_optimize_script_loading', 10, 3 );
 
 /**
  * Otimiza back/forward cache (bfcache) removendo barreiras.
- * 
+ *
  * Garante que a página pode ser restaurada do bfcache corretamente
  * e evita listeners que bloqueiam essa funcionalidade.
  */
@@ -1732,18 +1770,18 @@ function gstore_fix_back_forward_cache() {
 	<script id="gstore-bfcache-fix">
 	(function() {
 		'use strict';
-		
+
 		// Detecta quando a página é restaurada do bfcache
 		window.addEventListener('pageshow', function(event) {
 			if (event.persisted) {
 				// Página restaurada do bfcache - pode precisar re-inicializar alguns recursos
 				// Mas não força reload completo
-				
+
 				// Se houver scripts que precisam reinicializar, podem escutar este evento
 				window.dispatchEvent(new CustomEvent('gstore:bfcache:restore'));
 			}
 		});
-		
+
 		// Evita uso de beforeunload quando possível (bloqueia bfcache)
 		// Intercepta tentativas de adicionar beforeunload apenas em produção
 		if (!window.location.hostname.includes('localhost') && !window.location.hostname.includes('127.0.0.1')) {
@@ -1760,7 +1798,7 @@ function gstore_fix_back_forward_cache() {
 				return originalAddEventListener.call(this, type, listener, options);
 			};
 		}
-		
+
 		// Garante que não há referências a objetos que podem impedir bfcache
 		// Remove referências circulares comuns
 		if ('requestIdleCallback' in window) {
@@ -1777,7 +1815,7 @@ add_action( 'wp_footer', 'gstore_fix_back_forward_cache', 1 );
 
 /**
  * Remove preload automático do WordPress para o style.css do tema filho.
- * 
+ *
  * O WordPress 5.8+ adiciona automaticamente um preload para o stylesheet do tema,
  * mas isso pode causar avisos no console se o CSS não for usado imediatamente.
  * Como o CSS está sendo enfileirado corretamente, o preload não é necessário.
@@ -1798,10 +1836,10 @@ add_filter( 'wp_resource_hints', 'gstore_remove_automatic_stylesheet_preload', 1
 
 /**
  * Previne conflitos de múltiplas instâncias do React e problemas de acessibilidade.
- * 
+ *
  * 1. O erro "Failed to execute 'removeChild'" geralmente ocorre quando há
  *    múltiplas instâncias do React ou conflitos entre React e outras bibliotecas.
- * 
+ *
  * 2. O problema de aria-hidden ocorre quando o WooCommerce define aria-hidden="true"
  *    no wp-site-blocks enquanto o botão do mini-cart ainda tem foco.
  */
@@ -1810,7 +1848,7 @@ function gstore_prevent_react_conflicts() {
 	<script id="gstore-react-conflict-fix">
 	(function() {
 		'use strict';
-		
+
 		// Previne erros de removeChild do React de forma segura
 		// Apenas intercepta chamadas que falhariam
 		var originalRemoveChild = Node.prototype.removeChild;
@@ -1819,7 +1857,7 @@ function gstore_prevent_react_conflicts() {
 			if (!child) {
 				return child;
 			}
-			
+
 			try {
 				// Verifica se o nó ainda está no DOM e se é realmente filho
 				if (this.contains && this.contains(child)) {
@@ -1847,7 +1885,7 @@ function gstore_prevent_react_conflicts() {
 				return child;
 			}
 		};
-		
+
 		// Corrige problema de aria-hidden no mini-cart
 		// Quando o drawer do mini-cart é aberto, o WooCommerce define aria-hidden="true"
 		// no wp-site-blocks, mas o botão do mini-cart ainda pode ter foco
@@ -1855,11 +1893,11 @@ function gstore_prevent_react_conflicts() {
 			var wpSiteBlocks = document.querySelector('.wp-site-blocks');
 			var miniCartButton = document.querySelector('.wc-block-mini-cart__button');
 			var miniCartDrawer = document.querySelector('.wc-block-mini-cart__drawer');
-			
+
 			if (!wpSiteBlocks || !miniCartButton || !miniCartDrawer) {
 				return;
 			}
-			
+
 			// Intercepta quando o WooCommerce tenta definir aria-hidden="true"
 			// Verifica se há elementos focáveis antes de aplicar
 			var originalSetAttribute = Element.prototype.setAttribute;
@@ -1867,13 +1905,13 @@ function gstore_prevent_react_conflicts() {
 				// Se está tentando definir aria-hidden="true" no wp-site-blocks
 				if (name === 'aria-hidden' && value === 'true' && this === wpSiteBlocks) {
 					var activeElement = document.activeElement;
-					
+
 					// Verifica se há um elemento focável dentro do wp-site-blocks
 					// que não está dentro do drawer do mini-cart
 					var focusableElements = wpSiteBlocks.querySelectorAll(
 						'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
 					);
-					
+
 					var hasFocusedElement = false;
 					for (var i = 0; i < focusableElements.length; i++) {
 						var el = focusableElements[i];
@@ -1885,7 +1923,7 @@ function gstore_prevent_react_conflicts() {
 							}
 						}
 					}
-					
+
 					// Se há um elemento focável, não aplica aria-hidden no wp-site-blocks
 					// Aplica apenas no conteúdo principal (não no header)
 					if (hasFocusedElement) {
@@ -1897,17 +1935,17 @@ function gstore_prevent_react_conflicts() {
 						return;
 					}
 				}
-				
+
 				// Para outros casos, usa o comportamento padrão
 				return originalSetAttribute.call(this, name, value);
 			};
-			
+
 			// Observa mudanças no drawer do mini-cart para limpar aria-hidden quando fechar
 			var drawerObserver = new MutationObserver(function(mutations) {
 				mutations.forEach(function(mutation) {
 					if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
 						var isDrawerOpen = miniCartDrawer.classList.contains('is-open');
-						
+
 						// Quando o drawer fecha, remove aria-hidden do conteúdo principal
 						if (!isDrawerOpen) {
 							var mainContent = document.querySelector('main[aria-hidden="true"]');
@@ -1922,20 +1960,20 @@ function gstore_prevent_react_conflicts() {
 					}
 				});
 			});
-			
+
 			drawerObserver.observe(miniCartDrawer, {
 				attributes: true,
 				attributeFilter: ['class']
 			});
 		}
-		
+
 		// Inicializa quando o DOM estiver pronto
 		if (document.readyState === 'loading') {
 			document.addEventListener('DOMContentLoaded', fixMiniCartAriaHidden);
 		} else {
 			fixMiniCartAriaHidden();
 		}
-		
+
 		// Também tenta após um pequeno delay para garantir que o WooCommerce carregou
 		setTimeout(fixMiniCartAriaHidden, 1000);
 	})();
@@ -1946,7 +1984,7 @@ add_action( 'wp_head', 'gstore_prevent_react_conflicts', 999 );
 
 /**
  * Enfileira estilos do tema pai e do child theme.
- * 
+ *
  * Nova estrutura modular:
  * 1. Sistema de tokens e base (gstore-main.css)
  * 2. Style.css legado (compatibilidade)
@@ -1962,7 +2000,7 @@ function gstore_enqueue_styles() {
 	$footer_css_version = file_exists( $footer_css_file ) ? (string) filemtime( $footer_css_file ) : $theme_version;
 	$header_css_file = get_theme_file_path( 'assets/css/layouts/header.css' );
 	$header_css_version = file_exists( $header_css_file ) ? (string) filemtime( $header_css_file ) : $theme_version;
-	
+
 	// Obtém timestamp da última atualização dos tokens para forçar recarregamento
 	$tokens_version = get_option( 'gstore_tokens_last_updated', time() );
 	$gstore_version = $theme_version . '.' . $tokens_version;
@@ -3349,9 +3387,9 @@ function gstore_enqueue_scripts() {
 			// Páginas estáticas de catálogo
 			$catalog_pages = array( 'catalogo', 'ofertas' );
 			$catalog_templates = array( 'page-catalogo', 'page-ofertas' );
-			
+
 			$is_catalog_page = is_page( $catalog_pages );
-			
+
 			// Verifica também pelo template
 			if ( ! $is_catalog_page && is_page() ) {
 				$template = get_page_template_slug();
@@ -3363,12 +3401,12 @@ function gstore_enqueue_scripts() {
 				}
 			}
 		}
-		
+
 		// Também verifica se é uma página de shop/archive do WooCommerce
 		if ( ! $is_catalog_page && function_exists( 'is_shop' ) ) {
 			$is_catalog_page = is_shop() || is_product_category() || is_product_tag();
 		}
-		
+
 		if ( $is_catalog_page ) {
 			wp_enqueue_script(
 				'gstore-catalog-filters',
@@ -3378,7 +3416,7 @@ function gstore_enqueue_scripts() {
 				true
 			);
 		}
-	
+
 	/*
 	wp_enqueue_script(
 		'gstore-catalog-categories-tree',
@@ -3939,7 +3977,7 @@ add_action( 'wp_ajax_nopriv_gstore_load_product_reviews', 'gstore_ajax_load_prod
 
 /**
  * Garante que o AJAX add to cart está habilitado e configurado corretamente.
- * 
+ *
  * Por padrão, o WooCommerce já habilita AJAX, mas esta função garante
  * que não foi desabilitado por outros plugins ou configurações.
  */
@@ -4098,7 +4136,7 @@ add_filter( 'woocommerce_loop_add_to_cart_link', 'gstore_loop_public_add_to_cart
 
 /**
  * Garante que os eventos WooCommerce sejam disparados corretamente.
- * 
+ *
  * Adiciona suporte adicional para garantir que o evento added_to_cart
  * seja sempre disparado, mesmo em casos edge.
  */
@@ -4440,7 +4478,7 @@ add_action( 'wp_loaded', 'gstore_ensure_add_to_cart_for_buy_now', 0 );
 
 /**
  * Salva o carrinho atual em sessão antes de limpar para "Comprar agora"
- * 
+ *
  * Permite restaurar os itens se o cliente voltar ou cancelar a compra rápida.
  */
 function gstore_save_cart_before_buy_now() {
@@ -4485,7 +4523,7 @@ function gstore_save_cart_before_buy_now() {
 				'variation_id' => isset( $cart_item['variation_id'] ) ? $cart_item['variation_id'] : 0,
 				'variation'    => isset( $cart_item['variation'] ) ? $cart_item['variation'] : array(),
 			);
-			
+
 			// Preserva metadados customizados se existirem
 			if ( isset( $cart_item['gstore_shipping_rates'] ) ) {
 				$saved_cart_data[ $cart_item_key ]['gstore_shipping_rates'] = $cart_item['gstore_shipping_rates'];
@@ -4494,7 +4532,7 @@ function gstore_save_cart_before_buy_now() {
 				$saved_cart_data[ $cart_item_key ]['gstore_shipping_mode'] = $cart_item['gstore_shipping_mode'];
 			}
 		}
-		
+
 		WC()->session->set( 'gstore_saved_cart_before_buy_now', $saved_cart_data );
 		WC()->session->set( 'gstore_buy_now_active', true );
 	}
@@ -4514,7 +4552,7 @@ function gstore_save_cart_before_buy_now() {
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		$buy_now_variation_id = absint( $_REQUEST['variation_id'] );
 	}
-	
+
 	// Coleta atributos de variação se existirem
 	// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 	if ( ! empty( $_REQUEST ) ) {
@@ -4541,7 +4579,7 @@ add_action( 'wp_loaded', 'gstore_save_cart_before_buy_now', 1 );
 
 /**
  * Limpa o carrinho antes de adicionar produto via "Comprar agora"
- * 
+ *
  * Executa após salvar o carrinho, antes do WooCommerce processar o add-to-cart.
  */
 function gstore_clear_cart_before_buy_now() {
@@ -4573,7 +4611,7 @@ add_action( 'wp_loaded', 'gstore_clear_cart_before_buy_now', 5 );
 
 /**
  * Restaura o carrinho salvo se o cliente voltar do checkout
- * 
+ *
  * Executa quando o cliente acessa qualquer página após ter usado "Comprar agora".
  */
 function gstore_restore_saved_cart_if_needed() {
@@ -4606,11 +4644,11 @@ function gstore_restore_saved_cart_if_needed() {
 		$quantity = isset( $cart_item_data['quantity'] ) ? $cart_item_data['quantity'] : 1;
 		$variation_id = isset( $cart_item_data['variation_id'] ) ? $cart_item_data['variation_id'] : 0;
 		$variation = isset( $cart_item_data['variation'] ) ? $cart_item_data['variation'] : array();
-		
+
 		if ( ! $product_id ) {
 			continue;
 		}
-		
+
 		$item_data = array();
 
 		// Preserva metadados customizados se existirem
@@ -4686,7 +4724,7 @@ function gstore_consume_buy_now_checkout_reset_flag() {
 
 /**
  * Adiciona headers HTTP para evitar cache em requisições AJAX do carrinho.
- * 
+ *
  * Isso é crítico em ambientes de produção onde cache pode causar
  * problemas de sincronização entre o carrinho e o mini-cart.
  */
@@ -4715,12 +4753,12 @@ function gstore_prevent_cart_ajax_cache() {
 		header( 'Expires: 0' );
 		header( 'X-Accel-Buffering: no' ); // Nginx buffering
 		header( 'Vary: Cookie' ); // Garante que cache varia por cookie/sessão
-		
+
 		// Garante que sessões sejam mantidas
 		// Força o uso de cookies para sessões
 		ini_set( 'session.use_cookies', '1' );
 		ini_set( 'session.use_only_cookies', '1' );
-		
+
 		// Adiciona header para evitar cache em proxies/CDN
 		header( 'X-Cache-Control: no-cache' );
 	}
@@ -4751,7 +4789,7 @@ add_action( 'wp_ajax_nopriv_gstore_refresh_store_api_nonce', 'gstore_refresh_sto
 
 /**
  * Garante que fragmentos sejam sempre retornados após remoção de item.
- * 
+ *
  * Hook específico para wc_ajax_remove_from_cart para garantir que fragmentos
  * sejam sempre incluídos na resposta, mesmo em ambientes com cache ou problemas de timing.
  */
@@ -5321,18 +5359,18 @@ function gstore_add_payment_info_to_price( $html, $block_content, $block ) {
 	if ( empty( $html ) || strpos( $html, 'woocommerce-Price-amount' ) === false ) {
 		return $html;
 	}
-	
+
 	// Verifica se já tem as classes customizadas (evita duplicação)
 	if ( strpos( $html, 'Gstore-payment-label' ) !== false ) {
 		return $html;
 	}
-	
+
 	// Tenta obter o produto do contexto
 	$product = null;
 	if ( isset( $block->context['postId'] ) ) {
 		$product = wc_get_product( $block->context['postId'] );
 	}
-	
+
 	// Se não conseguir pelo contexto, tenta pegar o produto global
 	if ( ! $product ) {
 		global $product;
@@ -5344,7 +5382,7 @@ function gstore_add_payment_info_to_price( $html, $block_content, $block ) {
 	// Busca o preview alinhado ao plugin/admin; se indisponível, cai no fallback simples.
 	$installment_value = 0;
 	$installment_text_content = 'ou em até 21x no cartão';
-	
+
 	if ( $product && is_a( $product, 'WC_Product' ) ) {
 		$installment_preview = gstore_get_product_installment_preview_data( $product, 21, 1, 'card' );
 		if ( ! empty( $installment_preview['installments'] ) && ! empty( $installment_preview['per_installment_html'] ) ) {
@@ -5361,7 +5399,7 @@ function gstore_add_payment_info_to_price( $html, $block_content, $block ) {
 			}
 		}
 	}
-	
+
 	// Desconto Pix: substitui o preço exibido pelo preço com desconto (mesmo padrão del/ins).
 	$pix_price_replacement = '';
 	if ( $product && is_a( $product, 'WC_Product' ) && function_exists( 'gstore_blu_pix_get_discounted_price' ) ) {
@@ -5378,7 +5416,7 @@ function gstore_add_payment_info_to_price( $html, $block_content, $block ) {
 	// Cria os elementos de pagamento
 	$payment_label = '<div class="Gstore-payment-label">À VISTA NO PIX</div>';
 	$installment_text = '<div class="Gstore-installment-text">' . $installment_text_content . '</div>';
-	
+
 	// Encontra a div interna com a classe wc-block-components-product-price
 	if ( strpos( $html, 'wc-block-components-product-price' ) !== false ) {
 		// Se tem desconto Pix, substitui o conteúdo do preço pelo padrão del/ins.
@@ -5398,7 +5436,7 @@ function gstore_add_payment_info_to_price( $html, $block_content, $block ) {
 			$html,
 			1
 		);
-		
+
 		// Adiciona texto de parcelamento antes do fechamento das divs
 		$html = preg_replace(
 			'/(\s*<\/div>\s*<\/div>\s*)$/',
@@ -5407,7 +5445,7 @@ function gstore_add_payment_info_to_price( $html, $block_content, $block ) {
 			1
 		);
 	}
-	
+
 	return $html;
 }
 add_filter( 'render_block_woocommerce/product-price', 'gstore_add_payment_info_to_price', 10, 3 );
@@ -5849,7 +5887,7 @@ add_filter( 'the_content', 'gstore_force_classic_cart_shortcode', 5 );
 
 /**
  * Remove o título da página do carrinho (evita duplicação com o header customizado).
- * 
+ *
  * O WordPress Block Theme renderiza automaticamente um h1.wp-block-post-title
  * que não queremos na página do carrinho, pois já temos nosso header customizado.
  */
@@ -5892,7 +5930,7 @@ function gstore_ensure_empty_cart_message() {
 	if ( WC()->cart->is_empty() ) {
 		// Remove qualquer filtro que possa estar escondendo a mensagem
 		add_filter( 'woocommerce_cart_is_empty', '__return_true', 999 );
-		
+
 		// Garante que os avisos sejam exibidos
 		if ( function_exists( 'woocommerce_output_all_notices' ) ) {
 			// A mensagem de carrinho vazio já é exibida pelo WooCommerce automaticamente
@@ -5927,7 +5965,7 @@ function gstore_hide_empty_notices_wrapper( $output ) {
 
 	// Remove o wrapper se não contiver nenhum notice real
 	// Verifica se há mensagens, erros ou informações
-	if ( 
+	if (
 		false === strpos( $output, 'woocommerce-message' ) &&
 		false === strpos( $output, 'woocommerce-error' ) &&
 		false === strpos( $output, 'woocommerce-info' ) &&
@@ -6236,7 +6274,7 @@ function gstore_enqueue_checkout_assets() {
 		);
 
 	}
-    
+
     // Script de Auto-fill do CEP
     if ( function_exists( 'is_checkout' ) && is_checkout() ) {
         wp_enqueue_script(
@@ -6337,7 +6375,7 @@ add_action( 'init', 'gstore_move_privacy_policy_text' );
 
 /**
  * Verifica se as páginas essenciais existem na inicialização.
- * 
+ *
  * Nota: Use o menu "Setup Gstore" para criar todas as páginas de uma vez.
  * Esta função apenas cria páginas essenciais do WooCommerce se não existirem.
  */
@@ -6346,13 +6384,13 @@ function gstore_check_essential_pages() {
 	if ( ! is_admin() ) {
 		return;
 	}
-	
+
 	// Só verifica uma vez por sessão usando transient
 	$checked = get_transient( 'gstore_pages_checked' );
 	if ( $checked ) {
 		return;
 	}
-	
+
 	// Verifica se a página de catálogo existe (para compatibilidade com versões anteriores)
 	$catalog_page = get_page_by_path( 'catalogo' );
 	if ( ! $catalog_page ) {
@@ -6364,7 +6402,7 @@ function gstore_check_essential_pages() {
 			'post_content' => '',
 		) );
 	}
-	
+
 	// Define transient para não verificar novamente por 1 hora
 	set_transient( 'gstore_pages_checked', true, HOUR_IN_SECONDS );
 }
@@ -6391,7 +6429,7 @@ add_action( 'wp_footer', function() {
 		var statusMeta = document.querySelector('.pix-box__meta--muted');
 		var statusBadge = document.querySelector('.pix-box__status');
 		var pixBox = document.querySelector('.pix-box');
-		
+
 		if (statusMeta && statusBadge && pixBox) {
 			var statusText = statusMeta.textContent || '';
 			var match = statusText.match(/Status:\s*(\w+)/i);
@@ -7154,7 +7192,7 @@ function gstore_get_state_from_postcode( $postcode ) {
 function gstore_add_cpf_field( $fields ) {
     // Se for o filtro woocommerce_billing_fields, o array é direto
     // Se for woocommerce_checkout_fields, tem 'billing'
-    
+
     if ( isset( $fields['billing'] ) ) {
         $fields['billing']['billing_cpf'] = array(
             'label'       => __('CPF', 'gstore'),
@@ -7174,7 +7212,7 @@ function gstore_add_cpf_field( $fields ) {
             'priority'    => 35,
         );
     }
-    
+
     return $fields;
 }
 add_filter( 'woocommerce_checkout_fields', 'gstore_add_cpf_field', 20 );
@@ -7182,7 +7220,7 @@ add_filter( 'woocommerce_billing_fields', 'gstore_add_cpf_field', 20 );
 
 function gstore_save_cpf_field( $order_id ) {
     // Verifica nonce do checkout (segurança)
-    if ( ! isset( $_POST['woocommerce-process-checkout-nonce'] ) || 
+    if ( ! isset( $_POST['woocommerce-process-checkout-nonce'] ) ||
          ! wp_verify_nonce( $_POST['woocommerce-process-checkout-nonce'], 'woocommerce-process_checkout' ) ) {
         return;
     }
@@ -7320,7 +7358,7 @@ function gstore_rename_account_menu_items( $items ) {
 	$items['edit-address']    = __( 'Endereços', 'gstore' );
 	$items['edit-account']    = __( 'Meus Dados', 'gstore' );
 	$items['customer-logout'] = __( 'Sair', 'gstore' );
-	
+
 	return $items;
 }
 add_filter( 'woocommerce_account_menu_items', 'gstore_rename_account_menu_items' );
@@ -7363,7 +7401,7 @@ add_action( 'template_redirect', 'gstore_disable_account_page_cache', 0 );
 
 /**
  * Redireciona a página "Loja" para "Catálogo".
- * 
+ *
  * Redireciona qualquer acesso à página /loja para /catalogo,
  * incluindo a página de arquivo do WooCommerce.
  */
@@ -7374,7 +7412,7 @@ function gstore_redirect_loja_to_catalogo() {
 		wp_safe_redirect( $catalogo_url, 301 );
 		exit;
 	}
-	
+
 	// Verifica se é a página de shop do WooCommerce configurada como "loja"
 	if ( function_exists( 'is_shop' ) && is_shop() ) {
 		$shop_page_id = wc_get_page_id( 'shop' );
@@ -7392,7 +7430,7 @@ add_action( 'template_redirect', 'gstore_redirect_loja_to_catalogo', 1 );
 
 /**
  * Altera a URL do botão "Return to shop" para apontar para o catálogo.
- * 
+ *
  * @param string $url URL original do botão.
  * @return string URL do catálogo.
  */
@@ -7407,7 +7445,7 @@ add_filter( 'woocommerce_return_to_shop_redirect', 'gstore_return_to_shop_url' )
 
 /**
  * Altera o texto do botão "Return to shop" para "Retornar para o catálogo".
- * 
+ *
  * @param string $text Texto original do botão.
  * @return string Novo texto.
  */
@@ -7942,13 +7980,13 @@ add_filter( 'woocommerce_add_to_cart_redirect', 'gstore_redirect_order_again_to_
 
 /**
  * Aumenta a qualidade das imagens JPEG para melhor qualidade em produção.
- * 
+ *
  * O WordPress usa qualidade 82 por padrão. Aumentamos para 92 para banners.
  * Isso garante que imagens novas e redimensionadas tenham qualidade máxima.
- * 
+ *
  * NOTA: Imagens já carregadas precisarão ser regeneradas para aplicar a nova qualidade.
  * Use um plugin como "Regenerate Thumbnails" ou faça upload novamente das imagens.
- * 
+ *
  * @param int    $quality Qualidade atual (82 padrão).
  * @param string $mime_type Tipo MIME da imagem.
  * @return int Nova qualidade.
@@ -7959,7 +7997,7 @@ function gstore_increase_jpeg_quality( $quality, $mime_type ) {
 		// 92 é um bom equilíbrio entre qualidade e tamanho de arquivo
 		return 92;
 	}
-	
+
 	// Para WebP e PNG, mantém a qualidade padrão
 	return $quality;
 }
@@ -8079,7 +8117,7 @@ function gstore_get_image_tag( $attachment_id, $size = 'full', $alt = '', $attr 
 
 			if ( ! empty( $srcset_array ) ) {
 				$default_attr['srcset'] = implode( ', ', $srcset_array );
-				
+
 				// Gera sizes apropriado baseado no tamanho solicitado
 				if ( ! isset( $attr['sizes'] ) ) {
 					$default_attr['sizes'] = '(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw';
@@ -8120,10 +8158,10 @@ function gstore_get_image_tag( $attachment_id, $size = 'full', $alt = '', $attr 
 
 /**
  * Adiciona dimensões explícitas (width/height) a todas as imagens renderizadas pelo WordPress.
- * 
+ *
  * Isso inclui imagens de blocos Gutenberg, the_content, etc.
  * Reduz CLS (Cumulative Layout Shift) melhorando a experiência do usuário.
- * 
+ *
  * @param array $attr Atributos da imagem
  * @param WP_Post $attachment Objeto do attachment
  * @param string|array $size Tamanho da imagem
@@ -8157,9 +8195,9 @@ add_filter( 'wp_get_attachment_image_attributes', 'gstore_add_image_dimensions',
 
 /**
  * Adiciona dimensões a imagens no conteúdo (the_content).
- * 
+ *
  * Processa imagens que podem não ter sido renderizadas via wp_get_attachment_image.
- * 
+ *
  * @param string $content Conteúdo do post
  * @return string Conteúdo modificado
  */
@@ -8184,7 +8222,7 @@ function gstore_add_dimensions_to_content_images( $content ) {
 			// Tenta extrair src para obter attachment ID
 			if ( preg_match( '/src\s*=\s*["\']([^"\']+)["\']/i', $img_tag, $src_matches ) ) {
 				$image_url = $src_matches[1];
-				
+
 				// Tenta obter attachment ID da URL
 				$attachment_id = attachment_url_to_postid( $image_url );
 				if ( $attachment_id ) {
@@ -8207,9 +8245,9 @@ add_filter( 'the_content', 'gstore_add_dimensions_to_content_images', 20 );
 
 /**
  * Shortcode para retornar URL de imagem da biblioteca.
- * 
+ *
  * Uso: [gstore_image_url id="123" size="full"]
- * 
+ *
  * @param array $atts Atributos do shortcode.
  * @return string URL da imagem.
  */
@@ -8234,9 +8272,9 @@ add_shortcode( 'gstore_image_url', 'gstore_image_url_shortcode' );
 
 /**
  * Shortcode para retornar tag <img> completa da biblioteca.
- * 
+ *
  * Uso: [gstore_image id="123" size="full" alt="Descrição"]
- * 
+ *
  * @param array $atts Atributos do shortcode.
  * @return string Tag <img> completa.
  */
@@ -8270,11 +8308,11 @@ add_shortcode( 'gstore_image', 'gstore_image_shortcode' );
  */
 function gstore_banner_youtube_shortcode() {
 	$banner_id = gstore_get_banner_youtube_id();
-	
+
 	if ( $banner_id <= 0 ) {
 		return ''; // Não exibe nada se não estiver configurado
 	}
-	
+
 	$banner_url = wp_get_attachment_url( $banner_id );
 	$banner_alt = esc_attr( get_option( 'gstore_banner_youtube_alt', 'Banner do YouTube' ) );
 	$banner_link = esc_url( get_option( 'gstore_banner_youtube_link', '' ) );
@@ -8292,7 +8330,7 @@ function gstore_banner_youtube_shortcode() {
 		esc_url( $banner_url ),
 		$banner_alt
 	);
-	
+
 	// Se houver link configurado, envolve a imagem em um link
 	if ( ! empty( $banner_link ) ) {
 		$img_tag = sprintf(
@@ -8301,7 +8339,7 @@ function gstore_banner_youtube_shortcode() {
 			$img_tag
 		);
 	}
-	
+
 	$html = sprintf(
 		'<section class="wp-block-group alignfull Gstore-home-section Gstore-home-banner Gstore-home-banner--youtube" aria-label="%s">
 			<figure class="wp-block-image alignfull Gstore-home-transition">
@@ -8311,10 +8349,10 @@ function gstore_banner_youtube_shortcode() {
 		esc_attr__( 'Banner do YouTube', 'gstore' ),
 		$img_tag
 	);
-	
+
 	// Remove <br> tags dentro do figure
 	$html = preg_replace( '#<br\s*/?>#i', '', $html );
-	
+
 	return function_exists( 'gstore_normalize_home_section_output' )
 		? gstore_normalize_home_section_output( $html )
 		: $html;
@@ -8809,7 +8847,7 @@ function gstore_remove_br_from_banner_figure( $content ) {
 		'$1$3',
 		$content
 	);
-	
+
 	return $content;
 }
 add_filter( 'the_content', 'gstore_remove_br_from_banner_figure', 20 );
@@ -8855,7 +8893,7 @@ function gstore_register_theme_settings() {
 		'sanitize_callback' => 'absint',
 		'default' => 2,
 	) );
-	
+
 	// Hero Slider - Slides Desktop (até 10)
 	for ( $i = 1; $i <= 10; $i++ ) {
 		register_setting( 'gstore_settings', "gstore_hero_desktop_slide_{$i}_id", array(
@@ -8874,7 +8912,7 @@ function gstore_register_theme_settings() {
 			'default' => '',
 		) );
 	}
-	
+
 	// Hero Slider - Slides Mobile (até 10)
 	for ( $i = 1; $i <= 10; $i++ ) {
 		register_setting( 'gstore_settings', "gstore_hero_mobile_slide_{$i}_id", array(
@@ -8893,7 +8931,7 @@ function gstore_register_theme_settings() {
 			'default' => '',
 		) );
 	}
-	
+
 	// Banner YouTube
 	register_setting( 'gstore_settings', 'gstore_banner_youtube_id', array(
 		'type' => 'integer',
@@ -8922,7 +8960,7 @@ function gstore_register_theme_settings() {
 		'sanitize_callback' => 'sanitize_text_field',
 		'default' => 'Logo da loja',
 	) );
-	
+
 	// Cor de Accent para Design Tokens
 	register_setting( 'gstore_design_tokens', 'gstore_accent_color', array(
 		'type' => 'string',
@@ -8982,27 +9020,27 @@ function gstore_render_settings_page() {
 		wp_safe_redirect( admin_url( 'admin.php?page=gstore-vitrine' ) );
 		exit;
 	}
-	
+
 	// Verifica se o formulário foi submetido
 	if ( isset( $_GET['settings-updated'] ) ) {
 		add_settings_error( 'gstore_messages', 'gstore_message', __( 'Configurações salvas com sucesso!', 'gstore' ), 'updated' );
 	}
-	
+
 	settings_errors( 'gstore_messages' );
 	?>
 	<div class="wrap">
 		<h1><?php echo esc_html( get_admin_page_title() ); ?></h1>
 		<p><?php _e( 'Configure as imagens do tema Gstore. Selecione as imagens da biblioteca de mídia do WordPress.', 'gstore' ); ?></p>
-		
+
 		<form action="options.php" method="post">
 			<?php
 			settings_fields( 'gstore_settings' );
 			do_settings_sections( 'gstore_settings' );
 			?>
-			
+
 			<h2 class="title"><?php _e( 'Logo do Site', 'gstore' ); ?></h2>
 			<p class="description"><?php _e( 'Configure a logo que será exibida no header do site. Se não houver logo configurada, será exibido o título do site.', 'gstore' ); ?></p>
-			
+
 			<table class="form-table" role="presentation">
 				<tr>
 					<th scope="row">
@@ -9013,7 +9051,7 @@ function gstore_render_settings_page() {
 					</td>
 				</tr>
 			</table>
-			
+
 			<h2 class="title"><?php _e( 'Hero Slider - Slides da Pag. Inicial', 'gstore' ); ?></h2>
 			<p class="description"><?php _e( 'Configure as imagens do slider principal. Arraste os slides para reordenar ou use as setas.', 'gstore' ); ?></p>
 
@@ -9463,10 +9501,10 @@ function gstore_render_settings_page() {
 				updateArrows('mobile');
 			});
 			</script>
-			
+
 			<h2 class="title"><?php _e( 'Banners', 'gstore' ); ?></h2>
 			<p class="description"><?php _e( 'Configure os banners exibidos no site.', 'gstore' ); ?></p>
-			
+
 			<table class="form-table" role="presentation">
 				<tr>
 					<th scope="row">
@@ -9491,14 +9529,14 @@ function gstore_render_settings_page() {
 
 			<?php submit_button( __( 'Salvar Configurações', 'gstore' ) ); ?>
 		</form>
-		
+
 		<hr style="margin: 40px 0;" />
-		
+
 		<h2 class="title"><?php _e( 'Informações da Loja (JSON)', 'gstore' ); ?></h2>
 		<p class="description">
 			<?php _e( 'Gerencie as informações centralizadas da loja (nome, contatos, footer, etc). Útil para migrar configurações entre lojas.', 'gstore' ); ?>
 		</p>
-		
+
 		<div class="gstore-store-info-actions" style="display: flex; gap: 20px; margin: 20px 0; flex-wrap: wrap;">
 			<!-- Exportar -->
 			<div class="gstore-export-card" style="background: #fff; border: 1px solid #c3c4c7; border-radius: 4px; padding: 20px; flex: 1; min-width: 280px;">
@@ -9513,7 +9551,7 @@ function gstore_render_settings_page() {
 					</button>
 				</form>
 			</div>
-			
+
 			<!-- Importar -->
 			<div class="gstore-import-card" style="background: #fff; border: 1px solid #c3c4c7; border-radius: 4px; padding: 20px; flex: 1; min-width: 280px;">
 				<h3 style="margin-top: 0;"><?php _e( 'Importar Configurações', 'gstore' ); ?></h3>
@@ -9529,17 +9567,17 @@ function gstore_render_settings_page() {
 				</form>
 			</div>
 		</div>
-		
+
 		<!-- Preview dos dados atuais -->
 		<div class="gstore-current-info" style="margin-top: 30px;">
 			<h3><?php _e( 'Dados Atuais da Loja', 'gstore' ); ?></h3>
 			<p class="description"><?php _e( 'Pré-visualização das informações configuradas no arquivo JSON.', 'gstore' ); ?></p>
-			
+
 			<?php
 			$store_info = gstore_store_info();
 			$data = $store_info->get_all();
 			?>
-			
+
 			<table class="widefat" style="max-width: 800px; margin-top: 15px;">
 				<tbody>
 					<tr>
@@ -9568,7 +9606,7 @@ function gstore_render_settings_page() {
 					</tr>
 				</tbody>
 			</table>
-			
+
 			<p style="margin-top: 15px;">
 				<a href="<?php echo esc_url( admin_url( 'theme-editor.php?file=store-info.json&theme=' . get_stylesheet() ) ); ?>" class="button button-link" target="_blank">
 					<span class="dashicons dashicons-edit" style="margin-right: 5px; vertical-align: middle;"></span>
@@ -9588,7 +9626,7 @@ function gstore_render_settings_page() {
 		<div class="gstore-github-sync" style="background: #fff; border: 1px solid #c3c4c7; border-radius: 4px; padding: 20px; margin-top: 20px; max-width: 800px;">
 			<h3 style="margin-top: 0;"><?php _e( 'Atualizar Tema via Git', 'gstore' ); ?></h3>
 			<p><?php _e( 'Este comando irá executar um "git pull" (fetch + reset --hard) para sincronizar os arquivos locais com a versão mais recente do branch principal no GitHub.', 'gstore' ); ?></p>
-			
+
 			<div style="margin-top: 20px;">
 				<button type="button" class="button button-primary gstore-theme-git-update" data-nonce="<?php echo esc_attr( wp_create_nonce( 'gstore_theme_git_pull' ) ); ?>">
 					<span class="dashicons dashicons-cloud-upload" style="margin-right: 5px; vertical-align: middle;"></span>
@@ -9600,7 +9638,7 @@ function gstore_render_settings_page() {
 			</div>
 		</div>
 	</div>
-	
+
 	<style>
 		.gstore-media-selector {
 			display: flex;
@@ -9654,19 +9692,19 @@ function gstore_render_settings_page() {
 			max-width: 500px;
 		}
 	</style>
-	
+
 	<script>
 	jQuery(document).ready(function($) {
 		// Abre o seletor de mídia
 		$(document).on('click', '.gstore-select-media', function(e) {
 			e.preventDefault();
-			
+
 			var button = $(this);
 			var inputId = button.data('input-id');
 			var previewId = button.data('preview-id');
 			var input = $('#' + inputId);
 			var preview = $('#' + previewId);
-			
+
 			var mediaUploader = wp.media({
 				title: 'Selecione uma imagem',
 				button: {
@@ -9677,7 +9715,7 @@ function gstore_render_settings_page() {
 					type: 'image'
 				}
 			});
-			
+
 			mediaUploader.on('select', function() {
 				var attachment = mediaUploader.state().get('selection').first().toJSON();
 				input.val(attachment.id);
@@ -9685,33 +9723,33 @@ function gstore_render_settings_page() {
 				preview.addClass('has-image');
 				preview.closest('.gstore-media-selector').find('.gstore-remove-media').show();
 			});
-			
+
 			mediaUploader.open();
 		});
-		
+
 		// Remove a imagem selecionada
 		$(document).on('click', '.gstore-remove-media', function(e) {
 			e.preventDefault();
-			
+
 			var button = $(this);
 			var inputId = button.data('input-id');
 			var previewId = button.data('preview-id');
 			var input = $('#' + inputId);
 			var preview = $('#' + previewId);
-			
+
 			input.val(0);
 			preview.html('<span style="color: #999;">Nenhuma imagem selecionada</span>');
 			preview.removeClass('has-image');
 			button.hide();
 		});
-		
+
 		// Carrega previews existentes ao carregar a página
 		$('.gstore-media-preview').each(function() {
 			var preview = $(this);
 			var inputId = preview.data('input-id');
 			var input = $('#' + inputId);
 			var imageId = input.val();
-			
+
 			if (imageId && imageId != '0') {
 				$.ajax({
 					url: gstoreSettings.ajax_url,
@@ -9769,7 +9807,7 @@ function gstore_render_media_selector( $input_id, $alt_input_id, $current_id = 0
 			<p class="description">
 				<?php _e( 'ID da imagem:', 'gstore' ); ?> <strong><?php echo esc_html( $current_id ? $current_id : 'Nenhuma' ); ?></strong>
 			</p>
-			
+
 			<div class="gstore-alt-field">
 				<label for="<?php echo esc_attr( $alt_input_id ); ?>">
 					<?php _e( 'Texto Alternativo (Alt)', 'gstore' ); ?>
@@ -9815,14 +9853,14 @@ function gstore_render_media_selector_with_link( $input_id, $alt_input_id, $link
 			<p class="description">
 				<?php _e( 'ID da imagem:', 'gstore' ); ?> <strong><?php echo esc_html( $current_id ? $current_id : 'Nenhuma' ); ?></strong>
 			</p>
-			
+
 			<div class="gstore-alt-field">
 				<label for="<?php echo esc_attr( $alt_input_id ); ?>">
 					<?php _e( 'Texto Alternativo (Alt)', 'gstore' ); ?>
 				</label>
 				<input type="text" id="<?php echo esc_attr( $alt_input_id ); ?>" name="<?php echo esc_attr( $alt_input_id ); ?>" value="<?php echo esc_attr( $current_alt ); ?>" class="regular-text" />
 			</div>
-			
+
 			<div class="gstore-link-field" style="margin-top: 10px;">
 				<label for="<?php echo esc_attr( $link_input_id ); ?>">
 					<?php _e( 'Link do Slide (opcional)', 'gstore' ); ?>
@@ -9840,24 +9878,24 @@ function gstore_render_media_selector_with_link( $input_id, $alt_input_id, $link
  */
 function gstore_ajax_get_image_data() {
 	check_ajax_referer( 'gstore_ajax', 'nonce' );
-	
+
 	if ( ! current_user_can( 'manage_woocommerce' ) ) {
 		wp_send_json_error( array( 'message' => __( 'Permissão negada.', 'gstore' ) ) );
 	}
-	
+
 	$image_id = isset( $_POST['image_id'] ) ? absint( $_POST['image_id'] ) : 0;
-	
+
 	if ( ! $image_id ) {
 		wp_send_json_error( array( 'message' => __( 'ID da imagem não fornecido.', 'gstore' ) ) );
 	}
-	
+
 	$image_url = wp_get_attachment_image_url( $image_id, 'thumbnail' );
 	$image_alt = get_post_meta( $image_id, '_wp_attachment_image_alt', true );
-	
+
 	if ( ! $image_url ) {
 		wp_send_json_error( array( 'message' => __( 'Imagem não encontrada.', 'gstore' ) ) );
 	}
-	
+
 	wp_send_json_success( array(
 		'url' => $image_url,
 		'alt' => $image_alt,
@@ -9873,10 +9911,10 @@ function gstore_enqueue_settings_assets( $hook ) {
 	if ( 'appearance_page_gstore-settings' !== $hook ) {
 		return;
 	}
-	
+
 	wp_enqueue_media();
 	wp_enqueue_script( 'jquery' );
-	
+
 	// Localiza script para AJAX
 	wp_localize_script( 'jquery', 'gstoreSettings', array(
 		'ajax_url' => admin_url( 'admin-ajax.php' ),
@@ -9913,18 +9951,18 @@ function gstore_get_hero_slides_count( $device = 'desktop' ) {
 function gstore_get_hero_slide( $device, $index ) {
 	$prefix = "gstore_hero_{$device}_slide_{$index}";
 	$slide_id = absint( get_option( "{$prefix}_id", 0 ) );
-	
+
 	$data = array(
 		'id'   => $slide_id,
 		'alt'  => get_option( "{$prefix}_alt", '' ),
 		'link' => get_option( "{$prefix}_link", '' ),
 		'url'  => '',
 	);
-	
+
 	if ( $slide_id > 0 ) {
 		$data['url'] = wp_get_attachment_url( $slide_id );
 	}
-	
+
 	return $data;
 }
 
@@ -9937,14 +9975,14 @@ function gstore_get_hero_slide( $device, $index ) {
 function gstore_get_hero_slides( $device = 'desktop' ) {
 	$count = gstore_get_hero_slides_count( $device );
 	$slides = array();
-	
+
 	for ( $i = 1; $i <= $count; $i++ ) {
 		$slide = gstore_get_hero_slide( $device, $i );
 		if ( $slide['id'] > 0 ) {
 			$slides[] = $slide;
 		}
 	}
-	
+
 	return $slides;
 }
 
@@ -9958,20 +9996,20 @@ function gstore_render_hero_slider() {
 	$mobile_slides = gstore_get_hero_slides( 'mobile' );
 	$desktop_total = count( $desktop_slides );
 	$mobile_total = count( $mobile_slides );
-	
+
 	// Se não houver slides, retorna vazio
 	if ( empty( $desktop_slides ) && empty( $mobile_slides ) ) {
 		return '';
 	}
-	
+
 	ob_start();
 	?>
 	<div class="Gstore-hero-slider" data-gstore-hero-slider data-gstore-hero-force-autoplay>
 		<!-- Desktop Slides -->
 		<div class="Gstore-hero-slider__track Gstore-hero-slider__track--desktop" data-gstore-hero-track>
-			<?php 
+			<?php
 			$is_first = true;
-			foreach ( $desktop_slides as $slide ) : 
+			foreach ( $desktop_slides as $slide ) :
 				$img_tag = gstore_get_hero_image_tag( $slide['id'], $slide['alt'], $is_first );
 			?>
 				<figure class="Gstore-hero-slider__slide" data-gstore-hero-slide>
@@ -9983,17 +10021,17 @@ function gstore_render_hero_slider() {
 						<?php echo $img_tag; ?>
 					<?php endif; ?>
 				</figure>
-			<?php 
+			<?php
 				$is_first = false;
-			endforeach; 
+			endforeach;
 			?>
 		</div>
-		
+
 		<!-- Mobile Slides -->
 		<div class="Gstore-hero-slider__track Gstore-hero-slider__track--mobile" data-gstore-hero-track-mobile>
-			<?php 
+			<?php
 			$is_first = true;
-			foreach ( $mobile_slides as $slide ) : 
+			foreach ( $mobile_slides as $slide ) :
 				$img_tag = gstore_get_hero_image_tag( $slide['id'], $slide['alt'], $is_first );
 			?>
 				<figure class="Gstore-hero-slider__slide" data-gstore-hero-slide-mobile>
@@ -10005,25 +10043,25 @@ function gstore_render_hero_slider() {
 						<?php echo $img_tag; ?>
 					<?php endif; ?>
 				</figure>
-			<?php 
+			<?php
 				$is_first = false;
-			endforeach; 
+			endforeach;
 			?>
 		</div>
-		
+
 		<?php if ( $desktop_total > 1 || $mobile_total > 1 ) : ?>
 			<button class="Gstore-hero-slider__control Gstore-hero-slider__control--prev" type="button" aria-label="Slide anterior" data-gstore-hero-prev>
 				<span aria-hidden="true">
 					<i class="fa-solid fa-chevron-left"></i>
 				</span>
 			</button>
-			
+
 			<button class="Gstore-hero-slider__control Gstore-hero-slider__control--next" type="button" aria-label="Próximo slide" data-gstore-hero-next>
 				<span aria-hidden="true">
 					<i class="fa-solid fa-chevron-right"></i>
 				</span>
 			</button>
-			
+
 			<!-- Desktop Dots -->
 			<?php if ( $desktop_total > 1 ) : ?>
 				<div class="Gstore-hero-slider__dots Gstore-hero-slider__dots--desktop" role="tablist" data-gstore-hero-dots-total="<?php echo esc_attr( $desktop_total ); ?>">
@@ -10038,7 +10076,7 @@ function gstore_render_hero_slider() {
 					<?php endif; ?>
 				</div>
 			<?php endif; ?>
-			
+
 			<!-- Mobile Dots -->
 			<?php if ( $mobile_total > 1 ) : ?>
 				<div class="Gstore-hero-slider__dots Gstore-hero-slider__dots--mobile" role="tablist" data-gstore-hero-dots-total-mobile="<?php echo esc_attr( $mobile_total ); ?>">
@@ -10082,7 +10120,7 @@ function gstore_get_logo_id() {
 
 /**
  * Filtro para modificar o bloco site-logo para usar a logo configurada.
- * 
+ *
  * @param string $block_content Conteúdo do bloco.
  * @param array  $block         Dados do bloco.
  * @return string
@@ -10092,30 +10130,30 @@ function gstore_custom_site_logo_block( $block_content, $block ) {
 	if ( empty( $block['blockName'] ) || 'core/site-logo' !== $block['blockName'] ) {
 		return $block_content;
 	}
-	
+
 	// Verifica se está no header (pela classe ou contexto)
 	$is_in_header = false;
 	if ( isset( $block['attrs']['className'] ) && strpos( $block['attrs']['className'], 'Gstore-header__logo' ) !== false ) {
 		$is_in_header = true;
 	}
-	
+
 	// Se não está no header, não modifica
 	if ( ! $is_in_header ) {
 		return $block_content;
 	}
-	
+
 	// Evita processamento duplicado - se já contém a marca de logo customizada
 	if ( strpos( $block_content, 'data-gstore-logo="1"' ) !== false ) {
 		return $block_content;
 	}
-	
+
 	// Obtém a logo configurada
 	$logo_id = gstore_get_logo_id();
-	
+
 	if ( $logo_id > 0 ) {
 		$logo_url = gstore_get_image_url( $logo_id, 'full' );
 		$logo_alt = get_option( 'gstore_logo_alt', 'Logo da loja' );
-		
+
 		// Valida se a URL é válida
 		if ( $logo_url && filter_var( $logo_url, FILTER_VALIDATE_URL ) ) {
 			// Substitui o conteúdo do bloco pela logo configurada
@@ -10128,18 +10166,18 @@ function gstore_custom_site_logo_block( $block_content, $block ) {
 				esc_url( $logo_url ),
 				esc_attr( $logo_alt )
 			);
-			
+
 			return $logo_html;
 		}
 	}
-	
+
 	return $block_content;
 }
 add_filter( 'render_block', 'gstore_custom_site_logo_block', 10, 2 );
 
 /**
  * Filtro para modificar o bloco site-logo no footer para usar a logo configurada.
- * 
+ *
  * @param string $block_content Conteúdo do bloco.
  * @param array  $block         Dados do bloco.
  * @return string
@@ -10149,30 +10187,30 @@ function gstore_custom_footer_logo_block( $block_content, $block ) {
 	if ( empty( $block['blockName'] ) || 'core/site-logo' !== $block['blockName'] ) {
 		return $block_content;
 	}
-	
+
 	// Verifica se está no footer (pela classe footer-logo)
 	$is_in_footer = false;
 	if ( isset( $block['attrs']['className'] ) && strpos( $block['attrs']['className'], 'footer-logo' ) !== false ) {
 		$is_in_footer = true;
 	}
-	
+
 	// Se não está no footer, não modifica
 	if ( ! $is_in_footer ) {
 		return $block_content;
 	}
-	
+
 	// Evita processamento duplicado - se já contém a marca de logo customizada
 	if ( strpos( $block_content, 'data-gstore-footer-logo="1"' ) !== false ) {
 		return $block_content;
 	}
-	
+
 	// Obtém a logo configurada
 	$logo_id = gstore_get_logo_id();
-	
+
 	if ( $logo_id > 0 ) {
 		$logo_url = gstore_get_image_url( $logo_id, 'full' );
 		$logo_alt = get_option( 'gstore_logo_alt', 'Logo da loja' );
-		
+
 		// Valida se a URL é válida
 		if ( $logo_url && filter_var( $logo_url, FILTER_VALIDATE_URL ) ) {
 			// Substitui o conteúdo do bloco pela logo configurada
@@ -10185,18 +10223,18 @@ function gstore_custom_footer_logo_block( $block_content, $block ) {
 				esc_url( $logo_url ),
 				esc_attr( $logo_alt )
 			);
-			
+
 			return $logo_html;
 		}
 	}
-	
+
 	return $block_content;
 }
 add_filter( 'render_block', 'gstore_custom_footer_logo_block', 10, 2 );
 
 /**
  * Filtro para modificar o bloco site-title no checkout header para usar a logo configurada.
- * 
+ *
  * @param string $block_content Conteúdo do bloco.
  * @param array  $block         Dados do bloco.
  * @return string
@@ -10206,30 +10244,30 @@ function gstore_custom_checkout_header_logo_block( $block_content, $block ) {
 	if ( empty( $block['blockName'] ) || 'core/site-title' !== $block['blockName'] ) {
 		return $block_content;
 	}
-	
+
 	// Verifica se está no checkout header (pela classe Gstore-checkout-header__logo)
 	$is_in_checkout_header = false;
 	if ( isset( $block['attrs']['className'] ) && strpos( $block['attrs']['className'], 'Gstore-checkout-header__logo' ) !== false ) {
 		$is_in_checkout_header = true;
 	}
-	
+
 	// Se não está no checkout header, não modifica
 	if ( ! $is_in_checkout_header ) {
 		return $block_content;
 	}
-	
+
 	// Evita processamento duplicado - se já contém a marca de logo customizada
 	if ( strpos( $block_content, 'data-gstore-checkout-logo="1"' ) !== false ) {
 		return $block_content;
 	}
-	
+
 	// Obtém a logo configurada
 	$logo_id = gstore_get_logo_id();
-	
+
 	if ( $logo_id > 0 ) {
 		$logo_url = gstore_get_image_url( $logo_id, 'full' );
 		$logo_alt = get_option( 'gstore_logo_alt', 'Logo da loja' );
-		
+
 		// Valida se a URL é válida
 		if ( $logo_url && filter_var( $logo_url, FILTER_VALIDATE_URL ) ) {
 			// Substitui o conteúdo do bloco pela logo configurada
@@ -10242,35 +10280,35 @@ function gstore_custom_checkout_header_logo_block( $block_content, $block ) {
 				esc_url( $logo_url ),
 				esc_attr( $logo_alt )
 			);
-			
+
 			return $logo_html;
 		}
 	}
-	
+
 	return $block_content;
 }
 add_filter( 'render_block', 'gstore_custom_checkout_header_logo_block', 10, 2 );
 
 /**
  * Filtro para garantir que o logo do tema tenha prioridade sobre o Customizer.
- * 
+ *
  * Quando há uma logo configurada no tema, desabilita o site logo do Customizer.
  */
 add_filter( 'theme_mod_custom_logo', 'gstore_override_customizer_logo', 10, 1 );
 function gstore_override_customizer_logo( $logo_id ) {
 	$theme_logo_id = gstore_get_logo_id();
-	
+
 	// Se há uma logo configurada no tema, usa ela ao invés do Customizer
 	if ( $theme_logo_id > 0 ) {
 		return $theme_logo_id;
 	}
-	
+
 	return $logo_id;
 }
 
 /**
  * Substitui o link de texto da logo pela imagem configurada no header HTML.
- * 
+ *
  * @param string $content Conteúdo do template part.
  * @return string
  */
@@ -10279,30 +10317,30 @@ function gstore_replace_header_logo_html( $content ) {
 	if ( strpos( $content, 'data-gstore-logo="1"' ) !== false ) {
 		return $content;
 	}
-	
+
 	// Evita processar se já contém uma imagem de logo
 	if ( preg_match( '/<a[^>]*class="[^"]*Gstore-header__logo[^"]*"[^>]*>.*?<img[^>]*>/is', $content ) ) {
 		return $content;
 	}
-	
+
 	// Obtém a logo configurada
 	$logo_id = gstore_get_logo_id();
-	
+
 	if ( $logo_id <= 0 ) {
 		return $content;
 	}
-	
+
 	$logo_url = gstore_get_image_url( $logo_id, 'full' );
 	$logo_alt = get_option( 'gstore_logo_alt', 'Logo da loja' );
-	
+
 	// Valida se a URL é válida
 	if ( ! $logo_url || ! filter_var( $logo_url, FILTER_VALIDATE_URL ) ) {
 		return $content;
 	}
-	
+
 	$home_url = esc_url( home_url( '/' ) );
 	$site_name = esc_attr( get_bloginfo( 'name' ) );
-	
+
 	// HTML da logo com imagem (para substituição via regex)
 	$logo_html = sprintf(
 		'<div class="wp-block-site-logo Gstore-header__logo" data-gstore-logo="1" style="grid-area: logo;"><a href="%s" rel="home" aria-label="%s"><img src="%s" alt="%s" style="max-height: 36px; max-width: 180px; width: auto; height: auto;" loading="eager" /></a></div>',
@@ -10311,13 +10349,13 @@ function gstore_replace_header_logo_html( $content ) {
 		esc_url( $logo_url ),
 		esc_attr( $logo_alt )
 	);
-	
+
 	// Padrão 1: Substitui apenas o bloco site-logo renderizado pelo WordPress
 	// Captura: <div class="wp-block-site-logo...">...</div> (bloco completo)
 	$pattern1 = '/<div\s+[^>]*class="[^"]*wp-block-site-logo[^"]*"[^>]*>.*?<\/div>/is';
 	$replacement1 = '<div class="wp-block-site-logo Gstore-header__logo" data-gstore-logo="1" style="grid-area: logo;"><a href="' . $home_url . '" rel="home" aria-label="' . $site_name . '"><img src="' . esc_url( $logo_url ) . '" alt="' . esc_attr( $logo_alt ) . '" style="max-height: 36px; max-width: 180px; width: auto; height: auto;" loading="eager" /></a></div>';
 	$content = preg_replace( $pattern1, $replacement1, $content, 1 );
-	
+
 	// Padrão 2: Link com classe Gstore-header__logo (mas sem imagem) - apenas dentro do header content
 	// Captura: <a href="/" class="Gstore-header__logo">TEXTO</a> (sem img dentro)
 	// Limita a busca apenas dentro do Gstore-header__content para evitar capturar elementos errados
@@ -10339,7 +10377,7 @@ function gstore_replace_header_logo_html( $content ) {
 			$content = preg_replace( $pattern2b, $logo_html, $content, 1 );
 		}
 	}
-	
+
 	return $content;
 }
 // Remove o filtro de render_block para evitar conflito com gstore_custom_site_logo_block
@@ -10349,7 +10387,7 @@ add_filter( 'the_content', 'gstore_replace_header_logo_html', 5 );
 
 /**
  * Substitui o texto da logo pela imagem configurada no footer HTML.
- * 
+ *
  * @param string $content Conteúdo do template part.
  * @return string
  */
@@ -10358,30 +10396,30 @@ function gstore_replace_footer_logo_html( $content ) {
 	if ( strpos( $content, 'armastore-footer' ) === false ) {
 		return $content;
 	}
-	
+
 	// Evita processamento duplicado - se já contém a marca de logo customizada
 	if ( strpos( $content, 'data-gstore-footer-logo="1"' ) !== false ) {
 		return $content;
 	}
-	
+
 	// Obtém a logo configurada
 	$logo_id = gstore_get_logo_id();
-	
+
 	if ( $logo_id <= 0 ) {
 		return $content;
 	}
-	
+
 	$logo_url = gstore_get_image_url( $logo_id, 'full' );
 	$logo_alt = get_option( 'gstore_logo_alt', 'Logo da loja' );
-	
+
 	// Valida se a URL é válida
 	if ( ! $logo_url || ! filter_var( $logo_url, FILTER_VALIDATE_URL ) ) {
 		return $content;
 	}
-	
+
 	$home_url = esc_url( home_url( '/' ) );
 	$site_name = esc_attr( get_bloginfo( 'name' ) );
-	
+
 	// HTML da logo com imagem para o footer
 	$logo_html = sprintf(
 		'<div class="wp-block-site-logo footer-logo" data-gstore-footer-logo="1"><a href="%s" rel="home" aria-label="%s"><img src="%s" alt="%s" style="max-height: 50px; max-width: 200px; width: auto; height: auto;" loading="lazy" /></a></div>',
@@ -10390,21 +10428,21 @@ function gstore_replace_footer_logo_html( $content ) {
 		esc_url( $logo_url ),
 		esc_attr( $logo_alt )
 	);
-	
+
 	// Padrão 1: Substitui o bloco site-logo renderizado pelo WordPress no footer
 	// Procura especificamente dentro do primeiro footer-column (onde está a logo)
 	// Usa uma regex mais específica para capturar apenas o primeiro footer-column dentro do footer-main
 	if ( preg_match( '/(<div[^>]*class="[^"]*footer-main[^"]*"[^>]*>)(.*?)(<\/div>)/is', $content, $footer_main_match ) ) {
 		$footer_main_content = $footer_main_match[2];
-		
+
 		// Captura o primeiro footer-column
 		if ( preg_match( '/(<div[^>]*class="[^"]*footer-column[^"]*"[^>]*>)(.*?)(<\/div>)/is', $footer_main_content, $footer_column_match ) ) {
 			$footer_column_content = $footer_column_match[2];
-			
+
 			// Substitui o bloco site-logo se existir
 			$pattern1 = '/<div\s+[^>]*class="[^"]*wp-block-site-logo[^"]*footer-logo[^"]*"[^>]*>.*?<\/div>/is';
 			$footer_column_content_new = preg_replace( $pattern1, $logo_html, $footer_column_content, 1 );
-			
+
 			// Se houve substituição, atualiza o conteúdo
 			if ( $footer_column_content_new !== $footer_column_content ) {
 				$footer_main_content_new = str_replace( $footer_column_match[0], $footer_column_match[1] . $footer_column_content_new . $footer_column_match[3], $footer_main_content );
@@ -10412,7 +10450,7 @@ function gstore_replace_footer_logo_html( $content ) {
 			}
 		}
 	}
-	
+
 	return $content;
 }
 add_filter( 'render_block_core/template-part', 'gstore_replace_footer_logo_html', 10, 1 );
@@ -10420,7 +10458,7 @@ add_filter( 'the_content', 'gstore_replace_footer_logo_html', 5 );
 
 /**
  * Gera tag de imagem otimizada para hero com srcset e priorização.
- * 
+ *
  * @param int    $attachment_id ID da imagem.
  * @param string $alt           Texto alternativo.
  * @param bool   $is_first_slide Se true, adiciona fetchpriority="high" e remove lazy loading.
@@ -10510,9 +10548,9 @@ function gstore_get_hero_image_tag( $attachment_id, $alt = '', $is_first_slide =
 
 /**
  * Processa placeholders de imagens nos templates HTML.
- * 
+ *
  * Substitui placeholders como {{gstore_image:123}} por URLs reais da biblioteca.
- * 
+ *
  * @param string $content Conteúdo do template.
  * @return string Conteúdo processado.
  */
@@ -10520,28 +10558,28 @@ function gstore_process_image_placeholders( $content ) {
 	if ( empty( $content ) ) {
 		return $content;
 	}
-	
+
 	// NOVO SISTEMA: Hero Slider dinâmico com Desktop/Mobile
 	if ( strpos( $content, '{{gstore_hero_slider}}' ) !== false ) {
 		$slider_html = gstore_render_hero_slider();
 		$content = str_replace( '{{gstore_hero_slider}}', $slider_html, $content );
 	}
-	
+
 	// Placeholders especiais que usam configurações do tema (SISTEMA LEGADO - mantido para compatibilidade)
 	// {{gstore_hero_slide_1}}, {{gstore_hero_slide_2}}, {{gstore_banner_youtube}}
 	$hero_slide_1_id = gstore_get_hero_slide_1_id();
 	$hero_slide_2_id = gstore_get_hero_slide_2_id();
 	$banner_youtube_id = gstore_get_banner_youtube_id();
-	
+
 	// Processa hero slides com otimização (srcset + priorização)
 	if ( $hero_slide_1_id > 0 ) {
 		$hero_slide_1_alt = esc_attr( get_option( 'gstore_hero_slide_1_alt', 'Banner principal da loja' ) );
 		$hero_slide_1_tag = gstore_get_hero_image_tag( $hero_slide_1_id, $hero_slide_1_alt, true );
-		
+
 		// Substitui tag img completa que contém o placeholder (flexível com qualquer ordem de atributos)
 		$pattern = '/<img\s+[^>]*src=["\']\{\{gstore_hero_slide_1\}\}["\'][^>]*>/is';
 		$content = preg_replace( $pattern, $hero_slide_1_tag, $content );
-		
+
 		// Fallback: substitui apenas URL se tag não foi encontrada (para compatibilidade)
 		if ( strpos( $content, '{{gstore_hero_slide_1}}' ) !== false ) {
 			$hero_slide_1_url = wp_get_attachment_url( $hero_slide_1_id );
@@ -10552,15 +10590,15 @@ function gstore_process_image_placeholders( $content ) {
 	} else {
 		$content = str_replace( '{{gstore_hero_slide_1}}', '', $content );
 	}
-	
+
 	if ( $hero_slide_2_id > 0 ) {
 		$hero_slide_2_alt = esc_attr( get_option( 'gstore_hero_slide_2_alt', 'Banner promocional da loja' ) );
 		$hero_slide_2_tag = gstore_get_hero_image_tag( $hero_slide_2_id, $hero_slide_2_alt, false );
-		
+
 		// Substitui tag img completa que contém o placeholder (flexível com qualquer ordem de atributos)
 		$pattern = '/<img\s+[^>]*src=["\']\{\{gstore_hero_slide_2\}\}["\'][^>]*>/is';
 		$content = preg_replace( $pattern, $hero_slide_2_tag, $content );
-		
+
 		// Fallback: substitui apenas URL se tag não foi encontrada (para compatibilidade)
 		if ( strpos( $content, '{{gstore_hero_slide_2}}' ) !== false ) {
 			$hero_slide_2_url = wp_get_attachment_url( $hero_slide_2_id );
@@ -10571,7 +10609,7 @@ function gstore_process_image_placeholders( $content ) {
 	} else {
 		$content = str_replace( '{{gstore_hero_slide_2}}', '', $content );
 	}
-	
+
 	// Banner YouTube (não precisa de srcset, não é LCP)
 	if ( $banner_youtube_id > 0 ) {
 		$banner_youtube_url = wp_get_attachment_url( $banner_youtube_id );
@@ -10585,7 +10623,7 @@ function gstore_process_image_placeholders( $content ) {
 			esc_url( $banner_youtube_url ),
 			$banner_youtube_alt
 		);
-		
+
 		// Se houver link configurado, envolve a imagem em um link
 		if ( ! empty( $banner_youtube_link ) ) {
 			$img_tag = sprintf(
@@ -10594,11 +10632,11 @@ function gstore_process_image_placeholders( $content ) {
 				$img_tag
 			);
 		}
-		
+
 		// Substitui a tag img completa que contém o placeholder
 		$pattern = '/<img\s+[^>]*src=["\']\{\{gstore_banner_youtube\}\}["\'][^>]*>/is';
 		$content = preg_replace( $pattern, $img_tag, $content );
-		
+
 		// Fallback: substitui apenas URL se tag não foi encontrada (para compatibilidade)
 		if ( strpos( $content, '{{gstore_banner_youtube}}' ) !== false ) {
 			$content = str_replace( '{{gstore_banner_youtube}}', $banner_youtube_url, $content );
@@ -10606,50 +10644,50 @@ function gstore_process_image_placeholders( $content ) {
 	} else {
 		$content = str_replace( '{{gstore_banner_youtube}}', '', $content );
 	}
-	
+
 	// Placeholders para textos alternativos (para uso em outros contextos)
 	$content = str_replace( '{{gstore_hero_slide_1_alt}}', esc_attr( get_option( 'gstore_hero_slide_1_alt', 'Banner principal da loja' ) ), $content );
 	$content = str_replace( '{{gstore_hero_slide_2_alt}}', esc_attr( get_option( 'gstore_hero_slide_2_alt', 'Banner promocional da loja' ) ), $content );
 	$content = str_replace( '{{gstore_banner_youtube_alt}}', esc_attr( get_option( 'gstore_banner_youtube_alt', 'Banner do YouTube' ) ), $content );
-	
+
 	// Padrão: {{gstore_image:ID:size}} para URL apenas
 	$pattern = '/\{\{gstore_image:(\d+)(?::([^}]+))?\}\}/';
-	
+
 	$content = preg_replace_callback(
 		$pattern,
 		function( $matches ) {
 			$attachment_id = absint( $matches[1] );
 			$size          = isset( $matches[2] ) && ! empty( $matches[2] ) ? $matches[2] : 'full';
-			
+
 			if ( ! $attachment_id ) {
 				return '';
 			}
-			
+
 			$url = gstore_get_image_url( $attachment_id, $size );
 			return $url ? esc_url( $url ) : '';
 		},
 		$content
 	);
-	
+
 	// Padrão: {{gstore_image_tag:ID:size:alt}} para tag completa
 	$pattern_tag = '/\{\{gstore_image_tag:(\d+)(?::([^:}]+))?(?::([^}]+))?\}\}/';
-	
+
 	$content = preg_replace_callback(
 		$pattern_tag,
 		function( $matches ) {
 			$attachment_id = absint( $matches[1] );
 			$size          = isset( $matches[2] ) && ! empty( $matches[2] ) ? $matches[2] : 'full';
 			$alt           = isset( $matches[3] ) ? $matches[3] : '';
-			
+
 			if ( ! $attachment_id ) {
 				return '';
 			}
-			
+
 			return gstore_get_image_tag( $attachment_id, $size, $alt );
 		},
 		$content
 	);
-	
+
 	return $content;
 }
 
@@ -10661,29 +10699,29 @@ add_filter( 'widget_text', 'gstore_process_image_placeholders', 5 );
 
 /**
  * Processa template parts HTML carregando e substituindo placeholders.
- * 
+ *
  * Esta função pode ser usada para processar templates HTML manualmente.
- * 
+ *
  * @param string $template_path Caminho do template part.
  * @return string Conteúdo processado.
  */
 function gstore_load_template_part( $template_path ) {
 	$template_file = get_theme_file_path( $template_path );
-	
+
 	if ( ! file_exists( $template_file ) ) {
 		return '';
 	}
-	
+
 	ob_start();
 	include $template_file;
 	$content = ob_get_clean();
-	
+
 	return gstore_process_image_placeholders( $content );
 }
 
 /**
  * Filtro para processar blocos HTML customizados do Gutenberg.
- * 
+ *
  * Processa placeholders quando blocos HTML são renderizados.
  */
 add_filter( 'render_block_core/html', 'gstore_process_block_html', 10, 2 );
@@ -10696,7 +10734,7 @@ function gstore_process_block_html( $block_content, $block ) {
 
 /**
  * Filtro para processar template parts quando renderizados.
- * 
+ *
  * Processa placeholders em template parts HTML do Gutenberg.
  */
 add_filter( 'render_block_core/template-part', 'gstore_process_template_part_block', 10, 2 );
@@ -11638,7 +11676,7 @@ function gstore_process_image_block( $block_content, $block ) {
 
 /**
  * Filtro para processar todo o conteúdo renderizado.
- * 
+ *
  * Processa placeholders em qualquer conteúdo renderizado pelo WordPress.
  */
 add_filter( 'render_block', 'gstore_process_all_blocks', 10, 2 );
@@ -11654,7 +11692,7 @@ function gstore_process_all_blocks( $block_content, $block ) {
 
 /**
  * Processa o output final da página para garantir que placeholders sejam substituídos.
- * 
+ *
  * Este é um filtro de último recurso que processa todo o HTML antes de ser enviado ao navegador.
  */
 add_action( 'template_redirect', 'gstore_start_output_buffer', 1 );
@@ -11676,7 +11714,7 @@ function gstore_end_output_buffer() {
 
 /**
  * Processa o output final da página.
- * 
+ *
  * @param string $buffer Conteúdo HTML da página.
  * @return string Conteúdo processado.
  */
@@ -11684,22 +11722,22 @@ function gstore_process_final_output( $buffer ) {
 	if ( empty( $buffer ) ) {
 		return $buffer;
 	}
-	
+
 	// Processa placeholders de informações da loja (store-info.json)
 	if ( function_exists( 'gstore_process_store_info_placeholders' ) ) {
 		$buffer = gstore_process_store_info_placeholders( $buffer );
 	}
-	
+
 	// Processa placeholders de imagens no output final
 	$buffer = gstore_process_image_placeholders( $buffer );
-	
+
 	// Substitui a logo no header se configurada
 	$buffer = gstore_replace_header_logo_html( $buffer );
-	
+
 	// Remove classe Gstore-cart-shell do wrapper do WooCommerce para evitar conflitos
 	// O bloco page-content-wrapper adiciona classes que geram padding indesejado
 	$buffer = gstore_strip_cart_shell_from_wc_wrapper( $buffer );
-	
+
 	return $buffer;
 }
 
@@ -11721,42 +11759,42 @@ function gstore_strip_cart_shell_from_wc_wrapper( $html ) {
 	if ( empty( $html ) || strpos( $html, 'data-page="cart"' ) === false ) {
 		return $html;
 	}
-	
+
 	// Remove a classe Gstore-cart-shell do main que tem data-block-name="woocommerce/page-content-wrapper"
 	$html = preg_replace(
 		'/(<main[^>]*data-block-name="woocommerce\/page-content-wrapper"[^>]*class="[^"]*)\bGstore-cart-shell\b([^"]*")/i',
 		'$1$2',
 		$html
 	);
-	
+
 	// Remove classes is-layout-constrained do main wrapper do carrinho
 	$html = preg_replace(
 		'/(<main[^>]*data-page="cart"[^>]*class="[^"]*)\bis-layout-constrained\b([^"]*")/i',
 		'$1$2',
 		$html
 	);
-	
+
 	// Remove classes wp-block-group-is-layout-constrained do main wrapper do carrinho
 	$html = preg_replace(
 		'/(<main[^>]*data-page="cart"[^>]*class="[^"]*)\bwp-block-group-is-layout-constrained\b([^"]*")/i',
 		'$1$2',
 		$html
 	);
-	
+
 	// Remove classes is-layout-constrained do entry-content wrapper
 	$html = preg_replace(
 		'/(<div[^>]*class="[^"]*entry-content[^"]*)\bis-layout-constrained\b([^"]*")/i',
 		'$1$2',
 		$html
 	);
-	
+
 	// Remove classes wp-block-post-content-is-layout-constrained do entry-content wrapper
 	$html = preg_replace(
 		'/(<div[^>]*class="[^"]*entry-content[^"]*)\bwp-block-post-content-is-layout-constrained\b([^"]*")/i',
 		'$1$2',
 		$html
 	);
-	
+
 	return $html;
 }
 
@@ -11764,14 +11802,14 @@ function gstore_strip_cart_shell_from_wc_wrapper( $html ) {
  * ============================================
  * SETUP DO TEMA - CRIAÇÃO AUTOMÁTICA DE PÁGINAS
  * ============================================
- * 
+ *
  * Sistema que permite criar todas as páginas necessárias
  * para o funcionamento do tema Gstore com um clique.
  */
 
 /**
  * Retorna a lista de páginas que o tema precisa.
- * 
+ *
  * @return array Lista de páginas com configurações.
  */
 function gstore_get_required_pages() {
@@ -11939,30 +11977,44 @@ function gstore_render_design_tokens_page() {
 	if ( ! current_user_can( 'manage_options' ) ) {
 		return;
 	}
-	
-	// Obtém a cor de accent salva ou usa a padrão
-	$accent_color = get_option( 'gstore_accent_color', '#b5a642' );
-	
+
+	// Obtém a cor de accent persistida no banco, que é a fonte da verdade.
+	$accent_color      = gstore_ensure_persisted_accent_color();
+	$tokens_file_color = gstore_get_accent_color_from_tokens_file();
+
 	// Lê o arquivo de tokens
 	$tokens_file = get_theme_file_path( 'assets/css/tokens.css' );
 	$tokens_content = file_exists( $tokens_file ) ? file_get_contents( $tokens_file ) : '';
-	
+
 	// Extrai as cores do arquivo
 	$colors = gstore_extract_colors_from_tokens( $tokens_content );
-	
+
 	// Gera preview dos tokens derivados
 	$derived_tokens = gstore_generate_accent_tokens( $accent_color );
-	
+
 	?>
 	<div class="wrap">
 		<h1><?php echo esc_html( __( 'Design Tokens - GStore', 'gstore' ) ); ?></h1>
 		<p class="description"><?php echo esc_html( __( 'Visualize todos os tokens de cor, tipografia, espaçamento e outros tokens de design do tema.', 'gstore' ) ); ?></p>
-		
+
 		<!-- Seletor de Cor de Accent -->
 		<div class="gstore-accent-selector" style="background: #fff; border: 1px solid #ccd0d4; border-radius: 4px; padding: 20px; margin: 20px 0; box-shadow: 0 1px 1px rgba(0,0,0,.04);">
 			<h2 style="margin-top: 0;"><?php echo esc_html( __( 'Cor de Accent', 'gstore' ) ); ?></h2>
 			<p class="description"><?php echo esc_html( __( 'Escolha a cor de accent principal. Os tokens derivados (hover, dark, light, transparências) serão gerados automaticamente.', 'gstore' ) ); ?></p>
-			
+			<div class="gstore-accent-protection">
+				<strong><?php echo esc_html( __( 'Proteção contra atualização via Git ativa.', 'gstore' ) ); ?></strong>
+				<?php
+				echo esc_html(
+					sprintf(
+						/* translators: 1: saved color, 2: tokens file color. */
+						__( 'A cor salva no banco é %1$s. Cor atual em tokens.css: %2$s. Se uma atualização sobrescrever o arquivo, o tema reaplica a cor salva automaticamente.', 'gstore' ),
+						strtoupper( $accent_color ),
+						$tokens_file_color ? strtoupper( $tokens_file_color ) : __( 'não encontrada', 'gstore' )
+					)
+				);
+				?>
+			</div>
+
 			<form id="gstore-accent-color-form" method="post" action="">
 				<?php wp_nonce_field( 'gstore_save_accent_color', 'gstore_accent_color_nonce' ); ?>
 				<table class="form-table" role="presentation">
@@ -11971,22 +12023,26 @@ function gstore_render_design_tokens_page() {
 							<label for="gstore_accent_color"><?php echo esc_html( __( 'Cor de Accent', 'gstore' ) ); ?></label>
 						</th>
 						<td>
-							<input 
-								type="color" 
-								id="gstore_accent_color" 
-								name="gstore_accent_color" 
-								value="<?php echo esc_attr( $accent_color ); ?>" 
+							<input
+								type="color"
+								id="gstore_accent_color"
+								name="gstore_accent_color"
+								value="<?php echo esc_attr( $accent_color ); ?>"
 								style="width: 80px; height: 40px; border: 1px solid #ddd; border-radius: 4px; cursor: pointer;"
 							/>
-							<input 
-								type="text" 
-								id="gstore_accent_color_text" 
-								value="<?php echo esc_attr( $accent_color ); ?>" 
-								pattern="^#[0-9A-Fa-f]{6}$" 
+							<input
+								type="text"
+								id="gstore_accent_color_text"
+								value="<?php echo esc_attr( $accent_color ); ?>"
+								pattern="^#[0-9A-Fa-f]{6}$"
 								style="width: 100px; margin-left: 10px; padding: 5px;"
 								placeholder="#b5a642"
 							/>
 							<p class="description"><?php echo esc_html( __( 'Digite ou selecione uma cor em formato hexadecimal.', 'gstore' ) ); ?></p>
+							<label class="gstore-accent-confirm" for="gstore_accent_confirm">
+								<input type="checkbox" id="gstore_accent_confirm" name="gstore_accent_confirm" value="1" />
+								<?php echo esc_html( __( 'Confirmo que quero substituir a cor salva do site.', 'gstore' ) ); ?>
+							</label>
 						</td>
 					</tr>
 				</table>
@@ -11998,7 +12054,7 @@ function gstore_render_design_tokens_page() {
 					<span class="spinner" id="gstore-accent-color-spinner" style="float: none; margin-left: 10px;"></span>
 				</p>
 				<div id="gstore-accent-color-message" style="margin-top: 10px;"></div>
-				
+
 				<!-- Preview dos Tokens Derivados -->
 				<div class="gstore-derived-tokens-preview" style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #ddd;">
 					<h3 style="margin-top: 0;"><?php echo esc_html( __( 'Preview dos Tokens Derivados', 'gstore' ) ); ?></h3>
@@ -12022,12 +12078,12 @@ function gstore_render_design_tokens_page() {
 				</div>
 			</form>
 		</div>
-		
+
 		<div class="gstore-tokens-container" style="margin-top: 20px;">
 			<?php gstore_render_color_tokens( $colors ); ?>
 		</div>
 	</div>
-	
+
 	<style>
 		.gstore-tokens-container {
 			display: grid;
@@ -12107,6 +12163,24 @@ function gstore_render_design_tokens_page() {
 			visibility: visible !important;
 			opacity: 1 !important;
 		}
+		.gstore-accent-protection {
+			margin: 14px 0 0;
+			padding: 12px 14px;
+			border-left: 4px solid #b5a642;
+			background: rgba(181, 166, 66, 0.10);
+			color: #1d2327;
+		}
+		.gstore-accent-protection strong {
+			display: block;
+			margin-bottom: 4px;
+		}
+		.gstore-accent-confirm {
+			display: inline-flex;
+			align-items: center;
+			gap: 8px;
+			margin-top: 10px;
+			font-weight: 600;
+		}
 		.gstore-token-copy-message {
 			position: fixed;
 			top: 32px;
@@ -12134,7 +12208,7 @@ function gstore_render_design_tokens_page() {
 			}
 		}
 	</style>
-	
+
 	<script>
 		document.addEventListener('DOMContentLoaded', function() {
 			const colorCodes = document.querySelectorAll('.gstore-color-info code');
@@ -12142,7 +12216,7 @@ function gstore_render_design_tokens_page() {
 			copyMessage.className = 'gstore-token-copy-message';
 			copyMessage.textContent = 'Token copiado!';
 			document.body.appendChild(copyMessage);
-			
+
 			colorCodes.forEach(code => {
 				code.addEventListener('click', function() {
 					const text = this.textContent;
@@ -12154,18 +12228,20 @@ function gstore_render_design_tokens_page() {
 					});
 				});
 			});
-			
+
 			// Sincroniza o seletor de cor com o input de texto
 			const colorPicker = document.getElementById('gstore_accent_color');
 			const colorText = document.getElementById('gstore_accent_color_text');
-			
+			const confirmChange = document.getElementById('gstore_accent_confirm');
+			const savedAccentColor = '<?php echo esc_js( strtolower( $accent_color ) ); ?>';
+
 			if (colorPicker && colorText) {
 				// Atualiza o texto quando o seletor muda
 				colorPicker.addEventListener('input', function() {
 					colorText.value = this.value.toUpperCase();
 					updateDerivedTokensPreview();
 				});
-				
+
 				// Atualiza o seletor quando o texto muda
 				colorText.addEventListener('input', function() {
 					const value = this.value.trim();
@@ -12174,7 +12250,7 @@ function gstore_render_design_tokens_page() {
 						updateDerivedTokensPreview();
 					}
 				});
-				
+
 				// Valida o formato quando o campo perde o foco
 				colorText.addEventListener('blur', function() {
 					const value = this.value.trim();
@@ -12183,19 +12259,19 @@ function gstore_render_design_tokens_page() {
 					}
 				});
 			}
-			
+
 			// Atualiza o preview dos tokens derivados
 			function updateDerivedTokensPreview() {
 				const color = colorPicker.value;
 				const previews = document.querySelectorAll('.gstore-derived-tokens-preview .gstore-color-preview');
 				const codes = document.querySelectorAll('.gstore-derived-tokens-preview .gstore-color-info code');
-				
+
 				// Faz requisição AJAX para obter os tokens derivados
 				const formData = new FormData();
 				formData.append('action', 'gstore_get_derived_tokens');
 				formData.append('accent_color', color);
 				formData.append('nonce', '<?php echo wp_create_nonce( 'gstore_get_derived_tokens' ); ?>');
-				
+
 				fetch(ajaxurl, {
 					method: 'POST',
 					body: formData
@@ -12205,13 +12281,13 @@ function gstore_render_design_tokens_page() {
 					if (data.success && data.data) {
 						const tokens = data.data;
 						const tokenNames = ['accent', 'accent-hover', 'accent-dark', 'accent-light', 'accent-08', 'accent-10', 'accent-12', 'accent-15', 'accent-20'];
-						
+
 						previews.forEach((preview, index) => {
 							if (tokens[tokenNames[index]]) {
 								const tokenValue = tokens[tokenNames[index]];
 								preview.style.backgroundColor = tokenValue;
 								preview.textContent = tokenValue;
-								
+
 								// Atualiza cor do texto baseado no contraste
 								// Para rgba, extrai os valores RGB
 								let rgb = null;
@@ -12227,7 +12303,7 @@ function gstore_render_design_tokens_page() {
 								} else {
 									rgb = hexToRgb(tokenValue);
 								}
-								
+
 								if (rgb) {
 									const luminance = (0.299 * rgb.r + 0.587 * rgb.g + 0.114 * rgb.b) / 255;
 									preview.style.color = luminance > 0.5 ? '#000' : '#fff';
@@ -12236,7 +12312,7 @@ function gstore_render_design_tokens_page() {
 								}
 							}
 						});
-						
+
 						codes.forEach((code, index) => {
 							if (tokens[tokenNames[index]]) {
 								code.textContent = tokens[tokenNames[index]];
@@ -12248,7 +12324,7 @@ function gstore_render_design_tokens_page() {
 					console.error('Erro ao atualizar preview:', error);
 				});
 			}
-			
+
 			// Função auxiliar para converter hex para RGB
 			function hexToRgb(hex) {
 				const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
@@ -12258,24 +12334,30 @@ function gstore_render_design_tokens_page() {
 					b: parseInt(result[3], 16)
 				} : null;
 			}
-			
+
 			// Submissão do formulário via AJAX
 			const form = document.getElementById('gstore-accent-color-form');
 			if (form) {
 				form.addEventListener('submit', function(e) {
 					e.preventDefault();
-					
+
 					const submitButton = document.getElementById('gstore-save-accent-color');
 					const spinner = document.getElementById('gstore-accent-color-spinner');
 					const message = document.getElementById('gstore-accent-color-message');
-					
+					const selectedColor = colorPicker ? colorPicker.value.trim().toLowerCase() : '';
+
+					if (selectedColor && selectedColor !== savedAccentColor && confirmChange && !confirmChange.checked) {
+						message.innerHTML = '<div class="notice notice-warning is-dismissible"><p>Marque a confirmação para substituir a cor salva do site.</p></div>';
+						return;
+					}
+
 					submitButton.disabled = true;
 					spinner.classList.add('is-active');
 					message.innerHTML = '';
-					
+
 					const formData = new FormData(form);
 					formData.append('action', 'gstore_save_accent_color');
-					
+
 					fetch(ajaxurl, {
 						method: 'POST',
 						body: formData
@@ -12284,7 +12366,7 @@ function gstore_render_design_tokens_page() {
 					.then(data => {
 						spinner.classList.remove('is-active');
 						submitButton.disabled = false;
-						
+
 						if (data.success) {
 							message.innerHTML = '<div class="notice notice-success is-dismissible"><p>' + data.data.message + '</p></div>';
 							// Recarrega a página após 1 segundo para mostrar os tokens atualizados
@@ -12313,19 +12395,19 @@ function gstore_render_design_tokens_page() {
  */
 function gstore_ajax_get_derived_tokens() {
 	check_ajax_referer( 'gstore_get_derived_tokens', 'nonce' );
-	
+
 	if ( ! current_user_can( 'manage_options' ) ) {
 		wp_send_json_error( array( 'message' => __( 'Permissão negada.', 'gstore' ) ) );
 	}
-	
+
 	$accent_color = isset( $_POST['accent_color'] ) ? sanitize_hex_color( $_POST['accent_color'] ) : '#b5a642';
-	
+
 	if ( ! $accent_color ) {
 		wp_send_json_error( array( 'message' => __( 'Cor inválida.', 'gstore' ) ) );
 	}
-	
+
 	$tokens = gstore_generate_accent_tokens( $accent_color );
-	
+
 	wp_send_json_success( $tokens );
 }
 add_action( 'wp_ajax_gstore_get_derived_tokens', 'gstore_ajax_get_derived_tokens' );
@@ -12335,36 +12417,43 @@ add_action( 'wp_ajax_gstore_get_derived_tokens', 'gstore_ajax_get_derived_tokens
  */
 function gstore_ajax_save_accent_color() {
 	check_ajax_referer( 'gstore_save_accent_color', 'gstore_accent_color_nonce' );
-	
+
 	if ( ! current_user_can( 'manage_options' ) ) {
 		wp_send_json_error( array( 'message' => __( 'Permissão negada.', 'gstore' ) ) );
 	}
-	
+
 	$accent_color = isset( $_POST['gstore_accent_color'] ) ? sanitize_hex_color( $_POST['gstore_accent_color'] ) : '';
-	
+
 	if ( ! $accent_color ) {
 		wp_send_json_error( array( 'message' => __( 'Cor inválida. Por favor, selecione uma cor válida.', 'gstore' ) ) );
 	}
-	
+
+	$current_accent_color = gstore_get_effective_accent_color();
+	$confirmed_change     = ! empty( $_POST['gstore_accent_confirm'] );
+
+	if ( strtolower( $accent_color ) !== strtolower( $current_accent_color ) && ! $confirmed_change ) {
+		wp_send_json_error( array( 'message' => __( 'Confirme a troca para substituir a cor salva do site.', 'gstore' ) ) );
+	}
+
 	// Salva a opção
 	update_option( 'gstore_accent_color', $accent_color );
-	
+
 	// Atualiza o arquivo tokens.css
 	$result = gstore_update_accent_tokens_in_file( $accent_color );
-	
+
 	if ( is_wp_error( $result ) ) {
 		wp_send_json_error( array( 'message' => $result->get_error_message() ) );
 	}
-	
+
 	// Atualiza o timestamp para forçar recarregamento do CSS
 	update_option( 'gstore_tokens_last_updated', time() );
-	
+
 	// Limpa cache do WordPress se disponível
 	if ( function_exists( 'wp_cache_flush' ) ) {
 		wp_cache_flush();
 	}
-	
-	wp_send_json_success( array( 
+
+	wp_send_json_success( array(
 		'message' => __( 'Cor de accent salva e tokens atualizados com sucesso!', 'gstore' ),
 		'tokens' => gstore_generate_accent_tokens( $accent_color ),
 		'file_updated' => true
@@ -12385,7 +12474,7 @@ function gstore_extract_colors_from_tokens( $content ) {
 		'transparencia' => array(),
 		'estados' => array(),
 	);
-	
+
 	// Primeiro, cria um mapa de todas as variáveis para resolver referências
 	$var_map = array();
 	preg_match_all('/--gstore-color-([^:]+):\s*([^;]+);/', $content, $all_matches, PREG_SET_ORDER);
@@ -12394,17 +12483,17 @@ function gstore_extract_colors_from_tokens( $content ) {
 		$var_value = trim( $match[2] );
 		$var_map[ $var_name ] = $var_value;
 	}
-	
+
 	// Padrão para encontrar variáveis CSS
 	preg_match_all('/--gstore-color-([^:]+):\s*([^;]+);/', $content, $matches, PREG_SET_ORDER);
-	
+
 	foreach ( $matches as $match ) {
 		$name = trim( $match[1] );
 		$value = trim( $match[2] );
-		
+
 		// Resolve variáveis CSS se for uma referência
 		$resolved_value = gstore_resolve_css_variable( $value, $var_map );
-		
+
 		// Categoriza as cores
 		if ( strpos( $name, 'bg-' ) === 0 ) {
 			$colors['fundos'][] = array(
@@ -12458,7 +12547,7 @@ function gstore_extract_colors_from_tokens( $content ) {
 			);
 		}
 	}
-	
+
 	return $colors;
 }
 
@@ -12470,25 +12559,25 @@ function gstore_resolve_css_variable( $value, $var_map, $depth = 0 ) {
 	if ( $depth > 10 ) {
 		return $value;
 	}
-	
+
 	// Se não é uma variável, retorna o valor
 	if ( strpos( $value, 'var(' ) !== 0 ) {
 		return $value;
 	}
-	
+
 	// Extrai o nome da variável
 	preg_match( '/var\(([^)]+)\)/', $value, $matches );
 	if ( empty( $matches[1] ) ) {
 		return $value;
 	}
-	
+
 	$var_name = trim( $matches[1] );
-	
+
 	// Se a variável existe no mapa, resolve recursivamente
 	if ( isset( $var_map[ $var_name ] ) ) {
 		return gstore_resolve_css_variable( $var_map[ $var_name ], $var_map, $depth + 1 );
 	}
-	
+
 	return $value;
 }
 
@@ -12505,26 +12594,26 @@ function gstore_render_color_tokens( $colors ) {
 		'transparencia' => __( 'Cores com Transparência', 'gstore' ),
 		'estados' => __( 'Estados Específicos', 'gstore' ),
 	);
-	
+
 	foreach ( $sections as $key => $title ) {
 		if ( empty( $colors[ $key ] ) ) {
 			continue;
 		}
-		
+
 		?>
 		<div class="gstore-token-section">
 			<h2><?php echo esc_html( $title ); ?></h2>
 			<div class="gstore-color-grid">
-				<?php foreach ( $colors[ $key ] as $color ) : 
+				<?php foreach ( $colors[ $key ] as $color ) :
 					$color_value = isset( $color['resolved'] ) && $color['resolved'] !== $color['value'] ? $color['resolved'] : $color['value'];
 					$display_value = $color_value;
-					
+
 					// Se ainda for uma variável não resolvida, tenta usar o valor original
 					if ( strpos( $color_value, 'var(' ) === 0 ) {
 						$display_value = $color['value'];
 						$color_value = '#f0f0f0'; // Cor padrão para variáveis não resolvidas
 					}
-					
+
 					// Determina se o texto deve ser claro ou escuro
 					$text_color = gstore_get_contrast_color( $color_value );
 				?>
@@ -12564,50 +12653,50 @@ function gstore_get_contrast_color( $color ) {
 		}
 		return '#000';
 	}
-	
+
 	// Remove # se existir
 	$color = ltrim( $color, '#' );
-	
+
 	// Se não for hex válido, retorna preto
 	if ( ! preg_match( '/^[0-9a-fA-F]{3,6}$/', $color ) ) {
 		return '#000';
 	}
-	
+
 	// Converte hex para RGB
 	if ( strlen( $color ) === 3 ) {
 		$color = $color[0] . $color[0] . $color[1] . $color[1] . $color[2] . $color[2];
 	}
-	
+
 	$r = hexdec( substr( $color, 0, 2 ) );
 	$g = hexdec( substr( $color, 2, 2 ) );
 	$b = hexdec( substr( $color, 4, 2 ) );
-	
+
 	// Calcula luminância relativa
 	$luminance = ( 0.299 * $r + 0.587 * $g + 0.114 * $b ) / 255;
-	
+
 	// Retorna branco para fundos escuros, preto para fundos claros
 	return $luminance > 0.5 ? '#000' : '#fff';
 }
 
 /**
  * Converte cor hex para RGB.
- * 
+ *
  * @param string $hex Cor em formato hex (#RRGGBB ou RRGGBB).
  * @return array|false Array com r, g, b ou false se inválido.
  */
 function gstore_hex_to_rgb( $hex ) {
 	$hex = ltrim( $hex, '#' );
-	
+
 	// Se não for hex válido, retorna false
 	if ( ! preg_match( '/^[0-9a-fA-F]{3,6}$/', $hex ) ) {
 		return false;
 	}
-	
+
 	// Converte hex curto para completo
 	if ( strlen( $hex ) === 3 ) {
 		$hex = $hex[0] . $hex[0] . $hex[1] . $hex[1] . $hex[2] . $hex[2];
 	}
-	
+
 	return array(
 		'r' => hexdec( substr( $hex, 0, 2 ) ),
 		'g' => hexdec( substr( $hex, 2, 2 ) ),
@@ -12617,7 +12706,7 @@ function gstore_hex_to_rgb( $hex ) {
 
 /**
  * Converte RGB para hex.
- * 
+ *
  * @param int $r Valor R (0-255).
  * @param int $g Valor G (0-255).
  * @param int $b Valor B (0-255).
@@ -12632,7 +12721,7 @@ function gstore_rgb_to_hex( $r, $g, $b ) {
 
 /**
  * Escurece uma cor hex.
- * 
+ *
  * @param string $hex Cor em formato hex.
  * @param float $percent Porcentagem para escurecer (0-100).
  * @return string Cor escurecida em hex.
@@ -12642,10 +12731,10 @@ function gstore_darken_color( $hex, $percent = 15 ) {
 	if ( ! $rgb ) {
 		return $hex;
 	}
-	
+
 	$percent = max( 0, min( 100, floatval( $percent ) ) );
 	$factor = 1 - ( $percent / 100 );
-	
+
 	return gstore_rgb_to_hex(
 		$rgb['r'] * $factor,
 		$rgb['g'] * $factor,
@@ -12655,7 +12744,7 @@ function gstore_darken_color( $hex, $percent = 15 ) {
 
 /**
  * Clareia uma cor hex.
- * 
+ *
  * @param string $hex Cor em formato hex.
  * @param float $percent Porcentagem para clarear (0-100).
  * @return string Cor clareada em hex.
@@ -12665,10 +12754,10 @@ function gstore_lighten_color( $hex, $percent = 15 ) {
 	if ( ! $rgb ) {
 		return $hex;
 	}
-	
+
 	$percent = max( 0, min( 100, floatval( $percent ) ) );
 	$factor = 1 + ( $percent / 100 );
-	
+
 	return gstore_rgb_to_hex(
 		min( 255, $rgb['r'] * $factor ),
 		min( 255, $rgb['g'] * $factor ),
@@ -12678,7 +12767,7 @@ function gstore_lighten_color( $hex, $percent = 15 ) {
 
 /**
  * Converte cor hex para rgba.
- * 
+ *
  * @param string $hex Cor em formato hex.
  * @param float $opacity Opacidade (0-1).
  * @return string Cor em formato rgba.
@@ -12688,14 +12777,14 @@ function gstore_hex_to_rgba( $hex, $opacity = 1 ) {
 	if ( ! $rgb ) {
 		return $hex;
 	}
-	
+
 	$opacity = max( 0, min( 1, floatval( $opacity ) ) );
 	return sprintf( 'rgba(%d, %d, %d, %.2f)', $rgb['r'], $rgb['g'], $rgb['b'], $opacity );
 }
 
 /**
  * Gera tokens derivados baseados na cor de accent.
- * 
+ *
  * @param string $accent_color Cor de accent em hex.
  * @return array Array com todos os tokens derivados.
  */
@@ -12704,7 +12793,7 @@ function gstore_generate_accent_tokens( $accent_color ) {
 	if ( ! $rgb ) {
 		return array();
 	}
-	
+
 	return array(
 		'accent' => $accent_color,
 		'accent-hover' => gstore_darken_color( $accent_color, 12 ),
@@ -12721,13 +12810,13 @@ function gstore_generate_accent_tokens( $accent_color ) {
 /**
  * Atualiza o arquivo tokens.css com a nova cor de accent e tokens derivados.
  * Também atualiza valores de fallback em outros arquivos CSS.
- * 
+ *
  * @param string $accent_color Cor de accent em hex.
  * @return bool|WP_Error True em sucesso, WP_Error em erro.
  */
 function gstore_update_accent_tokens_in_file( $accent_color ) {
 	$tokens = gstore_generate_accent_tokens( $accent_color );
-	
+
 	// Mapeia os nomes dos tokens para os padrões no arquivo
 	$token_map = array(
 		'accent' => '--gstore-color-accent',
@@ -12740,16 +12829,16 @@ function gstore_update_accent_tokens_in_file( $accent_color ) {
 		'accent-15' => '--gstore-color-accent-15',
 		'accent-20' => '--gstore-color-accent-20',
 	);
-	
+
 	// 1. Atualiza tokens.css
 	$tokens_file = get_theme_file_path( 'assets/css/tokens.css' );
 	if ( file_exists( $tokens_file ) && is_writable( $tokens_file ) ) {
 		$content = file_get_contents( $tokens_file );
-		
+
 		foreach ( $token_map as $token_key => $token_var ) {
 			$token_value = $tokens[ $token_key ];
 			$pattern = '/([\t\s]*)(' . preg_quote( $token_var, '/' ) . '):\s*[^;]+;/';
-			
+
 			if ( preg_match( $pattern, $content ) ) {
 				$content = preg_replace(
 					$pattern,
@@ -12767,126 +12856,126 @@ function gstore_update_accent_tokens_in_file( $accent_color ) {
 				}
 			}
 		}
-		
+
 		file_put_contents( $tokens_file, $content );
 	}
-	
+
 	// 2. Atualiza valores de fallback em checkout-steps.css
 	$checkout_steps_file = get_theme_file_path( 'assets/css/checkout-steps.css' );
 	if ( file_exists( $checkout_steps_file ) && is_writable( $checkout_steps_file ) ) {
 		$content = file_get_contents( $checkout_steps_file );
-		
+
 		// Atualiza --gstore-brass com novo fallback
 		$content = preg_replace(
 			'/(--gstore-brass):\s*var\(--gstore-color-accent,\s*[^)]+\);/',
 			'$1: var(--gstore-color-accent, ' . $tokens['accent'] . ');',
 			$content
 		);
-		
+
 		// Atualiza --gstore-brass-dark com novo fallback
 		$content = preg_replace(
 			'/(--gstore-brass-dark):\s*var\(--gstore-color-accent-dark,\s*[^)]+\);/',
 			'$1: var(--gstore-color-accent-dark, ' . $tokens['accent-dark'] . ');',
 			$content
 		);
-		
+
 		file_put_contents( $checkout_steps_file, $content );
 	}
-	
+
 	// 3. Atualiza valores hardcoded em style.css
 	$style_file = get_theme_file_path( 'style.css' );
 	if ( file_exists( $style_file ) && is_writable( $style_file ) ) {
 		$content = file_get_contents( $style_file );
-		
+
 		// Atualiza valores hardcoded de accent (em qualquer lugar do arquivo)
 		$content = preg_replace(
 			'/(--gstore-color-accent):\s*#[0-9a-fA-F]{6};/',
 			'$1: ' . $tokens['accent'] . ';',
 			$content
 		);
-		
+
 		$content = preg_replace(
 			'/(--gstore-color-accent-hover):\s*#[0-9a-fA-F]{6};/',
 			'$1: ' . $tokens['accent-hover'] . ';',
 			$content
 		);
-		
+
 		// Atualiza todos os fallbacks de accent no arquivo
 		$content = preg_replace(
 			'/var\(--gstore-color-accent,\s*#[0-9a-fA-F]{6}\)/',
 			'var(--gstore-color-accent, ' . $tokens['accent'] . ')',
 			$content
 		);
-		
+
 		$content = preg_replace(
 			'/var\(--gstore-color-accent-hover,\s*#[0-9a-fA-F]{6}\)/',
 			'var(--gstore-color-accent-hover, ' . $tokens['accent-hover'] . ')',
 			$content
 		);
-		
+
 		$content = preg_replace(
 			'/var\(--gstore-color-accent-light,\s*#[0-9a-fA-F]{6}\)/',
 			'var(--gstore-color-accent-light, ' . $tokens['accent-light'] . ')',
 			$content
 		);
-		
+
 		file_put_contents( $style_file, $content );
 	}
-	
+
 	// 4. Atualiza valores de fallback em my-account.css
 	$my_account_file = get_theme_file_path( 'assets/css/my-account.css' );
 	if ( file_exists( $my_account_file ) && is_writable( $my_account_file ) ) {
 		$content = file_get_contents( $my_account_file );
-		
+
 		// Atualiza todos os fallbacks de accent
 		$content = preg_replace(
 			'/var\(--gstore-color-accent,\s*#[0-9a-fA-F]{6}\)/',
 			'var(--gstore-color-accent, ' . $tokens['accent'] . ')',
 			$content
 		);
-		
+
 		$content = preg_replace(
 			'/var\(--gstore-color-accent-hover,\s*#[0-9a-fA-F]{6}\)/',
 			'var(--gstore-color-accent-hover, ' . $tokens['accent-hover'] . ')',
 			$content
 		);
-		
+
 		$content = preg_replace(
 			'/var\(--gstore-color-accent-dark,\s*#[0-9a-fA-F]{6}\)/',
 			'var(--gstore-color-accent-dark, ' . $tokens['accent-dark'] . ')',
 			$content
 		);
-		
+
 		file_put_contents( $my_account_file, $content );
 	}
-	
+
 	// 5. Atualiza valores de fallback em header.css
 	$header_file = get_theme_file_path( 'assets/css/layouts/header.css' );
 	if ( file_exists( $header_file ) && is_writable( $header_file ) ) {
 		$content = file_get_contents( $header_file );
-		
+
 		// Atualiza todos os fallbacks de accent
 		$content = preg_replace(
 			'/var\(--gstore-color-accent,\s*#[0-9a-fA-F]{6}\)/',
 			'var(--gstore-color-accent, ' . $tokens['accent'] . ')',
 			$content
 		);
-		
+
 		file_put_contents( $header_file, $content );
 	}
-	
+
 	return true;
 }
 
 /**
  * Verifica se uma página existe pelo slug.
- * 
+ *
  * @param string $slug Slug da página.
  * @return WP_Post|null Post encontrado ou null.
  */
 function gstore_get_page_by_slug( $slug ) {
 	$page = get_page_by_path( $slug );
-	
+
 	if ( ! $page ) {
 		// Tenta encontrar com query mais específica
 		$pages = get_posts( array(
@@ -12895,33 +12984,33 @@ function gstore_get_page_by_slug( $slug ) {
 			'post_status' => array( 'publish', 'draft', 'private' ),
 			'numberposts' => 1,
 		) );
-		
+
 		$page = ! empty( $pages ) ? $pages[0] : null;
 	}
-	
+
 	return $page;
 }
 
 /**
  * Cria uma página do tema.
- * 
+ *
  * @param string $page_key Chave da página na lista de páginas.
  * @param bool   $force    Se true, recria a página mesmo se já existir.
  * @return array Resultado da operação.
  */
 function gstore_create_page( $page_key, $force = false ) {
 	$pages = gstore_get_required_pages();
-	
+
 	if ( ! isset( $pages[ $page_key ] ) ) {
 		return array(
 			'success' => false,
 			'message' => __( 'Página não encontrada nas configurações.', 'gstore' ),
 		);
 	}
-	
+
 	$page_config = $pages[ $page_key ];
 	$existing_page = gstore_get_page_by_slug( $page_config['slug'] );
-	
+
 	// Se a página já existe e não é forçado, apenas retorna sucesso
 	if ( $existing_page && ! $force ) {
 		return array(
@@ -12931,12 +13020,12 @@ function gstore_create_page( $page_key, $force = false ) {
 			'action'  => 'exists',
 		);
 	}
-	
+
 	// Se força recriação, deleta a existente
 	if ( $existing_page && $force ) {
 		wp_delete_post( $existing_page->ID, true );
 	}
-	
+
 	// Prepara os dados da nova página
 	$page_data = array(
 		'post_title'   => $page_config['title'],
@@ -12945,32 +13034,32 @@ function gstore_create_page( $page_key, $force = false ) {
 		'post_type'    => 'page',
 		'post_content' => $page_config['content'],
 	);
-	
+
 	// Insere a página
 	$page_id = wp_insert_post( $page_data );
-	
+
 	if ( is_wp_error( $page_id ) ) {
 		return array(
 			'success' => false,
 			'message' => $page_id->get_error_message(),
 		);
 	}
-	
+
 	// Define o template se especificado
 	if ( ! empty( $page_config['template'] ) ) {
 		update_post_meta( $page_id, '_wp_page_template', $page_config['template'] );
 	}
-	
+
 	// Configura opções do WooCommerce
 	if ( ! empty( $page_config['wc_option'] ) && class_exists( 'WooCommerce' ) ) {
 		update_option( $page_config['wc_option'], $page_id );
 	}
-	
+
 	// Configura opções do WordPress
 	if ( ! empty( $page_config['wp_option'] ) ) {
 		update_option( $page_config['wp_option'], $page_id );
 	}
-	
+
 	// Define como página inicial ou de posts
 	if ( ! empty( $page_config['set_as'] ) ) {
 		if ( 'front_page' === $page_config['set_as'] ) {
@@ -12985,7 +13074,7 @@ function gstore_create_page( $page_key, $force = false ) {
 			}
 		}
 	}
-	
+
 	return array(
 		'success' => true,
 		'message' => __( 'Página criada com sucesso!', 'gstore' ),
@@ -12996,14 +13085,14 @@ function gstore_create_page( $page_key, $force = false ) {
 
 /**
  * Força o uso do template page-blog.html quando for a página de posts do blog.
- * 
+ *
  * Quando uma página é definida como "posts_page", o WordPress usa templates de arquivo
  * (home.html, archive.html) ao invés de templates de página. Este filtro corrige isso.
- * 
+ *
  * IMPORTANTE: Em Block Themes, não devemos retornar o caminho do arquivo HTML diretamente
  * via template_include, pois isso impede o processamento dos blocos. Em vez disso, usamos
  * o filtro block_template_loader para forçar o template correto.
- * 
+ *
  * @param string $template Template atual.
  * @return string Template a ser usado.
  */
@@ -13011,14 +13100,14 @@ function gstore_force_blog_page_template( $template ) {
 	// Verifica se é a página de posts ou se está acessando /blog
 	if ( is_home() && ! is_front_page() ) {
 		$blog_page_id = get_option( 'page_for_posts' );
-		
+
 		if ( $blog_page_id ) {
 			$blog_page = get_post( $blog_page_id );
-			
+
 			// Verifica se a página do blog tem o template page-blog
 			if ( $blog_page && 'blog' === $blog_page->post_name ) {
 				$page_template = get_page_template_slug( $blog_page_id );
-				
+
 				// Se o template for page-blog, força o uso dele
 				if ( 'page-blog' === $page_template || 'page-blog.html' === $page_template ) {
 					// Em Block Themes, não retornamos o caminho do arquivo diretamente
@@ -13030,14 +13119,14 @@ function gstore_force_blog_page_template( $template ) {
 			}
 		}
 	}
-	
+
 	// Também verifica se está acessando diretamente a página /blog
 	if ( is_page( 'blog' ) ) {
 		$blog_page = get_page_by_path( 'blog' );
-		
+
 		if ( $blog_page ) {
 			$page_template = get_page_template_slug( $blog_page->ID );
-			
+
 			// Se o template for page-blog, força o uso dele
 			if ( 'page-blog' === $page_template || 'page-blog.html' === $page_template ) {
 				// Em Block Themes, não retornamos o caminho do arquivo diretamente
@@ -13047,17 +13136,17 @@ function gstore_force_blog_page_template( $template ) {
 			}
 		}
 	}
-	
+
 	return $template;
 }
 add_filter( 'template_include', 'gstore_force_blog_page_template', 99 );
 
 /**
  * Força o uso do template page-blog.html via Block Template API quando for a página de posts.
- * 
+ *
  * Este filtro funciona em conjunto com gstore_force_blog_page_template para garantir
  * que o WordPress use o template correto e processe os blocos adequadamente.
- * 
+ *
  * @param WP_Block_Template|null $template Template atual.
  * @return WP_Block_Template|null Template a ser usado.
  */
@@ -13065,18 +13154,18 @@ function gstore_force_blog_block_template( $template ) {
 	// Verifica se é a página de posts
 	if ( is_home() && ! is_front_page() ) {
 		$blog_page_id = get_option( 'page_for_posts' );
-		
+
 		if ( $blog_page_id ) {
 			$blog_page = get_post( $blog_page_id );
-			
+
 			if ( $blog_page && 'blog' === $blog_page->post_name ) {
 				$page_template = get_page_template_slug( $blog_page_id );
-				
+
 				// Se o template for page-blog, força o uso dele via Block Template API
 				if ( 'page-blog' === $page_template || 'page-blog.html' === $page_template ) {
 					if ( function_exists( 'get_block_template' ) ) {
 						$block_template = get_block_template( get_stylesheet() . '//page-blog', 'wp_template' );
-						
+
 						if ( $block_template ) {
 							return $block_template;
 						}
@@ -13085,25 +13174,25 @@ function gstore_force_blog_block_template( $template ) {
 			}
 		}
 	}
-	
+
 	return $template;
 }
 add_filter( 'block_template_loader', 'gstore_force_blog_block_template', 10, 1 );
 
 /**
  * Cria todas as páginas do tema.
- * 
+ *
  * @param bool $force Se true, recria todas as páginas.
  * @return array Resultados das operações.
  */
 function gstore_create_all_pages( $force = false ) {
 	$pages = gstore_get_required_pages();
 	$results = array();
-	
+
 	foreach ( $pages as $page_key => $page_config ) {
 		$results[ $page_key ] = gstore_create_page( $page_key, $force );
 	}
-	
+
 	return $results;
 }
 
@@ -13147,14 +13236,14 @@ function gstore_run_asset_diagnostics() {
  * ============================================
  * DIAGNÓSTICO DE CSS - VERIFICAÇÃO EM PRODUÇÃO
  * ============================================
- * 
+ *
  * Sistema que verifica se regras CSS críticas estão
  * sendo aplicadas corretamente no frontend.
  */
 
 /**
  * Retorna as regras CSS críticas que devem ser verificadas.
- * 
+ *
  * @return array Lista de regras com seletores e propriedades esperadas.
  */
 function gstore_get_css_diagnostic_rules() {
@@ -13224,49 +13313,49 @@ function gstore_get_css_diagnostic_rules() {
 
 /**
  * Gera o script JavaScript de diagnóstico para rodar no frontend.
- * 
+ *
  * @return string Código JavaScript para diagnóstico.
  */
 function gstore_generate_css_diagnostics_script() {
 	$rules = gstore_get_css_diagnostic_rules();
 	$rules_json = wp_json_encode( $rules );
-	
+
 	$script = <<<JAVASCRIPT
 (function() {
 	'use strict';
-	
+
 	var rules = {$rules_json};
 	var results = { passed: [], failed: [], notFound: [] };
 	var isMobile = window.innerWidth <= 900;
 	var isDesktop = window.innerWidth > 900;
-	
+
 	Object.keys(rules).forEach(function(key) {
 		var rule = rules[key];
-		var shouldCheck = (rule.viewport === 'mobile' && isMobile) || 
+		var shouldCheck = (rule.viewport === 'mobile' && isMobile) ||
 		                  (rule.viewport === 'desktop' && isDesktop) ||
 		                  !rule.viewport;
-		
+
 		if (!shouldCheck) {
 			return;
 		}
-		
+
 		var element = document.querySelector(rule.selector);
-		
+
 		if (!element) {
 			results.notFound.push(rule);
 			return;
 		}
-		
+
 		var computedStyle = window.getComputedStyle(element);
 		var actualValue = computedStyle.getPropertyValue(rule.property);
-		
+
 		if (actualValue.trim() === rule.expected) {
 			results.passed.push(rule);
 		} else {
 			results.failed.push({ rule: rule, actual: actualValue });
 		}
 	});
-	
+
 	// Retorna os resultados para uso programático
 	return results;
 })();
@@ -13277,19 +13366,19 @@ JAVASCRIPT;
 
 /**
  * Adiciona painel de diagnóstico no frontend via query parameter.
- * 
+ *
  * Acesse: ?gstore_diagnostics=1 para ver o painel visual.
  */
 function gstore_frontend_diagnostics_panel() {
 	if ( ! isset( $_GET['gstore_diagnostics'] ) || '1' !== $_GET['gstore_diagnostics'] ) {
 		return;
 	}
-	
+
 	// Apenas administradores podem acessar
 	if ( ! current_user_can( 'manage_options' ) ) {
 		return;
 	}
-	
+
 	$rules = gstore_get_css_diagnostic_rules();
 	?>
 	<div id="gstore-diagnostics-panel" style="
@@ -13330,7 +13419,7 @@ function gstore_frontend_diagnostics_panel() {
 				<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12"/></svg>
 			</button>
 		</div>
-		
+
 		<div style="padding: 16px;">
 			<div id="gstore-diag-viewport" style="
 				background: #2c3338;
@@ -13349,9 +13438,9 @@ function gstore_frontend_diagnostics_panel() {
 					font-weight: 600;
 				"></span>
 			</div>
-			
+
 			<div id="gstore-diag-results"></div>
-			
+
 			<div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid #3c434a;">
 				<button onclick="gstoreRunDiagnostics();" style="
 					width: 100%;
@@ -13363,40 +13452,40 @@ function gstore_frontend_diagnostics_panel() {
 					cursor: pointer;
 					font-weight: 500;
 				">🔄 Executar Diagnóstico</button>
-				
+
 			</div>
 		</div>
 	</div>
-	
+
 	<script>
 	var gstoreDiagRules = <?php echo wp_json_encode( $rules ); ?>;
-	
+
 	function gstoreRunDiagnostics() {
 		var resultsContainer = document.getElementById('gstore-diag-results');
 		var widthEl = document.getElementById('gstore-diag-width');
 		var modeEl = document.getElementById('gstore-diag-mode');
 		var isMobile = window.innerWidth <= 900;
-		
+
 		widthEl.textContent = window.innerWidth + 'px';
 		modeEl.textContent = isMobile ? 'MOBILE' : 'DESKTOP';
 		modeEl.style.background = isMobile ? '#00a32a' : '#2271b1';
-		
+
 		var html = '';
 		var passed = 0, failed = 0, notFound = 0;
-		
+
 		Object.keys(gstoreDiagRules).forEach(function(key) {
 			var rule = gstoreDiagRules[key];
-			var shouldCheck = (rule.viewport === 'mobile' && isMobile) || 
+			var shouldCheck = (rule.viewport === 'mobile' && isMobile) ||
 			                  (rule.viewport === 'desktop' && !isMobile) ||
 			                  !rule.viewport;
-			
+
 			if (!shouldCheck) {
 				return;
 			}
-			
+
 			var element = document.querySelector(rule.selector);
 			var status, statusColor, statusIcon;
-			
+
 			if (!element) {
 				status = 'Elemento não encontrado';
 				statusColor = '#dba617';
@@ -13405,7 +13494,7 @@ function gstore_frontend_diagnostics_panel() {
 			} else {
 				var computedStyle = window.getComputedStyle(element);
 				var actualValue = computedStyle.getPropertyValue(rule.property).trim();
-				
+
 				if (actualValue === rule.expected) {
 					status = rule.property + ': ' + actualValue;
 					statusColor = '#00a32a';
@@ -13418,7 +13507,7 @@ function gstore_frontend_diagnostics_panel() {
 					failed++;
 				}
 			}
-			
+
 			html += '<div style="background: #2c3338; padding: 12px; border-radius: 4px; margin-bottom: 8px; border-left: 3px solid ' + statusColor + ';">';
 			html += '<div style="display: flex; justify-content: space-between; align-items: center;">';
 			html += '<strong>' + statusIcon + ' ' + rule.name + '</strong>';
@@ -13427,7 +13516,7 @@ function gstore_frontend_diagnostics_panel() {
 			html += '<div style="font-size: 10px; color: #72777c; margin-top: 4px;">' + rule.selector + '</div>';
 			html += '</div>';
 		});
-		
+
 		// Resumo
 		html = '<div style="display: flex; gap: 10px; margin-bottom: 16px;">' +
 			'<div style="flex: 1; text-align: center; padding: 8px; background: #2c3338; border-radius: 4px;">' +
@@ -13440,10 +13529,10 @@ function gstore_frontend_diagnostics_panel() {
 			'<div style="font-size: 20px; color: #dba617;">' + notFound + '</div>' +
 			'<div style="font-size: 10px; color: #a7aaad;">N/A</div></div>' +
 			'</div>' + html;
-		
+
 		resultsContainer.innerHTML = html;
 	}
-	
+
 	// Executa automaticamente ao carregar
 	document.addEventListener('DOMContentLoaded', gstoreRunDiagnostics);
 	window.addEventListener('resize', gstoreRunDiagnostics);
@@ -13457,13 +13546,13 @@ add_action( 'wp_footer', 'gstore_frontend_diagnostics_panel', 9999 );
  */
 function gstore_ajax_get_diagnostics_script() {
 	check_ajax_referer( 'gstore_setup_nonce', 'nonce' );
-	
+
 	if ( ! current_user_can( 'manage_options' ) ) {
 		wp_send_json_error( array( 'message' => __( 'Permissão negada.', 'gstore' ) ) );
 	}
-	
+
 	$script = gstore_generate_css_diagnostics_script();
-	
+
 	wp_send_json_success( array(
 		'script' => $script,
 		'rules'  => gstore_get_css_diagnostic_rules(),
@@ -13553,60 +13642,60 @@ function gstore_flush_permalink_rules() {
  */
 function gstore_reset_blog_template() {
 	global $wpdb;
-	
-	
+
+
 	$deleted_count = 0;
 	$errors = array();
-	
+
 	// Busca todos os templates relacionados ao blog no banco de dados
 	// Usa query direta para garantir que encontre todos, independente de status ou meta
 	$template_ids = array();
-	
+
 	// Busca por page-blog
 	$found = $wpdb->get_col( $wpdb->prepare(
-		"SELECT ID FROM {$wpdb->posts} 
-		WHERE post_type = 'wp_template' 
-		AND post_name = %s 
+		"SELECT ID FROM {$wpdb->posts}
+		WHERE post_type = 'wp_template'
+		AND post_name = %s
 		AND post_status != 'trash'",
 		'page-blog'
 	) );
 	$template_ids = array_merge( $template_ids, $found );
-	
+
 	// Busca por archive (pode ser usado se a página Blog está configurada como página de posts)
 	$found = $wpdb->get_col( $wpdb->prepare(
-		"SELECT ID FROM {$wpdb->posts} 
-		WHERE post_type = 'wp_template' 
-		AND post_name = %s 
+		"SELECT ID FROM {$wpdb->posts}
+		WHERE post_type = 'wp_template'
+		AND post_name = %s
 		AND post_status != 'trash'",
 		'archive'
 	) );
 	$template_ids = array_merge( $template_ids, $found );
-	
+
 	// Busca por qualquer template que contenha 'blog' no nome ou título
 	$found = $wpdb->get_col( $wpdb->prepare(
-		"SELECT ID FROM {$wpdb->posts} 
-		WHERE post_type = 'wp_template' 
+		"SELECT ID FROM {$wpdb->posts}
+		WHERE post_type = 'wp_template'
 		AND (post_name LIKE %s OR post_title LIKE %s)
 		AND post_status != 'trash'",
 		'%blog%',
 		'%Blog%'
 	) );
 	$template_ids = array_merge( $template_ids, $found );
-	
+
 	// Remove duplicatas
 	$template_ids = array_unique( $template_ids );
-	
+
 	foreach ( $template_ids as $template_id ) {
 		// Verifica se o post ainda existe
 		$template_post = get_post( $template_id );
-		
+
 		if ( ! $template_post || $template_post->post_type !== 'wp_template' ) {
 			continue;
 		}
-		
+
 		// Deleta o template (qualquer wp_template salvo no banco é uma customização)
 		$deleted = wp_delete_post( $template_id, true );
-		
+
 		if ( $deleted && ! is_wp_error( $deleted ) ) {
 			$deleted_count++;
 		} else {
@@ -13614,17 +13703,17 @@ function gstore_reset_blog_template() {
 			$errors[] = sprintf( __( 'Template ID %d: %s', 'gstore' ), $template_id, $error_msg );
 		}
 	}
-	
+
 	// Limpa cache de templates e posts
 	wp_cache_flush();
 	clean_post_cache( 0 );
-	
+
 	// Força o WordPress a recarregar os templates
 	if ( function_exists( 'wp_get_theme' ) ) {
 		$theme = wp_get_theme();
 		delete_transient( 'wp_get_theme' );
 	}
-	
+
 	if ( $deleted_count > 0 ) {
 		$message = sprintf(
 			_n(
@@ -13635,22 +13724,22 @@ function gstore_reset_blog_template() {
 			),
 			$deleted_count
 		);
-		
+
 		if ( ! empty( $errors ) ) {
 			$message .= ' ' . __( 'Avisos:', 'gstore' ) . ' ' . implode( ', ', $errors );
 		}
-		
+
 		return array(
 			'success' => true,
 			'message' => $message,
 		);
 	} else {
 		$message = __( 'Nenhum template customizado encontrado no banco de dados. A página do blog já está usando o template do tema. Se o problema persistir, pode ser cache do navegador.', 'gstore' );
-		
+
 		if ( ! empty( $errors ) ) {
 			$message .= ' ' . __( 'Avisos:', 'gstore' ) . ' ' . implode( ', ', $errors );
 		}
-		
+
 		return array(
 			'success' => true,
 			'message' => $message,
@@ -13663,15 +13752,15 @@ function gstore_reset_blog_template() {
  */
 function gstore_ajax_setup_action() {
 	check_ajax_referer( 'gstore_setup_nonce', 'nonce' );
-	
+
 	if ( ! current_user_can( 'manage_options' ) ) {
 		wp_send_json_error( array( 'message' => __( 'Permissão negada.', 'gstore' ) ) );
 	}
-	
+
 	$action_type = isset( $_POST['action_type'] ) ? sanitize_text_field( $_POST['action_type'] ) : '';
 	$page_key = isset( $_POST['page_key'] ) ? sanitize_text_field( $_POST['page_key'] ) : '';
 	$force = isset( $_POST['force'] ) && 'true' === $_POST['force'];
-	
+
 	if ( 'create_single' === $action_type && ! empty( $page_key ) ) {
 		$result = gstore_create_page( $page_key, $force );
 		wp_send_json( $result );
@@ -13679,7 +13768,7 @@ function gstore_ajax_setup_action() {
 		$results = gstore_create_all_pages( $force );
 		$success_count = 0;
 		$created_count = 0;
-		
+
 		foreach ( $results as $result ) {
 			if ( $result['success'] ) {
 				$success_count++;
@@ -13688,7 +13777,7 @@ function gstore_ajax_setup_action() {
 				}
 			}
 		}
-		
+
 		wp_send_json( array(
 			'success' => true,
 			'message' => sprintf(
@@ -13732,7 +13821,7 @@ function gstore_render_setup_page() {
 	if ( ! current_user_can( 'manage_options' ) ) {
 		return;
 	}
-	
+
 	$pages = gstore_get_required_pages();
 	?>
 	<div class="wrap gstore-setup-wrap">
@@ -13740,30 +13829,30 @@ function gstore_render_setup_page() {
 			<span class="dashicons dashicons-store" style="font-size: 30px; margin-right: 10px;"></span>
 			<?php _e( 'Setup do Tema Gstore', 'gstore' ); ?>
 		</h1>
-		
+
 		<div class="gstore-setup-intro">
 			<p><?php _e( 'Esta ferramenta cria automaticamente todas as páginas necessárias para o funcionamento do tema Gstore. Cada página será configurada com o template correto e integrada com o WooCommerce.', 'gstore' ); ?></p>
 		</div>
-		
+
 		<div class="gstore-setup-actions">
 			<button type="button" id="gstore-create-all" class="button button-primary button-hero">
 				<span class="dashicons dashicons-welcome-add-page"></span>
 				<?php _e( 'Criar Todas as Páginas', 'gstore' ); ?>
 			</button>
-			
+
 			<button type="button" id="gstore-recreate-all" class="button button-secondary">
 				<span class="dashicons dashicons-update"></span>
 				<?php _e( 'Recriar Todas (Sobrescrever)', 'gstore' ); ?>
 			</button>
 		</div>
-		
+
 		<div class="gstore-setup-status" id="gstore-setup-status" style="display: none;">
 			<div class="gstore-setup-status__content">
 				<span class="spinner is-active"></span>
 				<span class="gstore-setup-status__message"></span>
 			</div>
 		</div>
-		
+
 		<table class="wp-list-table widefat fixed striped gstore-pages-table">
 			<thead>
 				<tr>
@@ -13775,7 +13864,7 @@ function gstore_render_setup_page() {
 				</tr>
 			</thead>
 			<tbody>
-				<?php foreach ( $pages as $page_key => $page_config ) : 
+				<?php foreach ( $pages as $page_key => $page_config ) :
 					$existing_page = gstore_get_page_by_slug( $page_config['slug'] );
 					$status = $existing_page ? 'exists' : 'missing';
 					$status_class = $existing_page ? 'gstore-status--success' : 'gstore-status--warning';
@@ -13813,7 +13902,7 @@ function gstore_render_setup_page() {
 						<?php endif; ?>
 						<?php if ( ! empty( $page_config['set_as'] ) ) : ?>
 							<br><small class="gstore-badge gstore-badge--wp">
-								<?php 
+								<?php
 								if ( 'front_page' === $page_config['set_as'] ) {
 									_e( 'Página Inicial', 'gstore' );
 								} elseif ( 'posts_page' === $page_config['set_as'] ) {
@@ -13840,7 +13929,7 @@ function gstore_render_setup_page() {
 				<?php endforeach; ?>
 			</tbody>
 		</table>
-		
+
 		<div class="gstore-setup-info">
 			<h3><span class="dashicons dashicons-info"></span> <?php _e( 'Informações', 'gstore' ); ?></h3>
 			<ul>
@@ -13897,24 +13986,24 @@ function gstore_render_setup_page() {
 		<div class="gstore-setup-diagnostics">
 			<h3><span class="dashicons dashicons-visibility"></span> <?php _e( 'Diagnóstico de CSS em Produção', 'gstore' ); ?></h3>
 			<p><?php _e( 'Verifique se as regras CSS críticas estão sendo aplicadas corretamente no frontend. Útil para identificar problemas de cache ou deploy.', 'gstore' ); ?></p>
-			
+
 			<div class="gstore-setup-diagnostics__actions">
 				<button type="button" id="gstore-open-frontend-diag" class="button button-primary">
 					<span class="dashicons dashicons-external"></span>
 					<?php _e( 'Abrir Diagnóstico Visual', 'gstore' ); ?>
 				</button>
-				
+
 				<button type="button" id="gstore-copy-diag-script" class="button">
 					<span class="dashicons dashicons-clipboard"></span>
 					<?php _e( 'Copiar Script para Console', 'gstore' ); ?>
 				</button>
 			</div>
-			
+
 			<div id="gstore-diag-script-container" style="display: none; margin-top: 16px;">
 				<p class="description"><?php _e( 'Cole este script no console do navegador (F12) em produção:', 'gstore' ); ?></p>
 				<textarea id="gstore-diag-script-textarea" readonly style="width: 100%; height: 200px; font-family: monospace; font-size: 12px; background: #1d2327; color: #f0f0f1; border: 1px solid #3c434a; border-radius: 4px; padding: 12px;"></textarea>
 			</div>
-			
+
 			<div class="gstore-setup-diagnostics__rules" style="margin-top: 20px;">
 				<h4><?php _e( 'Regras CSS Monitoradas', 'gstore' ); ?></h4>
 				<table class="wp-list-table widefat fixed striped">
@@ -13928,9 +14017,9 @@ function gstore_render_setup_page() {
 						</tr>
 					</thead>
 					<tbody>
-						<?php 
+						<?php
 						$rules = gstore_get_css_diagnostic_rules();
-						foreach ( $rules as $key => $rule ) : 
+						foreach ( $rules as $key => $rule ) :
 						?>
 						<tr>
 							<td><strong><?php echo esc_html( $rule['name'] ); ?></strong></td>
@@ -13953,15 +14042,15 @@ function gstore_render_setup_page() {
 		<div class="gstore-setup-diagnostics" style="margin-top: 30px; border-top: 2px solid #c9a43a; padding-top: 20px;">
 			<h3><span class="dashicons dashicons-code-standards"></span> <?php _e( 'Diagnóstico de Estrutura do Carrinho', 'gstore' ); ?></h3>
 			<p><?php _e( 'Analise a estrutura HTML da página do carrinho para identificar problemas de layout. Clique no botão e depois vá para a página do carrinho.', 'gstore' ); ?></p>
-			
-			<?php 
+
+			<?php
 			$cart_page = gstore_get_page_by_slug( 'carrinho' );
 			$cart_url = $cart_page ? get_permalink( $cart_page->ID ) : wc_get_cart_url();
 			?>
-			
+
 		</div>
 	</div>
-	
+
 	<style>
 		.gstore-setup-wrap {
 			max-width: 1200px;
@@ -14165,17 +14254,17 @@ function gstore_render_setup_page() {
 			color: #fff !important;
 		}
 	</style>
-	
+
 	<script>
 	jQuery(document).ready(function($) {
 		var nonce = '<?php echo wp_create_nonce( 'gstore_setup_nonce' ); ?>';
 		var defaultSuccessMessage = '<?php echo esc_js( __( 'Ação concluída.', 'gstore' ) ); ?>';
 		var defaultLoadingMessage = '<?php echo esc_js( __( 'Executando ação...', 'gstore' ) ); ?>';
-		
+
 		function showStatus(message, type) {
 			var $status = $('#gstore-setup-status');
 			$status.removeClass('gstore-setup-status--success gstore-setup-status--error');
-			
+
 			if (type === 'success') {
 				$status.addClass('gstore-setup-status--success');
 				$status.find('.spinner').removeClass('is-active');
@@ -14185,34 +14274,34 @@ function gstore_render_setup_page() {
 			} else {
 				$status.find('.spinner').addClass('is-active');
 			}
-			
+
 			$status.find('.gstore-setup-status__message').text(message);
 			$status.show();
 		}
-		
+
 		function updateRowStatus($row, success) {
 			var $statusCell = $row.find('.column-status');
 			var $actionsCell = $row.find('.column-actions');
 			var pageKey = $row.data('page-key');
-			
+
 			if (success) {
 				$statusCell.html('<span class="gstore-status gstore-status--success"><span class="dashicons dashicons-yes-alt"></span> Existe</span>');
 				$actionsCell.html('<button type="button" class="button gstore-recreate-page" data-page-key="' + pageKey + '"><span class="dashicons dashicons-update"></span> Recriar</button>');
 			}
-			
+
 			$row.removeClass('gstore-row-updating');
 		}
-		
+
 		// Criar página individual
 		$(document).on('click', '.gstore-create-page, .gstore-recreate-page', function() {
 			var $btn = $(this);
 			var pageKey = $btn.data('page-key');
 			var $row = $('#gstore-page-row-' + pageKey);
 			var force = $btn.hasClass('gstore-recreate-page');
-			
+
 			$row.addClass('gstore-row-updating');
 			showStatus(force ? 'Recriando página...' : 'Criando página...', 'loading');
-			
+
 			$.ajax({
 				url: ajaxurl,
 				type: 'POST',
@@ -14238,24 +14327,24 @@ function gstore_render_setup_page() {
 				}
 			});
 		});
-		
+
 		// Criar todas as páginas
 		$('#gstore-create-all').on('click', function() {
 			createAllPages(false);
 		});
-		
+
 		// Recriar todas as páginas
 		$('#gstore-recreate-all').on('click', function() {
 			if (confirm('Tem certeza? Isso irá SOBRESCREVER todas as páginas existentes com o conteúdo padrão do tema.')) {
 				createAllPages(true);
 			}
 		});
-		
+
 		function createAllPages(force) {
 			var $rows = $('.gstore-pages-table tbody tr');
 			$rows.addClass('gstore-row-updating');
 			showStatus('Criando páginas...', 'loading');
-			
+
 			$.ajax({
 				url: ajaxurl,
 				type: 'POST',
@@ -14268,7 +14357,7 @@ function gstore_render_setup_page() {
 				success: function(response) {
 					if (response.success) {
 						showStatus(response.message, 'success');
-						
+
 						// Atualiza o status de cada linha
 						$.each(response.results, function(pageKey, result) {
 							var $row = $('#gstore-page-row-' + pageKey);
@@ -14417,7 +14506,7 @@ function gstore_render_setup_page() {
  * ==========================================
  * GSTORE CART FIX - CENTRALIZAÇÃO FORÇADA
  * ==========================================
- * 
+ *
  * Remove estilos conflitantes do WooCommerce e adiciona
  * CSS/JS inline de alta prioridade para garantir que o
  * carrinho fique centralizado corretamente.
@@ -14449,7 +14538,7 @@ add_action( 'wp_head', function() {
 	/* ============================================
 	   GSTORE CART FIX - CENTRALIZAÇÃO FORÇADA
 	   ============================================ */
-	
+
 	/* Reset variáveis do WordPress */
 	body.woocommerce-cart {
 		--wp--style--root--padding-left: 0 !important;
@@ -14457,12 +14546,12 @@ add_action( 'wp_head', function() {
 		--wp--style--global--content-size: 100% !important;
 		--wp--style--global--wide-size: 100% !important;
 	}
-	
+
 	/* Esconde título duplicado */
 	body.woocommerce-cart .wp-block-post-title {
 		display: none !important;
 	}
-	
+
 	/* Reset do main e wrappers */
 	body.woocommerce-cart main,
 	body.woocommerce-cart .wp-site-blocks > main,
@@ -14476,7 +14565,7 @@ add_action( 'wp_head', function() {
 		justify-content: center !important;
 		max-width: none !important;
 	}
-	
+
 	/* Espaçamento para entry-content quando carrinho está vazio */
 	body.woocommerce-cart .entry-content:has(.cart-empty),
 	body.woocommerce-cart .wp-block-post-content:has(.cart-empty),
@@ -14492,7 +14581,7 @@ add_action( 'wp_head', function() {
 		justify-content: center !important;
 		min-height: 400px !important;
 	}
-	
+
 	/* Reset is-layout-constrained - NÃO afeta o container */
 	body.woocommerce-cart .is-layout-constrained > *:not(.Gstore-cart-container),
 	body.woocommerce-cart .wp-block-group-is-layout-constrained > *:not(.Gstore-cart-container) {
@@ -14500,7 +14589,7 @@ add_action( 'wp_head', function() {
 		margin-left: 0 !important;
 		margin-right: 0 !important;
 	}
-	
+
 	/* Main da página do carrinho */
 	body.woocommerce-cart main.Gstore-cart-page,
 	body.woocommerce-cart main[data-page="cart"],
@@ -14512,7 +14601,7 @@ add_action( 'wp_head', function() {
 		padding: 0 !important;
 		background: #fff !important;
 	}
-	
+
 	/* SHELL - ocupa 100% da largura */
 	body.woocommerce-cart .Gstore-cart-shell,
 	body.woocommerce-cart section.Gstore-cart-shell {
@@ -14523,7 +14612,7 @@ add_action( 'wp_head', function() {
 		background: #fff !important;
 		box-sizing: border-box !important;
 	}
-	
+
 	/* CONTAINER - centralizado a 1280px */
 	body.woocommerce-cart .Gstore-cart-container,
 	body.woocommerce-cart div.Gstore-cart-container,
@@ -14540,7 +14629,7 @@ add_action( 'wp_head', function() {
 		padding-right: 20px !important;
 		box-sizing: border-box !important;
 	}
-	
+
 	body.woocommerce-cart main .woocommerce {
 		max-width: 1280px !important;
 	}
@@ -14559,45 +14648,45 @@ add_action( 'wp_footer', function() {
 	<script id="gstore-cart-fix-js">
 	(function() {
 		'use strict';
-		
+
 		// Classes problemáticas do WordPress que adicionam max-width
 		const badClasses = [
 			'is-layout-constrained',
 			'wp-block-group-is-layout-constrained',
 			'wp-block-post-content-is-layout-constrained'
 		];
-		
+
 		function cleanCartClasses() {
 			// Remove classes do main
 			const main = document.querySelector('main.Gstore-cart-page, main[data-page="cart"], main.gstore-cart-page');
 			if (main) {
 				badClasses.forEach(cls => main.classList.remove(cls));
 			}
-			
+
 			// Remove classes do entry-content
 			const entryContent = document.querySelector('.entry-content');
 			if (entryContent) {
 				badClasses.forEach(cls => entryContent.classList.remove(cls));
 			}
-			
+
 			// Remove classes do wp-block-post-content
 			const postContent = document.querySelector('.wp-block-post-content');
 			if (postContent) {
 				badClasses.forEach(cls => postContent.classList.remove(cls));
 			}
-			
+
 			// Log para debug
 			console.log('[Gstore Cart Fix] Classes removidas com sucesso');
 		}
-		
+
 		// Executa imediatamente
 		cleanCartClasses();
-		
+
 		// Executa após DOM ready
 		if (document.readyState === 'loading') {
 			document.addEventListener('DOMContentLoaded', cleanCartClasses);
 		}
-		
+
 		// Executa após load completo (para scripts que adicionam classes depois)
 		window.addEventListener('load', cleanCartClasses);
 	})();
@@ -14711,11 +14800,11 @@ function gstore_get_whatsapp_link( $message = '' ) {
 	}
 
 	$url = 'https://wa.me/' . $whatsapp;
-	
+
 	if ( ! empty( $message ) ) {
 		$url .= '?text=' . rawurlencode( $message );
 	}
-	
+
 	return $url;
 }
 
@@ -14782,11 +14871,11 @@ function gstore_get_social( $network ) {
  */
 function gstore_get_social_link( $network ) {
 	$username = gstore_get_social( $network );
-	
+
 	if ( empty( $username ) ) {
 		return '';
 	}
-	
+
 	switch ( $network ) {
 		case 'instagram':
 		case 'instagram_alt':
@@ -14855,7 +14944,7 @@ function gstore_get_address( $format = 'full' ) {
 	if ( ! is_array( $address ) ) {
 		return '';
 	}
-	
+
 	switch ( $format ) {
 		case 'street':
 			return trim( (string) ( $address['street'] ?? '' ) );
@@ -14909,7 +14998,7 @@ function gstore_get_maps_url() {
  */
 function gstore_get_business_hours( $format = 'full' ) {
 	$store_info = gstore_store_info();
-	
+
 	switch ( $format ) {
 		case 'weekdays':
 			return $store_info->get_value( 'business_hours.weekdays', '' );
@@ -14931,11 +15020,11 @@ function gstore_get_business_hours( $format = 'full' ) {
  */
 function gstore_get_footer_info( $key = '' ) {
 	$store_info = gstore_store_info();
-	
+
 	if ( empty( $key ) ) {
 		return $store_info->get_value( 'footer' );
 	}
-	
+
 	return $store_info->get_value( 'footer.' . $key );
 }
 
@@ -15411,25 +15500,25 @@ function gstore_handle_export_store_info() {
 	if ( ! current_user_can( 'manage_woocommerce' ) ) {
 		wp_die( __( 'Você não tem permissão para realizar esta ação.', 'gstore' ) );
 	}
-	
+
 	// Verifica nonce
 	if ( ! isset( $_POST['gstore_export_nonce'] ) || ! wp_verify_nonce( $_POST['gstore_export_nonce'], 'gstore_export_store_info' ) ) {
 		wp_die( __( 'Verificação de segurança falhou.', 'gstore' ) );
 	}
-	
+
 	$store_info = gstore_store_info();
 	$json_content = $store_info->export_json();
-	
+
 	// Define headers para download
 	$filename = 'store-info-' . sanitize_file_name( gstore_get_store_name() ) . '-' . date( 'Y-m-d' ) . '.json';
-	
+
 	header( 'Content-Type: application/json; charset=utf-8' );
 	header( 'Content-Disposition: attachment; filename="' . $filename . '"' );
 	header( 'Content-Length: ' . strlen( $json_content ) );
 	header( 'Cache-Control: no-cache, no-store, must-revalidate' );
 	header( 'Pragma: no-cache' );
 	header( 'Expires: 0' );
-	
+
 	echo $json_content;
 	exit;
 }
@@ -15443,16 +15532,16 @@ function gstore_handle_import_store_info() {
 	if ( ! current_user_can( 'manage_woocommerce' ) ) {
 		wp_die( __( 'Você não tem permissão para realizar esta ação.', 'gstore' ) );
 	}
-	
+
 	// Verifica nonce
 	if ( ! isset( $_POST['gstore_import_nonce'] ) || ! wp_verify_nonce( $_POST['gstore_import_nonce'], 'gstore_import_store_info' ) ) {
 		wp_die( __( 'Verificação de segurança falhou.', 'gstore' ) );
 	}
-	
+
 	// Verifica se arquivo foi enviado
 	if ( ! isset( $_FILES['store_info_file'] ) || $_FILES['store_info_file']['error'] !== UPLOAD_ERR_OK ) {
 		$error_message = __( 'Erro ao enviar o arquivo.', 'gstore' );
-		
+
 		if ( isset( $_FILES['store_info_file']['error'] ) ) {
 			switch ( $_FILES['store_info_file']['error'] ) {
 				case UPLOAD_ERR_INI_SIZE:
@@ -15464,7 +15553,7 @@ function gstore_handle_import_store_info() {
 					break;
 			}
 		}
-		
+
 		wp_redirect( add_query_arg( array(
 			'page'    => 'gstore-settings',
 			'message' => 'import_error',
@@ -15472,10 +15561,10 @@ function gstore_handle_import_store_info() {
 		), admin_url( 'themes.php' ) ) );
 		exit;
 	}
-	
+
 	// Lê o conteúdo do arquivo primeiro (validação por conteúdo, não apenas extensão)
 	$json_content = file_get_contents( $_FILES['store_info_file']['tmp_name'] );
-	
+
 	if ( empty( $json_content ) ) {
 		wp_redirect( add_query_arg( array(
 			'page'    => 'gstore-settings',
@@ -15484,16 +15573,16 @@ function gstore_handle_import_store_info() {
 		), admin_url( 'themes.php' ) ) );
 		exit;
 	}
-	
+
 	// Remove BOM (Byte Order Mark) se presente
 	$json_content = preg_replace( '/^\xEF\xBB\xBF/', '', $json_content );
-	
+
 	// Remove espaços em branco no início e fim
 	$json_content = trim( $json_content );
-	
+
 	// Valida o JSON antes de importar
 	$json_data = json_decode( $json_content, true );
-	
+
 	if ( json_last_error() !== JSON_ERROR_NONE ) {
 		// Mensagem de erro específica do JSON
 		$json_error_messages = array(
@@ -15503,13 +15592,13 @@ function gstore_handle_import_store_info() {
 			JSON_ERROR_SYNTAX         => __( 'Erro de sintaxe JSON. Verifique vírgulas, chaves e aspas.', 'gstore' ),
 			JSON_ERROR_UTF8           => __( 'Caracteres UTF-8 malformados, possivelmente codificação incorreta.', 'gstore' ),
 		);
-		
-		$error_message = isset( $json_error_messages[ json_last_error() ] ) 
-			? $json_error_messages[ json_last_error() ] 
+
+		$error_message = isset( $json_error_messages[ json_last_error() ] )
+			? $json_error_messages[ json_last_error() ]
 			: __( 'Erro desconhecido ao processar JSON.', 'gstore' );
-		
+
 		$error_message .= ' ' . sprintf( __( 'Detalhes: %s', 'gstore' ), json_last_error_msg() );
-		
+
 		wp_redirect( add_query_arg( array(
 			'page'    => 'gstore-settings',
 			'message' => 'import_error',
@@ -15517,33 +15606,33 @@ function gstore_handle_import_store_info() {
 		), admin_url( 'themes.php' ) ) );
 		exit;
 	}
-	
+
 	// Tenta importar (passa o array já decodificado para evitar decodificar duas vezes)
 	$store_info = gstore_store_info();
-	
+
 	if ( ! is_array( $json_data ) ) {
 		wp_redirect( add_query_arg( array(
 			'page'    => 'gstore-settings',
 			'message' => 'import_error',
-			'error'   => urlencode( sprintf( 
-				__( 'Erro: JSON decodificado não é um array. Tipo: %s', 'gstore' ), 
-				gettype( $json_data ) 
+			'error'   => urlencode( sprintf(
+				__( 'Erro: JSON decodificado não é um array. Tipo: %s', 'gstore' ),
+				gettype( $json_data )
 			) ),
 		), admin_url( 'themes.php' ) ) );
 		exit;
 	}
-	
+
 	$result = $store_info->import_json( $json_data );
-	
+
 	if ( is_wp_error( $result ) ) {
 		$error_message = $result->get_error_message();
-		
+
 		// Adiciona informações de debug se for erro de estrutura
 		if ( $result->get_error_code() === 'invalid_structure' ) {
 			$secoes_encontradas = array_keys( $json_data );
 			$error_message .= ' | Seções no JSON: ' . implode( ', ', $secoes_encontradas );
 		}
-		
+
 		wp_redirect( add_query_arg( array(
 			'page'    => 'gstore-settings',
 			'message' => 'import_error',
@@ -15551,7 +15640,7 @@ function gstore_handle_import_store_info() {
 		), admin_url( 'themes.php' ) ) );
 		exit;
 	}
-	
+
 	// Sucesso
 	wp_redirect( add_query_arg( array(
 		'page'    => 'gstore-settings',
@@ -15566,11 +15655,11 @@ add_action( 'admin_post_gstore_import_store_info', 'gstore_handle_import_store_i
  */
 function gstore_store_info_admin_notices() {
 	$screen = get_current_screen();
-	
+
 	if ( ! $screen || $screen->id !== 'appearance_page_gstore-settings' ) {
 		return;
 	}
-	
+
 	if ( isset( $_GET['message'] ) ) {
 		if ( $_GET['message'] === 'import_success' ) {
 			?>
@@ -15616,7 +15705,7 @@ function gstore_process_store_info_placeholders( $content ) {
 	if ( empty( $content ) || strpos( $content, '{{' ) === false ) {
 		return $content;
 	}
-	
+
 	// Resolve o link principal de contato (header/footer): se configurado usa o do JSON, senão usa o WhatsApp.
 	$contact_primary_link = gstore_store_info()->get_value( 'contact.contact_primary_link', '' );
 	if ( empty( $contact_primary_link ) ) {
@@ -15627,7 +15716,7 @@ function gstore_process_store_info_placeholders( $content ) {
 	$email_link = gstore_get_store_email_link();
 	$phone_link = '' !== $phone_raw ? 'tel:+' . preg_replace( '/\D/', '', $phone_raw ) : '';
 	$footer_category_brand_summary = false !== strpos( $content, '{{footer_category_brand_summary}}' ) ? gstore_get_footer_category_brand_summary() : '';
-	
+
 	// Lista de placeholders e seus valores
 	$placeholders = array(
 		// Store
@@ -15637,7 +15726,7 @@ function gstore_process_store_info_placeholders( $content ) {
 		'{{store_slogan}}'        => gstore_store_info()->get_value( 'store.slogan', '' ),
 		'{{cnpj}}'                => gstore_get_cnpj(),
 		'{{founded_year}}'        => gstore_get_founded_year(),
-		
+
 		// Contact
 		'{{email}}'               => $email,
 		'{{email_link}}'          => $email_link,
@@ -15649,20 +15738,20 @@ function gstore_process_store_info_placeholders( $content ) {
 		'{{whatsapp_link_hello}}' => gstore_get_whatsapp_link( 'Olá ' . gstore_get_store_name( 'display' ) . '!' ),
 		'{{whatsapp_link_rastreio}}' => gstore_get_whatsapp_link( 'Olá ' . gstore_get_store_name( 'display' ) . '! Gostaria de rastrear meu pedido.' ),
 		'{{whatsapp_link_troca}}' => gstore_get_whatsapp_link( 'Olá ' . gstore_get_store_name( 'display' ) . '! Gostaria de solicitar uma troca ou devolução.' ),
-		
+
 		// Contact Labels
 		'{{whatsapp_label}}'  => gstore_store_info()->get_value( 'contact.whatsapp_label', 'WhatsApp' ),
 		'{{telegram_label}}'  => gstore_store_info()->get_value( 'contact.telegram_label', 'Telegram' ),
 		'{{instagram_label}}' => gstore_store_info()->get_value( 'contact.instagram_label', 'Instagram' ),
-		
+
 		// Phone link (tel:)
 		'{{phone_link}}'      => $phone_link,
-		
+
 		// Contact primary link (header/footer): usa o valor do JSON ou fallback para whatsapp_link
 		'{{contact_primary_link}}' => $contact_primary_link,
 		'{{privacy_policy_url}}'   => function_exists( 'get_privacy_policy_url' ) ? get_privacy_policy_url() : home_url( '/politica-de-privacidade/' ),
 		'{{terms_of_use_url}}'     => ( (int) get_option( 'woocommerce_terms_page_id', 0 ) > 0 ) ? get_permalink( (int) get_option( 'woocommerce_terms_page_id', 0 ) ) : home_url( '/termos-de-uso/' ),
-		
+
 		// Social
 		'{{instagram}}'           => gstore_get_social( 'instagram' ),
 		'{{instagram_link}}'      => gstore_get_social_link( 'instagram' ),
@@ -15670,35 +15759,35 @@ function gstore_process_store_info_placeholders( $content ) {
 		'{{youtube_link}}'        => gstore_get_social_link( 'youtube' ),
 		'{{telegram}}'            => gstore_get_telegram_username(),
 		'{{telegram_link}}'       => gstore_get_telegram_link(),
-		
+
 		// Address
 		'{{address_street}}'      => gstore_get_address( 'street' ),
 		'{{address_full}}'        => gstore_get_address( 'full' ),
 		'{{address_short}}'       => gstore_get_address( 'short' ),
 		'{{address_city_state}}'  => gstore_get_address( 'city_state' ),
 		'{{maps_url}}'            => gstore_get_maps_url(),
-		
+
 		// Business hours
 		'{{business_hours}}'      => gstore_get_business_hours(),
 		'{{support_hours}}'       => gstore_get_business_hours( 'support' ),
-		
+
 		// Footer
 		'{{copyright}}'           => gstore_get_copyright(),
 		'{{footer_contact_line}}' => gstore_get_footer_contact_line(),
 		'{{footer_business_hours_line}}' => gstore_get_footer_business_hours_line(),
 		'{{footer_legal_line}}'   => gstore_get_footer_legal_line(),
 		'{{footer_category_brand_summary}}' => $footer_category_brand_summary,
-		
+
 		// Meta
 		'{{meta_description}}'    => gstore_get_meta( 'description' ),
-		
+
 		// Branding
 		'{{accent_color}}'        => gstore_get_brand_color( 'accent_color' ),
-		
+
 		// Dynamic
 		'{{year}}'                => date( 'Y' ),
 	);
-	
+
 	// Processa parágrafos do footer (array)
 	$footer_paragraphs = gstore_get_footer_info( 'about_paragraphs' );
 	if ( is_array( $footer_paragraphs ) ) {
@@ -15706,14 +15795,14 @@ function gstore_process_store_info_placeholders( $content ) {
 			$placeholders['{{footer_paragraph_' . ( $index + 1 ) . '}}'] = $paragraph;
 		}
 	}
-	
+
 	// Substitui os placeholders
 	$content = str_replace( array_keys( $placeholders ), array_values( $placeholders ), $content );
 	$content = preg_replace( '/<a\b(?=[^>]*class="[^"]*\bGstore-top-bar__link\b[^"]*")[^>]*href=""[^>]*>.*?<\/a>\s*/is', '', $content );
 	$content = preg_replace( '/<div\s+class="contact-item">\s*<i\b[^>]*><\/i>\s*<a\b[^>]*href=""[^>]*>.*?<\/a>\s*<\/div>\s*/is', '', $content );
 	$content = preg_replace( '/<div\s+class="contact-item">\s*<i\b[^>]*><\/i>\s*<\/div>\s*/is', '', $content );
 	$content = preg_replace( '/<a\b[^>]*href=""[^>]*>\s*<i\b[^>]*fa-brands[^>]*><\/i>\s*<\/a>\s*/is', '', $content );
-	
+
 	return $content;
 }
 
@@ -16058,20 +16147,20 @@ function gstore_maybe_init_store_info_json() {
 	if ( ! is_admin() || ! current_user_can( 'manage_options' ) ) {
 		return;
 	}
-	
+
 	// Verifica se já foi inicializado
 	$initialized = get_option( 'gstore_store_info_initialized', false );
 	if ( $initialized ) {
 		return;
 	}
-	
+
 	$store_info = gstore_store_info();
-	
+
 	// Se o arquivo JSON não existe, cria com valores padrão
 	if ( ! $store_info->json_exists() ) {
 		$store_info->create_default_json();
 	}
-	
+
 	// Marca como inicializado
 	update_option( 'gstore_store_info_initialized', true );
 }
@@ -16083,7 +16172,7 @@ add_action( 'admin_init', 'gstore_maybe_init_store_info_json' );
 
 /**
  * Exibe o modal de verificação de idade no frontend.
- * 
+ *
  * O modal aparece na primeira visita do usuário e guarda
  * a confirmação no localStorage por 30 dias.
  */
@@ -16152,7 +16241,7 @@ function gstore_age_verification_modal() {
 			pointer-events: none;
 			transition: opacity 0.4s ease, visibility 0.4s ease;
 		}
-		
+
 		.gstore-age-modal[aria-hidden="false"] {
 			opacity: 1;
 			visibility: visible;
@@ -16163,7 +16252,7 @@ function gstore_age_verification_modal() {
 		.gstore-age-modal[aria-hidden="true"] * {
 			pointer-events: none !important;
 		}
-		
+
 		.gstore-age-modal__overlay {
 			position: absolute;
 			top: 0;
@@ -16174,13 +16263,13 @@ function gstore_age_verification_modal() {
 			backdrop-filter: blur(8px);
 			-webkit-backdrop-filter: blur(8px);
 		}
-		
+
 		.gstore-age-modal__content {
 			position: relative;
 			background: linear-gradient(180deg, #1a1a1a 0%, #0d0d0d 100%);
 			border: 1px solid rgba(255, 255, 255, 0.1);
 			border-radius: 20px;
-			box-shadow: 
+			box-shadow:
 				0 25px 50px -12px rgba(0, 0, 0, 0.8),
 				0 0 0 1px rgba(255, 255, 255, 0.05),
 				inset 0 1px 0 0 rgba(255, 255, 255, 0.1);
@@ -16193,12 +16282,12 @@ function gstore_age_verification_modal() {
 			transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.4s ease;
 			z-index: 1000000;
 		}
-		
+
 		.gstore-age-modal[aria-hidden="false"] .gstore-age-modal__content {
 			transform: scale(1) translateY(0);
 			opacity: 1;
 		}
-		
+
 		.gstore-age-modal__close {
 			position: absolute;
 			top: 16px;
@@ -16215,19 +16304,19 @@ function gstore_age_verification_modal() {
 			border-radius: 4px;
 			z-index: 1;
 		}
-		
+
 		.gstore-age-modal__close:hover,
 		.gstore-age-modal__close:focus {
 			color: rgba(255, 255, 255, 1);
 			background-color: rgba(255, 255, 255, 0.1);
 			outline: none;
 		}
-		
+
 		.gstore-age-modal__close svg {
 			width: 20px;
 			height: 20px;
 		}
-		
+
 		.gstore-age-modal__icon {
 			display: flex;
 			align-items: center;
@@ -16240,7 +16329,7 @@ function gstore_age_verification_modal() {
 			color: #ef4444;
 			animation: gstore-age-pulse 2s ease-in-out infinite;
 		}
-		
+
 		@keyframes gstore-age-pulse {
 			0%, 100% {
 				box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.3);
@@ -16249,7 +16338,7 @@ function gstore_age_verification_modal() {
 				box-shadow: 0 0 0 15px rgba(239, 68, 68, 0);
 			}
 		}
-		
+
 		.gstore-age-modal__title {
 			margin: 0 0 12px;
 			font-size: 28px;
@@ -16258,28 +16347,28 @@ function gstore_age_verification_modal() {
 			letter-spacing: -0.02em;
 			line-height: 1.2;
 		}
-		
+
 		.gstore-age-modal__text {
 			margin: 0 0 8px;
 			font-size: 15px;
 			line-height: 1.6;
 			color: rgba(255, 255, 255, 0.7);
 		}
-		
+
 		.gstore-age-modal__question {
 			margin: 24px 0;
 			font-size: 18px;
 			font-weight: 600;
 			color: #ffffff;
 		}
-		
+
 		.gstore-age-modal__actions {
 			display: flex;
 			flex-direction: column;
 			gap: 12px;
 			margin-bottom: 24px;
 		}
-		
+
 		.gstore-age-modal__btn {
 			display: inline-flex;
 			align-items: center;
@@ -16295,47 +16384,47 @@ function gstore_age_verification_modal() {
 			text-transform: none;
 			letter-spacing: 0;
 		}
-		
+
 		.gstore-age-modal__btn--confirm {
 			background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
 			color: #ffffff;
 			box-shadow: 0 4px 14px 0 rgba(34, 197, 94, 0.4);
 		}
-		
+
 		.gstore-age-modal__btn--confirm:hover {
 			background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
 			transform: translateY(-2px);
 			box-shadow: 0 6px 20px 0 rgba(34, 197, 94, 0.5);
 		}
-		
+
 		.gstore-age-modal__btn--confirm:active {
 			transform: translateY(0);
 		}
-		
+
 		.gstore-age-modal__btn--deny {
 			background: rgba(255, 255, 255, 0.05);
 			color: rgba(255, 255, 255, 0.7);
 			border: 1px solid rgba(255, 255, 255, 0.1);
 		}
-		
+
 		.gstore-age-modal__btn--deny:hover {
 			background: rgba(239, 68, 68, 0.1);
 			color: #ef4444;
 			border-color: rgba(239, 68, 68, 0.3);
 		}
-		
+
 		.gstore-age-modal__disclaimer {
 			margin: 0;
 			font-size: 12px;
 			line-height: 1.5;
 			color: rgba(255, 255, 255, 0.4);
 		}
-		
+
 		/* Tela de bloqueio para menores */
 		.gstore-age-modal--blocked .gstore-age-modal__content {
 			padding: 60px 40px;
 		}
-		
+
 		.gstore-age-modal__blocked-icon {
 			display: flex;
 			align-items: center;
@@ -16347,21 +16436,21 @@ function gstore_age_verification_modal() {
 			border-radius: 50%;
 			color: #ef4444;
 		}
-		
+
 		.gstore-age-modal__blocked-title {
 			margin: 0 0 16px;
 			font-size: 24px;
 			font-weight: 700;
 			color: #ffffff;
 		}
-		
+
 		.gstore-age-modal__blocked-text {
 			margin: 0;
 			font-size: 15px;
 			line-height: 1.7;
 			color: rgba(255, 255, 255, 0.6);
 		}
-		
+
 		/* Responsividade */
 		@media (max-width: 480px) {
 			.gstore-age-modal__content {
@@ -16369,46 +16458,46 @@ function gstore_age_verification_modal() {
 				padding: 36px 24px;
 				border-radius: 16px;
 			}
-			
+
 			.gstore-age-modal__icon {
 				width: 72px;
 				height: 72px;
 				margin-bottom: 20px;
 			}
-			
+
 			.gstore-age-modal__icon svg {
 				width: 48px;
 				height: 48px;
 			}
-			
+
 			.gstore-age-modal__title {
 				font-size: 22px;
 			}
-			
+
 			.gstore-age-modal__text {
 				font-size: 14px;
 			}
-			
+
 			.gstore-age-modal__question {
 				font-size: 16px;
 				margin: 20px 0;
 			}
-			
+
 			.gstore-age-modal__btn {
 				padding: 14px 24px;
 				font-size: 15px;
 			}
-			
+
 			.gstore-age-modal--blocked .gstore-age-modal__content {
 				padding: 40px 24px;
 			}
-			
+
 			.gstore-age-modal__close {
 				top: 12px;
 				right: 12px;
 			}
 		}
-		
+
 		/* Animação de entrada */
 		@keyframes gstore-age-fadeIn {
 			from {
@@ -16418,7 +16507,7 @@ function gstore_age_verification_modal() {
 				opacity: 1;
 			}
 		}
-		
+
 		/* Previne scroll do body quando modal está aberto */
 		body.gstore-age-modal-open {
 			overflow: hidden;
@@ -16428,23 +16517,23 @@ function gstore_age_verification_modal() {
 	<script id="gstore-age-modal-script">
 	(function() {
 		'use strict';
-		
+
 		var STORAGE_KEY = 'gstore_age_verified';
 		var STORAGE_DURATION = 30 * 24 * 60 * 60 * 1000; // 30 dias em ms
-		
+
 		function isVerified() {
 			try {
 				var stored = localStorage.getItem(STORAGE_KEY);
 				if (!stored) return false;
-				
+
 				var data = JSON.parse(stored);
 				var now = new Date().getTime();
-				
+
 				// Verifica se ainda esta valido
 				if (data.verified && data.expires > now) {
 					return true;
 				}
-				
+
 				// Expirou, remove
 				localStorage.removeItem(STORAGE_KEY);
 				return false;
@@ -16452,7 +16541,7 @@ function gstore_age_verification_modal() {
 				return false;
 			}
 		}
-		
+
 		function setVerified() {
 			try {
 				var data = {
@@ -16464,7 +16553,7 @@ function gstore_age_verification_modal() {
 				// localStorage nao disponivel
 			}
 		}
-		
+
 		function showModal() {
 			var modal = document.getElementById('gstore-age-modal');
 			if (modal) {
@@ -16472,7 +16561,7 @@ function gstore_age_verification_modal() {
 				modal.setAttribute('aria-hidden', 'false');
 			}
 		}
-		
+
 		function hideModal() {
 			var modal = document.getElementById('gstore-age-modal');
 			if (modal) {
@@ -16480,16 +16569,16 @@ function gstore_age_verification_modal() {
 				modal.setAttribute('aria-hidden', 'true');
 			}
 		}
-		
+
 		function showBlockedScreen() {
 			var modal = document.getElementById('gstore-age-modal');
 			if (!modal) return;
-			
+
 			modal.classList.add('gstore-age-modal--blocked');
 			var content = modal.querySelector('.gstore-age-modal__content');
-			
+
 			if (content) {
-				content.innerHTML = 
+				content.innerHTML =
 					'<div class="gstore-age-modal__blocked-icon">' +
 						'<svg xmlns="http://www.w3.org/2000/svg" width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">' +
 							'<circle cx="12" cy="12" r="10"/>' +
@@ -16502,13 +16591,13 @@ function gstore_age_verification_modal() {
 						'Voc&ecirc; ser&aacute; redirecionado para o Google em alguns segundos...' +
 					'</p>';
 			}
-			
+
 			// Redireciona apos 5 segundos
 			setTimeout(function() {
 				window.location.href = 'https://www.google.com';
 			}, 5000);
 		}
-		
+
 		function init() {
 			// Se já verificado, não mostra o modal
 			if (isVerified()) {
@@ -16518,28 +16607,28 @@ function gstore_age_verification_modal() {
 				}
 				return;
 			}
-			
+
 			// Mostra o modal
 			showModal();
-			
+
 			// Event listeners
 			var modal = document.getElementById('gstore-age-modal');
 			var confirmBtn = document.getElementById('gstore-age-confirm');
 			var denyBtn = document.getElementById('gstore-age-deny');
 			var closeBtn = modal ? modal.querySelector('.gstore-age-modal__close') : null;
-			
+
 			if (closeBtn) {
 				closeBtn.addEventListener('click', function() {
 					// Ao fechar sem responder, redireciona para fora do site
 					window.location.href = 'https://www.google.com';
 				});
 			}
-			
+
 			if (confirmBtn) {
 				confirmBtn.addEventListener('click', function() {
 					setVerified();
 					hideModal();
-					
+
 					// Remove o modal apos a animacao
 					setTimeout(function() {
 						var modal = document.getElementById('gstore-age-modal');
@@ -16547,14 +16636,14 @@ function gstore_age_verification_modal() {
 					}, 500);
 				});
 			}
-			
+
 			if (denyBtn) {
 				denyBtn.addEventListener('click', function() {
 					showBlockedScreen();
 				});
 			}
 		}
-		
+
 		// Inicializa quando o DOM estiver pronto
 		if (document.readyState === 'loading') {
 			document.addEventListener('DOMContentLoaded', init);
@@ -16621,19 +16710,19 @@ function gstore_custom_my_account_address_labels( $address, $customer_id, $name_
     $city       = $address['city'] ?? '';
     $state      = $address['state'] ?? '';
     $postcode   = $address['postcode'] ?? '';
-    
+
     // Campos extras do tema
     $number       = get_user_meta( $customer_id, $name_type . '_number', true );
     $neighborhood = get_user_meta( $customer_id, $name_type . '_neighborhood', true );
 
     $new_address = array();
-    
+
     // Nome: Nome Completo
     if ( $first_name || $last_name ) {
         $new_address['first_name'] = 'Nome: ' . trim( $first_name . ' ' . $last_name );
-        $new_address['last_name']  = ''; 
+        $new_address['last_name']  = '';
     }
-    
+
     // Endereço: Rua, Numero - Complemento
     if ( $address_1 ) {
         $addr = 'Endereço: ' . $address_1;
@@ -16644,7 +16733,7 @@ function gstore_custom_my_account_address_labels( $address, $customer_id, $name_
             $addr .= ' - ' . $address_2;
         }
         $new_address['address_1'] = $addr;
-        $new_address['address_2'] = ''; 
+        $new_address['address_2'] = '';
     }
 
     // Bairro (apenas se preenchido)
@@ -16667,14 +16756,14 @@ function gstore_custom_my_account_address_labels( $address, $customer_id, $name_
     }
 
     // Não exibe o país na página de conta se for BR
-    $new_address['country'] = (isset($address['country']) && $address['country'] !== 'BR') ? $address['country'] : ''; 
+    $new_address['country'] = (isset($address['country']) && $address['country'] !== 'BR') ? $address['country'] : '';
 
     return $new_address;
 }
 
 /**
  * Define o formato de endereço para o Brasil para incluir o bairro e garantir a ordem.
- * Nota: Isso afeta apenas quando wc_get_formatted_address é chamado, 
+ * Nota: Isso afeta apenas quando wc_get_formatted_address é chamado,
  * mas como alteramos os valores apenas na Minha Conta, o impacto visual é controlado.
  */
 add_filter( 'woocommerce_localisation_address_formats', 'gstore_br_address_format_with_neighborhood' );

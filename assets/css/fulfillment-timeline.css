@@ -55,10 +55,10 @@
 
 /* Atual */
 .gstore-fulfillment-timeline__step.is-current .gstore-fulfillment-timeline__icon {
-	background: var(--gstore-color-accent, #ff5c00);
+	background: var(--gstore-color-accent, #b5a642);
 	color: #fff;
-	border: 2px solid var(--gstore-color-accent, #ff5c00);
-	box-shadow: 0 0 0 4px rgba(255, 92, 0, 0.15);
+	border: 2px solid var(--gstore-color-accent, #b5a642);
+	box-shadow: 0 0 0 4px rgba(181, 166, 66, 0.15);
 }
 
 /* Pendente */
@@ -108,7 +108,7 @@
 }
 
 .gstore-fulfillment-timeline__step.is-current .gstore-fulfillment-timeline__label {
-	color: var(--gstore-color-accent, #ff5c00);
+	color: var(--gstore-color-accent, #b5a642);
 	font-weight: 600;
 }
 
@@ -194,14 +194,14 @@
 }
 
 .gstore-fulfillment-upload__link {
-	color: var(--gstore-color-accent, #ff5c00);
+	color: var(--gstore-color-accent, #b5a642);
 	font-weight: 600;
 	text-decoration: underline;
 	text-underline-offset: 2px;
 }
 
 .gstore-fulfillment-upload__link:hover {
-	color: var(--gstore-color-accent-hover, #e05000);
+	color: var(--gstore-color-accent-hover, #9f923a);
 }
 
 .gstore-fulfillment-upload__counter {
@@ -316,8 +316,8 @@
 }
 
 .gstore-fulfillment-upload__btn:hover {
-	border-color: var(--gstore-color-accent, #ff5c00);
-	color: var(--gstore-color-accent, #ff5c00);
+	border-color: var(--gstore-color-accent, #b5a642);
+	color: var(--gstore-color-accent, #b5a642);
 }
 
 .gstore-fulfillment-upload__btn--delete:hover {
@@ -407,12 +407,12 @@
 
 .gstore-fulfillment-upload__dropzone:hover,
 .gstore-fulfillment-upload__dropzone:focus-visible {
-	border-color: var(--gstore-color-accent, #ff5c00);
+	border-color: var(--gstore-color-accent, #b5a642);
 	background: #fff8f5;
 }
 
 .gstore-fulfillment-upload__dropzone.is-dragover {
-	border-color: var(--gstore-color-accent, #ff5c00);
+	border-color: var(--gstore-color-accent, #b5a642);
 	background: #fff2eb;
 	transform: scale(1.01);
 }
@@ -453,7 +453,7 @@
 }
 
 .gstore-fulfillment-upload__dropzone-content svg {
-	color: var(--gstore-color-accent, #ff5c00);
+	color: var(--gstore-color-accent, #b5a642);
 	opacity: 0.6;
 }
 
@@ -487,7 +487,7 @@
 	top: 0;
 	height: 100%;
 	width: var(--progress, 0%);
-	background: var(--gstore-color-accent, #ff5c00);
+	background: var(--gstore-color-accent, #b5a642);
 	border-radius: 2px;
 	transition: width 0.3s ease;
 }

@@ -134,7 +134,7 @@ body.woocommerce-account .armastore-footer {
 	width: 48px;
 	height: 48px;
 	border-radius: 50%;
-	border: 2px solid var(--gstore-color-accent, #ff5c00);
+	border: 2px solid var(--gstore-color-accent, #b5a642);
 	object-fit: cover;
 }
 
@@ -188,13 +188,13 @@ body.woocommerce-account .armastore-footer {
 
 .gstore-myaccount-nav__link:hover {
 	background-color: var(--gstore-color-bg-muted, #f0f2f5);
-	color: var(--gstore-color-accent, #ff5c00);
+	color: var(--gstore-color-accent, #b5a642);
 }
 
 .gstore-myaccount-nav__item.is-active .gstore-myaccount-nav__link {
 	background-color: var(--gstore-color-accent-tint, var(--gstore-color-accent-12));
-	color: var(--gstore-color-accent, #ff5c00);
-	border-left-color: var(--gstore-color-accent, #ff5c00);
+	color: var(--gstore-color-accent, #b5a642);
+	border-left-color: var(--gstore-color-accent, #b5a642);
 	font-weight: var(--gstore-font-weight-semibold, 600);
 }
 
@@ -210,7 +210,7 @@ body.woocommerce-account .armastore-footer {
 
 .gstore-myaccount-nav__item.is-active .gstore-myaccount-nav__icon,
 .gstore-myaccount-nav__link:hover .gstore-myaccount-nav__icon {
-	color: var(--gstore-color-accent, #ff5c00);
+	color: var(--gstore-color-accent, #b5a642);
 }
 
 .gstore-myaccount-nav__label {
@@ -224,7 +224,7 @@ body.woocommerce-account .armastore-footer {
 	min-width: 20px;
 	height: 20px;
 	padding: 0 6px;
-	background-color: var(--gstore-color-accent, #ff5c00);
+	background-color: var(--gstore-color-accent, #b5a642);
 	color: #fff;
 	font-size: var(--gstore-font-size-xs);
 	font-weight: var(--gstore-font-weight-bold, 700);
@@ -277,7 +277,7 @@ body.woocommerce-account .armastore-footer {
 }
 
 .gstore-dashboard__name {
-	color: var(--gstore-color-accent, #ff5c00);
+	color: var(--gstore-color-accent, #b5a642);
 }
 
 .gstore-dashboard__subtitle {
@@ -313,18 +313,18 @@ body.woocommerce-account .armastore-footer {
 	height: 48px;
 	background: var(--gstore-color-accent-tint, var(--gstore-color-accent-12));
 	border-radius: var(--gstore-radius-md, 6px);
-	color: var(--gstore-color-accent, #ff5c00);
+	color: var(--gstore-color-accent, #b5a642);
 	flex-shrink: 0;
 }
 
 .gstore-dashboard__stat-icon--accent {
 	background: var(--gstore-color-accent-15);
-	color: var(--gstore-color-accent, #ff5c00);
+	color: var(--gstore-color-accent, #b5a642);
 }
 
 .gstore-dashboard__stat-icon--success {
 	background: var(--gstore-color-accent-tint-strong, var(--gstore-color-accent-20));
-	color: var(--gstore-color-accent-dark, #bf4500);
+	color: var(--gstore-color-accent-dark, #877c31);
 }
 
 .gstore-dashboard__stat-content {
@@ -379,14 +379,14 @@ body.woocommerce-account .armastore-footer {
 	align-items: center;
 	gap: 4px;
 	font-size: var(--gstore-font-size-sm, 0.875rem);
-	color: var(--gstore-color-accent, #ff5c00);
+	color: var(--gstore-color-accent, #b5a642);
 	text-decoration: none;
 	font-weight: var(--gstore-font-weight-medium, 500);
 	transition: color var(--gstore-transition-fast);
 }
 
 .gstore-dashboard__view-all:hover {
-	color: var(--gstore-color-accent-hover, #e05000);
+	color: var(--gstore-color-accent-hover, #9f923a);
 }
 
 /* Action Cards */
@@ -410,13 +410,13 @@ body.woocommerce-account .armastore-footer {
 }
 
 .gstore-dashboard__action-card:hover {
-	border-color: var(--gstore-color-accent, #ff5c00);
+	border-color: var(--gstore-color-accent, #b5a642);
 	box-shadow: var(--gstore-shadow-md);
 	transform: translateY(-2px);
 }
 
 .gstore-dashboard__action-card--highlight {
-	background: linear-gradient(135deg, var(--gstore-color-accent, #ff5c00), var(--gstore-color-accent-hover, #e05000));
+	background: linear-gradient(135deg, var(--gstore-color-accent, #b5a642), var(--gstore-color-accent-hover, #9f923a));
 	border-color: transparent;
 }
 
@@ -432,7 +432,7 @@ body.woocommerce-account .armastore-footer {
 	height: 48px;
 	background: var(--gstore-color-accent-tint, var(--gstore-color-accent-12));
 	border-radius: var(--gstore-radius-md, 6px);
-	color: var(--gstore-color-accent, #ff5c00);
+	color: var(--gstore-color-accent, #b5a642);
 	flex-shrink: 0;
 }
 
@@ -586,15 +586,15 @@ body.woocommerce-account .armastore-footer {
 	padding: 8px 16px;
 	font-size: var(--gstore-font-size-sm, 0.875rem);
 	font-weight: var(--gstore-font-weight-medium, 500);
-	color: var(--gstore-color-accent, #ff5c00);
+	color: var(--gstore-color-accent, #b5a642);
 	text-decoration: none;
-	border: 1px solid var(--gstore-color-accent, #ff5c00);
+	border: 1px solid var(--gstore-color-accent, #b5a642);
 	border-radius: var(--gstore-radius-base, 4px);
 	transition: all var(--gstore-transition-fast);
 }
 
 .gstore-dashboard__order-link:hover {
-	background: var(--gstore-color-accent, #ff5c00);
+	background: var(--gstore-color-accent, #b5a642);
 	color: #fff;
 }
 
@@ -745,7 +745,7 @@ body.woocommerce-account .armastore-footer {
 	font-size: var(--gstore-font-size-sm, 0.875rem);
 	font-weight: var(--gstore-font-weight-semibold, 600);
 	color: #fff;
-	background: var(--gstore-color-accent, #ff5c00);
+	background: var(--gstore-color-accent, #b5a642);
 	border: none;
 	border-radius: var(--gstore-radius-base, 4px);
 	cursor: pointer;
@@ -755,22 +755,22 @@ body.woocommerce-account .armastore-footer {
 
 .gstore-myaccount__content .woocommerce-button:hover,
 .gstore-myaccount__content .button:hover {
-	background: var(--gstore-color-accent-hover, #e05000);
+	background: var(--gstore-color-accent-hover, #9f923a);
 	transform: translateY(-1px);
 }
 
 /* Botão "Pagar" na página de visualização de pedidos (Order Again) */
 .gstore-myaccount__content .woocommerce-orders-table .woocommerce-button.order-again,
 .gstore-myaccount__content .woocommerce-order-details .woocommerce-button.order-again {
-	background: var(--gstore-color-accent, #ff5c00);
+	background: var(--gstore-color-accent, #b5a642);
 	color: #fff;
-	border: 1px solid var(--gstore-color-accent, #ff5c00);
+	border: 1px solid var(--gstore-color-accent, #b5a642);
 }
 
 .gstore-myaccount__content .woocommerce-orders-table .woocommerce-button.order-again:hover,
 .gstore-myaccount__content .woocommerce-order-details .woocommerce-button.order-again:hover {
-	background: var(--gstore-color-accent-hover, #e05000);
-	border-color: var(--gstore-color-accent-hover, #e05000);
+	background: var(--gstore-color-accent-hover, #9f923a);
+	border-color: var(--gstore-color-accent-hover, #9f923a);
 }
 
 /* Forms */
@@ -872,7 +872,7 @@ body.woocommerce-account .armastore-footer {
 
 .gstore-myaccount__content .form-row .input-text:focus,
 .gstore-myaccount__content .form-row select:focus {
-	border-color: var(--gstore-color-accent, #ff5c00);
+	border-color: var(--gstore-color-accent, #b5a642);
 	outline: none;
 }
 
@@ -990,7 +990,7 @@ body.woocommerce-account .armastore-footer {
 	font-size: 0;
 	/* Hide original text */
 	font-weight: var(--gstore-font-weight-bold, 700);
-	color: var(--gstore-color-accent, #ff5c00);
+	color: var(--gstore-color-accent, #b5a642);
 	text-decoration: none;
 	padding: 6px 12px;
 	background: rgba(181, 166, 66, 0.1);
@@ -1009,7 +1009,7 @@ body.woocommerce-account .armastore-footer {
 }
 
 .gstore-myaccount__content .woocommerce-Address-title a:hover {
-	background: var(--gstore-color-accent, #ff5c00);
+	background: var(--gstore-color-accent, #b5a642);
 	color: #fff;
 	text-decoration: none;
 }
@@ -1337,7 +1337,7 @@ form.woocommerce-form {
 .gstore-rememberme-row .woocommerce-form__input-checkbox {
 	width: 18px;
 	height: 18px;
-	accent-color: var(--gstore-color-accent, #ff5c00);
+	accent-color: var(--gstore-color-accent, #b5a642);
 	cursor: pointer;
 }
 
@@ -1374,12 +1374,12 @@ form.woocommerce-form {
 
 .gstore-btn-register {
 	background: transparent !important;
-	color: var(--gstore-color-accent, #ff5c00) !important;
-	border: 2px solid var(--gstore-color-accent, #ff5c00) !important;
+	color: var(--gstore-color-accent, #b5a642) !important;
+	border: 2px solid var(--gstore-color-accent, #b5a642) !important;
 }
 
 .gstore-btn-register:hover {
-	background: var(--gstore-color-accent, #ff5c00) !important;
+	background: var(--gstore-color-accent, #b5a642) !important;
 	color: #fff !important;
 }
 
@@ -1463,14 +1463,14 @@ form.woocommerce-form {
 
 .gstore-register-info-btn:hover,
 .gstore-register-info-btn:focus {
-	color: var(--gstore-color-accent, #ff5c00);
-	outline: 2px solid var(--gstore-color-accent, #ff5c00);
+	color: var(--gstore-color-accent, #b5a642);
+	outline: 2px solid var(--gstore-color-accent, #b5a642);
 	outline-offset: 2px;
 	border-radius: 4px;
 }
 
 .gstore-register-info-btn:focus-visible {
-	outline: 2px solid var(--gstore-color-accent, #ff5c00);
+	outline: 2px solid var(--gstore-color-accent, #b5a642);
 	outline-offset: 2px;
 }
 
@@ -1627,11 +1627,11 @@ form.woocommerce-form {
 	margin-bottom: 20px;
 	padding: 14px 16px;
 	border: 1px solid #f1c7ad;
-	border: 1px solid color-mix(in srgb, var(--gstore-color-accent, #ff5c00) 30%, #ffffff);
-	border-left: 5px solid var(--gstore-color-accent, #ff5c00);
+	border: 1px solid color-mix(in srgb, var(--gstore-color-accent, #b5a642) 30%, #ffffff);
+	border-left: 5px solid var(--gstore-color-accent, #b5a642);
 	border-radius: var(--gstore-radius-base, 4px);
 	background: #fff6ef;
-	background: color-mix(in srgb, var(--gstore-color-accent, #ff5c00) 10%, #ffffff);
+	background: color-mix(in srgb, var(--gstore-color-accent, #b5a642) 10%, #ffffff);
 }
 
 .gstore-lost-password__notice p {
@@ -1676,12 +1676,12 @@ form.woocommerce-form {
 }
 
 .gstore-lost-password .input-text:focus {
-	border-color: var(--gstore-color-accent, #ff5c00);
-	outline: 3px solid rgba(255, 92, 0, 0.3);
-	outline: 3px solid color-mix(in srgb, var(--gstore-color-accent, #ff5c00) 30%, transparent);
+	border-color: var(--gstore-color-accent, #b5a642);
+	outline: 3px solid rgba(181, 166, 66, 0.3);
+	outline: 3px solid color-mix(in srgb, var(--gstore-color-accent, #b5a642) 30%, transparent);
 	outline-offset: 1px;
-	box-shadow: 0 0 0 1px rgba(255, 92, 0, 0.35);
-	box-shadow: 0 0 0 1px color-mix(in srgb, var(--gstore-color-accent, #ff5c00) 45%, #ffffff);
+	box-shadow: 0 0 0 1px rgba(181, 166, 66, 0.35);
+	box-shadow: 0 0 0 1px color-mix(in srgb, var(--gstore-color-accent, #b5a642) 45%, #ffffff);
 }
 
 .gstore-lost-password__actions {
@@ -1702,8 +1702,8 @@ form.woocommerce-form {
 
 .gstore-lost-password__actions .button:focus-visible,
 .gstore-lost-password__actions .woocommerce-Button:focus-visible {
-	outline: 3px solid rgba(255, 92, 0, 0.35);
-	outline: 3px solid color-mix(in srgb, var(--gstore-color-accent, #ff5c00) 35%, transparent);
+	outline: 3px solid rgba(181, 166, 66, 0.35);
+	outline: 3px solid color-mix(in srgb, var(--gstore-color-accent, #b5a642) 35%, transparent);
 	outline-offset: 2px;
 }
 
@@ -1732,7 +1732,7 @@ form.woocommerce-form {
 .gstore-lost-password__confirmation-card {
 	background: var(--gstore-color-bg-light, #fff);
 	border: 1px solid var(--gstore-color-border, #d9d9d9);
-	border-left: 6px solid var(--gstore-color-accent, #ff5c00);
+	border-left: 6px solid var(--gstore-color-accent, #b5a642);
 	border-radius: var(--gstore-radius-lg, 8px);
 	box-shadow: var(--gstore-shadow-sm);
 	padding: clamp(22px, 4vw, 38px);
@@ -1768,8 +1768,8 @@ form.woocommerce-form {
 	min-height: 52px;
 	padding: 12px 26px !important;
 	border-radius: var(--gstore-radius-base, 4px) !important;
-	background: var(--gstore-color-accent, #ff5c00) !important;
-	border: 2px solid var(--gstore-color-accent, #ff5c00) !important;
+	background: var(--gstore-color-accent, #b5a642) !important;
+	border: 2px solid var(--gstore-color-accent, #b5a642) !important;
 	color: var(--gstore-color-text-light, #fff) !important;
 	font-size: clamp(1rem, 1.8vw, 1.0625rem) !important;
 	font-weight: var(--gstore-font-weight-semibold, 600) !important;
@@ -1781,7 +1781,7 @@ form.woocommerce-form {
 }
 
 .gstore-lost-password__home-btn:focus-visible {
-	outline: 3px solid rgba(255, 92, 0, 0.35);
+	outline: 3px solid rgba(181, 166, 66, 0.35);
 	outline-offset: 2px;
 }
 
@@ -1884,7 +1884,7 @@ form.woocommerce-form {
 }
 
 .woocommerce-table--order-details a:hover {
-	color: var(--gstore-color-accent, #ff5c00);
+	color: var(--gstore-color-accent, #b5a642);
 }
 
 /* Customer Details */
@@ -1945,7 +1945,7 @@ form.woocommerce-form {
 	background: var(--gstore-color-bg-light, #ffffff) !important;
 	background-color: var(--gstore-color-bg-light, #ffffff) !important;
 	border: 1px solid var(--gstore-color-border, #e6e6e6);
-	border-left: 4px solid var(--gstore-color-accent, #ff5c00);
+	border-left: 4px solid var(--gstore-color-accent, #b5a642);
 	border-radius: var(--gstore-radius-base, 4px);
 	padding: 16px 20px;
 	margin-bottom: 32px;
@@ -2131,7 +2131,7 @@ form.woocommerce-form {
 }
 
 .Gstore-pix-emv-code:focus {
-	border-color: var(--gstore-color-accent, #ff5c00);
+	border-color: var(--gstore-color-accent, #b5a642);
 	box-shadow: 0 0 0 3px rgba(181, 166, 66, 0.1);
 	outline: none;
 }
@@ -2142,7 +2142,7 @@ form.woocommerce-form {
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
-	background: var(--gstore-color-accent, #ff5c00);
+	background: var(--gstore-color-accent, #b5a642);
 	color: #ffffff;
 	border: none;
 	border-radius: var(--gstore-radius-base, 4px);

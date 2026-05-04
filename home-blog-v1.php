@@ -82,7 +82,7 @@ if ( ! function_exists( 'gstore_home_blog_v1_render' ) ) {
 				--hb-title: var(--gstore-color-text-primary, #1a1a1a);
 				--hb-muted: var(--gstore-color-text-muted, #7a7a7a);
 				--hb-link: var(--gstore-color-text-primary, #1a1a1a);
-				--hb-link-hover: var(--gstore-color-accent, #ff5c00);
+				--hb-link-hover: var(--gstore-color-accent, #b5a642);
 				--hb-shadow: var(--gstore-shadow-sm, 0 1px 2px rgba(0, 0, 0, 0.06));
 				background: var(--gstore-color-bg-light, #ffffff);
 				color: var(--hb-title);
@@ -301,8 +301,8 @@ if ( ! function_exists( 'gstore_home_blog_v1_render' ) ) {
 			.gstore-hb-v1 .Gstore-btn--outline:hover,
 			.gstore-hb-v1 .Gstore-btn--outline:focus {
 				color: var(--gstore-color-text-light, #f5f5f5);
-				background: var(--gstore-color-accent-dark, #bf4500);
-				border-color: var(--gstore-color-accent-dark, #bf4500);
+				background: var(--gstore-color-accent-dark, #877c31);
+				border-color: var(--gstore-color-accent-dark, #877c31);
 			}
 			.gstore-hb-v1 .hb-mini__body {
 				min-width: 0;

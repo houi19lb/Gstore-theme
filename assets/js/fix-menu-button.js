@@ -61,7 +61,7 @@
     '  width: 14px !important;',
     '  height: 3px !important;',
     '  border-radius: 2px;',
-    '  background-color: var(--gstore-color-accent, #ff5c00) !important;',
+    '  background-color: var(--gstore-color-accent, #b5a642) !important;',
     '  opacity: 0.85;',
     '  transition: transform 0.3s ease, opacity 0.3s ease;',
     '  transform-origin: center;',
@@ -100,7 +100,7 @@
     '.Gstore-header__menu-toggle.is-active span.Gstore-header__menu-line {',
     '  width: 14px !important;',
     '  height: 3px !important;',
-    '  background-color: var(--gstore-color-accent, #ff5c00) !important;',
+    '  background-color: var(--gstore-color-accent, #b5a642) !important;',
     '}',
 
     '.Gstore-header__menu-toggle.is-active span.Gstore-header__menu-line:nth-child(1) {',

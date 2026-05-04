@@ -1,6 +1,6 @@
 /**
  * Checkout em 3 Etapas - Gstore
- * 
+ *
  * Design System:
  * - Bordas: 4px
  * - Accent: #b5a642 (cor principal de destaque - brass/dourado para steppers/títulos)
@@ -23,8 +23,8 @@
    VARIÁVEIS CSS
    =========================================== */
 :root {
-	--gstore-brass: var(--gstore-color-accent, #ff5c00);
-	--gstore-brass-dark: var(--gstore-color-accent-dark, #bf4500);
+	--gstore-brass: var(--gstore-color-accent, #b5a642);
+	--gstore-brass-dark: var(--gstore-color-accent-dark, #877c31);
 	--gstore-green: var(--gstore-color-accent-secondary, #5a8900);
 	--gstore-green-hover: var(--gstore-color-accent-secondary-hover, #4f7900);
 	--gstore-base: #f5f5f2;

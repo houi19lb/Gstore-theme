@@ -181,6 +181,11 @@ class Gstore_Theme_Git_Updater {
 			wp_send_json_error( 'Diretório do tema sem permissão de escrita.' );
 		}
 
+		$preserved_accent_color = '';
+		if ( function_exists( 'gstore_ensure_persisted_accent_color' ) ) {
+			$preserved_accent_color = gstore_ensure_persisted_accent_color();
+		}
+
 		@set_time_limit( 300 );
 
 		// Verifica se git existe.
@@ -272,6 +277,10 @@ class Gstore_Theme_Git_Updater {
 		// Remove token do remote por segurança (melhor esforço).
 		$this->run_in_dir( 'git remote set-url origin ' . $this->quote( $this->repo_url ), $theme_dir );
 
+		if ( function_exists( 'gstore_maybe_restore_saved_accent_tokens' ) ) {
+			gstore_maybe_restore_saved_accent_tokens();
+		}
+
 		$masked = $this->mask_token( $out, $token );
 		$stash_masked = $this->mask_token( $stash_output, $token );
 		$retry_stash_masked = $this->mask_token( $retry_stash_output, $token );
@@ -294,7 +303,9 @@ class Gstore_Theme_Git_Updater {
 
 		wp_send_json_success(
 			array(
-				'message' => 'Atualizado.',
+				'message' => $preserved_accent_color
+					? 'Atualizado. Cor de accent preservada: ' . strtoupper( $preserved_accent_color ) . '.'
+					: 'Atualizado.',
 				'output'  => ( '' !== trim( (string) $stash_masked ) )
 					? ( "Stash automático:\n" . $stash_masked . "\n\n" . $masked )
 					: $masked,
@@ -431,4 +442,3 @@ class Gstore_Theme_Git_Updater {
 		return trim( $branch );
 	}
 }
-

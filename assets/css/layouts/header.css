@@ -3,7 +3,7 @@
  * GSTORE HEADER - REFATORADO
  * ==========================================
  * CSS limpo e sem conflitos com WordPress Block Theme
- * 
+ *
  * NOTA: Este arquivo substitui os estilos de header do style.css
  * Os seletores usam alta especificidade para garantir prioridade
  */
@@ -72,7 +72,7 @@ header.Gstore-header-shell .wp-block-group,
 }
 
 .Gstore-top-bar__link:hover {
-	color: var(--gstore-color-accent, #ff5c00);
+	color: var(--gstore-color-accent, #b5a642);
 }
 
 .Gstore-top-bar__link .Gstore-icon {
@@ -179,7 +179,7 @@ body:has(.Gstore-header-shell) {
 }
 
 .Gstore-logo-highlight {
-	color: var(--gstore-color-accent, #ff5c00);
+	color: var(--gstore-color-accent, #b5a642);
 }
 
 /* Barra de Pesquisa */
@@ -213,7 +213,7 @@ body:has(.Gstore-header-shell) {
 }
 
 .Gstore-header__search .wp-block-search__button {
-	background: var(--gstore-color-accent, #ff5c00) !important;
+	background: var(--gstore-color-accent, #b5a642) !important;
 	border: none !important;
 	padding: 10px 14px !important;
 	color: var(--gstore-color-black) !important;
@@ -246,8 +246,8 @@ body:has(.Gstore-header-shell) {
 }
 
 .Gstore-header__btn-atendimento:hover {
-	border-color: var(--gstore-color-accent, #ff5c00);
-	color: var(--gstore-color-accent, #ff5c00) !important;
+	border-color: var(--gstore-color-accent, #b5a642);
+	color: var(--gstore-color-accent, #b5a642) !important;
 }
 
 .Gstore-header__btn-atendimento .Gstore-icon {
@@ -294,7 +294,7 @@ body:has(.Gstore-header-shell) {
 	width: 14px;
 	height: 3px;
 	border-radius: 2px;
-	background-color: var(--gstore-color-accent, #ff5c00);
+	background-color: var(--gstore-color-accent, #b5a642);
 	opacity: 0.85;
 	transition: transform 0.3s ease, opacity 0.3s ease;
 	transform-origin: center;
@@ -337,7 +337,7 @@ body:has(.Gstore-header-shell) {
 .Gstore-header__menu-toggle.is-active span.Gstore-header__menu-line {
 	width: 14px;
 	height: 3px;
-	background-color: var(--gstore-color-accent, #ff5c00);
+	background-color: var(--gstore-color-accent, #b5a642);
 }
 
 .Gstore-header__menu-toggle.is-active span.Gstore-header__menu-line:nth-child(1) {
@@ -369,7 +369,7 @@ body:has(.Gstore-header-shell) {
 }
 
 .Gstore-header__mini-cart .wc-block-mini-cart__button {
-	background-color: var(--gstore-color-accent, #ff5c00) !important;
+	background-color: var(--gstore-color-accent, #b5a642) !important;
 	border: none !important;
 	border-radius: 4px !important;
 	padding: 8px 12px !important;
@@ -422,7 +422,7 @@ body:has(.Gstore-header-shell) {
 	left: 0;
 	width: 0;
 	height: 2px;
-	background-color: var(--gstore-color-accent, #ff5c00);
+	background-color: var(--gstore-color-accent, #b5a642);
 	transition: width 0.2s ease;
 }
 
@@ -443,7 +443,7 @@ body:has(.Gstore-header-shell) {
 	.Gstore-top-bar {
 		display: none;
 	}
-	
+
 	/* Header principal */
 	.Gstore-header__inner {
 		padding: 6px 16px;
@@ -453,7 +453,7 @@ body:has(.Gstore-header-shell) {
 		align-items: center;
 		gap: 8px;
 	}
-	
+
 	/* Menu toggle visível */
 	.Gstore-header__menu-toggle {
 		display: flex;
@@ -465,7 +465,7 @@ body:has(.Gstore-header-shell) {
 		border-radius: 8px;
 		align-items: center;
 	}
-	
+
 	/* Logo centralizada */
 	.Gstore-header__logo,
 	.Gstore-header__logo-text {
@@ -473,24 +473,24 @@ body:has(.Gstore-header-shell) {
 		justify-self: center;
 		font-size: var(--gstore-font-size-2xl);
 	}
-	
+
 	/* Logo image no mobile */
 	.Gstore-header__logo.wp-block-site-logo {
 		grid-area: logo;
 		justify-self: center;
 	}
-	
+
 	.Gstore-header__logo img,
 	.Gstore-header__logo.wp-block-site-logo img {
 		max-height: 32px;
 		max-width: 140px;
 	}
-	
+
 	/* Esconde barra de pesquisa no mobile */
 	.Gstore-header__search-wrapper {
 		display: none;
 	}
-	
+
 	/* Actions */
 	.Gstore-header__actions {
 		grid-area: actions;
@@ -502,12 +502,12 @@ body:has(.Gstore-header-shell) {
 		position: relative;
 		z-index: 2;
 	}
-	
+
 	/* Esconde botão de atendimento no mobile */
 	.Gstore-header__btn-atendimento {
 		display: none;
 	}
-	
+
 	/* Mini cart ajustado */
 	.Gstore-header__mini-cart .wc-block-mini-cart__button {
 		min-width: 44px !important;
@@ -516,7 +516,7 @@ body:has(.Gstore-header-shell) {
 		border-radius: 8px !important;
 		line-height: 1 !important;
 	}
-	
+
 	.Gstore-nav__mobile-link .Gstore-icon {
 		width: 18px;
 		height: 18px;
@@ -637,7 +637,7 @@ body:has(.Gstore-header-shell) {
 
 	.Gstore-mobile-drawer__close:hover,
 	.Gstore-mobile-drawer__close:focus {
-		color: var(--gstore-color-accent, #ff5c00);
+		color: var(--gstore-color-accent, #b5a642);
 		outline: none;
 	}
 
@@ -690,14 +690,14 @@ body:has(.Gstore-header-shell) {
 	}
 
 	.Gstore-mobile-drawer__search .wp-block-search__input:focus {
-		border-color: var(--gstore-color-accent, #ff5c00) !important;
+		border-color: var(--gstore-color-accent, #b5a642) !important;
 	}
 
 	.Gstore-mobile-drawer__search .wp-block-search__button {
 		padding: 10px 14px !important;
-		background-color: var(--gstore-color-accent, #ff5c00) !important;
-		border: 1px solid var(--gstore-color-accent, #ff5c00) !important;
-		border-left: 1px solid var(--gstore-color-accent, #ff5c00) !important;
+		background-color: var(--gstore-color-accent, #b5a642) !important;
+		border: 1px solid var(--gstore-color-accent, #b5a642) !important;
+		border-left: 1px solid var(--gstore-color-accent, #b5a642) !important;
 		border-radius: 0 4px 4px 0 !important;
 		color: var(--gstore-color-bg-dark, #0a0a0a) !important;
 		cursor: pointer;
@@ -711,7 +711,7 @@ body:has(.Gstore-header-shell) {
 
 	.Gstore-mobile-drawer__search .wp-block-search__button:hover,
 	.Gstore-mobile-drawer__search .wp-block-search__button:focus {
-		background-color: var(--gstore-color-accent-hover, #ff6500) !important;
+		background-color: var(--gstore-color-accent-hover, #c7b648) !important;
 		outline: none;
 		transform: translateY(-1px);
 	}
@@ -759,7 +759,7 @@ body:has(.Gstore-header-shell) {
 	.Gstore-mobile-drawer__nav .wp-block-navigation-item__content:hover,
 	.Gstore-mobile-drawer__nav .wp-block-navigation-item__content:focus {
 		background-color: var(--gstore-color-bg-dark, #0a0a0a);
-		color: var(--gstore-color-accent, #ff5c00) !important;
+		color: var(--gstore-color-accent, #b5a642) !important;
 		outline: none;
 	}
 
@@ -774,7 +774,7 @@ body:has(.Gstore-header-shell) {
 		border-top: 1px solid var(--gstore-color-white-10, rgba(255, 255, 255, 0.1));
 		display: grid;
 		grid-template-columns: repeat(2, minmax(0, 1fr));
-		background: var(--gstore-color-accent-10, rgba(255, 92, 0, 0.1));
+		background: var(--gstore-color-accent-10, rgba(181, 166, 66, 0.1));
 		padding-bottom: env(safe-area-inset-bottom, 0px);
 		position: relative;
 		z-index: 1;
@@ -805,7 +805,7 @@ body:has(.Gstore-header-shell) {
 	.Gstore-mobile-drawer__footer .Gstore-nav__mobile-link:focus,
 	.Gstore-mobile-drawer__footer .Gstore-mobile-drawer__footer-link:hover,
 	.Gstore-mobile-drawer__footer .Gstore-mobile-drawer__footer-link:focus {
-		background: var(--gstore-color-accent-20, rgba(255, 92, 0, 0.2));
+		background: var(--gstore-color-accent-20, rgba(181, 166, 66, 0.2));
 		outline: none;
 	}
 
@@ -842,7 +842,7 @@ body:has(.Gstore-header-shell) {
 	.Gstore-header__menu-text {
 		font-size: 0.9375rem;
 	}
-	
+
 	.Gstore-header__logo {
 		font-size: var(--gstore-font-size-xl);
 	}
