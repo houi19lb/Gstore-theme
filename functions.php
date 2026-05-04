@@ -98,6 +98,264 @@ function gstore_get_default_accent_color() {
 }
 
 /**
+ * Indica se a cor recebida e o fallback default do tema.
+ *
+ * @param string $color Cor hexadecimal.
+ * @return bool
+ */
+function gstore_is_default_accent_color( $color ) {
+	return strtolower( (string) $color ) === strtolower( gstore_get_default_accent_color() );
+}
+
+/**
+ * Mapeia os tokens derivados de accent para as variaveis CSS persistidas por loja.
+ *
+ * @return array<string,string>
+ */
+function gstore_get_accent_token_css_var_map() {
+	return array(
+		'accent'       => '--gstore-color-accent',
+		'accent-hover' => '--gstore-color-accent-hover',
+		'accent-dark'  => '--gstore-color-accent-dark',
+		'accent-light' => '--gstore-color-accent-light',
+		'accent-08'    => '--gstore-color-accent-08',
+		'accent-10'    => '--gstore-color-accent-10',
+		'accent-12'    => '--gstore-color-accent-12',
+		'accent-15'    => '--gstore-color-accent-15',
+		'accent-20'    => '--gstore-color-accent-20',
+	);
+}
+
+/**
+ * Option que guarda overrides de design tokens independentes da pasta do tema.
+ *
+ * @return string
+ */
+function gstore_get_design_tokens_option_key() {
+	return 'gstore_design_tokens_overrides';
+}
+
+/**
+ * Sanitiza um valor simples de token CSS controlado pelo admin.
+ *
+ * @param string $value Valor CSS.
+ * @return string
+ */
+function gstore_sanitize_design_token_value( $value ) {
+	$value = trim( (string) $value );
+
+	$hex = sanitize_hex_color( $value );
+	if ( $hex ) {
+		return strtolower( $hex );
+	}
+
+	if ( preg_match( '/^rgba\(\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(0|1|0?\.\d+)\s*\)$/i', $value, $matches ) ) {
+		return sprintf(
+			'rgba(%d, %d, %d, %.2f)',
+			max( 0, min( 255, (int) $matches[1] ) ),
+			max( 0, min( 255, (int) $matches[2] ) ),
+			max( 0, min( 255, (int) $matches[3] ) ),
+			max( 0, min( 1, (float) $matches[4] ) )
+		);
+	}
+
+	return '';
+}
+
+/**
+ * Retorna os overrides de tokens salvos no banco.
+ *
+ * @return array<string,string>
+ */
+function gstore_get_saved_design_token_overrides() {
+	$raw = get_option( gstore_get_design_tokens_option_key(), array() );
+	if ( ! is_array( $raw ) ) {
+		return array();
+	}
+
+	$allowed_vars = array_values( gstore_get_accent_token_css_var_map() );
+	$tokens       = array();
+
+	foreach ( $allowed_vars as $css_var ) {
+		if ( ! array_key_exists( $css_var, $raw ) ) {
+			continue;
+		}
+
+		$value = gstore_sanitize_design_token_value( $raw[ $css_var ] );
+		if ( '' !== $value ) {
+			$tokens[ $css_var ] = $value;
+		}
+	}
+
+	return $tokens;
+}
+
+/**
+ * Le a cor de accent do Store Info do plugin quando ela existir.
+ *
+ * @return string
+ */
+function gstore_get_store_info_accent_color() {
+	if ( ! function_exists( 'gstore_store_info' ) ) {
+		return '';
+	}
+
+	$store_info = gstore_store_info();
+	if ( ! is_object( $store_info ) || ! method_exists( $store_info, 'get_value' ) ) {
+		return '';
+	}
+
+	$color = sanitize_hex_color( (string) $store_info->get_value( 'branding.accent_color', '' ) );
+	return $color ? $color : '';
+}
+
+/**
+ * Sincroniza o Store Info com a cor salva em Design Tokens, quando o plugin existir.
+ *
+ * @param string $accent_color Cor base.
+ * @return void
+ */
+function gstore_sync_store_info_accent_color( $accent_color ) {
+	$accent_color = sanitize_hex_color( $accent_color );
+	if ( ! $accent_color || ! function_exists( 'gstore_store_info' ) ) {
+		return;
+	}
+
+	$store_info = gstore_store_info();
+	if (
+		! is_object( $store_info )
+		|| ! method_exists( $store_info, 'get_all' )
+		|| ! method_exists( $store_info, 'save_to_json' )
+	) {
+		return;
+	}
+
+	$data = $store_info->get_all();
+	if ( ! is_array( $data ) ) {
+		return;
+	}
+
+	if ( ! isset( $data['branding'] ) || ! is_array( $data['branding'] ) ) {
+		$data['branding'] = array();
+	}
+
+	$current = isset( $data['branding']['accent_color'] ) ? sanitize_hex_color( (string) $data['branding']['accent_color'] ) : '';
+	if ( $current && strtolower( $current ) === strtolower( $accent_color ) ) {
+		return;
+	}
+
+	$data['branding']['accent_color'] = $accent_color;
+	$store_info->save_to_json( $data );
+}
+
+/**
+ * Retorna a cor de accent salva nos overrides de design tokens.
+ *
+ * @return string
+ */
+function gstore_get_accent_color_from_design_token_overrides() {
+	$tokens = gstore_get_saved_design_token_overrides();
+	$color  = isset( $tokens['--gstore-color-accent'] ) ? sanitize_hex_color( $tokens['--gstore-color-accent'] ) : '';
+
+	return $color ? $color : '';
+}
+
+/**
+ * Gera overrides CSS a partir da cor de accent.
+ *
+ * @param string $accent_color Cor base.
+ * @return array<string,string>
+ */
+function gstore_build_accent_design_token_overrides( $accent_color ) {
+	$accent_color = sanitize_hex_color( $accent_color );
+	if ( ! $accent_color ) {
+		return array();
+	}
+
+	$generated = gstore_generate_accent_tokens( $accent_color );
+	$token_map = gstore_get_accent_token_css_var_map();
+	$overrides = array();
+
+	foreach ( $token_map as $token_key => $css_var ) {
+		if ( empty( $generated[ $token_key ] ) ) {
+			continue;
+		}
+
+		$value = gstore_sanitize_design_token_value( $generated[ $token_key ] );
+		if ( '' !== $value ) {
+			$overrides[ $css_var ] = $value;
+		}
+	}
+
+	return $overrides;
+}
+
+/**
+ * Persiste tokens derivados em wp_options, fora da pasta do tema.
+ *
+ * @param string $accent_color Cor base.
+ * @return bool
+ */
+function gstore_persist_accent_design_token_overrides( $accent_color ) {
+	$accent_color = sanitize_hex_color( $accent_color );
+	if ( ! $accent_color ) {
+		return false;
+	}
+
+	$current   = gstore_get_saved_design_token_overrides();
+	$generated = gstore_build_accent_design_token_overrides( $accent_color );
+	if ( empty( $generated ) ) {
+		return false;
+	}
+
+	$next        = array_merge( $current, $generated );
+	$saved_color = sanitize_hex_color( (string) get_option( 'gstore_accent_color', '' ) );
+	$changed     = $next !== $current || strtolower( (string) $saved_color ) !== strtolower( $accent_color );
+
+	if ( $next !== $current ) {
+		update_option( gstore_get_design_tokens_option_key(), $next, true );
+	}
+
+	if ( ! $saved_color || strtolower( $saved_color ) !== strtolower( $accent_color ) ) {
+		update_option( 'gstore_accent_color', $accent_color, true );
+	}
+
+	if ( $changed ) {
+		update_option( 'gstore_tokens_last_updated', time(), true );
+	}
+
+	return true;
+}
+
+/**
+ * Monta o CSS inline dos tokens por loja.
+ *
+ * @return string
+ */
+function gstore_get_design_token_overrides_css() {
+	$tokens          = gstore_get_saved_design_token_overrides();
+	$accent_color    = gstore_get_effective_accent_color();
+	$current_accent  = isset( $tokens['--gstore-color-accent'] ) ? sanitize_hex_color( $tokens['--gstore-color-accent'] ) : '';
+	$accent_mismatch = $accent_color && ( ! $current_accent || strtolower( $current_accent ) !== strtolower( $accent_color ) );
+
+	if ( empty( $tokens ) || $accent_mismatch ) {
+		$tokens = array_merge( $tokens, gstore_build_accent_design_token_overrides( $accent_color ) );
+	}
+
+	if ( empty( $tokens ) ) {
+		return '';
+	}
+
+	$lines = array( ':root {' );
+	foreach ( $tokens as $css_var => $value ) {
+		$lines[] = sprintf( "\t%s: %s;", $css_var, $value );
+	}
+	$lines[] = '}';
+
+	return implode( "\n", $lines );
+}
+
+/**
  * Retorna a URL publica do catalogo usada pelo tema.
  *
  * @return string URL do catalogo.
@@ -457,7 +715,34 @@ add_filter( 'rank_math/frontend/canonical', 'gstore_catalog_query_canonical_url_
  */
 function gstore_get_effective_accent_color() {
 	$saved_color = sanitize_hex_color( (string) get_option( 'gstore_accent_color', '' ) );
-	return $saved_color ? $saved_color : gstore_get_default_accent_color();
+	$token_color = gstore_get_accent_color_from_design_token_overrides();
+	$store_info_color = gstore_get_store_info_accent_color();
+
+	if ( $token_color && ! gstore_is_default_accent_color( $token_color ) ) {
+		return $token_color;
+	}
+
+	if ( $saved_color && ! gstore_is_default_accent_color( $saved_color ) ) {
+		return $saved_color;
+	}
+
+	if ( $store_info_color && ! gstore_is_default_accent_color( $store_info_color ) ) {
+		return $store_info_color;
+	}
+
+	if ( $token_color ) {
+		return $token_color;
+	}
+
+	if ( $saved_color ) {
+		return $saved_color;
+	}
+
+	if ( $store_info_color ) {
+		return $store_info_color;
+	}
+
+	return gstore_get_default_accent_color();
 }
 
 /**
@@ -467,9 +752,37 @@ function gstore_get_effective_accent_color() {
  */
 function gstore_ensure_persisted_accent_color() {
 	$saved_color = sanitize_hex_color( (string) get_option( 'gstore_accent_color', '' ) );
+	$token_color = gstore_get_accent_color_from_design_token_overrides();
+	$store_info_color = gstore_get_store_info_accent_color();
+
+	if ( $token_color && ! gstore_is_default_accent_color( $token_color ) ) {
+		gstore_persist_accent_design_token_overrides( $token_color );
+		return $token_color;
+	}
+
+	if ( $saved_color && ! gstore_is_default_accent_color( $saved_color ) ) {
+		gstore_persist_accent_design_token_overrides( $saved_color );
+		return $saved_color;
+	}
+
+	if ( $store_info_color && ! gstore_is_default_accent_color( $store_info_color ) ) {
+		gstore_persist_accent_design_token_overrides( $store_info_color );
+		return $store_info_color;
+	}
+
+	if ( $token_color ) {
+		gstore_persist_accent_design_token_overrides( $token_color );
+		return $token_color;
+	}
 
 	if ( $saved_color ) {
+		gstore_persist_accent_design_token_overrides( $saved_color );
 		return $saved_color;
+	}
+
+	if ( $store_info_color ) {
+		gstore_persist_accent_design_token_overrides( $store_info_color );
+		return $store_info_color;
 	}
 
 	$file_color       = gstore_get_accent_color_from_tokens_file();
@@ -477,7 +790,7 @@ function gstore_ensure_persisted_accent_color() {
 	$default_color    = gstore_get_default_accent_color();
 	$accent_color     = $file_color && ! $is_legacy_orange ? $file_color : $default_color;
 
-	update_option( 'gstore_accent_color', $accent_color, true );
+	gstore_persist_accent_design_token_overrides( $accent_color );
 
 	return $accent_color;
 }
@@ -2179,6 +2492,11 @@ function gstore_enqueue_styles() {
 		$category_filter_js_version,
 		true
 	);
+
+	$design_token_overrides_css = gstore_get_design_token_overrides_css();
+	if ( '' !== $design_token_overrides_css ) {
+		wp_add_inline_style( 'gstore-header-css', $design_token_overrides_css );
+	}
 }
 add_action( 'wp_enqueue_scripts', 'gstore_enqueue_styles' );
 
@@ -12887,7 +13205,8 @@ function gstore_ajax_save_accent_color() {
 	}
 
 	// Salva a opção
-	update_option( 'gstore_accent_color', $accent_color );
+	gstore_persist_accent_design_token_overrides( $accent_color );
+	gstore_sync_store_info_accent_color( $accent_color );
 
 	// Atualiza o arquivo tokens.css
 	$result = gstore_update_accent_tokens_in_file( $accent_color );
@@ -13269,17 +13588,7 @@ function gstore_update_accent_tokens_in_file( $accent_color ) {
 	$tokens = gstore_generate_accent_tokens( $accent_color );
 
 	// Mapeia os nomes dos tokens para os padrões no arquivo
-	$token_map = array(
-		'accent' => '--gstore-color-accent',
-		'accent-hover' => '--gstore-color-accent-hover',
-		'accent-dark' => '--gstore-color-accent-dark',
-		'accent-light' => '--gstore-color-accent-light',
-		'accent-08' => '--gstore-color-accent-08',
-		'accent-10' => '--gstore-color-accent-10',
-		'accent-12' => '--gstore-color-accent-12',
-		'accent-15' => '--gstore-color-accent-15',
-		'accent-20' => '--gstore-color-accent-20',
-	);
+	$token_map = gstore_get_accent_token_css_var_map();
 
 	// 1. Atualiza tokens.css
 	$tokens_file = get_theme_file_path( 'assets/css/tokens.css' );
