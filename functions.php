@@ -10842,6 +10842,23 @@ function gstore_is_generated_category_catalog_page() {
 }
 
 /**
+ * Retorna o termo de busca do catalogo aceitando o parametro atual (?q=)
+ * e o legado (?s=).
+ *
+ * @return string
+ */
+function gstore_get_catalog_search_request_term() {
+	$search_term = '';
+	if ( isset( $_GET['q'] ) ) {
+		$search_term = sanitize_text_field( wp_unslash( $_GET['q'] ) );
+	} elseif ( isset( $_GET['s'] ) ) {
+		$search_term = sanitize_text_field( wp_unslash( $_GET['s'] ) );
+	}
+
+	return trim( $search_term );
+}
+
+/**
  * Mapeia rotas raiz "/{categoria-principal}" para o template de catálogo.
  *
  * Exemplo:
@@ -10936,145 +10953,23 @@ function gstore_catalog_apply_search_to_products_shortcode( $query_args, $attr, 
 		return $query_args;
 	}
 
-	$search_term = '';
-	if ( isset( $_GET['q'] ) ) {
-		$search_term = sanitize_text_field( wp_unslash( $_GET['q'] ) );
-	} elseif ( isset( $_GET['s'] ) ) {
-		// Compatibilidade com links antigos.
-		$search_term = sanitize_text_field( wp_unslash( $_GET['s'] ) );
-	}
-	$search_term = trim( $search_term );
+	$search_term = gstore_get_catalog_search_request_term();
 	if ( $search_term === '' ) {
 		return $query_args;
 	}
 
-	// Para SKU, prioriza match estritamente exato e ignora fuzzy/proximidade.
-	$exact_sku_ids = function_exists( 'gstore_find_product_ids_by_exact_sku' )
-		? gstore_find_product_ids_by_exact_sku( $search_term, 40 )
+	$product_ids = function_exists( 'gstore_find_relevant_product_ids_for_search' )
+		? gstore_find_relevant_product_ids_for_search( $search_term, 80 )
 		: array();
 
-	if ( ! empty( $exact_sku_ids ) ) {
-		$query_args['post__in'] = $exact_sku_ids;
-		return $query_args;
-	}
-
-	// -----------------------------------------------------------
-	// Coleta IDs de produtos por 3 vias (OR) em vez de usar
-	// 's' + tax_query juntos (que gera AND e restringe resultados).
-	// -----------------------------------------------------------
-
-	// 1. Busca textual padrao do WordPress.
-	$text_ids = get_posts(
-		array(
-			'post_type'              => 'product',
-			'post_status'            => 'publish',
-			'posts_per_page'         => 200,
-			'no_found_rows'          => true,
-			'ignore_sticky_posts'    => true,
-			's'                      => $search_term,
-			'fields'                 => 'ids',
-			'update_post_meta_cache' => false,
-			'update_post_term_cache' => false,
-		)
-	);
-	$text_ids = is_array( $text_ids ) ? array_map( 'intval', $text_ids ) : array();
-
-	// 2. Busca por categorias que correspondam ao termo (OR, nao AND).
-	$cat_product_ids = array();
-	$has_manual_category_filter = isset( $_GET['filter_cat'] ) || isset( $_GET['filter_cat[]'] );
-
-	if ( ! $has_manual_category_filter ) {
-		$needle = strtolower( remove_accents( $search_term ) );
-
-		if ( $needle !== '' ) {
-			$terms   = array();
-			$terms_a = get_terms(
-				array(
-					'taxonomy'   => 'product_cat',
-					'hide_empty' => true,
-					'number'     => 20,
-					'search'     => $search_term,
-				)
-			);
-			if ( ! is_wp_error( $terms_a ) && ! empty( $terms_a ) ) {
-				$terms = array_merge( $terms, $terms_a );
-			}
-
-			$search_no_accents = remove_accents( $search_term );
-			if ( $search_no_accents && $search_no_accents !== $search_term ) {
-				$terms_b = get_terms(
-					array(
-						'taxonomy'   => 'product_cat',
-						'hide_empty' => true,
-						'number'     => 20,
-						'search'     => $search_no_accents,
-					)
-				);
-				if ( ! is_wp_error( $terms_b ) && ! empty( $terms_b ) ) {
-					$terms = array_merge( $terms, $terms_b );
-				}
-			}
-
-			$matched_term_ids = array();
-			foreach ( $terms as $term ) {
-				if ( empty( $term ) || ! isset( $term->term_id ) ) {
-					continue;
-				}
-				$name_norm = strtolower( remove_accents( (string) $term->name ) );
-				$slug_norm = strtolower( remove_accents( (string) $term->slug ) );
-				if ( strpos( $name_norm, $needle ) !== false || strpos( $slug_norm, $needle ) !== false ) {
-					$matched_term_ids[] = (int) $term->term_id;
-				}
-			}
-
-			$matched_term_ids = array_values( array_unique( array_filter( $matched_term_ids ) ) );
-
-			if ( ! empty( $matched_term_ids ) ) {
-				$cat_product_ids = get_posts(
-					array(
-						'post_type'              => 'product',
-						'post_status'            => 'publish',
-						'posts_per_page'         => 200,
-						'no_found_rows'          => true,
-						'ignore_sticky_posts'    => true,
-						'fields'                 => 'ids',
-						'update_post_meta_cache' => false,
-						'update_post_term_cache' => false,
-						'tax_query'              => array(
-							array(
-								'taxonomy'         => 'product_cat',
-								'field'            => 'term_id',
-								'terms'            => $matched_term_ids,
-								'operator'         => 'IN',
-								'include_children' => true,
-							),
-						),
-					)
-				);
-				$cat_product_ids = is_array( $cat_product_ids ) ? array_map( 'intval', $cat_product_ids ) : array();
-			}
-		}
-	}
-
-	// 3. Busca fuzzy (tolerancia a erros de digitacao).
-	$fuzzy_ids = array();
-	if ( function_exists( 'gstore_fuzzy_search_products' ) ) {
-		$fuzzy_ids = gstore_fuzzy_search_products( $search_term, 40, $text_ids );
-	}
-
-	// Mescla todos os IDs (logica OR).
-	$all_ids = array_values( array_unique( array_merge( $text_ids, $cat_product_ids, $fuzzy_ids ) ) );
-
-	if ( empty( $all_ids ) ) {
+	if ( empty( $product_ids ) ) {
 		// Forca nenhum resultado em vez de mostrar tudo.
 		$query_args['post__in'] = array( 0 );
 		return $query_args;
 	}
 
-	$query_args['post__in'] = $all_ids;
-
-	// Nao usamos 's' junto com post__in para evitar AND indesejado.
-	// Os IDs ja representam a uniao de todas as fontes de busca.
+	$query_args['post__in'] = $product_ids;
+	$query_args['orderby']  = 'post__in';
 
 	return $query_args;
 }
@@ -11132,8 +11027,12 @@ function gstore_catalog_mark_shortcode_stock_priority( $query_args, $attr, $type
 		return $query_args;
 	}
 
+	$has_catalog_search = function_exists( 'gstore_get_catalog_search_request_term' ) && '' !== gstore_get_catalog_search_request_term();
+
 	$query_args['gstore_instock_first'] = 1;
-	$query_args['gstore_featured_first'] = 1;
+	if ( ! $has_catalog_search ) {
+		$query_args['gstore_featured_first'] = 1;
+	}
 
 	return $query_args;
 }
@@ -11147,8 +11046,12 @@ function gstore_catalog_mark_main_query_stock_priority( $query ) {
 		return;
 	}
 
+	$has_catalog_search = function_exists( 'gstore_get_catalog_search_request_term' ) && '' !== gstore_get_catalog_search_request_term();
+
 	$query->set( 'gstore_instock_first', 1 );
-	$query->set( 'gstore_featured_first', 1 );
+	if ( ! $has_catalog_search ) {
+		$query->set( 'gstore_featured_first', 1 );
+	}
 }
 
 /**
@@ -11331,7 +11234,7 @@ function gstore_handle_search_suggest( WP_REST_Request $request ) {
 		);
 	}
 
-	$cache_key = 'gstore_search_suggest_' . md5( strtolower( remove_accents( $term ) ) );
+	$cache_key = 'gstore_search_suggest_v2_' . md5( strtolower( remove_accents( $term ) ) );
 	$cached    = get_transient( $cache_key );
 	if ( is_array( $cached ) ) {
 		return new WP_REST_Response( $cached, 200 );
@@ -11345,29 +11248,8 @@ function gstore_handle_search_suggest( WP_REST_Request $request ) {
 		: array();
 	$has_exact_sku_hit = ! empty( $product_ids );
 
-	if ( ! $has_exact_sku_hit ) {
-		$query = new WP_Query(
-			array(
-				'post_type'              => 'product',
-				'post_status'            => 'publish',
-				'posts_per_page'         => $limit,
-				'no_found_rows'          => true,
-				'ignore_sticky_posts'    => true,
-				's'                      => $term,
-				'fields'                 => 'ids',
-				'update_post_meta_cache' => false,
-				'update_post_term_cache' => false,
-			)
-		);
-		if ( $query->have_posts() ) {
-			$product_ids = array_map( 'intval', $query->posts );
-		}
-
-		// Busca fuzzy complementar quando a busca exata retorna poucos resultados.
-		if ( count( $product_ids ) < $limit && function_exists( 'gstore_fuzzy_search_products' ) ) {
-			$fuzzy_ids  = gstore_fuzzy_search_products( $term, $limit - count( $product_ids ), $product_ids );
-			$product_ids = array_merge( $product_ids, $fuzzy_ids );
-		}
+	if ( ! $has_exact_sku_hit && function_exists( 'gstore_find_relevant_product_ids_for_search' ) ) {
+		$product_ids = gstore_find_relevant_product_ids_for_search( $term, $limit );
 	}
 
 	$products = array();
@@ -11431,7 +11313,6 @@ function gstore_handle_search_suggest( WP_REST_Request $request ) {
 		}
 	}
 
-	$needle_norm = strtolower( remove_accents( $term ) );
 	$seen_term   = array();
 	$categories  = array();
 	foreach ( $terms as $t ) {
@@ -11443,9 +11324,7 @@ function gstore_handle_search_suggest( WP_REST_Request $request ) {
 		}
 		$seen_term[ $t->term_id ] = true;
 
-		$name_norm = strtolower( remove_accents( (string) $t->name ) );
-		$slug_norm = strtolower( remove_accents( (string) $t->slug ) );
-		if ( strpos( $name_norm, $needle_norm ) === false && strpos( $slug_norm, $needle_norm ) === false ) {
+		if ( function_exists( 'gstore_search_term_matches_catalog_term' ) && ! gstore_search_term_matches_catalog_term( $term, $t ) ) {
 			continue;
 		}
 
@@ -11546,31 +11425,549 @@ function gstore_find_product_ids_by_exact_sku( $search_term, $limit = 0 ) {
 }
 
 /**
- * Busca fuzzy de produtos por titulo.
+ * Normaliza textos usados no ranking da busca.
  *
- * Compara o termo de busca com os titulos dos produtos usando Levenshtein,
- * retornando IDs de produtos similares que nao seriam encontrados pela
- * busca exata do WordPress. Util para tolerar erros de digitacao
- * (ex: "pitola" encontra "pistola").
+ * @param string $value Texto bruto.
+ * @return string Texto normalizado.
+ */
+function gstore_normalize_product_search_text( $value ) {
+	$text = trim( wp_strip_all_tags( (string) $value ) );
+	if ( '' === $text ) {
+		return '';
+	}
+
+	$text = remove_accents( $text );
+	$text = function_exists( 'mb_strtolower' ) ? mb_strtolower( $text ) : strtolower( $text );
+
+	$normalized = preg_replace( '/[^\p{L}\p{N}]+/u', ' ', $text );
+	if ( ! is_string( $normalized ) ) {
+		$normalized = preg_replace( '/[^a-z0-9]+/i', ' ', $text );
+	}
+	if ( ! is_string( $normalized ) ) {
+		return trim( $text );
+	}
+
+	$normalized = preg_replace( '/\s+/', ' ', $normalized );
+	return is_string( $normalized ) ? trim( $normalized ) : '';
+}
+
+/**
+ * Quebra a busca em termos significativos.
+ *
+ * @param string $search_term Termo digitado.
+ * @return string[]
+ */
+function gstore_tokenize_product_search_term( $search_term ) {
+	$normalized = gstore_normalize_product_search_text( $search_term );
+	if ( '' === $normalized ) {
+		return array();
+	}
+
+	$stopwords = array_fill_keys(
+		array( 'a', 'as', 'o', 'os', 'e', 'de', 'da', 'das', 'do', 'dos', 'para', 'por', 'com', 'sem', 'em', 'na', 'nas', 'no', 'nos' ),
+		true
+	);
+
+	$tokens = array();
+	foreach ( explode( ' ', $normalized ) as $token ) {
+		$token = trim( $token );
+		if ( '' === $token || isset( $stopwords[ $token ] ) ) {
+			continue;
+		}
+
+		$len = function_exists( 'mb_strlen' ) ? mb_strlen( $token ) : strlen( $token );
+		if ( $len < 2 && ! ctype_digit( $token ) ) {
+			continue;
+		}
+
+		$tokens[ $token ] = true;
+	}
+
+	return array_keys( $tokens );
+}
+
+/**
+ * Verifica se um token aparece em um texto normalizado.
+ *
+ * @param string $token Token normalizado.
+ * @param string $text  Texto normalizado.
+ * @return bool
+ */
+function gstore_search_token_in_text( $token, $text ) {
+	$token = (string) $token;
+	$text  = (string) $text;
+	if ( '' === $token || '' === $text ) {
+		return false;
+	}
+
+	$token_len = function_exists( 'mb_strlen' ) ? mb_strlen( $token ) : strlen( $token );
+	if ( $token_len <= 2 ) {
+		return (bool) preg_match( '/(?:^|\s)' . preg_quote( $token, '/' ) . '(?:\s|$)/', $text );
+	}
+
+	foreach ( explode( ' ', $text ) as $word ) {
+		if ( $word === $token ) {
+			return true;
+		}
+		if ( $token_len >= 4 && 0 === strpos( $word, $token ) ) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
+/**
+ * Verifica se todos os tokens aparecem no texto normalizado.
+ *
+ * @param string[] $tokens Tokens normalizados.
+ * @param string   $text   Texto normalizado.
+ * @return bool
+ */
+function gstore_search_all_tokens_in_text( $tokens, $text ) {
+	if ( empty( $tokens ) || '' === (string) $text ) {
+		return false;
+	}
+
+	$compact_tokens = implode( '', array_map( 'strval', $tokens ) );
+	$compact_text   = str_replace( ' ', '', (string) $text );
+	if ( strlen( $compact_tokens ) >= 3 && false !== strpos( $compact_text, $compact_tokens ) ) {
+		return true;
+	}
+
+	foreach ( $tokens as $token ) {
+		if ( ! gstore_search_token_in_text( $token, $text ) ) {
+			return false;
+		}
+	}
+
+	return true;
+}
+
+/**
+ * Retorna as taxonomias de produto que ajudam a busca (categoria, tag e marca).
+ *
+ * @return string[]
+ */
+function gstore_get_product_search_taxonomies() {
+	static $cached_taxonomies = null;
+
+	if ( null !== $cached_taxonomies ) {
+		return $cached_taxonomies;
+	}
+
+	$taxonomies = array( 'product_cat', 'product_tag' );
+
+	if ( function_exists( 'gstore_get_footer_brand_taxonomies' ) ) {
+		$taxonomies = array_merge( $taxonomies, gstore_get_footer_brand_taxonomies() );
+	}
+
+	$taxonomies = array_values( array_unique( array_filter( array_map( 'trim', $taxonomies ) ) ) );
+	$cached_taxonomies = array_values( array_filter( $taxonomies, 'taxonomy_exists' ) );
+
+	return $cached_taxonomies;
+}
+
+/**
+ * Texto de taxonomias associado a um produto para ranking de busca.
+ *
+ * @param int $product_id ID do produto.
+ * @return string Texto normalizado.
+ */
+function gstore_get_product_taxonomy_search_text( $product_id ) {
+	static $cache = array();
+
+	$product_id = absint( $product_id );
+	if ( $product_id <= 0 ) {
+		return '';
+	}
+	if ( isset( $cache[ $product_id ] ) ) {
+		return $cache[ $product_id ];
+	}
+
+	$parts = array();
+	foreach ( gstore_get_product_search_taxonomies() as $taxonomy ) {
+		$terms = get_the_terms( $product_id, $taxonomy );
+		if ( is_wp_error( $terms ) || empty( $terms ) ) {
+			continue;
+		}
+
+		foreach ( $terms as $term ) {
+			if ( empty( $term ) || empty( $term->name ) ) {
+				continue;
+			}
+			$parts[] = (string) $term->name;
+			$parts[] = (string) $term->slug;
+		}
+	}
+
+	$cache[ $product_id ] = gstore_normalize_product_search_text( implode( ' ', $parts ) );
+	return $cache[ $product_id ];
+}
+
+/**
+ * Pontua um produto por sinais de alta precisao: SKU, titulo, slug e taxonomias.
+ *
+ * @param string $search_term Termo digitado.
+ * @param int    $product_id  ID do produto.
+ * @return int Pontuacao de relevancia. Zero significa descartar.
+ */
+function gstore_score_product_for_search( $search_term, $product_id ) {
+	$product_id = absint( $product_id );
+	$tokens     = gstore_tokenize_product_search_term( $search_term );
+	$needle     = gstore_normalize_product_search_text( $search_term );
+
+	if ( $product_id <= 0 || '' === $needle || empty( $tokens ) ) {
+		return 0;
+	}
+
+	$post = get_post( $product_id );
+	if ( ! ( $post instanceof WP_Post ) || 'product' !== $post->post_type || 'publish' !== $post->post_status ) {
+		return 0;
+	}
+
+	$title = gstore_normalize_product_search_text( $post->post_title );
+	$slug  = gstore_normalize_product_search_text( $post->post_name );
+	$sku   = gstore_normalize_product_search_text( get_post_meta( $product_id, '_sku', true ) );
+	$tax   = gstore_get_product_taxonomy_search_text( $product_id );
+
+	$title_sku = trim( $title . ' ' . $slug . ' ' . $sku );
+	$full_text = trim( $title_sku . ' ' . $tax );
+
+	if ( '' !== $sku && $sku === $needle ) {
+		return 1000;
+	}
+	if ( $title === $needle || $slug === $needle ) {
+		return 930;
+	}
+	if ( '' !== $title && 0 === strpos( $title, $needle ) ) {
+		return 880;
+	}
+	if ( '' !== $title && false !== strpos( $title, $needle ) ) {
+		return 830;
+	}
+	if ( gstore_search_all_tokens_in_text( $tokens, $title_sku ) ) {
+		return 760 + min( 20, count( $tokens ) * 4 );
+	}
+	if ( count( $tokens ) > 1 && gstore_search_all_tokens_in_text( $tokens, $full_text ) ) {
+		return 650 + min( 20, count( $tokens ) * 4 );
+	}
+	if ( 1 === count( $tokens ) && gstore_search_token_in_text( $tokens[0], $title_sku ) ) {
+		return 610;
+	}
+	if ( 1 === count( $tokens ) && gstore_search_token_in_text( $tokens[0], $tax ) ) {
+		return 500;
+	}
+
+	return 0;
+}
+
+/**
+ * Ordena candidatos por relevancia e remove matches fracos.
+ *
+ * @param string $search_term Termo digitado.
+ * @param int[]  $candidate_ids IDs candidatos.
+ * @param int    $limit Limite de retorno. Use 0 para sem limite.
+ * @return int[]
+ */
+function gstore_rank_product_ids_by_search_precision( $search_term, $candidate_ids, $limit = 0 ) {
+	$seen   = array();
+	$scored = array();
+	$index  = 0;
+
+	foreach ( (array) $candidate_ids as $product_id ) {
+		$product_id = absint( $product_id );
+		if ( $product_id <= 0 || isset( $seen[ $product_id ] ) ) {
+			continue;
+		}
+		$seen[ $product_id ] = true;
+
+		$score = gstore_score_product_for_search( $search_term, $product_id );
+		if ( $score <= 0 ) {
+			continue;
+		}
+
+		$scored[] = array(
+			'id'    => $product_id,
+			'score' => $score,
+			'index' => $index,
+		);
+		$index++;
+	}
+
+	usort(
+		$scored,
+		static function( $left, $right ) {
+			if ( $left['score'] !== $right['score'] ) {
+				return $right['score'] <=> $left['score'];
+			}
+
+			return $left['index'] <=> $right['index'];
+		}
+	);
+
+	$result = array_map(
+		static function( $item ) {
+			return (int) $item['id'];
+		},
+		$scored
+	);
+
+	$limit = max( 0, (int) $limit );
+	if ( $limit > 0 && count( $result ) > $limit ) {
+		$result = array_slice( $result, 0, $limit );
+	}
+
+	return $result;
+}
+
+/**
+ * Busca produtos cujo titulo/slug contem todos os termos relevantes.
+ *
+ * @param string $search_term Termo digitado.
+ * @param int    $limit       Limite de candidatos.
+ * @return int[]
+ */
+function gstore_find_product_ids_by_title_tokens( $search_term, $limit = 200 ) {
+	global $wpdb;
+
+	$tokens = gstore_tokenize_product_search_term( $search_term );
+	if ( empty( $tokens ) ) {
+		return array();
+	}
+
+	$where = array(
+		"post_type = 'product'",
+		"post_status = 'publish'",
+	);
+
+	foreach ( $tokens as $token ) {
+		$like    = '%' . $wpdb->esc_like( $token ) . '%';
+		$where[] = $wpdb->prepare( '(post_title LIKE %s OR post_name LIKE %s)', $like, $like );
+	}
+
+	$limit = max( 1, absint( $limit ) );
+	$sql   = "
+		SELECT ID
+		FROM {$wpdb->posts}
+		WHERE " . implode( ' AND ', $where ) . '
+		ORDER BY post_title ASC
+		LIMIT %d
+	';
+
+	$ids = $wpdb->get_col( $wpdb->prepare( $sql, $limit ) );
+	return array_values( array_unique( array_filter( array_map( 'absint', (array) $ids ) ) ) );
+}
+
+/**
+ * Verifica se um termo de catalogo e forte o suficiente para expandir produtos.
+ *
+ * @param string  $search_term Termo digitado.
+ * @param WP_Term $term Termo da taxonomia.
+ * @return bool
+ */
+function gstore_search_term_matches_catalog_term( $search_term, $term ) {
+	if ( ! ( $term instanceof WP_Term ) ) {
+		return false;
+	}
+
+	$needle = gstore_normalize_product_search_text( $search_term );
+	$tokens = gstore_tokenize_product_search_term( $search_term );
+	if ( '' === $needle || empty( $tokens ) ) {
+		return false;
+	}
+
+	$name = gstore_normalize_product_search_text( $term->name );
+	$slug = gstore_normalize_product_search_text( $term->slug );
+	$text = trim( $name . ' ' . $slug );
+
+	if ( $name === $needle || $slug === $needle ) {
+		return true;
+	}
+	if ( count( $tokens ) > 1 ) {
+		return gstore_search_all_tokens_in_text( $tokens, $text );
+	}
+
+	$token     = $tokens[0];
+	$token_len = function_exists( 'mb_strlen' ) ? mb_strlen( $token ) : strlen( $token );
+	if ( $token_len < 4 ) {
+		return false;
+	}
+
+	foreach ( explode( ' ', $text ) as $word ) {
+		if ( 0 === strpos( $word, $token ) ) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
+/**
+ * Encontra termos de produto/categoria/marca que batem com a busca.
+ *
+ * @param string $search_term Termo digitado.
+ * @param int    $limit Limite por consulta de termos.
+ * @return array<string,int[]>
+ */
+function gstore_find_matching_product_search_terms( $search_term, $limit = 30 ) {
+	$taxonomies = gstore_get_product_search_taxonomies();
+	if ( empty( $taxonomies ) ) {
+		return array();
+	}
+
+	$term_sets = array();
+	$queries   = array_unique( array_filter( array( $search_term, remove_accents( $search_term ) ) ) );
+	foreach ( $queries as $query_term ) {
+		$terms = get_terms(
+			array(
+				'taxonomy'   => $taxonomies,
+				'hide_empty' => true,
+				'number'     => max( 1, absint( $limit ) ),
+				'search'     => $query_term,
+			)
+		);
+		if ( is_wp_error( $terms ) || empty( $terms ) ) {
+			continue;
+		}
+
+		foreach ( $terms as $term ) {
+			if ( ! gstore_search_term_matches_catalog_term( $search_term, $term ) ) {
+				continue;
+			}
+			if ( empty( $term_sets[ $term->taxonomy ] ) ) {
+				$term_sets[ $term->taxonomy ] = array();
+			}
+			$term_sets[ $term->taxonomy ][] = (int) $term->term_id;
+		}
+	}
+
+	foreach ( $term_sets as $taxonomy => $term_ids ) {
+		$term_sets[ $taxonomy ] = array_values( array_unique( array_filter( array_map( 'absint', $term_ids ) ) ) );
+		if ( empty( $term_sets[ $taxonomy ] ) ) {
+			unset( $term_sets[ $taxonomy ] );
+		}
+	}
+
+	return $term_sets;
+}
+
+/**
+ * Retorna IDs de produtos associados aos termos fortes encontrados.
+ *
+ * @param string $search_term Termo digitado.
+ * @param int    $limit Limite de candidatos.
+ * @return int[]
+ */
+function gstore_find_product_ids_by_search_terms( $search_term, $limit = 120 ) {
+	$term_sets = gstore_find_matching_product_search_terms( $search_term );
+	if ( empty( $term_sets ) ) {
+		return array();
+	}
+
+	$tax_query = array( 'relation' => 'OR' );
+	foreach ( $term_sets as $taxonomy => $term_ids ) {
+		$tax_query[] = array(
+			'taxonomy'         => $taxonomy,
+			'field'            => 'term_id',
+			'terms'            => $term_ids,
+			'operator'         => 'IN',
+			'include_children' => ( 'product_cat' === $taxonomy ),
+		);
+	}
+
+	$ids = get_posts(
+		array(
+			'post_type'              => 'product',
+			'post_status'            => 'publish',
+			'posts_per_page'         => max( 1, absint( $limit ) ),
+			'no_found_rows'          => true,
+			'ignore_sticky_posts'    => true,
+			'fields'                 => 'ids',
+			'update_post_meta_cache' => false,
+			'update_post_term_cache' => false,
+			'tax_query'              => $tax_query,
+		)
+	);
+
+	return array_values( array_unique( array_filter( array_map( 'absint', is_array( $ids ) ? $ids : array() ) ) ) );
+}
+
+/**
+ * Busca e ranqueia produtos com foco em precisao.
+ *
+ * @param string $search_term Termo digitado.
+ * @param int    $limit Limite final de produtos.
+ * @return int[]
+ */
+function gstore_find_relevant_product_ids_for_search( $search_term, $limit = 80 ) {
+	$limit = max( 1, absint( $limit ) );
+
+	$exact_sku_ids = function_exists( 'gstore_find_product_ids_by_exact_sku' )
+		? gstore_find_product_ids_by_exact_sku( $search_term, $limit )
+		: array();
+	if ( ! empty( $exact_sku_ids ) ) {
+		return array_slice( $exact_sku_ids, 0, $limit );
+	}
+
+	$text_ids = get_posts(
+		array(
+			'post_type'              => 'product',
+			'post_status'            => 'publish',
+			'posts_per_page'         => 200,
+			'no_found_rows'          => true,
+			'ignore_sticky_posts'    => true,
+			's'                      => $search_term,
+			'fields'                 => 'ids',
+			'update_post_meta_cache' => false,
+			'update_post_term_cache' => false,
+		)
+	);
+	$text_ids = is_array( $text_ids ) ? array_map( 'absint', $text_ids ) : array();
+
+	$title_ids = gstore_find_product_ids_by_title_tokens( $search_term, 200 );
+	$term_ids  = gstore_find_product_ids_by_search_terms( $search_term, 120 );
+
+	$candidate_ids = array_values( array_unique( array_filter( array_merge( $title_ids, $text_ids, $term_ids ) ) ) );
+	$ranked_ids    = gstore_rank_product_ids_by_search_precision( $search_term, $candidate_ids, $limit );
+
+	$fuzzy_floor = min( 12, $limit );
+	if ( count( $ranked_ids ) < $fuzzy_floor && function_exists( 'gstore_fuzzy_search_products' ) ) {
+		$fuzzy_ids = gstore_fuzzy_search_products( $search_term, $fuzzy_floor - count( $ranked_ids ), $ranked_ids );
+		if ( ! empty( $fuzzy_ids ) ) {
+			$ranked_ids = array_values( array_unique( array_merge( $ranked_ids, $fuzzy_ids ) ) );
+		}
+	}
+
+	if ( count( $ranked_ids ) > $limit ) {
+		$ranked_ids = array_slice( $ranked_ids, 0, $limit );
+	}
+
+	return $ranked_ids;
+}
+
+/**
+ * Busca fuzzy de produtos por titulo com cobertura de todos os termos.
  *
  * @param string $search_term Termo digitado pelo usuario.
  * @param int    $limit       Maximo de IDs a retornar.
- * @param array  $exclude_ids IDs a excluir (ja encontrados pela busca exata).
- * @return int[] IDs de produtos ordenados por relevancia.
+ * @param array  $exclude_ids IDs a excluir.
+ * @return int[] IDs de produtos ordenados por similaridade.
  */
 function gstore_fuzzy_search_products( $search_term, $limit = 20, $exclude_ids = array() ) {
 	global $wpdb;
 
-	$needle = function_exists( 'mb_strtolower' )
-		? mb_strtolower( remove_accents( trim( $search_term ) ) )
-		: strtolower( remove_accents( trim( $search_term ) ) );
+	$needle       = gstore_normalize_product_search_text( $search_term );
+	$needle_words = gstore_tokenize_product_search_term( $search_term );
+	$needle_len   = function_exists( 'mb_strlen' ) ? mb_strlen( $needle ) : strlen( $needle );
+	$limit        = max( 0, absint( $limit ) );
 
-	$needle_len = function_exists( 'mb_strlen' ) ? mb_strlen( $needle ) : strlen( $needle );
-	if ( $needle === '' || $needle_len < 2 ) {
+	if ( $needle === '' || $needle_len < 2 || $limit <= 0 || empty( $needle_words ) ) {
 		return array();
 	}
 
-	$cache_key = 'gstore_fuzzy_' . md5( $needle . '_' . implode( ',', $exclude_ids ) . '_' . $limit );
+	$exclude_ids = array_values( array_unique( array_filter( array_map( 'absint', (array) $exclude_ids ) ) ) );
+	$cache_key   = 'gstore_fuzzy_v2_' . md5( $needle . '_' . implode( ',', $exclude_ids ) . '_' . $limit );
 	$cached    = get_transient( $cache_key );
 	if ( is_array( $cached ) ) {
 		return $cached;
@@ -11586,77 +11983,85 @@ function gstore_fuzzy_search_products( $search_term, $limit = 20, $exclude_ids =
 	}
 
 	$exclude_map = array_flip( $exclude_ids );
-	$needle_words = preg_split( '/[\s\-_\.]+/', $needle, -1, PREG_SPLIT_NO_EMPTY );
-	$scored = array();
+	$scored      = array();
 
 	foreach ( $products as $product ) {
 		if ( isset( $exclude_map[ (int) $product->ID ] ) ) {
 			continue;
 		}
 
-		$title = function_exists( 'mb_strtolower' )
-			? mb_strtolower( remove_accents( $product->post_title ) )
-			: strtolower( remove_accents( $product->post_title ) );
+		$title = gstore_normalize_product_search_text( $product->post_title );
 
 		// Pula se ja eh match exato por substring (WP_Query ja encontra).
 		if ( strpos( $title, $needle ) !== false ) {
 			continue;
 		}
 
-		$best_score = 0;
-		$title_words = preg_split( '/[\s\-_\.]+/', $title, -1, PREG_SPLIT_NO_EMPTY );
+		$title_words = preg_split( '/\s+/', $title, -1, PREG_SPLIT_NO_EMPTY );
+		if ( empty( $title_words ) ) {
+			continue;
+		}
 
-		// Compara cada palavra do termo com cada palavra do titulo.
+		$total_score = 0;
+		$matched_all = true;
+
 		foreach ( $needle_words as $nw ) {
 			$nw_len = function_exists( 'mb_strlen' ) ? mb_strlen( $nw ) : strlen( $nw );
 			if ( $nw_len < 2 ) {
 				continue;
 			}
 
+			$best_score = 0;
 			foreach ( $title_words as $tw ) {
 				$tw_len = function_exists( 'mb_strlen' ) ? mb_strlen( $tw ) : strlen( $tw );
 				if ( $tw_len < 2 ) {
 					continue;
 				}
 
-				// Levenshtein entre palavras individuais.
+				if ( $tw === $nw ) {
+					$best_score = 1;
+					break;
+				}
+
+				if ( $nw_len >= 4 && 0 === strpos( $tw, $nw ) ) {
+					$best_score = max( $best_score, 0.9 );
+				} elseif ( $nw_len >= 4 && $tw_len >= 4 && false !== strpos( $tw, $nw ) ) {
+					$best_score = max( $best_score, 0.84 );
+				}
+
 				$lev  = levenshtein( $nw, $tw );
 				$mlen = max( $nw_len, $tw_len );
 				if ( $mlen > 0 ) {
 					$sim = 1 - ( $lev / $mlen );
 					$best_score = max( $best_score, $sim );
 				}
-
-				// Se a palavra do needle esta contida na do titulo ou vice-versa.
-				if ( strpos( $tw, $nw ) !== false || strpos( $nw, $tw ) !== false ) {
-					$best_score = max( $best_score, 0.75 );
-				}
 			}
-		}
 
-		// Levenshtein do termo completo contra o titulo completo (para termos curtos).
-		if ( $needle_len <= 15 ) {
-			foreach ( $title_words as $tw ) {
-				$tw_len = function_exists( 'mb_strlen' ) ? mb_strlen( $tw ) : strlen( $tw );
-				$lev  = levenshtein( $needle, $tw );
-				$mlen = max( $needle_len, $tw_len );
-				if ( $mlen > 0 ) {
-					$sim = 1 - ( $lev / $mlen );
-					$best_score = max( $best_score, $sim );
-				}
+			$threshold = $nw_len <= 3 ? 0.86 : 0.72;
+			if ( $best_score < $threshold ) {
+				$matched_all = false;
+				break;
 			}
+
+			$total_score += $best_score;
 		}
 
-		// Limiar: pelo menos 60% de similaridade.
-		if ( $best_score >= 0.6 ) {
-			$scored[] = array(
-				'id'    => (int) $product->ID,
-				'score' => $best_score,
-			);
+		if ( ! $matched_all ) {
+			continue;
 		}
+
+		$avg_score = $total_score / max( 1, count( $needle_words ) );
+		$scored[]  = array(
+			'id'    => (int) $product->ID,
+			'score' => $avg_score,
+		);
 	}
 
 	usort( $scored, function ( $a, $b ) {
+		if ( $a['score'] === $b['score'] ) {
+			return $a['id'] <=> $b['id'];
+		}
+
 		return $b['score'] <=> $a['score'];
 	} );
 
