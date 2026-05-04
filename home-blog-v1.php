@@ -242,13 +242,14 @@ if ( ! function_exists( 'gstore_home_blog_v1_render' ) ) {
 			.gstore-hb-v1 .hb-thumb img {
 				width: 100%;
 				height: 100%;
-				object-fit: cover;
+				object-fit: contain;
+				object-position: center;
 				display: block;
 				transition: transform .25s ease;
 			}
 			.gstore-hb-v1 .hb-cover:hover img,
 			.gstore-hb-v1 .hb-thumb:hover img {
-				transform: scale(1.02);
+				transform: none;
 			}
 			.gstore-hb-v1 .hb-cover::after {
 				content: "";

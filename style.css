@@ -4784,9 +4784,27 @@ main:not(.Gstore-blog-shell):not(.Gstore-blog-single-shell) {
 	min-height: 100%;
 }
 
+.Gstore-home-blog__image {
+	width: 100%;
+	overflow: hidden;
+	background: var(--gray-bg);
+	border-radius: var(--gstore-radius-base);
+}
+
+.Gstore-home-blog__image a {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 100%;
+	height: 100%;
+}
+
 .Gstore-home-blog__image img {
 	border-radius: var(--gstore-radius-base);
-	object-fit: cover;
+	object-fit: contain !important;
+	object-position: center;
+	width: 100% !important;
+	height: 100% !important;
 }
 
 .Gstore-home-blog__content {
@@ -6731,17 +6749,29 @@ main.Gstore-blog-shell .wp-block-group.is-layout-constrained {
 	height: 240px;
 	overflow: hidden;
 	background: var(--gray-bg);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.Gstore-blog-card__image a {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 100%;
+	height: 100%;
 }
 
 .Gstore-blog-card__image img {
-	width: 100%;
-	height: 100%;
-	object-fit: cover;
+	width: 100% !important;
+	height: 100% !important;
+	object-fit: contain !important;
+	object-position: center;
 	transition: transform 0.3s ease;
 }
 
 .Gstore-blog-card:hover .Gstore-blog-card__image img {
-	transform: scale(1.05);
+	transform: none;
 }
 
 .Gstore-blog-card__content {
@@ -7091,12 +7121,14 @@ main.Gstore-blog-shell .wp-block-group.is-layout-constrained {
 	flex-shrink: 0;
 	border-radius: 4px;
 	overflow: hidden;
+	background: var(--gray-bg);
 }
 
 .Gstore-blog-recent-post__image img {
 	width: 80px;
 	height: 80px;
-	object-fit: cover;
+	object-fit: contain;
+	object-position: center;
 	display: block;
 }
 
@@ -7375,7 +7407,8 @@ main.Gstore-blog-single-shell .wp-block-group.is-layout-constrained:not(.Gstore-
 	height: 100%;
 	display: block;
 	border-radius: 4px;
-	object-fit: cover;
+	object-fit: contain !important;
+	object-position: center;
 	padding-left: 0;
 	padding-right: 0;
 }
@@ -7773,14 +7806,28 @@ main.Gstore-blog-single-shell .wp-block-group.is-layout-constrained:not(.Gstore-
 .Gstore-blog-single-related__image {
 	width: 100%;
 	height: 200px;
-	object-fit: cover;
+	object-fit: contain !important;
+	object-position: center;
 	margin: 0;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background: var(--gray-bg);
+}
+
+.Gstore-blog-single-related__image a {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 100%;
+	height: 100%;
 }
 
 .Gstore-blog-single-related__image img {
 	width: 100%;
 	height: 100%;
-	object-fit: cover;
+	object-fit: contain !important;
+	object-position: center;
 }
 
 .Gstore-blog-single-related__content {

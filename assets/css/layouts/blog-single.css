@@ -459,18 +459,31 @@
 }
 
 .Gstore-blog-single-related__image {
+	display: flex;
+	align-items: center;
+	justify-content: center;
 	overflow: hidden;
+	background: var(--gstore-color-bg-muted);
+}
+
+.Gstore-blog-single-related__image a {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 100%;
+	height: 100%;
 }
 
 .Gstore-blog-single-related__image img {
 	width: 100%;
 	height: 200px;
-	object-fit: cover;
+	object-fit: contain !important;
+	object-position: center;
 	transition: transform var(--gstore-transition-base);
 }
 
 .Gstore-blog-single-related__card:hover .Gstore-blog-single-related__image img {
-	transform: scale(1.05);
+	transform: none;
 }
 
 .Gstore-blog-single-related__content {
