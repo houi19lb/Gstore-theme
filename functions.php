@@ -6185,6 +6185,48 @@ function gstore_disable_wpautop() {
 add_action( 'init', 'gstore_disable_wpautop', 9 );
 
 /**
+ * Restaura paragrafos apenas no corpo de posts classicos do blog.
+ *
+ * O tema remove wpautop globalmente para evitar quebras em areas customizadas,
+ * mas posts criados pelo editor classico/customizado podem chegar sem tags
+ * de bloco. Esta regra fica limitada a single post para nao afetar produtos.
+ *
+ * @param string $content Conteudo renderizado.
+ * @return string
+ */
+function gstore_restore_classic_blog_post_paragraphs( $content ) {
+	if ( is_admin() || '' === trim( (string) $content ) ) {
+		return $content;
+	}
+
+	if ( function_exists( 'is_singular' ) && ! is_singular( 'post' ) ) {
+		return $content;
+	}
+
+	$post_id = get_the_ID();
+	if ( $post_id && 'post' !== get_post_type( $post_id ) ) {
+		return $content;
+	}
+
+	if ( $post_id && function_exists( 'has_blocks' ) && has_blocks( $post_id ) ) {
+		return $content;
+	}
+
+	$has_block_markup = preg_match( '/<(p|div|ul|ol|li|h[1-6]|blockquote|table|pre|hr|figure|section|article|br)\b/i', $content );
+	if ( $has_block_markup ) {
+		return $content;
+	}
+
+	$content = wpautop( $content );
+	if ( function_exists( 'shortcode_unautop' ) ) {
+		$content = shortcode_unautop( $content );
+	}
+
+	return $content;
+}
+add_filter( 'the_content', 'gstore_restore_classic_blog_post_paragraphs', 10 );
+
+/**
  * Remove as tags <p> adicionadas automaticamente dentro dos cards personalizados.
  *
  * @param string $html HTML que contém os cards.
