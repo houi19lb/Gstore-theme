@@ -383,6 +383,31 @@ function gstore_get_catalog_url() {
 }
 
 /**
+ * Resolve um termo product_cat por slug e retorna seu link nativo.
+ *
+ * @param string $slug Slug do termo.
+ * @return string
+ */
+function gstore_get_product_category_native_link_by_slug( $slug ) {
+	$slug = sanitize_title( (string) $slug );
+	if ( '' === $slug || ! taxonomy_exists( 'product_cat' ) ) {
+		return '';
+	}
+
+	$term = get_term_by( 'slug', $slug, 'product_cat' );
+	if ( ! $term || is_wp_error( $term ) ) {
+		return '';
+	}
+
+	$link = get_term_link( $term, 'product_cat' );
+	if ( is_wp_error( $link ) || ! is_string( $link ) || '' === $link ) {
+		return '';
+	}
+
+	return $link;
+}
+
+/**
  * Resolve links internos antigos de categoria para URLs publicas atuais.
  *
  * @param string $legacy_url URL encontrada no HTML.
@@ -405,6 +430,13 @@ function gstore_resolve_legacy_category_public_url( $legacy_url ) {
 	}
 	$legacy_path = implode( '/', array_map( 'sanitize_title', $segments ) );
 	$leaf        = ! empty( $segments ) ? sanitize_title( (string) end( $segments ) ) : '';
+
+	if ( '' !== $leaf ) {
+		$native_category_link = gstore_get_product_category_native_link_by_slug( $leaf );
+		if ( '' !== $native_category_link ) {
+			return $native_category_link;
+		}
+	}
 
 	$clean_pages = array(
 		'promocoes'     => '/ofertas/',
@@ -524,6 +556,143 @@ function gstore_filter_robots_sitemap( $output, $public ) {
 add_filter( 'robots_txt', 'gstore_filter_robots_sitemap', 20, 2 );
 
 /**
+ * Taxonomias de produto que podem ter archives comerciais indexaveis.
+ *
+ * @return string[]
+ */
+function gstore_get_public_product_taxonomies() {
+	$taxonomies = array( 'product_cat', 'product_tag' );
+
+	if ( function_exists( 'gstore_get_footer_brand_taxonomies' ) ) {
+		$taxonomies = array_merge( $taxonomies, gstore_get_footer_brand_taxonomies() );
+	}
+
+	return array_values( array_unique( array_filter( $taxonomies, 'taxonomy_exists' ) ) );
+}
+
+/**
+ * Indica se o termo de produto deve ser indexavel.
+ *
+ * @param mixed $term Termo consultado.
+ * @return bool
+ */
+function gstore_is_indexable_product_term( $term ) {
+	if ( ! $term instanceof WP_Term || ! in_array( $term->taxonomy, gstore_get_public_product_taxonomies(), true ) ) {
+		return true;
+	}
+
+	$blocked_slugs = apply_filters(
+		'gstore_noindex_product_term_slugs',
+		array( 'sem-categoria', 'uncategorized', 'diversos', 'diversas' )
+	);
+	$blocked_slugs = array_values( array_unique( array_filter( array_map( 'sanitize_title', (array) $blocked_slugs ) ) ) );
+
+	if ( in_array( sanitize_title( (string) $term->slug ), $blocked_slugs, true ) ) {
+		return false;
+	}
+
+	if ( isset( $term->count ) && (int) $term->count < 1 ) {
+		return false;
+	}
+
+	return true;
+}
+
+/**
+ * IDs de termos de produto que nao devem entrar no sitemap nativo.
+ *
+ * @param string $taxonomy Taxonomia.
+ * @return int[]
+ */
+function gstore_get_noindex_product_term_ids_for_sitemap( $taxonomy ) {
+	$taxonomy = sanitize_key( (string) $taxonomy );
+	if ( '' === $taxonomy || ! in_array( $taxonomy, gstore_get_public_product_taxonomies(), true ) ) {
+		return array();
+	}
+
+	static $ids_by_taxonomy = array();
+	if ( isset( $ids_by_taxonomy[ $taxonomy ] ) ) {
+		return $ids_by_taxonomy[ $taxonomy ];
+	}
+
+	$blocked_slugs = apply_filters(
+		'gstore_noindex_product_term_slugs',
+		array( 'sem-categoria', 'uncategorized', 'diversos', 'diversas' )
+	);
+	$blocked_slugs = array_values( array_unique( array_filter( array_map( 'sanitize_title', (array) $blocked_slugs ) ) ) );
+	if ( empty( $blocked_slugs ) ) {
+		$ids_by_taxonomy[ $taxonomy ] = array();
+		return $ids_by_taxonomy[ $taxonomy ];
+	}
+
+	$term_ids = get_terms(
+		array(
+			'taxonomy'   => $taxonomy,
+			'hide_empty' => false,
+			'slug'       => $blocked_slugs,
+			'fields'     => 'ids',
+		)
+	);
+
+	$ids_by_taxonomy[ $taxonomy ] = is_wp_error( $term_ids )
+		? array()
+		: array_values( array_unique( array_filter( array_map( 'absint', (array) $term_ids ) ) ) );
+
+	return $ids_by_taxonomy[ $taxonomy ];
+}
+
+/**
+ * Detecta archive de termo de produto que deve sair do indice.
+ *
+ * @return bool
+ */
+function gstore_is_non_indexable_product_term_archive() {
+	if ( ! function_exists( 'is_tax' ) ) {
+		return false;
+	}
+
+	if ( ! is_tax( gstore_get_public_product_taxonomies() ) ) {
+		return false;
+	}
+
+	return ! gstore_is_indexable_product_term( get_queried_object() );
+}
+
+/**
+ * Query vars que tornam catalogo/archives uma pagina operacional, nao uma landing indexavel.
+ *
+ * @param string $key Query var.
+ * @return bool
+ */
+function gstore_is_catalog_operational_query_key( $key ) {
+	$key = sanitize_key( (string) $key );
+	if ( '' === $key ) {
+		return false;
+	}
+
+	$exact_keys = array(
+		'filter_cat',
+		'filter',
+		'orderby',
+		'min_price',
+		'max_price',
+		'rating_filter',
+		'stock_status',
+		'price',
+		'q',
+		's',
+		'paged',
+		'product-page',
+	);
+
+	if ( in_array( $key, $exact_keys, true ) ) {
+		return true;
+	}
+
+	return 0 === strpos( $key, 'filter_' ) || 0 === strpos( $key, 'attribute_' ) || 0 === strpos( $key, 'pa_' );
+}
+
+/**
  * Indica se a URL atual e uma pagina de catalogo ou filtro que nao deve indexar.
  *
  * @return bool
@@ -537,21 +706,13 @@ function gstore_should_noindex_catalog_request() {
 		return true;
 	}
 
-	$filter_keys = array(
-		'filter_cat',
-		'filter_cat[]',
-		'filter',
-		'orderby',
-		'min_price',
-		'max_price',
-		'rating_filter',
-		'q',
-		's',
-	);
+	if ( gstore_is_non_indexable_product_term_archive() ) {
+		return true;
+	}
 
 	$has_filter_query = false;
-	foreach ( $filter_keys as $key ) {
-		if ( isset( $_GET[ $key ] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+	foreach ( array_keys( (array) $_GET ) as $key ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		if ( gstore_is_catalog_operational_query_key( $key ) ) {
 			$has_filter_query = true;
 			break;
 		}
@@ -566,6 +727,10 @@ function gstore_should_noindex_catalog_request() {
 	}
 
 	if ( function_exists( 'is_page' ) && is_page( array( 'catalogo', 'ofertas' ) ) ) {
+		return true;
+	}
+
+	if ( function_exists( 'is_tax' ) && is_tax( gstore_get_public_product_taxonomies() ) ) {
 		return true;
 	}
 
@@ -639,6 +804,48 @@ add_filter( 'rank_math/frontend/robots', 'gstore_catalog_array_robots_directives
 add_filter( 'aioseo_robots_meta', 'gstore_catalog_array_robots_directives', 20 );
 
 /**
+ * Mantem sitemaps nativos livres de categorias vazias.
+ *
+ * @param array  $args     Args de get_terms().
+ * @param string $taxonomy Taxonomia.
+ * @return array
+ */
+function gstore_filter_product_taxonomy_sitemap_args( $args, $taxonomy ) {
+	if ( in_array( $taxonomy, gstore_get_public_product_taxonomies(), true ) ) {
+		$args['hide_empty'] = true;
+		$args['exclude']    = array_values(
+			array_unique(
+				array_merge(
+					array_map( 'absint', (array) ( $args['exclude'] ?? array() ) ),
+					gstore_get_noindex_product_term_ids_for_sitemap( $taxonomy )
+				)
+			)
+		);
+	}
+
+	return $args;
+}
+add_filter( 'wp_sitemaps_taxonomies_query_args', 'gstore_filter_product_taxonomy_sitemap_args', 20, 2 );
+
+/**
+ * Remove termos noindex dos sitemaps de plugins SEO que expõem entrada por objeto.
+ *
+ * @param mixed  $url    Entrada original do sitemap.
+ * @param string $type   Tipo de objeto.
+ * @param mixed  $object Objeto do sitemap.
+ * @return mixed
+ */
+function gstore_filter_product_term_sitemap_entry( $url, $type, $object ) {
+	if ( $object instanceof WP_Term && ! gstore_is_indexable_product_term( $object ) ) {
+		return false;
+	}
+
+	return $url;
+}
+add_filter( 'wpseo_sitemap_entry', 'gstore_filter_product_term_sitemap_entry', 20, 3 );
+add_filter( 'rank_math/sitemap/entry', 'gstore_filter_product_term_sitemap_entry', 20, 3 );
+
+/**
  * Fallback para ambientes em que o plugin SEO nao fornece filtro publico.
  */
 function gstore_catalog_print_noindex_fallback() {
@@ -674,6 +881,14 @@ add_filter( 'get_canonical_url', 'gstore_catalog_query_canonical_url', 20, 2 );
  * @return string
  */
 function gstore_get_catalog_query_canonical_url( $canonical_url, $post = null ) {
+	$queried_object = get_queried_object();
+	if ( $queried_object instanceof WP_Term && in_array( $queried_object->taxonomy, gstore_get_public_product_taxonomies(), true ) ) {
+		$term_link = get_term_link( $queried_object );
+		if ( ! is_wp_error( $term_link ) && is_string( $term_link ) && '' !== $term_link ) {
+			return $term_link;
+		}
+	}
+
 	if ( $post instanceof WP_Post ) {
 		$permalink = get_permalink( $post->ID );
 		if ( $permalink ) {
@@ -707,6 +922,61 @@ function gstore_catalog_query_canonical_url_for_seo_plugins( $canonical_url ) {
 }
 add_filter( 'wpseo_canonical', 'gstore_catalog_query_canonical_url_for_seo_plugins', 20 );
 add_filter( 'rank_math/frontend/canonical', 'gstore_catalog_query_canonical_url_for_seo_plugins', 20 );
+
+/**
+ * Retorna a URL canonica para archives publicos de taxonomias de produto.
+ *
+ * @return string
+ */
+function gstore_get_product_taxonomy_canonical_url() {
+	if ( ! function_exists( 'is_tax' ) || ! is_tax( gstore_get_public_product_taxonomies() ) ) {
+		return '';
+	}
+
+	$queried_object = get_queried_object();
+	if ( ! $queried_object instanceof WP_Term || ! in_array( $queried_object->taxonomy, gstore_get_public_product_taxonomies(), true ) ) {
+		return '';
+	}
+
+	$term_link = get_term_link( $queried_object, $queried_object->taxonomy );
+	if ( is_wp_error( $term_link ) || ! is_string( $term_link ) || '' === $term_link ) {
+		return '';
+	}
+
+	return $term_link;
+}
+
+/**
+ * Canonical proprio para categorias/subcategorias/marcas/tag de produto.
+ *
+ * @param string $canonical_url URL canonica original.
+ * @return string
+ */
+function gstore_product_taxonomy_canonical_url_for_seo_plugins( $canonical_url ) {
+	$product_taxonomy_canonical = gstore_get_product_taxonomy_canonical_url();
+
+	return '' !== $product_taxonomy_canonical ? $product_taxonomy_canonical : $canonical_url;
+}
+add_filter( 'wpseo_canonical', 'gstore_product_taxonomy_canonical_url_for_seo_plugins', 19 );
+add_filter( 'rank_math/frontend/canonical', 'gstore_product_taxonomy_canonical_url_for_seo_plugins', 19 );
+add_filter( 'aioseo_canonical_url', 'gstore_product_taxonomy_canonical_url_for_seo_plugins', 19 );
+
+/**
+ * Fallback de canonical quando nao ha plugin SEO imprimindo em taxonomias.
+ */
+function gstore_print_product_taxonomy_canonical_fallback() {
+	if ( defined( 'WPSEO_VERSION' ) || defined( 'RANK_MATH_VERSION' ) || defined( 'AIOSEO_VERSION' ) ) {
+		return;
+	}
+
+	$product_taxonomy_canonical = gstore_get_product_taxonomy_canonical_url();
+	if ( '' === $product_taxonomy_canonical ) {
+		return;
+	}
+
+	echo '<link rel="canonical" href="' . esc_url( $product_taxonomy_canonical ) . '" />' . "\n";
+}
+add_action( 'wp_head', 'gstore_print_product_taxonomy_canonical_fallback', 2 );
 
 /**
  * Obtém a cor de accent efetiva (salva no admin ou fallback do tema).
@@ -5373,9 +5643,12 @@ function gstore_filter_product_breadcrumb_category_links( $crumbs, $breadcrumb )
 			continue;
 		}
 
-		$target_url = isset( $menu_route_map[ $term->slug ] )
-			? $menu_route_map[ $term->slug ]
-			: add_query_arg( array( 'filter_cat[]' => (string) $term->slug ), $catalog_url );
+		$target_url = get_term_link( $term, 'product_cat' );
+		if ( is_wp_error( $target_url ) || ! is_string( $target_url ) || '' === $target_url ) {
+			$target_url = isset( $menu_route_map[ $term->slug ] )
+				? $menu_route_map[ $term->slug ]
+				: $catalog_url;
+		}
 
 		$crumbs[ $index ][1] = $target_url;
 	}
@@ -11160,6 +11433,69 @@ function gstore_is_generated_category_catalog_page() {
 }
 
 /**
+ * Redireciona rotas paralelas de categoria principal para o archive nativo do WooCommerce.
+ */
+add_action( 'template_redirect', 'gstore_redirect_generated_category_catalog_to_native_archive', 0 );
+function gstore_redirect_generated_category_catalog_to_native_archive() {
+	if ( is_admin() || wp_doing_ajax() || wp_doing_cron() ) {
+		return;
+	}
+
+	$scope_slug = get_query_var( 'gstore_catalog_scope', '' );
+	$scope_slug = is_string( $scope_slug ) ? sanitize_title( $scope_slug ) : '';
+
+	if ( '' === $scope_slug && function_exists( 'gstore_is_generated_category_catalog_page' ) && gstore_is_generated_category_catalog_page() ) {
+		$page = get_queried_object();
+		if ( $page instanceof WP_Post ) {
+			$scope_slug = sanitize_title( (string) get_post_meta( $page->ID, '_gstore_category_catalog_term_slug', true ) );
+			if ( '' === $scope_slug ) {
+				$scope_slug = sanitize_title( (string) $page->post_name );
+			}
+		}
+	}
+
+	if ( '' === $scope_slug || ! taxonomy_exists( 'product_cat' ) ) {
+		return;
+	}
+
+	$term = get_term_by( 'slug', $scope_slug, 'product_cat' );
+	if ( ! $term || is_wp_error( $term ) ) {
+		return;
+	}
+
+	$target = get_term_link( $term, 'product_cat' );
+	if ( is_wp_error( $target ) || ! is_string( $target ) || '' === $target ) {
+		return;
+	}
+
+	if ( ! empty( $_GET ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$args = array();
+		foreach ( (array) $_GET as $key => $value ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			$key = sanitize_key( (string) $key );
+			if ( '' === $key ) {
+				continue;
+			}
+			if ( is_array( $value ) ) {
+				$args[ $key ] = array_map(
+					static function ( $item ) {
+						return sanitize_text_field( wp_unslash( $item ) );
+					},
+					$value
+				);
+			} else {
+				$args[ $key ] = sanitize_text_field( wp_unslash( $value ) );
+			}
+		}
+		if ( ! empty( $args ) ) {
+			$target = add_query_arg( $args, $target );
+		}
+	}
+
+	wp_safe_redirect( $target, 301 );
+	exit;
+}
+
+/**
  * Retorna o termo de busca do catalogo aceitando o parametro atual (?q=)
  * e o legado (?s=).
  *
@@ -11646,11 +11982,16 @@ function gstore_handle_search_suggest( WP_REST_Request $request ) {
 			continue;
 		}
 
+		$category_url = get_term_link( $t, 'product_cat' );
+		if ( is_wp_error( $category_url ) || ! is_string( $category_url ) || '' === $category_url ) {
+			$category_url = add_query_arg( array( 'filter_cat[]' => (string) $t->slug ), gstore_get_catalog_url() );
+		}
+
 		$categories[] = array(
 			'term_id' => (int) $t->term_id,
 			'slug'    => (string) $t->slug,
 			'name'    => (string) $t->name,
-			'url'     => add_query_arg( array( 'filter_cat[]' => (string) $t->slug ), gstore_get_catalog_url() ),
+			'url'     => $category_url,
 		);
 	}
 
@@ -12507,7 +12848,101 @@ function gstore_process_final_output( $buffer ) {
 	// O bloco page-content-wrapper adiciona classes que geram padding indesejado
 	$buffer = gstore_strip_cart_shell_from_wc_wrapper( $buffer );
 
+	$buffer = gstore_replace_catalog_dynamic_breadcrumb_html( $buffer );
+
 	return $buffer;
+}
+
+/**
+ * Monta breadcrumb hierarquico para archives nativos de product_cat.
+ *
+ * @return string
+ */
+function gstore_get_product_category_archive_breadcrumb_html() {
+	if ( ! function_exists( 'is_product_category' ) || ! is_product_category() ) {
+		return '';
+	}
+
+	$term = get_queried_object();
+	if ( ! $term instanceof WP_Term || 'product_cat' !== $term->taxonomy ) {
+		return '';
+	}
+
+	$items = array(
+		array(
+			'label' => __( 'Início', 'gstore' ),
+			'url'   => home_url( '/' ),
+		),
+		array(
+			'label' => __( 'Catálogo', 'gstore' ),
+			'url'   => function_exists( 'gstore_get_catalog_url' ) ? gstore_get_catalog_url() : home_url( '/catalogo/' ),
+		),
+	);
+
+	$ancestor_ids = array_reverse( array_map( 'absint', get_ancestors( (int) $term->term_id, 'product_cat', 'taxonomy' ) ) );
+	foreach ( $ancestor_ids as $ancestor_id ) {
+		$ancestor = get_term( $ancestor_id, 'product_cat' );
+		if ( ! $ancestor instanceof WP_Term || is_wp_error( $ancestor ) ) {
+			continue;
+		}
+
+		$link = get_term_link( $ancestor, 'product_cat' );
+		if ( is_wp_error( $link ) || ! is_string( $link ) || '' === $link ) {
+			continue;
+		}
+
+		$items[] = array(
+			'label' => $ancestor->name,
+			'url'   => $link,
+		);
+	}
+
+	$items[] = array(
+		'label' => $term->name,
+		'url'   => '',
+	);
+
+	$html = '<nav class="Gstore-breadcrumb Gstore-breadcrumb--dynamic" aria-label="' . esc_attr__( 'Navegação', 'gstore' ) . '">';
+	$last = count( $items ) - 1;
+	foreach ( $items as $index => $item ) {
+		if ( $index > 0 ) {
+			$html .= '<span class="Gstore-breadcrumb__separator">/</span>';
+		}
+
+		if ( $index === $last || empty( $item['url'] ) ) {
+			$html .= '<span class="Gstore-breadcrumb__current Gstore-breadcrumb__current-term">' . esc_html( $item['label'] ) . '</span>';
+			continue;
+		}
+
+		$html .= '<a href="' . esc_url( $item['url'] ) . '">' . esc_html( $item['label'] ) . '</a>';
+	}
+	$html .= '</nav>';
+
+	return $html;
+}
+
+/**
+ * Substitui o breadcrumb estatico do template de categoria pelo breadcrumb hierarquico.
+ *
+ * @param string $html HTML final.
+ * @return string
+ */
+function gstore_replace_catalog_dynamic_breadcrumb_html( $html ) {
+	if ( ! is_string( $html ) || false === strpos( $html, 'Gstore-breadcrumb--dynamic' ) ) {
+		return $html;
+	}
+
+	$breadcrumb = gstore_get_product_category_archive_breadcrumb_html();
+	if ( '' === $breadcrumb ) {
+		return $html;
+	}
+
+	return (string) preg_replace(
+		'#<nav\b[^>]*\bGstore-breadcrumb--dynamic\b[^>]*>.*?</nav>#is',
+		$breadcrumb,
+		$html,
+		1
+	);
 }
 
 /**
@@ -16006,16 +16441,6 @@ function gstore_get_footer_discovery_term_score( $term, $keyword_weights ) {
  * @return string
  */
 function gstore_get_footer_discovery_term_link( $term ) {
-	if ( isset( $term->taxonomy ) && 'product_cat' === $term->taxonomy && ! empty( $term->slug ) && function_exists( 'gstore_get_catalog_url' ) ) {
-		$route_map = function_exists( 'gstore_get_header_menu_category_route_map' ) ? gstore_get_header_menu_category_route_map() : array();
-
-		if ( isset( $route_map[ $term->slug ] ) ) {
-			return $route_map[ $term->slug ];
-		}
-
-		return add_query_arg( array( 'filter_cat[]' => (string) $term->slug ), gstore_get_catalog_url() );
-	}
-
 	$link = get_term_link( $term );
 	if ( is_wp_error( $link ) ) {
 		return '';
@@ -17587,39 +18012,312 @@ function gstore_fix_menu_toggle_structure( $content ) {
 }
 
 /**
- * Ordena os produtos relacionados priorizando os que têm estoque.
- * Produtos sem estoque aparecem apenas se não houver opções com estoque suficientes.
+ * Retorna os IDs de termos de um produto, sempre normalizados.
  */
-function gstore_related_products_prioritize_in_stock( $related_posts, $product_id, $args ) {
-	if ( empty( $related_posts ) ) {
+function gstore_related_products_get_term_ids( $product_id, $taxonomy ) {
+	if ( ! taxonomy_exists( $taxonomy ) ) {
+		return array();
+	}
+
+	static $term_ids_cache = array();
+
+	$product_id = absint( $product_id );
+	$cache_key  = $product_id . '|' . $taxonomy;
+
+	if ( isset( $term_ids_cache[ $cache_key ] ) ) {
+		return $term_ids_cache[ $cache_key ];
+	}
+
+	$term_ids = wp_get_post_terms( absint( $product_id ), $taxonomy, array( 'fields' => 'ids' ) );
+	if ( is_wp_error( $term_ids ) || empty( $term_ids ) ) {
+		$term_ids_cache[ $cache_key ] = array();
+		return array();
+	}
+
+	$term_ids_cache[ $cache_key ] = array_values( array_unique( array_map( 'absint', $term_ids ) ) );
+
+	return $term_ids_cache[ $cache_key ];
+}
+
+/**
+ * Considera como categorias especificas as folhas entre as categorias do produto.
+ */
+function gstore_related_products_get_specific_category_ids( $category_ids ) {
+	$category_ids = array_values( array_unique( array_map( 'absint', (array) $category_ids ) ) );
+	if ( empty( $category_ids ) ) {
+		return array();
+	}
+
+	$specific_ids = array();
+
+	foreach ( $category_ids as $category_id ) {
+		$is_parent_of_selected_category = false;
+
+		foreach ( $category_ids as $possible_child_id ) {
+			if ( $category_id === $possible_child_id ) {
+				continue;
+			}
+
+			$ancestor_ids = array_map( 'absint', get_ancestors( $possible_child_id, 'product_cat', 'taxonomy' ) );
+			if ( in_array( $category_id, $ancestor_ids, true ) ) {
+				$is_parent_of_selected_category = true;
+				break;
+			}
+		}
+
+		if ( ! $is_parent_of_selected_category ) {
+			$specific_ids[] = $category_id;
+		}
+	}
+
+	return ! empty( $specific_ids ) ? $specific_ids : $category_ids;
+}
+
+/**
+ * Retorna categorias mais amplas: pais/ancestrais das categorias especificas.
+ */
+function gstore_related_products_get_broader_category_ids( $category_ids, $specific_category_ids ) {
+	$broader_ids           = array_diff( array_map( 'absint', (array) $category_ids ), array_map( 'absint', (array) $specific_category_ids ) );
+	$specific_category_ids = array_values( array_unique( array_map( 'absint', (array) $specific_category_ids ) ) );
+
+	foreach ( $specific_category_ids as $category_id ) {
+		$broader_ids = array_merge(
+			$broader_ids,
+			array_map( 'absint', get_ancestors( $category_id, 'product_cat', 'taxonomy' ) )
+		);
+	}
+
+	$broader_ids = array_diff( array_unique( array_map( 'absint', $broader_ids ) ), $specific_category_ids );
+
+	return array_values( $broader_ids );
+}
+
+/**
+ * Expande categorias diretas com seus ancestrais para pontuar produtos em categorias irmas.
+ */
+function gstore_related_products_get_category_lineage_ids( $category_ids ) {
+	$lineage_ids = array_values( array_unique( array_map( 'absint', (array) $category_ids ) ) );
+
+	foreach ( $category_ids as $category_id ) {
+		$lineage_ids = array_merge(
+			$lineage_ids,
+			array_map( 'absint', get_ancestors( absint( $category_id ), 'product_cat', 'taxonomy' ) )
+		);
+	}
+
+	return array_values( array_unique( array_map( 'absint', $lineage_ids ) ) );
+}
+
+/**
+ * Busca candidatos extras para permitir fallback real: subcategoria > categoria > tags.
+ */
+function gstore_related_products_query_candidate_ids( $taxonomy, $term_ids, $exclude_ids, $limit, $include_children = false ) {
+	$term_ids = array_values( array_filter( array_unique( array_map( 'absint', (array) $term_ids ) ) ) );
+	if ( empty( $term_ids ) || ! taxonomy_exists( $taxonomy ) ) {
+		return array();
+	}
+
+	$query = new WP_Query(
+		array(
+			'post_type'              => 'product',
+			'post_status'            => 'publish',
+			'fields'                 => 'ids',
+			'posts_per_page'         => max( 1, absint( $limit ) ),
+			'no_found_rows'          => true,
+			'ignore_sticky_posts'    => true,
+			'update_post_meta_cache' => false,
+			'update_post_term_cache' => false,
+			'post__not_in'           => array_values( array_unique( array_map( 'absint', (array) $exclude_ids ) ) ),
+			'orderby'                => 'rand',
+			'tax_query'              => array(
+				array(
+					'taxonomy'         => $taxonomy,
+					'field'            => 'term_id',
+					'terms'            => $term_ids,
+					'include_children' => (bool) $include_children,
+				),
+			),
+		)
+	);
+
+	$ids = array_map( 'absint', $query->posts );
+	wp_reset_postdata();
+
+	return $ids;
+}
+
+/**
+ * Popularidade geral do produto, baseada no total de vendas do WooCommerce.
+ */
+function gstore_related_products_get_popularity_score( $product_id ) {
+	$total_sales = max( 0, (int) get_post_meta( absint( $product_id ), 'total_sales', true ) );
+	if ( $total_sales <= 0 ) {
+		return 0.0;
+	}
+
+	return min( 12.0, log( $total_sales + 1 ) / log( 2 ) );
+}
+
+/**
+ * Ordena por popularidade com variacao: populares aparecem mais, mas a vitrine renova.
+ */
+function gstore_related_products_order_by_popularity( $product_ids ) {
+	$product_ids = array_values( array_unique( array_map( 'absint', (array) $product_ids ) ) );
+	if ( empty( $product_ids ) ) {
+		return array();
+	}
+
+	$sort_keys = array();
+	foreach ( $product_ids as $product_id ) {
+		$weight = 1 + gstore_related_products_get_popularity_score( $product_id );
+		$random = max( 0.000001, wp_rand( 1, 1000000 ) / 1000000 );
+
+		$sort_keys[ $product_id ] = pow( $random, 1 / $weight );
+	}
+
+	arsort( $sort_keys, SORT_NUMERIC );
+
+	return array_map( 'absint', array_keys( $sort_keys ) );
+}
+
+/**
+ * Adiciona IDs unicos ao resultado ate preencher a quantidade desejada.
+ */
+function gstore_related_products_append_unique_ids( $result, $product_ids, $limit ) {
+	foreach ( (array) $product_ids as $product_id ) {
+		$product_id = absint( $product_id );
+		if ( ! $product_id || in_array( $product_id, $result, true ) ) {
+			continue;
+		}
+
+		$result[] = $product_id;
+
+		if ( count( $result ) >= $limit ) {
+			break;
+		}
+	}
+
+	return $result;
+}
+
+/**
+ * Monta os primeiros slots sem deixar a subcategoria dominar 100% quando ha opcoes.
+ */
+function gstore_related_products_build_priority_mix( $specific_ids, $category_ids, $tag_ids, $fallback_ids, $limit ) {
+	$limit = max( 1, absint( $limit ) );
+
+	$specific_ids = gstore_related_products_order_by_popularity( $specific_ids );
+	$category_ids = gstore_related_products_order_by_popularity( $category_ids );
+	$tag_ids      = gstore_related_products_order_by_popularity( $tag_ids );
+	$fallback_ids = gstore_related_products_order_by_popularity( $fallback_ids );
+
+	$specific_target = max( 1, (int) ceil( $limit * 0.5 ) );
+	$category_target = max( 1, (int) floor( $limit * 0.25 ) );
+	$tag_target      = max( 1, $limit - $specific_target - $category_target );
+
+	$result = array();
+	$result = gstore_related_products_append_unique_ids( $result, $specific_ids, min( $limit, $specific_target ) );
+	$result = gstore_related_products_append_unique_ids( $result, $category_ids, min( $limit, count( $result ) + $category_target ) );
+	$result = gstore_related_products_append_unique_ids( $result, $tag_ids, min( $limit, count( $result ) + $tag_target ) );
+
+	if ( count( $result ) < $limit ) {
+		$result = gstore_related_products_append_unique_ids( $result, $specific_ids, $limit );
+	}
+
+	if ( count( $result ) < $limit ) {
+		$result = gstore_related_products_append_unique_ids( $result, $category_ids, $limit );
+	}
+
+	if ( count( $result ) < $limit ) {
+		$result = gstore_related_products_append_unique_ids( $result, $tag_ids, $limit );
+	}
+
+	if ( count( $result ) < $limit ) {
+		$result = gstore_related_products_append_unique_ids( $result, $fallback_ids, $limit );
+	}
+
+	$remaining = array_merge( $specific_ids, $category_ids, $tag_ids, $fallback_ids );
+
+	return array_merge(
+		$result,
+		array_values( array_diff( array_unique( array_map( 'absint', $remaining ) ), $result ) )
+	);
+}
+
+/**
+ * Rank dos relacionados: subcategoria > categoria > tags; popularidade ordena cada grupo.
+ * Produtos sem estoque seguem como fallback no final.
+ */
+function gstore_related_products_rank_by_relevance( $related_posts, $product_id, $args ) {
+	$product_id    = absint( $product_id );
+	$related_posts = array_map( 'absint', (array) $related_posts );
+	$limit         = isset( $args['limit'] ) ? max( 1, absint( $args['limit'] ) ) : 4;
+	$exclude_ids   = isset( $args['excluded_ids'] ) ? array_map( 'absint', (array) $args['excluded_ids'] ) : array();
+	$exclude_ids[] = $product_id;
+	$exclude_ids   = array_values( array_unique( array_filter( $exclude_ids ) ) );
+
+	$category_ids          = gstore_related_products_get_term_ids( $product_id, 'product_cat' );
+	$specific_category_ids = gstore_related_products_get_specific_category_ids( $category_ids );
+	$broader_category_ids  = gstore_related_products_get_broader_category_ids( $category_ids, $specific_category_ids );
+	$tag_ids               = gstore_related_products_get_term_ids( $product_id, 'product_tag' );
+
+	if ( empty( $related_posts ) && empty( $specific_category_ids ) && empty( $broader_category_ids ) && empty( $tag_ids ) ) {
 		return $related_posts;
 	}
 
-	$in_stock     = array();
-	$out_of_stock = array();
+	$query_limit   = max( 48, $limit * 16 );
+	$candidate_ids = array_merge(
+		$related_posts,
+		gstore_related_products_query_candidate_ids( 'product_cat', $specific_category_ids, $exclude_ids, $query_limit, true ),
+		gstore_related_products_query_candidate_ids( 'product_cat', $broader_category_ids, $exclude_ids, $query_limit, true ),
+		gstore_related_products_query_candidate_ids( 'product_tag', $tag_ids, $exclude_ids, $query_limit, false )
+	);
+	$candidate_ids = array_values( array_diff( array_unique( array_map( 'absint', $candidate_ids ) ), $exclude_ids ) );
 
-	foreach ( $related_posts as $related_id ) {
-		$product = wc_get_product( $related_id );
-		if ( ! $product ) {
+	$in_stock_specific = array();
+	$in_stock_category = array();
+	$in_stock_tags     = array();
+	$in_stock_fallback = array();
+	$out_of_stock      = array();
+
+	foreach ( $candidate_ids as $candidate_id ) {
+		$candidate = wc_get_product( $candidate_id );
+		if ( ! $candidate || ! wc_products_array_filter_visible( $candidate ) ) {
 			continue;
 		}
-		if ( $product->is_in_stock() ) {
-			$in_stock[] = $related_id;
+
+		$candidate_category_ids = gstore_related_products_get_term_ids( $candidate_id, 'product_cat' );
+		$candidate_lineage_ids  = gstore_related_products_get_category_lineage_ids( $candidate_category_ids );
+		$candidate_tag_ids      = gstore_related_products_get_term_ids( $candidate_id, 'product_tag' );
+
+		if ( ! $candidate->is_in_stock() ) {
+			$out_of_stock[] = $candidate_id;
+			continue;
+		}
+
+		if ( array_intersect( $candidate_lineage_ids, $specific_category_ids ) ) {
+			$in_stock_specific[] = $candidate_id;
+		} elseif ( array_intersect( $candidate_lineage_ids, $broader_category_ids ) ) {
+			$in_stock_category[] = $candidate_id;
+		} elseif ( array_intersect( $candidate_tag_ids, $tag_ids ) ) {
+			$in_stock_tags[] = $candidate_id;
 		} else {
-			$out_of_stock[] = $related_id;
+			$in_stock_fallback[] = $candidate_id;
 		}
 	}
 
-	// Produtos com estoque primeiro; sem estoque como fallback no final.
-	return array_merge( $in_stock, $out_of_stock );
+	return array_merge(
+		gstore_related_products_build_priority_mix( $in_stock_specific, $in_stock_category, $in_stock_tags, $in_stock_fallback, $limit ),
+		gstore_related_products_order_by_popularity( $out_of_stock )
+	);
 }
-add_filter( 'woocommerce_related_products', 'gstore_related_products_prioritize_in_stock', 10, 3 );
+add_filter( 'woocommerce_related_products', 'gstore_related_products_rank_by_relevance', 10, 3 );
 
-// Impede o WooCommerce de embaralhar os IDs após nosso filtro de ordenação por estoque.
+// Impede o WooCommerce de embaralhar os IDs apos nosso ranking ponderado.
 add_filter( 'woocommerce_product_related_posts_shuffle', '__return_false' );
 
-// Impede o wc_products_array_orderby de re-embaralhar na renderização.
-// 'none' é um case explícito no WooCommerce que faz break sem sort; 'asc' evita array_reverse.
+// Impede o wc_products_array_orderby de re-embaralhar na renderizacao.
+// 'none' e um case explicito no WooCommerce que faz break sem sort; 'asc' evita array_reverse.
 add_filter( 'woocommerce_output_related_products_args', function( $args ) {
 	$args['orderby'] = 'none';
 	$args['order']   = 'asc';

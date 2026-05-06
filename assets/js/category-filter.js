@@ -7,7 +7,8 @@ class CategoryFilterTree {
         this.container = document.getElementById(containerId);
         if (!this.container) return;
 
-        this.tree = this.container.querySelector('.gstore-category-filter__tree');
+        this.trees = Array.from(this.container.querySelectorAll('.gstore-category-filter__tree'));
+        this.tree = this.container;
         this.searchInput = this.container.querySelector('.gstore-category-filter__search');
         this.chipsContainer = this.container.querySelector('#gstore-category-filter-chips');
         this.clearBtn = this.container.querySelector('#gstore-filter-clear');
@@ -31,6 +32,17 @@ class CategoryFilterTree {
 
     isSearchParamKey(key) {
         return ['q', 's'].includes(String(key || '').trim());
+    }
+
+    isOperationalParamKey(key) {
+        const normalized = String(key || '').trim();
+        return this.isFilterParamKey(normalized)
+            || this.isPaginationParamKey(normalized)
+            || this.isSearchParamKey(normalized)
+            || ['orderby', 'min_price', 'max_price', 'rating_filter', 'stock_status', 'price'].includes(normalized)
+            || /^filter_/.test(normalized)
+            || /^attribute_/.test(normalized)
+            || /^pa_/.test(normalized);
     }
 
     buildCatalogUrl(selectedSlugs, baseUrl) {
@@ -62,7 +74,7 @@ class CategoryFilterTree {
     }
 
     init() {
-        this.tree.addEventListener('click', (e) => {
+        this.container.addEventListener('click', (e) => {
             const expandBtn = e.target.closest('.gstore-category-filter__expand');
             if (expandBtn) {
                 e.preventDefault();
@@ -72,7 +84,7 @@ class CategoryFilterTree {
             }
 
             const node = e.target.closest('.gstore-category-filter__node');
-            if (node && !e.target.closest('.gstore-category-filter__checkbox')) {
+            if (node && !e.target.closest('.gstore-category-filter__checkbox, .gstore-category-filter__link')) {
                 const item = node.closest('.gstore-category-filter__item');
                 const btn = item.querySelector('.gstore-category-filter__expand');
                 if (btn) {
@@ -81,31 +93,37 @@ class CategoryFilterTree {
             }
         });
 
-        this.tree.addEventListener('change', (e) => {
+        this.container.addEventListener('change', (e) => {
             const checkbox = e.target.closest('.gstore-category-filter__checkbox');
             if (!checkbox) return;
             this.handleCheckbox(checkbox);
             this.applyFilters();
         });
 
-        this.searchInput.addEventListener('input', (e) => {
-            this.handleSearch(e.target.value);
-        });
+        if (this.searchInput) {
+            this.searchInput.addEventListener('input', (e) => {
+                this.handleSearch(e.target.value);
+            });
+        }
 
-        this.clearBtn.addEventListener('click', () => this.clearFilters());
+        if (this.clearBtn) {
+            this.clearBtn.addEventListener('click', () => this.clearFilters());
+        }
 
-        this.chipsContainer.addEventListener('click', (e) => {
-            const removeBtn = e.target.closest('.gstore-category-filter__chip-remove');
-            if (removeBtn) {
-                e.preventDefault();
-                e.stopPropagation();
-                const slug = removeBtn.dataset.slug;
-                const hasChanged = this.uncheckBySlug(slug);
-                if (hasChanged) {
-                    this.applyFilters();
+        if (this.chipsContainer) {
+            this.chipsContainer.addEventListener('click', (e) => {
+                const removeBtn = e.target.closest('.gstore-category-filter__chip-remove');
+                if (removeBtn) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const slug = removeBtn.dataset.slug;
+                    const hasChanged = this.uncheckBySlug(slug);
+                    if (hasChanged) {
+                        this.applyFilters();
+                    }
                 }
-            }
-        });
+            });
+        }
 
         this.updateParentStates();
         this.updateChips();
@@ -157,7 +175,7 @@ class CategoryFilterTree {
 
     handleSearch(query) {
         query = query.toLowerCase().trim();
-        const allItems = this.tree.querySelectorAll('.gstore-category-filter__item');
+        const allItems = this.container.querySelectorAll('.gstore-category-filter__item');
 
         if (!query) {
             allItems.forEach((item) => {
@@ -173,7 +191,7 @@ class CategoryFilterTree {
             item.classList.add('is-hidden');
         });
 
-        const matchingItems = this.tree.querySelectorAll('.gstore-category-filter__item[data-matches="true"]');
+        const matchingItems = this.container.querySelectorAll('.gstore-category-filter__item[data-matches="true"]');
         matchingItems.forEach((item) => {
             item.classList.remove('is-hidden');
 
@@ -252,7 +270,19 @@ class CategoryFilterTree {
     }
 
     clearFilters() {
-        window.location.href = this.buildCatalogUrl([]);
+        const url = new URL(window.location.href);
+        const params = new URLSearchParams();
+
+        url.searchParams.forEach((value, key) => {
+            if (!this.isOperationalParamKey(key)) {
+                params.append(key, value);
+            }
+        });
+
+        const base = url.origin + this.normalizePathname(url.pathname);
+        const query = params.toString();
+
+        window.location.href = base + (query ? `?${query}` : '');
     }
 }
 

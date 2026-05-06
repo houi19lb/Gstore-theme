@@ -127,7 +127,11 @@ const __GSTORE_TREE_RUN_ID = 'tree_' + Date.now() + '_' + Math.random().toString
 		return tree;
 	}
 
-	function getCatalogFilterUrl(slug) {
+	function getCatalogFilterUrl(slug, permalink) {
+		if (permalink) {
+			return permalink;
+		}
+
 		const configuredCatalogUrl = (window.gstoreProductSearch && window.gstoreProductSearch.catalogUrl)
 			? window.gstoreProductSearch.catalogUrl
 			: '';
@@ -167,7 +171,7 @@ const __GSTORE_TREE_RUN_ID = 'tree_' + Date.now() + '_' + Math.random().toString
 				</button>`;
 			}
 
-			html += `<a href="${getCatalogFilterUrl(slug)}">
+			html += `<a href="${getCatalogFilterUrl(slug, cat.permalink || '')}">
 				<span class="wc-block-product-categories-list-item__name">${cat.name}</span>
 			</a>`;
 			html += `<span class="wc-block-product-categories-list-item-count">

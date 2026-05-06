@@ -184,6 +184,9 @@ class GStore_Category_Filter {
 		$is_ofertas       = $this->is_ofertas_page();
 		$has_scope        = $scope_term || $is_ofertas;
 		$full_catalog_url = function_exists( 'gstore_get_catalog_url' ) ? gstore_get_catalog_url() : home_url( '/catalogo/' );
+		$context_nav      = $scope_term ? $this->get_context_category_navigation( $scope_term ) : array( 'title' => '', 'nodes' => array() );
+		$excluded_root_id = $scope_term ? $this->get_root_term_id( $scope_term ) : 0;
+		$global_categories = $excluded_root_id > 0 ? $this->filter_tree_excluding_root( $categories, $excluded_root_id ) : $categories;
 
 		ob_start();
 		?>
@@ -227,11 +230,29 @@ class GStore_Category_Filter {
 				<!-- Chips serão inseridos via JS -->
 			</div>
 
-			<div class="gstore-category-filter__tree-container">
-				<ul class="gstore-category-filter__tree">
-					<?php $this->render_tree_level( $categories ); ?>
-				</ul>
-			</div>
+			<?php if ( ! empty( $context_nav['nodes'] ) ) : ?>
+				<div class="gstore-category-filter__nav-section gstore-category-filter__nav-section--context">
+					<div class="gstore-category-filter__section-title"><?php echo esc_html( $context_nav['title'] ); ?></div>
+					<div class="gstore-category-filter__tree-container gstore-category-filter__tree-container--context">
+						<ul class="gstore-category-filter__tree gstore-category-filter__tree--context">
+							<?php $this->render_tree_level( $context_nav['nodes'] ); ?>
+						</ul>
+					</div>
+				</div>
+			<?php endif; ?>
+
+			<?php if ( ! empty( $global_categories ) ) : ?>
+				<div class="gstore-category-filter__nav-section gstore-category-filter__nav-section--global">
+					<div class="gstore-category-filter__section-title">
+						<?php echo esc_html( $scope_term ? __( 'Outras categorias', 'gstore' ) : __( 'Todas as categorias', 'gstore' ) ); ?>
+					</div>
+					<div class="gstore-category-filter__tree-container">
+						<ul class="gstore-category-filter__tree">
+							<?php $this->render_tree_level( $global_categories ); ?>
+						</ul>
+					</div>
+				</div>
+			<?php endif; ?>
 
 			<div class="gstore-category-filter__actions">
 				<?php if ( $has_scope ) : ?>
@@ -413,32 +434,28 @@ class GStore_Category_Filter {
 	 * Busca e organiza as categorias em árvore.
 	 */
 	private function get_category_tree() {
-		$scope_term = $this->get_scope_term();
-		$is_ofertas = $this->is_ofertas_page();
-		$terms      = array();
-		if ( $scope_term ) {
-			$terms = $this->get_terms_for_scoped_products( $scope_term );
-			if ( empty( $terms ) ) {
-				return array();
-			}
-		} elseif ( $is_ofertas ) {
-			$terms = $this->get_terms_for_sale_products();
-			if ( empty( $terms ) ) {
-				return array();
-			}
-		} else {
-			$terms = get_terms(
-				array(
-					'taxonomy'   => 'product_cat',
-					'hide_empty' => true,
-				)
-			);
-		}
+		$terms = get_terms(
+			array(
+				'taxonomy'   => 'product_cat',
+				'hide_empty' => true,
+				'exclude'    => $this->get_navigation_excluded_term_ids(),
+			)
+		);
 
 		if ( is_wp_error( $terms ) || empty( $terms ) ) {
 			return [];
 		}
 
+		return $this->build_category_tree_from_terms( $terms );
+	}
+
+	/**
+	 * Monta uma arvore de categorias a partir de termos carregados.
+	 *
+	 * @param \WP_Term[] $terms Termos.
+	 * @return array<int,object>
+	 */
+	private function build_category_tree_from_terms( $terms ) {
 		$term_ids = array_values(
 			array_filter(
 				array_map( 'intval', wp_list_pluck( $terms, 'term_id' ) )
@@ -452,12 +469,19 @@ class GStore_Category_Filter {
 		$term_map = [];
 
 		foreach ( $terms as $term ) {
+			if ( ! $term instanceof \WP_Term ) {
+				continue;
+			}
+
 			$term_map[ $term->term_id ] = (object) [
 				'id'       => $term->term_id,
 				'name'     => $term->name,
 				'slug'     => $term->slug,
 				'parent'   => $term->parent,
 				'count'    => $term->count,
+				'url'      => $this->get_term_archive_url( $term ),
+				'is_current' => $this->is_current_term( $term ),
+				'is_current_ancestor' => $this->is_current_term_ancestor( $term ),
 				'sort_order' => $this->get_term_sort_order( $term->term_id ),
 				'children' => [],
 			];
@@ -473,16 +497,200 @@ class GStore_Category_Filter {
 
 		$this->sort_tree_nodes( $tree );
 
-		if ( $scope_term ) {
-			$scope_term_id = (int) $scope_term->term_id;
-			if ( isset( $term_map[ $scope_term_id ] ) && ! empty( $term_map[ $scope_term_id ]->children ) ) {
-				return array_values( $term_map[ $scope_term_id ]->children );
-			}
+		return $tree;
+	}
 
-			return array();
+	/**
+	 * Retorna URL limpa do archive nativo da categoria.
+	 *
+	 * @param \WP_Term $term Termo.
+	 * @return string
+	 */
+	private function get_term_archive_url( $term ) {
+		if ( ! $term instanceof \WP_Term ) {
+			return '';
 		}
 
-		return $tree;
+		$link = get_term_link( $term, 'product_cat' );
+		if ( is_wp_error( $link ) || ! is_string( $link ) || '' === $link ) {
+			return '';
+		}
+
+		return $link;
+	}
+
+	/**
+	 * Retorna o termo da categoria atual quando a tela e um archive product_cat.
+	 *
+	 * @return \WP_Term|null
+	 */
+	private function get_current_product_category_term() {
+		if ( ! function_exists( 'is_product_category' ) || ! is_product_category() ) {
+			return null;
+		}
+
+		$term = get_queried_object();
+		return $term instanceof \WP_Term && 'product_cat' === $term->taxonomy ? $term : null;
+	}
+
+	/**
+	 * Indica se um termo e a categoria atual.
+	 *
+	 * @param \WP_Term $term Termo.
+	 * @return bool
+	 */
+	private function is_current_term( $term ) {
+		$current = $this->get_current_product_category_term();
+		return $current instanceof \WP_Term && $term instanceof \WP_Term && (int) $current->term_id === (int) $term->term_id;
+	}
+
+	/**
+	 * Indica se um termo e ancestral da categoria atual.
+	 *
+	 * @param \WP_Term $term Termo.
+	 * @return bool
+	 */
+	private function is_current_term_ancestor( $term ) {
+		$current = $this->get_current_product_category_term();
+		if ( ! $current instanceof \WP_Term || ! $term instanceof \WP_Term || (int) $current->term_id === (int) $term->term_id ) {
+			return false;
+		}
+
+		return in_array( (int) $term->term_id, array_map( 'absint', get_ancestors( (int) $current->term_id, 'product_cat', 'taxonomy' ) ), true );
+	}
+
+	/**
+	 * Retorna o ID do termo raiz de uma categoria.
+	 *
+	 * @param \WP_Term $term Termo.
+	 * @return int
+	 */
+	private function get_root_term_id( $term ) {
+		if ( ! $term instanceof \WP_Term ) {
+			return 0;
+		}
+
+		$ancestors = array_map( 'absint', get_ancestors( (int) $term->term_id, 'product_cat', 'taxonomy' ) );
+		if ( empty( $ancestors ) ) {
+			return (int) $term->term_id;
+		}
+
+		return (int) end( $ancestors );
+	}
+
+	/**
+	 * Remove da arvore global a familia exibida no bloco contextual.
+	 *
+	 * @param array<int,object> $nodes       Nos.
+	 * @param int               $excluded_id ID raiz excluido.
+	 * @return array<int,object>
+	 */
+	private function filter_tree_excluding_root( $nodes, $excluded_id ) {
+		$excluded_id = absint( $excluded_id );
+		if ( $excluded_id <= 0 || empty( $nodes ) ) {
+			return $nodes;
+		}
+
+		$out = array();
+		foreach ( $nodes as $node ) {
+			if ( isset( $node->id ) && (int) $node->id === $excluded_id ) {
+				continue;
+			}
+			$out[] = $node;
+		}
+
+		return $out;
+	}
+
+	/**
+	 * Monta o bloco contextual: filhas da categoria atual ou irmas quando ja estiver em uma filha.
+	 *
+	 * @param \WP_Term $scope_term Termo atual.
+	 * @return array{title:string,nodes:array<int,object>}
+	 */
+	private function get_context_category_navigation( $scope_term ) {
+		if ( ! $scope_term instanceof \WP_Term ) {
+			return array( 'title' => '', 'nodes' => array() );
+		}
+
+		$parent_for_list = (int) $scope_term->term_id;
+		$title_term      = $scope_term;
+
+		$direct_children = get_terms(
+			array(
+				'taxonomy'   => 'product_cat',
+				'parent'     => (int) $scope_term->term_id,
+				'hide_empty' => true,
+				'exclude'    => $this->get_navigation_excluded_term_ids(),
+			)
+		);
+
+		if ( ( is_wp_error( $direct_children ) || empty( $direct_children ) ) && (int) $scope_term->parent > 0 ) {
+			$parent_term = get_term( (int) $scope_term->parent, 'product_cat' );
+			if ( $parent_term instanceof \WP_Term && ! is_wp_error( $parent_term ) ) {
+				$parent_for_list = (int) $parent_term->term_id;
+				$title_term      = $parent_term;
+			}
+		}
+
+		$terms = get_terms(
+			array(
+				'taxonomy'   => 'product_cat',
+				'child_of'   => $parent_for_list,
+				'hide_empty' => true,
+				'exclude'    => $this->get_navigation_excluded_term_ids(),
+			)
+		);
+
+		if ( is_wp_error( $terms ) || empty( $terms ) ) {
+			return array( 'title' => '', 'nodes' => array() );
+		}
+
+		return array(
+			'title' => sprintf(
+				/* translators: %s: category name */
+				__( 'Subcategorias de %s', 'gstore' ),
+				$title_term->name
+			),
+			'nodes' => $this->build_category_tree_from_terms( $terms ),
+		);
+	}
+
+	/**
+	 * Termos que nao devem aparecer na navegacao lateral de categorias.
+	 *
+	 * @return int[]
+	 */
+	private function get_navigation_excluded_term_ids() {
+		static $excluded_ids = null;
+		if ( null !== $excluded_ids ) {
+			return $excluded_ids;
+		}
+
+		$blocked_slugs = apply_filters(
+			'gstore_noindex_product_term_slugs',
+			array( 'sem-categoria', 'uncategorized', 'diversos', 'diversas' )
+		);
+		$blocked_slugs = array_values( array_unique( array_filter( array_map( 'sanitize_title', (array) $blocked_slugs ) ) ) );
+		if ( empty( $blocked_slugs ) ) {
+			$excluded_ids = array();
+			return $excluded_ids;
+		}
+
+		$term_ids = get_terms(
+			array(
+				'taxonomy'   => 'product_cat',
+				'hide_empty' => false,
+				'slug'       => $blocked_slugs,
+				'fields'     => 'ids',
+			)
+		);
+
+		$excluded_ids = is_wp_error( $term_ids )
+			? array()
+			: array_values( array_unique( array_filter( array_map( 'absint', (array) $term_ids ) ) ) );
+
+		return $excluded_ids;
 	}
 
 	/**
@@ -788,9 +996,15 @@ class GStore_Category_Filter {
 	private function render_tree_level( $nodes, $level = 0 ) {
 		foreach ( $nodes as $node ) {
 			$has_children = ! empty( $node->children );
-			$is_selected = in_array( $node->slug, $this->selected_slugs );
+			$item_classes = array( 'gstore-category-filter__item' );
+			if ( ! empty( $node->is_current ) ) {
+				$item_classes[] = 'is-current';
+			}
+			if ( ! empty( $node->is_current_ancestor ) ) {
+				$item_classes[] = 'is-current-ancestor';
+			}
 			
-			echo '<li class="gstore-category-filter__item" data-id="' . esc_attr( $node->id ) . '" data-slug="' . esc_attr( $node->slug ) . '" data-level="' . esc_attr( $level ) . '">';
+			echo '<li class="' . esc_attr( implode( ' ', $item_classes ) ) . '" data-id="' . esc_attr( $node->id ) . '" data-slug="' . esc_attr( $node->slug ) . '" data-level="' . esc_attr( $level ) . '">';
 			
 			echo '<div class="gstore-category-filter__node">';
 			
@@ -803,12 +1017,10 @@ class GStore_Category_Filter {
 				echo '<span class="gstore-category-filter__expand-spacer"></span>';
 			}
 
-			// Checkbox
-			echo '<label class="gstore-category-filter__label">';
-			echo '<input type="checkbox" class="gstore-category-filter__checkbox" value="' . esc_attr( $node->slug ) . '" ' . checked( $is_selected, true, false ) . ' data-name="' . esc_attr( $node->name ) . '">';
+			echo '<a class="gstore-category-filter__label gstore-category-filter__link" href="' . esc_url( $node->url ) . '"' . ( ! empty( $node->is_current ) ? ' aria-current="page"' : '' ) . '>';
 			echo '<span class="gstore-category-filter__name">' . esc_html( $node->name ) . '</span>';
 			echo '<span class="gstore-category-filter__count">' . esc_html( $node->count ) . '</span>';
-			echo '</label>';
+			echo '</a>';
 			
 			echo '</div>'; // .gstore-category-filter__node
 
