@@ -9199,6 +9199,23 @@ body:has(.Gstore-catalog-shell--light) main {
 	padding-bottom: 0;
 }
 
+.Gstore-catalog-sidebar__inner > .Gstore-catalog-search {
+	margin-block-start: 0 !important;
+}
+
+.Gstore-catalog-sidebar__inner > .Gstore-catalog-search + .wp-block-spacer {
+	height: 10px !important;
+	margin-block-start: 10px !important;
+}
+
+.Gstore-catalog-sidebar__inner > .wp-block-spacer + .Gstore-catalog-filter-section {
+	margin-block-start: 0 !important;
+}
+
+.Gstore-catalog-filter-section > .gstore-category-filter {
+	margin-block-start: 10px !important;
+}
+
 .Gstore-catalog-shell--light .Gstore-catalog-sidebar__subtitle {
 	font-size: var(--gstore-font-size-xs);
 	font-weight: 600;
