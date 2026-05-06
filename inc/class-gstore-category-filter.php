@@ -182,15 +182,13 @@ class GStore_Category_Filter {
 		$categories       = $this->get_category_tree();
 		$scope_term       = $this->get_scope_term();
 		$is_ofertas       = $this->is_ofertas_page();
-		$has_scope        = $scope_term || $is_ofertas;
-		$full_catalog_url = function_exists( 'gstore_get_catalog_url' ) ? gstore_get_catalog_url() : home_url( '/catalogo/' );
 		$context_nav      = $scope_term ? $this->get_context_category_navigation( $scope_term ) : array( 'title' => '', 'nodes' => array() );
 		$excluded_root_id = $scope_term ? $this->get_root_term_id( $scope_term ) : 0;
 		$global_categories = $excluded_root_id > 0 ? $this->filter_tree_excluding_root( $categories, $excluded_root_id ) : $categories;
 
 		ob_start();
 		?>
-		<div class="gstore-category-filter" id="gstore-category-filter" <?php echo $has_scope ? 'data-full-catalog-url="' . esc_url( $full_catalog_url ) . '"' : ''; ?>>
+		<div class="gstore-category-filter" id="gstore-category-filter">
 			<div class="gstore-category-filter__search-wrapper">
 				<input type="text" class="gstore-category-filter__search" placeholder="Buscar categoria..." aria-label="Buscar categoria">
 				<svg class="gstore-category-filter__search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -211,18 +209,12 @@ class GStore_Category_Filter {
 						);
 						?>
 					</span>
-					<a class="gstore-category-filter__scope-link" href="<?php echo esc_url( $full_catalog_url ); ?>">
-						<?php esc_html_e( 'Ver catalogo completo', 'gstore' ); ?>
-					</a>
 				</div>
 			<?php elseif ( $is_ofertas ) : ?>
 				<div class="gstore-category-filter__scope">
 					<span class="gstore-category-filter__scope-label">
 						<?php esc_html_e( 'Mostrando: Ofertas', 'gstore' ); ?>
 					</span>
-					<a class="gstore-category-filter__scope-link" href="<?php echo esc_url( $full_catalog_url ); ?>">
-						<?php esc_html_e( 'Ver catalogo completo', 'gstore' ); ?>
-					</a>
 				</div>
 			<?php endif; ?>
 
@@ -254,12 +246,6 @@ class GStore_Category_Filter {
 				</div>
 			<?php endif; ?>
 
-			<div class="gstore-category-filter__actions">
-				<?php if ( $has_scope ) : ?>
-					<a class="gstore-category-filter__btn-full-catalog" href="<?php echo esc_url( $full_catalog_url ); ?>">Ver catálogo completo</a>
-				<?php endif; ?>
-				<button type="button" class="gstore-category-filter__btn-clear" id="gstore-filter-clear">Limpar</button>
-			</div>
 		</div>
 		<?php
 		return ob_get_clean();
