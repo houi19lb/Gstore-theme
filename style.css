@@ -8994,6 +8994,7 @@ body:has(.Gstore-catalog-shell--light) main {
 	align-items: center;
 	gap: 16px;
 	flex-wrap: wrap;
+	margin-left: auto;
 }
 
 /* Botão de toggle de filtros (mobile) */

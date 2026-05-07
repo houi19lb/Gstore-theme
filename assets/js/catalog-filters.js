@@ -168,7 +168,7 @@
 		}
 
 		let termName = '';
-		const archiveTitle = document.querySelector('.Gstore-catalog-title');
+		const archiveTitle = document.querySelector('.woocommerce-products-header__title, .Gstore-catalog-title');
 		if (archiveTitle) {
 			termName = archiveTitle.textContent.trim();
 			termName = termName.replace(/^(Categoria:|Category:|Arquivo:|Archive:)\s*/i, '');
