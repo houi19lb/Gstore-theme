@@ -9065,6 +9065,49 @@ body:has(.Gstore-catalog-shell--light) main {
 	max-width: 960px;
 }
 
+.Gstore-catalog-archive-intro.has-brand-image {
+	align-items: center;
+	display: flex;
+	gap: 16px;
+}
+
+.Gstore-catalog-archive-intro__media {
+	flex: 0 0 auto;
+}
+
+.Gstore-catalog-archive-intro__content {
+	min-width: 0;
+}
+
+.Gstore-brand-archive-logo {
+	align-items: center;
+	background: #ffffff;
+	border: 1px solid var(--gray-border, #e6e6e6);
+	border-radius: var(--gstore-radius-base, 4px);
+	display: flex;
+	height: 84px;
+	justify-content: center;
+	margin: 0;
+	overflow: hidden;
+	width: 84px;
+}
+
+.Gstore-brand-archive-logo__image {
+	box-sizing: border-box;
+	display: block;
+	height: 100%;
+	object-fit: contain;
+	padding: 10px;
+	width: 100%;
+}
+
+.Gstore-brand-archive-logo--fallback {
+	color: var(--text-main, #1a1a1a);
+	font-size: 22px;
+	font-weight: 700;
+	letter-spacing: 0;
+}
+
 .Gstore-catalog-archive-title {
 	margin-bottom: 10px !important;
 }
@@ -9084,6 +9127,24 @@ body:has(.Gstore-catalog-shell--light) main {
 @media (max-width: 640px) {
 	.Gstore-catalog-archive-intro {
 		margin-bottom: 16px;
+	}
+
+	.Gstore-catalog-archive-intro.has-brand-image {
+		align-items: flex-start;
+		gap: 12px;
+	}
+
+	.Gstore-brand-archive-logo {
+		height: 62px;
+		width: 62px;
+	}
+
+	.Gstore-brand-archive-logo__image {
+		padding: 7px;
+	}
+
+	.Gstore-brand-archive-logo--fallback {
+		font-size: 16px;
 	}
 
 	.Gstore-catalog-archive-summary,
@@ -9688,7 +9749,7 @@ body:has(.Gstore-catalog-shell--light) main {
 .Gstore-catalog-shell--light .Gstore-products-grid--light ul.products,
 .Gstore-catalog-shell--light .Gstore-products-grid--light .wc-block-product-template {
 	display: grid !important;
-	grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+	grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
 	gap: 24px !important;
 }
 
@@ -9866,7 +9927,7 @@ body:has(.Gstore-catalog-shell--light) main {
 
 	.Gstore-catalog-shell--light .Gstore-products-grid--light ul.products,
 	.Gstore-catalog-shell--light .Gstore-products-grid--light .wc-block-product-template {
-		grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+		grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
 	}
 }
 

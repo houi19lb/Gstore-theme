@@ -11944,7 +11944,15 @@ function gstore_is_catalog_context() {
 		return false;
 	}
 
-	if ( function_exists( 'is_page' ) && is_page( array( 'catalogo', 'ofertas' ) ) ) {
+	if ( function_exists( 'is_front_page' ) && is_front_page() ) {
+		return false;
+	}
+
+	if ( function_exists( 'is_page' ) && is_page( array( 'catalogo', 'loja', 'ofertas', 'marcas', 'categorias-produto', 'categoria-produto' ) ) ) {
+		return true;
+	}
+
+	if ( function_exists( 'is_page_template' ) && is_page_template( array( 'templates/page-catalogo.html', 'templates/page-loja.html', 'templates/page-ofertas.html' ) ) ) {
 		return true;
 	}
 
@@ -11995,6 +12003,29 @@ function gstore_catalog_apply_products_per_page_to_query( $query ) {
 	$query->set( 'posts_per_page', 16 );
 }
 add_action( 'woocommerce_product_query', 'gstore_catalog_apply_products_per_page_to_query', 20 );
+
+/**
+ * Aplica 16 produtos tambem em shortcodes [products] usados nas paginas de catalogo.
+ *
+ * @param array  $query_args Argumentos da query do shortcode.
+ * @param array  $attributes Atributos recebidos pelo shortcode.
+ * @param string $type       Tipo do shortcode.
+ * @return array
+ */
+function gstore_catalog_apply_products_per_page_to_shortcodes( $query_args, $attributes, $type ) {
+	if ( function_exists( 'is_front_page' ) && is_front_page() ) {
+		return $query_args;
+	}
+
+	if ( function_exists( 'gstore_is_catalog_context' ) && ! gstore_is_catalog_context() ) {
+		return $query_args;
+	}
+
+	$query_args['posts_per_page'] = 16;
+
+	return $query_args;
+}
+add_filter( 'woocommerce_shortcode_products_query', 'gstore_catalog_apply_products_per_page_to_shortcodes', 20, 3 );
 
 /**
  * Retorna o titulo limpo do arquivo atual de catalogo.
@@ -12146,6 +12177,128 @@ function gstore_get_catalog_archive_summary( $description_html, $limit = 150 ) {
 }
 
 /**
+ * Retorna o termo de marca quando o arquivo atual for uma marca de produto.
+ *
+ * @param mixed $term Termo opcional.
+ * @return WP_Term|null
+ */
+function gstore_get_catalog_archive_brand_term( $term = null ) {
+	if ( ! $term instanceof WP_Term ) {
+		$term = get_queried_object();
+	}
+
+	if ( ! $term instanceof WP_Term ) {
+		return null;
+	}
+
+	$brand_taxonomies = array( 'product_brand' );
+	if ( function_exists( 'gstore_get_footer_brand_taxonomies' ) ) {
+		$brand_taxonomies = array_merge( $brand_taxonomies, (array) gstore_get_footer_brand_taxonomies() );
+	}
+
+	$brand_taxonomies = array_values( array_unique( array_filter( $brand_taxonomies ) ) );
+
+	return in_array( $term->taxonomy, $brand_taxonomies, true ) ? $term : null;
+}
+
+/**
+ * Retorna o attachment ID usado como imagem da marca.
+ *
+ * @param mixed $term Termo opcional.
+ * @return int
+ */
+function gstore_get_catalog_archive_brand_image_id( $term = null ) {
+	$term = gstore_get_catalog_archive_brand_term( $term );
+	if ( ! $term ) {
+		return 0;
+	}
+
+	$image_id = absint( get_term_meta( (int) $term->term_id, 'gstore_term_image_id', true ) );
+	if ( $image_id <= 0 ) {
+		$image_id = absint( get_term_meta( (int) $term->term_id, 'thumbnail_id', true ) );
+	}
+
+	if ( $image_id <= 0 || 'attachment' !== get_post_type( $image_id ) || ! wp_attachment_is_image( $image_id ) ) {
+		return 0;
+	}
+
+	return $image_id;
+}
+
+/**
+ * Gera iniciais curtas para marcas sem imagem.
+ *
+ * @param string $name Nome da marca.
+ * @return string
+ */
+function gstore_get_catalog_archive_brand_initials( $name ) {
+	$name  = html_entity_decode( wp_strip_all_tags( (string) $name ), ENT_QUOTES, get_bloginfo( 'charset' ) );
+	$words = preg_split( '/\s+/u', trim( $name ), -1, PREG_SPLIT_NO_EMPTY );
+
+	if ( ! is_array( $words ) || empty( $words ) ) {
+		return '';
+	}
+
+	$letters = array();
+	foreach ( $words as $word ) {
+		$letter = function_exists( 'mb_substr' ) ? mb_substr( $word, 0, 1, 'UTF-8' ) : substr( $word, 0, 1 );
+		if ( '' !== $letter ) {
+			$letters[] = $letter;
+		}
+		if ( count( $letters ) >= 2 ) {
+			break;
+		}
+	}
+
+	$initials = implode( '', $letters );
+	return function_exists( 'mb_strtoupper' ) ? mb_strtoupper( $initials, 'UTF-8' ) : strtoupper( $initials );
+}
+
+/**
+ * Retorna o HTML da imagem/placeholder da marca no arquivo de produtos.
+ *
+ * @param mixed $term Termo opcional.
+ * @return string
+ */
+function gstore_get_catalog_archive_brand_image_html( $term = null ) {
+	$term = gstore_get_catalog_archive_brand_term( $term );
+	if ( ! $term ) {
+		return '';
+	}
+
+	$image_id = gstore_get_catalog_archive_brand_image_id( $term );
+	if ( $image_id > 0 ) {
+		$alt = trim( (string) get_post_meta( $image_id, '_wp_attachment_image_alt', true ) );
+		if ( '' === $alt ) {
+			$alt = $term->name;
+		}
+
+		$image = wp_get_attachment_image(
+			$image_id,
+			'thumbnail',
+			false,
+			array(
+				'class'    => 'Gstore-brand-archive-logo__image',
+				'alt'      => $alt,
+				'loading'  => 'eager',
+				'decoding' => 'async',
+			)
+		);
+
+		if ( $image ) {
+			return '<figure class="Gstore-brand-archive-logo">' . $image . '</figure>';
+		}
+	}
+
+	$initials = gstore_get_catalog_archive_brand_initials( $term->name );
+	if ( '' === $initials ) {
+		return '';
+	}
+
+	return '<span class="Gstore-brand-archive-logo Gstore-brand-archive-logo--fallback" aria-hidden="true">' . esc_html( $initials ) . '</span>';
+}
+
+/**
  * Imprime titulo e resumo curto no topo do arquivo de produtos.
  */
 function gstore_output_catalog_archive_intro() {
@@ -12154,35 +12307,121 @@ function gstore_output_catalog_archive_intro() {
 	}
 
 	$title       = gstore_get_catalog_archive_title();
-	$summary     = gstore_get_catalog_archive_summary( gstore_get_catalog_archive_description_html() );
-	$has_content = '' !== $title || '' !== $summary;
+	$description = gstore_get_catalog_archive_description_html();
+	$summary     = function_exists( 'gstore_get_catalog_archive_summary' )
+		? gstore_get_catalog_archive_summary( $description )
+		: ( function_exists( 'gstore_get_catalog_brand_archive_summary' ) ? gstore_get_catalog_brand_archive_summary( $description ) : '' );
+	$brand_image = gstore_get_catalog_archive_brand_image_html();
+	$has_content = '' !== $title || '' !== $summary || '' !== $brand_image;
 
 	if ( ! $has_content ) {
 		return;
 	}
 
-	echo '<header class="woocommerce-products-header Gstore-catalog-archive-intro">';
+	$classes = array( 'woocommerce-products-header', 'Gstore-catalog-archive-intro' );
+	if ( '' !== $brand_image ) {
+		$classes[] = 'has-brand-image';
+	}
+
+	echo '<header class="' . esc_attr( implode( ' ', $classes ) ) . '">';
+	if ( '' !== $brand_image ) {
+		echo '<div class="Gstore-catalog-archive-intro__media">' . $brand_image . '</div>';
+		echo '<div class="Gstore-catalog-archive-intro__content">';
+	}
 	if ( '' !== $title ) {
 		echo '<h1 class="woocommerce-products-header__title page-title Gstore-catalog-archive-title">' . esc_html( $title ) . '</h1>';
 	}
 	if ( '' !== $summary ) {
 		echo '<div class="term-description Gstore-catalog-archive-summary"><p>' . esc_html( $summary ) . '</p></div>';
 	}
+	if ( '' !== $brand_image ) {
+		echo '</div>';
+	}
 	echo '</header>';
 }
 
 /**
- * Troca o header completo padrao do WooCommerce por titulo + resumo curto.
+ * Usa o header customizado com imagem apenas em arquivos de marca.
  */
-function gstore_setup_catalog_archive_header() {
-	if ( function_exists( 'gstore_is_catalog_context' ) && ! gstore_is_catalog_context() ) {
+function gstore_setup_catalog_brand_archive_header() {
+	if ( ! gstore_get_catalog_archive_brand_term() ) {
 		return;
 	}
 
 	remove_action( 'woocommerce_shop_loop_header', 'woocommerce_product_taxonomy_archive_header', 10 );
 	add_action( 'woocommerce_shop_loop_header', 'gstore_output_catalog_archive_intro', 10 );
 }
-add_action( 'wp', 'gstore_setup_catalog_archive_header', 20 );
+add_action( 'wp', 'gstore_setup_catalog_brand_archive_header', 20 );
+
+/**
+ * Garante o header de marca antes do header padrao do WooCommerce renderizar.
+ */
+function gstore_output_catalog_brand_archive_intro_early() {
+	if ( ! gstore_get_catalog_archive_brand_term() ) {
+		return;
+	}
+
+	remove_action( 'woocommerce_shop_loop_header', 'woocommerce_product_taxonomy_archive_header', 10 );
+	remove_action( 'woocommerce_shop_loop_header', 'gstore_output_catalog_archive_intro', 10 );
+	gstore_output_catalog_archive_intro();
+}
+add_action( 'woocommerce_shop_loop_header', 'gstore_output_catalog_brand_archive_intro_early', 1 );
+
+/**
+ * Imprime apenas o resumo curto dentro do header padrao do WooCommerce.
+ */
+function gstore_output_catalog_archive_summary_description() {
+	if ( function_exists( 'gstore_is_catalog_context' ) && ! gstore_is_catalog_context() ) {
+		return;
+	}
+
+	$summary = gstore_get_catalog_archive_summary( gstore_get_catalog_archive_description_html() );
+	if ( '' === $summary ) {
+		return;
+	}
+
+	echo '<div class="term-description Gstore-catalog-archive-summary"><p>' . esc_html( $summary ) . '</p></div>';
+}
+
+/**
+ * Troca a description completa do topo pelo resumo curto.
+ */
+function gstore_setup_catalog_archive_description() {
+	if ( function_exists( 'gstore_is_catalog_context' ) && ! gstore_is_catalog_context() ) {
+		return;
+	}
+
+	remove_action( 'woocommerce_archive_description', 'woocommerce_taxonomy_archive_description', 10 );
+	remove_action( 'woocommerce_archive_description', 'woocommerce_product_archive_description', 10 );
+	add_action( 'woocommerce_archive_description', 'gstore_output_catalog_archive_summary_description', 10 );
+}
+add_action( 'wp', 'gstore_setup_catalog_archive_description', 20 );
+
+/**
+ * Retorna o accordion com a description completa.
+ *
+ * @return string
+ */
+function gstore_get_catalog_archive_description_details_html() {
+	$description = gstore_get_catalog_archive_description_html();
+	if ( '' === trim( wp_strip_all_tags( $description ) ) ) {
+		return '';
+	}
+
+	$title      = gstore_get_catalog_archive_title();
+	$store_name = function_exists( 'gstore_get_store_name' ) ? gstore_get_store_name( 'display' ) : get_bloginfo( 'name' );
+	$label      = trim( sprintf( __( 'Sobre %1$s na %2$s', 'gstore' ), $title ? $title : __( 'produtos', 'gstore' ), $store_name ) );
+
+	return '<section class="Gstore-catalog-archive-details" aria-label="' . esc_attr( $label ) . '">'
+		. '<details class="Gstore-catalog-archive-details__item">'
+		. '<summary class="Gstore-catalog-archive-details__summary">'
+		. '<span class="Gstore-catalog-archive-details__icon" aria-hidden="true"></span>'
+		. '<span>' . esc_html( $label ) . '</span>'
+		. '</summary>'
+		. '<div class="Gstore-catalog-archive-details__content">' . wp_kses_post( $description ) . '</div>'
+		. '</details>'
+		. '</section>';
+}
 
 /**
  * Imprime a description completa no fim do arquivo de produtos.
@@ -12192,25 +12431,32 @@ function gstore_output_catalog_archive_description_details() {
 		return;
 	}
 
-	$description = gstore_get_catalog_archive_description_html();
-	if ( '' === trim( wp_strip_all_tags( $description ) ) ) {
-		return;
+	echo gstore_get_catalog_archive_description_details_html(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+}
+
+/**
+ * Acrescenta o accordion depois de shortcodes [products] em paginas de catalogo.
+ *
+ * @param string $output Saida renderizada.
+ * @param string $tag    Nome do shortcode.
+ * @return string
+ */
+function gstore_append_catalog_details_after_products_shortcode( $output, $tag ) {
+	if ( 'products' !== $tag ) {
+		return $output;
 	}
 
-	$title      = gstore_get_catalog_archive_title();
-	$store_name = function_exists( 'gstore_get_store_name' ) ? gstore_get_store_name( 'display' ) : get_bloginfo( 'name' );
-	$label      = trim( sprintf( __( 'Sobre %1$s na %2$s', 'gstore' ), $title ? $title : __( 'produtos', 'gstore' ), $store_name ) );
+	if ( function_exists( 'gstore_is_catalog_context' ) && ! gstore_is_catalog_context() ) {
+		return $output;
+	}
 
-	echo '<section class="Gstore-catalog-archive-details" aria-label="' . esc_attr( $label ) . '">';
-	echo '<details class="Gstore-catalog-archive-details__item">';
-	echo '<summary class="Gstore-catalog-archive-details__summary">';
-	echo '<span class="Gstore-catalog-archive-details__icon" aria-hidden="true"></span>';
-	echo '<span>' . esc_html( $label ) . '</span>';
-	echo '</summary>';
-	echo '<div class="Gstore-catalog-archive-details__content">' . wp_kses_post( $description ) . '</div>';
-	echo '</details>';
-	echo '</section>';
+	if ( false !== strpos( (string) $output, 'Gstore-catalog-archive-details' ) ) {
+		return $output;
+	}
+
+	return $output . gstore_get_catalog_archive_description_details_html();
 }
+add_filter( 'do_shortcode_tag', 'gstore_append_catalog_details_after_products_shortcode', 20, 2 );
 
 /**
  * Define "popularidade" como ordenacao padrao no catalogo.
@@ -13405,7 +13651,104 @@ function gstore_process_final_output( $buffer ) {
 
 	$buffer = gstore_replace_catalog_dynamic_breadcrumb_html( $buffer );
 
+	$buffer = gstore_replace_catalog_brand_archive_header_html( $buffer );
+
+	$buffer = gstore_normalize_catalog_archive_description_output( $buffer );
+
 	return $buffer;
+}
+
+/**
+ * Fallback final para o header de marcas quando o template em bloco renderiza o header padrao.
+ *
+ * @param string $html HTML final.
+ * @return string
+ */
+function gstore_replace_catalog_brand_archive_header_html( $html ) {
+	if ( ! is_string( $html ) || '' === $html || false === strpos( $html, 'woocommerce-products-header' ) ) {
+		return $html;
+	}
+
+	if ( false !== strpos( $html, 'Gstore-catalog-archive-intro' ) ) {
+		return $html;
+	}
+
+	if ( ! gstore_get_catalog_archive_brand_term() ) {
+		return $html;
+	}
+
+	$title       = gstore_get_catalog_archive_title();
+	$description = gstore_get_catalog_archive_description_html();
+	$summary     = function_exists( 'gstore_get_catalog_archive_summary' )
+		? gstore_get_catalog_archive_summary( $description )
+		: ( function_exists( 'gstore_get_catalog_brand_archive_summary' ) ? gstore_get_catalog_brand_archive_summary( $description ) : '' );
+	$brand_image = gstore_get_catalog_archive_brand_image_html();
+
+	if ( '' === $title && '' === $summary && '' === $brand_image ) {
+		return $html;
+	}
+
+	$classes = array( 'woocommerce-products-header', 'Gstore-catalog-archive-intro' );
+	if ( '' !== $brand_image ) {
+		$classes[] = 'has-brand-image';
+	}
+
+	$replacement = '<header class="' . esc_attr( implode( ' ', $classes ) ) . '">';
+	if ( '' !== $brand_image ) {
+		$replacement .= '<div class="Gstore-catalog-archive-intro__media">' . $brand_image . '</div>';
+		$replacement .= '<div class="Gstore-catalog-archive-intro__content">';
+	}
+	if ( '' !== $title ) {
+		$replacement .= '<h1 class="woocommerce-products-header__title page-title Gstore-catalog-archive-title">' . esc_html( $title ) . '</h1>';
+	}
+	if ( '' !== $summary ) {
+		$replacement .= '<div class="term-description Gstore-catalog-archive-summary"><p>' . esc_html( $summary ) . '</p></div>';
+	}
+	if ( '' !== $brand_image ) {
+		$replacement .= '</div>';
+	}
+	$replacement .= '</header>';
+
+	return (string) preg_replace(
+		'#<header\b(?=[^>]*class="[^"]*\bwoocommerce-products-header\b[^"]*")[^>]*>.*?</header>#is',
+		$replacement,
+		$html,
+		1
+	);
+}
+
+/**
+ * Fallback final para garantir que archives de produto mostrem resumo no topo.
+ *
+ * @param string $html HTML final.
+ * @return string
+ */
+function gstore_normalize_catalog_archive_description_output( $html ) {
+	if ( ! is_string( $html ) || '' === $html || false === strpos( $html, 'woocommerce-products-header' ) ) {
+		return $html;
+	}
+
+	if ( function_exists( 'gstore_is_catalog_context' ) && ! gstore_is_catalog_context() ) {
+		return $html;
+	}
+
+	$summary = gstore_get_catalog_archive_summary( gstore_get_catalog_archive_description_html() );
+	if ( '' === $summary ) {
+		return $html;
+	}
+
+	$summary_html = '<div class="term-description Gstore-catalog-archive-summary"><p>' . esc_html( $summary ) . '</p></div>';
+
+	if ( false !== strpos( $html, 'Gstore-catalog-archive-summary' ) ) {
+		return $html;
+	}
+
+	return (string) preg_replace(
+		'#<div\b([^>]*)\bclass=(["\'])([^"\']*\bterm-description\b[^"\']*)\2([^>]*)>.*?</div>#is',
+		$summary_html,
+		$html,
+		1
+	);
 }
 
 /**
