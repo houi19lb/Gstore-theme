@@ -9152,11 +9152,23 @@ body:has(.Gstore-catalog-shell--light) main {
 		font-size: 14px;
 		line-height: 1.55;
 	}
+
+	.Gstore-catalog-archive-details {
+		margin-top: 24px;
+	}
 }
 
 .Gstore-catalog-archive-details {
 	margin: 28px 0 0;
 	width: 100%;
+}
+
+.Gstore-catalog-archive-details__heading {
+	color: var(--text-main, #1a1a1a);
+	font-size: 14px;
+	font-weight: 700;
+	line-height: 1.35;
+	margin: 0 0 10px;
 }
 
 .Gstore-catalog-archive-details__item {
@@ -9749,7 +9761,7 @@ body:has(.Gstore-catalog-shell--light) main {
 .Gstore-catalog-shell--light .Gstore-products-grid--light ul.products,
 .Gstore-catalog-shell--light .Gstore-products-grid--light .wc-block-product-template {
 	display: grid !important;
-	grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+	grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
 	gap: 24px !important;
 }
 
@@ -9927,7 +9939,7 @@ body:has(.Gstore-catalog-shell--light) main {
 
 	.Gstore-catalog-shell--light .Gstore-products-grid--light ul.products,
 	.Gstore-catalog-shell--light .Gstore-products-grid--light .wc-block-product-template {
-		grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+		grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
 	}
 }
 

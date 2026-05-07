@@ -11972,7 +11972,7 @@ function gstore_is_catalog_context() {
 }
 
 /**
- * Mantem 4 linhas de 4 produtos no catalogo desktop.
+ * Mantem 5 linhas de 3 produtos no catalogo desktop.
  *
  * @param int $per_page Quantidade original.
  * @return int
@@ -11982,7 +11982,7 @@ function gstore_catalog_products_per_page( $per_page ) {
 		return $per_page;
 	}
 
-	return 16;
+	return 15;
 }
 add_filter( 'loop_shop_per_page', 'gstore_catalog_products_per_page', 20 );
 
@@ -12000,12 +12000,12 @@ function gstore_catalog_apply_products_per_page_to_query( $query ) {
 		return;
 	}
 
-	$query->set( 'posts_per_page', 16 );
+	$query->set( 'posts_per_page', 15 );
 }
 add_action( 'woocommerce_product_query', 'gstore_catalog_apply_products_per_page_to_query', 20 );
 
 /**
- * Aplica 16 produtos tambem em shortcodes [products] usados nas paginas de catalogo.
+ * Aplica 15 produtos tambem em shortcodes [products] usados nas paginas de catalogo.
  *
  * @param array  $query_args Argumentos da query do shortcode.
  * @param array  $attributes Atributos recebidos pelo shortcode.
@@ -12021,7 +12021,7 @@ function gstore_catalog_apply_products_per_page_to_shortcodes( $query_args, $att
 		return $query_args;
 	}
 
-	$query_args['posts_per_page'] = 16;
+	$query_args['posts_per_page'] = 15;
 
 	return $query_args;
 }
@@ -12412,7 +12412,8 @@ function gstore_get_catalog_archive_description_details_html() {
 	$store_name = function_exists( 'gstore_get_store_name' ) ? gstore_get_store_name( 'display' ) : get_bloginfo( 'name' );
 	$label      = trim( sprintf( __( 'Sobre %1$s na %2$s', 'gstore' ), $title ? $title : __( 'produtos', 'gstore' ), $store_name ) );
 
-	return '<section class="Gstore-catalog-archive-details" aria-label="' . esc_attr( $label ) . '">'
+	return '<section class="Gstore-catalog-archive-details" aria-label="' . esc_attr__( 'Conteúdo e informações', 'gstore' ) . '">'
+		. '<h2 class="Gstore-catalog-archive-details__heading">' . esc_html__( 'Conteúdo e informações', 'gstore' ) . '</h2>'
 		. '<details class="Gstore-catalog-archive-details__item">'
 		. '<summary class="Gstore-catalog-archive-details__summary">'
 		. '<span class="Gstore-catalog-archive-details__icon" aria-hidden="true"></span>'
@@ -12427,12 +12428,26 @@ function gstore_get_catalog_archive_description_details_html() {
  * Imprime a description completa no fim do arquivo de produtos.
  */
 function gstore_output_catalog_archive_description_details() {
+	static $rendered = false;
+
 	if ( function_exists( 'gstore_is_catalog_context' ) && ! gstore_is_catalog_context() ) {
 		return;
 	}
 
-	echo gstore_get_catalog_archive_description_details_html(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+	if ( $rendered ) {
+		return;
+	}
+
+	$html = gstore_get_catalog_archive_description_details_html();
+	if ( '' === $html ) {
+		return;
+	}
+
+	$rendered = true;
+
+	echo $html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 }
+add_action( 'woocommerce_after_shop_loop', 'gstore_output_catalog_archive_description_details', 30 );
 
 /**
  * Acrescenta o accordion depois de shortcodes [products] em paginas de catalogo.
