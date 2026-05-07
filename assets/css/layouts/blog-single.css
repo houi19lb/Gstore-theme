@@ -149,7 +149,7 @@
 	margin-left: 0;
 	margin-right: 0;
 	width: 100%;
-	aspect-ratio: 16 / 9;
+	aspect-ratio: 3 / 1;
 	height: auto !important;
 	border-radius: var(--gstore-radius-lg);
 	overflow: hidden;
@@ -461,7 +461,7 @@
 
 .Gstore-blog-single-related__image {
 	width: 100%;
-	aspect-ratio: 16 / 9;
+	aspect-ratio: 4 / 3;
 	height: auto !important;
 	display: flex;
 	align-items: center;

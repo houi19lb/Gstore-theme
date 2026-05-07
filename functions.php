@@ -18743,3 +18743,62 @@ function gstore_get_order_required_documents( $order ) {
 
 	return $result;
 }
+
+/**
+ * Troca a imagem destacada do template single pelo banner 3:1 do artigo.
+ *
+ * O filtro fica limitado ao bloco com classe Gstore-blog-single-image em posts,
+ * mantendo cards, produtos e outras imagens usando os fluxos atuais.
+ *
+ * @param string $block_content HTML renderizado pelo WordPress.
+ * @param array  $block         Dados do bloco.
+ * @return string
+ */
+function gstore_render_blog_single_banner_image( $block_content, $block ) {
+	if ( is_admin() || ! is_singular( 'post' ) || ! is_array( $block ) ) {
+		return $block_content;
+	}
+
+	$class_name = isset( $block['attrs']['className'] ) ? (string) $block['attrs']['className'] : '';
+	if ( false === strpos( $class_name, 'Gstore-blog-single-image' ) ) {
+		return $block_content;
+	}
+
+	$post_id = get_queried_object_id();
+	if ( $post_id <= 0 || 'post' !== get_post_type( $post_id ) ) {
+		return $block_content;
+	}
+
+	$banner_image_id = absint( get_post_meta( $post_id, '_gstore_blog_banner_image_id', true ) );
+	if ( $banner_image_id <= 0 || ! wp_attachment_is_image( $banner_image_id ) ) {
+		return $block_content;
+	}
+
+	$alt = trim( (string) get_post_meta( $banner_image_id, '_wp_attachment_image_alt', true ) );
+	if ( '' === $alt ) {
+		$alt = get_the_title( $post_id );
+	}
+
+	$image = wp_get_attachment_image(
+		$banner_image_id,
+		'full',
+		false,
+		array(
+			'class' => 'wp-post-image',
+			'alt'   => $alt,
+		)
+	);
+
+	if ( ! $image ) {
+		return $block_content;
+	}
+
+	$classes = trim( 'wp-block-post-featured-image ' . $class_name . ' Gstore-blog-single-image--banner' );
+
+	return sprintf(
+		'<figure class="%s">%s</figure>',
+		esc_attr( $classes ),
+		$image
+	);
+}
+add_filter( 'render_block_core/post-featured-image', 'gstore_render_blog_single_banner_image', 10, 2 );
