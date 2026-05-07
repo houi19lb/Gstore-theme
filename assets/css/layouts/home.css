@@ -524,7 +524,7 @@
 
 .Gstore-home-blog__image {
 	width: 100%;
-	aspect-ratio: 2 / 1;
+	aspect-ratio: 16 / 9;
 	height: auto !important;
 	overflow: hidden;
 	background: #161616;

@@ -4786,7 +4786,7 @@ main:not(.Gstore-blog-shell):not(.Gstore-blog-single-shell) {
 
 .Gstore-home-blog__image {
 	width: 100%;
-	aspect-ratio: 2 / 1;
+	aspect-ratio: 16 / 9;
 	height: auto !important;
 	overflow: hidden;
 	background: #161616;
@@ -6759,7 +6759,7 @@ main.Gstore-blog-shell .wp-block-group.is-layout-constrained {
 
 .Gstore-blog-card__image {
 	width: 100%;
-	aspect-ratio: 2 / 1;
+	aspect-ratio: 16 / 9;
 	height: auto !important;
 	overflow: hidden;
 	background: #161616;
@@ -7430,7 +7430,7 @@ main.Gstore-blog-single-shell .wp-block-group.is-layout-constrained:not(.Gstore-
 
 .Gstore-blog-single-image {
 	width: 100%;
-	aspect-ratio: 2 / 1;
+	aspect-ratio: 16 / 9;
 	height: auto !important;
 	border-radius: 4px;
 	overflow: hidden;
@@ -7850,7 +7850,7 @@ main.Gstore-blog-single-shell .wp-block-group.is-layout-constrained:not(.Gstore-
 
 .Gstore-blog-single-related__image {
 	width: 100%;
-	aspect-ratio: 2 / 1;
+	aspect-ratio: 16 / 9;
 	height: auto !important;
 	margin: 0;
 	display: flex;

@@ -1095,6 +1095,42 @@ function gstore_get_catalog_pagination_base_url() {
 }
 
 /**
+ * Converte URLs internas de paginacao em caminhos relativos para evitar reescrita por buffers de hospedagem.
+ *
+ * @param string $url URL absoluta ou relativa.
+ * @return string
+ */
+function gstore_get_catalog_pagination_href( $url ) {
+	$url  = (string) $url;
+	$path = wp_parse_url( $url, PHP_URL_PATH );
+	if ( ! is_string( $path ) || '' === $path ) {
+		return $url;
+	}
+
+	$query    = wp_parse_url( $url, PHP_URL_QUERY );
+	$fragment = wp_parse_url( $url, PHP_URL_FRAGMENT );
+	$href     = $path;
+	if ( is_string( $query ) && '' !== $query ) {
+		$href .= '?' . $query;
+	}
+	if ( is_string( $fragment ) && '' !== $fragment ) {
+		$href .= '#' . $fragment;
+	}
+
+	return $href;
+}
+
+/**
+ * Escapa hrefs de paginacao evitando que buffers finais reescrevam /page/N/.
+ *
+ * @param string $url URL absoluta ou relativa.
+ * @return string
+ */
+function gstore_escape_catalog_pagination_href( $url ) {
+	return str_replace( '/', '&#47;', esc_url( gstore_get_catalog_pagination_href( $url ) ) );
+}
+
+/**
  * Paginacao propria para archives do catalogo.
  */
 function gstore_catalog_pagination() {
@@ -1144,7 +1180,7 @@ function gstore_catalog_pagination() {
 
 	$link_items = array();
 	if ( $current > 1 ) {
-		$link_items[] = '<li><a class="prev page-numbers" rel="prev" href="' . esc_url( $page_url( $current - 1 ) ) . '">' . ( is_rtl() ? '&rarr;' : '&larr;' ) . '</a></li>';
+		$link_items[] = '<li><a class="prev page-numbers" rel="prev" href="' . gstore_escape_catalog_pagination_href( $page_url( $current - 1 ) ) . '">' . ( is_rtl() ? '&rarr;' : '&larr;' ) . '</a></li>';
 	}
 
 	$previous_page = 0;
@@ -1156,14 +1192,14 @@ function gstore_catalog_pagination() {
 		if ( $page === $current ) {
 			$link_items[] = '<li><span aria-current="page" class="page-numbers current">' . esc_html( number_format_i18n( $page ) ) . '</span></li>';
 		} else {
-			$link_items[] = '<li><a class="page-numbers" aria-label="' . esc_attr( sprintf( __( 'Pagina %s', 'gstore' ), number_format_i18n( $page ) ) ) . '" href="' . esc_url( $page_url( $page ) ) . '">' . esc_html( number_format_i18n( $page ) ) . '</a></li>';
+			$link_items[] = '<li><a class="page-numbers" aria-label="' . esc_attr( sprintf( __( 'Pagina %s', 'gstore' ), number_format_i18n( $page ) ) ) . '" href="' . gstore_escape_catalog_pagination_href( $page_url( $page ) ) . '">' . esc_html( number_format_i18n( $page ) ) . '</a></li>';
 		}
 
 		$previous_page = $page;
 	}
 
 	if ( $current < $total ) {
-		$link_items[] = '<li><a class="next page-numbers" rel="next" href="' . esc_url( $page_url( $current + 1 ) ) . '">' . ( is_rtl() ? '&larr;' : '&rarr;' ) . '</a></li>';
+		$link_items[] = '<li><a class="next page-numbers" rel="next" href="' . gstore_escape_catalog_pagination_href( $page_url( $current + 1 ) ) . '">' . ( is_rtl() ? '&larr;' : '&rarr;' ) . '</a></li>';
 	}
 
 	$links = '<ul class="page-numbers">' . implode( "\n", $link_items ) . '</ul>';
