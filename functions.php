@@ -1123,38 +1123,50 @@ function gstore_catalog_pagination() {
 	$raw_base    = gstore_should_use_clean_catalog_pagination_urls()
 		? user_trailingslashit( trailingslashit( $base_url ) . 'page/' . $placeholder, 'paged' )
 		: add_query_arg( 'product-page', $placeholder, $base_url );
-	$base        = str_replace( $placeholder, '%#%', esc_url_raw( $raw_base ) );
 
-	$links = paginate_links(
-		apply_filters(
-			'gstore_catalog_pagination_args',
-			array(
-				'base'      => $base,
-				'format'    => '',
-				'add_args'  => false,
-				'current'   => $current,
-				'total'     => $total,
-				'prev_text' => is_rtl() ? '&rarr;' : '&larr;',
-				'next_text' => is_rtl() ? '&larr;' : '&rarr;',
-				'type'      => 'list',
-				'end_size'  => 3,
-				'mid_size'  => 3,
-			)
-		)
-	);
+	$page_url = static function ( $page ) use ( $base_url, $raw_base, $placeholder ) {
+		$page = absint( $page );
+		if ( $page <= 1 ) {
+			return $base_url;
+		}
 
-	if ( ! is_string( $links ) || '' === $links ) {
-		return;
+		return str_replace( $placeholder, (string) $page, $raw_base );
+	};
+
+	$pages    = array();
+	$end_size = 2;
+	$mid_size = 2;
+	for ( $page = 1; $page <= $total; $page++ ) {
+		if ( $page <= $end_size || $page > $total - $end_size || abs( $page - $current ) <= $mid_size ) {
+			$pages[] = $page;
+		}
 	}
 
-	$first_page_url      = esc_url( $base_url );
-	$first_page_url_raw  = str_replace( $placeholder, '1', $raw_base );
-	$first_page_url_html = esc_url( $first_page_url_raw );
-	$links               = str_replace(
-		array( $first_page_url_html, str_replace( '&', '&#038;', $first_page_url_html ) ),
-		$first_page_url,
-		$links
-	);
+	$link_items = array();
+	if ( $current > 1 ) {
+		$link_items[] = '<li><a class="prev page-numbers" rel="prev" href="' . esc_url( $page_url( $current - 1 ) ) . '">' . ( is_rtl() ? '&rarr;' : '&larr;' ) . '</a></li>';
+	}
+
+	$previous_page = 0;
+	foreach ( $pages as $page ) {
+		if ( $previous_page && $page > $previous_page + 1 ) {
+			$link_items[] = '<li><span class="page-numbers dots">&hellip;</span></li>';
+		}
+
+		if ( $page === $current ) {
+			$link_items[] = '<li><span aria-current="page" class="page-numbers current">' . esc_html( number_format_i18n( $page ) ) . '</span></li>';
+		} else {
+			$link_items[] = '<li><a class="page-numbers" aria-label="' . esc_attr( sprintf( __( 'Pagina %s', 'gstore' ), number_format_i18n( $page ) ) ) . '" href="' . esc_url( $page_url( $page ) ) . '">' . esc_html( number_format_i18n( $page ) ) . '</a></li>';
+		}
+
+		$previous_page = $page;
+	}
+
+	if ( $current < $total ) {
+		$link_items[] = '<li><a class="next page-numbers" rel="next" href="' . esc_url( $page_url( $current + 1 ) ) . '">' . ( is_rtl() ? '&larr;' : '&rarr;' ) . '</a></li>';
+	}
+
+	$links = '<ul class="page-numbers">' . implode( "\n", $link_items ) . '</ul>';
 
 	echo '<nav class="woocommerce-pagination" aria-label="' . esc_attr__( 'Paginacao de produtos', 'gstore' ) . '">';
 	echo wp_kses_post( $links );
