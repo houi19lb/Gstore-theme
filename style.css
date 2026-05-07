@@ -4786,6 +4786,8 @@ main:not(.Gstore-blog-shell):not(.Gstore-blog-single-shell) {
 
 .Gstore-home-blog__image {
 	width: 100%;
+	aspect-ratio: 16 / 5;
+	height: auto !important;
 	overflow: hidden;
 	background: #161616;
 	border-radius: var(--gstore-radius-base);
@@ -4794,17 +4796,8 @@ main:not(.Gstore-blog-shell):not(.Gstore-blog-single-shell) {
 }
 
 .Gstore-home-blog__image.has-blog-image-bg::before {
-	content: "";
-	position: absolute;
-	inset: -18px;
-	z-index: 0;
-	background-image: var(--gstore-blog-image-bg);
-	background-position: center;
-	background-size: cover;
-	filter: blur(18px) saturate(.95);
-	opacity: .42;
-	transform: scale(1.08);
-	pointer-events: none;
+	content: none !important;
+	display: none !important;
 }
 
 .Gstore-home-blog__image a {
@@ -4812,7 +4805,7 @@ main:not(.Gstore-blog-shell):not(.Gstore-blog-single-shell) {
 	align-items: center;
 	justify-content: center;
 	width: 100%;
-	height: 100%;
+	height: 100% !important;
 	position: relative;
 	z-index: 1;
 }
@@ -6766,7 +6759,8 @@ main.Gstore-blog-shell .wp-block-group.is-layout-constrained {
 
 .Gstore-blog-card__image {
 	width: 100%;
-	height: 240px;
+	aspect-ratio: 16 / 5;
+	height: auto !important;
 	overflow: hidden;
 	background: #161616;
 	display: flex;
@@ -6777,17 +6771,8 @@ main.Gstore-blog-shell .wp-block-group.is-layout-constrained {
 }
 
 .Gstore-blog-card__image.has-blog-image-bg::before {
-	content: "";
-	position: absolute;
-	inset: -18px;
-	z-index: 0;
-	background-image: var(--gstore-blog-image-bg);
-	background-position: center;
-	background-size: cover;
-	filter: blur(18px) saturate(.95);
-	opacity: .42;
-	transform: scale(1.08);
-	pointer-events: none;
+	content: none !important;
+	display: none !important;
 }
 
 .Gstore-blog-card__image a {
@@ -7167,17 +7152,8 @@ main.Gstore-blog-shell .wp-block-group.is-layout-constrained {
 }
 
 .Gstore-blog-recent-post__image.has-blog-image-bg::before {
-	content: "";
-	position: absolute;
-	inset: -12px;
-	z-index: 0;
-	background-image: var(--gstore-blog-image-bg);
-	background-position: center;
-	background-size: cover;
-	filter: blur(12px) saturate(.95);
-	opacity: .42;
-	transform: scale(1.08);
-	pointer-events: none;
+	content: none !important;
+	display: none !important;
 }
 
 .Gstore-blog-recent-post__image img {
@@ -7360,7 +7336,7 @@ main.Gstore-blog-shell .wp-block-group.is-layout-constrained {
 	}
 
 	.Gstore-blog-card__image {
-		height: 200px;
+		height: auto !important;
 	}
 
 	.Gstore-blog-card__content {
@@ -7454,7 +7430,8 @@ main.Gstore-blog-single-shell .wp-block-group.is-layout-constrained:not(.Gstore-
 
 .Gstore-blog-single-image {
 	width: 100%;
-	height: 100%;
+	aspect-ratio: 16 / 5;
+	height: auto !important;
 	border-radius: 4px;
 	overflow: hidden;
 	margin: 0;
@@ -7464,22 +7441,13 @@ main.Gstore-blog-single-shell .wp-block-group.is-layout-constrained:not(.Gstore-
 }
 
 .Gstore-blog-single-image.has-blog-image-bg::before {
-	content: "";
-	position: absolute;
-	inset: -22px;
-	z-index: 0;
-	background-image: var(--gstore-blog-image-bg);
-	background-position: center;
-	background-size: cover;
-	filter: blur(22px) saturate(.95);
-	opacity: .42;
-	transform: scale(1.08);
-	pointer-events: none;
+	content: none !important;
+	display: none !important;
 }
 
 .Gstore-blog-single-image img {
-	width: 100%;
-	height: 100%;
+	width: 100% !important;
+	height: 100% !important;
 	display: block;
 	border-radius: 4px;
 	object-fit: contain !important;
@@ -7882,9 +7850,8 @@ main.Gstore-blog-single-shell .wp-block-group.is-layout-constrained:not(.Gstore-
 
 .Gstore-blog-single-related__image {
 	width: 100%;
-	height: 200px;
-	object-fit: contain !important;
-	object-position: center;
+	aspect-ratio: 16 / 5;
+	height: auto !important;
 	margin: 0;
 	display: flex;
 	align-items: center;
@@ -7895,17 +7862,8 @@ main.Gstore-blog-single-shell .wp-block-group.is-layout-constrained:not(.Gstore-
 }
 
 .Gstore-blog-single-related__image.has-blog-image-bg::before {
-	content: "";
-	position: absolute;
-	inset: -18px;
-	z-index: 0;
-	background-image: var(--gstore-blog-image-bg);
-	background-position: center;
-	background-size: cover;
-	filter: blur(18px) saturate(.95);
-	opacity: .42;
-	transform: scale(1.08);
-	pointer-events: none;
+	content: none !important;
+	display: none !important;
 }
 
 .Gstore-blog-single-related__image a {
@@ -7919,12 +7877,23 @@ main.Gstore-blog-single-shell .wp-block-group.is-layout-constrained:not(.Gstore-
 }
 
 .Gstore-blog-single-related__image img {
-	width: 100%;
-	height: 100%;
+	width: 100% !important;
+	height: 100% !important;
 	object-fit: contain !important;
 	object-position: center;
 	position: relative;
 	z-index: 1;
+}
+
+.gstore-hb-v1 .hb-cover.has-blog-image-bg::before,
+.gstore-hb-v1 .hb-thumb.has-blog-image-bg::before,
+.Gstore-home-blog__image.has-blog-image-bg::before,
+.Gstore-blog-card__image.has-blog-image-bg::before,
+.Gstore-blog-recent-post__image.has-blog-image-bg::before,
+.Gstore-blog-single-image.has-blog-image-bg::before,
+.Gstore-blog-single-related__image.has-blog-image-bg::before {
+	content: none !important;
+	display: none !important;
 }
 
 .Gstore-blog-single-related__content {

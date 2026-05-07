@@ -11,35 +11,9 @@
 		'.Gstore-blog-single-related__image'
 	].join(',');
 
-	function cssUrl(url) {
-		return 'url("' + String(url).replace(/\\/g, '\\\\').replace(/"/g, '\\"') + '")';
-	}
-
-	function getImageUrl(img) {
-		return img.currentSrc || img.src || '';
-	}
-
 	function applyFrame(frame) {
-		const img = frame.querySelector('img');
-		if (!img) {
-			return;
-		}
-
-		const update = function () {
-			const url = getImageUrl(img);
-			if (!url) {
-				return;
-			}
-
-			frame.style.setProperty('--gstore-blog-image-bg', cssUrl(url));
-			frame.classList.add('has-blog-image-bg');
-		};
-
-		update();
-
-		if (!img.complete) {
-			img.addEventListener('load', update, { once: true });
-		}
+		frame.style.removeProperty('--gstore-blog-image-bg');
+		frame.classList.remove('has-blog-image-bg');
 	}
 
 	function init(root) {

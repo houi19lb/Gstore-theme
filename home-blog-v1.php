@@ -231,7 +231,7 @@ if ( ! function_exists( 'gstore_home_blog_v1_render' ) ) {
 			.gstore-hb-v1 .hb-cover {
 				margin-top: var(--gstore-spacing-3, 12px);
 				width: 100%;
-				aspect-ratio: 16 / 9;
+				aspect-ratio: 16 / 5;
 				overflow: hidden;
 				border: 1px solid var(--hb-border);
 				border-radius: var(--hb-radius);
@@ -241,17 +241,8 @@ if ( ! function_exists( 'gstore_home_blog_v1_render' ) ) {
 			}
 			.gstore-hb-v1 .hb-cover.has-blog-image-bg::before,
 			.gstore-hb-v1 .hb-thumb.has-blog-image-bg::before {
-				content: "";
-				position: absolute;
-				inset: -18px;
-				z-index: 0;
-				background-image: var(--gstore-blog-image-bg);
-				background-position: center;
-				background-size: cover;
-				filter: blur(18px) saturate(.95);
-				opacity: .42;
-				transform: scale(1.08);
-				pointer-events: none;
+				content: none !important;
+				display: none !important;
 			}
 			.gstore-hb-v1 .hb-cover img,
 			.gstore-hb-v1 .hb-thumb img {
@@ -389,9 +380,8 @@ if ( ! function_exists( 'gstore_home_blog_v1_render' ) ) {
 				.gstore-hb-v1 .hb-card__inner {
 					padding: var(--gstore-spacing-3, 12px);
 				}
-				.gstore-hb-v1 .hb-cover,
-				.gstore-hb-v1 .hb-thumb {
-					aspect-ratio: 16 / 10;
+				.gstore-hb-v1 .hb-cover {
+					aspect-ratio: 16 / 5;
 				}
 				/* No mobile, iguala o card destaque aos cards secundários */
 				.gstore-hb-v1 .hb-grid > .hb-card:first-child .hb-pill,

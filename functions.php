@@ -943,6 +943,11 @@ function gstore_get_product_taxonomy_canonical_url() {
 		return '';
 	}
 
+	$paged = max( absint( get_query_var( 'paged' ) ), absint( get_query_var( 'page' ) ) );
+	if ( $paged > 1 && gstore_should_use_clean_catalog_pagination_urls() ) {
+		return user_trailingslashit( trailingslashit( $term_link ) . 'page/' . $paged, 'paged' );
+	}
+
 	return $term_link;
 }
 
@@ -960,6 +965,217 @@ function gstore_product_taxonomy_canonical_url_for_seo_plugins( $canonical_url )
 add_filter( 'wpseo_canonical', 'gstore_product_taxonomy_canonical_url_for_seo_plugins', 19 );
 add_filter( 'rank_math/frontend/canonical', 'gstore_product_taxonomy_canonical_url_for_seo_plugins', 19 );
 add_filter( 'aioseo_canonical_url', 'gstore_product_taxonomy_canonical_url_for_seo_plugins', 19 );
+
+/**
+ * Retorna a pagina de produtos solicitada via query param controlado.
+ *
+ * @return int
+ */
+function gstore_get_catalog_product_page_request() {
+	$page = isset( $_GET['product-page'] ) ? absint( wp_unslash( $_GET['product-page'] ) ) : 0; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+
+	return max( 1, $page );
+}
+
+/**
+ * Indica se a pagina atual pode usar URLs limpas /page/N/ para paginacao.
+ *
+ * @return bool
+ */
+function gstore_should_use_clean_catalog_pagination_urls() {
+	if ( ! function_exists( 'is_shop' ) || ( ! is_shop() && ( ! function_exists( 'is_product_taxonomy' ) || ! is_product_taxonomy() ) ) ) {
+		return false;
+	}
+
+	foreach ( array_keys( (array) $_GET ) as $key ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$key = sanitize_key( (string) $key );
+		if ( '' === $key ) {
+			continue;
+		}
+
+		return false;
+	}
+
+	return true;
+}
+
+/**
+ * Faz archives do catalogo aceitarem ?product-page=N como pagina da query principal.
+ *
+ * O WooCommerce/WordPress estava gerando links de paginacao quebrados em archives
+ * renderizados pelo legacy-template do block theme. Usamos um parametro proprio para
+ * manter filtros como URLs operacionais noindex e evitar a rota /page/N sequestrada
+ * por redirects legados.
+ *
+ * @param WP_Query $query Query atual.
+ */
+function gstore_apply_catalog_product_page_to_main_query( $query ) {
+	if ( is_admin() || ! ( $query instanceof WP_Query ) || ! $query->is_main_query() ) {
+		return;
+	}
+
+	$page = gstore_get_catalog_product_page_request();
+	if ( $page <= 1 ) {
+		return;
+	}
+
+	$is_product_archive = false;
+	if ( method_exists( $query, 'is_post_type_archive' ) && $query->is_post_type_archive( 'product' ) ) {
+		$is_product_archive = true;
+	}
+	if ( method_exists( $query, 'is_tax' ) && $query->is_tax( gstore_get_public_product_taxonomies() ) ) {
+		$is_product_archive = true;
+	}
+
+	if ( ! $is_product_archive ) {
+		return;
+	}
+
+	$query->set( 'paged', $page );
+}
+add_action( 'pre_get_posts', 'gstore_apply_catalog_product_page_to_main_query', 9 );
+
+/**
+ * Monta a URL base da paginacao do catalogo preservando filtros operacionais.
+ *
+ * @return string
+ */
+function gstore_get_catalog_pagination_base_url() {
+	$base_url = '';
+	$queried  = get_queried_object();
+
+	if ( $queried instanceof WP_Term && in_array( $queried->taxonomy, gstore_get_public_product_taxonomies(), true ) ) {
+		$link = get_term_link( $queried, $queried->taxonomy );
+		if ( ! is_wp_error( $link ) && is_string( $link ) && '' !== $link ) {
+			$base_url = $link;
+		}
+	}
+
+	if ( '' === $base_url && function_exists( 'is_shop' ) && is_shop() && function_exists( 'wc_get_page_permalink' ) ) {
+		$shop_url = wc_get_page_permalink( 'shop' );
+		if ( is_string( $shop_url ) && '' !== $shop_url && ! is_wp_error( $shop_url ) ) {
+			$base_url = $shop_url;
+		}
+	}
+
+	if ( '' === $base_url && $queried instanceof WP_Post ) {
+		$permalink = get_permalink( $queried->ID );
+		if ( is_string( $permalink ) && '' !== $permalink ) {
+			$base_url = $permalink;
+		}
+	}
+
+	if ( '' === $base_url ) {
+		$request_uri = isset( $_SERVER['REQUEST_URI'] ) ? (string) wp_unslash( $_SERVER['REQUEST_URI'] ) : '';
+		$path        = $request_uri ? (string) wp_parse_url( $request_uri, PHP_URL_PATH ) : '';
+		$base_url    = $path ? home_url( $path ) : home_url( '/' );
+	}
+
+	$args = array();
+	foreach ( (array) $_GET as $key => $value ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$key = sanitize_key( (string) $key );
+		if ( '' === $key || in_array( $key, array( 'product-page', 'paged', 'page', 'add-to-cart' ), true ) ) {
+			continue;
+		}
+
+		if ( is_array( $value ) ) {
+			$args[ $key ] = array_map(
+				static function ( $item ) {
+					return sanitize_text_field( wp_unslash( $item ) );
+				},
+				$value
+			);
+			continue;
+		}
+
+		$args[ $key ] = sanitize_text_field( wp_unslash( $value ) );
+	}
+
+	return empty( $args ) ? $base_url : add_query_arg( $args, $base_url );
+}
+
+/**
+ * Paginacao propria para archives do catalogo.
+ */
+function gstore_catalog_pagination() {
+	if ( function_exists( 'gstore_is_catalog_context' ) && ! gstore_is_catalog_context() ) {
+		return;
+	}
+
+	if ( ! function_exists( 'wc_get_loop_prop' ) || ! wc_get_loop_prop( 'is_paginated' ) || ! function_exists( 'woocommerce_products_will_display' ) || ! woocommerce_products_will_display() ) {
+		return;
+	}
+
+	$total = (int) wc_get_loop_prop( 'total_pages' );
+	if ( $total <= 1 ) {
+		return;
+	}
+
+	$current = max(
+		1,
+		gstore_get_catalog_product_page_request(),
+		absint( wc_get_loop_prop( 'current_page' ) ),
+		absint( get_query_var( 'paged' ) )
+	);
+
+	$base_url    = gstore_get_catalog_pagination_base_url();
+	$placeholder = 'GSTORE_PAGE_NUMBER';
+	$raw_base    = gstore_should_use_clean_catalog_pagination_urls()
+		? user_trailingslashit( trailingslashit( $base_url ) . 'page/' . $placeholder, 'paged' )
+		: add_query_arg( 'product-page', $placeholder, $base_url );
+	$base        = str_replace( $placeholder, '%#%', esc_url_raw( $raw_base ) );
+
+	$links = paginate_links(
+		apply_filters(
+			'gstore_catalog_pagination_args',
+			array(
+				'base'      => $base,
+				'format'    => '',
+				'add_args'  => false,
+				'current'   => $current,
+				'total'     => $total,
+				'prev_text' => is_rtl() ? '&rarr;' : '&larr;',
+				'next_text' => is_rtl() ? '&larr;' : '&rarr;',
+				'type'      => 'list',
+				'end_size'  => 3,
+				'mid_size'  => 3,
+			)
+		)
+	);
+
+	if ( ! is_string( $links ) || '' === $links ) {
+		return;
+	}
+
+	$first_page_url      = esc_url( $base_url );
+	$first_page_url_raw  = str_replace( $placeholder, '1', $raw_base );
+	$first_page_url_html = esc_url( $first_page_url_raw );
+	$links               = str_replace(
+		array( $first_page_url_html, str_replace( '&', '&#038;', $first_page_url_html ) ),
+		$first_page_url,
+		$links
+	);
+
+	echo '<nav class="woocommerce-pagination" aria-label="' . esc_attr__( 'Paginacao de produtos', 'gstore' ) . '">';
+	echo wp_kses_post( $links );
+	echo '</nav>';
+}
+
+/**
+ * Substitui a paginacao padrao do WooCommerce por uma versao estavel no catalogo.
+ */
+function gstore_replace_woocommerce_catalog_pagination() {
+	if ( function_exists( 'gstore_is_catalog_context' ) && ! gstore_is_catalog_context() ) {
+		return;
+	}
+
+	if ( function_exists( 'woocommerce_pagination' ) ) {
+		remove_action( 'woocommerce_after_shop_loop', 'woocommerce_pagination', 10 );
+	}
+
+	add_action( 'woocommerce_after_shop_loop', 'gstore_catalog_pagination', 10 );
+}
+add_action( 'wp', 'gstore_replace_woocommerce_catalog_pagination', 20 );
 
 /**
  * Fallback de canonical quando nao ha plugin SEO imprimindo em taxonomias.
