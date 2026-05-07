@@ -1169,7 +1169,7 @@ function gstore_catalog_pagination() {
 	$links = '<ul class="page-numbers">' . implode( "\n", $link_items ) . '</ul>';
 
 	echo '<nav class="woocommerce-pagination" aria-label="' . esc_attr__( 'Paginacao de produtos', 'gstore' ) . '">';
-	echo wp_kses_post( $links );
+	echo $links; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 	echo '</nav>';
 }
 

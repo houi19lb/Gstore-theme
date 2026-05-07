@@ -231,7 +231,7 @@ if ( ! function_exists( 'gstore_home_blog_v1_render' ) ) {
 			.gstore-hb-v1 .hb-cover {
 				margin-top: var(--gstore-spacing-3, 12px);
 				width: 100%;
-				aspect-ratio: 3 / 1;
+				aspect-ratio: 2 / 1;
 				overflow: hidden;
 				border: 1px solid var(--hb-border);
 				border-radius: var(--hb-radius);
@@ -381,7 +381,7 @@ if ( ! function_exists( 'gstore_home_blog_v1_render' ) ) {
 					padding: var(--gstore-spacing-3, 12px);
 				}
 				.gstore-hb-v1 .hb-cover {
-					aspect-ratio: 3 / 1;
+					aspect-ratio: 2 / 1;
 				}
 				/* No mobile, iguala o card destaque aos cards secundários */
 				.gstore-hb-v1 .hb-grid > .hb-card:first-child .hb-pill,
