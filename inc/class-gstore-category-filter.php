@@ -180,6 +180,7 @@ class GStore_Category_Filter {
 	 */
 	public function render_filter_html() {
 		$categories       = $this->get_category_tree();
+		$brands           = $this->get_brand_nodes();
 		$scope_term       = $this->get_scope_term();
 		$is_ofertas       = $this->is_ofertas_page();
 		$context_nav      = $scope_term ? $this->get_context_category_navigation( $scope_term ) : array( 'title' => '', 'nodes' => array() );
@@ -190,7 +191,7 @@ class GStore_Category_Filter {
 		?>
 		<div class="gstore-category-filter" id="gstore-category-filter">
 			<div class="gstore-category-filter__search-wrapper">
-				<input type="text" class="gstore-category-filter__search" placeholder="Buscar categoria..." aria-label="Buscar categoria">
+				<input type="text" class="gstore-category-filter__search" placeholder="Buscar categoria ou marca..." aria-label="Buscar categoria ou marca">
 				<svg class="gstore-category-filter__search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
 					<circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>
 				</svg>
@@ -228,6 +229,19 @@ class GStore_Category_Filter {
 					<div class="gstore-category-filter__tree-container gstore-category-filter__tree-container--context">
 						<ul class="gstore-category-filter__tree gstore-category-filter__tree--context">
 							<?php $this->render_tree_level( $context_nav['nodes'] ); ?>
+						</ul>
+					</div>
+				</div>
+			<?php endif; ?>
+
+			<?php if ( ! empty( $brands ) ) : ?>
+				<div class="gstore-category-filter__nav-section gstore-category-filter__nav-section--brands">
+					<div class="gstore-category-filter__section-title">
+						<?php esc_html_e( 'Marcas', 'gstore' ); ?>
+					</div>
+					<div class="gstore-category-filter__tree-container gstore-category-filter__tree-container--brands">
+						<ul class="gstore-category-filter__tree gstore-category-filter__tree--brands">
+							<?php $this->render_tree_level( $brands ); ?>
 						</ul>
 					</div>
 				</div>
@@ -487,6 +501,59 @@ class GStore_Category_Filter {
 	}
 
 	/**
+	 * Retorna as marcas de produto como uma lista plana para a lateral do catalogo.
+	 *
+	 * @return array<int,object>
+	 */
+	private function get_brand_nodes() {
+		if ( ! taxonomy_exists( 'product_brand' ) ) {
+			return array();
+		}
+
+		$terms = get_terms(
+			array(
+				'taxonomy'   => 'product_brand',
+				'hide_empty' => true,
+				'orderby'    => 'name',
+				'order'      => 'ASC',
+			)
+		);
+
+		if ( is_wp_error( $terms ) || empty( $terms ) ) {
+			return array();
+		}
+
+		$current_brand = $this->get_current_product_brand_term();
+		$nodes         = array();
+
+		foreach ( $terms as $term ) {
+			if ( ! $term instanceof \WP_Term ) {
+				continue;
+			}
+
+			$link = get_term_link( $term, 'product_brand' );
+			if ( is_wp_error( $link ) || ! is_string( $link ) || '' === $link ) {
+				continue;
+			}
+
+			$nodes[] = (object) array(
+				'id'                  => (int) $term->term_id,
+				'name'                => $term->name,
+				'slug'                => $term->slug,
+				'parent'              => 0,
+				'count'               => (int) $term->count,
+				'url'                 => $link,
+				'is_current'          => $current_brand instanceof \WP_Term && (int) $current_brand->term_id === (int) $term->term_id,
+				'is_current_ancestor' => false,
+				'sort_order'          => 0,
+				'children'            => array(),
+			);
+		}
+
+		return $nodes;
+	}
+
+	/**
 	 * Retorna URL limpa do archive nativo da categoria.
 	 *
 	 * @param \WP_Term $term Termo.
@@ -517,6 +584,20 @@ class GStore_Category_Filter {
 
 		$term = get_queried_object();
 		return $term instanceof \WP_Term && 'product_cat' === $term->taxonomy ? $term : null;
+	}
+
+	/**
+	 * Retorna a marca atual quando a tela e um archive product_brand.
+	 *
+	 * @return \WP_Term|null
+	 */
+	private function get_current_product_brand_term() {
+		if ( ! function_exists( 'is_tax' ) || ! is_tax( 'product_brand' ) ) {
+			return null;
+		}
+
+		$term = get_queried_object();
+		return $term instanceof \WP_Term && 'product_brand' === $term->taxonomy ? $term : null;
 	}
 
 	/**
