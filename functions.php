@@ -383,6 +383,424 @@ function gstore_get_catalog_url() {
 }
 
 /**
+ * Retorna o nome publico da loja para textos de SEO sem fixar uma marca no tema.
+ *
+ * @return string
+ */
+function gstore_get_store_display_name_for_seo() {
+	$store_name = function_exists( 'gstore_get_store_name' ) ? gstore_get_store_name( 'display' ) : get_bloginfo( 'name' );
+	$store_name = trim( wp_strip_all_tags( (string) $store_name ) );
+
+	if ( '' === $store_name ) {
+		$store_name = trim( wp_strip_all_tags( (string) get_bloginfo( 'name' ) ) );
+	}
+
+	return '' !== $store_name ? $store_name : __( 'loja', 'gstore' );
+}
+
+/**
+ * Indica se a pagina atual e a landing geral /catalogo/.
+ *
+ * @return bool
+ */
+function gstore_is_catalog_landing_page() {
+	return ! is_admin() && function_exists( 'is_page' ) && is_page( 'catalogo' );
+}
+
+/**
+ * Titulo SEO da pagina-mae do catalogo.
+ *
+ * @return string
+ */
+function gstore_get_catalog_landing_seo_title() {
+	return sprintf(
+		__( 'Catálogo: Armas, Munições, Airsoft e Acessórios | %s', 'gstore' ),
+		gstore_get_store_display_name_for_seo()
+	);
+}
+
+/**
+ * Meta description da pagina-mae do catalogo.
+ *
+ * @return string
+ */
+function gstore_get_catalog_landing_meta_description() {
+	return sprintf(
+		__( 'Explore o catálogo da loja %s com armas de fogo, munições, airsoft, carabinas de pressão, acessórios e itens outdoor. Filtre por marca e categoria.', 'gstore' ),
+		gstore_get_store_display_name_for_seo()
+	);
+}
+
+/**
+ * Texto de topo da pagina-mae do catalogo.
+ *
+ * @return string
+ */
+function gstore_get_catalog_landing_intro_text() {
+	return sprintf(
+		__( 'No catálogo da loja %s, você encontra produtos para tiro esportivo, uso profissional, airsoft, pressão e outdoor, incluindo armas de fogo, munições, pistolas, revólveres, espingardas, carabinas, rifles, carabinas de pressão, acessórios, coldres, lanternas e vestuário. Use os filtros para buscar por marca, categoria, calibre e faixa de preço. Produtos controlados são vendidos apenas mediante documentação, autorização e requisitos legais aplicáveis.', 'gstore' ),
+		gstore_get_store_display_name_for_seo()
+	);
+}
+
+/**
+ * Texto alternativo padrao da imagem SEO do catalogo.
+ *
+ * @return string
+ */
+function gstore_get_catalog_landing_image_alt() {
+	return sprintf(
+		__( 'Catálogo da loja %s com armas, munições, airsoft e acessórios', 'gstore' ),
+		gstore_get_store_display_name_for_seo()
+	);
+}
+
+/**
+ * Shortcode do bloco introdutorio do catalogo.
+ *
+ * @return string
+ */
+function gstore_catalog_intro_shortcode() {
+	$text = gstore_get_catalog_landing_intro_text();
+	if ( '' === trim( $text ) ) {
+		return '';
+	}
+
+	return '<section class="Gstore-catalog-seo-intro" aria-label="' . esc_attr__( 'Resumo do catálogo', 'gstore' ) . '"><p>' . esc_html( $text ) . '</p></section>';
+}
+add_shortcode( 'gstore_catalog_intro', 'gstore_catalog_intro_shortcode' );
+
+/**
+ * Aplica o titulo SEO dinamico no catalogo sem depender do nome de uma loja especifica.
+ *
+ * @param string $title Titulo original.
+ * @return string
+ */
+function gstore_catalog_landing_pre_get_document_title( $title ) {
+	return gstore_is_catalog_landing_page() ? gstore_get_catalog_landing_seo_title() : $title;
+}
+add_filter( 'pre_get_document_title', 'gstore_catalog_landing_pre_get_document_title', 30 );
+
+/**
+ * Compatibilidade com plugins SEO para o titulo do catalogo.
+ *
+ * @param string $title Titulo original.
+ * @return string
+ */
+function gstore_catalog_landing_seo_plugin_title( $title ) {
+	return gstore_is_catalog_landing_page() ? gstore_get_catalog_landing_seo_title() : $title;
+}
+add_filter( 'wpseo_title', 'gstore_catalog_landing_seo_plugin_title', 30 );
+add_filter( 'rank_math/frontend/title', 'gstore_catalog_landing_seo_plugin_title', 30 );
+
+/**
+ * Imprime meta description da landing de catalogo quando nao houver plugin SEO assumindo.
+ */
+function gstore_catalog_landing_meta_description_tag() {
+	if ( ! gstore_is_catalog_landing_page() || defined( 'WPSEO_VERSION' ) || defined( 'RANK_MATH_VERSION' ) || defined( 'AIOSEO_VERSION' ) ) {
+		return;
+	}
+
+	echo '<meta name="description" content="' . esc_attr( gstore_get_catalog_landing_meta_description() ) . '" />' . "\n";
+}
+add_action( 'wp_head', 'gstore_catalog_landing_meta_description_tag', 1 );
+
+/**
+ * Compatibilidade com plugins SEO para a description do catalogo.
+ *
+ * @param string $description Description original.
+ * @return string
+ */
+function gstore_catalog_landing_seo_plugin_description( $description ) {
+	return gstore_is_catalog_landing_page() ? gstore_get_catalog_landing_meta_description() : $description;
+}
+add_filter( 'wpseo_metadesc', 'gstore_catalog_landing_seo_plugin_description', 30 );
+add_filter( 'rank_math/frontend/description', 'gstore_catalog_landing_seo_plugin_description', 30 );
+add_filter( 'aioseo_description', 'gstore_catalog_landing_seo_plugin_description', 30 );
+
+/**
+ * Retorna uma imagem de produto para representar o catalogo geral em SEO/social.
+ *
+ * @return int
+ */
+function gstore_get_catalog_landing_product_image_id() {
+	static $image_id = null;
+
+	if ( null !== $image_id ) {
+		return (int) $image_id;
+	}
+
+	$image_id    = 0;
+	$product_ids = get_posts(
+		array(
+			'post_type'              => 'product',
+			'post_status'            => 'publish',
+			'fields'                 => 'ids',
+			'posts_per_page'         => 24,
+			'orderby'                => 'meta_value_num',
+			'meta_key'               => 'total_sales',
+			'order'                  => 'DESC',
+			'no_found_rows'          => true,
+			'ignore_sticky_posts'    => true,
+			'update_post_meta_cache' => false,
+			'update_post_term_cache' => false,
+			'meta_query'             => array(
+				array(
+					'key'     => '_thumbnail_id',
+					'compare' => 'EXISTS',
+				),
+			),
+		)
+	);
+
+	foreach ( array_map( 'absint', (array) $product_ids ) as $product_id ) {
+		$candidate_id = absint( get_post_thumbnail_id( $product_id ) );
+		if ( $candidate_id > 0 && 'attachment' === get_post_type( $candidate_id ) && wp_attachment_is_image( $candidate_id ) ) {
+			$image_id = $candidate_id;
+			break;
+		}
+	}
+
+	return (int) $image_id;
+}
+
+/**
+ * Retorna os dados da imagem SEO do catalogo.
+ *
+ * @return array<string,mixed>
+ */
+function gstore_get_catalog_landing_seo_image() {
+	$image_id = gstore_get_catalog_landing_product_image_id();
+	if ( $image_id <= 0 ) {
+		return array();
+	}
+
+	$image = wp_get_attachment_image_src( $image_id, 'large' );
+	if ( ! is_array( $image ) || empty( $image[0] ) ) {
+		return array();
+	}
+
+	return array(
+		'id'     => $image_id,
+		'url'    => esc_url_raw( $image[0] ),
+		'width'  => isset( $image[1] ) ? absint( $image[1] ) : 0,
+		'height' => isset( $image[2] ) ? absint( $image[2] ) : 0,
+		'type'   => (string) get_post_mime_type( $image_id ),
+		'alt'    => gstore_get_catalog_landing_image_alt(),
+	);
+}
+
+/**
+ * Compatibilidade com plugins SEO para imagem Open Graph do catalogo.
+ *
+ * @param string $image_url URL original.
+ * @return string
+ */
+function gstore_catalog_landing_seo_image_url( $image_url = '' ) {
+	$image = gstore_is_catalog_landing_page() ? gstore_get_catalog_landing_seo_image() : array();
+	return ! empty( $image['url'] ) ? (string) $image['url'] : $image_url;
+}
+add_filter( 'wpseo_opengraph_image', 'gstore_catalog_landing_seo_image_url', 25 );
+add_filter( 'rank_math/opengraph/facebook/image', 'gstore_catalog_landing_seo_image_url', 25 );
+
+/**
+ * Compatibilidade com plugins SEO para alt da imagem Open Graph do catalogo.
+ *
+ * @param string $alt Alt original.
+ * @return string
+ */
+function gstore_catalog_landing_seo_image_alt( $alt = '' ) {
+	return gstore_is_catalog_landing_page() ? gstore_get_catalog_landing_image_alt() : $alt;
+}
+add_filter( 'wpseo_opengraph_image_alt', 'gstore_catalog_landing_seo_image_alt', 25 );
+
+/**
+ * Imprime metadados de imagem para a pagina-mae do catalogo.
+ */
+function gstore_print_catalog_landing_seo_image_meta() {
+	if ( ! gstore_is_catalog_landing_page() || gstore_has_catalog_non_pagination_operational_query() ) {
+		return;
+	}
+
+	$image = gstore_get_catalog_landing_seo_image();
+	if ( empty( $image['url'] ) ) {
+		return;
+	}
+
+	$url    = (string) $image['url'];
+	$alt    = ! empty( $image['alt'] ) ? (string) $image['alt'] : '';
+	$type   = ! empty( $image['type'] ) ? (string) $image['type'] : '';
+	$width  = ! empty( $image['width'] ) ? absint( $image['width'] ) : 0;
+	$height = ! empty( $image['height'] ) ? absint( $image['height'] ) : 0;
+
+	echo '<link rel="image_src" href="' . esc_url( $url ) . '" />' . "\n";
+	echo '<meta property="og:image" content="' . esc_url( $url ) . '" />' . "\n";
+	echo '<meta property="og:image:secure_url" content="' . esc_url( $url ) . '" />' . "\n";
+	if ( $type ) {
+		echo '<meta property="og:image:type" content="' . esc_attr( $type ) . '" />' . "\n";
+	}
+	if ( $width > 0 ) {
+		echo '<meta property="og:image:width" content="' . esc_attr( (string) $width ) . '" />' . "\n";
+	}
+	if ( $height > 0 ) {
+		echo '<meta property="og:image:height" content="' . esc_attr( (string) $height ) . '" />' . "\n";
+	}
+	if ( $alt ) {
+		echo '<meta property="og:image:alt" content="' . esc_attr( $alt ) . '" />' . "\n";
+	}
+}
+add_action( 'wp_head', 'gstore_print_catalog_landing_seo_image_meta', 5 );
+
+/**
+ * Monta um ItemList simples com produtos visiveis na pagina do catalogo.
+ *
+ * @param string $page_url URL canonica da pagina.
+ * @return array<string,mixed>
+ */
+function gstore_get_catalog_landing_item_list_schema( $page_url ) {
+	$page     = gstore_get_catalog_product_page_request();
+	$per_page = 15;
+	$offset   = max( 0, ( $page - 1 ) * $per_page );
+	$products = get_posts(
+		array(
+			'post_type'              => 'product',
+			'post_status'            => 'publish',
+			'fields'                 => 'ids',
+			'posts_per_page'         => $per_page,
+			'offset'                 => $offset,
+			'orderby'                => 'meta_value_num',
+			'meta_key'               => 'total_sales',
+			'order'                  => 'DESC',
+			'no_found_rows'          => true,
+			'ignore_sticky_posts'    => true,
+			'update_post_meta_cache' => false,
+			'update_post_term_cache' => false,
+		)
+	);
+
+	$items = array();
+	foreach ( array_map( 'absint', (array) $products ) as $index => $product_id ) {
+		$permalink = get_permalink( $product_id );
+		if ( ! is_string( $permalink ) || '' === $permalink ) {
+			continue;
+		}
+
+		$product = array(
+			'@type' => 'Product',
+			'@id'   => trailingslashit( $permalink ) . '#product',
+			'url'   => esc_url_raw( $permalink ),
+			'name'  => get_the_title( $product_id ),
+		);
+
+		$image_url = get_the_post_thumbnail_url( $product_id, 'large' );
+		if ( is_string( $image_url ) && '' !== $image_url ) {
+			$product['image'] = esc_url_raw( $image_url );
+		}
+
+		$items[] = array(
+			'@type'    => 'ListItem',
+			'position' => $offset + $index + 1,
+			'item'     => $product,
+		);
+	}
+
+	if ( empty( $items ) ) {
+		return array();
+	}
+
+	return array(
+		'@type'           => 'ItemList',
+		'@id'             => trailingslashit( $page_url ) . '#itemlist',
+		'itemListOrder'   => 'https://schema.org/ItemListOrderDescending',
+		'numberOfItems'   => count( $items ),
+		'itemListElement' => $items,
+	);
+}
+
+/**
+ * Imprime CollectionPage, BreadcrumbList e ItemList da pagina-mae do catalogo.
+ */
+function gstore_print_catalog_landing_schema() {
+	if ( ! gstore_is_catalog_landing_page() || gstore_has_catalog_non_pagination_operational_query() ) {
+		return;
+	}
+
+	$page_url = gstore_get_catalog_landing_canonical_url( gstore_get_catalog_url() );
+	$site_url = home_url( '/' );
+	$site_id  = trailingslashit( $site_url ) . '#website';
+	$page_id  = trailingslashit( $page_url ) . '#webpage';
+	$image    = gstore_get_catalog_landing_seo_image();
+
+	$collection_page = array(
+		'@type'        => 'CollectionPage',
+		'@id'          => $page_id,
+		'url'          => $page_url,
+		'name'         => gstore_get_catalog_landing_seo_title(),
+		'headline'     => __( 'Catálogo de Produtos', 'gstore' ),
+		'description'  => gstore_get_catalog_landing_meta_description(),
+		'isPartOf'     => array(
+			'@id' => $site_id,
+		),
+		'inLanguage'   => (string) get_bloginfo( 'language' ),
+		'breadcrumb'   => array(
+			'@id' => trailingslashit( $page_url ) . '#breadcrumb',
+		),
+	);
+
+	if ( ! empty( $image['url'] ) ) {
+		$collection_page['primaryImageOfPage'] = array(
+			'@type'   => 'ImageObject',
+			'url'     => (string) $image['url'],
+			'caption' => ! empty( $image['alt'] ) ? (string) $image['alt'] : '',
+		);
+	}
+
+	$item_list = gstore_get_catalog_landing_item_list_schema( $page_url );
+	if ( ! empty( $item_list ) ) {
+		$collection_page['mainEntity'] = array(
+			'@id' => $item_list['@id'],
+		);
+	}
+
+	$graph = array(
+		array(
+			'@type' => 'WebSite',
+			'@id'   => $site_id,
+			'url'   => $site_url,
+			'name'  => gstore_get_store_display_name_for_seo(),
+		),
+		$collection_page,
+		array(
+			'@type'           => 'BreadcrumbList',
+			'@id'             => trailingslashit( $page_url ) . '#breadcrumb',
+			'itemListElement' => array(
+				array(
+					'@type'    => 'ListItem',
+					'position' => 1,
+					'name'     => __( 'Início', 'gstore' ),
+					'item'     => $site_url,
+				),
+				array(
+					'@type'    => 'ListItem',
+					'position' => 2,
+					'name'     => __( 'Catálogo', 'gstore' ),
+					'item'     => $page_url,
+				),
+			),
+		),
+	);
+
+	if ( ! empty( $item_list ) ) {
+		$graph[] = $item_list;
+	}
+
+	echo '<script type="application/ld+json" id="gstore-catalog-landing-schema">'
+		. wp_json_encode( array( '@context' => 'https://schema.org', '@graph' => $graph ), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES )
+		. '</script>' . "\n";
+}
+add_action( 'wp_head', 'gstore_print_catalog_landing_schema', 30 );
+
+/**
  * Resolve um termo product_cat por slug e retorna seu link nativo.
  *
  * @param string $slug Slug do termo.
@@ -693,6 +1111,31 @@ function gstore_is_catalog_operational_query_key( $key ) {
 }
 
 /**
+ * Query vars que representam apenas paginacao rastreavel do catalogo.
+ *
+ * @param string $key Query var.
+ * @return bool
+ */
+function gstore_is_catalog_pagination_query_key( $key ) {
+	return in_array( sanitize_key( (string) $key ), array( 'product-page', 'paged', 'page' ), true );
+}
+
+/**
+ * Indica se a requisicao atual tem filtros, ordenacao ou busca alem de paginacao.
+ *
+ * @return bool
+ */
+function gstore_has_catalog_non_pagination_operational_query() {
+	foreach ( array_keys( (array) $_GET ) as $key ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		if ( gstore_is_catalog_operational_query_key( $key ) && ! gstore_is_catalog_pagination_query_key( $key ) ) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
+/**
  * Indica se a URL atual e uma pagina de catalogo ou filtro que nao deve indexar.
  *
  * @return bool
@@ -710,15 +1153,7 @@ function gstore_should_noindex_catalog_request() {
 		return true;
 	}
 
-	$has_filter_query = false;
-	foreach ( array_keys( (array) $_GET ) as $key ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-		if ( gstore_is_catalog_operational_query_key( $key ) ) {
-			$has_filter_query = true;
-			break;
-		}
-	}
-
-	if ( ! $has_filter_query ) {
+	if ( ! gstore_has_catalog_non_pagination_operational_query() ) {
 		return false;
 	}
 
@@ -849,6 +1284,10 @@ add_filter( 'rank_math/sitemap/entry', 'gstore_filter_product_term_sitemap_entry
  * Fallback para ambientes em que o plugin SEO nao fornece filtro publico.
  */
 function gstore_catalog_print_noindex_fallback() {
+	if ( function_exists( 'wp_robots' ) || defined( 'WPSEO_VERSION' ) || defined( 'RANK_MATH_VERSION' ) || defined( 'AIOSEO_VERSION' ) ) {
+		return;
+	}
+
 	if ( ! gstore_should_noindex_catalog_request() ) {
 		return;
 	}
@@ -907,6 +1346,41 @@ function gstore_get_catalog_query_canonical_url( $canonical_url, $post = null ) 
 }
 
 /**
+ * Retorna canonical proprio da landing do catalogo, preservando paginas paginadas.
+ *
+ * @param string $canonical_url Canonical original.
+ * @return string
+ */
+function gstore_get_catalog_landing_canonical_url( $canonical_url = '' ) {
+	if ( ! gstore_is_catalog_landing_page() ) {
+		return $canonical_url;
+	}
+
+	if ( gstore_has_catalog_non_pagination_operational_query() ) {
+		return gstore_get_catalog_url();
+	}
+
+	$page = gstore_get_catalog_product_page_request();
+	if ( $page > 1 ) {
+		return add_query_arg( 'product-page', $page, gstore_get_catalog_url() );
+	}
+
+	return gstore_get_catalog_url();
+}
+
+/**
+ * Canonical da landing /catalogo/ com paginação indexavel.
+ *
+ * @param string       $canonical_url URL canonica original.
+ * @param WP_Post|null $post          Post atual.
+ * @return string
+ */
+function gstore_catalog_landing_canonical_url( $canonical_url, $post = null ) {
+	return gstore_get_catalog_landing_canonical_url( $canonical_url );
+}
+add_filter( 'get_canonical_url', 'gstore_catalog_landing_canonical_url', 21, 2 );
+
+/**
  * Compatibilidade com canonical de plugins SEO.
  *
  * @param string $canonical_url URL canonica.
@@ -922,6 +1396,19 @@ function gstore_catalog_query_canonical_url_for_seo_plugins( $canonical_url ) {
 }
 add_filter( 'wpseo_canonical', 'gstore_catalog_query_canonical_url_for_seo_plugins', 20 );
 add_filter( 'rank_math/frontend/canonical', 'gstore_catalog_query_canonical_url_for_seo_plugins', 20 );
+
+/**
+ * Compatibilidade com plugins SEO para canonical da landing /catalogo/.
+ *
+ * @param string $canonical_url Canonical original.
+ * @return string
+ */
+function gstore_catalog_landing_canonical_url_for_seo_plugins( $canonical_url ) {
+	return gstore_get_catalog_landing_canonical_url( $canonical_url );
+}
+add_filter( 'wpseo_canonical', 'gstore_catalog_landing_canonical_url_for_seo_plugins', 21 );
+add_filter( 'rank_math/frontend/canonical', 'gstore_catalog_landing_canonical_url_for_seo_plugins', 21 );
+add_filter( 'aioseo_canonical_url', 'gstore_catalog_landing_canonical_url_for_seo_plugins', 21 );
 
 /**
  * Retorna a URL canonica para archives publicos de taxonomias de produto.
@@ -8336,6 +8823,29 @@ function gstore_redirect_loja_to_catalogo() {
 add_action( 'template_redirect', 'gstore_redirect_loja_to_catalogo', 1 );
 
 /**
+ * Redireciona o indice vazio de marcas para o catalogo.
+ *
+ * Mantem archives reais como /marca/cbc/ intactos.
+ */
+function gstore_redirect_brand_index_to_catalogo() {
+	if ( is_admin() || wp_doing_ajax() || wp_doing_cron() ) {
+		return;
+	}
+
+	$request_uri = isset( $_SERVER['REQUEST_URI'] ) ? (string) wp_unslash( $_SERVER['REQUEST_URI'] ) : '';
+	$path        = $request_uri ? (string) wp_parse_url( $request_uri, PHP_URL_PATH ) : '';
+	$path        = trim( rawurldecode( (string) $path ), '/' );
+
+	if ( 'marca' !== $path ) {
+		return;
+	}
+
+	wp_safe_redirect( gstore_get_catalog_url(), 301 );
+	exit;
+}
+add_action( 'template_redirect', 'gstore_redirect_brand_index_to_catalogo', 1 );
+
+/**
  * Altera a URL do botão "Return to shop" para apontar para o catálogo.
  *
  * @param string $url URL original do botão.
@@ -12226,77 +12736,244 @@ function gstore_get_catalog_archive_brand_image_id( $term = null ) {
 }
 
 /**
- * Gera iniciais curtas para marcas sem imagem.
+ * Retorna uma imagem de produto da marca para fallback SEO.
  *
- * @param string $name Nome da marca.
- * @return string
+ * @param mixed $term Termo opcional.
+ * @return int
  */
-function gstore_get_catalog_archive_brand_initials( $name ) {
-	$name  = html_entity_decode( wp_strip_all_tags( (string) $name ), ENT_QUOTES, get_bloginfo( 'charset' ) );
-	$words = preg_split( '/\s+/u', trim( $name ), -1, PREG_SPLIT_NO_EMPTY );
-
-	if ( ! is_array( $words ) || empty( $words ) ) {
-		return '';
+function gstore_get_catalog_archive_brand_product_image_id( $term = null ) {
+	$term = gstore_get_catalog_archive_brand_term( $term );
+	if ( ! $term ) {
+		return 0;
 	}
 
-	$letters = array();
-	foreach ( $words as $word ) {
-		$letter = function_exists( 'mb_substr' ) ? mb_substr( $word, 0, 1, 'UTF-8' ) : substr( $word, 0, 1 );
-		if ( '' !== $letter ) {
-			$letters[] = $letter;
+	static $cache = array();
+
+	$cache_key = $term->taxonomy . ':' . (int) $term->term_id;
+	if ( array_key_exists( $cache_key, $cache ) ) {
+		return (int) $cache[ $cache_key ];
+	}
+
+	$product_ids = get_posts(
+		array(
+			'post_type'              => 'product',
+			'post_status'            => 'publish',
+			'fields'                 => 'ids',
+			'posts_per_page'         => 16,
+			'orderby'                => 'date',
+			'order'                  => 'DESC',
+			'no_found_rows'          => true,
+			'ignore_sticky_posts'    => true,
+			'update_post_meta_cache' => false,
+			'update_post_term_cache' => false,
+			'tax_query'              => array(
+				array(
+					'taxonomy'         => $term->taxonomy,
+					'field'            => 'term_id',
+					'terms'            => array( (int) $term->term_id ),
+					'include_children' => is_taxonomy_hierarchical( $term->taxonomy ),
+				),
+			),
+		)
+	);
+
+	$image_id = 0;
+
+	foreach ( array_map( 'absint', (array) $product_ids ) as $product_id ) {
+		$candidate_ids = array( absint( get_post_thumbnail_id( $product_id ) ) );
+		$gallery       = get_post_meta( $product_id, '_product_image_gallery', true );
+
+		if ( is_string( $gallery ) && '' !== trim( $gallery ) ) {
+			$candidate_ids = array_merge(
+				$candidate_ids,
+				array_map( 'absint', explode( ',', $gallery ) )
+			);
 		}
-		if ( count( $letters ) >= 2 ) {
-			break;
+
+		foreach ( array_filter( $candidate_ids ) as $candidate_id ) {
+			if ( 'attachment' === get_post_type( $candidate_id ) && wp_attachment_is_image( $candidate_id ) ) {
+				$image_id = (int) $candidate_id;
+				break 2;
+			}
 		}
 	}
 
-	$initials = implode( '', $letters );
-	return function_exists( 'mb_strtoupper' ) ? mb_strtoupper( $initials, 'UTF-8' ) : strtoupper( $initials );
+	$cache[ $cache_key ] = $image_id;
+
+	return $image_id;
 }
 
 /**
- * Retorna o HTML da imagem/placeholder da marca no arquivo de produtos.
+ * Retorna a imagem SEO da marca: logo cadastrada ou produto vinculado.
  *
  * @param mixed $term Termo opcional.
- * @return string
+ * @return array<string,mixed>
  */
-function gstore_get_catalog_archive_brand_image_html( $term = null ) {
+function gstore_get_catalog_archive_brand_seo_image( $term = null ) {
 	$term = gstore_get_catalog_archive_brand_term( $term );
 	if ( ! $term ) {
-		return '';
+		return array();
 	}
 
 	$image_id = gstore_get_catalog_archive_brand_image_id( $term );
-	if ( $image_id > 0 ) {
-		$alt = trim( (string) get_post_meta( $image_id, '_wp_attachment_image_alt', true ) );
-		if ( '' === $alt ) {
-			$alt = $term->name;
-		}
+	$source   = 'brand';
 
-		$image = wp_get_attachment_image(
-			$image_id,
-			'thumbnail',
-			false,
-			array(
-				'class'    => 'Gstore-brand-archive-logo__image',
-				'alt'      => $alt,
-				'loading'  => 'eager',
-				'decoding' => 'async',
-			)
-		);
-
-		if ( $image ) {
-			return '<figure class="Gstore-brand-archive-logo">' . $image . '</figure>';
-		}
+	if ( $image_id <= 0 ) {
+		$image_id = gstore_get_catalog_archive_brand_product_image_id( $term );
+		$source   = 'product';
 	}
 
-	$initials = gstore_get_catalog_archive_brand_initials( $term->name );
-	if ( '' === $initials ) {
-		return '';
+	if ( $image_id <= 0 ) {
+		return array();
 	}
 
-	return '<span class="Gstore-brand-archive-logo Gstore-brand-archive-logo--fallback" aria-hidden="true">' . esc_html( $initials ) . '</span>';
+	$image = wp_get_attachment_image_src( $image_id, 'large' );
+	if ( ! is_array( $image ) || empty( $image[0] ) ) {
+		return array();
+	}
+
+	$store_name = function_exists( 'gstore_get_store_name' ) ? gstore_get_store_name( 'display' ) : get_bloginfo( 'name' );
+	$store_name = trim( wp_strip_all_tags( (string) $store_name ) );
+	if ( '' === $store_name ) {
+		$store_name = trim( wp_strip_all_tags( (string) get_bloginfo( 'name' ) ) );
+	}
+
+	$alt = sprintf(
+		__( 'Produtos %1$s disponíveis na %2$s', 'gstore' ),
+		$term->name,
+		$store_name
+	);
+
+	return array(
+		'id'     => $image_id,
+		'url'    => esc_url_raw( $image[0] ),
+		'width'  => isset( $image[1] ) ? absint( $image[1] ) : 0,
+		'height' => isset( $image[2] ) ? absint( $image[2] ) : 0,
+		'type'   => (string) get_post_mime_type( $image_id ),
+		'alt'    => $alt,
+		'source' => $source,
+		'term'   => $term,
+	);
 }
+
+/**
+ * Filtra a imagem Open Graph em plugins SEO.
+ *
+ * @param string $image_url URL original.
+ * @return string
+ */
+function gstore_catalog_brand_archive_seo_image_url( $image_url = '' ) {
+	$image = gstore_get_catalog_archive_brand_seo_image();
+	return ! empty( $image['url'] ) ? (string) $image['url'] : $image_url;
+}
+add_filter( 'wpseo_opengraph_image', 'gstore_catalog_brand_archive_seo_image_url', 20 );
+add_filter( 'rank_math/opengraph/facebook/image', 'gstore_catalog_brand_archive_seo_image_url', 20 );
+
+/**
+ * Filtra o texto alternativo da imagem social quando o plugin disponibilizar filtro.
+ *
+ * @param string $alt Texto original.
+ * @return string
+ */
+function gstore_catalog_brand_archive_seo_image_alt( $alt = '' ) {
+	$image = gstore_get_catalog_archive_brand_seo_image();
+	return ! empty( $image['alt'] ) ? (string) $image['alt'] : $alt;
+}
+add_filter( 'wpseo_opengraph_image_alt', 'gstore_catalog_brand_archive_seo_image_alt', 20 );
+
+/**
+ * Imprime metadados de imagem para marcas sem expor a miniatura no topo da pagina.
+ */
+function gstore_print_catalog_brand_archive_seo_image_meta() {
+	$image = gstore_get_catalog_archive_brand_seo_image();
+	if ( empty( $image['url'] ) ) {
+		return;
+	}
+
+	$url    = (string) $image['url'];
+	$alt    = ! empty( $image['alt'] ) ? (string) $image['alt'] : '';
+	$type   = ! empty( $image['type'] ) ? (string) $image['type'] : '';
+	$width  = ! empty( $image['width'] ) ? absint( $image['width'] ) : 0;
+	$height = ! empty( $image['height'] ) ? absint( $image['height'] ) : 0;
+
+	echo '<link rel="image_src" href="' . esc_url( $url ) . '" />' . "\n";
+	echo '<meta property="og:image" content="' . esc_url( $url ) . '" />' . "\n";
+	echo '<meta property="og:image:secure_url" content="' . esc_url( $url ) . '" />' . "\n";
+	if ( $type ) {
+		echo '<meta property="og:image:type" content="' . esc_attr( $type ) . '" />' . "\n";
+	}
+	if ( $width > 0 ) {
+		echo '<meta property="og:image:width" content="' . esc_attr( (string) $width ) . '" />' . "\n";
+	}
+	if ( $height > 0 ) {
+		echo '<meta property="og:image:height" content="' . esc_attr( (string) $height ) . '" />' . "\n";
+	}
+	if ( $alt ) {
+		echo '<meta property="og:image:alt" content="' . esc_attr( $alt ) . '" />' . "\n";
+	}
+}
+add_action( 'wp_head', 'gstore_print_catalog_brand_archive_seo_image_meta', 5 );
+
+/**
+ * Adiciona a imagem SEO da marca no schema WebPage do Yoast quando disponivel.
+ *
+ * @param array $data Dados originais.
+ * @return array
+ */
+function gstore_catalog_brand_archive_schema_image( $data ) {
+	$image = gstore_get_catalog_archive_brand_seo_image();
+	if ( empty( $image['url'] ) || ! is_array( $data ) ) {
+		return $data;
+	}
+
+	$data['primaryImageOfPage'] = array(
+		'@type'   => 'ImageObject',
+		'url'     => (string) $image['url'],
+		'caption' => ! empty( $image['alt'] ) ? (string) $image['alt'] : '',
+	);
+
+	return $data;
+}
+add_filter( 'wpseo_schema_webpage', 'gstore_catalog_brand_archive_schema_image', 20 );
+
+/**
+ * Schema leve complementar para a imagem SEO da marca.
+ */
+function gstore_print_catalog_brand_archive_image_schema() {
+	$image = gstore_get_catalog_archive_brand_seo_image();
+	if ( empty( $image['url'] ) || empty( $image['term'] ) || ! $image['term'] instanceof WP_Term ) {
+		return;
+	}
+
+	$term = $image['term'];
+	$url  = get_term_link( $term, $term->taxonomy );
+	if ( is_wp_error( $url ) || ! is_string( $url ) || '' === $url ) {
+		$url = '';
+	}
+
+	$schema = array(
+		'@context'           => 'https://schema.org',
+		'@type'              => 'CollectionPage',
+		'name'               => gstore_get_catalog_archive_title(),
+		'url'                => $url,
+		'primaryImageOfPage' => array(
+			'@type'   => 'ImageObject',
+			'url'     => (string) $image['url'],
+			'caption' => ! empty( $image['alt'] ) ? (string) $image['alt'] : '',
+		),
+		'about'              => array(
+			'@type' => 'Brand',
+			'name'  => $term->name,
+		),
+	);
+
+	if ( 'brand' === $image['source'] ) {
+		$schema['about']['logo'] = (string) $image['url'];
+	}
+
+	echo '<script type="application/ld+json">' . wp_json_encode( $schema, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES ) . '</script>' . "\n";
+}
+add_action( 'wp_head', 'gstore_print_catalog_brand_archive_image_schema', 31 );
 
 /**
  * Imprime titulo e resumo curto no topo do arquivo de produtos.
@@ -12311,37 +12988,26 @@ function gstore_output_catalog_archive_intro() {
 	$summary     = function_exists( 'gstore_get_catalog_archive_summary' )
 		? gstore_get_catalog_archive_summary( $description )
 		: ( function_exists( 'gstore_get_catalog_brand_archive_summary' ) ? gstore_get_catalog_brand_archive_summary( $description ) : '' );
-	$brand_image = gstore_get_catalog_archive_brand_image_html();
-	$has_content = '' !== $title || '' !== $summary || '' !== $brand_image;
+	$has_content = '' !== $title || '' !== $summary;
 
 	if ( ! $has_content ) {
 		return;
 	}
 
 	$classes = array( 'woocommerce-products-header', 'Gstore-catalog-archive-intro' );
-	if ( '' !== $brand_image ) {
-		$classes[] = 'has-brand-image';
-	}
 
 	echo '<header class="' . esc_attr( implode( ' ', $classes ) ) . '">';
-	if ( '' !== $brand_image ) {
-		echo '<div class="Gstore-catalog-archive-intro__media">' . $brand_image . '</div>';
-		echo '<div class="Gstore-catalog-archive-intro__content">';
-	}
 	if ( '' !== $title ) {
 		echo '<h1 class="woocommerce-products-header__title page-title Gstore-catalog-archive-title">' . esc_html( $title ) . '</h1>';
 	}
 	if ( '' !== $summary ) {
 		echo '<div class="term-description Gstore-catalog-archive-summary"><p>' . esc_html( $summary ) . '</p></div>';
 	}
-	if ( '' !== $brand_image ) {
-		echo '</div>';
-	}
 	echo '</header>';
 }
 
 /**
- * Usa o header customizado com imagem apenas em arquivos de marca.
+ * Usa o header customizado sem miniatura visual em arquivos de marca.
  */
 function gstore_setup_catalog_brand_archive_header() {
 	if ( ! gstore_get_catalog_archive_brand_term() ) {
@@ -13697,30 +14363,19 @@ function gstore_replace_catalog_brand_archive_header_html( $html ) {
 	$summary     = function_exists( 'gstore_get_catalog_archive_summary' )
 		? gstore_get_catalog_archive_summary( $description )
 		: ( function_exists( 'gstore_get_catalog_brand_archive_summary' ) ? gstore_get_catalog_brand_archive_summary( $description ) : '' );
-	$brand_image = gstore_get_catalog_archive_brand_image_html();
 
-	if ( '' === $title && '' === $summary && '' === $brand_image ) {
+	if ( '' === $title && '' === $summary ) {
 		return $html;
 	}
 
 	$classes = array( 'woocommerce-products-header', 'Gstore-catalog-archive-intro' );
-	if ( '' !== $brand_image ) {
-		$classes[] = 'has-brand-image';
-	}
 
 	$replacement = '<header class="' . esc_attr( implode( ' ', $classes ) ) . '">';
-	if ( '' !== $brand_image ) {
-		$replacement .= '<div class="Gstore-catalog-archive-intro__media">' . $brand_image . '</div>';
-		$replacement .= '<div class="Gstore-catalog-archive-intro__content">';
-	}
 	if ( '' !== $title ) {
 		$replacement .= '<h1 class="woocommerce-products-header__title page-title Gstore-catalog-archive-title">' . esc_html( $title ) . '</h1>';
 	}
 	if ( '' !== $summary ) {
 		$replacement .= '<div class="term-description Gstore-catalog-archive-summary"><p>' . esc_html( $summary ) . '</p></div>';
-	}
-	if ( '' !== $brand_image ) {
-		$replacement .= '</div>';
 	}
 	$replacement .= '</header>';
 

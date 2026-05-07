@@ -9041,6 +9041,18 @@ body:has(.Gstore-catalog-shell--light) main {
 	margin: 0;
 }
 
+.Gstore-catalog-seo-intro {
+	color: var(--text-main, #1a1a1a);
+	font-size: var(--gstore-font-size-base, 15px);
+	line-height: 1.65;
+	margin: -12px 0 28px;
+	max-width: 980px;
+}
+
+.Gstore-catalog-seo-intro p {
+	margin: 0;
+}
+
 /* Remove prefixo "Categoria:" do WooCommerce */
 .Gstore-catalog-shell--light .woocommerce-products-header__title {
 	font-size: clamp(24px, 3vw, 32px);
@@ -9065,49 +9077,6 @@ body:has(.Gstore-catalog-shell--light) main {
 	max-width: 960px;
 }
 
-.Gstore-catalog-archive-intro.has-brand-image {
-	align-items: center;
-	display: flex;
-	gap: 16px;
-}
-
-.Gstore-catalog-archive-intro__media {
-	flex: 0 0 auto;
-}
-
-.Gstore-catalog-archive-intro__content {
-	min-width: 0;
-}
-
-.Gstore-brand-archive-logo {
-	align-items: center;
-	background: #ffffff;
-	border: 1px solid var(--gray-border, #e6e6e6);
-	border-radius: var(--gstore-radius-base, 4px);
-	display: flex;
-	height: 84px;
-	justify-content: center;
-	margin: 0;
-	overflow: hidden;
-	width: 84px;
-}
-
-.Gstore-brand-archive-logo__image {
-	box-sizing: border-box;
-	display: block;
-	height: 100%;
-	object-fit: contain;
-	padding: 10px;
-	width: 100%;
-}
-
-.Gstore-brand-archive-logo--fallback {
-	color: var(--text-main, #1a1a1a);
-	font-size: 22px;
-	font-weight: 700;
-	letter-spacing: 0;
-}
-
 .Gstore-catalog-archive-title {
 	margin-bottom: 10px !important;
 }
@@ -9129,22 +9098,10 @@ body:has(.Gstore-catalog-shell--light) main {
 		margin-bottom: 16px;
 	}
 
-	.Gstore-catalog-archive-intro.has-brand-image {
-		align-items: flex-start;
-		gap: 12px;
-	}
-
-	.Gstore-brand-archive-logo {
-		height: 62px;
-		width: 62px;
-	}
-
-	.Gstore-brand-archive-logo__image {
-		padding: 7px;
-	}
-
-	.Gstore-brand-archive-logo--fallback {
-		font-size: 16px;
+	.Gstore-catalog-seo-intro {
+		font-size: 14px;
+		line-height: 1.55;
+		margin: -6px 0 22px;
 	}
 
 	.Gstore-catalog-archive-summary,

@@ -23,6 +23,9 @@ temp_header_live.css
 
 # Large exports (keep out of repo)
 woocommerce-products-categorias-pai-filho_COMMA(out).csv
+arma_sem-categoria_produtos_*.csv
+arma_sem-categoria_produtos_*.json
+arma_sem-categoria_produtos_*.txt
 
 # API Visualizer (keep dist in repo; ignore deps)
 api-visualizer/node_modules/

@@ -189,7 +189,7 @@ class GStore_Category_Filter {
 
 		ob_start();
 		?>
-		<div class="gstore-category-filter" id="gstore-category-filter">
+		<div class="gstore-category-filter" id="gstore-category-filter" data-nosnippet>
 			<div class="gstore-category-filter__search-wrapper">
 				<input type="text" class="gstore-category-filter__search" placeholder="Buscar categoria ou marca..." aria-label="Buscar categoria ou marca">
 				<svg class="gstore-category-filter__search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
