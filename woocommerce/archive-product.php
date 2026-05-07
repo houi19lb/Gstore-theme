@@ -76,6 +76,10 @@ if ( woocommerce_product_loop() ) {
 	do_action( 'woocommerce_no_products_found' );
 }
 
+if ( function_exists( 'gstore_output_catalog_archive_description_details' ) ) {
+	gstore_output_catalog_archive_description_details();
+}
+
 echo '</div>'; // .Gstore-products-shell
 
 /**

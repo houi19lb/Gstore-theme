@@ -11964,6 +11964,255 @@ function gstore_is_catalog_context() {
 }
 
 /**
+ * Mantem 4 linhas de 4 produtos no catalogo desktop.
+ *
+ * @param int $per_page Quantidade original.
+ * @return int
+ */
+function gstore_catalog_products_per_page( $per_page ) {
+	if ( function_exists( 'gstore_is_catalog_context' ) && ! gstore_is_catalog_context() ) {
+		return $per_page;
+	}
+
+	return 16;
+}
+add_filter( 'loop_shop_per_page', 'gstore_catalog_products_per_page', 20 );
+
+/**
+ * Aplica o mesmo limite na query principal de produtos.
+ *
+ * @param WC_Query|WP_Query $query Query de produtos.
+ */
+function gstore_catalog_apply_products_per_page_to_query( $query ) {
+	if ( is_admin() || ! is_object( $query ) || ! method_exists( $query, 'set' ) ) {
+		return;
+	}
+
+	if ( function_exists( 'gstore_is_catalog_context' ) && ! gstore_is_catalog_context() ) {
+		return;
+	}
+
+	$query->set( 'posts_per_page', 16 );
+}
+add_action( 'woocommerce_product_query', 'gstore_catalog_apply_products_per_page_to_query', 20 );
+
+/**
+ * Retorna o titulo limpo do arquivo atual de catalogo.
+ *
+ * @return string
+ */
+function gstore_get_catalog_archive_title() {
+	$title = '';
+
+	if ( function_exists( 'woocommerce_page_title' ) && ( ( function_exists( 'is_shop' ) && is_shop() ) || ( function_exists( 'is_product_taxonomy' ) && is_product_taxonomy() ) ) ) {
+		$title = (string) woocommerce_page_title( false );
+	} elseif ( function_exists( 'is_search' ) && is_search() ) {
+		$title = get_search_query();
+	} elseif ( function_exists( 'is_archive' ) && is_archive() ) {
+		$title = get_the_archive_title();
+	} elseif ( function_exists( 'get_the_title' ) ) {
+		$title = get_the_title();
+	}
+
+	$title = html_entity_decode( wp_strip_all_tags( (string) $title ), ENT_QUOTES, get_bloginfo( 'charset' ) );
+	$title = trim( preg_replace( '/\s+/u', ' ', $title ) );
+	$title = (string) preg_replace( '/^\s*(Categoria|Category|Tag|Marca):\s*/i', '', $title );
+
+	return trim( $title );
+}
+
+/**
+ * Retorna a description completa configurada para o catalogo atual.
+ *
+ * @return string
+ */
+function gstore_get_catalog_archive_description_html() {
+	$description = '';
+
+	if ( function_exists( 'is_product_taxonomy' ) && is_product_taxonomy() ) {
+		$term = get_queried_object();
+		if ( $term instanceof WP_Term ) {
+			$description = (string) term_description( (int) $term->term_id, $term->taxonomy );
+		}
+	}
+
+	if ( '' === trim( wp_strip_all_tags( $description ) ) && function_exists( 'is_shop' ) && is_shop() && function_exists( 'wc_get_page_id' ) ) {
+		$shop_page_id = (int) wc_get_page_id( 'shop' );
+		if ( $shop_page_id > 0 ) {
+			$content = (string) get_post_field( 'post_content', $shop_page_id );
+			if ( '' !== trim( wp_strip_all_tags( $content ) ) ) {
+				$description = apply_filters( 'the_content', $content );
+			}
+		}
+	}
+
+	return trim( (string) $description );
+}
+
+/**
+ * Conta caracteres com suporte a UTF-8 quando disponivel.
+ *
+ * @param string $text Texto.
+ * @return int
+ */
+function gstore_catalog_text_length( $text ) {
+	$text = (string) $text;
+
+	return function_exists( 'mb_strlen' ) ? mb_strlen( $text, 'UTF-8' ) : strlen( $text );
+}
+
+/**
+ * Corta no limite de palavras, evitando quebrar uma palavra no mobile.
+ *
+ * @param string $text  Texto limpo.
+ * @param int    $limit Limite de caracteres.
+ * @return string
+ */
+function gstore_catalog_trim_summary_to_words( $text, $limit ) {
+	$text  = trim( (string) $text );
+	$limit = max( 80, absint( $limit ) );
+	$words = preg_split( '/\s+/u', $text, -1, PREG_SPLIT_NO_EMPTY );
+
+	if ( ! is_array( $words ) || empty( $words ) ) {
+		return $text;
+	}
+
+	$summary = '';
+	foreach ( $words as $word ) {
+		$candidate = '' === $summary ? $word : $summary . ' ' . $word;
+		if ( gstore_catalog_text_length( $candidate ) > $limit ) {
+			break;
+		}
+
+		$summary = $candidate;
+	}
+
+	if ( '' === $summary ) {
+		$summary = function_exists( 'mb_substr' ) ? mb_substr( $text, 0, $limit, 'UTF-8' ) : substr( $text, 0, $limit );
+	}
+
+	return rtrim( $summary, " \t\n\r\0\x0B,;:-" ) . '...';
+}
+
+/**
+ * Gera um resumo curto da description para o topo do catalogo.
+ *
+ * @param string $description_html Description completa em HTML.
+ * @param int    $limit            Limite aproximado.
+ * @return string
+ */
+function gstore_get_catalog_archive_summary( $description_html, $limit = 150 ) {
+	$text = html_entity_decode( wp_strip_all_tags( (string) $description_html ), ENT_QUOTES, get_bloginfo( 'charset' ) );
+	$text = trim( preg_replace( '/\s+/u', ' ', $text ) );
+
+	if ( '' === $text ) {
+		return '';
+	}
+
+	$limit = max( 80, absint( $limit ) );
+	if ( gstore_catalog_text_length( $text ) <= $limit ) {
+		return $text;
+	}
+
+	$sentences = preg_split( '/(?<=[.!?])\s+/u', $text, -1, PREG_SPLIT_NO_EMPTY );
+	$summary   = '';
+
+	if ( is_array( $sentences ) ) {
+		foreach ( $sentences as $sentence ) {
+			$sentence = trim( $sentence );
+			if ( '' === $sentence ) {
+				continue;
+			}
+
+			$candidate = '' === $summary ? $sentence : $summary . ' ' . $sentence;
+			if ( gstore_catalog_text_length( $candidate ) <= $limit ) {
+				$summary = $candidate;
+				continue;
+			}
+
+			break;
+		}
+	}
+
+	if ( '' === $summary || gstore_catalog_text_length( $summary ) > $limit ) {
+		return gstore_catalog_trim_summary_to_words( $text, $limit );
+	}
+
+	if ( preg_match( '/(\.\.\.|[.!?])$/u', $summary ) ) {
+		return $summary;
+	}
+
+	return rtrim( $summary, " \t\n\r\0\x0B,;:-" ) . '.';
+}
+
+/**
+ * Imprime titulo e resumo curto no topo do arquivo de produtos.
+ */
+function gstore_output_catalog_archive_intro() {
+	if ( function_exists( 'gstore_is_catalog_context' ) && ! gstore_is_catalog_context() ) {
+		return;
+	}
+
+	$title       = gstore_get_catalog_archive_title();
+	$summary     = gstore_get_catalog_archive_summary( gstore_get_catalog_archive_description_html() );
+	$has_content = '' !== $title || '' !== $summary;
+
+	if ( ! $has_content ) {
+		return;
+	}
+
+	echo '<header class="woocommerce-products-header Gstore-catalog-archive-intro">';
+	if ( '' !== $title ) {
+		echo '<h1 class="woocommerce-products-header__title page-title Gstore-catalog-archive-title">' . esc_html( $title ) . '</h1>';
+	}
+	if ( '' !== $summary ) {
+		echo '<div class="term-description Gstore-catalog-archive-summary"><p>' . esc_html( $summary ) . '</p></div>';
+	}
+	echo '</header>';
+}
+
+/**
+ * Troca o header completo padrao do WooCommerce por titulo + resumo curto.
+ */
+function gstore_setup_catalog_archive_header() {
+	if ( function_exists( 'gstore_is_catalog_context' ) && ! gstore_is_catalog_context() ) {
+		return;
+	}
+
+	remove_action( 'woocommerce_shop_loop_header', 'woocommerce_product_taxonomy_archive_header', 10 );
+	add_action( 'woocommerce_shop_loop_header', 'gstore_output_catalog_archive_intro', 10 );
+}
+add_action( 'wp', 'gstore_setup_catalog_archive_header', 20 );
+
+/**
+ * Imprime a description completa no fim do arquivo de produtos.
+ */
+function gstore_output_catalog_archive_description_details() {
+	if ( function_exists( 'gstore_is_catalog_context' ) && ! gstore_is_catalog_context() ) {
+		return;
+	}
+
+	$description = gstore_get_catalog_archive_description_html();
+	if ( '' === trim( wp_strip_all_tags( $description ) ) ) {
+		return;
+	}
+
+	$title      = gstore_get_catalog_archive_title();
+	$store_name = function_exists( 'gstore_get_store_name' ) ? gstore_get_store_name( 'display' ) : get_bloginfo( 'name' );
+	$label      = trim( sprintf( __( 'Sobre %1$s na %2$s', 'gstore' ), $title ? $title : __( 'produtos', 'gstore' ), $store_name ) );
+
+	echo '<section class="Gstore-catalog-archive-details" aria-label="' . esc_attr( $label ) . '">';
+	echo '<details class="Gstore-catalog-archive-details__item">';
+	echo '<summary class="Gstore-catalog-archive-details__summary">';
+	echo '<span class="Gstore-catalog-archive-details__icon" aria-hidden="true"></span>';
+	echo '<span>' . esc_html( $label ) . '</span>';
+	echo '</summary>';
+	echo '<div class="Gstore-catalog-archive-details__content">' . wp_kses_post( $description ) . '</div>';
+	echo '</details>';
+	echo '</section>';
+}
+
+/**
  * Define "popularidade" como ordenacao padrao no catalogo.
  *
  * @param string $default_orderby Ordenacao padrao atual.

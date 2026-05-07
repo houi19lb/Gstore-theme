@@ -9049,14 +9049,125 @@ body:has(.Gstore-catalog-shell--light) main {
 	margin: 0;
 }
 
-/* Oculta o título no mobile */
+/* Mantem o titulo visivel no mobile */
 @media (max-width: 1023px) {
 
 	.Gstore-catalog-shell--light .Gstore-catalog-title,
 	.Gstore-catalog-shell--light .wp-block-query-title.Gstore-catalog-title,
 	.Gstore-catalog-shell--light .woocommerce-products-header__title {
-		display: none;
+		display: block;
+		width: 100%;
 	}
+}
+
+.Gstore-catalog-archive-intro {
+	margin: 0 0 20px;
+	max-width: 960px;
+}
+
+.Gstore-catalog-archive-title {
+	margin-bottom: 10px !important;
+}
+
+.Gstore-catalog-archive-summary,
+.Gstore-catalog-shell--light .Gstore-catalog-archive-summary {
+	color: var(--text-main, #1a1a1a);
+	font-size: var(--gstore-font-size-base, 15px);
+	line-height: 1.65;
+	margin: 0;
+}
+
+.Gstore-catalog-archive-summary p {
+	margin: 0;
+}
+
+@media (max-width: 640px) {
+	.Gstore-catalog-archive-intro {
+		margin-bottom: 16px;
+	}
+
+	.Gstore-catalog-archive-summary,
+	.Gstore-catalog-shell--light .Gstore-catalog-archive-summary {
+		font-size: 14px;
+		line-height: 1.55;
+	}
+}
+
+.Gstore-catalog-archive-details {
+	margin: 28px 0 0;
+	width: 100%;
+}
+
+.Gstore-catalog-archive-details__item {
+	background: #ffffff;
+	border: 1px solid var(--gray-border, #e6e6e6);
+	border-radius: var(--gstore-radius-base, 4px);
+	overflow: hidden;
+}
+
+.Gstore-catalog-archive-details__summary {
+	align-items: center;
+	cursor: pointer;
+	display: flex;
+	gap: 10px;
+	list-style: none;
+	padding: 14px 16px;
+	font-size: var(--gstore-font-size-sm, 14px);
+	font-weight: 600;
+	color: var(--text-main, #1a1a1a);
+}
+
+.Gstore-catalog-archive-details__summary::-webkit-details-marker {
+	display: none;
+}
+
+.Gstore-catalog-archive-details__summary::after {
+	content: "+";
+	margin-left: auto;
+	font-size: 18px;
+	line-height: 1;
+	color: var(--text-muted, #6b6b6b);
+}
+
+.Gstore-catalog-archive-details__item[open] .Gstore-catalog-archive-details__summary::after {
+	content: "-";
+}
+
+.Gstore-catalog-archive-details__icon {
+	width: 15px;
+	height: 18px;
+	border: 1px solid currentColor;
+	border-radius: 2px;
+	position: relative;
+	flex: 0 0 auto;
+	opacity: 0.72;
+}
+
+.Gstore-catalog-archive-details__icon::after {
+	content: "";
+	position: absolute;
+	left: 3px;
+	right: 3px;
+	top: 5px;
+	height: 1px;
+	background: currentColor;
+	box-shadow: 0 4px 0 currentColor;
+}
+
+.Gstore-catalog-archive-details__content {
+	border-top: 1px solid var(--gray-border, #e6e6e6);
+	color: var(--text-main, #1a1a1a);
+	font-size: var(--gstore-font-size-base, 15px);
+	line-height: 1.7;
+	padding: 16px;
+}
+
+.Gstore-catalog-archive-details__content > :first-child {
+	margin-top: 0;
+}
+
+.Gstore-catalog-archive-details__content > :last-child {
+	margin-bottom: 0;
 }
 
 /* Breadcrumb */
