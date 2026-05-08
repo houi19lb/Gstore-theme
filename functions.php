@@ -12830,6 +12830,367 @@ function gstore_get_catalog_archive_brand_term( $term = null ) {
 }
 
 /**
+ * Retorna IDs validos das categorias principais do catalogo.
+ *
+ * @return int[]
+ */
+function gstore_get_main_catalog_category_ids_for_breadcrumb() {
+	if ( ! taxonomy_exists( 'product_cat' ) ) {
+		return array();
+	}
+
+	$stored = get_option( 'gstore_main_categories', array() );
+	if ( ! is_array( $stored ) ) {
+		$stored = array();
+	}
+
+	$ids = array_values(
+		array_unique(
+			array_filter(
+				array_map( 'absint', $stored )
+			)
+		)
+	);
+
+	if ( empty( $ids ) ) {
+		$ids = get_terms(
+			array(
+				'taxonomy'   => 'product_cat',
+				'parent'     => 0,
+				'hide_empty' => false,
+				'fields'     => 'ids',
+			)
+		);
+
+		if ( is_wp_error( $ids ) || empty( $ids ) ) {
+			return array();
+		}
+
+		$ids = array_map( 'absint', (array) $ids );
+	}
+
+	$valid_ids = get_terms(
+		array(
+			'taxonomy'   => 'product_cat',
+			'include'    => $ids,
+			'hide_empty' => false,
+			'fields'     => 'ids',
+		)
+	);
+
+	if ( is_wp_error( $valid_ids ) || empty( $valid_ids ) ) {
+		return array();
+	}
+
+	$valid_map = array_fill_keys( array_map( 'absint', (array) $valid_ids ), true );
+
+	return array_values(
+		array_filter(
+			$ids,
+			static function ( $id ) use ( $valid_map ) {
+				return isset( $valid_map[ (int) $id ] );
+			}
+		)
+	);
+}
+
+/**
+ * Retorna IDs de uma categoria e suas subcategorias.
+ *
+ * @param int $category_id ID da categoria raiz.
+ * @return int[]
+ */
+function gstore_get_product_category_scope_ids_for_breadcrumb( $category_id ) {
+	$category_id = absint( $category_id );
+	if ( $category_id <= 0 || ! taxonomy_exists( 'product_cat' ) ) {
+		return array();
+	}
+
+	$scope_ids = array( $category_id );
+	$children  = get_term_children( $category_id, 'product_cat' );
+	if ( ! is_wp_error( $children ) && ! empty( $children ) ) {
+		$scope_ids = array_merge( $scope_ids, array_map( 'absint', (array) $children ) );
+	}
+
+	return array_values( array_unique( array_filter( array_map( 'absint', $scope_ids ) ) ) );
+}
+
+/**
+ * Conta produtos publicados de uma marca dentro de uma lista de categorias.
+ *
+ * @param WP_Term $brand_term   Termo de marca.
+ * @param int[]   $category_ids IDs de categorias.
+ * @return int
+ */
+function gstore_count_brand_products_in_categories_for_breadcrumb( $brand_term, array $category_ids ) {
+	if ( ! $brand_term instanceof WP_Term || empty( $category_ids ) ) {
+		return 0;
+	}
+
+	$category_ids = array_values( array_unique( array_filter( array_map( 'absint', $category_ids ) ) ) );
+	if ( empty( $category_ids ) ) {
+		return 0;
+	}
+
+	$query = new WP_Query(
+		array(
+			'post_type'              => 'product',
+			'post_status'            => 'publish',
+			'fields'                 => 'ids',
+			'posts_per_page'         => 1,
+			'ignore_sticky_posts'    => true,
+			'update_post_meta_cache' => false,
+			'update_post_term_cache' => false,
+			'tax_query'              => array(
+				'relation' => 'AND',
+				array(
+					'taxonomy'         => $brand_term->taxonomy,
+					'field'            => 'term_id',
+					'terms'            => array( (int) $brand_term->term_id ),
+					'include_children' => is_taxonomy_hierarchical( $brand_term->taxonomy ),
+				),
+				array(
+					'taxonomy'         => 'product_cat',
+					'field'            => 'term_id',
+					'terms'            => $category_ids,
+					'include_children' => false,
+				),
+			),
+		)
+	);
+
+	return absint( $query->found_posts );
+}
+
+/**
+ * Infere a categoria principal de uma marca pelos produtos publicados.
+ *
+ * @param mixed $term Termo de marca.
+ * @return WP_Term|null
+ */
+function gstore_get_brand_primary_product_category_for_breadcrumb( $term = null ) {
+	$brand_term = gstore_get_catalog_archive_brand_term( $term );
+	if ( ! $brand_term ) {
+		return null;
+	}
+
+	static $cache = array();
+	$cache_key    = $brand_term->taxonomy . ':' . (int) $brand_term->term_id;
+	if ( array_key_exists( $cache_key, $cache ) ) {
+		return $cache[ $cache_key ];
+	}
+
+	$category_ids = gstore_get_main_catalog_category_ids_for_breadcrumb();
+	if ( empty( $category_ids ) ) {
+		$cache[ $cache_key ] = null;
+		return null;
+	}
+
+	$scores = array();
+	foreach ( $category_ids as $index => $category_id ) {
+		$scope_ids = gstore_get_product_category_scope_ids_for_breadcrumb( $category_id );
+		if ( empty( $scope_ids ) ) {
+			continue;
+		}
+
+		$count = gstore_count_brand_products_in_categories_for_breadcrumb( $brand_term, $scope_ids );
+		if ( $count <= 0 ) {
+			continue;
+		}
+
+		$scores[] = array(
+			'term_id' => (int) $category_id,
+			'count'   => (int) $count,
+			'index'   => (int) $index,
+		);
+	}
+
+	if ( empty( $scores ) ) {
+		$cache[ $cache_key ] = null;
+		return null;
+	}
+
+	usort(
+		$scores,
+		static function ( $a, $b ) {
+			if ( $a['count'] !== $b['count'] ) {
+				return $b['count'] <=> $a['count'];
+			}
+
+			if ( $a['index'] !== $b['index'] ) {
+				return $a['index'] <=> $b['index'];
+			}
+
+			return $a['term_id'] <=> $b['term_id'];
+		}
+	);
+
+	$primary_category = get_term( (int) $scores[0]['term_id'], 'product_cat' );
+	$primary_category = $primary_category instanceof WP_Term && ! is_wp_error( $primary_category ) ? $primary_category : null;
+
+	$cache[ $cache_key ] = apply_filters( 'gstore_brand_primary_product_category_for_breadcrumb', $primary_category, $brand_term, $scores );
+
+	return $cache[ $cache_key ];
+}
+
+/**
+ * Retorna URL publica de termo para breadcrumb.
+ *
+ * @param WP_Term $term Termo.
+ * @return string
+ */
+function gstore_get_product_term_archive_url_for_breadcrumb( $term ) {
+	if ( ! $term instanceof WP_Term ) {
+		return '';
+	}
+
+	$link = get_term_link( $term, $term->taxonomy );
+	if ( is_wp_error( $link ) || ! is_string( $link ) || '' === $link ) {
+		return '';
+	}
+
+	return esc_url_raw( $link );
+}
+
+/**
+ * Monta BreadcrumbList para archives publicos de produto.
+ *
+ * @param WP_Term $term     Termo atual.
+ * @param string  $page_url URL canonica da pagina atual.
+ * @return array<string,mixed>
+ */
+function gstore_get_catalog_term_breadcrumb_schema( $term, $page_url ) {
+	if ( ! $term instanceof WP_Term || '' === (string) $page_url ) {
+		return array();
+	}
+
+	$items = array(
+		array(
+			'@type'    => 'ListItem',
+			'position' => 1,
+			'name'     => __( 'Inicio', 'gstore' ),
+			'item'     => home_url( '/' ),
+		),
+		array(
+			'@type'    => 'ListItem',
+			'position' => 2,
+			'name'     => __( 'Catalogo', 'gstore' ),
+			'item'     => esc_url_raw( gstore_get_catalog_url() ),
+		),
+	);
+
+	$brand_primary_category = gstore_get_brand_primary_product_category_for_breadcrumb( $term );
+	if ( $brand_primary_category instanceof WP_Term ) {
+		$brand_category_url = gstore_get_product_term_archive_url_for_breadcrumb( $brand_primary_category );
+		if ( '' !== $brand_category_url ) {
+			$items[] = array(
+				'@type'    => 'ListItem',
+				'position' => count( $items ) + 1,
+				'name'     => wp_strip_all_tags( (string) $brand_primary_category->name ),
+				'item'     => $brand_category_url,
+			);
+		}
+	}
+
+	if ( is_taxonomy_hierarchical( $term->taxonomy ) ) {
+		$ancestor_ids = array_reverse( array_map( 'absint', get_ancestors( (int) $term->term_id, $term->taxonomy, 'taxonomy' ) ) );
+		foreach ( $ancestor_ids as $ancestor_id ) {
+			$ancestor = get_term( $ancestor_id, $term->taxonomy );
+			if ( ! $ancestor instanceof WP_Term || is_wp_error( $ancestor ) ) {
+				continue;
+			}
+
+			$ancestor_url = gstore_get_product_term_archive_url_for_breadcrumb( $ancestor );
+			if ( '' === $ancestor_url ) {
+				continue;
+			}
+
+			$items[] = array(
+				'@type'    => 'ListItem',
+				'position' => count( $items ) + 1,
+				'name'     => wp_strip_all_tags( (string) $ancestor->name ),
+				'item'     => $ancestor_url,
+			);
+		}
+	}
+
+	$items[] = array(
+		'@type'    => 'ListItem',
+		'position' => count( $items ) + 1,
+		'name'     => wp_strip_all_tags( (string) $term->name ),
+		'item'     => esc_url_raw( $page_url ),
+	);
+
+	return array(
+		'@type'           => 'BreadcrumbList',
+		'@id'             => trailingslashit( $page_url ) . '#breadcrumb',
+		'itemListElement' => $items,
+	);
+}
+
+/**
+ * Retorna o BreadcrumbList do archive comercial atual.
+ *
+ * @return array<string,mixed>
+ */
+function gstore_get_current_catalog_term_breadcrumb_schema() {
+	if ( ! function_exists( 'is_tax' ) || ! is_tax( gstore_get_public_product_taxonomies() ) ) {
+		return array();
+	}
+
+	if ( function_exists( 'gstore_has_catalog_non_pagination_operational_query' ) && gstore_has_catalog_non_pagination_operational_query() ) {
+		return array();
+	}
+
+	$term = get_queried_object();
+	if ( ! $term instanceof WP_Term || ! in_array( $term->taxonomy, gstore_get_public_product_taxonomies(), true ) ) {
+		return array();
+	}
+
+	$page_url = function_exists( 'gstore_get_product_taxonomy_canonical_url' ) ? gstore_get_product_taxonomy_canonical_url() : '';
+	if ( '' === $page_url ) {
+		$page_url = gstore_get_product_term_archive_url_for_breadcrumb( $term );
+	}
+
+	return gstore_get_catalog_term_breadcrumb_schema( $term, $page_url );
+}
+
+/**
+ * Adiciona referencia de breadcrumb ao WebPage do Yoast.
+ *
+ * @param array $data Dados originais.
+ * @return array
+ */
+function gstore_catalog_archive_schema_breadcrumb( $data ) {
+	$breadcrumb = gstore_get_current_catalog_term_breadcrumb_schema();
+	if ( empty( $breadcrumb['@id'] ) || ! is_array( $data ) ) {
+		return $data;
+	}
+
+	$data['breadcrumb'] = array(
+		'@id' => $breadcrumb['@id'],
+	);
+
+	return $data;
+}
+add_filter( 'wpseo_schema_webpage', 'gstore_catalog_archive_schema_breadcrumb', 18 );
+
+/**
+ * Imprime BreadcrumbList para categorias, tags e marcas de produto.
+ */
+function gstore_print_catalog_term_breadcrumb_schema() {
+	$breadcrumb = gstore_get_current_catalog_term_breadcrumb_schema();
+	if ( empty( $breadcrumb ) ) {
+		return;
+	}
+
+	echo '<script type="application/ld+json" id="gstore-catalog-term-breadcrumb-schema">'
+		. wp_json_encode( array( '@context' => 'https://schema.org', '@graph' => array( $breadcrumb ) ), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES )
+		. '</script>' . "\n";
+}
+add_action( 'wp_head', 'gstore_print_catalog_term_breadcrumb_schema', 30 );
+
+/**
  * Retorna o attachment ID usado como imagem da marca.
  *
  * @param mixed $term Termo opcional.
@@ -13069,9 +13430,12 @@ function gstore_print_catalog_brand_archive_image_schema() {
 		$url = '';
 	}
 
+	$breadcrumb = gstore_get_current_catalog_term_breadcrumb_schema();
+
 	$schema = array(
 		'@context'           => 'https://schema.org',
 		'@type'              => 'CollectionPage',
+		'@id'                => '' !== $url ? trailingslashit( $url ) . '#webpage' : '',
 		'name'               => gstore_get_catalog_archive_title(),
 		'url'                => $url,
 		'primaryImageOfPage' => array(
@@ -13084,6 +13448,16 @@ function gstore_print_catalog_brand_archive_image_schema() {
 			'name'  => $term->name,
 		),
 	);
+
+	if ( empty( $schema['@id'] ) ) {
+		unset( $schema['@id'] );
+	}
+
+	if ( ! empty( $breadcrumb['@id'] ) ) {
+		$schema['breadcrumb'] = array(
+			'@id' => $breadcrumb['@id'],
+		);
+	}
 
 	if ( 'brand' === $image['source'] ) {
 		$schema['about']['logo'] = (string) $image['url'];
