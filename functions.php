@@ -1430,13 +1430,69 @@ function gstore_get_product_taxonomy_canonical_url() {
 		return '';
 	}
 
-	$paged = max( absint( get_query_var( 'paged' ) ), absint( get_query_var( 'page' ) ) );
-	if ( $paged > 1 && gstore_should_use_clean_catalog_pagination_urls() ) {
-		return user_trailingslashit( trailingslashit( $term_link ) . 'page/' . $paged, 'paged' );
+	if ( gstore_has_catalog_non_pagination_operational_query() ) {
+		return $term_link;
+	}
+
+	$paged = max( absint( get_query_var( 'paged' ) ), absint( get_query_var( 'page' ) ), gstore_get_catalog_product_page_request() );
+	if ( $paged > 1 ) {
+		return gstore_get_product_taxonomy_clean_pagination_url( $term_link, $paged );
 	}
 
 	return $term_link;
 }
+
+/**
+ * Monta a URL limpa /page/N/ para taxonomias de produto.
+ *
+ * @param string $term_link Link raiz do termo.
+ * @param int    $page      Pagina solicitada.
+ * @return string
+ */
+function gstore_get_product_taxonomy_clean_pagination_url( $term_link, $page ) {
+	$page = max( 1, absint( $page ) );
+
+	if ( $page <= 1 ) {
+		return user_trailingslashit( $term_link );
+	}
+
+	return user_trailingslashit( trailingslashit( $term_link ) . 'page/' . $page, 'paged' );
+}
+
+/**
+ * Redireciona ?product-page=N em taxonomias para a URL limpa /page/N/.
+ *
+ * @param string|false $redirect_url  URL sugerida pelo WordPress.
+ * @param string       $requested_url URL requisitada.
+ * @return string|false
+ */
+function gstore_product_taxonomy_pagination_redirect_canonical( $redirect_url, $requested_url ) {
+	if ( ! function_exists( 'is_tax' ) || ! is_tax( gstore_get_public_product_taxonomies() ) ) {
+		return $redirect_url;
+	}
+
+	if ( gstore_has_catalog_non_pagination_operational_query() ) {
+		return $redirect_url;
+	}
+
+	$page = gstore_get_catalog_product_page_request();
+	if ( $page <= 1 ) {
+		return $redirect_url;
+	}
+
+	$queried_object = get_queried_object();
+	if ( ! $queried_object instanceof WP_Term || ! in_array( $queried_object->taxonomy, gstore_get_public_product_taxonomies(), true ) ) {
+		return $redirect_url;
+	}
+
+	$term_link = get_term_link( $queried_object, $queried_object->taxonomy );
+	if ( is_wp_error( $term_link ) || ! is_string( $term_link ) || '' === $term_link ) {
+		return $redirect_url;
+	}
+
+	return gstore_get_product_taxonomy_clean_pagination_url( $term_link, $page );
+}
+add_filter( 'redirect_canonical', 'gstore_product_taxonomy_pagination_redirect_canonical', 20, 2 );
 
 /**
  * Canonical proprio para categorias/subcategorias/marcas/tag de produto.
@@ -12591,6 +12647,68 @@ function gstore_get_catalog_archive_description_html() {
 }
 
 /**
+ * Gera um resumo padrao para archives comerciais sem descricao cadastrada.
+ *
+ * @param mixed $term Termo atual.
+ * @return string
+ */
+function gstore_get_catalog_archive_fallback_summary_text( $term = null ) {
+	if ( ! $term instanceof WP_Term ) {
+		$term = get_queried_object();
+	}
+
+	if ( ! $term instanceof WP_Term || ! in_array( $term->taxonomy, gstore_get_public_product_taxonomies(), true ) ) {
+		return '';
+	}
+
+	$term_name  = trim( wp_strip_all_tags( (string) $term->name ) );
+	$store_name = gstore_get_store_display_name_for_seo();
+
+	if ( '' === $term_name ) {
+		return '';
+	}
+
+	if ( function_exists( 'gstore_get_catalog_archive_brand_term' ) && gstore_get_catalog_archive_brand_term( $term ) ) {
+		return sprintf(
+			__( 'Veja produtos %1$s disponíveis na loja %2$s, com filtros por categoria e disponibilidade. Produtos controlados seguem requisitos legais.', 'gstore' ),
+			$term_name,
+			$store_name
+		);
+	}
+
+	if ( 'product_tag' === $term->taxonomy ) {
+		return sprintf(
+			__( 'Veja produtos relacionados a %1$s na loja %2$s. Use os filtros para comparar categorias, marcas e disponibilidade.', 'gstore' ),
+			$term_name,
+			$store_name
+		);
+	}
+
+	return sprintf(
+		__( 'Veja produtos em %1$s na loja %2$s. Filtre por marca, categoria e disponibilidade. Produtos controlados exigem documentação e autorização conforme a lei.', 'gstore' ),
+		$term_name,
+		$store_name
+	);
+}
+
+/**
+ * Retorna a fonte de texto usada no resumo do topo, com fallback quando a descricao esta vazia.
+ *
+ * @return string
+ */
+function gstore_get_catalog_archive_summary_source_html() {
+	$description = gstore_get_catalog_archive_description_html();
+
+	if ( '' !== trim( wp_strip_all_tags( $description ) ) ) {
+		return $description;
+	}
+
+	$fallback = gstore_get_catalog_archive_fallback_summary_text();
+
+	return '' !== $fallback ? '<p>' . esc_html( $fallback ) . '</p>' : '';
+}
+
+/**
  * Conta caracteres com suporte a UTF-8 quando disponivel.
  *
  * @param string $text Texto.
@@ -12984,7 +13102,7 @@ function gstore_output_catalog_archive_intro() {
 	}
 
 	$title       = gstore_get_catalog_archive_title();
-	$description = gstore_get_catalog_archive_description_html();
+	$description = gstore_get_catalog_archive_summary_source_html();
 	$summary     = function_exists( 'gstore_get_catalog_archive_summary' )
 		? gstore_get_catalog_archive_summary( $description )
 		: ( function_exists( 'gstore_get_catalog_brand_archive_summary' ) ? gstore_get_catalog_brand_archive_summary( $description ) : '' );
@@ -13041,7 +13159,7 @@ function gstore_output_catalog_archive_summary_description() {
 		return;
 	}
 
-	$summary = gstore_get_catalog_archive_summary( gstore_get_catalog_archive_description_html() );
+	$summary = gstore_get_catalog_archive_summary( gstore_get_catalog_archive_summary_source_html() );
 	if ( '' === $summary ) {
 		return;
 	}
@@ -14334,6 +14452,8 @@ function gstore_process_final_output( $buffer ) {
 
 	$buffer = gstore_replace_catalog_brand_archive_header_html( $buffer );
 
+	$buffer = gstore_replace_catalog_archive_header_html( $buffer );
+
 	$buffer = gstore_normalize_catalog_archive_description_output( $buffer );
 
 	return $buffer;
@@ -14359,7 +14479,7 @@ function gstore_replace_catalog_brand_archive_header_html( $html ) {
 	}
 
 	$title       = gstore_get_catalog_archive_title();
-	$description = gstore_get_catalog_archive_description_html();
+	$description = gstore_get_catalog_archive_summary_source_html();
 	$summary     = function_exists( 'gstore_get_catalog_archive_summary' )
 		? gstore_get_catalog_archive_summary( $description )
 		: ( function_exists( 'gstore_get_catalog_brand_archive_summary' ) ? gstore_get_catalog_brand_archive_summary( $description ) : '' );
@@ -14371,6 +14491,54 @@ function gstore_replace_catalog_brand_archive_header_html( $html ) {
 	$classes = array( 'woocommerce-products-header', 'Gstore-catalog-archive-intro' );
 
 	$replacement = '<header class="' . esc_attr( implode( ' ', $classes ) ) . '">';
+	if ( '' !== $title ) {
+		$replacement .= '<h1 class="woocommerce-products-header__title page-title Gstore-catalog-archive-title">' . esc_html( $title ) . '</h1>';
+	}
+	if ( '' !== $summary ) {
+		$replacement .= '<div class="term-description Gstore-catalog-archive-summary"><p>' . esc_html( $summary ) . '</p></div>';
+	}
+	$replacement .= '</header>';
+
+	return (string) preg_replace(
+		'#<header\b(?=[^>]*class="[^"]*\bwoocommerce-products-header\b[^"]*")[^>]*>.*?</header>#is',
+		$replacement,
+		$html,
+		1
+	);
+}
+
+/**
+ * Fallback final para o header de archives de produto com resumo SEO.
+ *
+ * @param string $html HTML final.
+ * @return string
+ */
+function gstore_replace_catalog_archive_header_html( $html ) {
+	if ( ! is_string( $html ) || '' === $html || false === strpos( $html, 'woocommerce-products-header' ) ) {
+		return $html;
+	}
+
+	if ( false !== strpos( $html, 'Gstore-catalog-archive-intro' ) ) {
+		return $html;
+	}
+
+	if ( function_exists( 'gstore_is_catalog_context' ) && ! gstore_is_catalog_context() ) {
+		return $html;
+	}
+
+	if ( ! function_exists( 'is_product_taxonomy' ) || ! is_product_taxonomy() ) {
+		return $html;
+	}
+
+	$title       = gstore_get_catalog_archive_title();
+	$description = gstore_get_catalog_archive_summary_source_html();
+	$summary     = gstore_get_catalog_archive_summary( $description );
+
+	if ( '' === $title && '' === $summary ) {
+		return $html;
+	}
+
+	$replacement = '<header class="woocommerce-products-header Gstore-catalog-archive-intro">';
 	if ( '' !== $title ) {
 		$replacement .= '<h1 class="woocommerce-products-header__title page-title Gstore-catalog-archive-title">' . esc_html( $title ) . '</h1>';
 	}
@@ -14402,7 +14570,7 @@ function gstore_normalize_catalog_archive_description_output( $html ) {
 		return $html;
 	}
 
-	$summary = gstore_get_catalog_archive_summary( gstore_get_catalog_archive_description_html() );
+	$summary = gstore_get_catalog_archive_summary( gstore_get_catalog_archive_summary_source_html() );
 	if ( '' === $summary ) {
 		return $html;
 	}
