@@ -234,19 +234,6 @@ class GStore_Category_Filter {
 				</div>
 			<?php endif; ?>
 
-			<?php if ( ! empty( $brands ) ) : ?>
-				<div class="gstore-category-filter__nav-section gstore-category-filter__nav-section--brands">
-					<div class="gstore-category-filter__section-title">
-						<?php esc_html_e( 'Marcas', 'gstore' ); ?>
-					</div>
-					<div class="gstore-category-filter__tree-container gstore-category-filter__tree-container--brands">
-						<ul class="gstore-category-filter__tree gstore-category-filter__tree--brands">
-							<?php $this->render_tree_level( $brands ); ?>
-						</ul>
-					</div>
-				</div>
-			<?php endif; ?>
-
 			<?php if ( ! empty( $global_categories ) ) : ?>
 				<div class="gstore-category-filter__nav-section gstore-category-filter__nav-section--global">
 					<div class="gstore-category-filter__section-title">
@@ -255,6 +242,19 @@ class GStore_Category_Filter {
 					<div class="gstore-category-filter__tree-container">
 						<ul class="gstore-category-filter__tree">
 							<?php $this->render_tree_level( $global_categories ); ?>
+						</ul>
+					</div>
+				</div>
+			<?php endif; ?>
+
+			<?php if ( ! empty( $brands ) ) : ?>
+				<div class="gstore-category-filter__nav-section gstore-category-filter__nav-section--brands">
+					<div class="gstore-category-filter__section-title">
+						<?php esc_html_e( 'Marcas', 'gstore' ); ?>
+					</div>
+					<div class="gstore-category-filter__tree-container gstore-category-filter__tree-container--brands">
+						<ul class="gstore-category-filter__tree gstore-category-filter__tree--brands">
+							<?php $this->render_tree_level( $brands ); ?>
 						</ul>
 					</div>
 				</div>
