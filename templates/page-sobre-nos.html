@@ -35,6 +35,10 @@
 						<span>Localização</span>
 						<strong>{{address_city_state}}</strong>
 					</div>
+					<div>
+						<span>Registro</span>
+						<strong>{{compliance_registration_summary}}</strong>
+					</div>
 				</div>
 			</aside>
 		</section>
@@ -43,6 +47,7 @@
 			<span>Nesta página</span>
 			<a href="#quem-somos">Quem somos</a>
 			<a href="#dados-da-empresa">Dados da empresa</a>
+			<a href="#empresa-regularizada">Regularização</a>
 			<a href="#compra-legal">Compra legal</a>
 			<a href="#documentacao">Documentação</a>
 			<a href="#prazos-envio">Prazos e envio</a>
@@ -89,8 +94,20 @@
 					<strong>{{store_display_name}}</strong>
 				</div>
 				<div class="Gstore-about-data__row">
+					<span>Razão social</span>
+					<strong>{{store_legal_name}}</strong>
+				</div>
+				<div class="Gstore-about-data__row">
+					<span>Nome fantasia</span>
+					<strong>{{store_trade_name}}</strong>
+				</div>
+				<div class="Gstore-about-data__row">
 					<span>CNPJ</span>
 					<strong>{{cnpj}}</strong>
+				</div>
+				<div class="Gstore-about-data__row">
+					<span>Inscrição estadual</span>
+					<strong>{{state_registration}}</strong>
 				</div>
 				<div class="Gstore-about-data__row">
 					<span>Endereço</span>
@@ -112,6 +129,53 @@
 			<div class="Gstore-about-section__actions">
 				<a class="Gstore-btn Gstore-btn--secondary" href="{{maps_url}}" target="_blank" rel="noopener noreferrer">Ver localização</a>
 				<a class="Gstore-btn Gstore-btn--secondary" href="/atendimento/">Canais de atendimento</a>
+			</div>
+		</section>
+
+		<section class="Gstore-about-section" id="empresa-regularizada">
+			<div class="Gstore-about-section__head">
+				<p class="Gstore-about-kicker">Empresa regularizada</p>
+				<h2>Dados públicos de conformidade e compra responsável</h2>
+				<p>
+					Produtos controlados exigem atendimento responsável, dados comerciais verificáveis e respeito às etapas documentais previstas para cada perfil de compra.
+				</p>
+			</div>
+			<div class="Gstore-about-compliance">
+				<div class="Gstore-about-compliance__summary">
+					<i class="fa-solid fa-shield-halved" aria-hidden="true"></i>
+					<div>
+						<strong>{{compliance_registration_summary}}</strong>
+						<p>{{compliance_registration_scope}}</p>
+					</div>
+				</div>
+				<div class="Gstore-about-data Gstore-about-data--compact">
+					<div class="Gstore-about-data__row">
+						<span>Razão social</span>
+						<strong>{{store_legal_name}}</strong>
+					</div>
+					<div class="Gstore-about-data__row">
+						<span>CNPJ</span>
+						<strong>{{cnpj}}</strong>
+					</div>
+					<div class="Gstore-about-data__row">
+						<span>Registro/autorização</span>
+						<strong>{{compliance_registration_summary}}</strong>
+					</div>
+					<div class="Gstore-about-data__row">
+						<span>Órgão emissor</span>
+						<strong>{{compliance_registration_issuer}}</strong>
+					</div>
+				</div>
+			</div>
+			<div class="Gstore-about-callout">
+				<strong>Transparência:</strong> {{compliance_public_note}}
+			</div>
+			<div class="Gstore-about-callout Gstore-about-callout--neutral">
+				<strong>Documentos sensíveis:</strong> {{compliance_document_publication_policy}}
+			</div>
+			<div class="Gstore-about-sources__links Gstore-about-sources__links--inline">
+				{{compliance_verification_link_html}}
+				{{compliance_official_links_html}}
 			</div>
 		</section>
 
@@ -240,6 +304,10 @@
 					<p>Depende do perfil. Cidadãos normalmente precisam de autorização de aquisição da Polícia Federal e documentos pessoais. CACs seguem exigências vinculadas ao CR, autorização, CRAF e regras do acervo.</p>
 				</details>
 				<details class="Gstore-about-faq__item">
+					<summary>Como verifico os dados da empresa?</summary>
+					<p>Confira razão social, CNPJ, endereço e canais oficiais nesta página. Dados de registro ou autorização pública devem ser conferidos com a loja e nos canais oficiais do órgão competente.</p>
+				</details>
+				<details class="Gstore-about-faq__item">
 					<summary>Qual é a diferença entre cidadão e CAC?</summary>
 					<p>O cidadão compra para finalidade permitida em processo próprio. CAC é colecionador, atirador desportivo ou caçador com Certificado de Registro e regras específicas para acervo, aquisição e transporte.</p>
 				</details>
@@ -263,6 +331,10 @@
 					<summary>A loja ajuda com a documentação?</summary>
 					<p>Sim. A {{store_display_name}} orienta sobre os documentos esperados, confere o material recebido e indica os próximos passos, sem substituir a análise do órgão competente.</p>
 				</details>
+				<details class="Gstore-about-faq__item">
+					<summary>A loja publica documentos completos?</summary>
+					<p>Não. Documentos de clientes e comprovantes com dados sensíveis não devem ser publicados. Quando houver comprovante público, ele deve ser revisado e redigido antes de qualquer exposição.</p>
+				</details>
 			</div>
 		</section>
 
@@ -270,9 +342,7 @@
 			<h2>Referências oficiais</h2>
 			<p>Para detalhes legais atualizados, consulte sempre os canais oficiais:</p>
 			<div class="Gstore-about-sources__links">
-				<a href="https://www.gov.br/pf/pt-br/assuntos/carta-de-servicos/armas/adquirir-arma-de-fogo" target="_blank" rel="noopener noreferrer">Aquisição de arma - Polícia Federal</a>
-				<a href="https://www.gov.br/pf/pt-br/assuntos/armas" target="_blank" rel="noopener noreferrer">Armas e Sinarm - Polícia Federal</a>
-				<a href="https://www.gov.br/pt-br/servicos/incluir-ou-excluir-produtos-ou-atividade-controladas-pelo-exercito-do-titulo-de-registro" target="_blank" rel="noopener noreferrer">Aquisição de PCE para CAC - gov.br</a>
+				{{compliance_official_links_html}}
 			</div>
 		</section>
 	</div>

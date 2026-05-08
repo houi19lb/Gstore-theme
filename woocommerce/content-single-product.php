@@ -350,14 +350,6 @@ if ( post_password_required() ) {
 |--------------------------------------------------------------------------
 */
 
-// Categoria do produto.
-$category_label = __( 'Linha destaque', 'gstore' );
-$categories     = get_the_terms( gstore_get_product_id( $product ), 'product_cat' );
-
-if ( ! empty( $categories ) && ! is_wp_error( $categories ) ) {
-	$category_label = $categories[0]->name;
-}
-
 // Descrição e avaliações. Usar the_content para que filtros do plugin (normalização) rodem na descrição.
 $short_description = apply_filters( 'woocommerce_short_description', $product->get_short_description() );
 $full_description  = apply_filters( 'the_content', $product->get_description() );
@@ -496,26 +488,8 @@ if ( $is_variable ) {
 	}
 }
 
-/*
-|--------------------------------------------------------------------------
-| Atributos e características do produto
-|--------------------------------------------------------------------------
-*/
-
-$attribute_data = gstore_get_product_attributes( $product );
-
-// Badge do produto (prioriza o 1º atributo visível; fallback: categoria).
-$badge_text = $category_label;
-if ( ! empty( $attribute_data ) && ! empty( $attribute_data[0]['value'] ) ) {
-	$first_value = trim( (string) $attribute_data[0]['value'] );
-	if ( '' !== $first_value ) {
-		$first_value = explode( ',', $first_value )[0];
-		$first_value = trim( (string) $first_value );
-		if ( '' !== $first_value ) {
-			$badge_text = $first_value;
-		}
-	}
-}
+// Badge do produto: usa a mesma disponibilidade configurada no admin GSTORE.
+$badge_text = $texto_disponibilidade;
 
 /*
 |--------------------------------------------------------------------------

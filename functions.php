@@ -2601,6 +2601,10 @@ function gstore_get_sobre_nos_faq_items() {
 			'answer'   => 'Depende do perfil. Cidadãos normalmente precisam de autorização de aquisição da Polícia Federal e documentos pessoais. CACs seguem exigências vinculadas ao CR, autorização, CRAF e regras do acervo.',
 		),
 		array(
+			'question' => 'Como verifico os dados da empresa?',
+			'answer'   => sprintf( 'Confira razao social, CNPJ, endereco e canais oficiais nesta pagina. Dados de registro ou autorizacao publica devem ser conferidos com a %s e nos canais oficiais do orgao competente.', $store_name ),
+		),
+		array(
 			'question' => 'Qual é a diferença entre cidadão e CAC?',
 			'answer'   => 'O cidadão compra para finalidade permitida em processo próprio. CAC é colecionador, atirador desportivo ou caçador com Certificado de Registro e regras específicas para acervo, aquisição e transporte.',
 		),
@@ -2623,6 +2627,10 @@ function gstore_get_sobre_nos_faq_items() {
 		array(
 			'question' => 'A loja ajuda com a documentação?',
 			'answer'   => sprintf( 'Sim. A %s orienta sobre os documentos esperados, confere o material recebido e indica os próximos passos, sem substituir a análise do órgão competente.', $store_name ),
+		),
+		array(
+			'question' => 'A loja publica documentos completos?',
+			'answer'   => 'Nao. Documentos de clientes e comprovantes com dados sensiveis nao devem ser publicados. Quando houver comprovante publico, ele deve ser revisado e redigido antes de qualquer exposicao.',
 		),
 	);
 }
@@ -2652,6 +2660,16 @@ function gstore_sobre_nos_json_ld() {
 		'description' => $description,
 	);
 
+	$legal_name = function_exists( 'gstore_get_store_legal_name' ) ? gstore_get_store_legal_name() : '';
+	if ( '' !== $legal_name ) {
+		$organization['legalName'] = $legal_name;
+	}
+
+	$trade_name = function_exists( 'gstore_get_store_trade_name' ) ? gstore_get_store_trade_name() : '';
+	if ( '' !== $trade_name && $trade_name !== $store_name ) {
+		$organization['alternateName'] = $trade_name;
+	}
+
 	if ( $logo_url ) {
 		$organization['logo'] = esc_url_raw( $logo_url );
 	}
@@ -2659,6 +2677,37 @@ function gstore_sobre_nos_json_ld() {
 	$cnpj = trim( (string) gstore_get_cnpj() );
 	if ( '' !== $cnpj ) {
 		$organization['taxID'] = $cnpj;
+	}
+
+	$identifiers = array();
+	if ( '' !== $cnpj ) {
+		$identifiers[] = array(
+			'@type'      => 'PropertyValue',
+			'propertyID' => 'CNPJ',
+			'value'      => $cnpj,
+		);
+	}
+
+	$state_registration = function_exists( 'gstore_get_state_registration' ) ? gstore_get_state_registration() : '';
+	if ( '' !== $state_registration ) {
+		$identifiers[] = array(
+			'@type'      => 'PropertyValue',
+			'propertyID' => 'Inscricao Estadual',
+			'value'      => $state_registration,
+		);
+	}
+
+	$registration_number = function_exists( 'gstore_get_compliance_value' ) ? gstore_get_compliance_value( 'registration_number' ) : '';
+	if ( '' !== $registration_number ) {
+		$identifiers[] = array(
+			'@type'      => 'PropertyValue',
+			'propertyID' => gstore_get_compliance_value( 'registration_type', 'CR' ),
+			'value'      => $registration_number,
+		);
+	}
+
+	if ( ! empty( $identifiers ) ) {
+		$organization['identifier'] = $identifiers;
 	}
 
 	$phone = trim( (string) gstore_get_phone() );
@@ -2669,6 +2718,19 @@ function gstore_sobre_nos_json_ld() {
 	$email = gstore_get_store_email();
 	if ( '' !== $email ) {
 		$organization['email'] = $email;
+	}
+
+	if ( '' !== $phone || '' !== $email ) {
+		$organization['contactPoint'] = array_filter(
+			array(
+				'@type'       => 'ContactPoint',
+				'contactType' => 'customer support',
+				'telephone'   => $phone,
+				'email'       => $email,
+				'areaServed'  => 'BR',
+				'availableLanguage' => 'pt-BR',
+			)
+		);
 	}
 
 	$address = gstore_store_info()->get_value( 'address' );
@@ -4663,8 +4725,16 @@ function gstore_enqueue_scripts() {
 				)
 			);
 
-			$custom_notice = (string) get_post_meta( $product_id, '_gstore_custom_notice', true );
-			$custom_notice = trim( $custom_notice );
+			$notice_parts  = array();
+			$custom_notice = trim( (string) get_post_meta( $product_id, '_gstore_custom_notice', true ) );
+			if ( '' !== $custom_notice ) {
+				$notice_parts[] = $custom_notice;
+			}
+			if ( function_exists( 'gstore_is_controlled_product' ) && gstore_is_controlled_product( $product_id ) ) {
+				$notice_parts[] = gstore_get_controlled_product_notice_text();
+			}
+
+			$product_notice_text = trim( implode( ' ', array_unique( array_filter( $notice_parts, 'strlen' ) ) ) );
 
 			$product_notice_js_path = get_theme_file_path( 'assets/js/gstore-product-notice.js' );
 			$product_notice_js_version = file_exists( $product_notice_js_path ) ? (string) filemtime( $product_notice_js_path ) : wp_get_theme()->get( 'Version' );
@@ -4691,8 +4761,8 @@ function gstore_enqueue_scripts() {
 				'gstore-product-notice',
 				'gstoreProductNotice',
 				array(
-					'active' => '' !== $custom_notice,
-					'text'   => $custom_notice,
+					'active' => '' !== $product_notice_text,
+					'text'   => $product_notice_text,
 				)
 			);
 		}
@@ -12916,6 +12986,39 @@ function gstore_get_product_category_scope_ids_for_breadcrumb( $category_id ) {
 }
 
 /**
+ * Resolve uma categoria de produto para a categoria principal configurada no painel.
+ *
+ * @param WP_Term $term              Categoria de produto.
+ * @param int[]   $main_category_ids IDs salvos em gstore_main_categories.
+ * @return int
+ */
+function gstore_resolve_main_catalog_category_id_for_breadcrumb( $term, array $main_category_ids ) {
+	if ( ! $term instanceof WP_Term || 'product_cat' !== $term->taxonomy || empty( $main_category_ids ) ) {
+		return 0;
+	}
+
+	$main_category_ids = array_values( array_unique( array_filter( array_map( 'absint', $main_category_ids ) ) ) );
+	if ( empty( $main_category_ids ) ) {
+		return 0;
+	}
+
+	$main_category_map = array_fill_keys( $main_category_ids, true );
+	$term_id           = (int) $term->term_id;
+	if ( isset( $main_category_map[ $term_id ] ) ) {
+		return $term_id;
+	}
+
+	$ancestor_ids = array_map( 'absint', get_ancestors( $term_id, 'product_cat', 'taxonomy' ) );
+	foreach ( $ancestor_ids as $ancestor_id ) {
+		if ( isset( $main_category_map[ (int) $ancestor_id ] ) ) {
+			return (int) $ancestor_id;
+		}
+	}
+
+	return 0;
+}
+
+/**
  * Conta produtos publicados de uma marca dentro de uma lista de categorias.
  *
  * @param WP_Term $brand_term   Termo de marca.
@@ -12963,6 +13066,168 @@ function gstore_count_brand_products_in_categories_for_breadcrumb( $brand_term, 
 }
 
 /**
+ * Retorna IDs de produtos publicados de uma marca.
+ *
+ * @param WP_Term $brand_term Termo de marca.
+ * @return int[]
+ */
+function gstore_get_brand_published_product_ids_for_breadcrumb( $brand_term ) {
+	if ( ! $brand_term instanceof WP_Term ) {
+		return array();
+	}
+
+	static $cache = array();
+
+	$cache_key = $brand_term->taxonomy . ':' . (int) $brand_term->term_id;
+	if ( array_key_exists( $cache_key, $cache ) ) {
+		return $cache[ $cache_key ];
+	}
+
+	$product_ids = get_posts(
+		array(
+			'post_type'              => 'product',
+			'post_status'            => 'publish',
+			'fields'                 => 'ids',
+			'posts_per_page'         => -1,
+			'ignore_sticky_posts'    => true,
+			'no_found_rows'          => true,
+			'update_post_meta_cache' => false,
+			'update_post_term_cache' => false,
+			'tax_query'              => array(
+				array(
+					'taxonomy'         => $brand_term->taxonomy,
+					'field'            => 'term_id',
+					'terms'            => array( (int) $brand_term->term_id ),
+					'include_children' => is_taxonomy_hierarchical( $brand_term->taxonomy ),
+				),
+			),
+		)
+	);
+
+	$cache[ $cache_key ] = array_values(
+		array_unique(
+			array_filter(
+				array_map( 'absint', is_array( $product_ids ) ? $product_ids : array() )
+			)
+		)
+	);
+
+	return $cache[ $cache_key ];
+}
+
+/**
+ * Retorna a categoria principal de catalogo para um produto publicado.
+ *
+ * Espelha a regra do plugin quando ele esta ativo: categoria principal manual do
+ * produto, depois a regra automatica de profundidade/prioridade. Em seguida,
+ * mapeia o termo para uma das categorias salvas em gstore_main_categories.
+ *
+ * @param int[] $main_category_ids IDs salvos em gstore_main_categories.
+ * @param int   $product_id        ID do produto.
+ * @return int
+ */
+function gstore_get_product_main_catalog_category_id_for_breadcrumb( $product_id, array $main_category_ids ) {
+	$product_id = absint( $product_id );
+	if ( $product_id <= 0 || empty( $main_category_ids ) ) {
+		return 0;
+	}
+
+	static $cache = array();
+
+	$main_category_ids = array_values( array_unique( array_filter( array_map( 'absint', $main_category_ids ) ) ) );
+	$cache_key         = $product_id . ':' . implode( ',', $main_category_ids );
+	if ( array_key_exists( $cache_key, $cache ) ) {
+		return $cache[ $cache_key ];
+	}
+
+	if ( class_exists( '\GStore\Services\Primary_Category_Service' ) ) {
+		$primary_term = \GStore\Services\Primary_Category_Service::get_primary_term( $product_id );
+		$resolved_id  = gstore_resolve_main_catalog_category_id_for_breadcrumb( $primary_term, $main_category_ids );
+		if ( $resolved_id > 0 ) {
+			$cache[ $cache_key ] = $resolved_id;
+			return $cache[ $cache_key ];
+		}
+	}
+
+	$terms = wp_get_post_terms(
+		$product_id,
+		'product_cat',
+		array(
+			'hide_empty' => false,
+		)
+	);
+
+	if ( is_wp_error( $terms ) || empty( $terms ) ) {
+		$cache[ $cache_key ] = 0;
+		return 0;
+	}
+
+	foreach ( $main_category_ids as $main_category_id ) {
+		foreach ( $terms as $term ) {
+			$resolved_id = gstore_resolve_main_catalog_category_id_for_breadcrumb( $term, array( (int) $main_category_id ) );
+			if ( $resolved_id > 0 ) {
+				$cache[ $cache_key ] = $resolved_id;
+				return $cache[ $cache_key ];
+			}
+		}
+	}
+
+	$cache[ $cache_key ] = 0;
+	return 0;
+}
+
+/**
+ * Pontua categorias principais da marca usando a categoria principal dos produtos publicados.
+ *
+ * @param WP_Term $brand_term        Termo de marca.
+ * @param int[]   $main_category_ids IDs salvos em gstore_main_categories.
+ * @return array<int,array{term_id:int,count:int,index:int}>
+ */
+function gstore_get_brand_primary_category_scores_from_products_for_breadcrumb( $brand_term, array $main_category_ids ) {
+	if ( ! $brand_term instanceof WP_Term || empty( $main_category_ids ) ) {
+		return array();
+	}
+
+	$product_ids = gstore_get_brand_published_product_ids_for_breadcrumb( $brand_term );
+	if ( empty( $product_ids ) ) {
+		return array();
+	}
+
+	$counts = array();
+	foreach ( $product_ids as $product_id ) {
+		$main_category_id = gstore_get_product_main_catalog_category_id_for_breadcrumb( $product_id, $main_category_ids );
+		if ( $main_category_id <= 0 ) {
+			continue;
+		}
+
+		if ( ! isset( $counts[ $main_category_id ] ) ) {
+			$counts[ $main_category_id ] = 0;
+		}
+		$counts[ $main_category_id ]++;
+	}
+
+	if ( empty( $counts ) ) {
+		return array();
+	}
+
+	$scores = array();
+	foreach ( $main_category_ids as $index => $category_id ) {
+		$category_id = (int) $category_id;
+		if ( empty( $counts[ $category_id ] ) ) {
+			continue;
+		}
+
+		$scores[] = array(
+			'term_id' => $category_id,
+			'count'   => (int) $counts[ $category_id ],
+			'index'   => (int) $index,
+		);
+	}
+
+	return $scores;
+}
+
+/**
  * Infere a categoria principal de uma marca pelos produtos publicados.
  *
  * @param mixed $term Termo de marca.
@@ -12986,23 +13251,25 @@ function gstore_get_brand_primary_product_category_for_breadcrumb( $term = null 
 		return null;
 	}
 
-	$scores = array();
-	foreach ( $category_ids as $index => $category_id ) {
-		$scope_ids = gstore_get_product_category_scope_ids_for_breadcrumb( $category_id );
-		if ( empty( $scope_ids ) ) {
-			continue;
-		}
+	$scores = gstore_get_brand_primary_category_scores_from_products_for_breadcrumb( $brand_term, $category_ids );
+	if ( empty( $scores ) ) {
+		foreach ( $category_ids as $index => $category_id ) {
+			$scope_ids = gstore_get_product_category_scope_ids_for_breadcrumb( $category_id );
+			if ( empty( $scope_ids ) ) {
+				continue;
+			}
 
-		$count = gstore_count_brand_products_in_categories_for_breadcrumb( $brand_term, $scope_ids );
-		if ( $count <= 0 ) {
-			continue;
-		}
+			$count = gstore_count_brand_products_in_categories_for_breadcrumb( $brand_term, $scope_ids );
+			if ( $count <= 0 ) {
+				continue;
+			}
 
-		$scores[] = array(
-			'term_id' => (int) $category_id,
-			'count'   => (int) $count,
-			'index'   => (int) $index,
-		);
+			$scores[] = array(
+				'term_id' => (int) $category_id,
+				'count'   => (int) $count,
+				'index'   => (int) $index,
+			);
+		}
 	}
 
 	if ( empty( $scores ) ) {
@@ -18077,6 +18344,317 @@ function gstore_get_cnpj() {
 }
 
 /**
+ * Obtem a razao social publica da loja.
+ *
+ * @return string
+ */
+function gstore_get_store_legal_name() {
+	$legal_name = trim( wp_strip_all_tags( (string) gstore_store_info()->get_value( 'store.legal_name', '' ) ) );
+
+	return '' !== $legal_name ? $legal_name : trim( (string) gstore_get_store_name() );
+}
+
+/**
+ * Obtem o nome fantasia publico da loja.
+ *
+ * @return string
+ */
+function gstore_get_store_trade_name() {
+	$trade_name = trim( wp_strip_all_tags( (string) gstore_store_info()->get_value( 'store.trade_name', '' ) ) );
+
+	return '' !== $trade_name ? $trade_name : trim( (string) gstore_get_store_name( 'display' ) );
+}
+
+/**
+ * Obtem a inscricao estadual da loja quando configurada.
+ *
+ * @return string
+ */
+function gstore_get_state_registration() {
+	return trim( wp_strip_all_tags( (string) gstore_store_info()->get_value( 'store.state_registration', '' ) ) );
+}
+
+/**
+ * Obtem um campo publico de conformidade da loja.
+ *
+ * @param string $key     Chave dentro de compliance.
+ * @param string $default Valor padrao.
+ * @return string
+ */
+function gstore_get_compliance_value( $key, $default = '' ) {
+	$value = gstore_store_info()->get_value( 'compliance.' . $key, $default );
+	if ( is_array( $value ) || is_object( $value ) ) {
+		return $default;
+	}
+
+	return trim( wp_strip_all_tags( (string) $value ) );
+}
+
+/**
+ * Monta um resumo publico do registro/autorizacao.
+ *
+ * @return string
+ */
+function gstore_get_compliance_registration_summary() {
+	$type   = gstore_get_compliance_value( 'registration_type', 'CR' );
+	$number = gstore_get_compliance_value( 'registration_number' );
+	$issuer = gstore_get_compliance_value( 'registration_issuer' );
+	$valid  = gstore_get_compliance_value( 'registration_valid_until' );
+
+	$parts = array();
+	if ( '' !== $type && '' !== $number ) {
+		$parts[] = trim( $type . ': ' . $number );
+	} elseif ( '' !== $number ) {
+		$parts[] = $number;
+	}
+	if ( '' !== $issuer ) {
+		$parts[] = $issuer;
+	}
+	if ( '' !== $valid ) {
+		$parts[] = $valid;
+	}
+
+	if ( empty( $parts ) ) {
+		return __( 'Dados de registro e autorizacoes informados pelos canais oficiais da loja.', 'gstore' );
+	}
+
+	return implode( ' | ', $parts );
+}
+
+/**
+ * Nota publica de compra legal.
+ *
+ * @return string
+ */
+function gstore_get_compliance_public_note() {
+	$note = gstore_get_compliance_value( 'public_note' );
+	if ( '' !== $note ) {
+		return $note;
+	}
+
+	return __( 'Produtos controlados sao vendidos somente mediante documentacao, autorizacao e requisitos legais aplicaveis. A loja nao promete aprovacao de processos junto aos orgaos competentes.', 'gstore' );
+}
+
+/**
+ * Aviso padrao para produtos controlados.
+ *
+ * @return string
+ */
+function gstore_get_controlled_product_notice_text() {
+	$notice = gstore_get_compliance_value( 'controlled_product_notice' );
+	if ( '' !== $notice ) {
+		return $notice;
+	}
+
+	return __( 'Venda sujeita a documentacao, autorizacao e requisitos legais vigentes. A aprovacao depende do orgao competente.', 'gstore' );
+}
+
+/**
+ * Linha curta de confianca para o rodape.
+ *
+ * @return string
+ */
+function gstore_get_footer_trust_line() {
+	$cnpj         = trim( (string) gstore_get_cnpj() );
+	$registration = gstore_get_compliance_registration_summary();
+
+	return implode( ' | ', array_filter( array(
+		'' !== $cnpj ? 'Empresa verificavel - CNPJ: ' . $cnpj : 'Empresa verificavel',
+		$registration,
+		__( 'Produtos controlados somente com documentacao e autorizacao aplicaveis.', 'gstore' ),
+	), 'strlen' ) );
+}
+
+/**
+ * Link HTML de verificacao quando houver URL publica configurada.
+ *
+ * @return string
+ */
+function gstore_get_compliance_verification_link_html() {
+	$url = esc_url( gstore_get_compliance_value( 'verification_url' ) );
+	if ( '' === $url ) {
+		return '';
+	}
+
+	return '<a href="' . $url . '" target="_blank" rel="noopener noreferrer">Consultar registro/autorizacao informado</a>';
+}
+
+/**
+ * Links oficiais de apoio para a pagina institucional.
+ *
+ * @return string
+ */
+function gstore_get_compliance_official_links_html() {
+	$links = array(
+		array(
+			'url'   => gstore_get_compliance_value( 'pf_url', 'https://www.gov.br/pf/pt-br/assuntos/armas' ),
+			'label' => __( 'Armas - Policia Federal', 'gstore' ),
+		),
+		array(
+			'url'   => gstore_get_compliance_value( 'legislation_url', 'https://www.gov.br/pf/pt-br/assuntos/armas/normativos/legislacao' ),
+			'label' => __( 'Legislacao e normativos - PF', 'gstore' ),
+		),
+	);
+
+	$verification_url = gstore_get_compliance_value( 'verification_url' );
+	if ( '' !== $verification_url ) {
+		$links[] = array(
+			'url'   => $verification_url,
+			'label' => __( 'Consulta publica do registro', 'gstore' ),
+		);
+	}
+
+	$html = array();
+	foreach ( $links as $link ) {
+		$url = esc_url( $link['url'] );
+		if ( '' === $url ) {
+			continue;
+		}
+		$html[] = '<a href="' . $url . '" target="_blank" rel="noopener noreferrer">' . esc_html( $link['label'] ) . '</a>';
+	}
+
+	return implode( "\n", $html );
+}
+
+/**
+ * Indica se um slug de categoria representa produto controlado.
+ *
+ * @param string $slug Slug de termo.
+ * @return bool
+ */
+function gstore_is_controlled_product_term_slug( $slug ) {
+	$slug = sanitize_title( (string) $slug );
+	if ( '' === $slug ) {
+		return false;
+	}
+
+	foreach ( array( 'airsoft', 'pressao', 'pcp', 'pneumatica', 'chumbinho' ) as $excluded ) {
+		if ( false !== strpos( $slug, $excluded ) ) {
+			return false;
+		}
+	}
+
+	$exact_slugs = apply_filters(
+		'gstore_controlled_product_exact_slugs',
+		array(
+			'armas',
+			'arma-de-fogo',
+			'armas-de-fogo',
+			'municao',
+			'municoes',
+			'pistola',
+			'pistolas',
+			'revolver',
+			'revolveres',
+			'espingarda',
+			'espingardas',
+			'rifle',
+			'rifles',
+			'carabina',
+			'carabinas',
+		)
+	);
+
+	if ( in_array( $slug, array_map( 'sanitize_title', (array) $exact_slugs ), true ) ) {
+		return true;
+	}
+
+	$keywords = apply_filters(
+		'gstore_controlled_product_slug_keywords',
+		array( 'arma-de-fogo', 'armas-de-fogo', 'municao', 'municoes', 'pistola', 'revolver', 'espingarda', 'rifle' )
+	);
+
+	foreach ( (array) $keywords as $keyword ) {
+		$keyword = sanitize_title( (string) $keyword );
+		if ( '' !== $keyword && false !== strpos( $slug, $keyword ) ) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
+/**
+ * Verifica se um termo de catalogo esta no escopo de produto controlado.
+ *
+ * @param WP_Term|int|null $term Termo atual ou ID.
+ * @return bool
+ */
+function gstore_is_controlled_catalog_term( $term = null ) {
+	if ( null === $term && function_exists( 'get_queried_object' ) ) {
+		$term = get_queried_object();
+	}
+
+	if ( is_numeric( $term ) ) {
+		$term = get_term( (int) $term, 'product_cat' );
+	}
+
+	if ( ! $term instanceof WP_Term || 'product_cat' !== $term->taxonomy ) {
+		return false;
+	}
+
+	$terms = array( $term );
+	$ancestors = get_ancestors( (int) $term->term_id, 'product_cat', 'taxonomy' );
+	foreach ( array_map( 'absint', (array) $ancestors ) as $ancestor_id ) {
+		$ancestor = get_term( $ancestor_id, 'product_cat' );
+		if ( $ancestor instanceof WP_Term ) {
+			$terms[] = $ancestor;
+		}
+	}
+
+	foreach ( $terms as $candidate ) {
+		if ( gstore_is_controlled_product_term_slug( $candidate->slug ) ) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
+/**
+ * Verifica se um produto pertence a categoria controlada.
+ *
+ * @param int $product_id ID do produto.
+ * @return bool
+ */
+function gstore_is_controlled_product( $product_id = 0 ) {
+	$product_id = $product_id ? absint( $product_id ) : (int) get_queried_object_id();
+	if ( $product_id <= 0 || ! taxonomy_exists( 'product_cat' ) ) {
+		return false;
+	}
+
+	$terms = wp_get_post_terms( $product_id, 'product_cat' );
+	if ( is_wp_error( $terms ) || empty( $terms ) ) {
+		return false;
+	}
+
+	foreach ( $terms as $term ) {
+		if ( $term instanceof WP_Term && gstore_is_controlled_catalog_term( $term ) ) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
+/**
+ * Imprime aviso discreto em archives de categorias controladas.
+ *
+ * @return void
+ */
+function gstore_output_catalog_controlled_notice() {
+	if ( ! function_exists( 'is_product_category' ) || ! is_product_category() || ! gstore_is_controlled_catalog_term() ) {
+		return;
+	}
+
+	echo '<div class="gstore-compliance-notice gstore-compliance-notice--catalog" role="note">'
+		. '<i class="fa-solid fa-shield-halved" aria-hidden="true"></i>'
+		. '<span>' . esc_html( gstore_get_controlled_product_notice_text() ) . '</span>'
+		. '</div>';
+}
+add_action( 'woocommerce_before_shop_loop', 'gstore_output_catalog_controlled_notice', 3 );
+
+/**
  * Obtém o número do WhatsApp.
  *
  * @param string $format 'raw' ou 'display'.
@@ -19016,10 +19594,13 @@ function gstore_process_store_info_placeholders( $content ) {
 	$placeholders = array(
 		// Store
 		'{{store_name}}'          => gstore_get_store_name(),
+		'{{store_legal_name}}'    => gstore_get_store_legal_name(),
+		'{{store_trade_name}}'    => gstore_get_store_trade_name(),
 		'{{store_display_name}}'  => gstore_get_store_name( 'display' ),
 		'{{store_name_highlight}}' => gstore_get_store_name( 'highlight' ),
 		'{{store_slogan}}'        => gstore_store_info()->get_value( 'store.slogan', '' ),
 		'{{cnpj}}'                => gstore_get_cnpj(),
+		'{{state_registration}}'  => gstore_get_state_registration(),
 		'{{founded_year}}'        => gstore_get_founded_year(),
 
 		// Contact
@@ -19066,11 +19647,25 @@ function gstore_process_store_info_placeholders( $content ) {
 		'{{business_hours}}'      => gstore_get_business_hours(),
 		'{{support_hours}}'       => gstore_get_business_hours( 'support' ),
 
+		// Compliance
+		'{{compliance_registration_type}}' => gstore_get_compliance_value( 'registration_type', 'CR' ),
+		'{{compliance_registration_number}}' => gstore_get_compliance_value( 'registration_number' ),
+		'{{compliance_registration_issuer}}' => gstore_get_compliance_value( 'registration_issuer' ),
+		'{{compliance_registration_valid_until}}' => gstore_get_compliance_value( 'registration_valid_until' ),
+		'{{compliance_registration_scope}}' => gstore_get_compliance_value( 'registration_scope' ),
+		'{{compliance_registration_summary}}' => gstore_get_compliance_registration_summary(),
+		'{{compliance_public_note}}' => gstore_get_compliance_public_note(),
+		'{{compliance_controlled_notice}}' => gstore_get_controlled_product_notice_text(),
+		'{{compliance_document_publication_policy}}' => gstore_get_compliance_value( 'document_publication_policy' ),
+		'{{compliance_verification_link_html}}' => gstore_get_compliance_verification_link_html(),
+		'{{compliance_official_links_html}}' => gstore_get_compliance_official_links_html(),
+
 		// Footer
 		'{{copyright}}'           => gstore_get_copyright(),
 		'{{footer_contact_line}}' => gstore_get_footer_contact_line(),
 		'{{footer_business_hours_line}}' => gstore_get_footer_business_hours_line(),
 		'{{footer_legal_line}}'   => gstore_get_footer_legal_line(),
+		'{{footer_trust_line}}'   => gstore_get_footer_trust_line(),
 		'{{footer_category_brand_summary}}' => $footer_category_brand_summary,
 
 		// Meta
@@ -19093,6 +19688,7 @@ function gstore_process_store_info_placeholders( $content ) {
 
 	// Substitui os placeholders
 	$content = str_replace( array_keys( $placeholders ), array_values( $placeholders ), $content );
+	$content = preg_replace( '/<div\s+class="Gstore-about-data__row">\s*<span>[^<]*<\/span>\s*<strong>\s*<\/strong>\s*<\/div>\s*/is', '', $content );
 	$content = preg_replace( '/<a\b(?=[^>]*class="[^"]*\bGstore-top-bar__link\b[^"]*")[^>]*href=""[^>]*>.*?<\/a>\s*/is', '', $content );
 	$content = preg_replace( '/<div\s+class="contact-item">\s*<i\b[^>]*><\/i>\s*<a\b[^>]*href=""[^>]*>.*?<\/a>\s*<\/div>\s*/is', '', $content );
 	$content = preg_replace( '/<div\s+class="contact-item">\s*<i\b[^>]*><\/i>\s*<\/div>\s*/is', '', $content );

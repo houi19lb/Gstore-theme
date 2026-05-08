@@ -9053,6 +9053,26 @@ body:has(.Gstore-catalog-shell--light) main {
 	margin: 0;
 }
 
+.gstore-compliance-notice {
+	display: flex;
+	gap: 10px;
+	align-items: flex-start;
+	margin: 0 0 20px;
+	padding: 14px 16px;
+	background: #fffdf1;
+	border: 1px solid rgba(181, 166, 66, 0.36);
+	border-radius: var(--gstore-radius-base, 4px);
+	color: var(--text-main, #1a1a1a);
+	font-size: var(--gstore-font-size-sm, 14px);
+	line-height: 1.5;
+}
+
+.gstore-compliance-notice i {
+	flex: 0 0 auto;
+	margin-top: 2px;
+	color: var(--gstore-color-accent, #b5a642);
+}
+
 /* Remove prefixo "Categoria:" do WooCommerce */
 .Gstore-catalog-shell--light .woocommerce-products-header__title {
 	font-size: clamp(24px, 3vw, 32px);
