@@ -12965,6 +12965,83 @@ function gstore_get_main_catalog_category_ids_for_breadcrumb() {
 }
 
 /**
+ * Retorna slugs de categorias principais que sao campanhas ou hubs editoriais.
+ *
+ * Essas categorias podem existir em gstore_main_categories para navegacao, mas
+ * nao devem definir a familia principal de uma marca quando houver categorias
+ * comerciais como Pistolas, Municao, Carabinas etc.
+ *
+ * @return string[]
+ */
+function gstore_get_brand_breadcrumb_excluded_main_category_slugs() {
+	$slugs = array(
+		'clube-de-tiro',
+		'especial',
+		'imperdivel',
+		'lancamento',
+		'maio-de-fogo',
+		'ofertas',
+		'programas',
+		'promocoes',
+		'pro-training',
+		'tiro-longo',
+	);
+
+	$slugs = apply_filters( 'gstore_brand_breadcrumb_excluded_main_category_slugs', $slugs );
+
+	return array_values( array_unique( array_filter( array_map( 'sanitize_title', (array) $slugs ) ) ) );
+}
+
+/**
+ * Filtra categorias principais usadas para inferir breadcrumb de marca.
+ *
+ * @param int[] $category_ids IDs salvos em gstore_main_categories.
+ * @return int[]
+ */
+function gstore_filter_brand_breadcrumb_main_category_ids( array $category_ids ) {
+	$category_ids = array_values( array_unique( array_filter( array_map( 'absint', $category_ids ) ) ) );
+	if ( empty( $category_ids ) || ! taxonomy_exists( 'product_cat' ) ) {
+		return $category_ids;
+	}
+
+	$excluded_slugs = gstore_get_brand_breadcrumb_excluded_main_category_slugs();
+	if ( empty( $excluded_slugs ) ) {
+		return $category_ids;
+	}
+
+	$terms = get_terms(
+		array(
+			'taxonomy'   => 'product_cat',
+			'include'    => $category_ids,
+			'hide_empty' => false,
+		)
+	);
+
+	if ( is_wp_error( $terms ) || empty( $terms ) ) {
+		return $category_ids;
+	}
+
+	$terms_by_id = array();
+	foreach ( $terms as $term ) {
+		if ( $term instanceof WP_Term ) {
+			$terms_by_id[ (int) $term->term_id ] = $term;
+		}
+	}
+
+	$filtered_ids = array();
+	foreach ( $category_ids as $category_id ) {
+		$term = $terms_by_id[ (int) $category_id ] ?? null;
+		if ( $term instanceof WP_Term && in_array( sanitize_title( (string) $term->slug ), $excluded_slugs, true ) ) {
+			continue;
+		}
+
+		$filtered_ids[] = (int) $category_id;
+	}
+
+	return ! empty( $filtered_ids ) ? $filtered_ids : $category_ids;
+}
+
+/**
  * Retorna IDs de uma categoria e suas subcategorias.
  *
  * @param int $category_id ID da categoria raiz.
@@ -13250,6 +13327,7 @@ function gstore_get_brand_primary_product_category_for_breadcrumb( $term = null 
 		$cache[ $cache_key ] = null;
 		return null;
 	}
+	$category_ids = gstore_filter_brand_breadcrumb_main_category_ids( $category_ids );
 
 	$scores = gstore_get_brand_primary_category_scores_from_products_for_breadcrumb( $brand_term, $category_ids );
 	if ( empty( $scores ) ) {
@@ -13446,6 +13524,10 @@ add_filter( 'wpseo_schema_webpage', 'gstore_catalog_archive_schema_breadcrumb', 
  * Imprime BreadcrumbList para categorias, tags e marcas de produto.
  */
 function gstore_print_catalog_term_breadcrumb_schema() {
+	if ( ! empty( $GLOBALS['gstore_product_taxonomy_schema_printed'] ) ) {
+		return;
+	}
+
 	$breadcrumb = gstore_get_current_catalog_term_breadcrumb_schema();
 	if ( empty( $breadcrumb ) ) {
 		return;
@@ -13455,7 +13537,7 @@ function gstore_print_catalog_term_breadcrumb_schema() {
 		. wp_json_encode( array( '@context' => 'https://schema.org', '@graph' => array( $breadcrumb ) ), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES )
 		. '</script>' . "\n";
 }
-add_action( 'wp_head', 'gstore_print_catalog_term_breadcrumb_schema', 30 );
+add_action( 'wp_head', 'gstore_print_catalog_term_breadcrumb_schema', 31 );
 
 /**
  * Retorna o attachment ID usado como imagem da marca.
@@ -15231,6 +15313,55 @@ function gstore_normalize_catalog_archive_description_output( $html ) {
 }
 
 /**
+ * Monta breadcrumb hierarquico para archives publicos de produto.
+ *
+ * @return string
+ */
+function gstore_get_catalog_archive_breadcrumb_html() {
+	if ( ! function_exists( 'is_tax' ) || ! is_tax( gstore_get_public_product_taxonomies() ) ) {
+		return '';
+	}
+
+	if ( function_exists( 'gstore_has_catalog_non_pagination_operational_query' ) && gstore_has_catalog_non_pagination_operational_query() ) {
+		return '';
+	}
+
+	$breadcrumb = gstore_get_current_catalog_term_breadcrumb_schema();
+	if ( empty( $breadcrumb['itemListElement'] ) || ! is_array( $breadcrumb['itemListElement'] ) ) {
+		return '';
+	}
+
+	$items = array_values( $breadcrumb['itemListElement'] );
+	if ( empty( $items ) ) {
+		return '';
+	}
+
+	$html = '<nav class="Gstore-breadcrumb Gstore-breadcrumb--dynamic" aria-label="' . esc_attr__( 'NavegaÃ§Ã£o', 'gstore' ) . '">';
+	$last = count( $items ) - 1;
+	foreach ( $items as $index => $item ) {
+		$label = isset( $item['name'] ) ? wp_strip_all_tags( (string) $item['name'] ) : '';
+		if ( '' === $label ) {
+			continue;
+		}
+
+		if ( $index > 0 ) {
+			$html .= '<span class="Gstore-breadcrumb__separator">/</span>';
+		}
+
+		$url = isset( $item['item'] ) ? (string) $item['item'] : '';
+		if ( $index === $last || '' === $url ) {
+			$html .= '<span class="Gstore-breadcrumb__current Gstore-breadcrumb__current-term">' . esc_html( $label ) . '</span>';
+			continue;
+		}
+
+		$html .= '<a href="' . esc_url( $url ) . '">' . esc_html( $label ) . '</a>';
+	}
+	$html .= '</nav>';
+
+	return $html;
+}
+
+/**
  * Monta breadcrumb hierarquico para archives nativos de product_cat.
  *
  * @return string
@@ -15309,7 +15440,7 @@ function gstore_replace_catalog_dynamic_breadcrumb_html( $html ) {
 		return $html;
 	}
 
-	$breadcrumb = gstore_get_product_category_archive_breadcrumb_html();
+	$breadcrumb = gstore_get_catalog_archive_breadcrumb_html();
 	if ( '' === $breadcrumb ) {
 		return $html;
 	}
