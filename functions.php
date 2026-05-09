@@ -12831,6 +12831,7 @@ function gstore_get_catalog_archive_title() {
  */
 function gstore_get_catalog_archive_description_html() {
 	$description = '';
+	$term        = null;
 
 	if ( function_exists( 'is_product_taxonomy' ) && is_product_taxonomy() ) {
 		$term = get_queried_object();
@@ -12849,7 +12850,7 @@ function gstore_get_catalog_archive_description_html() {
 		}
 	}
 
-	return trim( (string) $description );
+	return trim( (string) apply_filters( 'gstore_catalog_archive_description_html', $description, $term ) );
 }
 
 /**
@@ -12903,6 +12904,12 @@ function gstore_get_catalog_archive_fallback_summary_text( $term = null ) {
  * @return string
  */
 function gstore_get_catalog_archive_summary_source_html() {
+	$term = get_queried_object();
+	$seo_intro = apply_filters( 'gstore_catalog_archive_summary_source_html', '', $term );
+	if ( '' !== trim( wp_strip_all_tags( (string) $seo_intro ) ) ) {
+		return (string) $seo_intro;
+	}
+
 	$description = gstore_get_catalog_archive_description_html();
 
 	if ( '' !== trim( wp_strip_all_tags( $description ) ) ) {
