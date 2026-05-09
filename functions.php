@@ -13856,6 +13856,10 @@ add_filter( 'wpseo_opengraph_image_alt', 'gstore_catalog_brand_archive_seo_image
  * Imprime metadados de imagem para marcas sem expor a miniatura no topo da pagina.
  */
 function gstore_print_catalog_brand_archive_seo_image_meta() {
+	if ( ! empty( $GLOBALS['gstore_catalog_term_open_graph_rendered'] ) ) {
+		return;
+	}
+
 	$image = gstore_get_catalog_archive_brand_seo_image();
 	if ( empty( $image['url'] ) ) {
 		return;
