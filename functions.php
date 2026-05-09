@@ -1495,6 +1495,142 @@ function gstore_product_taxonomy_pagination_redirect_canonical( $redirect_url, $
 add_filter( 'redirect_canonical', 'gstore_product_taxonomy_pagination_redirect_canonical', 20, 2 );
 
 /**
+ * Retorna o path normalizado de uma URL.
+ *
+ * @param string $url URL completa ou path.
+ * @return string
+ */
+function gstore_normalize_public_path_for_brand_redirects( $url ) {
+	$path = (string) wp_parse_url( (string) $url, PHP_URL_PATH );
+	if ( '' === $path ) {
+		$path = (string) $url;
+	}
+
+	$path = '/' . trim( rawurldecode( $path ), '/' );
+
+	return '/' === $path ? '/' : untrailingslashit( $path );
+}
+
+/**
+ * Retorna o slug publico da taxonomia de marcas.
+ *
+ * @return string
+ */
+function gstore_get_product_brand_rewrite_slug() {
+	$taxonomy = taxonomy_exists( 'product_brand' ) ? get_taxonomy( 'product_brand' ) : null;
+	if ( $taxonomy && ! empty( $taxonomy->rewrite['slug'] ) ) {
+		return trim( (string) $taxonomy->rewrite['slug'], '/' );
+	}
+
+	return 'marca';
+}
+
+/**
+ * Detecta termo product_brand em uma URL publica /marca/{slug}/.
+ *
+ * @param string $url URL completa ou path.
+ * @return WP_Term|null
+ */
+function gstore_get_product_brand_term_from_public_url( $url ) {
+	if ( ! taxonomy_exists( 'product_brand' ) ) {
+		return null;
+	}
+
+	$path       = trim( gstore_normalize_public_path_for_brand_redirects( $url ), '/' );
+	$brand_base = gstore_get_product_brand_rewrite_slug();
+
+	if ( '' === $path || '' === $brand_base ) {
+		return null;
+	}
+
+	$segments = array_values( array_filter( explode( '/', $path ) ) );
+	if ( count( $segments ) < 2 || $brand_base !== $segments[0] ) {
+		return null;
+	}
+
+	if ( isset( $segments[2] ) && 'page' === $segments[2] ) {
+		$segments = array_slice( $segments, 0, 2 );
+	}
+
+	if ( count( $segments ) !== 2 ) {
+		return null;
+	}
+
+	$term = get_term_by( 'slug', sanitize_title( $segments[1] ), 'product_brand' );
+
+	return $term instanceof WP_Term && ! is_wp_error( $term ) ? $term : null;
+}
+
+/**
+ * Impede que o canonical do WordPress troque uma marca por categoria homonima.
+ *
+ * Isso acontece quando existe /marca/glock/ e tambem product_cat "glock"; o
+ * canonical pode preferir /categoria-produto/pistolas/glock/.
+ *
+ * @param string|false $redirect_url  URL sugerida pelo WordPress.
+ * @param string       $requested_url URL requisitada.
+ * @return string|false
+ */
+function gstore_prevent_product_brand_slug_collision_canonical_redirect( $redirect_url, $requested_url ) {
+	if ( false === $redirect_url || '' === (string) $redirect_url ) {
+		return $redirect_url;
+	}
+
+	$brand_term = gstore_get_product_brand_term_from_public_url( $requested_url );
+	if ( ! $brand_term ) {
+		return $redirect_url;
+	}
+
+	$brand_link = get_term_link( $brand_term, 'product_brand' );
+	if ( is_wp_error( $brand_link ) || ! is_string( $brand_link ) || '' === $brand_link ) {
+		return $redirect_url;
+	}
+
+	$brand_path    = gstore_normalize_public_path_for_brand_redirects( $brand_link );
+	$redirect_path = gstore_normalize_public_path_for_brand_redirects( $redirect_url );
+
+	return $brand_path !== $redirect_path ? false : $redirect_url;
+}
+add_filter( 'redirect_canonical', 'gstore_prevent_product_brand_slug_collision_canonical_redirect', 1, 2 );
+
+/**
+ * Redireciona categoria vazia homonima para a marca real.
+ */
+function gstore_redirect_empty_brand_like_product_category_to_brand_archive() {
+	if ( is_admin() || wp_doing_ajax() || wp_doing_cron() || ! function_exists( 'is_product_category' ) || ! is_product_category() ) {
+		return;
+	}
+
+	if ( ! taxonomy_exists( 'product_brand' ) ) {
+		return;
+	}
+
+	$term = get_queried_object();
+	if ( ! $term instanceof WP_Term || 'product_cat' !== $term->taxonomy || (int) $term->count > 0 ) {
+		return;
+	}
+
+	$children = get_term_children( (int) $term->term_id, 'product_cat' );
+	if ( ! is_wp_error( $children ) && ! empty( $children ) ) {
+		return;
+	}
+
+	$brand_term = get_term_by( 'slug', (string) $term->slug, 'product_brand' );
+	if ( ! $brand_term instanceof WP_Term || is_wp_error( $brand_term ) || (int) $brand_term->count <= 0 ) {
+		return;
+	}
+
+	$brand_link = get_term_link( $brand_term, 'product_brand' );
+	if ( is_wp_error( $brand_link ) || ! is_string( $brand_link ) || '' === $brand_link ) {
+		return;
+	}
+
+	wp_safe_redirect( $brand_link, 301 );
+	exit;
+}
+add_action( 'template_redirect', 'gstore_redirect_empty_brand_like_product_category_to_brand_archive', 0 );
+
+/**
  * Canonical proprio para categorias/subcategorias/marcas/tag de produto.
  *
  * @param string $canonical_url URL canonica original.
