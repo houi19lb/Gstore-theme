@@ -14046,6 +14046,11 @@ add_action( 'wp', 'gstore_setup_catalog_archive_description', 20 );
  * @return string
  */
 function gstore_get_catalog_archive_description_details_html() {
+	$filtered_html = apply_filters( 'gstore_catalog_archive_description_details_html', '', get_queried_object() );
+	if ( is_string( $filtered_html ) && '' !== trim( $filtered_html ) ) {
+		return $filtered_html;
+	}
+
 	$description = gstore_get_catalog_archive_description_html();
 	if ( '' === trim( wp_strip_all_tags( $description ) ) ) {
 		return '';

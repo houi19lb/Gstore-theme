@@ -9155,6 +9155,10 @@ body:has(.Gstore-catalog-shell--light) main {
 	overflow: hidden;
 }
 
+.Gstore-catalog-archive-details__item + .Gstore-catalog-archive-details__item {
+	margin-top: 8px;
+}
+
 .Gstore-catalog-archive-details__summary {
 	align-items: center;
 	cursor: pointer;
