@@ -7559,6 +7559,27 @@ main.Gstore-blog-single-shell .wp-block-group.is-layout-constrained:not(.Gstore-
 	margin: 2em 0;
 }
 
+.Gstore-blog-single-content .gstore-seo-inline-image {
+	margin: 2em 0;
+}
+
+.Gstore-blog-single-content .gstore-seo-inline-image img {
+	display: block;
+	width: 100%;
+	margin: 0;
+	aspect-ratio: 16 / 9;
+	object-fit: contain;
+	background: #f8f8f8;
+	border: 1px solid var(--gray-border);
+}
+
+.Gstore-blog-single-content .gstore-seo-inline-image figcaption {
+	margin-top: 8px;
+	color: var(--text-muted);
+	font-size: 0.92rem;
+	line-height: 1.45;
+}
+
 .Gstore-blog-single-content .wp-block-table,
 .Gstore-blog-single-content .gstore-seo-table {
 	width: 100%;

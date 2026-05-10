@@ -4775,11 +4775,13 @@ function gstore_enqueue_scripts() {
 
 	// Script para posts únicos do blog
 	if ( is_single() && get_post_type() === 'post' ) {
+		$blog_single_js_path    = get_theme_file_path( 'assets/js/blog-single.js' );
+		$blog_single_js_version = file_exists( $blog_single_js_path ) ? (string) filemtime( $blog_single_js_path ) : wp_get_theme()->get( 'Version' );
 		wp_enqueue_script(
 			'gstore-blog-single',
 			get_theme_file_uri( 'assets/js/blog-single.js' ),
 			array(),
-			wp_get_theme()->get( 'Version' ),
+			$blog_single_js_version,
 			true
 		);
 	}
@@ -21426,6 +21428,142 @@ function gstore_get_order_required_documents( $order ) {
 
 	return $result;
 }
+
+/**
+ * Calcula o tempo de leitura do artigo no servidor.
+ *
+ * @param int $post_id ID do post.
+ * @return int
+ */
+function gstore_blog_single_get_reading_minutes( $post_id ) {
+	$post = get_post( $post_id );
+	if ( ! $post instanceof WP_Post ) {
+		return 1;
+	}
+
+	$content    = wp_strip_all_tags( strip_shortcodes( $post->post_content ) );
+	$word_count = preg_match_all( '/[\p{L}\p{N}]+/u', $content, $matches );
+
+	return max( 1, (int) ceil( $word_count / 200 ) );
+}
+
+/**
+ * Substitui o placeholder de tempo de leitura no template single.
+ *
+ * @param string $block_content HTML renderizado.
+ * @param array  $block         Dados do bloco.
+ * @return string
+ */
+function gstore_blog_single_replace_reading_time_placeholder( $block_content, $block ) {
+	if ( is_admin() || ! is_singular( 'post' ) || false === strpos( $block_content, 'Gstore-blog-single-meta__reading-time-text' ) ) {
+		return $block_content;
+	}
+
+	$minutes = gstore_blog_single_get_reading_minutes( get_queried_object_id() );
+	$text    = sprintf( _n( '%d min de leitura', '%d min de leitura', $minutes, 'gstore' ), $minutes );
+
+	return preg_replace(
+		'/(<span class="Gstore-blog-single-meta__reading-time-text">)[^<]*(<\/span>)/',
+		'${1}' . esc_html( $text ) . '${2}',
+		$block_content,
+		1
+	);
+}
+add_filter( 'render_block_core/html', 'gstore_blog_single_replace_reading_time_placeholder', 30, 2 );
+
+/**
+ * Evita que o query loop de artigos relacionados mostre o proprio post atual.
+ *
+ * @param array    $query Query vars do bloco.
+ * @param WP_Block $block Instancia do bloco.
+ * @return array
+ */
+function gstore_blog_single_exclude_current_from_related_query( $query, $block ) {
+	if ( is_admin() || ! is_singular( 'post' ) ) {
+		return $query;
+	}
+
+	$parsed     = $block instanceof WP_Block ? $block->parsed_block : (array) $block;
+	$class_name = isset( $parsed['attrs']['className'] ) ? (string) $parsed['attrs']['className'] : '';
+	if ( false === strpos( $class_name, 'Gstore-blog-single-related__query' ) ) {
+		return $query;
+	}
+
+	$current_id = get_queried_object_id();
+	if ( $current_id <= 0 ) {
+		return $query;
+	}
+
+	$excluded              = isset( $query['post__not_in'] ) ? (array) $query['post__not_in'] : array();
+	$excluded[]            = $current_id;
+	$query['post__not_in'] = array_values( array_unique( array_map( 'absint', $excluded ) ) );
+
+	return $query;
+}
+add_filter( 'query_loop_block_query_vars', 'gstore_blog_single_exclude_current_from_related_query', 10, 2 );
+
+/**
+ * Injeta o ID atual no atributo exclude do bloco Query antes da renderizacao.
+ *
+ * @param array $parsed_block Dados parseados do bloco.
+ * @return array
+ */
+function gstore_blog_single_exclude_current_from_related_block_data( $parsed_block ) {
+	if ( is_admin() || ! is_singular( 'post' ) || ! is_array( $parsed_block ) || 'core/query' !== ( $parsed_block['blockName'] ?? '' ) ) {
+		return $parsed_block;
+	}
+
+	$class_name = isset( $parsed_block['attrs']['className'] ) ? (string) $parsed_block['attrs']['className'] : '';
+	if ( false === strpos( $class_name, 'Gstore-blog-single-related__query' ) ) {
+		return $parsed_block;
+	}
+
+	$current_id = get_queried_object_id();
+	if ( $current_id <= 0 ) {
+		return $parsed_block;
+	}
+
+	if ( ! isset( $parsed_block['attrs']['query'] ) || ! is_array( $parsed_block['attrs']['query'] ) ) {
+		$parsed_block['attrs']['query'] = array();
+	}
+
+	$exclude = isset( $parsed_block['attrs']['query']['exclude'] ) ? (array) $parsed_block['attrs']['query']['exclude'] : array();
+	$exclude[] = $current_id;
+	$parsed_block['attrs']['query']['exclude'] = array_values( array_unique( array_map( 'absint', $exclude ) ) );
+
+	return $parsed_block;
+}
+add_filter( 'render_block_data', 'gstore_blog_single_exclude_current_from_related_block_data', 10, 1 );
+
+/**
+ * Fallback no HTML renderizado para remover o post atual dos relacionados.
+ *
+ * @param string $block_content HTML renderizado.
+ * @param array  $block         Dados do bloco.
+ * @return string
+ */
+function gstore_blog_single_remove_current_related_card( $block_content, $block ) {
+	if ( is_admin() || ! is_singular( 'post' ) || false === strpos( $block_content, 'Gstore-blog-single-related__card' ) ) {
+		return $block_content;
+	}
+
+	$current_url   = trailingslashit( get_permalink( get_queried_object_id() ) );
+	$current_title = get_the_title( get_queried_object_id() );
+
+	return preg_replace_callback(
+		'/<article\b[^>]*Gstore-blog-single-related__card[^>]*>[\s\S]*?<\/article>/',
+		function( $matches ) use ( $current_url, $current_title ) {
+			$card = $matches[0];
+			if ( false !== strpos( $card, esc_url( $current_url ) ) || ( $current_title && false !== strpos( wp_strip_all_tags( $card ), $current_title ) ) ) {
+				return '';
+			}
+
+			return $card;
+		},
+		$block_content
+	);
+}
+add_filter( 'render_block', 'gstore_blog_single_remove_current_related_card', 35, 2 );
 
 /**
  * Troca a imagem destacada do template single pelo banner 3:1 do artigo.

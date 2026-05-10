@@ -52,7 +52,7 @@
 		const readingTime = Math.ceil(wordCount / 200);
 		const minutes = readingTime === 0 ? 1 : readingTime;
 
-		readingTimeElement.textContent = `${minutes} ${minutes === 1 ? 'min' : 'mins'} de leitura`;
+		readingTimeElement.textContent = `${minutes} min de leitura`;
 	}
 
 	/**
@@ -256,8 +256,8 @@
 		}
 
 		// Obtém a URL atual
-		const currentUrl = window.location.href;
-		const currentPath = window.location.pathname;
+		const currentPath = normalizePath(window.location.pathname);
+		const currentTitle = (document.querySelector('.Gstore-blog-single-title')?.textContent || '').trim();
 
 		// Encontra todos os cards de posts relacionados
 		const relatedCards = relatedQuery.querySelectorAll('.Gstore-blog-single-related__card');
@@ -269,13 +269,18 @@
 			}
 
 			const cardUrl = link.href;
-			const cardPath = new URL(cardUrl).pathname;
+			const cardPath = normalizePath(new URL(cardUrl).pathname);
+			const cardTitle = (card.querySelector('.Gstore-blog-single-related__title-card')?.textContent || '').trim();
 
 			// Se o caminho for igual ao atual, remove o card
-			if (cardPath === currentPath) {
+			if (cardPath === currentPath || (currentTitle && cardTitle === currentTitle)) {
 				card.remove();
 			}
 		});
+	}
+
+	function normalizePath(path) {
+		return String(path || '').replace(/\/+$/, '') || '/';
 	}
 })();
 
