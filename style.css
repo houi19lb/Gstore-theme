@@ -7559,6 +7559,49 @@ main.Gstore-blog-single-shell .wp-block-group.is-layout-constrained:not(.Gstore-
 	margin: 2em 0;
 }
 
+.Gstore-blog-single-content .wp-block-table,
+.Gstore-blog-single-content .gstore-seo-table {
+	width: 100%;
+	margin: 2em 0;
+	overflow-x: auto;
+	border: 1px solid var(--gray-border);
+	border-radius: 6px;
+	background: #ffffff;
+}
+
+.Gstore-blog-single-content table,
+.Gstore-blog-single-content .gstore-seo-table__table {
+	width: 100%;
+	min-width: 640px;
+	border-collapse: collapse;
+	border-spacing: 0;
+	font-size: 0.98rem;
+	line-height: 1.55;
+}
+
+.Gstore-blog-single-content th,
+.Gstore-blog-single-content td {
+	padding: 14px 16px;
+	text-align: left;
+	vertical-align: top;
+	border-bottom: 1px solid var(--gray-border);
+	color: var(--text-main);
+}
+
+.Gstore-blog-single-content th {
+	background: var(--gray-bg, #f5f5f5);
+	font-weight: 700;
+	color: var(--text-main);
+}
+
+.Gstore-blog-single-content tbody tr:nth-child(even) td {
+	background: #fafafa;
+}
+
+.Gstore-blog-single-content tbody tr:last-child td {
+	border-bottom: 0;
+}
+
 @media (max-width: 900px) {
 	.Gstore-blog-single-shell {
 		padding: 24px 15px !important;
