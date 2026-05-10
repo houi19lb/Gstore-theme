@@ -430,6 +430,11 @@
 
 .Gstore-blog-single-related {
 	padding-top: var(--gstore-spacing-10);
+	width: 100%;
+	max-width: var(--gstore-container-max-width) !important;
+	margin-left: auto !important;
+	margin-right: auto !important;
+	box-sizing: border-box;
 }
 
 .Gstore-blog-single-related__title {
@@ -440,10 +445,18 @@
 	margin-bottom: var(--gstore-spacing-8);
 }
 
+.Gstore-blog-single-related__query {
+	width: 100%;
+	max-width: none !important;
+}
+
 .Gstore-blog-single-related__grid {
 	display: grid;
-	grid-template-columns: repeat(3, 1fr);
-	gap: var(--gstore-spacing-6);
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+	gap: clamp(var(--gstore-spacing-5), 2.4vw, var(--gstore-spacing-8));
+	width: 100%;
+	max-width: none !important;
+	align-items: stretch;
 }
 
 .Gstore-blog-single-related__card {
@@ -452,6 +465,10 @@
 	border-radius: var(--gstore-radius-lg);
 	overflow: hidden;
 	transition: all var(--gstore-transition-base);
+	display: flex;
+	flex-direction: column;
+	min-width: 0;
+	height: 100%;
 }
 
 .Gstore-blog-single-related__card:hover {
@@ -504,6 +521,10 @@
 
 .Gstore-blog-single-related__content {
 	padding: var(--gstore-spacing-5);
+	display: flex;
+	flex-direction: column;
+	gap: var(--gstore-spacing-3);
+	flex: 1;
 }
 
 .Gstore-blog-single-related__date {
@@ -535,13 +556,26 @@
 	line-height: var(--gstore-line-height-relaxed);
 }
 
+.Gstore-blog-single-related__excerpt p {
+	margin: 0;
+}
+
+.Gstore-blog-single-related__excerpt .wp-block-post-excerpt__more-text {
+	margin-top: var(--gstore-spacing-3);
+}
+
+.Gstore-blog-single-related__excerpt a {
+	color: var(--gstore-color-accent);
+	font-weight: var(--gstore-font-weight-semibold);
+}
+
 /* ========================================
    RESPONSIVIDADE
    ======================================== */
 
 @media (max-width: 1024px) {
 	.Gstore-blog-single-related__grid {
-		grid-template-columns: repeat(2, 1fr);
+		grid-template-columns: repeat(2, minmax(0, 1fr));
 	}
 }
 

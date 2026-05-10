@@ -7881,6 +7881,11 @@ main.Gstore-blog-single-shell .wp-block-group.is-layout-constrained:not(.Gstore-
 	margin: 64px 0 0 0;
 	padding-top: 48px;
 	border-top: 2px solid var(--gray-border, #e6e6e6);
+	width: 100%;
+	max-width: var(--gstore-container-max-width, 1280px) !important;
+	margin-left: auto !important;
+	margin-right: auto !important;
+	box-sizing: border-box;
 }
 
 .Gstore-blog-single-related__title {
@@ -7891,10 +7896,18 @@ main.Gstore-blog-single-shell .wp-block-group.is-layout-constrained:not(.Gstore-
 	text-align: center;
 }
 
+.Gstore-blog-single-related__query {
+	width: 100%;
+	max-width: none !important;
+}
+
 .Gstore-blog-single-related__grid {
 	display: grid;
-	grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-	gap: 24px;
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+	gap: clamp(20px, 2.4vw, 32px);
+	width: 100%;
+	max-width: none !important;
+	align-items: stretch;
 }
 
 .Gstore-blog-single-related__card {
@@ -7905,6 +7918,8 @@ main.Gstore-blog-single-shell .wp-block-group.is-layout-constrained:not(.Gstore-
 	transition: transform 0.2s ease, box-shadow 0.2s ease;
 	display: flex;
 	flex-direction: column;
+	min-width: 0;
+	height: 100%;
 }
 
 .Gstore-blog-single-related__card:hover {
@@ -8001,6 +8016,14 @@ main.Gstore-blog-single-shell .wp-block-group.is-layout-constrained:not(.Gstore-
 	margin: 0;
 }
 
+.Gstore-blog-single-related__excerpt p {
+	margin: 0;
+}
+
+.Gstore-blog-single-related__excerpt .wp-block-post-excerpt__more-text {
+	margin-top: 12px;
+}
+
 .Gstore-blog-single-related__excerpt a {
 	color: var(--gstore-color-accent, #b5a642);
 	text-decoration: none;
@@ -8040,7 +8063,7 @@ main.Gstore-blog-single-shell .wp-block-group.is-layout-constrained:not(.Gstore-
 	}
 
 	.Gstore-blog-single-related__grid {
-		grid-template-columns: 1fr;
+		grid-template-columns: repeat(2, minmax(0, 1fr));
 		gap: 20px;
 	}
 }
@@ -8075,6 +8098,10 @@ main.Gstore-blog-single-shell .wp-block-group.is-layout-constrained:not(.Gstore-
 
 	.Gstore-blog-single-related__title {
 		margin-bottom: 24px;
+	}
+
+	.Gstore-blog-single-related__grid {
+		grid-template-columns: 1fr;
 	}
 }
 

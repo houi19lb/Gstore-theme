@@ -257,8 +257,6 @@
 
 		// Obtém a URL atual
 		const currentPath = normalizePath(window.location.pathname);
-		const currentTitle = (document.querySelector('.Gstore-blog-single-title')?.textContent || '').trim();
-
 		// Encontra todos os cards de posts relacionados
 		const relatedCards = relatedQuery.querySelectorAll('.Gstore-blog-single-related__card');
 		
@@ -270,10 +268,9 @@
 
 			const cardUrl = link.href;
 			const cardPath = normalizePath(new URL(cardUrl).pathname);
-			const cardTitle = (card.querySelector('.Gstore-blog-single-related__title-card')?.textContent || '').trim();
 
 			// Se o caminho for igual ao atual, remove o card
-			if (cardPath === currentPath || (currentTitle && cardTitle === currentTitle)) {
+			if (cardPath === currentPath) {
 				card.remove();
 			}
 		});

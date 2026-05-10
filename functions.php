@@ -21471,6 +21471,161 @@ function gstore_blog_single_replace_reading_time_placeholder( $block_content, $b
 }
 add_filter( 'render_block_core/html', 'gstore_blog_single_replace_reading_time_placeholder', 30, 2 );
 
+if ( ! defined( 'GSTORE_BLOG_RELATED_POSTS_LIMIT' ) ) {
+	define( 'GSTORE_BLOG_RELATED_POSTS_LIMIT', 3 );
+}
+
+/**
+ * Identifica o bloco Query usado nos artigos relacionados do single.
+ *
+ * @param array|WP_Block $block Dados do bloco.
+ * @return bool
+ */
+function gstore_blog_single_is_related_query_block( $block ) {
+	$parsed = $block instanceof WP_Block ? $block->parsed_block : (array) $block;
+	if ( empty( $parsed ) || ! is_array( $parsed ) ) {
+		return false;
+	}
+
+	$class_name = isset( $parsed['attrs']['className'] ) ? (string) $parsed['attrs']['className'] : '';
+
+	return false !== strpos( $class_name, 'Gstore-blog-single-related__query' );
+}
+
+/**
+ * Consulta artigos relacionados com fallback para posts recentes.
+ *
+ * @param int $current_id ID do post atual.
+ * @param int $limit      Quantidade maxima de cards.
+ * @return WP_Post[]
+ */
+function gstore_blog_single_get_related_posts( $current_id, $limit = GSTORE_BLOG_RELATED_POSTS_LIMIT ) {
+	$current_id = absint( $current_id );
+	$limit      = max( 1, absint( $limit ) );
+
+	if ( $current_id <= 0 ) {
+		return array();
+	}
+
+	$related = array();
+	$exclude = array( $current_id );
+
+	$tag_ids = wp_get_post_terms( $current_id, 'post_tag', array( 'fields' => 'ids' ) );
+	$cat_ids = wp_get_post_terms( $current_id, 'category', array( 'fields' => 'ids' ) );
+
+	$queries = array();
+	if ( ! is_wp_error( $tag_ids ) && ! empty( $tag_ids ) ) {
+		$queries[] = array( 'tag__in' => array_map( 'absint', $tag_ids ) );
+	}
+
+	if ( ! is_wp_error( $cat_ids ) && ! empty( $cat_ids ) ) {
+		$queries[] = array( 'category__in' => array_map( 'absint', $cat_ids ) );
+	}
+
+	// Fallback: completa com artigos recentes quando tag/categoria nao bastam.
+	$queries[] = array();
+
+	foreach ( $queries as $query_args ) {
+		if ( count( $related ) >= $limit ) {
+			break;
+		}
+
+		$query = new WP_Query(
+			array_merge(
+				array(
+					'post_type'           => 'post',
+					'post_status'         => 'publish',
+					'posts_per_page'      => $limit - count( $related ),
+					'post__not_in'        => array_values( array_unique( array_map( 'absint', $exclude ) ) ),
+					'orderby'             => 'date',
+					'order'               => 'DESC',
+					'ignore_sticky_posts' => true,
+					'no_found_rows'       => true,
+				),
+				$query_args
+			)
+		);
+
+		foreach ( $query->posts as $post ) {
+			$related[] = $post;
+			$exclude[] = $post->ID;
+		}
+
+		wp_reset_postdata();
+	}
+
+	return array_slice( $related, 0, $limit );
+}
+
+/**
+ * Renderiza um card dos artigos relacionados.
+ *
+ * @param WP_Post|int $post Post relacionado.
+ * @return string
+ */
+function gstore_blog_single_render_related_post_card( $post ) {
+	$post_id = $post instanceof WP_Post ? $post->ID : absint( $post );
+	if ( $post_id <= 0 ) {
+		return '';
+	}
+
+	$permalink = get_permalink( $post_id );
+	$title     = get_the_title( $post_id );
+	$excerpt   = get_the_excerpt( $post_id );
+	if ( '' === trim( $excerpt ) ) {
+		$excerpt = get_post_field( 'post_content', $post_id );
+	}
+	$excerpt = wp_trim_words( wp_strip_all_tags( strip_shortcodes( $excerpt ) ), 20, '...' );
+	$image   = has_post_thumbnail( $post_id )
+		? get_the_post_thumbnail(
+			$post_id,
+			'medium_large',
+			array(
+				'loading'  => 'lazy',
+				'decoding' => 'async',
+			)
+		)
+		: '';
+
+	return sprintf(
+		'<article class="wp-block-group Gstore-blog-single-related__card post-%1$d" itemscope itemtype="https://schema.org/BlogPosting"><figure class="wp-block-post-featured-image Gstore-blog-single-related__image"><a href="%2$s" aria-label="%3$s">%4$s</a></figure><div class="wp-block-group Gstore-blog-single-related__content"><div class="wp-block-post-date Gstore-blog-single-related__date"><time datetime="%5$s">%6$s</time></div><h3 class="wp-block-post-title Gstore-blog-single-related__title-card" itemprop="headline"><a href="%2$s">%7$s</a></h3><div class="wp-block-post-excerpt Gstore-blog-single-related__excerpt"><p class="wp-block-post-excerpt__excerpt">%8$s</p><p class="wp-block-post-excerpt__more-text"><a class="wp-block-post-excerpt__more-link" href="%2$s">Ler mais</a></p></div></div></article>',
+		$post_id,
+		esc_url( $permalink ),
+		esc_attr( sprintf( __( 'Ler artigo %s', 'gstore' ), $title ) ),
+		$image,
+		esc_attr( get_the_date( DATE_W3C, $post_id ) ),
+		esc_html( get_the_date( 'd/m/Y', $post_id ) ),
+		esc_html( $title ),
+		esc_html( $excerpt )
+	);
+}
+
+/**
+ * Renderiza a lista de relacionados sempre com ate 3 posts e fallback.
+ *
+ * @param string $block_content HTML renderizado.
+ * @param array  $block         Dados do bloco.
+ * @return string
+ */
+function gstore_blog_single_render_related_query_block( $block_content, $block ) {
+	if ( is_admin() || ! is_singular( 'post' ) || ! gstore_blog_single_is_related_query_block( $block ) ) {
+		return $block_content;
+	}
+
+	$related_posts = gstore_blog_single_get_related_posts( get_queried_object_id(), GSTORE_BLOG_RELATED_POSTS_LIMIT );
+	if ( empty( $related_posts ) ) {
+		return '';
+	}
+
+	$cards = '';
+	foreach ( $related_posts as $related_post ) {
+		$cards .= gstore_blog_single_render_related_post_card( $related_post );
+	}
+
+	return '<div class="wp-block-query Gstore-blog-single-related__query"><div class="wp-block-post-template Gstore-blog-single-related__grid">' . $cards . '</div></div>';
+}
+add_filter( 'render_block_core/query', 'gstore_blog_single_render_related_query_block', 30, 2 );
+
 /**
  * Evita que o query loop de artigos relacionados mostre o proprio post atual.
  *
@@ -21483,9 +21638,7 @@ function gstore_blog_single_exclude_current_from_related_query( $query, $block )
 		return $query;
 	}
 
-	$parsed     = $block instanceof WP_Block ? $block->parsed_block : (array) $block;
-	$class_name = isset( $parsed['attrs']['className'] ) ? (string) $parsed['attrs']['className'] : '';
-	if ( false === strpos( $class_name, 'Gstore-blog-single-related__query' ) ) {
+	if ( ! gstore_blog_single_is_related_query_block( $block ) ) {
 		return $query;
 	}
 
@@ -21497,6 +21650,8 @@ function gstore_blog_single_exclude_current_from_related_query( $query, $block )
 	$excluded              = isset( $query['post__not_in'] ) ? (array) $query['post__not_in'] : array();
 	$excluded[]            = $current_id;
 	$query['post__not_in'] = array_values( array_unique( array_map( 'absint', $excluded ) ) );
+	$query['posts_per_page'] = GSTORE_BLOG_RELATED_POSTS_LIMIT;
+	$query['ignore_sticky_posts'] = true;
 
 	return $query;
 }
@@ -21513,8 +21668,7 @@ function gstore_blog_single_exclude_current_from_related_block_data( $parsed_blo
 		return $parsed_block;
 	}
 
-	$class_name = isset( $parsed_block['attrs']['className'] ) ? (string) $parsed_block['attrs']['className'] : '';
-	if ( false === strpos( $class_name, 'Gstore-blog-single-related__query' ) ) {
+	if ( ! gstore_blog_single_is_related_query_block( $parsed_block ) ) {
 		return $parsed_block;
 	}
 
@@ -21530,6 +21684,7 @@ function gstore_blog_single_exclude_current_from_related_block_data( $parsed_blo
 	$exclude = isset( $parsed_block['attrs']['query']['exclude'] ) ? (array) $parsed_block['attrs']['query']['exclude'] : array();
 	$exclude[] = $current_id;
 	$parsed_block['attrs']['query']['exclude'] = array_values( array_unique( array_map( 'absint', $exclude ) ) );
+	$parsed_block['attrs']['query']['perPage'] = GSTORE_BLOG_RELATED_POSTS_LIMIT;
 
 	return $parsed_block;
 }
@@ -21547,14 +21702,14 @@ function gstore_blog_single_remove_current_related_card( $block_content, $block 
 		return $block_content;
 	}
 
-	$current_url   = trailingslashit( get_permalink( get_queried_object_id() ) );
-	$current_title = get_the_title( get_queried_object_id() );
+	$current_url = trailingslashit( get_permalink( get_queried_object_id() ) );
+	$current_url_untrailed = untrailingslashit( $current_url );
 
 	return preg_replace_callback(
 		'/<article\b[^>]*Gstore-blog-single-related__card[^>]*>[\s\S]*?<\/article>/',
-		function( $matches ) use ( $current_url, $current_title ) {
+		function( $matches ) use ( $current_url, $current_url_untrailed ) {
 			$card = $matches[0];
-			if ( false !== strpos( $card, esc_url( $current_url ) ) || ( $current_title && false !== strpos( wp_strip_all_tags( $card ), $current_title ) ) ) {
+			if ( false !== strpos( $card, esc_url( $current_url ) ) || false !== strpos( $card, esc_url( $current_url_untrailed ) ) ) {
 				return '';
 			}
 
