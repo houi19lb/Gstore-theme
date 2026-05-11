@@ -13004,7 +13004,7 @@ function gstore_catalog_trim_summary_to_words( $text, $limit ) {
  * @param int    $limit            Limite aproximado.
  * @return string
  */
-function gstore_get_catalog_archive_summary( $description_html, $limit = 150 ) {
+function gstore_get_catalog_archive_summary( $description_html, $limit = 360 ) {
 	$text = html_entity_decode( wp_strip_all_tags( (string) $description_html ), ENT_QUOTES, get_bloginfo( 'charset' ) );
 	$text = trim( preg_replace( '/\s+/u', ' ', $text ) );
 
@@ -15519,7 +15519,7 @@ function gstore_get_catalog_archive_breadcrumb_html() {
 		return '';
 	}
 
-	$html = '<nav class="Gstore-breadcrumb Gstore-breadcrumb--dynamic" aria-label="' . esc_attr__( 'NavegaÃ§Ã£o', 'gstore' ) . '">';
+	$html = '<nav class="woocommerce-breadcrumb breadcrumb Gstore-breadcrumb Gstore-breadcrumb--dynamic" aria-label="Breadcrumb">';
 	$last = count( $items ) - 1;
 	foreach ( $items as $index => $item ) {
 		$label = isset( $item['name'] ) ? wp_strip_all_tags( (string) $item['name'] ) : '';
@@ -15593,7 +15593,7 @@ function gstore_get_product_category_archive_breadcrumb_html() {
 		'url'   => '',
 	);
 
-	$html = '<nav class="Gstore-breadcrumb Gstore-breadcrumb--dynamic" aria-label="' . esc_attr__( 'Navegação', 'gstore' ) . '">';
+	$html = '<nav class="woocommerce-breadcrumb breadcrumb Gstore-breadcrumb Gstore-breadcrumb--dynamic" aria-label="Breadcrumb">';
 	$last = count( $items ) - 1;
 	foreach ( $items as $index => $item ) {
 		if ( $index > 0 ) {
