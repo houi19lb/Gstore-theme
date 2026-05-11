@@ -4897,16 +4897,14 @@ function gstore_enqueue_scripts() {
 				)
 			);
 
-			$notice_parts  = array();
 			$custom_notice = trim( (string) get_post_meta( $product_id, '_gstore_custom_notice', true ) );
 			if ( '' !== $custom_notice ) {
-				$notice_parts[] = $custom_notice;
+				$product_notice_text = $custom_notice;
+			} elseif ( function_exists( 'gstore_is_controlled_product' ) && gstore_is_controlled_product( $product_id ) ) {
+				$product_notice_text = gstore_get_controlled_product_notice_text();
+			} else {
+				$product_notice_text = '';
 			}
-			if ( function_exists( 'gstore_is_controlled_product' ) && gstore_is_controlled_product( $product_id ) ) {
-				$notice_parts[] = gstore_get_controlled_product_notice_text();
-			}
-
-			$product_notice_text = trim( implode( ' ', array_unique( array_filter( $notice_parts, 'strlen' ) ) ) );
 
 			$product_notice_js_path = get_theme_file_path( 'assets/js/gstore-product-notice.js' );
 			$product_notice_js_version = file_exists( $product_notice_js_path ) ? (string) filemtime( $product_notice_js_path ) : wp_get_theme()->get( 'Version' );
@@ -18894,6 +18892,53 @@ function gstore_is_controlled_product_term_slug( $slug ) {
 }
 
 /**
+ * Retorna os IDs das categorias que recebem o aviso automatico.
+ *
+ * Quando o plugin ainda nao salvou uma configuracao, usa a regra antiga por
+ * slug apenas como fallback inicial.
+ *
+ * @return int[]
+ */
+if ( ! function_exists( 'gstore_get_controlled_product_notice_category_ids' ) ) {
+	function gstore_get_controlled_product_notice_category_ids() {
+		$raw = get_option( 'gstore_controlled_product_notice_category_ids', null );
+		if ( is_array( $raw ) ) {
+			return array_values(
+				array_unique(
+					array_filter(
+						array_map( 'absint', $raw )
+					)
+				)
+			);
+		}
+
+		if ( ! taxonomy_exists( 'product_cat' ) ) {
+			return array();
+		}
+
+		$terms = get_terms(
+			array(
+				'taxonomy'   => 'product_cat',
+				'hide_empty' => false,
+			)
+		);
+
+		if ( is_wp_error( $terms ) || empty( $terms ) ) {
+			return array();
+		}
+
+		$ids = array();
+		foreach ( $terms as $candidate ) {
+			if ( $candidate instanceof WP_Term && gstore_is_controlled_product_term_slug( $candidate->slug ) ) {
+				$ids[] = (int) $candidate->term_id;
+			}
+		}
+
+		return array_values( array_unique( array_filter( $ids ) ) );
+	}
+}
+
+/**
  * Verifica se um termo de catalogo esta no escopo de produto controlado.
  *
  * @param WP_Term|int|null $term Termo atual ou ID.
@@ -18912,6 +18957,11 @@ function gstore_is_controlled_catalog_term( $term = null ) {
 		return false;
 	}
 
+	$controlled_category_ids = array_map( 'absint', (array) gstore_get_controlled_product_notice_category_ids() );
+	if ( empty( $controlled_category_ids ) ) {
+		return false;
+	}
+
 	$terms = array( $term );
 	$ancestors = get_ancestors( (int) $term->term_id, 'product_cat', 'taxonomy' );
 	foreach ( array_map( 'absint', (array) $ancestors ) as $ancestor_id ) {
@@ -18922,7 +18972,7 @@ function gstore_is_controlled_catalog_term( $term = null ) {
 	}
 
 	foreach ( $terms as $candidate ) {
-		if ( gstore_is_controlled_product_term_slug( $candidate->slug ) ) {
+		if ( $candidate instanceof WP_Term && in_array( (int) $candidate->term_id, $controlled_category_ids, true ) ) {
 			return true;
 		}
 	}
