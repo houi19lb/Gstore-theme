@@ -29,6 +29,11 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+$gstore_armastore_migration_config = get_theme_file_path( 'inc/armastore-migration-config.php' );
+if ( file_exists( $gstore_armastore_migration_config ) ) {
+	require_once $gstore_armastore_migration_config;
+}
+
 /**
  * Configurações iniciais do tema filho.
  */
