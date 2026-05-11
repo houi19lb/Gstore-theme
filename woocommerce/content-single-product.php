@@ -760,6 +760,12 @@ $gstore_tab_next_cta_labels = array(
 									$next_tab  = isset( $gstore_product_tabs[ $index + 1 ] ) && is_array( $gstore_product_tabs[ $index + 1 ] ) ? $gstore_product_tabs[ $index + 1 ] : array();
 									$next_slug = isset( $next_tab['slug'] ) ? (string) $next_tab['slug'] : '';
 									$next_cta  = isset( $gstore_tab_next_cta_labels[ $next_slug ] ) ? (string) $gstore_tab_next_cta_labels[ $next_slug ] : '';
+									$content_classes = 'Gstore-single-product__tab-content';
+									$content_id      = '';
+									if ( 'description' === $slug ) {
+										$content_id       = 'tab-description';
+										$content_classes .= ' woocommerce-Tabs-panel woocommerce-Tabs-panel--description panel entry-content wc-tab';
+									}
 
 									if ( '' === $slug || '' === $label ) {
 										continue;
@@ -779,7 +785,10 @@ $gstore_tab_next_cta_labels = array(
 												<h3 class="Gstore-single-product__tab-title">
 													<?php echo esc_html( $label ); ?>
 												</h3>
-												<div class="Gstore-single-product__tab-content">
+												<div
+													<?php echo '' !== $content_id ? 'id="' . esc_attr( $content_id ) . '"' : ''; ?>
+													class="<?php echo esc_attr( $content_classes ); ?>"
+												>
 													<?php echo wp_kses_post( $content ); ?>
 												</div>
 												<?php if ( '' !== $next_slug && '' !== $next_cta ) : ?>
