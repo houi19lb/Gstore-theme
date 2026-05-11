@@ -21558,6 +21558,22 @@ function gstore_blog_single_get_related_posts( $current_id, $limit = GSTORE_BLOG
 }
 
 /**
+ * Corrige pequenos artefatos de texto em cards de artigos relacionados.
+ *
+ * @param string $text Texto do resumo.
+ * @return string
+ */
+function gstore_blog_single_fix_related_excerpt_text( $text ) {
+	$fixed = (string) $text;
+	$fixed = preg_replace(
+		'/\b(marcas|produtos|itens|preços|precos|modelos|guias|categorias|fontes|links|documentação|documentacao|legislação|legislacao)\s+é\s+(produtos|marcas|itens|modelos|categorias|fontes|links|documentação|documentacao|legislação|legislacao|atendimento)\b/iu',
+		'$1 e $2',
+		$fixed
+	);
+	return is_string( $fixed ) ? $fixed : (string) $text;
+}
+
+/**
  * Renderiza um card dos artigos relacionados.
  *
  * @param WP_Post|int $post Post relacionado.
@@ -21576,6 +21592,7 @@ function gstore_blog_single_render_related_post_card( $post ) {
 		$excerpt = get_post_field( 'post_content', $post_id );
 	}
 	$excerpt = wp_trim_words( wp_strip_all_tags( strip_shortcodes( $excerpt ) ), 20, '...' );
+	$excerpt = gstore_blog_single_fix_related_excerpt_text( $excerpt );
 	$image   = has_post_thumbnail( $post_id )
 		? get_the_post_thumbnail(
 			$post_id,
