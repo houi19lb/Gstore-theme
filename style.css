@@ -4779,9 +4779,10 @@ main:not(.Gstore-blog-shell):not(.Gstore-blog-single-shell) {
 	background: var(--gray-bg);
 	border-radius: var(--gstore-radius-base);
 	border: 1px solid var(--gray-border);
-	padding: 16px;
+	padding: 0;
 	box-shadow: var(--shadow-sm);
 	min-height: 100%;
+	overflow: hidden;
 }
 
 .Gstore-home-blog__image {
@@ -4790,7 +4791,7 @@ main:not(.Gstore-blog-shell):not(.Gstore-blog-single-shell) {
 	height: auto !important;
 	overflow: hidden;
 	background: #161616;
-	border-radius: var(--gstore-radius-base);
+	border-radius: 0;
 	position: relative;
 	isolation: isolate;
 }
@@ -4811,7 +4812,7 @@ main:not(.Gstore-blog-shell):not(.Gstore-blog-single-shell) {
 }
 
 .Gstore-home-blog__image img {
-	border-radius: var(--gstore-radius-base);
+	border-radius: 0;
 	object-fit: contain !important;
 	object-position: center;
 	width: 100% !important;
@@ -4822,7 +4823,7 @@ main:not(.Gstore-blog-shell):not(.Gstore-blog-single-shell) {
 
 .Gstore-home-blog__content {
 	gap: 10px;
-	padding: 12px 4px 0;
+	padding: 16px;
 }
 
 .Gstore-home-blog__date {
