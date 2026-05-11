@@ -528,7 +528,7 @@
 	aspect-ratio: 4 / 3;
 	height: auto !important;
 	overflow: hidden;
-	background: #161616;
+	background: #f4f4f2;
 	border-radius: 0;
 	position: relative;
 	isolation: isolate;
@@ -555,8 +555,19 @@
 }
 
 .Gstore-home-blog__image.has-blog-image-bg::before {
-	content: none !important;
-	display: none !important;
+	content: "" !important;
+	display: block !important;
+	position: absolute;
+	inset: -16px;
+	background-image: var(--gstore-blog-image-bg);
+	background-position: center;
+	background-size: cover;
+	background-repeat: no-repeat;
+	filter: blur(18px);
+	opacity: 0.85;
+	transform: scale(1.08);
+	z-index: 0;
+	pointer-events: none;
 }
 
 .Gstore-home-blog__content {

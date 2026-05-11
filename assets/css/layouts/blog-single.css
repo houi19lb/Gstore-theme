@@ -153,6 +153,9 @@
 	height: auto !important;
 	border-radius: var(--gstore-radius-lg);
 	overflow: hidden;
+	background: #f4f4f2;
+	position: relative;
+	isolation: isolate;
 }
 
 .Gstore-blog-single-image img {
@@ -484,7 +487,7 @@
 	align-items: center;
 	justify-content: center;
 	overflow: hidden;
-	background: #161616;
+	background: #f4f4f2;
 	position: relative;
 	isolation: isolate;
 }
@@ -515,8 +518,19 @@
 
 .Gstore-blog-single-image.has-blog-image-bg::before,
 .Gstore-blog-single-related__image.has-blog-image-bg::before {
-	content: none !important;
-	display: none !important;
+	content: "" !important;
+	display: block !important;
+	position: absolute;
+	inset: -16px;
+	background-image: var(--gstore-blog-image-bg);
+	background-position: center;
+	background-size: cover;
+	background-repeat: no-repeat;
+	filter: blur(18px);
+	opacity: 0.85;
+	transform: scale(1.08);
+	z-index: 0;
+	pointer-events: none;
 }
 
 .Gstore-blog-single-related__content {

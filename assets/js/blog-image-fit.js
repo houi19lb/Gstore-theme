@@ -11,9 +11,34 @@
 		'.Gstore-blog-single-related__image'
 	].join(',');
 
+	function cssUrl(url) {
+		return 'url("' + String(url).replace(/\\/g, '\\\\').replace(/"/g, '\\"') + '")';
+	}
+
+	function getImageUrl(img) {
+		return img.currentSrc || img.src || img.getAttribute('src') || img.getAttribute('data-src') || '';
+	}
+
 	function applyFrame(frame) {
-		frame.style.removeProperty('--gstore-blog-image-bg');
-		frame.classList.remove('has-blog-image-bg');
+		const img = frame.querySelector('img');
+		const imageUrl = img ? getImageUrl(img) : '';
+
+		if (!imageUrl) {
+			frame.style.removeProperty('--gstore-blog-image-bg');
+			frame.classList.remove('has-blog-image-bg');
+
+			if (img && !img.dataset.gstoreBlogFitBound) {
+				img.dataset.gstoreBlogFitBound = '1';
+				img.addEventListener('load', function () {
+					applyFrame(frame);
+				}, { once: true });
+			}
+
+			return;
+		}
+
+		frame.style.setProperty('--gstore-blog-image-bg', cssUrl(imageUrl));
+		frame.classList.add('has-blog-image-bg');
 	}
 
 	function init(root) {
