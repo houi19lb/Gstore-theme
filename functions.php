@@ -928,7 +928,7 @@ function gstore_get_public_sitemap_url() {
 	) {
 		$sitemap_url = home_url( '/sitemap.xml' );
 	} else {
-		$sitemap_url = home_url( '/sitemap.xml' );
+		$sitemap_url = home_url( '/wp-sitemap.xml' );
 	}
 
 	return apply_filters( 'gstore_public_sitemap_url', $sitemap_url );
