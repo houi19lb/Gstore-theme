@@ -2,7 +2,7 @@
 Theme Name: Gstore Theme
 Author: Gstore
 Description: Tema personalizado para WooCommerce.
-Version: 1.6.14
+Version: 1.6.15
 Text Domain: gstore
 */
 
@@ -7607,6 +7607,33 @@ main.Gstore-blog-single-shell .wp-block-group.is-layout-constrained:not(.Gstore-
 	margin-bottom: 0.9em;
 }
 
+.Gstore-blog-single-content .gstore-article-cta-grid {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 12px;
+	margin: 1.5em 0 2em;
+}
+
+.Gstore-blog-single-content .gstore-article-cta-grid a {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	min-height: 48px;
+	padding: 12px 14px;
+	border: 1px solid var(--gray-border);
+	border-radius: 6px;
+	background: #ffffff;
+	color: var(--text-main);
+	font-weight: 700;
+	text-align: center;
+	text-decoration: none;
+}
+
+.Gstore-blog-single-content .gstore-article-cta-grid a:hover {
+	border-color: var(--gstore-color-accent, #b5a642);
+	color: var(--gstore-color-accent-hover, #9f923a);
+}
+
 .Gstore-blog-single-content .gstore-seo-inline-image {
 	margin: 2em 0;
 }
@@ -7700,6 +7727,10 @@ main.Gstore-blog-single-shell .wp-block-group.is-layout-constrained:not(.Gstore-
 
 	.Gstore-blog-single-content {
 		padding: 40px 20px 20px;
+	}
+
+	.Gstore-blog-single-content .gstore-article-cta-grid {
+		grid-template-columns: 1fr;
 	}
 
 	.Gstore-blog-single-image {
