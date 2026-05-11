@@ -2594,6 +2594,29 @@ function gstore_sort_variation_dropdown_html_by_admin_order( $html, $args ) {
 add_filter( 'woocommerce_dropdown_variation_attribute_options_html', 'gstore_sort_variation_dropdown_html_by_admin_order', 10, 2 );
 
 /**
+ * Detecta quando outro emissor SEO deve controlar as tags de produto.
+ *
+ * @param string $context Contexto SEO.
+ * @param mixed  $object  Objeto relacionado.
+ * @return bool
+ */
+function gstore_theme_should_skip_product_seo_emit( $context, $object = null ) {
+	if (
+		defined( 'WPSEO_VERSION' )
+		|| defined( 'RANK_MATH_VERSION' )
+		|| defined( 'THE_SEO_FRAMEWORK_VERSION' )
+		|| function_exists( 'the_seo_framework' )
+		|| defined( 'AIOSEO_VERSION' )
+		|| class_exists( 'GStore\\Services\\Migration_SEO_Service' )
+	) {
+		return true;
+	}
+
+	return (bool) apply_filters( 'gstore_skip_seo_emit', false, $context, $object )
+		|| (bool) apply_filters( 'gstore_skip_seo_emit', false, 'product', $object );
+}
+
+/**
  * SEO: título do documento na página single do produto.
  * Usa meta _gstore_seo_title se preenchido; fallback = nome do produto.
  *
@@ -2602,6 +2625,9 @@ add_filter( 'woocommerce_dropdown_variation_attribute_options_html', 'gstore_sor
  */
 function gstore_product_document_title_parts( $title_parts ) {
 	if ( ! function_exists( 'is_product' ) || ! is_product() ) {
+		return $title_parts;
+	}
+	if ( gstore_theme_should_skip_product_seo_emit( 'title', get_queried_object() ) ) {
 		return $title_parts;
 	}
 	$product_id = (int) get_queried_object_id();
@@ -2622,6 +2648,9 @@ add_filter( 'document_title_parts', 'gstore_product_document_title_parts', 10, 1
  */
 function gstore_product_meta_description() {
 	if ( ! function_exists( 'is_product' ) || ! is_product() ) {
+		return;
+	}
+	if ( gstore_theme_should_skip_product_seo_emit( 'meta_description', get_queried_object() ) ) {
 		return;
 	}
 	$product_id = (int) get_queried_object_id();
@@ -19874,6 +19903,23 @@ function gstore_process_store_info_placeholders( $content ) {
 	$email_link = gstore_get_store_email_link();
 	$phone_link = '' !== $phone_raw ? 'tel:+' . preg_replace( '/\D/', '', $phone_raw ) : '';
 	$footer_category_brand_summary = false !== strpos( $content, '{{footer_category_brand_summary}}' ) ? gstore_get_footer_category_brand_summary() : '';
+	$home_seo_h1 = trim(
+		implode(
+			' | ',
+			array_filter(
+				array_map(
+					'trim',
+					array(
+						wp_strip_all_tags( (string) gstore_get_store_name( 'display' ) ),
+						wp_strip_all_tags( (string) gstore_store_info()->get_value( 'store.slogan', '' ) ),
+					)
+				)
+			)
+		)
+	);
+	if ( '' === $home_seo_h1 ) {
+		$home_seo_h1 = trim( wp_strip_all_tags( (string) get_bloginfo( 'name' ) ) );
+	}
 
 	// Lista de placeholders e seus valores
 	$placeholders = array(
@@ -19884,6 +19930,7 @@ function gstore_process_store_info_placeholders( $content ) {
 		'{{store_display_name}}'  => gstore_get_store_name( 'display' ),
 		'{{store_name_highlight}}' => gstore_get_store_name( 'highlight' ),
 		'{{store_slogan}}'        => gstore_store_info()->get_value( 'store.slogan', '' ),
+		'{{home_seo_h1}}'         => $home_seo_h1,
 		'{{cnpj}}'                => gstore_get_cnpj(),
 		'{{state_registration}}'  => gstore_get_state_registration(),
 		'{{founded_year}}'        => gstore_get_founded_year(),
