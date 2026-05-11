@@ -22,6 +22,8 @@ add_filter(
 	}
 );
 
+add_filter( 'gstore_migration_noindex_feeds', '__return_true' );
+
 add_filter(
 	'gstore_migration_legacy_category_map',
 	static function ( $map ) {
