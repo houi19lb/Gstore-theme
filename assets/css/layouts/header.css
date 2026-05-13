@@ -808,6 +808,42 @@ body:has(.Gstore-header-shell) {
 		display: none;
 	}
 
+	.Gstore-mobile-drawer__nav .wp-block-navigation__submenu-container {
+		position: static !important;
+		width: 100%;
+		min-width: 0;
+		margin: 0;
+		padding: 0;
+		border: 0;
+		background: transparent;
+		box-shadow: none;
+	}
+
+	.Gstore-mobile-drawer__nav .wp-block-navigation__submenu-container .wp-block-navigation-item__content {
+		--gstore-drawer-cascade-offset: 28px;
+		position: relative;
+		padding-left: var(--gstore-drawer-cascade-offset);
+		border-bottom: 0;
+	}
+
+	.Gstore-mobile-drawer__nav .wp-block-navigation__submenu-container .wp-block-navigation-item__content::before {
+		content: "";
+		position: absolute;
+		right: 0;
+		bottom: 0;
+		left: var(--gstore-drawer-cascade-offset);
+		height: 1px;
+		background: var(--gstore-color-white-10, rgba(255, 255, 255, 0.1));
+	}
+
+	.Gstore-mobile-drawer__nav .wp-block-navigation__submenu-container .wp-block-navigation__submenu-container .wp-block-navigation-item__content {
+		--gstore-drawer-cascade-offset: 42px;
+	}
+
+	.Gstore-mobile-drawer__nav .wp-block-navigation__submenu-container .wp-block-navigation__submenu-container .wp-block-navigation__submenu-container .wp-block-navigation-item__content {
+		--gstore-drawer-cascade-offset: 56px;
+	}
+
 	/* Drawer Footer */
 	.Gstore-mobile-drawer__footer {
 		flex-shrink: 0;
