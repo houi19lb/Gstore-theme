@@ -387,7 +387,8 @@ body:has(.Gstore-header-shell) {
    ======================================== */
 
 .Gstore-nav-shell {
-	background-color: var(--gstore-color-bg-darker, #1a1a1a);
+	--gstore-nav-surface: var(--gstore-color-bg-darker, #1a1a1a);
+	background-color: var(--gstore-nav-surface);
 	border-bottom: 0 !important;
 	border-top: 0 !important;
 }
@@ -576,6 +577,7 @@ body:has(.Gstore-header-shell) {
 
 	/* Drawer Content */
 	.Gstore-mobile-drawer__content {
+		--gstore-nav-surface: var(--gstore-color-bg-darker, #1a1a1a);
 		position: absolute;
 		top: 0;
 		left: 0;

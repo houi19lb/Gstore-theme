@@ -1,6 +1,7 @@
 /* Simple catalog cascade menu */
 
 .Gstore-nav .gstore-catalog-mega {
+	--gstore-catalog-mega-surface: var(--gstore-nav-surface, var(--gstore-color-bg-darker, #1a1a1a));
 	position: relative;
 }
 
@@ -61,7 +62,7 @@
 	overflow: visible;
 	border: 1px solid rgba(255, 255, 255, 0.10);
 	border-radius: 0 0 8px 8px;
-	background: #080808;
+	background: var(--gstore-catalog-mega-surface);
 	box-shadow: 0 18px 38px rgba(0, 0, 0, 0.34);
 	color: var(--gstore-color-text-light, #fff);
 	opacity: 0;
@@ -139,7 +140,7 @@
 	padding: 8px 0;
 	border: 1px solid rgba(255, 255, 255, 0.10);
 	border-radius: 0 8px 8px 0;
-	background: #080808;
+	background: var(--gstore-catalog-mega-surface);
 	box-shadow: 18px 18px 38px rgba(0, 0, 0, 0.30);
 	opacity: 0;
 	pointer-events: none;
@@ -230,7 +231,7 @@
 		overflow: visible;
 		border: 0;
 		border-radius: 0;
-		background: var(--gstore-color-bg-dark, #0a0a0a);
+		background: var(--gstore-catalog-mega-surface);
 		box-shadow: none;
 		color: var(--gstore-color-text-light, #fff);
 		opacity: 1;
