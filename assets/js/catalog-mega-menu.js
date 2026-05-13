@@ -37,51 +37,6 @@
 		});
 	}
 
-	function setTreeItemOpen(item, open) {
-		var toggle = item.querySelector(':scope > .gstore-catalog-mega__tree-row .gstore-catalog-mega__tree-toggle');
-		item.classList.toggle('is-open', !!open);
-		item.classList.toggle('is-collapsed', !open);
-		if (toggle) {
-			toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
-		}
-	}
-
-	function syncTreeForViewport(root) {
-		var desktop = isDesktop();
-		root.querySelectorAll('.gstore-catalog-mega__tree-item.has-children').forEach(function (item) {
-			var toggle = item.querySelector(':scope > .gstore-catalog-mega__tree-row .gstore-catalog-mega__tree-toggle');
-			if (desktop) {
-				item.classList.remove('is-collapsed');
-				if (toggle) {
-					toggle.setAttribute('aria-expanded', 'true');
-				}
-				return;
-			}
-
-			var open = item.classList.contains('is-open');
-			item.classList.toggle('is-collapsed', !open);
-			if (toggle) {
-				toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
-			}
-		});
-	}
-
-	function initTree(root) {
-		root.querySelectorAll('.gstore-catalog-mega__tree-item.has-children').forEach(function (item) {
-			var toggle = item.querySelector(':scope > .gstore-catalog-mega__tree-row .gstore-catalog-mega__tree-toggle');
-			if (!toggle || toggle.getAttribute('data-gstore-catalog-tree-ready') === '1') {
-				return;
-			}
-
-			toggle.setAttribute('data-gstore-catalog-tree-ready', '1');
-			toggle.addEventListener('click', function (event) {
-				event.preventDefault();
-				event.stopPropagation();
-				setTreeItemOpen(item, !item.classList.contains('is-open'));
-			});
-		});
-	}
-
 	function initMega(root) {
 		if (!root || root.classList.contains('gstore-catalog-mega--enhanced')) {
 			return;
@@ -131,17 +86,10 @@
 				}
 			}, 0);
 		});
-
-		initTree(root);
-		syncTreeForViewport(root);
 	}
 
 	function scan() {
 		document.querySelectorAll('.gstore-catalog-mega').forEach(initMega);
-	}
-
-	function syncAllTrees() {
-		document.querySelectorAll('.gstore-catalog-mega--enhanced').forEach(syncTreeForViewport);
 	}
 
 	function watchMutations() {
@@ -187,13 +135,5 @@
 				closeAll();
 			}
 		});
-
-		if (mediaQuery) {
-			if (typeof mediaQuery.addEventListener === 'function') {
-				mediaQuery.addEventListener('change', syncAllTrees);
-			} else if (typeof mediaQuery.addListener === 'function') {
-				mediaQuery.addListener(syncAllTrees);
-			}
-		}
 	});
 })();
