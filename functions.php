@@ -7824,6 +7824,33 @@ function gstore_enqueue_checkout_assets() {
 			true
 		);
 
+		$quote_notice_script_path = get_theme_file_path( 'assets/js/freight-quote-notice.js' );
+		if ( file_exists( $quote_notice_script_path ) ) {
+			$quote_notice_message = '';
+			if ( class_exists( '\GStore\Services\Freight_Service' ) ) {
+				$quote_notice_config  = \GStore\Services\Freight_Service::get_config();
+				$quote_notice_message = \GStore\Services\Freight_Service::get_quote_notice_message( $quote_notice_config );
+			}
+
+			wp_enqueue_script(
+				'gstore-freight-quote-notice',
+				get_theme_file_uri( 'assets/js/freight-quote-notice.js' ),
+				array( 'gstore-checkout-steps' ),
+				filemtime( $quote_notice_script_path ),
+				true
+			);
+
+			wp_localize_script(
+				'gstore-freight-quote-notice',
+				'gstoreFreightQuoteNotice',
+				array(
+					'enabled'     => true,
+					'message'     => $quote_notice_message,
+					'buttonLabel' => __( 'Ver aviso', 'gstore' ),
+				)
+			);
+		}
+
 		// Fornece nonce e URLs para o checkout (URLs respeitam subdiretório do WP).
 		$checkout_inline  = 'window.gstoreCheckout = window.gstoreCheckout || {};';
 		$checkout_inline .= 'window.gstoreCheckout.processCheckoutNonce = ' . wp_json_encode( wp_create_nonce( 'woocommerce-process_checkout' ) ) . ';';
