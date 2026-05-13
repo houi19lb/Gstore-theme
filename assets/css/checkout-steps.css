@@ -2985,6 +2985,45 @@ body.gstore-blu-checkout-modal-open {
 	margin-top: 0;
 }
 
+body.woocommerce-checkout .Gstore-checkout-summary-top__details .Gstore-summary-item [data-gstore-item-shipping],
+body.woocommerce-checkout .Gstore-checkout-summary-top__details .Gstore-summary-item .Gstore-checkout-item-shipping-group,
+body.woocommerce-checkout .Gstore-checkout-summary-top__details .Gstore-summary-item .Gstore-checkout-item-shipping-group__options {
+	min-width: 0 !important;
+	max-width: 100% !important;
+}
+
+body.woocommerce-checkout .Gstore-checkout-summary-top__details .Gstore-summary-item .Gstore-checkout-item-shipping-option {
+	display: grid !important;
+	grid-template-columns: 16px minmax(0, 1fr) !important;
+	width: 100% !important;
+	max-width: 100% !important;
+	min-width: 0 !important;
+	box-sizing: border-box;
+	white-space: normal !important;
+	overflow: hidden;
+}
+
+body.woocommerce-checkout .Gstore-checkout-summary-top__details .Gstore-summary-item .Gstore-checkout-item-shipping-option__label,
+body.woocommerce-checkout .Gstore-checkout-summary-top__details .Gstore-summary-item .Gstore-checkout-item-shipping-option__price {
+	min-width: 0 !important;
+	max-width: 100% !important;
+	white-space: normal !important;
+	overflow-wrap: anywhere;
+	word-break: normal;
+}
+
+body.woocommerce-checkout .Gstore-checkout-summary-top__details .Gstore-summary-item .Gstore-checkout-item-shipping-option__price--quote-notice,
+body.woocommerce-checkout .Gstore-checkout-summary-top__details .Gstore-summary-item .Gstore-checkout-item-shipping-option__price .gstore-shipping-quote-notice {
+	display: block !important;
+	grid-column: 2;
+	grid-row: 2;
+	width: 100% !important;
+	max-width: 100% !important;
+	white-space: normal !important;
+	overflow-wrap: anywhere;
+	line-height: 1.35;
+}
+
 .Gstore-summary-item .Gstore-checkout-item-shipping-option:hover {
 	border-color: var(--gstore-brass);
 }

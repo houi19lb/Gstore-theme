@@ -2737,12 +2737,13 @@ function getInstallmentDisplayTotals(summaryData) {
 						const checked = String(rate.rate_id || '') === String(selectedRateId || '') ? 'checked' : '';
 						const selectedClass = checked ? ' is-selected' : '';
 						const noticeClass = isRateQuoteNoticeActive(rate) ? ' Gstore-checkout-item-shipping-option--quote-notice' : '';
+						const priceNoticeClass = isRateQuoteNoticeActive(rate) ? ' Gstore-checkout-item-shipping-option__price--quote-notice' : '';
 						const label = getRateDisplayLabel(rate);
 						return `
 							<label class="Gstore-checkout-item-shipping-option${selectedClass}${noticeClass}">
 								<input type="radio" name="gstore_selected_shipping_rate[${cartItemKey}]" data-cart-item-key="${cartItemKey}" data-gstore-mode="${group.mode}" value="${rate.rate_id}" ${checked} />
 								<span class="Gstore-checkout-item-shipping-option__label">${label}</span>
-								<span class="Gstore-checkout-item-shipping-option__price">${cost}</span>
+								<span class="Gstore-checkout-item-shipping-option__price${priceNoticeClass}">${cost}</span>
 							</label>
 						`;
 					}).join('');
