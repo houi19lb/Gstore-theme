@@ -724,10 +724,13 @@ body:has(.Gstore-header-shell) {
 
 	/* Drawer Navigation */
 	.Gstore-mobile-drawer__nav {
-		flex: 1;
+		flex: 1 1 auto;
 		min-height: 0;
 		overflow-y: auto;
 		overflow-x: hidden;
+		padding-bottom: 8px;
+		overscroll-behavior: contain;
+		-webkit-overflow-scrolling: touch;
 	}
 
 	.Gstore-mobile-drawer__nav .Gstore-nav {

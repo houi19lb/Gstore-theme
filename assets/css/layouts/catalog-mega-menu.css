@@ -55,7 +55,9 @@
 	top: 100%;
 	left: 0;
 	z-index: 250;
-	width: min(300px, calc(100vw - 32px));
+	width: max-content;
+	min-width: 150px;
+	max-width: min(300px, calc(100vw - 32px));
 	overflow: visible;
 	border: 1px solid rgba(255, 255, 255, 0.10);
 	border-radius: 0 0 8px 8px;
@@ -104,6 +106,7 @@
 	font-weight: 650;
 	line-height: 1.25;
 	text-decoration: none;
+	white-space: nowrap;
 }
 
 .Gstore-nav .gstore-catalog-mega__group-arrow {
@@ -128,7 +131,9 @@
 	left: 100%;
 	z-index: 260;
 	display: flex;
-	width: min(300px, calc(100vw - 32px));
+	width: max-content;
+	min-width: 150px;
+	max-width: min(300px, calc(100vw - 32px));
 	min-height: 100%;
 	flex-direction: column;
 	padding: 8px 0;
@@ -161,6 +166,7 @@
 	font-weight: 600;
 	line-height: 1.25;
 	text-decoration: none;
+	white-space: nowrap;
 }
 
 .Gstore-nav .gstore-catalog-mega__submenu-link:hover,
@@ -170,12 +176,27 @@
 }
 
 @media (max-width: 767px) {
+	.Gstore-mobile-drawer__nav {
+		overscroll-behavior: contain;
+		scrollbar-gutter: stable;
+	}
+
+	.Gstore-mobile-drawer__nav .Gstore-nav {
+		display: block;
+	}
+
+	.Gstore-mobile-drawer__nav .Gstore-nav .wp-block-navigation__container {
+		align-items: stretch;
+	}
+
+	.Gstore-mobile-drawer__nav .Gstore-nav .gstore-catalog-mega,
 	.Gstore-mobile-drawer__nav .gstore-catalog-mega {
 		display: block;
 		position: relative;
 		width: 100%;
 	}
 
+	.Gstore-mobile-drawer__nav .Gstore-nav .gstore-catalog-mega__trigger,
 	.Gstore-mobile-drawer__nav .gstore-catalog-mega__trigger {
 		display: flex;
 		width: 100%;
@@ -183,12 +204,14 @@
 		border-bottom: 1px solid var(--gstore-color-white-10, rgba(255, 255, 255, 0.1));
 	}
 
+	.Gstore-mobile-drawer__nav .Gstore-nav .gstore-catalog-mega__link.wp-block-navigation-item__content,
 	.Gstore-mobile-drawer__nav .gstore-catalog-mega__link.wp-block-navigation-item__content {
 		flex: 1 1 auto;
 		width: auto;
 		border-bottom: 0;
 	}
 
+	.Gstore-mobile-drawer__nav .Gstore-nav .gstore-catalog-mega__toggle,
 	.Gstore-mobile-drawer__nav .gstore-catalog-mega__toggle {
 		flex: 0 0 48px;
 		width: 48px;
@@ -197,10 +220,14 @@
 		color: var(--gstore-color-text-light, #fff);
 	}
 
-	.Gstore-mobile-drawer__nav .gstore-catalog-mega__panel {
+	.Gstore-mobile-drawer__nav .Gstore-nav .gstore-catalog-mega > .gstore-catalog-mega__panel,
+	.Gstore-mobile-drawer__nav .gstore-catalog-mega > .gstore-catalog-mega__panel {
 		position: static;
 		display: block;
 		width: 100%;
+		min-width: 0;
+		max-width: none;
+		overflow: visible;
 		border: 0;
 		border-radius: 0;
 		background: var(--gstore-color-bg-dark, #0a0a0a);
@@ -212,22 +239,32 @@
 		visibility: visible;
 	}
 
-	.Gstore-mobile-drawer__nav .gstore-catalog-mega--enhanced:not(.is-open) > .gstore-catalog-mega__panel {
+	.Gstore-mobile-drawer__nav .Gstore-nav .gstore-catalog-mega.gstore-catalog-mega--enhanced:not(.is-open) > .gstore-catalog-mega__panel,
+	.Gstore-mobile-drawer__nav .gstore-catalog-mega.gstore-catalog-mega--enhanced:not(.is-open) > .gstore-catalog-mega__panel {
 		display: none;
 	}
 
+	.Gstore-mobile-drawer__nav .Gstore-nav .gstore-catalog-mega.is-open > .gstore-catalog-mega__panel,
+	.Gstore-mobile-drawer__nav .gstore-catalog-mega.is-open > .gstore-catalog-mega__panel {
+		display: block;
+	}
+
+	.Gstore-mobile-drawer__nav .Gstore-nav .gstore-catalog-mega__panel-inner,
 	.Gstore-mobile-drawer__nav .gstore-catalog-mega__panel-inner {
 		padding: 6px 0 12px;
 	}
 
+	.Gstore-mobile-drawer__nav .Gstore-nav .gstore-catalog-mega__columns,
 	.Gstore-mobile-drawer__nav .gstore-catalog-mega__columns {
 		display: block;
 	}
 
+	.Gstore-mobile-drawer__nav .Gstore-nav .gstore-catalog-mega__group,
 	.Gstore-mobile-drawer__nav .gstore-catalog-mega__group {
 		position: relative;
 	}
 
+	.Gstore-mobile-drawer__nav .Gstore-nav .gstore-catalog-mega__group-title,
 	.Gstore-mobile-drawer__nav .gstore-catalog-mega__group-title {
 		justify-content: space-between;
 		gap: 12px;
@@ -236,14 +273,18 @@
 		border-radius: 0;
 		color: rgba(255, 255, 255, 0.88);
 		font-size: 13px;
+		white-space: normal;
 	}
 
+	.Gstore-mobile-drawer__nav .Gstore-nav .gstore-catalog-mega__group-title:hover,
+	.Gstore-mobile-drawer__nav .Gstore-nav .gstore-catalog-mega__group-title:focus,
 	.Gstore-mobile-drawer__nav .gstore-catalog-mega__group-title:hover,
 	.Gstore-mobile-drawer__nav .gstore-catalog-mega__group-title:focus {
 		background: rgba(255, 255, 255, 0.08);
 		color: var(--gstore-color-accent, #b5a642);
 	}
 
+	.Gstore-mobile-drawer__nav .Gstore-nav .gstore-catalog-mega__group-arrow,
 	.Gstore-mobile-drawer__nav .gstore-catalog-mega__group-arrow {
 		width: 7px;
 		height: 7px;
@@ -253,10 +294,14 @@
 		transform: rotate(135deg);
 	}
 
+	.Gstore-mobile-drawer__nav .Gstore-nav .gstore-catalog-mega__submenu,
 	.Gstore-mobile-drawer__nav .gstore-catalog-mega__submenu {
 		position: static;
 		display: flex;
 		width: 100%;
+		min-width: 0;
+		max-width: none;
+		min-height: 0;
 		flex-direction: column;
 		padding: 0 0 8px 14px;
 		border: 0;
@@ -269,6 +314,7 @@
 		visibility: visible;
 	}
 
+	.Gstore-mobile-drawer__nav .Gstore-nav .gstore-catalog-mega__submenu-link,
 	.Gstore-mobile-drawer__nav .gstore-catalog-mega__submenu-link {
 		display: flex;
 		align-items: center;
@@ -278,8 +324,11 @@
 		font-size: 12px;
 		font-weight: 600;
 		text-decoration: none;
+		white-space: normal;
 	}
 
+	.Gstore-mobile-drawer__nav .Gstore-nav .gstore-catalog-mega__submenu-link:hover,
+	.Gstore-mobile-drawer__nav .Gstore-nav .gstore-catalog-mega__submenu-link:focus,
 	.Gstore-mobile-drawer__nav .gstore-catalog-mega__submenu-link:hover,
 	.Gstore-mobile-drawer__nav .gstore-catalog-mega__submenu-link:focus {
 		background: rgba(255, 255, 255, 0.08);
