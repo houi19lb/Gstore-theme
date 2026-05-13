@@ -1300,9 +1300,63 @@ const subtotal = decodeHtmlEntities(stripHtmlText(it.subtotal || ''));
 				</div>
 				<div class="Gstore-checkout-step__fields"></div>
 				${actionsHtml}
-				${isLast ? '<div class="Gstore-checkout-step__payment-container"><div class="Gstore-checkout-step__order-review-slot"></div><div class="Gstore-blu-installments-slot"></div></div>' : ''}
+				${isLast ? '<div class="Gstore-checkout-step__payment-container"><div class="Gstore-checkout-step__coupon-slot"></div><div class="Gstore-checkout-step__order-review-slot"></div><div class="Gstore-blu-installments-slot"></div></div>' : ''}
 			</div>
 		`;
+	}
+
+	/**
+	 * Move o formulário nativo de cupom para a etapa final do checkout.
+	 */
+	function moveCheckoutCouponForm() {
+		const $slot = $('[data-step="payment"] .Gstore-checkout-step__coupon-slot').first();
+		if (!$slot.length) return;
+
+		const $couponForm = $('form.checkout_coupon, form.woocommerce-form-coupon')
+			.filter(function() {
+				return !$(this).hasClass('checkout');
+			})
+			.first();
+		const $couponToggle = $('.woocommerce-form-coupon-toggle').first();
+
+		if (!$couponForm.length) {
+			$slot.empty().hide();
+			$couponToggle.hide();
+			return;
+		}
+
+		if (!$slot.find('.Gstore-checkout-coupon-card').length) {
+			$slot.html(`
+				<div class="Gstore-checkout-coupon-card">
+					<div class="Gstore-checkout-coupon-card__header">
+						<div>
+							<span class="Gstore-checkout-coupon-card__eyebrow">Cupom</span>
+							<h3>Tem cupom de desconto?</h3>
+						</div>
+						<i class="fa-solid fa-ticket" aria-hidden="true"></i>
+					</div>
+					<div class="Gstore-checkout-coupon-card__body"></div>
+				</div>
+			`);
+		}
+
+		$slot.show();
+		$couponToggle.hide();
+
+		if ($couponForm.length) {
+			const $body = $slot.find('.Gstore-checkout-coupon-card__body').first();
+			if (!$body.find('form.checkout_coupon, form.woocommerce-form-coupon').length) {
+				$body.append($couponForm.detach());
+			}
+			$couponForm
+				.addClass('Gstore-checkout-coupon-form')
+				.css('display', 'block');
+			$couponForm.find('input[name="coupon_code"]')
+				.attr('placeholder', 'Digite seu cupom')
+				.attr('autocomplete', 'off');
+			$couponForm.find('button[name="apply_coupon"], input[name="apply_coupon"]')
+				.addClass('Gstore-checkout-coupon-form__button');
+		}
 	}
 
 	/**
@@ -1839,6 +1893,7 @@ const subtotal = decodeHtmlEntities(stripHtmlText(it.subtotal || ''));
 
 		// Etapa 3: Footer de finalização (termos + privacidade + CTA)
 		const $finalizeStep = $('[data-step="payment"] .Gstore-checkout-step__payment-container');
+		moveCheckoutCouponForm();
 		if ($finalizeStep.length && !$finalizeStep.find('#place_order').length) {
 			const contractSettings = getContractSettings();
 			const contractEnabled = contractSettings.enabled;

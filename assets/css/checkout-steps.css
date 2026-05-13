@@ -37,6 +37,120 @@
 	--gstore-shadow-md: none;
 }
 
+.Gstore-checkout-coupon-card {
+	background: var(--gstore-card-bg);
+	border: 1px solid var(--gstore-muted);
+	border-radius: var(--gstore-border-radius);
+	margin-bottom: 16px;
+	padding: 18px;
+}
+
+.Gstore-checkout-coupon-card__header {
+	display: flex;
+	align-items: flex-start;
+	justify-content: space-between;
+	gap: 16px;
+	margin-bottom: 14px;
+}
+
+.Gstore-checkout-coupon-card__eyebrow {
+	color: var(--gstore-brass-dark);
+	display: block;
+	font-size: var(--gstore-font-size-xs, 0.75rem);
+	font-weight: 700;
+	margin-bottom: 4px;
+	text-transform: uppercase;
+}
+
+.Gstore-checkout-coupon-card h3 {
+	color: var(--gstore-foreground);
+	font-size: var(--gstore-font-size-base, 1rem);
+	line-height: 1.25;
+	margin: 0;
+}
+
+.Gstore-checkout-coupon-card__header i {
+	color: var(--gstore-brass);
+	font-size: 1.15rem;
+	margin-top: 2px;
+}
+
+.Gstore-checkout-coupon-form {
+	border: 0 !important;
+	display: grid !important;
+	gap: 10px;
+	grid-template-columns: minmax(0, 1fr) auto;
+	margin: 0 !important;
+	padding: 0 !important;
+}
+
+.Gstore-checkout-coupon-form p {
+	margin: 0;
+}
+
+.Gstore-checkout-coupon-form > p:not(.form-row) {
+	color: var(--gstore-text-muted);
+	font-size: var(--gstore-font-size-sm, 0.875rem);
+	grid-column: 1 / -1;
+	line-height: 1.45;
+}
+
+.Gstore-checkout-coupon-form .form-row {
+	float: none !important;
+	margin: 0 !important;
+	padding: 0 !important;
+	width: auto !important;
+}
+
+.Gstore-checkout-coupon-form .clear {
+	display: none;
+}
+
+.Gstore-checkout-coupon-form input[name="coupon_code"] {
+	background: #fff;
+	border: 1px solid var(--gstore-muted);
+	border-radius: var(--gstore-border-radius);
+	color: var(--gstore-foreground);
+	flex: 1 1 auto;
+	font-size: var(--gstore-font-size-sm, 0.875rem);
+	min-height: 44px;
+	min-width: 0;
+	padding: 0 12px;
+	width: 100%;
+}
+
+.Gstore-checkout-coupon-form__button,
+.Gstore-checkout-coupon-form button[name="apply_coupon"],
+.Gstore-checkout-coupon-form input[name="apply_coupon"] {
+	background: var(--gstore-green) !important;
+	border: 0 !important;
+	border-radius: var(--gstore-border-radius) !important;
+	color: #fff !important;
+	cursor: pointer;
+	font-weight: 700 !important;
+	min-height: 44px;
+	padding: 0 18px !important;
+	white-space: nowrap;
+}
+
+.Gstore-checkout-coupon-form__button:hover,
+.Gstore-checkout-coupon-form button[name="apply_coupon"]:hover,
+.Gstore-checkout-coupon-form input[name="apply_coupon"]:hover {
+	background: var(--gstore-green-hover) !important;
+}
+
+@media (max-width: 640px) {
+	.Gstore-checkout-coupon-form {
+		grid-template-columns: 1fr;
+	}
+
+	.Gstore-checkout-coupon-form__button,
+	.Gstore-checkout-coupon-form button[name="apply_coupon"],
+	.Gstore-checkout-coupon-form input[name="apply_coupon"] {
+		width: 100%;
+	}
+}
+
 /* ===========================================
    HEADER MINIMALISTA DO CHECKOUT
    =========================================== */
