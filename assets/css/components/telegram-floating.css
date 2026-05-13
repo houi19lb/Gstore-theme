@@ -382,6 +382,18 @@ body.gstore-support-chat-open .Gstore-support-float {
 	display: none !important;
 }
 
+body.drawer-open .Gstore-support-float,
+body.drawer-open .Gstore-telegram-float,
+body.drawer-open #cw-bubble-holder,
+body.drawer-open .woot-widget-bubble,
+body.drawer-open [class*="woot-widget-bubble"],
+body.drawer-open .woot-widget-holder,
+body.drawer-open [class*="woot-widget-holder"] {
+	opacity: 0 !important;
+	pointer-events: none !important;
+	visibility: hidden !important;
+}
+
 /* Patch defensivo para reduzir conflito visual do launcher/widget do Chatwoot durante o modal fake (estratégia A). */
 body.gstore-support-chat-open .woot-widget-bubble,
 body.gstore-support-chat-open [class*="woot-widget-bubble"] {

@@ -596,6 +596,7 @@ body:has(.Gstore-header-shell) {
 
 	/* Drawer aberto */
 	.Gstore-mobile-drawer.is-open {
+		z-index: 2147483600;
 		pointer-events: auto;
 	}
 
@@ -605,6 +606,7 @@ body:has(.Gstore-header-shell) {
 	}
 
 	.Gstore-mobile-drawer.is-open .Gstore-mobile-drawer__content {
+		z-index: 2147483601;
 		transform: translateX(0);
 	}
 
