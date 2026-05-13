@@ -128,6 +128,15 @@
 			return quantity > 0 ? quantity : 1;
 		}
 
+		escapeHtml(value) {
+			return String(value || '')
+				.replace(/&/g, '&amp;')
+				.replace(/</g, '&lt;')
+				.replace(/>/g, '&gt;')
+				.replace(/"/g, '&quot;')
+				.replace(/'/g, '&#039;');
+		}
+
 		calculate() {
 			const cep = this.cepInput.val().trim();
 			const context = this.resolveContext();
@@ -226,13 +235,18 @@
 				const labelText = label
 					? label
 					: ((rate.mode || '').toLowerCase() === 'air' ? 'Frete Aéreo' : (rate.mode || '').toLowerCase() === 'pickup' ? 'Retirada na loja' : 'Frete Terrestre');
+				const hasQuoteNotice = rate.quote_value_enabled === false
+					|| String(rate.quote_notice_html || rate.cost_formatted || '').indexOf('gstore-shipping-quote-notice') !== -1;
+				const costHtml = hasQuoteNotice
+					? (rate.quote_notice_html || rate.cost_formatted || `<span class="gstore-shipping-quote-notice">${this.escapeHtml(rate.quote_notice_message || '')}</span>`)
+					: (rate.cost_formatted || '-');
 				return `
-					<div class="gstore-shipping-calculator__result-row">
+					<div class="gstore-shipping-calculator__result-row${hasQuoteNotice ? ' gstore-shipping-calculator__result-row--quote-notice' : ''}">
 						<span class="gstore-shipping-calculator__result-label">
 							<i class="fa-solid fa-truck" aria-hidden="true"></i>
 							${labelText}:
 						</span>
-						<strong class="gstore-shipping-calculator__result-value">${rate.cost_formatted || '-'}</strong>
+						<strong class="gstore-shipping-calculator__result-value">${costHtml || '-'}</strong>
 					</div>
 				`;
 			}).join('');

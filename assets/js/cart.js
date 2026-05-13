@@ -15,6 +15,8 @@
 	const CART_SELECTED_RATE_STORAGE_KEY = 'gstore_cart_selected_shipping_rate';
 	const CART_CALCULATED_SESSION_KEY = 'gstore_cart_shipping_calculated_session';
 	const CART_RATES_STORAGE_KEY = 'gstore_cart_shipping_rates';
+	const CART_RATES_STORAGE_VERSION_KEY = 'gstore_cart_shipping_rates_version';
+	const CART_RATES_STORAGE_VERSION = '20260512-quote-notice-v2';
 
 	function getCartCep() {
 		const cepInput = document.querySelector('.gstore-shipping-calculator__cep');
@@ -182,6 +184,7 @@
 		payload[cartItemKey] = Array.isArray(rates) ? rates : [];
 		try {
 			window.localStorage.setItem(CART_RATES_STORAGE_KEY, JSON.stringify(payload));
+			window.localStorage.setItem(CART_RATES_STORAGE_VERSION_KEY, CART_RATES_STORAGE_VERSION);
 		} catch (e) {
 			// ignore storage errors
 		}
@@ -190,15 +193,26 @@
 	function parseAndNormalizeRates(rawRates) {
 		const rates = Array.isArray(rawRates) ? rawRates : [];
 		return rates
-			.map((rate) => ({
-				rate_id: rate && typeof rate === 'object' ? String(rate.rate_id || rate.id || '') : '',
-				mode: normalizeRateMode(rate && (rate.mode || rate.label || '')),
-				label: rate && rate.label ? String(rate.label) : '',
-				carrier_id: rate && rate.carrier_id ? String(rate.carrier_id) : '',
-				service_id: rate && rate.service_id ? String(rate.service_id) : '',
-				cost: rate && typeof rate === 'object' && 'cost' in rate ? rate.cost : '',
-				cost_formatted: rate && typeof rate === 'object' && 'cost_formatted' in rate ? rate.cost_formatted : '',
-			}))
+			.map((rate) => {
+				const raw = rate && typeof rate === 'object' ? rate : {};
+				const quoteValueEnabled = raw.quote_value_enabled;
+				return {
+					rate_id: String(raw.rate_id || raw.id || ''),
+					mode: normalizeRateMode(raw.mode || raw.label || ''),
+					label: raw.label ? String(raw.label) : '',
+					carrier_id: raw.carrier_id ? String(raw.carrier_id) : '',
+					service_id: raw.service_id ? String(raw.service_id) : '',
+					cost: Object.prototype.hasOwnProperty.call(raw, 'cost') ? raw.cost : '',
+					cost_formatted: raw.cost_formatted || raw.costFormatted || '',
+					quote_value_enabled: quoteValueEnabled === undefined
+						? true
+						: !(quoteValueEnabled === false || quoteValueEnabled === 'false' || quoteValueEnabled === 0 || quoteValueEnabled === '0'),
+					quote_notice_message: raw.quote_notice_message || '',
+					quote_notice_html: raw.quote_notice_html || '',
+					rate_kind: raw.rate_kind || '',
+					pricing_type: raw.pricing_type || '',
+				};
+			})
 			.filter((rate) => rate.mode && rate.rate_id);
 	}
 
@@ -296,6 +310,10 @@
 
 		let storedRates = null;
 		try {
+			if (window.localStorage.getItem(CART_RATES_STORAGE_VERSION_KEY) !== CART_RATES_STORAGE_VERSION) {
+				window.localStorage.removeItem(CART_RATES_STORAGE_KEY);
+				return;
+			}
 			const raw = window.localStorage.getItem(CART_RATES_STORAGE_KEY);
 			if (!raw) {
 				return;
@@ -736,8 +754,15 @@
 				label: rate.label || '',
 				carrier_id: rate.carrier_id || '',
 				service_id: rate.service_id || '',
-				cost: rate.cost || '',
+				cost: Object.prototype.hasOwnProperty.call(rate, 'cost') ? rate.cost : '',
 				cost_formatted: rate.cost_formatted || '',
+				quote_value_enabled: rate.quote_value_enabled === undefined
+					? true
+					: !(rate.quote_value_enabled === false || rate.quote_value_enabled === 'false' || rate.quote_value_enabled === 0 || rate.quote_value_enabled === '0'),
+				quote_notice_message: rate.quote_notice_message || '',
+				quote_notice_html: rate.quote_notice_html || '',
+				rate_kind: rate.rate_kind || '',
+				pricing_type: rate.pricing_type || '',
 			}))
 			.filter((rate) => rate.mode && rate.rate_id);
 		storeShippingRates(cartItemKey, normalizedRates);

@@ -57,6 +57,8 @@
 	const CART_MODE_STORAGE_KEY = 'gstore_cart_shipping_mode';
 	const CART_SELECTED_RATE_STORAGE_KEY = 'gstore_cart_selected_shipping_rate';
 	const CART_RATES_STORAGE_KEY = 'gstore_cart_shipping_rates';
+	const CART_RATES_STORAGE_VERSION_KEY = 'gstore_cart_shipping_rates_version';
+	const CART_RATES_STORAGE_VERSION = '20260512-quote-notice-v2';
 	let checkoutSelectedShippingMode = 'land';
 	let checkoutShippingRates = [];
 	let checkoutShippingStatus = 'idle';
@@ -1984,6 +1986,52 @@ const subtotal = decodeHtmlEntities(stripHtmlText(it.subtotal || ''));
 		return label || getRateModeLabel(mode);
 	}
 
+	function normalizeShippingRate(rate) {
+		const raw = rate && typeof rate === 'object' ? rate : {};
+		const quoteValueEnabled = raw.quote_value_enabled;
+		return {
+			rate_id: String(raw.rate_id || raw.id || ''),
+			mode: normalizeRateMode(raw.mode || raw.label || ''),
+			label: raw.label || '',
+			carrier_id: raw.carrier_id || '',
+			service_id: raw.service_id || '',
+			cost: Object.prototype.hasOwnProperty.call(raw, 'cost') ? raw.cost : '',
+			cost_formatted: raw.cost_formatted || raw.costFormatted || '',
+			quote_value_enabled: quoteValueEnabled === undefined
+				? true
+				: !(quoteValueEnabled === false || quoteValueEnabled === 'false' || quoteValueEnabled === 0 || quoteValueEnabled === '0'),
+			quote_notice_message: raw.quote_notice_message || '',
+			quote_notice_html: raw.quote_notice_html || '',
+			rate_kind: raw.rate_kind || '',
+			pricing_type: raw.pricing_type || '',
+		};
+	}
+
+	function isRateQuoteNoticeActive(rate) {
+		if (!rate) {
+			return false;
+		}
+		if (rate.quote_value_enabled === false) {
+			return true;
+		}
+		return String(rate.quote_notice_html || rate.cost_formatted || '').indexOf('gstore-shipping-quote-notice') !== -1;
+	}
+
+	function getRateCostHtml(rate) {
+		if (!rate) {
+			return '-';
+		}
+		if (isRateQuoteNoticeActive(rate)) {
+			if (rate.quote_notice_html) {
+				return rate.quote_notice_html;
+			}
+			if (rate.quote_notice_message) {
+				return `<span class="gstore-shipping-quote-notice">${escapeHtml(rate.quote_notice_message)}</span>`;
+			}
+		}
+		return rate.cost_formatted || '-';
+	}
+
 	function groupRatesByMode(rates) {
 		const groups = new Map();
 		(rates || []).forEach((rate) => {
@@ -2325,6 +2373,10 @@ function getInstallmentDisplayTotals(summaryData) {
 			return {};
 		}
 		try {
+			if (window.localStorage.getItem(CART_RATES_STORAGE_VERSION_KEY) !== CART_RATES_STORAGE_VERSION) {
+				window.localStorage.removeItem(CART_RATES_STORAGE_KEY);
+				return {};
+			}
 			const raw = window.localStorage.getItem(CART_RATES_STORAGE_KEY);
 			if (!raw) {
 				return {};
@@ -2337,15 +2389,7 @@ function getInstallmentDisplayTotals(summaryData) {
 			Object.keys(parsed).forEach((key) => {
 				const rates = Array.isArray(parsed[key]) ? parsed[key] : [];
 				output[key] = rates
-					.map((rate) => ({
-						rate_id: String(rate.rate_id || rate.id || ''),
-						mode: normalizeRateMode(rate.mode),
-						label: rate.label || '',
-						carrier_id: rate.carrier_id || '',
-						service_id: rate.service_id || '',
-						cost: rate.cost || '',
-						cost_formatted: rate.cost_formatted || '',
-					}))
+					.map(normalizeShippingRate)
 					.filter((rate) => rate.mode && rate.rate_id);
 			});
 			return output;
@@ -2470,6 +2514,13 @@ function getInstallmentDisplayTotals(summaryData) {
 					service_id: rate.service_id || '',
 					cost: rate.cost,
 					cost_formatted: rate.cost_formatted || rate.costFormatted || '',
+					quote_value_enabled: rate.quote_value_enabled === undefined
+						? true
+						: !(rate.quote_value_enabled === false || rate.quote_value_enabled === 'false' || rate.quote_value_enabled === 0 || rate.quote_value_enabled === '0'),
+					quote_notice_message: rate.quote_notice_message || '',
+					quote_notice_html: rate.quote_notice_html || '',
+					rate_kind: rate.rate_kind || '',
+					pricing_type: rate.pricing_type || '',
 				};
 			})
 			.filter((rate) => rate.mode && rate.rate_id);
@@ -2682,12 +2733,13 @@ function getInstallmentDisplayTotals(summaryData) {
 			const optionsHtml = rates.length
 				? groupRatesByMode(rates).map((group) => {
 					const groupOptionsHtml = group.rates.map((rate) => {
-						const cost = rate.cost_formatted || '-';
+						const cost = getRateCostHtml(rate);
 						const checked = String(rate.rate_id || '') === String(selectedRateId || '') ? 'checked' : '';
 						const selectedClass = checked ? ' is-selected' : '';
+						const noticeClass = isRateQuoteNoticeActive(rate) ? ' Gstore-checkout-item-shipping-option--quote-notice' : '';
 						const label = getRateDisplayLabel(rate);
 						return `
-							<label class="Gstore-checkout-item-shipping-option${selectedClass}">
+							<label class="Gstore-checkout-item-shipping-option${selectedClass}${noticeClass}">
 								<input type="radio" name="gstore_selected_shipping_rate[${cartItemKey}]" data-cart-item-key="${cartItemKey}" data-gstore-mode="${group.mode}" value="${rate.rate_id}" ${checked} />
 								<span class="Gstore-checkout-item-shipping-option__label">${label}</span>
 								<span class="Gstore-checkout-item-shipping-option__price">${cost}</span>
@@ -3167,17 +3219,9 @@ function getInstallmentDisplayTotals(summaryData) {
 			results.forEach(function(result) {
 				if (result && result.rates && result.rates.length > 0) {
 					hasAnyRates = true;
-					const normalizedRates = result.rates.map(function(rate) {
-						return {
-							rate_id: String(rate.rate_id || rate.id || ''),
-							mode: normalizeRateMode(rate.mode),
-							label: rate.label || '',
-							carrier_id: rate.carrier_id || '',
-							service_id: rate.service_id || '',
-							cost: rate.cost,
-							cost_formatted: rate.cost_formatted || '',
-						};
-					}).filter(function(rate) { return rate.mode && rate.rate_id; });
+					const normalizedRates = result.rates
+						.map(normalizeShippingRate)
+						.filter(function(rate) { return rate.mode && rate.rate_id; });
 					
 					const groupItems = result.group && Array.isArray(result.group.items) ? result.group.items : [];
 					const memberKeys = groupItems.map(function(item) {
@@ -3225,6 +3269,7 @@ function getInstallmentDisplayTotals(summaryData) {
 			if (typeof window !== 'undefined' && window.localStorage) {
 				try {
 					window.localStorage.setItem(CART_RATES_STORAGE_KEY, JSON.stringify(checkoutShippingRatesByItem));
+					window.localStorage.setItem(CART_RATES_STORAGE_VERSION_KEY, CART_RATES_STORAGE_VERSION);
 				} catch (e) {
 					// Ignora erros de storage
 				}

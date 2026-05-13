@@ -1328,8 +1328,9 @@ body.woocommerce-checkout .Gstore-checkout-steps-shell {
 	.Gstore-summary-item .Gstore-checkout-item-shipping-option {
 		width: 100% !important;
 		min-width: 100% !important;
-		display: flex !important;
-		justify-content: space-between;
+		display: grid !important;
+		grid-template-columns: 16px minmax(0, 1fr) !important;
+		justify-content: flex-start;
 		white-space: normal !important;
 		flex: 1 1 100% !important;
 	}
@@ -2930,8 +2931,8 @@ body.gstore-blu-checkout-modal-open {
 }
 
 .Gstore-summary-item .Gstore-checkout-item-shipping-option {
-	display: grid;
-	grid-template-columns: 16px minmax(0, 1fr);
+	display: grid !important;
+	grid-template-columns: 16px minmax(0, 1fr) !important;
 	align-items: start;
 	justify-content: flex-start;
 	column-gap: 8px;
@@ -2942,7 +2943,7 @@ body.gstore-blu-checkout-modal-open {
 	background: #fff;
 	font-size: var(--gstore-font-size-sm);
 	color: var(--gstore-foreground);
-	white-space: normal;
+	white-space: normal !important;
 	width: fit-content;
 	max-width: 100%;
 	flex: none;

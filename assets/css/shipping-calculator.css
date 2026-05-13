@@ -179,6 +179,15 @@ input.gstore-shipping-calculator__cep.has-error {
 	row-gap: 4px;
 }
 
+.gstore-shipping-calculator__result-row--quote-notice {
+	grid-template-columns: 1fr;
+	row-gap: 2px;
+}
+
+.gstore-shipping-calculator__result-row--quote-notice .gstore-shipping-calculator__result-value {
+	padding-left: 1.75rem;
+}
+
 .gstore-shipping-calculator__result-value {
 	display: block;
 	justify-self: stretch;
