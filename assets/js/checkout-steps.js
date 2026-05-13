@@ -2022,11 +2022,14 @@ const subtotal = decodeHtmlEntities(stripHtmlText(it.subtotal || ''));
 			return '-';
 		}
 		if (isRateQuoteNoticeActive(rate)) {
-			if (rate.quote_notice_html) {
-				return rate.quote_notice_html;
-			}
 			if (rate.quote_notice_message) {
-				return `<span class="gstore-shipping-quote-notice">${escapeHtml(rate.quote_notice_message)}</span>`;
+				return `<span class="gstore-shipping-quote-notice" style="display:block;max-width:100%;white-space:normal;overflow-wrap:anywhere;line-height:1.35;">${escapeHtml(rate.quote_notice_message)}</span>`;
+			}
+			if (rate.quote_notice_html) {
+				return String(rate.quote_notice_html).replace(
+					'class="gstore-shipping-quote-notice"',
+					'class="gstore-shipping-quote-notice" style="display:block;max-width:100%;white-space:normal;overflow-wrap:anywhere;line-height:1.35;"'
+				);
 			}
 		}
 		return rate.cost_formatted || '-';
@@ -2738,12 +2741,24 @@ function getInstallmentDisplayTotals(summaryData) {
 						const selectedClass = checked ? ' is-selected' : '';
 						const noticeClass = isRateQuoteNoticeActive(rate) ? ' Gstore-checkout-item-shipping-option--quote-notice' : '';
 						const priceNoticeClass = isRateQuoteNoticeActive(rate) ? ' Gstore-checkout-item-shipping-option__price--quote-notice' : '';
+						const noticeOptionStyle = isRateQuoteNoticeActive(rate)
+							? ' style="display:grid;grid-template-columns:16px minmax(0,1fr);width:100%;max-width:100%;min-width:0;box-sizing:border-box;white-space:normal;overflow:hidden;"'
+							: '';
+						const noticeInputStyle = isRateQuoteNoticeActive(rate)
+							? ' style="grid-column:1;grid-row:1;margin-top:2px;"'
+							: '';
+						const noticeLabelStyle = isRateQuoteNoticeActive(rate)
+							? ' style="grid-column:2;grid-row:1;min-width:0;max-width:100%;white-space:normal;overflow-wrap:anywhere;"'
+							: '';
+						const noticePriceStyle = isRateQuoteNoticeActive(rate)
+							? ' style="grid-column:2;grid-row:2;display:block;min-width:0;max-width:100%;width:100%;white-space:normal;overflow-wrap:anywhere;line-height:1.35;"'
+							: '';
 						const label = getRateDisplayLabel(rate);
 						return `
-							<label class="Gstore-checkout-item-shipping-option${selectedClass}${noticeClass}">
-								<input type="radio" name="gstore_selected_shipping_rate[${cartItemKey}]" data-cart-item-key="${cartItemKey}" data-gstore-mode="${group.mode}" value="${rate.rate_id}" ${checked} />
-								<span class="Gstore-checkout-item-shipping-option__label">${label}</span>
-								<span class="Gstore-checkout-item-shipping-option__price${priceNoticeClass}">${cost}</span>
+							<label class="Gstore-checkout-item-shipping-option${selectedClass}${noticeClass}"${noticeOptionStyle}>
+								<input type="radio" name="gstore_selected_shipping_rate[${cartItemKey}]" data-cart-item-key="${cartItemKey}" data-gstore-mode="${group.mode}" value="${rate.rate_id}" ${checked}${noticeInputStyle} />
+								<span class="Gstore-checkout-item-shipping-option__label"${noticeLabelStyle}>${label}</span>
+								<span class="Gstore-checkout-item-shipping-option__price${priceNoticeClass}"${noticePriceStyle}>${cost}</span>
 							</label>
 						`;
 					}).join('');

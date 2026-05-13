@@ -7800,11 +7800,12 @@ function gstore_enqueue_checkout_assets() {
 		);
 
 		// CSS do checkout em 3 etapas
+		$checkout_steps_css_path = get_theme_file_path( 'assets/css/checkout-steps.css' );
 		wp_enqueue_style(
 			'gstore-checkout-steps',
 			get_theme_file_uri( 'assets/css/checkout-steps.css' ),
 			array( 'gstore-checkout' ),
-			$theme_version
+			file_exists( $checkout_steps_css_path ) ? filemtime( $checkout_steps_css_path ) : $theme_version
 		);
 
 		wp_enqueue_script(
@@ -8010,11 +8011,12 @@ function gstore_enqueue_checkout_assets() {
 		|| ( function_exists( 'is_checkout' ) && is_checkout() )
 	) {
 		// CSS do calculador
+		$shipping_calculator_css_path = get_theme_file_path( 'assets/css/shipping-calculator.css' );
 		wp_enqueue_style(
 			'gstore-shipping-calculator',
 			get_theme_file_uri( 'assets/css/shipping-calculator.css' ),
 			array( 'gstore-style' ),
-			$theme_version
+			file_exists( $shipping_calculator_css_path ) ? filemtime( $shipping_calculator_css_path ) : $theme_version
 		);
 
 		// JavaScript do calculador
@@ -8022,7 +8024,7 @@ function gstore_enqueue_checkout_assets() {
 			'gstore-shipping-calculator',
 			get_theme_file_uri( 'assets/js/shipping-calculator.js' ),
 			array( 'jquery' ),
-			$theme_version,
+			filemtime( get_theme_file_path( 'assets/js/shipping-calculator.js' ) ),
 			true
 		);
 
