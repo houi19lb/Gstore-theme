@@ -3683,6 +3683,18 @@ function gstore_enqueue_styles() {
 		$header_css_version
 	);
 
+	if ( function_exists( 'gstore_catalog_menu_is_cascade_enabled' ) && gstore_catalog_menu_is_cascade_enabled() ) {
+		$catalog_mega_css_file = get_theme_file_path( 'assets/css/layouts/catalog-mega-menu.css' );
+		if ( file_exists( $catalog_mega_css_file ) ) {
+			wp_enqueue_style(
+				'gstore-catalog-mega-menu-css',
+				get_theme_file_uri( 'assets/css/layouts/catalog-mega-menu.css' ),
+				array( 'gstore-header-css' ),
+				filemtime( $catalog_mega_css_file )
+			);
+		}
+	}
+
 	// Mini-cart CSS dedicado.
 	// Carrega separadamente com filemtime para evitar stale cache do @import em gstore-main.css.
 	$mini_cart_css_file = get_theme_file_path( 'assets/css/components/mini-cart.css' );
@@ -4635,6 +4647,19 @@ function gstore_enqueue_scripts() {
 		$header_js_version,
 		true
 	);
+
+	if ( function_exists( 'gstore_catalog_menu_is_cascade_enabled' ) && gstore_catalog_menu_is_cascade_enabled() ) {
+		$catalog_mega_js_file = get_theme_file_path( 'assets/js/catalog-mega-menu.js' );
+		if ( file_exists( $catalog_mega_js_file ) ) {
+			wp_enqueue_script(
+				'gstore-catalog-mega-menu',
+				get_theme_file_uri( 'assets/js/catalog-mega-menu.js' ),
+				array( 'gstore-header' ),
+				filemtime( $catalog_mega_js_file ),
+				true
+			);
+		}
+	}
 
 	$pwa_install_js_path    = get_theme_file_path( 'assets/js/pwa-install.js' );
 	$pwa_install_js_version = file_exists( $pwa_install_js_path ) ? (string) filemtime( $pwa_install_js_path ) : wp_get_theme()->get( 'Version' );
