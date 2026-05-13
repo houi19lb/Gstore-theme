@@ -43,6 +43,16 @@ $is_out_of_stock = 'outofstock' === $stock_status;
 $show_price_oos = 'yes' === (string) get_option( 'gstore_show_price_out_of_stock', 'no' );
 $hide_price = function_exists( 'gstore_product_hides_price' ) ? gstore_product_hides_price( $product, 'card' ) : (bool) get_post_meta( $product->get_id(), '_gstore_hide_price', true );
 $should_show_discount_badge = ! $hide_price && ! ( $is_out_of_stock && ! $show_price_oos );
+$product_card_style = function_exists( 'gstore_get_product_card_style' ) ? gstore_get_product_card_style() : sanitize_key( (string) get_option( 'gstore_product_card_style', 'default' ) );
+$product_card_classes = array( 'Gstore-product-card' );
+
+if ( $hide_price ) {
+	$product_card_classes[] = 'Gstore-product-card--price-hidden';
+}
+
+if ( 'hidden_button' === $product_card_style ) {
+	$product_card_classes[] = 'Gstore-product-card--button-hidden';
+}
 
 $regular_price_amount  = $is_variable_product ? (float) $product->get_variation_regular_price( 'min', true ) : (float) $product->get_regular_price();
 $sale_price_amount     = $is_variable_product ? (float) $product->get_variation_sale_price( 'min', true ) : (float) $product->get_sale_price();
@@ -72,7 +82,7 @@ $pix_discount_price      = $pix_discount_active && function_exists( 'gstore_blu_
 $pix_discount_price_html = $pix_discount_price ? wc_price( $pix_discount_price ) : '';
 $pix_discount_percent    = $pix_discount_active ? (float) $pix_discount_config['percent'] : 0;
 ?>
-<li <?php wc_product_class( 'Gstore-product-card' . ( $hide_price ? ' Gstore-product-card--price-hidden' : '' ), $product ); ?>>
+<li <?php wc_product_class( implode( ' ', $product_card_classes ), $product ); ?>>
 	<div class="Gstore-product-card__inner">
 		<div class="Gstore-product-card__top">
 			<?php

@@ -7621,6 +7621,34 @@ add_filter( 'the_title', 'gstore_remove_cart_page_title', 10, 2 );
 /**
  * Adiciona classe ao body para página do carrinho com template PHP.
  */
+/**
+ * Helpers do modo visual dos cards da Vitrine.
+ */
+if ( ! function_exists( 'gstore_sanitize_product_card_style' ) ) {
+	function gstore_sanitize_product_card_style( $style ) {
+		$style = is_string( $style ) ? sanitize_key( $style ) : '';
+		return in_array( $style, array( 'default', 'hidden_button' ), true ) ? $style : 'default';
+	}
+}
+
+if ( ! function_exists( 'gstore_get_product_card_style' ) ) {
+	function gstore_get_product_card_style() {
+		return gstore_sanitize_product_card_style( get_option( 'gstore_product_card_style', 'default' ) );
+	}
+}
+
+function gstore_product_card_style_body_class( $classes ) {
+	if ( 'hidden_button' === gstore_get_product_card_style() ) {
+		$classes[] = 'gstore-product-card-style-hidden-button';
+	}
+
+	return $classes;
+}
+add_filter( 'body_class', 'gstore_product_card_style_body_class' );
+
+/**
+ * Adiciona classe ao body para pagina do carrinho com template PHP.
+ */
 function gstore_cart_body_class( $classes ) {
 	if ( function_exists( 'is_cart' ) && is_cart() ) {
 		$classes[] = 'gstore-cart-template';

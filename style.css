@@ -5615,6 +5615,76 @@ main:not(.Gstore-blog-shell):not(.Gstore-blog-single-shell) {
 	display: none;
 }
 
+/* Variante Avancada: botao escondido no hover */
+body.gstore-product-card-style-hidden-button .Gstore-product-card--button-hidden .Gstore-product-card__inner {
+	box-shadow: none;
+}
+
+body.gstore-product-card-style-hidden-button .Gstore-product-card--button-hidden .Gstore-product-card__top {
+	border-bottom: 1px solid #edf0f2;
+}
+
+body.gstore-product-card-style-hidden-button .Gstore-product-card--button-hidden .Gstore-product-card__meta {
+	align-items: center;
+	background: #fff;
+	border-bottom: 0;
+	height: auto;
+	min-height: 92px;
+	padding: 18px 18px 6px;
+	text-align: center;
+}
+
+body.gstore-product-card-style-hidden-button .Gstore-product-card--button-hidden .Gstore-product-card__rating,
+body.gstore-product-card-style-hidden-button .Gstore-product-card--button-hidden .Gstore-product-card__stars {
+	justify-content: center;
+}
+
+body.gstore-product-card-style-hidden-button .Gstore-product-card--button-hidden .Gstore-product-card__title {
+	font-size: var(--gstore-font-size-sm);
+	font-weight: 500;
+	text-align: center;
+}
+
+body.gstore-product-card-style-hidden-button .Gstore-product-card--button-hidden .Gstore-product-card__price-section {
+	align-items: center;
+	min-height: 104px;
+	padding: 8px 20px 28px;
+	text-align: center;
+	transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+body.gstore-product-card-style-hidden-button .Gstore-product-card--button-hidden .Gstore-product-card__price-row {
+	color: var(--text-main);
+}
+
+body.gstore-product-card-style-hidden-button .Gstore-product-card--button-hidden .Gstore-product-card__footer {
+	position: absolute;
+	right: 20px;
+	bottom: 20px;
+	left: 20px;
+	z-index: 12;
+	padding: 0;
+	border: 0;
+	background: transparent;
+	opacity: 0;
+	pointer-events: none;
+	transform: translateY(10px);
+	transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+body.gstore-product-card-style-hidden-button .Gstore-product-card--button-hidden .Gstore-product-card__inner:hover .Gstore-product-card__price-section,
+body.gstore-product-card-style-hidden-button .Gstore-product-card--button-hidden .Gstore-product-card__inner:focus-within .Gstore-product-card__price-section {
+	opacity: 0;
+	transform: translateY(-8px);
+}
+
+body.gstore-product-card-style-hidden-button .Gstore-product-card--button-hidden .Gstore-product-card__inner:hover .Gstore-product-card__footer,
+body.gstore-product-card-style-hidden-button .Gstore-product-card--button-hidden .Gstore-product-card__inner:focus-within .Gstore-product-card__footer {
+	opacity: 1;
+	pointer-events: auto;
+	transform: translateY(0);
+}
+
 /* Reset WooCommerce default styles */
 .Gstore-products-grid ul.products li.product,
 .Gstore-products-grid ul.products li.product {
@@ -5904,6 +5974,126 @@ main:not(.Gstore-blog-shell):not(.Gstore-blog-single-shell) {
 }
 
 /* Remove faixa decorativa (não usada no novo design) */
+/* Variante Avancada para Product Collection blocks */
+body.gstore-product-card-style-hidden-button .Gstore-products-grid .wc-block-product,
+body.gstore-product-card-style-hidden-button .Gstore-products-grid li.wc-block-product {
+	box-shadow: none !important;
+}
+
+body.gstore-product-card-style-hidden-button .Gstore-products-grid .wc-block-product .wc-block-components-product-rating,
+body.gstore-product-card-style-hidden-button .Gstore-products-grid .wc-block-product .wp-block-woocommerce-product-rating,
+body.gstore-product-card-style-hidden-button .Gstore-products-grid .wc-block-product .wp-block-post-title,
+body.gstore-product-card-style-hidden-button .Gstore-products-grid .wc-block-product h2.wp-block-post-title {
+	background: #fff !important;
+	text-align: center !important;
+}
+
+body.gstore-product-card-style-hidden-button .Gstore-products-grid .wc-block-product .wc-block-components-product-rating,
+body.gstore-product-card-style-hidden-button .Gstore-products-grid .wc-block-product .wp-block-woocommerce-product-rating {
+	justify-content: center !important;
+	padding: 18px 20px 8px !important;
+}
+
+body.gstore-product-card-style-hidden-button .Gstore-products-grid .wc-block-product .wc-block-components-product-rating__stars,
+body.gstore-product-card-style-hidden-button .Gstore-products-grid .wc-block-product .star-rating {
+	justify-content: center !important;
+	margin-right: auto !important;
+	margin-left: auto !important;
+}
+
+body.gstore-product-card-style-hidden-button .Gstore-products-grid .wc-block-product .wp-block-post-title,
+body.gstore-product-card-style-hidden-button .Gstore-products-grid .wc-block-product h2.wp-block-post-title {
+	border-bottom: 0 !important;
+	font-size: var(--gstore-font-size-sm) !important;
+	font-weight: 500 !important;
+	padding: 0 20px 8px !important;
+}
+
+body.gstore-product-card-style-hidden-button .Gstore-products-grid .wc-block-product .wp-block-woocommerce-product-price,
+body.gstore-product-card-style-hidden-button .Gstore-products-grid .wc-block-product .wc-block-components-product-price {
+	min-height: 104px !important;
+	padding: 10px 20px 28px !important;
+	text-align: center !important;
+	transition: opacity 0.2s ease, transform 0.2s ease !important;
+}
+
+body.gstore-product-card-style-hidden-button .Gstore-products-grid .wc-block-product .wc-block-components-product-price .woocommerce-Price-amount,
+body.gstore-product-card-style-hidden-button .Gstore-products-grid .wc-block-product .wp-block-woocommerce-product-price .woocommerce-Price-amount {
+	color: var(--text-main) !important;
+}
+
+body.gstore-product-card-style-hidden-button .Gstore-products-grid .wc-block-product .wp-block-button,
+body.gstore-product-card-style-hidden-button .Gstore-products-grid .wc-block-product .wp-block-woocommerce-product-button {
+	position: absolute !important;
+	right: 20px !important;
+	bottom: 20px !important;
+	left: 20px !important;
+	z-index: 12 !important;
+	width: auto !important;
+	padding: 0 !important;
+	border: 0 !important;
+	background: transparent !important;
+	opacity: 0 !important;
+	pointer-events: none !important;
+	transform: translateY(10px) !important;
+	transition: opacity 0.2s ease, transform 0.2s ease !important;
+}
+
+body.gstore-product-card-style-hidden-button .Gstore-products-grid .wc-block-product:hover .wp-block-woocommerce-product-price,
+body.gstore-product-card-style-hidden-button .Gstore-products-grid .wc-block-product:hover .wc-block-components-product-price,
+body.gstore-product-card-style-hidden-button .Gstore-products-grid .wc-block-product:focus-within .wp-block-woocommerce-product-price,
+body.gstore-product-card-style-hidden-button .Gstore-products-grid .wc-block-product:focus-within .wc-block-components-product-price {
+	opacity: 0 !important;
+	transform: translateY(-8px) !important;
+}
+
+body.gstore-product-card-style-hidden-button .Gstore-products-grid .wc-block-product:hover .wp-block-button,
+body.gstore-product-card-style-hidden-button .Gstore-products-grid .wc-block-product:hover .wp-block-woocommerce-product-button,
+body.gstore-product-card-style-hidden-button .Gstore-products-grid .wc-block-product:focus-within .wp-block-button,
+body.gstore-product-card-style-hidden-button .Gstore-products-grid .wc-block-product:focus-within .wp-block-woocommerce-product-button {
+	opacity: 1 !important;
+	pointer-events: auto !important;
+	transform: translateY(0) !important;
+}
+
+@media (hover: none), (pointer: coarse) {
+	body.gstore-product-card-style-hidden-button .Gstore-product-card--button-hidden .Gstore-product-card__footer {
+		position: static;
+		padding: 20px;
+		border-top: 2px solid #f0f0f0;
+		background: #fafafa;
+		opacity: 1;
+		pointer-events: auto;
+		transform: none;
+	}
+
+	body.gstore-product-card-style-hidden-button .Gstore-product-card--button-hidden .Gstore-product-card__inner:hover .Gstore-product-card__price-section,
+	body.gstore-product-card-style-hidden-button .Gstore-product-card--button-hidden .Gstore-product-card__inner:focus-within .Gstore-product-card__price-section {
+		opacity: 1;
+		transform: none;
+	}
+
+	body.gstore-product-card-style-hidden-button .Gstore-products-grid .wc-block-product .wp-block-button,
+	body.gstore-product-card-style-hidden-button .Gstore-products-grid .wc-block-product .wp-block-woocommerce-product-button {
+		position: static !important;
+		width: 100% !important;
+		padding: 20px !important;
+		border-top: 2px solid #f0f0f0 !important;
+		background: #fafafa !important;
+		opacity: 1 !important;
+		pointer-events: auto !important;
+		transform: none !important;
+	}
+
+	body.gstore-product-card-style-hidden-button .Gstore-products-grid .wc-block-product:hover .wp-block-woocommerce-product-price,
+	body.gstore-product-card-style-hidden-button .Gstore-products-grid .wc-block-product:hover .wc-block-components-product-price,
+	body.gstore-product-card-style-hidden-button .Gstore-products-grid .wc-block-product:focus-within .wp-block-woocommerce-product-price,
+	body.gstore-product-card-style-hidden-button .Gstore-products-grid .wc-block-product:focus-within .wc-block-components-product-price {
+		opacity: 1 !important;
+		transform: none !important;
+	}
+}
+
 .Gstore-products-grid .wc-block-product::after {
 	display: none !important;
 }

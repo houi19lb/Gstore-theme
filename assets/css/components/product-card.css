@@ -244,6 +244,94 @@
 	border-top: 1px solid var(--gstore-color-border);
 }
 
+/* Variante Avancada: botao escondido no hover */
+body.gstore-product-card-style-hidden-button .Gstore-product-card--button-hidden .Gstore-product-card__inner {
+	box-shadow: none;
+}
+
+body.gstore-product-card-style-hidden-button .Gstore-product-card--button-hidden .Gstore-product-card__top {
+	border-bottom: 1px solid var(--gstore-color-border-light);
+}
+
+body.gstore-product-card-style-hidden-button .Gstore-product-card--button-hidden .Gstore-product-card__meta {
+	align-items: center;
+	background: var(--gstore-color-bg-light);
+	border-bottom: 0;
+	height: auto;
+	min-height: 92px;
+	padding: 18px 18px 6px;
+	text-align: center;
+}
+
+body.gstore-product-card-style-hidden-button .Gstore-product-card--button-hidden .Gstore-product-card__rating,
+body.gstore-product-card-style-hidden-button .Gstore-product-card--button-hidden .Gstore-product-card__stars {
+	justify-content: center;
+}
+
+body.gstore-product-card-style-hidden-button .Gstore-product-card--button-hidden .Gstore-product-card__title {
+	font-size: var(--gstore-font-size-sm);
+	font-weight: var(--gstore-font-weight-medium);
+	text-align: center;
+}
+
+body.gstore-product-card-style-hidden-button .Gstore-product-card--button-hidden .Gstore-product-card__price-section {
+	align-items: center;
+	min-height: 104px;
+	padding: 8px 20px 28px;
+	text-align: center;
+	transition: opacity var(--gstore-transition-fast), transform var(--gstore-transition-fast);
+}
+
+body.gstore-product-card-style-hidden-button .Gstore-product-card--button-hidden .Gstore-product-card__price-row {
+	color: var(--gstore-color-text-primary);
+}
+
+body.gstore-product-card-style-hidden-button .Gstore-product-card--button-hidden .Gstore-product-card__footer {
+	position: absolute;
+	right: 20px;
+	bottom: 20px;
+	left: 20px;
+	z-index: 12;
+	padding: 0;
+	border: 0;
+	background: transparent;
+	opacity: 0;
+	pointer-events: none;
+	transform: translateY(10px);
+	transition: opacity var(--gstore-transition-fast), transform var(--gstore-transition-fast);
+}
+
+body.gstore-product-card-style-hidden-button .Gstore-product-card--button-hidden .Gstore-product-card__inner:hover .Gstore-product-card__price-section,
+body.gstore-product-card-style-hidden-button .Gstore-product-card--button-hidden .Gstore-product-card__inner:focus-within .Gstore-product-card__price-section {
+	opacity: 0;
+	transform: translateY(-8px);
+}
+
+body.gstore-product-card-style-hidden-button .Gstore-product-card--button-hidden .Gstore-product-card__inner:hover .Gstore-product-card__footer,
+body.gstore-product-card-style-hidden-button .Gstore-product-card--button-hidden .Gstore-product-card__inner:focus-within .Gstore-product-card__footer {
+	opacity: 1;
+	pointer-events: auto;
+	transform: translateY(0);
+}
+
+@media (hover: none), (pointer: coarse) {
+	body.gstore-product-card-style-hidden-button .Gstore-product-card--button-hidden .Gstore-product-card__footer {
+		position: static;
+		padding: var(--gstore-spacing-4);
+		border-top: 1px solid var(--gstore-color-border);
+		background: var(--gstore-color-bg-muted);
+		opacity: 1;
+		pointer-events: auto;
+		transform: none;
+	}
+
+	body.gstore-product-card-style-hidden-button .Gstore-product-card--button-hidden .Gstore-product-card__inner:hover .Gstore-product-card__price-section,
+	body.gstore-product-card-style-hidden-button .Gstore-product-card--button-hidden .Gstore-product-card__inner:focus-within .Gstore-product-card__price-section {
+		opacity: 1;
+		transform: none;
+	}
+}
+
 /* ========================================
    RESPONSIVIDADE
    ======================================== */
