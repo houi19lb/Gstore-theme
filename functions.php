@@ -12153,6 +12153,48 @@ add_filter( 'render_block_core/template-part', 'gstore_replace_header_logo_html'
 add_filter( 'the_content', 'gstore_replace_header_logo_html', 5 );
 
 /**
+ * Substitui a logo textual do drawer mobile pela imagem configurada no tema.
+ *
+ * @param string $content Conteudo renderizado.
+ * @return string
+ */
+function gstore_replace_mobile_drawer_logo_html( $content ) {
+	if ( empty( $content ) || false === strpos( $content, 'Gstore-mobile-drawer__logo' ) ) {
+		return $content;
+	}
+
+	if ( false !== strpos( $content, 'data-gstore-drawer-logo="1"' ) ) {
+		return $content;
+	}
+
+	$logo_id = gstore_get_logo_id();
+	if ( $logo_id <= 0 ) {
+		return $content;
+	}
+
+	$logo_url = gstore_get_image_url( $logo_id, 'full' );
+	$logo_alt = get_option( 'gstore_logo_alt', 'Logo da loja' );
+	if ( ! $logo_url || ! filter_var( $logo_url, FILTER_VALIDATE_URL ) ) {
+		return $content;
+	}
+
+	$home_url  = esc_url( home_url( '/' ) );
+	$site_name = esc_attr( get_bloginfo( 'name' ) );
+	$logo_html = sprintf(
+		'<a href="%s" class="Gstore-mobile-drawer__logo" rel="home" aria-label="%s" data-gstore-drawer-logo="1"><img src="%s" alt="%s" loading="eager" /></a>',
+		$home_url,
+		$site_name,
+		esc_url( $logo_url ),
+		esc_attr( $logo_alt )
+	);
+
+	$pattern = '/<a\s+[^>]*class="[^"]*Gstore-mobile-drawer__logo[^"]*"[^>]*>.*?<\/a>/is';
+	return preg_replace( $pattern, $logo_html, $content, 1 );
+}
+add_filter( 'render_block_core/template-part', 'gstore_replace_mobile_drawer_logo_html', 11, 1 );
+add_filter( 'the_content', 'gstore_replace_mobile_drawer_logo_html', 6 );
+
+/**
  * Substitui o texto da logo pela imagem configurada no footer HTML.
  *
  * @param string $content Conteúdo do template part.
@@ -15406,6 +15448,7 @@ function gstore_process_final_output( $buffer ) {
 
 	// Substitui a logo no header se configurada
 	$buffer = gstore_replace_header_logo_html( $buffer );
+	$buffer = gstore_replace_mobile_drawer_logo_html( $buffer );
 
 	// Remove classe Gstore-cart-shell do wrapper do WooCommerce para evitar conflitos
 	// O bloco page-content-wrapper adiciona classes que geram padding indesejado

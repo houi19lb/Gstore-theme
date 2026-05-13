@@ -4,6 +4,8 @@
 	var DESKTOP_QUERY = '(min-width: 768px)';
 	var mediaQuery = window.matchMedia ? window.matchMedia(DESKTOP_QUERY) : null;
 	var observer = null;
+	var enhancedRoots = window.WeakSet ? new WeakSet() : null;
+	var enhancedGroups = window.WeakSet ? new WeakSet() : null;
 
 	function ready(callback) {
 		if (document.readyState === 'loading') {
@@ -21,9 +23,32 @@
 		return root.querySelector(':scope > .gstore-catalog-mega__trigger .gstore-catalog-mega__toggle');
 	}
 
+	function getSubmenuToggle(group) {
+		return group.querySelector(':scope > .gstore-catalog-mega__group-trigger .gstore-catalog-mega__group-toggle');
+	}
+
+	function setSubmenuOpen(group, open) {
+		var toggle = getSubmenuToggle(group);
+		group.classList.toggle('is-submenu-open', !!open);
+		if (toggle) {
+			toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+		}
+	}
+
+	function closeSubmenus(root, except) {
+		root.querySelectorAll('.gstore-catalog-mega__group.is-submenu-open').forEach(function (group) {
+			if (group !== except) {
+				setSubmenuOpen(group, false);
+			}
+		});
+	}
+
 	function setOpen(root, open) {
 		var toggle = getToggle(root);
 		root.classList.toggle('is-open', !!open);
+		if (!open) {
+			closeSubmenus(root);
+		}
 		if (toggle) {
 			toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
 		}
@@ -37,8 +62,42 @@
 		});
 	}
 
+	function isEnhanced(element, store, className) {
+		return store ? store.has(element) : element.classList.contains(className);
+	}
+
+	function markEnhanced(element, store, className) {
+		if (store) {
+			store.add(element);
+		}
+		element.classList.add(className);
+	}
+
+	function initSubmenu(group, root) {
+		if (!group || isEnhanced(group, enhancedGroups, 'gstore-catalog-mega__group--enhanced')) {
+			return;
+		}
+
+		var toggle = getSubmenuToggle(group);
+		var submenu = group.querySelector(':scope > .gstore-catalog-mega__submenu');
+		if (!toggle || !submenu) {
+			return;
+		}
+
+		markEnhanced(group, enhancedGroups, 'gstore-catalog-mega__group--enhanced');
+		toggle.setAttribute('aria-expanded', 'false');
+
+		toggle.addEventListener('click', function (event) {
+			event.preventDefault();
+			event.stopPropagation();
+			var nextOpen = !group.classList.contains('is-submenu-open');
+			closeSubmenus(root, group);
+			setSubmenuOpen(group, nextOpen);
+		});
+	}
+
 	function initMega(root) {
-		if (!root || root.classList.contains('gstore-catalog-mega--enhanced')) {
+		if (!root || isEnhanced(root, enhancedRoots, 'gstore-catalog-mega--enhanced')) {
 			return;
 		}
 
@@ -48,8 +107,11 @@
 			return;
 		}
 
-		root.classList.add('gstore-catalog-mega--enhanced');
+		markEnhanced(root, enhancedRoots, 'gstore-catalog-mega--enhanced');
 		toggle.setAttribute('aria-expanded', 'false');
+		root.querySelectorAll(':scope > .gstore-catalog-mega__panel .gstore-catalog-mega__group.has-children').forEach(function (group) {
+			initSubmenu(group, root);
+		});
 
 		toggle.addEventListener('click', function (event) {
 			event.preventDefault();

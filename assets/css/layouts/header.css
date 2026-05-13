@@ -616,16 +616,50 @@ body:has(.Gstore-header-shell) {
 	.Gstore-mobile-drawer__header {
 		display: flex;
 		align-items: center;
-		justify-content: flex-end;
+		justify-content: space-between;
+		gap: 12px;
 		padding: 16px;
 		border-bottom: 1px solid var(--gstore-color-white-10, rgba(255, 255, 255, 0.1));
 		flex-shrink: 0;
+	}
+
+	.Gstore-mobile-drawer__logo {
+		display: flex;
+		align-items: center;
+		min-width: 0;
+		max-width: calc(100% - 64px);
+		height: 48px;
+		color: var(--gstore-color-text-light, #fff) !important;
+		text-decoration: none;
+		text-transform: uppercase;
+		font-size: var(--gstore-font-size-lg, 1.125rem);
+		font-weight: var(--gstore-font-weight-bold, 700);
+		line-height: 1;
+		letter-spacing: var(--gstore-letter-spacing-tight, -0.02em);
+		white-space: nowrap;
+	}
+
+	.Gstore-mobile-drawer__logo img {
+		display: block;
+		width: auto;
+		height: auto;
+		max-width: 132px;
+		max-height: 36px;
+		object-fit: contain;
+	}
+
+	.Gstore-mobile-drawer__logo span {
+		display: block;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
 	}
 
 	.Gstore-mobile-drawer__close {
 		display: flex;
 		align-items: center;
 		justify-content: center;
+		flex: 0 0 48px;
 		width: 48px;
 		height: 48px;
 		background: none;

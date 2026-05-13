@@ -71,6 +71,48 @@
 	}
 
 	/**
+	 * Garante logo no topo do drawer mobile, inclusive quando o drawer e criado via fallback.
+	 */
+	function ensureDrawerLogo() {
+		var drawerHeader = document.querySelector('.Gstore-mobile-drawer__header');
+		if (!drawerHeader) {
+			return;
+		}
+
+		var existingLogo = drawerHeader.querySelector('.Gstore-mobile-drawer__logo');
+		if (existingLogo && existingLogo.querySelector('img')) {
+			return;
+		}
+
+		var source = document.querySelector('.Gstore-header__logo');
+		var sourceLink = source
+			? (source.tagName && source.tagName.toLowerCase() === 'a' ? source : source.querySelector('a'))
+			: null;
+		if (existingLogo && (!sourceLink || !sourceLink.querySelector('img'))) {
+			return;
+		}
+
+		var logoLink = sourceLink ? sourceLink.cloneNode(true) : document.createElement('a');
+
+		if (!sourceLink) {
+			logoLink.href = '/';
+			logoLink.innerHTML = '<span>' + (document.title || 'Home').split('|')[0].trim() + '</span>';
+		}
+
+		logoLink.className = 'Gstore-mobile-drawer__logo';
+		logoLink.setAttribute('rel', 'home');
+		if (!logoLink.getAttribute('aria-label')) {
+			logoLink.setAttribute('aria-label', logoLink.textContent.trim() || 'Home');
+		}
+
+		if (existingLogo) {
+			existingLogo.replaceWith(logoLink);
+		} else {
+			drawerHeader.insertBefore(logoLink, drawerHeader.firstChild);
+		}
+	}
+
+	/**
 	 * Calcula a altura atual do header.
 	 */
 	function calculateHeaderHeight() {
@@ -190,6 +232,8 @@
 		}
 
 		// Salva a posição de scroll atual antes de abrir
+		ensureDrawerLogo();
+
 		var scrollPosition = 0;
 
 		function setMenuState(isOpen) {
@@ -413,6 +457,7 @@
 	function init() {
 		setupMenuToggle();
 		updateAccountLinks();
+		ensureDrawerLogo();
 		ensureDrawerFooterLinks();
 		setupStickyHeader();
 		setupCartHeaderShow();
