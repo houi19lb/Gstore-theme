@@ -276,6 +276,7 @@ body.gstore-product-card-style-hidden-button .Gstore-product-card--button-hidden
 
 body.gstore-product-card-style-hidden-button .Gstore-product-card--button-hidden .Gstore-product-card__price-section {
 	align-items: center;
+	border-top: 1px solid var(--gstore-color-border-light);
 	min-height: 104px;
 	padding: 8px 20px 28px;
 	text-align: center;

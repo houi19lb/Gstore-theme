@@ -347,6 +347,21 @@ function gstore_get_design_token_overrides_css() {
 		$tokens = array_merge( $tokens, gstore_build_accent_design_token_overrides( $accent_color ) );
 	}
 
+	$main_background_color = function_exists( 'gstore_get_main_background_color' )
+		? gstore_get_main_background_color()
+		: sanitize_hex_color( (string) get_option( 'gstore_main_background_color', '#ffffff' ) );
+	$main_background_color = $main_background_color ? strtolower( $main_background_color ) : '#ffffff';
+
+	$tokens['--gstore-color-main-background'] = $main_background_color;
+	$tokens['--gstore-color-bg-main']         = $main_background_color;
+
+	$benefits_bar_background = function_exists( 'gstore_get_benefits_bar_background_color' )
+		? gstore_get_benefits_bar_background_color()
+		: sanitize_hex_color( (string) get_option( 'gstore_benefits_bar_background_color', '' ) );
+	if ( $benefits_bar_background ) {
+		$tokens['--gstore-benefits-bar-background'] = strtolower( $benefits_bar_background );
+	}
+
 	if ( empty( $tokens ) ) {
 		return '';
 	}
@@ -355,6 +370,34 @@ function gstore_get_design_token_overrides_css() {
 	foreach ( $tokens as $css_var => $value ) {
 		$lines[] = sprintf( "\t%s: %s;", $css_var, $value );
 	}
+	$lines[] = '}';
+
+	$main_background_selectors = array(
+		'body',
+		'body .wp-site-blocks',
+		'body .wp-site-blocks>.wp-block-group:not(header):not(footer)',
+		'body .wp-site-blocks>main:not(.Gstore-blog-shell):not(.Gstore-blog-single-shell)',
+		'body main:not(.Gstore-blog-shell):not(.Gstore-blog-single-shell)',
+		'body .Gstore-home-shell',
+		'body .Gstore-home-section:not(.Gstore-home-hero):not(.Gstore-home-banner--youtube)',
+		'body .Gstore-products-shell',
+		'body .Gstore-catalog-shell--light',
+	);
+	$catalog_main_background_selectors = array(
+		'body:has(.Gstore-catalog-shell--light)',
+		'body:has(.Gstore-catalog-shell--light) .wp-site-blocks',
+		'body:has(.Gstore-catalog-shell--light) .wp-site-blocks>.wp-block-group:not(header):not(footer)',
+		'body:has(.Gstore-catalog-shell--light) main',
+	);
+
+	$lines[] = '';
+	$lines[] = implode( ",\n", $main_background_selectors ) . ' {';
+	$lines[] = "\tbackground: var(--gstore-color-main-background, #ffffff) !important;";
+	$lines[] = "\tbackground-color: var(--gstore-color-main-background, #ffffff) !important;";
+	$lines[] = '}';
+	$lines[] = implode( ",\n", $catalog_main_background_selectors ) . ' {';
+	$lines[] = "\tbackground: var(--gstore-color-main-background, #ffffff) !important;";
+	$lines[] = "\tbackground-color: var(--gstore-color-main-background, #ffffff) !important;";
 	$lines[] = '}';
 
 	return implode( "\n", $lines );
@@ -5791,6 +5834,61 @@ function gstore_get_coupon_already_applied_notice( $coupon_code, $blocks_other_c
 }
 
 /**
+ * Extrai/formata o gasto mínimo exigido para o cupom.
+ *
+ * @param mixed  $coupon Coupon nativo.
+ * @param string $message Mensagem original.
+ * @return string
+ */
+function gstore_get_coupon_minimum_spend_amount( $coupon = null, $message = '' ) {
+	if ( is_object( $coupon ) && is_callable( array( $coupon, 'get_minimum_amount' ) ) ) {
+		$minimum_amount = $coupon->get_minimum_amount();
+
+		if ( '' !== (string) $minimum_amount && (float) $minimum_amount > 0 ) {
+			if ( function_exists( 'wc_price' ) ) {
+				return trim( wp_strip_all_tags( wc_price( $minimum_amount ) ) );
+			}
+
+			return sanitize_text_field( (string) $minimum_amount );
+		}
+	}
+
+	$plain_message = html_entity_decode( wp_strip_all_tags( (string) $message ), ENT_QUOTES, get_bloginfo( 'charset' ) );
+
+	if ( preg_match( '/minimum spend for coupon\s+"[^"]+"\s+is\s+(.+?)\.?$/i', $plain_message, $matches ) ) {
+		return sanitize_text_field( $matches[1] );
+	}
+
+	return '';
+}
+
+/**
+ * Monta a mensagem para gasto mínimo do cupom.
+ *
+ * @param string $coupon_code Código do cupom.
+ * @param string $minimum_amount Valor formatado.
+ * @return string
+ */
+function gstore_get_coupon_minimum_spend_notice( $coupon_code, $minimum_amount = '' ) {
+	$coupon_code    = trim( (string) $coupon_code );
+	$minimum_amount = trim( (string) $minimum_amount );
+
+	if ( '' !== $coupon_code && '' !== $minimum_amount ) {
+		return sprintf( 'O valor mínimo para usar o cupom "%1$s" é %2$s.', esc_html( $coupon_code ), esc_html( $minimum_amount ) );
+	}
+
+	if ( '' !== $coupon_code ) {
+		return sprintf( 'O valor mínimo para usar o cupom "%s" ainda não foi atingido.', esc_html( $coupon_code ) );
+	}
+
+	if ( '' !== $minimum_amount ) {
+		return sprintf( 'O valor mínimo para usar este cupom é %s.', esc_html( $minimum_amount ) );
+	}
+
+	return 'O valor mínimo para usar este cupom ainda não foi atingido.';
+}
+
+/**
  * Retorna o link de pedidos da conta, quando disponível.
  *
  * @return string
@@ -5808,7 +5906,8 @@ function gstore_get_my_account_orders_url() {
  *
  * Códigos usados pelo WooCommerce:
  * 103 = cupom já aplicado; 104 = cupom individual já aplicado;
- * 106 = limite de uso; 115/116 = limite preso em pedido não concluído.
+ * 106 = limite de uso; 108 = gasto mínimo;
+ * 115/116 = limite preso em pedido não concluído.
  *
  * @param string $message Mensagem original.
  * @param int    $error_code Código de erro do WooCommerce.
@@ -5826,6 +5925,11 @@ function gstore_translate_woocommerce_coupon_error( $message, $error_code = 0, $
 			return gstore_get_coupon_already_applied_notice( $coupon_code, true );
 		case 106:
 			return sprintf( 'O limite de uso %s foi atingido.', $subject );
+		case 108:
+			return gstore_get_coupon_minimum_spend_notice(
+				$coupon_code,
+				gstore_get_coupon_minimum_spend_amount( $coupon, $message )
+			);
 		case 115:
 			$account_url = gstore_get_my_account_orders_url();
 			$account     = $account_url
@@ -5855,6 +5959,13 @@ function gstore_translate_woocommerce_coupon_notice_text( $message ) {
 	$coupon_code = gstore_get_coupon_notice_code( null, $message );
 	$subject     = gstore_get_coupon_notice_subject( $coupon_code );
 	$plain       = wp_strip_all_tags( html_entity_decode( $message, ENT_QUOTES, get_bloginfo( 'charset' ) ) );
+
+	if ( false !== stripos( $plain, 'minimum spend for coupon' ) ) {
+		return gstore_get_coupon_minimum_spend_notice(
+			$coupon_code,
+			gstore_get_coupon_minimum_spend_amount( null, $message )
+		);
+	}
 
 	if ( false !== stripos( $plain, 'Usage limit for coupon' ) ) {
 		if ( false !== stripos( $plain, 'my account page' ) ) {
@@ -5905,6 +6016,7 @@ function gstore_translate_woocommerce_coupon_gettext( $translation, $text, $doma
 		'Coupon code "%s" already applied!' => 'O cupom "%s" já foi aplicado.',
 		'Sorry, coupon "%s" has already been applied and cannot be used in conjunction with other coupons.' => 'O cupom "%s" já foi aplicado e não pode ser usado junto com outros cupons.',
 		'"%s" has already been applied and cannot be used in conjunction with other coupons.' => 'O cupom "%s" já foi aplicado e não pode ser usado junto com outros cupons.',
+		'The minimum spend for coupon "%1$s" is %2$s.' => 'O valor mínimo para usar o cupom "%1$s" é %2$s.',
 		'Usage limit for coupon "%s" has been reached.' => 'O limite de uso do cupom "%s" foi atingido.',
 		'Usage limit for coupon "%s" has been reached. Please try again after some time, or contact us for help.' => 'O limite de uso do cupom "%s" foi atingido. Tente novamente em alguns instantes ou entre em contato para obter ajuda.',
 		'Usage limit for coupon "%1$s" has been reached. If you were using this coupon just now but your order was not complete, you can retry or cancel the order by going to the <a href="%2$s">my account page</a>.' => 'O limite de uso do cupom "%1$s" foi atingido. Se você tentou usar este cupom agora e o pedido não foi concluído, tente novamente ou cancele o pedido acessando a <a href="%2$s">página Minha conta</a>.',
@@ -7822,6 +7934,66 @@ if ( ! function_exists( 'gstore_sanitize_product_card_style' ) ) {
 if ( ! function_exists( 'gstore_get_product_card_style' ) ) {
 	function gstore_get_product_card_style() {
 		return gstore_sanitize_product_card_style( get_option( 'gstore_product_card_style', 'default' ) );
+	}
+}
+
+if ( ! function_exists( 'gstore_sanitize_main_background_color' ) ) {
+	function gstore_sanitize_main_background_color( $color ) {
+		$color = is_string( $color ) ? trim( $color ) : '';
+		if ( '' !== $color && '#' !== $color[0] ) {
+			$color = '#' . $color;
+		}
+
+		$color = sanitize_hex_color( $color );
+		if ( $color && 4 === strlen( $color ) ) {
+			$color = '#' . $color[1] . $color[1] . $color[2] . $color[2] . $color[3] . $color[3];
+		}
+		return $color ? strtolower( $color ) : '#ffffff';
+	}
+}
+
+if ( ! function_exists( 'gstore_get_main_background_color' ) ) {
+	function gstore_get_main_background_color() {
+		return gstore_sanitize_main_background_color( get_option( 'gstore_main_background_color', '#ffffff' ) );
+	}
+}
+
+if ( ! function_exists( 'gstore_sanitize_benefits_bar_style' ) ) {
+	function gstore_sanitize_benefits_bar_style( $style ) {
+		$style = is_string( $style ) ? sanitize_key( $style ) : '';
+		return in_array( $style, array( 'default', 'floating' ), true ) ? $style : 'default';
+	}
+}
+
+if ( ! function_exists( 'gstore_sanitize_optional_hex_color' ) ) {
+	function gstore_sanitize_optional_hex_color( $color ) {
+		$color = is_string( $color ) ? trim( $color ) : '';
+		if ( '' === $color ) {
+			return '';
+		}
+
+		if ( '#' !== $color[0] ) {
+			$color = '#' . $color;
+		}
+
+		$color = sanitize_hex_color( $color );
+		if ( $color && 4 === strlen( $color ) ) {
+			$color = '#' . $color[1] . $color[1] . $color[2] . $color[2] . $color[3] . $color[3];
+		}
+
+		return $color ? strtolower( $color ) : '';
+	}
+}
+
+if ( ! function_exists( 'gstore_get_benefits_bar_style' ) ) {
+	function gstore_get_benefits_bar_style() {
+		return gstore_sanitize_benefits_bar_style( get_option( 'gstore_benefits_bar_style', 'default' ) );
+	}
+}
+
+if ( ! function_exists( 'gstore_get_benefits_bar_background_color' ) ) {
+	function gstore_get_benefits_bar_background_color() {
+		return gstore_sanitize_optional_hex_color( get_option( 'gstore_benefits_bar_background_color', '' ) );
 	}
 }
 
@@ -10377,9 +10549,23 @@ function gstore_home_benefits_shortcode() {
 		);
 	}
 
+	$bar_style = function_exists( 'gstore_get_benefits_bar_style' )
+		? gstore_get_benefits_bar_style()
+		: gstore_sanitize_benefits_bar_style( get_option( 'gstore_benefits_bar_style', 'default' ) );
+	$bar_background = function_exists( 'gstore_get_benefits_bar_background_color' )
+		? gstore_get_benefits_bar_background_color()
+		: gstore_sanitize_optional_hex_color( get_option( 'gstore_benefits_bar_background_color', '' ) );
+	$classes = array(
+		'wp-block-group',
+		'alignfull',
+		'Gstore-home-benefits',
+		'Gstore-home-benefits--' . $bar_style,
+	);
+	$style_attr = $bar_background ? sprintf( ' style="%s"', esc_attr( '--gstore-benefits-bar-background: ' . $bar_background . ';' ) ) : '';
+
 	ob_start();
 	?>
-	<div class="wp-block-group alignfull Gstore-home-benefits">
+	<div class="<?php echo esc_attr( implode( ' ', $classes ) ); ?>"<?php echo $style_attr; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>>
 		<div class="wp-block-group Gstore-home-benefits__inner">
 			<?php foreach ( $benefits as $b ) : ?>
 			<div class="wp-block-group Gstore-home-benefits__item">

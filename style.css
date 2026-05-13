@@ -4261,7 +4261,7 @@ main:not(.Gstore-blog-shell):not(.Gstore-blog-single-shell) {
 .Gstore-home-benefits {
 	padding: 0;
 	margin: 0;
-	background: linear-gradient(90deg, var(--gstore-color-accent), var(--gstore-color-accent, #b5a642));
+	background: var(--gstore-benefits-bar-background, linear-gradient(90deg, var(--gstore-color-accent), var(--gstore-color-accent-light, var(--gstore-color-accent, #b5a642))));
 }
 
 .wp-block-group.Gstore-home-benefits,
@@ -4270,6 +4270,18 @@ main:not(.Gstore-blog-shell):not(.Gstore-blog-single-shell) {
 	margin-block-start: 0 !important;
 	margin-block-end: 0 !important;
 	padding: 0 !important;
+}
+
+.wp-block-group.Gstore-home-benefits.Gstore-home-benefits--floating,
+.wp-block-group.alignfull.Gstore-home-benefits.Gstore-home-benefits--floating {
+	position: relative;
+	z-index: 8;
+	width: min(calc(100% - 32px), 860px);
+	max-width: min(calc(100% - 32px), 860px);
+	margin: clamp(-46px, -4vw, -28px) auto clamp(32px, 5vw, 56px) !important;
+	overflow: visible;
+	border-radius: 999px;
+	background: transparent !important;
 }
 
 .Gstore-home-benefits__inner {
@@ -4287,12 +4299,45 @@ main:not(.Gstore-blog-shell):not(.Gstore-blog-single-shell) {
 	box-shadow: none;
 }
 
+.Gstore-home-benefits--floating .Gstore-home-benefits__inner {
+	max-width: none;
+	gap: 0;
+	justify-content: center;
+	padding: clamp(14px, 1.7vw, 18px) clamp(24px, 3vw, 46px);
+	border-radius: 999px;
+	background: var(--gstore-benefits-bar-background, linear-gradient(90deg, var(--gstore-color-accent), var(--gstore-color-accent-light, var(--gstore-color-accent, #b5a642))));
+	box-shadow: 0 18px 34px rgba(0, 0, 0, 0.24);
+}
+
 .Gstore-home-benefits__item {
 	display: flex;
 	align-items: center;
 	gap: 14px;
 	flex: 1 1 220px;
 	min-width: 220px;
+}
+
+.Gstore-home-benefits--floating .Gstore-home-benefits__item {
+	position: relative;
+	flex: 1 1 0;
+	justify-content: center;
+	min-width: 0;
+	gap: 0;
+	padding: 0 clamp(14px, 2.2vw, 30px);
+	text-align: center;
+}
+
+.Gstore-home-benefits--floating .Gstore-home-benefits__item + .Gstore-home-benefits__item::before {
+	content: "";
+	position: absolute;
+	top: 50%;
+	left: 0;
+	width: 5px;
+	height: 5px;
+	border-radius: 999px;
+	background: color-mix(in srgb, var(--gstore-color-accent-light, #c7b648) 75%, #ffffff 25%);
+	box-shadow: 0 0 12px rgba(255, 255, 255, 0.28);
+	transform: translate(-50%, -50%);
 }
 
 .Gstore-home-benefits__icon {
@@ -4304,6 +4349,10 @@ main:not(.Gstore-blog-shell):not(.Gstore-blog-single-shell) {
 	align-items: center;
 	justify-content: center;
 	background: rgba(255, 255, 255, 0.1);
+}
+
+.Gstore-home-benefits--floating .Gstore-home-benefits__icon {
+	display: none;
 }
 
 .Gstore-home-benefits__icon svg,
@@ -4332,6 +4381,12 @@ main:not(.Gstore-blog-shell):not(.Gstore-blog-single-shell) {
 	letter-spacing: var(--gstore-letter-spacing-wide);
 }
 
+.Gstore-home-benefits--floating .Gstore-home-benefits__title {
+	font-size: clamp(0.78rem, 0.9vw, 0.94rem);
+	letter-spacing: var(--gstore-letter-spacing-06, .06em);
+	white-space: nowrap;
+}
+
 .Gstore-home-benefits__subtitle {
 	margin: 0;
 	font-size: var(--gstore-font-size-sm);
@@ -4341,13 +4396,19 @@ main:not(.Gstore-blog-shell):not(.Gstore-blog-single-shell) {
 }
 
 /* Carrossel para benefícios */
+.Gstore-home-benefits--floating .Gstore-home-benefits__subtitle {
+	font-size: clamp(0.62rem, 0.72vw, 0.75rem);
+	letter-spacing: var(--gstore-letter-spacing-06, .06em);
+	white-space: nowrap;
+}
+
 .Gstore-home-benefits__slider {
 	display: none;
 	position: relative;
 	width: 100%;
 	overflow: hidden;
 	padding: 20px 0;
-	background: linear-gradient(90deg, var(--gstore-color-accent), var(--gstore-color-accent-light, #c7b648));
+	background: var(--gstore-benefits-bar-background, linear-gradient(90deg, var(--gstore-color-accent), var(--gstore-color-accent-light, #c7b648)));
 	border-radius: 0;
 	color: #fff;
 	box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
@@ -4475,6 +4536,14 @@ main:not(.Gstore-blog-shell):not(.Gstore-blog-single-shell) {
 		margin-block-end: 0 !important;
 	}
 
+	.wp-block-group.Gstore-home-benefits.Gstore-home-benefits--floating,
+	.wp-block-group.alignfull.Gstore-home-benefits.Gstore-home-benefits--floating {
+		width: calc(100% - 24px);
+		max-width: calc(100% - 24px);
+		margin: -30px auto 32px !important;
+		border-radius: 24px;
+	}
+
 	.Gstore-home-benefits .Gstore-home-benefits__inner {
 		display: none !important;
 	}
@@ -4484,6 +4553,12 @@ main:not(.Gstore-blog-shell):not(.Gstore-blog-single-shell) {
 		border-radius: 0;
 		overflow: hidden;
 		padding-bottom: 0 !important;
+	}
+
+	.Gstore-home-benefits--floating .Gstore-home-benefits__slider {
+		border-radius: 24px;
+		background: var(--gstore-benefits-bar-background, linear-gradient(90deg, var(--gstore-color-accent), var(--gstore-color-accent-light, #c7b648)));
+		box-shadow: 0 16px 28px rgba(0, 0, 0, 0.22);
 	}
 
 	.Gstore-home-benefits__slider-slide {
@@ -4520,6 +4595,17 @@ main:not(.Gstore-blog-shell):not(.Gstore-blog-single-shell) {
 	.Gstore-home-benefits__slider .Gstore-home-benefits__icon {
 		width: 42px;
 		height: 42px;
+	}
+
+	.Gstore-home-benefits--floating .Gstore-home-benefits__slider .Gstore-home-benefits__icon {
+		display: none;
+	}
+
+	.Gstore-home-benefits--floating .Gstore-home-benefits__slider-slide .Gstore-home-benefits__item {
+		justify-content: center;
+		min-width: 0;
+		padding: 0 18px;
+		text-align: center;
 	}
 
 	.Gstore-home-benefits__slider .Gstore-home-benefits__icon svg,
@@ -5647,6 +5733,7 @@ body.gstore-product-card-style-hidden-button .Gstore-product-card--button-hidden
 
 body.gstore-product-card-style-hidden-button .Gstore-product-card--button-hidden .Gstore-product-card__price-section {
 	align-items: center;
+	border-top: 1px solid #edf0f2;
 	min-height: 104px;
 	padding: 8px 20px 28px;
 	text-align: center;
@@ -6011,6 +6098,7 @@ body.gstore-product-card-style-hidden-button .Gstore-products-grid .wc-block-pro
 
 body.gstore-product-card-style-hidden-button .Gstore-products-grid .wc-block-product .wp-block-woocommerce-product-price,
 body.gstore-product-card-style-hidden-button .Gstore-products-grid .wc-block-product .wc-block-components-product-price {
+	border-top: 1px solid #edf0f2 !important;
 	min-height: 104px !important;
 	padding: 10px 20px 28px !important;
 	text-align: center !important;
