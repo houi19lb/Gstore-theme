@@ -5727,6 +5727,194 @@ add_action( 'woocommerce_before_cart', 'gstore_suppress_variable_product_choose_
 add_action( 'woocommerce_before_checkout_form', 'gstore_suppress_variable_product_choose_options_notice', 1 );
 
 /**
+ * Traduz avisos de cupom do WooCommerce que podem chegar sem pacote pt_BR.
+ *
+ * @param mixed  $coupon Coupon nativo do WooCommerce.
+ * @param string $message Mensagem original.
+ * @return string
+ */
+function gstore_get_coupon_notice_code( $coupon = null, $message = '' ) {
+	if ( is_object( $coupon ) && method_exists( $coupon, 'get_code' ) ) {
+		$code = (string) $coupon->get_code();
+		if ( '' !== $code ) {
+			return $code;
+		}
+	}
+
+	$plain_message = html_entity_decode( wp_strip_all_tags( (string) $message ), ENT_QUOTES, get_bloginfo( 'charset' ) );
+	if ( preg_match( '/coupon(?: code)? "([^"]+)"/i', $plain_message, $matches ) ) {
+		return sanitize_text_field( $matches[1] );
+	}
+
+	if ( preg_match( '/^"([^"]+)" has already been applied/i', $plain_message, $matches ) ) {
+		return sanitize_text_field( $matches[1] );
+	}
+
+	return '';
+}
+
+/**
+ * Monta a referência textual ao cupom preservando o código quando existir.
+ *
+ * @param string $coupon_code Código do cupom.
+ * @return string
+ */
+function gstore_get_coupon_notice_subject( $coupon_code ) {
+	$coupon_code = trim( (string) $coupon_code );
+
+	if ( '' === $coupon_code ) {
+		return 'deste cupom';
+	}
+
+	return sprintf( 'do cupom "%s"', esc_html( $coupon_code ) );
+}
+
+/**
+ * Monta a mensagem para cupom já aplicado.
+ *
+ * @param string $coupon_code Código do cupom.
+ * @param bool   $blocks_other_coupons Indica se o cupom bloqueia combinação.
+ * @return string
+ */
+function gstore_get_coupon_already_applied_notice( $coupon_code, $blocks_other_coupons = false ) {
+	$coupon_code = trim( (string) $coupon_code );
+
+	if ( '' === $coupon_code ) {
+		return $blocks_other_coupons
+			? 'Este cupom já foi aplicado e não pode ser usado junto com outros cupons.'
+			: 'Este cupom já foi aplicado.';
+	}
+
+	return $blocks_other_coupons
+		? sprintf( 'O cupom "%s" já foi aplicado e não pode ser usado junto com outros cupons.', esc_html( $coupon_code ) )
+		: sprintf( 'O cupom "%s" já foi aplicado.', esc_html( $coupon_code ) );
+}
+
+/**
+ * Retorna o link de pedidos da conta, quando disponível.
+ *
+ * @return string
+ */
+function gstore_get_my_account_orders_url() {
+	if ( function_exists( 'wc_get_endpoint_url' ) && function_exists( 'wc_get_page_permalink' ) ) {
+		return wc_get_endpoint_url( 'orders', '', wc_get_page_permalink( 'myaccount' ) );
+	}
+
+	return function_exists( 'wc_get_page_permalink' ) ? wc_get_page_permalink( 'myaccount' ) : '';
+}
+
+/**
+ * Normaliza erros de cupom vindos do WooCommerce para PT-BR.
+ *
+ * Códigos usados pelo WooCommerce:
+ * 103 = cupom já aplicado; 104 = cupom individual já aplicado;
+ * 106 = limite de uso; 115/116 = limite preso em pedido não concluído.
+ *
+ * @param string $message Mensagem original.
+ * @param int    $error_code Código de erro do WooCommerce.
+ * @param mixed  $coupon Coupon nativo.
+ * @return string
+ */
+function gstore_translate_woocommerce_coupon_error( $message, $error_code = 0, $coupon = null ) {
+	$coupon_code = gstore_get_coupon_notice_code( $coupon, $message );
+	$subject     = gstore_get_coupon_notice_subject( $coupon_code );
+
+	switch ( (int) $error_code ) {
+		case 103:
+			return gstore_get_coupon_already_applied_notice( $coupon_code );
+		case 104:
+			return gstore_get_coupon_already_applied_notice( $coupon_code, true );
+		case 106:
+			return sprintf( 'O limite de uso %s foi atingido.', $subject );
+		case 115:
+			$account_url = gstore_get_my_account_orders_url();
+			$account     = $account_url
+				? sprintf( '<a href="%s">página Minha conta</a>', esc_url( $account_url ) )
+				: 'página Minha conta';
+			return sprintf(
+				'O limite de uso %1$s foi atingido. Se você tentou usar este cupom agora e o pedido não foi concluído, tente novamente ou cancele o pedido acessando a %2$s.',
+				$subject,
+				$account
+			);
+		case 116:
+			return sprintf( 'O limite de uso %s foi atingido. Tente novamente em alguns instantes ou entre em contato para obter ajuda.', $subject );
+		default:
+			return gstore_translate_woocommerce_coupon_notice_text( $message );
+	}
+}
+add_filter( 'woocommerce_coupon_error', 'gstore_translate_woocommerce_coupon_error', 20, 3 );
+
+/**
+ * Tradução de fallback para notices já formatados antes de passar pelo filtro do cupom.
+ *
+ * @param string $message Mensagem original.
+ * @return string
+ */
+function gstore_translate_woocommerce_coupon_notice_text( $message ) {
+	$message     = (string) $message;
+	$coupon_code = gstore_get_coupon_notice_code( null, $message );
+	$subject     = gstore_get_coupon_notice_subject( $coupon_code );
+	$plain       = wp_strip_all_tags( html_entity_decode( $message, ENT_QUOTES, get_bloginfo( 'charset' ) ) );
+
+	if ( false !== stripos( $plain, 'Usage limit for coupon' ) ) {
+		if ( false !== stripos( $plain, 'my account page' ) ) {
+			$account_url = gstore_get_my_account_orders_url();
+			$account     = $account_url
+				? sprintf( '<a href="%s">página Minha conta</a>', esc_url( $account_url ) )
+				: 'página Minha conta';
+			return sprintf(
+				'O limite de uso %1$s foi atingido. Se você tentou usar este cupom agora e o pedido não foi concluído, tente novamente ou cancele o pedido acessando a %2$s.',
+				$subject,
+				$account
+			);
+		}
+
+		if ( false !== stripos( $plain, 'Please try again after some time' ) ) {
+			return sprintf( 'O limite de uso %s foi atingido. Tente novamente em alguns instantes ou entre em contato para obter ajuda.', $subject );
+		}
+
+		return sprintf( 'O limite de uso %s foi atingido.', $subject );
+	}
+
+	if ( false !== stripos( $plain, 'already applied' ) && false !== stripos( $plain, 'other coupons' ) ) {
+		return gstore_get_coupon_already_applied_notice( $coupon_code, true );
+	}
+
+	if ( false !== stripos( $plain, 'already applied' ) ) {
+		return gstore_get_coupon_already_applied_notice( $coupon_code );
+	}
+
+	return $message;
+}
+add_filter( 'woocommerce_add_error', 'gstore_translate_woocommerce_coupon_notice_text', 20 );
+
+/**
+ * Traduções diretas das strings originais para cobrir fluxos fora do checkout clássico.
+ *
+ * @param string $translation Tradução atual.
+ * @param string $text Texto original.
+ * @param string $domain Domínio de tradução.
+ * @return string
+ */
+function gstore_translate_woocommerce_coupon_gettext( $translation, $text, $domain ) {
+	if ( 'woocommerce' !== $domain ) {
+		return $translation;
+	}
+
+	$translations = array(
+		'Coupon code "%s" already applied!' => 'O cupom "%s" já foi aplicado.',
+		'Sorry, coupon "%s" has already been applied and cannot be used in conjunction with other coupons.' => 'O cupom "%s" já foi aplicado e não pode ser usado junto com outros cupons.',
+		'"%s" has already been applied and cannot be used in conjunction with other coupons.' => 'O cupom "%s" já foi aplicado e não pode ser usado junto com outros cupons.',
+		'Usage limit for coupon "%s" has been reached.' => 'O limite de uso do cupom "%s" foi atingido.',
+		'Usage limit for coupon "%s" has been reached. Please try again after some time, or contact us for help.' => 'O limite de uso do cupom "%s" foi atingido. Tente novamente em alguns instantes ou entre em contato para obter ajuda.',
+		'Usage limit for coupon "%1$s" has been reached. If you were using this coupon just now but your order was not complete, you can retry or cancel the order by going to the <a href="%2$s">my account page</a>.' => 'O limite de uso do cupom "%1$s" foi atingido. Se você tentou usar este cupom agora e o pedido não foi concluído, tente novamente ou cancele o pedido acessando a <a href="%2$s">página Minha conta</a>.',
+	);
+
+	return $translations[ $text ] ?? $translation;
+}
+add_filter( 'gettext', 'gstore_translate_woocommerce_coupon_gettext', 20, 3 );
+
+/**
  * Em listas de produtos, itens vari�veis devem abrir a p�gina de produto.
  *
  * Isso evita tentativas de add-to-cart sem atributos selecionados no cat�logo.
