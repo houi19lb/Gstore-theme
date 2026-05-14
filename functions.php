@@ -664,6 +664,53 @@ function gstore_print_catalog_landing_seo_image_meta() {
 add_action( 'wp_head', 'gstore_print_catalog_landing_seo_image_meta', 5 );
 
 /**
+ * Monta Offer minimo para os produtos exibidos na pagina do catalogo.
+ *
+ * @param mixed  $product   Produto WooCommerce.
+ * @param string $permalink URL canonica do produto.
+ * @return array<string,mixed>
+ */
+function gstore_get_catalog_landing_product_offer_schema( $product, $permalink ) {
+	if ( ! is_object( $product ) ) {
+		return array();
+	}
+
+	$raw_price = method_exists( $product, 'get_price' ) ? $product->get_price() : '';
+	if ( ( '' === $raw_price || null === $raw_price ) && method_exists( $product, 'get_regular_price' ) ) {
+		$raw_price = $product->get_regular_price();
+	}
+
+	if ( ! is_numeric( $raw_price ) || (float) $raw_price <= 0 ) {
+		return array();
+	}
+
+	$availability = 'https://schema.org/InStock';
+	if ( method_exists( $product, 'get_stock_status' ) ) {
+		$stock_status = (string) $product->get_stock_status();
+		if ( 'outofstock' === $stock_status ) {
+			$availability = 'https://schema.org/OutOfStock';
+		} elseif ( 'onbackorder' === $stock_status ) {
+			$availability = 'https://schema.org/BackOrder';
+		}
+	} elseif ( method_exists( $product, 'is_in_stock' ) && false === $product->is_in_stock() ) {
+		$availability = 'https://schema.org/OutOfStock';
+	}
+
+	return array(
+		'@type'         => 'Offer',
+		'url'           => esc_url_raw( $permalink ),
+		'priceCurrency' => function_exists( 'get_woocommerce_currency' ) ? get_woocommerce_currency() : 'BRL',
+		'price'         => number_format( (float) $raw_price, 2, '.', '' ),
+		'availability'  => $availability,
+		'itemCondition' => 'https://schema.org/NewCondition',
+		'seller'        => array(
+			'@type' => 'Organization',
+			'name'  => gstore_get_store_display_name_for_seo(),
+		),
+	);
+}
+
+/**
  * Monta um ItemList simples com produtos visiveis na pagina do catalogo.
  *
  * @param string $page_url URL canonica da pagina.
@@ -691,17 +738,24 @@ function gstore_get_catalog_landing_item_list_schema( $page_url ) {
 	);
 
 	$items = array();
-	foreach ( array_map( 'absint', (array) $products ) as $index => $product_id ) {
+	foreach ( array_map( 'absint', (array) $products ) as $product_id ) {
 		$permalink = get_permalink( $product_id );
 		if ( ! is_string( $permalink ) || '' === $permalink ) {
 			continue;
 		}
 
+		$wc_product = function_exists( 'wc_get_product' ) ? wc_get_product( $product_id ) : null;
+		$offer      = gstore_get_catalog_landing_product_offer_schema( $wc_product, $permalink );
+		if ( empty( $offer ) ) {
+			continue;
+		}
+
 		$product = array(
-			'@type' => 'Product',
-			'@id'   => trailingslashit( $permalink ) . '#product',
-			'url'   => esc_url_raw( $permalink ),
-			'name'  => get_the_title( $product_id ),
+			'@type'  => 'Product',
+			'@id'    => trailingslashit( $permalink ) . '#product',
+			'url'    => esc_url_raw( $permalink ),
+			'name'   => get_the_title( $product_id ),
+			'offers' => $offer,
 		);
 
 		$image_url = get_the_post_thumbnail_url( $product_id, 'large' );
@@ -711,7 +765,7 @@ function gstore_get_catalog_landing_item_list_schema( $page_url ) {
 
 		$items[] = array(
 			'@type'    => 'ListItem',
-			'position' => $offset + $index + 1,
+			'position' => $offset + count( $items ) + 1,
 			'item'     => $product,
 		);
 	}
