@@ -4563,7 +4563,8 @@ main:not(.Gstore-blog-shell):not(.Gstore-blog-single-shell) {
 		width: calc(100% - 24px);
 		max-width: calc(100% - 24px);
 		margin: calc(-1 * var(--gstore-benefits-floating-overlap)) auto calc(-1 * var(--gstore-benefits-floating-bottom-pull)) !important;
-		border-radius: 18px;
+		border-radius: 999px;
+		overflow: hidden;
 	}
 
 	.wp-block-group.Gstore-home-benefits.Gstore-home-benefits--floating + .Gstore-home-section,
@@ -4587,8 +4588,9 @@ main:not(.Gstore-blog-shell):not(.Gstore-blog-single-shell) {
 	}
 
 	.Gstore-home-benefits--floating .Gstore-home-benefits__slider {
-		border-radius: 18px;
+		border-radius: 999px;
 		line-height: 0;
+		overflow: hidden;
 		padding: 9px 0 !important;
 		background: var(--gstore-benefits-bar-background, linear-gradient(90deg, var(--gstore-color-accent), var(--gstore-color-accent-light, #c7b648)));
 		box-shadow: 0 16px 28px rgba(0, 0, 0, 0.22);

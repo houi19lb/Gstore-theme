@@ -239,6 +239,8 @@
 		--gstore-benefits-floating-overlap: 4px;
 		--gstore-benefits-floating-bottom-pull: 48px;
 		margin: calc(-1 * var(--gstore-benefits-floating-overlap)) auto calc(-1 * var(--gstore-benefits-floating-bottom-pull)) !important;
+		border-radius: 999px;
+		overflow: hidden;
 	}
 
 	.wp-block-group.Gstore-home-benefits.Gstore-home-benefits--floating + .Gstore-home-section,
@@ -251,8 +253,9 @@
 	}
 
 	.Gstore-home-benefits--floating .Gstore-home-benefits__slider {
-		border-radius: 18px;
+		border-radius: 999px;
 		line-height: 0;
+		overflow: hidden;
 		padding: 9px 0 !important;
 	}
 

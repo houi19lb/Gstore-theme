@@ -249,6 +249,173 @@ body.woocommerce-account .armastore-footer {
 }
 
 /* ========================================
+   VIP ACCOUNT
+   ======================================== */
+
+.gstore-vip-account {
+	display: grid;
+	gap: 24px;
+	color: var(--gstore-color-text-primary, #1a1a1a);
+}
+
+.gstore-vip-hero,
+.gstore-vip-panel {
+	background: var(--gstore-color-bg-light, #ffffff);
+	border: 1px solid var(--gstore-color-border, #e6e6e6);
+	border-radius: var(--gstore-radius-lg, 8px);
+	box-shadow: var(--gstore-shadow-sm, 0 2px 8px rgba(15, 23, 42, 0.06));
+}
+
+.gstore-vip-hero {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) minmax(220px, 300px);
+	gap: 24px;
+	align-items: center;
+	padding: clamp(24px, 4vw, 40px);
+}
+
+.gstore-vip-hero__copy {
+	display: grid;
+	gap: 10px;
+}
+
+.gstore-vip-hero h2,
+.gstore-vip-panel h3 {
+	margin: 0;
+	color: var(--gstore-color-text-primary, #1a1a1a);
+}
+
+.gstore-vip-hero h2 {
+	font-size: clamp(1.75rem, 3vw, 2.5rem);
+	line-height: 1.05;
+}
+
+.gstore-vip-hero p,
+.gstore-vip-panel p {
+	margin: 0;
+	background: transparent;
+	color: var(--gstore-color-text-secondary, #6b6b6b);
+}
+
+.gstore-vip-status {
+	display: inline-flex;
+	width: fit-content;
+	align-items: center;
+	justify-content: center;
+	padding: 6px 10px;
+	border-radius: 999px;
+	font-size: 0.75rem;
+	font-weight: 800;
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+}
+
+.gstore-vip-status.is-active {
+	background: var(--gstore-color-accent-12, rgba(181, 166, 66, 0.12));
+	color: var(--gstore-color-accent, #b5a642);
+}
+
+.gstore-vip-status.is-inactive {
+	background: var(--gstore-color-bg-muted, #f0f2f5);
+	color: var(--gstore-color-text-secondary, #6b6b6b);
+}
+
+.gstore-vip-hero__status {
+	display: grid;
+	gap: 8px;
+	padding: 18px;
+	border: 1px solid var(--gstore-color-border, #e6e6e6);
+	border-radius: var(--gstore-radius-md, 8px);
+	background: var(--gstore-color-bg-base, #f5f5f2);
+}
+
+.gstore-vip-hero__status strong {
+	font-size: 0.82rem;
+	text-transform: uppercase;
+	color: var(--gstore-color-text-secondary, #6b6b6b);
+}
+
+.gstore-vip-hero__status span {
+	font-weight: 700;
+	color: var(--gstore-color-text-primary, #1a1a1a);
+}
+
+.gstore-vip-grid {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) minmax(320px, 0.85fr);
+	gap: 24px;
+	align-items: start;
+}
+
+.gstore-vip-panel {
+	display: grid;
+	gap: 18px;
+	padding: clamp(20px, 3vw, 28px);
+}
+
+.gstore-vip-benefits,
+.gstore-vip-plans {
+	display: grid;
+	gap: 12px;
+}
+
+.gstore-vip-benefits > div,
+.gstore-vip-plan {
+	display: grid;
+	gap: 6px;
+	padding: 14px;
+	border: 1px solid var(--gstore-color-border, #e6e6e6);
+	border-radius: var(--gstore-radius-md, 8px);
+	background: var(--gstore-color-bg-base, #f5f5f2);
+}
+
+.gstore-vip-benefits strong,
+.gstore-vip-plan span {
+	color: var(--gstore-color-text-primary, #1a1a1a);
+	font-weight: 800;
+}
+
+.gstore-vip-benefits span,
+.gstore-vip-plan small {
+	color: var(--gstore-color-text-secondary, #6b6b6b);
+	line-height: 1.45;
+}
+
+.gstore-vip-plan {
+	grid-template-columns: minmax(0, 1fr) auto;
+	align-items: center;
+	gap: 16px;
+}
+
+.gstore-vip-plan > div {
+	display: grid;
+	gap: 4px;
+}
+
+.gstore-vip-plan strong {
+	font-size: 1.45rem;
+	line-height: 1.1;
+	color: var(--gstore-color-text-primary, #1a1a1a);
+}
+
+.gstore-vip-plan__button,
+.gstore-vip-category-button {
+	width: fit-content;
+	text-align: center;
+}
+
+@media (max-width: 900px) {
+	.gstore-vip-hero,
+	.gstore-vip-grid {
+		grid-template-columns: 1fr;
+	}
+
+	.gstore-vip-plan {
+		grid-template-columns: 1fr;
+	}
+}
+
+/* ========================================
    DASHBOARD CONTENT
    ======================================== */
 
