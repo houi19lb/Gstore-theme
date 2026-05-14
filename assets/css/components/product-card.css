@@ -342,11 +342,19 @@ body.gstore-product-card-style-hidden-button .Gstore-product-card--button-hidden
 	body.gstore-product-card-style-hidden-button .Gstore-product-card--button-hidden .Gstore-product-card__footer {
 		position: static;
 		padding: var(--gstore-spacing-4);
-		border-top: 1px solid var(--gstore-color-border);
-		background: var(--gstore-color-bg-muted);
+		border-top: 0;
+		background: var(--gstore-color-bg-light);
+		box-shadow: none;
 		opacity: 1;
 		pointer-events: auto;
 		transform: none;
+	}
+
+	body.gstore-product-card-style-hidden-button .Gstore-product-card--button-hidden .Gstore-product-card__footer .button,
+	body.gstore-product-card-style-hidden-button .Gstore-product-card--button-hidden .Gstore-product-card__footer .add_to_cart_button,
+	body.gstore-product-card-style-hidden-button .Gstore-product-card--button-hidden .Gstore-product-card__footer .product_type_simple,
+	body.gstore-product-card-style-hidden-button .Gstore-product-card--button-hidden .Gstore-product-card__footer .ajax_add_to_cart {
+		box-shadow: none !important;
 	}
 
 	body.gstore-product-card-style-hidden-button .Gstore-product-card--button-hidden .Gstore-product-card__inner:hover .Gstore-product-card__price-section > :not(.Gstore-product-card__footer),

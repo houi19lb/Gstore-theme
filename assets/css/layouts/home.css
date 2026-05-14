@@ -243,7 +243,7 @@
 @media (max-width: 900px) {
 	.wp-block-group.Gstore-home-benefits.Gstore-home-benefits--floating,
 	.wp-block-group.alignfull.Gstore-home-benefits.Gstore-home-benefits--floating {
-		--gstore-benefits-floating-overlap: 16px;
+		--gstore-benefits-floating-overlap: 4px;
 		--gstore-benefits-floating-bottom-pull: 48px;
 		margin: calc(-1 * var(--gstore-benefits-floating-overlap)) auto calc(-1 * var(--gstore-benefits-floating-bottom-pull)) !important;
 	}

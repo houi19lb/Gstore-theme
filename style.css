@@ -4566,7 +4566,7 @@ main:not(.Gstore-blog-shell):not(.Gstore-blog-single-shell) {
 
 	.wp-block-group.Gstore-home-benefits.Gstore-home-benefits--floating,
 	.wp-block-group.alignfull.Gstore-home-benefits.Gstore-home-benefits--floating {
-		--gstore-benefits-floating-overlap: 16px;
+		--gstore-benefits-floating-overlap: 4px;
 		--gstore-benefits-floating-bottom-pull: 48px;
 		width: calc(100% - 24px);
 		max-width: calc(100% - 24px);
@@ -6234,11 +6234,19 @@ body.gstore-product-card-style-hidden-button .Gstore-products-grid .wc-block-pro
 	body.gstore-product-card-style-hidden-button .Gstore-product-card--button-hidden .Gstore-product-card__footer {
 		position: static;
 		padding: 20px;
-		border-top: 2px solid #f0f0f0;
-		background: #fafafa;
+		border-top: 0;
+		background: #ffffff;
+		box-shadow: none;
 		opacity: 1;
 		pointer-events: auto;
 		transform: none;
+	}
+
+	body.gstore-product-card-style-hidden-button .Gstore-product-card--button-hidden .Gstore-product-card__footer .button,
+	body.gstore-product-card-style-hidden-button .Gstore-product-card--button-hidden .Gstore-product-card__footer .add_to_cart_button,
+	body.gstore-product-card-style-hidden-button .Gstore-product-card--button-hidden .Gstore-product-card__footer .product_type_simple,
+	body.gstore-product-card-style-hidden-button .Gstore-product-card--button-hidden .Gstore-product-card__footer .ajax_add_to_cart {
+		box-shadow: none !important;
 	}
 
 	body.gstore-product-card-style-hidden-button .Gstore-product-card--button-hidden .Gstore-product-card__inner:hover .Gstore-product-card__price-section > :not(.Gstore-product-card__footer),
@@ -6254,11 +6262,18 @@ body.gstore-product-card-style-hidden-button .Gstore-products-grid .wc-block-pro
 		position: static !important;
 		width: 100% !important;
 		padding: 20px !important;
-		border-top: 2px solid #f0f0f0 !important;
-		background: #fafafa !important;
+		border-top: 0 !important;
+		background: #ffffff !important;
+		box-shadow: none !important;
 		opacity: 1 !important;
 		pointer-events: auto !important;
 		transform: none !important;
+	}
+
+	body.gstore-product-card-style-hidden-button .Gstore-products-grid .wc-block-product .wp-block-button__link,
+	body.gstore-product-card-style-hidden-button .Gstore-products-grid .wc-block-product .wc-block-components-product-button__button,
+	body.gstore-product-card-style-hidden-button .Gstore-products-grid .wc-block-product button.wp-block-button__link {
+		box-shadow: none !important;
 	}
 
 	body.gstore-product-card-style-hidden-button .Gstore-products-grid .wc-block-product:hover .wp-block-woocommerce-product-price,
