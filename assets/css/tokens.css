@@ -13,8 +13,6 @@
 	
 	/* Fundos */
 	--gstore-color-bg-base: #f5f5f2;
-	--gstore-color-main-background: #ffffff;
-	--gstore-color-bg-main: #ffffff;
 	--gstore-color-bg-light: #ffffff;
 	--gstore-color-bg-muted: #f0f2f5;
 	--gstore-color-bg-dark: #0a0a0a;
@@ -353,5 +351,3 @@
 	/* WooCommerce Compatibility */
 	--wc-content-bg: var(--gstore-color-bg-light);
 }
-
-

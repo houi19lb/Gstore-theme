@@ -347,14 +347,6 @@ function gstore_get_design_token_overrides_css() {
 		$tokens = array_merge( $tokens, gstore_build_accent_design_token_overrides( $accent_color ) );
 	}
 
-	$main_background_color = function_exists( 'gstore_get_main_background_color' )
-		? gstore_get_main_background_color()
-		: sanitize_hex_color( (string) get_option( 'gstore_main_background_color', '#ffffff' ) );
-	$main_background_color = $main_background_color ? strtolower( $main_background_color ) : '#ffffff';
-
-	$tokens['--gstore-color-main-background'] = $main_background_color;
-	$tokens['--gstore-color-bg-main']         = $main_background_color;
-
 	$benefits_bar_background = function_exists( 'gstore_get_benefits_bar_background_color' )
 		? gstore_get_benefits_bar_background_color()
 		: sanitize_hex_color( (string) get_option( 'gstore_benefits_bar_background_color', '' ) );
@@ -370,34 +362,6 @@ function gstore_get_design_token_overrides_css() {
 	foreach ( $tokens as $css_var => $value ) {
 		$lines[] = sprintf( "\t%s: %s;", $css_var, $value );
 	}
-	$lines[] = '}';
-
-	$main_background_selectors = array(
-		'body',
-		'body .wp-site-blocks',
-		'body .wp-site-blocks>.wp-block-group:not(header):not(footer)',
-		'body .wp-site-blocks>main:not(.Gstore-blog-shell):not(.Gstore-blog-single-shell)',
-		'body main:not(.Gstore-blog-shell):not(.Gstore-blog-single-shell)',
-		'body .Gstore-home-shell',
-		'body .Gstore-home-section:not(.Gstore-home-hero):not(.Gstore-home-banner--youtube)',
-		'body .Gstore-products-shell',
-		'body .Gstore-catalog-shell--light',
-	);
-	$catalog_main_background_selectors = array(
-		'body:has(.Gstore-catalog-shell--light)',
-		'body:has(.Gstore-catalog-shell--light) .wp-site-blocks',
-		'body:has(.Gstore-catalog-shell--light) .wp-site-blocks>.wp-block-group:not(header):not(footer)',
-		'body:has(.Gstore-catalog-shell--light) main',
-	);
-
-	$lines[] = '';
-	$lines[] = implode( ",\n", $main_background_selectors ) . ' {';
-	$lines[] = "\tbackground: var(--gstore-color-main-background, #ffffff) !important;";
-	$lines[] = "\tbackground-color: var(--gstore-color-main-background, #ffffff) !important;";
-	$lines[] = '}';
-	$lines[] = implode( ",\n", $catalog_main_background_selectors ) . ' {';
-	$lines[] = "\tbackground: var(--gstore-color-main-background, #ffffff) !important;";
-	$lines[] = "\tbackground-color: var(--gstore-color-main-background, #ffffff) !important;";
 	$lines[] = '}';
 
 	return implode( "\n", $lines );
@@ -7934,27 +7898,6 @@ if ( ! function_exists( 'gstore_sanitize_product_card_style' ) ) {
 if ( ! function_exists( 'gstore_get_product_card_style' ) ) {
 	function gstore_get_product_card_style() {
 		return gstore_sanitize_product_card_style( get_option( 'gstore_product_card_style', 'default' ) );
-	}
-}
-
-if ( ! function_exists( 'gstore_sanitize_main_background_color' ) ) {
-	function gstore_sanitize_main_background_color( $color ) {
-		$color = is_string( $color ) ? trim( $color ) : '';
-		if ( '' !== $color && '#' !== $color[0] ) {
-			$color = '#' . $color;
-		}
-
-		$color = sanitize_hex_color( $color );
-		if ( $color && 4 === strlen( $color ) ) {
-			$color = '#' . $color[1] . $color[1] . $color[2] . $color[2] . $color[3] . $color[3];
-		}
-		return $color ? strtolower( $color ) : '#ffffff';
-	}
-}
-
-if ( ! function_exists( 'gstore_get_main_background_color' ) ) {
-	function gstore_get_main_background_color() {
-		return gstore_sanitize_main_background_color( get_option( 'gstore_main_background_color', '#ffffff' ) );
 	}
 }
 
