@@ -7,7 +7,7 @@
 	const DOT_SELECTOR = '[data-gstore-benefits-dot]';
 	const PREV_SELECTOR = '[data-gstore-benefits-prev]';
 	const NEXT_SELECTOR = '[data-gstore-benefits-next]';
-	const AUTOPLAY_DELAY = 7000;
+	const AUTOPLAY_DELAY = 4000;
 
 	function initSlider(slider) {
 		const forceAutoplay = slider.hasAttribute('data-gstore-benefits-force-autoplay');
@@ -253,5 +253,4 @@
 		resizeTimeout = setTimeout(handleResize, 250);
 	});
 })();
-
 

@@ -299,7 +299,7 @@ body.gstore-product-card-style-hidden-button .Gstore-product-card--button-hidden
 
 body.gstore-product-card-style-hidden-button .Gstore-product-card--button-hidden .Gstore-product-card__price-section > :not(.Gstore-product-card__footer),
 body.gstore-product-card-style-hidden-button .Gstore-product-card--button-hidden .Gstore-product-card__reposicao > :not(.Gstore-product-card__footer) {
-	transition: opacity var(--gstore-transition-fast), transform var(--gstore-transition-fast);
+	transition: opacity var(--gstore-transition-fast), filter var(--gstore-transition-fast), transform var(--gstore-transition-fast);
 }
 
 body.gstore-product-card-style-hidden-button .Gstore-product-card--button-hidden .Gstore-product-card__price-row {
@@ -314,9 +314,12 @@ body.gstore-product-card-style-hidden-button .Gstore-product-card--button-hidden
 	top: 50%;
 	z-index: 12;
 	margin: 0;
-	padding: 0;
+	padding: 8px;
 	border: 0;
-	background: transparent;
+	border-radius: var(--gstore-radius-base);
+	background: rgba(255, 255, 255, 0.76);
+	backdrop-filter: blur(8px);
+	-webkit-backdrop-filter: blur(8px);
 	opacity: 0;
 	pointer-events: none;
 	transform: translateY(calc(-50% + 10px));
@@ -327,8 +330,9 @@ body.gstore-product-card-style-hidden-button .Gstore-product-card--button-hidden
 body.gstore-product-card-style-hidden-button .Gstore-product-card--button-hidden .Gstore-product-card__inner:focus-within .Gstore-product-card__price-section > :not(.Gstore-product-card__footer),
 body.gstore-product-card-style-hidden-button .Gstore-product-card--button-hidden .Gstore-product-card__inner:hover .Gstore-product-card__reposicao > :not(.Gstore-product-card__footer),
 body.gstore-product-card-style-hidden-button .Gstore-product-card--button-hidden .Gstore-product-card__inner:focus-within .Gstore-product-card__reposicao > :not(.Gstore-product-card__footer) {
-	opacity: 0;
-	transform: translateY(-8px);
+	filter: blur(2px);
+	opacity: 0.58;
+	transform: none;
 }
 
 body.gstore-product-card-style-hidden-button .Gstore-product-card--button-hidden .Gstore-product-card__inner:hover .Gstore-product-card__footer,
@@ -343,7 +347,10 @@ body.gstore-product-card-style-hidden-button .Gstore-product-card--button-hidden
 		position: static;
 		padding: var(--gstore-spacing-4);
 		border-top: 0;
+		border-radius: 0;
 		background: var(--gstore-color-bg-light);
+		backdrop-filter: none;
+		-webkit-backdrop-filter: none;
 		box-shadow: none;
 		opacity: 1;
 		pointer-events: auto;
@@ -361,6 +368,7 @@ body.gstore-product-card-style-hidden-button .Gstore-product-card--button-hidden
 	body.gstore-product-card-style-hidden-button .Gstore-product-card--button-hidden .Gstore-product-card__inner:focus-within .Gstore-product-card__price-section > :not(.Gstore-product-card__footer),
 	body.gstore-product-card-style-hidden-button .Gstore-product-card--button-hidden .Gstore-product-card__inner:hover .Gstore-product-card__reposicao > :not(.Gstore-product-card__footer),
 	body.gstore-product-card-style-hidden-button .Gstore-product-card--button-hidden .Gstore-product-card__inner:focus-within .Gstore-product-card__reposicao > :not(.Gstore-product-card__footer) {
+		filter: none;
 		opacity: 1;
 		transform: none;
 	}
