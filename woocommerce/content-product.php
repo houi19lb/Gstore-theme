@@ -44,13 +44,14 @@ $show_price_oos = 'yes' === (string) get_option( 'gstore_show_price_out_of_stock
 $hide_price = function_exists( 'gstore_product_hides_price' ) ? gstore_product_hides_price( $product, 'card' ) : (bool) get_post_meta( $product->get_id(), '_gstore_hide_price', true );
 $should_show_discount_badge = ! $hide_price && ! ( $is_out_of_stock && ! $show_price_oos );
 $product_card_style = function_exists( 'gstore_get_product_card_style' ) ? gstore_get_product_card_style() : sanitize_key( (string) get_option( 'gstore_product_card_style', 'default' ) );
+$is_hidden_button_card = 'hidden_button' === $product_card_style;
 $product_card_classes = array( 'Gstore-product-card' );
 
 if ( $hide_price ) {
 	$product_card_classes[] = 'Gstore-product-card--price-hidden';
 }
 
-if ( 'hidden_button' === $product_card_style ) {
+if ( $is_hidden_button_card ) {
 	$product_card_classes[] = 'Gstore-product-card--button-hidden';
 }
 
@@ -81,6 +82,16 @@ $pix_discount_active     = ! empty( $pix_discount_config['enabled'] ) && $displa
 $pix_discount_price      = $pix_discount_active && function_exists( 'gstore_blu_pix_get_discounted_price' ) ? gstore_blu_pix_get_discounted_price( $display_price_amount, $product->get_id() ) : false;
 $pix_discount_price_html = $pix_discount_price ? wc_price( $pix_discount_price ) : '';
 $pix_discount_percent    = $pix_discount_active ? (float) $pix_discount_config['percent'] : 0;
+
+$render_product_card_footer = static function() {
+	?>
+	<div class="Gstore-product-card__footer">
+		<?php
+		woocommerce_template_loop_add_to_cart();
+		?>
+	</div>
+	<?php
+};
 ?>
 <li <?php wc_product_class( implode( ' ', $product_card_classes ), $product ); ?>>
 	<div class="Gstore-product-card__inner">
@@ -157,12 +168,22 @@ $pix_discount_percent    = $pix_discount_active ? (float) $pix_discount_config['
 			<?php if ( $hide_price ) : ?>
 				<div class="Gstore-product-card__price-section Gstore-product-card__price-section--masked">
 					<?php echo wp_kses_post( gstore_get_hidden_price_mask_html( 'card' ) ); ?>
+					<?php
+					if ( $is_hidden_button_card ) {
+						$render_product_card_footer();
+					}
+					?>
 				</div>
 			<?php elseif ( $is_out_of_stock && ! $show_price_oos ) : ?>
 				<div class="Gstore-product-card__reposicao">
 					<span class="Gstore-product-card__reposicao-badge"><?php esc_html_e( 'EM REPOSIÇÃO', 'gstore' ); ?></span>
 					<div class="Gstore-product-card__reposicao-text"><?php esc_html_e( 'Este item está temporariamente sem estoque.', 'gstore' ); ?></div>
 					<div class="Gstore-product-card__reposicao-hint"><?php esc_html_e( 'Consulte disponibilidade ou veja opções semelhantes.', 'gstore' ); ?></div>
+					<?php
+					if ( $is_hidden_button_card ) {
+						$render_product_card_footer();
+					}
+					?>
 				</div>
 			<?php elseif ( ! $is_out_of_stock || $show_price_oos ) : ?>
 				<div class="Gstore-product-card__price-section">
@@ -222,13 +243,18 @@ $pix_discount_percent    = $pix_discount_active ? (float) $pix_discount_config['
 							<strong class="Gstore-product-card__price-details-label"><?php esc_html_e( 'Sem estoque no momento', 'gstore' ); ?></strong>
 						</div>
 					<?php endif; ?>
+					<?php
+					if ( $is_hidden_button_card ) {
+						$render_product_card_footer();
+					}
+					?>
 				</div>
 			<?php endif; ?>
 		</div>
-		<div class="Gstore-product-card__footer">
-			<?php
-			woocommerce_template_loop_add_to_cart();
-			?>
-		</div>
+		<?php
+		if ( ! $is_hidden_button_card ) {
+			$render_product_card_footer();
+		}
+		?>
 	</div>
 </li>

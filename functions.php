@@ -10506,57 +10506,46 @@ function gstore_home_benefits_shortcode() {
 	);
 	$style_attr = $bar_background ? sprintf( ' style="%s"', esc_attr( '--gstore-benefits-bar-background: ' . $bar_background . ';' ) ) : '';
 
-	ob_start();
-	?>
-	<div class="<?php echo esc_attr( implode( ' ', $classes ) ); ?>"<?php echo $style_attr; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>>
-		<div class="wp-block-group Gstore-home-benefits__inner">
-			<?php foreach ( $benefits as $b ) : ?>
-			<div class="wp-block-group Gstore-home-benefits__item">
-				<span class="Gstore-home-benefits__icon" aria-hidden="true">
-					<i class="fa-solid <?php echo esc_attr( $b['icon'] ); ?>"></i>
-				</span>
-				<div class="wp-block-group Gstore-home-benefits__content">
-					<p class="Gstore-home-benefits__title"><?php echo $b['title']; ?></p>
-					<p class="Gstore-home-benefits__subtitle"><?php echo $b['subtitle']; ?></p>
-				</div>
-			</div>
-			<?php endforeach; ?>
-		</div>
-		<div class="Gstore-home-benefits__slider" data-gstore-benefits-slider data-gstore-benefits-force-autoplay>
-			<div class="Gstore-home-benefits__slider-track" data-gstore-benefits-track>
-				<?php foreach ( $benefits as $b ) : ?>
-				<div class="Gstore-home-benefits__slider-slide" data-gstore-benefits-slide>
-					<div class="wp-block-group Gstore-home-benefits__item">
-						<span class="Gstore-home-benefits__icon" aria-hidden="true">
-							<i class="fa-solid <?php echo esc_attr( $b['icon'] ); ?>"></i>
-						</span>
-						<div class="wp-block-group Gstore-home-benefits__content">
-							<p class="Gstore-home-benefits__title"><?php echo $b['title']; ?></p>
-							<p class="Gstore-home-benefits__subtitle"><?php echo $b['subtitle']; ?></p>
-						</div>
-					</div>
-				</div>
-				<?php endforeach; ?>
-			</div>
-			<button class="Gstore-home-benefits__slider-control Gstore-home-benefits__slider-control--prev" type="button" aria-label="Benefício anterior" data-gstore-benefits-prev>
-				<span aria-hidden="true"><i class="fa-solid fa-chevron-left"></i></span>
-			</button>
-			<button class="Gstore-home-benefits__slider-control Gstore-home-benefits__slider-control--next" type="button" aria-label="Próximo benefício" data-gstore-benefits-next>
-				<span aria-hidden="true"><i class="fa-solid fa-chevron-right"></i></span>
-			</button>
-			<div class="Gstore-home-benefits__slider-dots" role="tablist">
-				<?php foreach ( $benefits as $n => $b ) :
-					$i = $n - 1;
-					$active    = ( 0 === $i ) ? ' is-active' : '';
-					$selected  = ( 0 === $i ) ? 'true' : 'false';
-				?>
-				<button class="Gstore-home-benefits__slider-dot<?php echo $active; ?>" type="button" role="tab" aria-label="Mostrar benefício <?php echo $n; ?>" aria-selected="<?php echo $selected; ?>" data-gstore-benefits-dot="<?php echo $i; ?>"></button>
-				<?php endforeach; ?>
-			</div>
-		</div>
-	</div>
-	<?php
-	return ob_get_clean();
+	$render_item = static function( $benefit ) {
+		return sprintf(
+			'<div class="wp-block-group Gstore-home-benefits__item"><span class="Gstore-home-benefits__icon" aria-hidden="true"><i class="fa-solid %1$s"></i></span><div class="wp-block-group Gstore-home-benefits__content"><span class="Gstore-home-benefits__title">%2$s</span><span class="Gstore-home-benefits__subtitle">%3$s</span></div></div>',
+			esc_attr( $benefit['icon'] ),
+			$benefit['title'],
+			$benefit['subtitle']
+		);
+	};
+
+	$html = sprintf( '<div class="%s"%s>', esc_attr( implode( ' ', $classes ) ), $style_attr );
+	$html .= '<div class="wp-block-group Gstore-home-benefits__inner">';
+	foreach ( $benefits as $benefit ) {
+		$html .= $render_item( $benefit );
+	}
+	$html .= '</div>';
+	$html .= '<div class="Gstore-home-benefits__slider" data-gstore-benefits-slider data-gstore-benefits-force-autoplay><div class="Gstore-home-benefits__slider-track" data-gstore-benefits-track>';
+	foreach ( $benefits as $benefit ) {
+		$html .= '<div class="Gstore-home-benefits__slider-slide" data-gstore-benefits-slide>' . $render_item( $benefit ) . '</div>';
+	}
+	$html .= '</div>';
+	$html .= '<button class="Gstore-home-benefits__slider-control Gstore-home-benefits__slider-control--prev" type="button" aria-label="' . esc_attr__( 'Beneficio anterior', 'gstore-theme' ) . '" data-gstore-benefits-prev><span aria-hidden="true"><i class="fa-solid fa-chevron-left"></i></span></button>';
+	$html .= '<button class="Gstore-home-benefits__slider-control Gstore-home-benefits__slider-control--next" type="button" aria-label="' . esc_attr__( 'Proximo beneficio', 'gstore-theme' ) . '" data-gstore-benefits-next><span aria-hidden="true"><i class="fa-solid fa-chevron-right"></i></span></button>';
+	$html .= '<div class="Gstore-home-benefits__slider-dots" role="tablist">';
+	foreach ( $benefits as $n => $benefit ) {
+		$i        = $n - 1;
+		$active   = ( 0 === $i ) ? ' is-active' : '';
+		$selected = ( 0 === $i ) ? 'true' : 'false';
+		$html    .= sprintf(
+			'<button class="Gstore-home-benefits__slider-dot%1$s" type="button" role="tab" aria-label="%2$s" aria-selected="%3$s" data-gstore-benefits-dot="%4$d"></button>',
+			esc_attr( $active ),
+			esc_attr( sprintf( __( 'Mostrar beneficio %d', 'gstore-theme' ), $n ) ),
+			esc_attr( $selected ),
+			(int) $i
+		);
+	}
+	$html .= '</div></div></div>';
+
+	return function_exists( 'gstore_normalize_home_section_output' )
+		? gstore_normalize_home_section_output( $html )
+		: $html;
 }
 add_shortcode( 'gstore_home_benefits', 'gstore_home_benefits_shortcode' );
 
@@ -20400,20 +20389,23 @@ function gstore_process_store_info_placeholders( $content ) {
 	$email_link = gstore_get_store_email_link();
 	$phone_link = '' !== $phone_raw ? 'tel:+' . preg_replace( '/\D/', '', $phone_raw ) : '';
 	$footer_category_brand_summary = false !== strpos( $content, '{{footer_category_brand_summary}}' ) ? gstore_get_footer_category_brand_summary() : '';
-	$home_seo_h1 = trim(
-		implode(
-			' | ',
-			array_filter(
-				array_map(
-					'trim',
-					array(
-						wp_strip_all_tags( (string) gstore_get_store_name( 'display' ) ),
-						wp_strip_all_tags( (string) gstore_store_info()->get_value( 'store.slogan', '' ) ),
+	$home_seo_h1 = trim( wp_strip_all_tags( (string) gstore_store_info()->get_value( 'meta.home_h1', '' ) ) );
+	if ( '' === $home_seo_h1 ) {
+		$home_seo_h1 = trim(
+			implode(
+				' | ',
+				array_filter(
+					array_map(
+						'trim',
+						array(
+							wp_strip_all_tags( (string) gstore_get_store_name( 'display' ) ),
+							wp_strip_all_tags( (string) gstore_store_info()->get_value( 'store.slogan', '' ) ),
+						)
 					)
 				)
 			)
-		)
-	);
+		);
+	}
 	if ( '' === $home_seo_h1 ) {
 		$home_seo_h1 = trim( wp_strip_all_tags( (string) get_bloginfo( 'name' ) ) );
 	}

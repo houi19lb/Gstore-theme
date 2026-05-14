@@ -246,6 +246,7 @@
 
 /* Variante Avancada: botao escondido no hover */
 body.gstore-product-card-style-hidden-button .Gstore-product-card--button-hidden .Gstore-product-card__inner {
+	--gstore-hidden-card-action-area: 104px;
 	box-shadow: none;
 }
 
@@ -277,9 +278,27 @@ body.gstore-product-card-style-hidden-button .Gstore-product-card--button-hidden
 body.gstore-product-card-style-hidden-button .Gstore-product-card--button-hidden .Gstore-product-card__price-section {
 	align-items: center;
 	border-top: 1px solid var(--gstore-color-border-light);
-	min-height: 104px;
-	padding: 8px 20px 28px;
+	box-sizing: border-box;
+	justify-content: center;
+	min-height: var(--gstore-hidden-card-action-area);
+	padding: 16px 20px;
+	position: relative;
 	text-align: center;
+}
+
+body.gstore-product-card-style-hidden-button .Gstore-product-card--button-hidden .Gstore-product-card__reposicao {
+	align-items: center;
+	border-top: 1px solid var(--gstore-color-border-light);
+	box-sizing: border-box;
+	justify-content: center;
+	min-height: var(--gstore-hidden-card-action-area);
+	padding: 16px 20px;
+	position: relative;
+	text-align: center;
+}
+
+body.gstore-product-card-style-hidden-button .Gstore-product-card--button-hidden .Gstore-product-card__price-section > :not(.Gstore-product-card__footer),
+body.gstore-product-card-style-hidden-button .Gstore-product-card--button-hidden .Gstore-product-card__reposicao > :not(.Gstore-product-card__footer) {
 	transition: opacity var(--gstore-transition-fast), transform var(--gstore-transition-fast);
 }
 
@@ -290,20 +309,24 @@ body.gstore-product-card-style-hidden-button .Gstore-product-card--button-hidden
 body.gstore-product-card-style-hidden-button .Gstore-product-card--button-hidden .Gstore-product-card__footer {
 	position: absolute;
 	right: 20px;
-	bottom: 20px;
+	bottom: auto;
 	left: 20px;
+	top: 50%;
 	z-index: 12;
+	margin: 0;
 	padding: 0;
 	border: 0;
 	background: transparent;
 	opacity: 0;
 	pointer-events: none;
-	transform: translateY(10px);
+	transform: translateY(calc(-50% + 10px));
 	transition: opacity var(--gstore-transition-fast), transform var(--gstore-transition-fast);
 }
 
-body.gstore-product-card-style-hidden-button .Gstore-product-card--button-hidden .Gstore-product-card__inner:hover .Gstore-product-card__price-section,
-body.gstore-product-card-style-hidden-button .Gstore-product-card--button-hidden .Gstore-product-card__inner:focus-within .Gstore-product-card__price-section {
+body.gstore-product-card-style-hidden-button .Gstore-product-card--button-hidden .Gstore-product-card__inner:hover .Gstore-product-card__price-section > :not(.Gstore-product-card__footer),
+body.gstore-product-card-style-hidden-button .Gstore-product-card--button-hidden .Gstore-product-card__inner:focus-within .Gstore-product-card__price-section > :not(.Gstore-product-card__footer),
+body.gstore-product-card-style-hidden-button .Gstore-product-card--button-hidden .Gstore-product-card__inner:hover .Gstore-product-card__reposicao > :not(.Gstore-product-card__footer),
+body.gstore-product-card-style-hidden-button .Gstore-product-card--button-hidden .Gstore-product-card__inner:focus-within .Gstore-product-card__reposicao > :not(.Gstore-product-card__footer) {
 	opacity: 0;
 	transform: translateY(-8px);
 }
@@ -312,7 +335,7 @@ body.gstore-product-card-style-hidden-button .Gstore-product-card--button-hidden
 body.gstore-product-card-style-hidden-button .Gstore-product-card--button-hidden .Gstore-product-card__inner:focus-within .Gstore-product-card__footer {
 	opacity: 1;
 	pointer-events: auto;
-	transform: translateY(0);
+	transform: translateY(-50%);
 }
 
 @media (hover: none), (pointer: coarse) {
@@ -326,8 +349,10 @@ body.gstore-product-card-style-hidden-button .Gstore-product-card--button-hidden
 		transform: none;
 	}
 
-	body.gstore-product-card-style-hidden-button .Gstore-product-card--button-hidden .Gstore-product-card__inner:hover .Gstore-product-card__price-section,
-	body.gstore-product-card-style-hidden-button .Gstore-product-card--button-hidden .Gstore-product-card__inner:focus-within .Gstore-product-card__price-section {
+	body.gstore-product-card-style-hidden-button .Gstore-product-card--button-hidden .Gstore-product-card__inner:hover .Gstore-product-card__price-section > :not(.Gstore-product-card__footer),
+	body.gstore-product-card-style-hidden-button .Gstore-product-card--button-hidden .Gstore-product-card__inner:focus-within .Gstore-product-card__price-section > :not(.Gstore-product-card__footer),
+	body.gstore-product-card-style-hidden-button .Gstore-product-card--button-hidden .Gstore-product-card__inner:hover .Gstore-product-card__reposicao > :not(.Gstore-product-card__footer),
+	body.gstore-product-card-style-hidden-button .Gstore-product-card--button-hidden .Gstore-product-card__inner:focus-within .Gstore-product-card__reposicao > :not(.Gstore-product-card__footer) {
 		opacity: 1;
 		transform: none;
 	}
