@@ -22,6 +22,30 @@ add_filter(
 	}
 );
 
+add_filter(
+	'gstore_migration_static_redirects',
+	static function ( $redirects ) {
+		$redirects = is_array( $redirects ) ? $redirects : array();
+		$host      = function_exists( 'home_url' ) ? wp_parse_url( home_url( '/' ), PHP_URL_HOST ) : '';
+		$host      = strtolower( preg_replace( '#^www\.#', '', (string) $host ) );
+
+		if ( 'armastore.com.br' !== $host ) {
+			return $redirects;
+		}
+
+		return array_merge(
+			$redirects,
+			array(
+				'/38-tpc/pistola-taurus-gx4-carry-calibre-38-tpc-graphene/' => '/produto/pistola-taurus-gx4-carry-calibre-38-tpc-graphene/',
+				'/38-tpc-pistolas/pistola-taurus-gx4-carry-calibre-38-tpc-graphene/' => '/produto/pistola-taurus-gx4-carry-calibre-38-tpc-graphene/',
+				'/38-tpc/pistola-taurus-tx38tpc-calibre-38-tpc-full-size/' => '/produto/pistola-taurus-tx38tpc-calibre-38-tpc-full-size/',
+				'/38-tpc-pistolas/pistola-taurus-tx38tpc-calibre-38-tpc-full-size/' => '/produto/pistola-taurus-tx38tpc-calibre-38-tpc-full-size/',
+				'/38-tpc/pistola-gx2-calibre-38-tpc-cafo-black-t-o-r-o/' => '/produto/pistola-gx2-calibre-38-tpc-cafo-black-t-o-r-o/',
+			)
+		);
+	}
+);
+
 add_filter( 'gstore_migration_noindex_feeds', '__return_true' );
 
 add_filter(
