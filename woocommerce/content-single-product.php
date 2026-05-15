@@ -422,7 +422,7 @@ $stock_subtitle = $is_in_stock
 // Mantém um wrapper para facilitar estilização sem quebrar o layout.
 $stock_label = sprintf(
 	'<span class="disponibilidade-texto">%s</span>',
-	esc_html( $texto_disponibilidade )
+	esc_html( $is_out_of_stock ? $stock_title : $texto_disponibilidade )
 );
 
 // Preços e parcelamento.

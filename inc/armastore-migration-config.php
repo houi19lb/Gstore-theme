@@ -41,6 +41,10 @@ add_filter(
 				'/38-tpc/pistola-taurus-tx38tpc-calibre-38-tpc-full-size/' => '/produto/pistola-taurus-tx38tpc-calibre-38-tpc-full-size/',
 				'/38-tpc-pistolas/pistola-taurus-tx38tpc-calibre-38-tpc-full-size/' => '/produto/pistola-taurus-tx38tpc-calibre-38-tpc-full-size/',
 				'/38-tpc/pistola-gx2-calibre-38-tpc-cafo-black-t-o-r-o/' => '/produto/pistola-gx2-calibre-38-tpc-cafo-black-t-o-r-o/',
+				'/12ga-municao/municao-cbc-cal-12ga-ch-7-1-2-f150-c-25-un/' => array(
+					'target'         => '/produto/municao-cbc-cal-12ga-ch-7-1-2-f150-c-25-un/',
+					'preserve_query' => false,
+				),
 			)
 		);
 	}

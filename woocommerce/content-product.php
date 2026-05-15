@@ -17,6 +17,7 @@ if ( empty( $product ) || ! $product->is_visible() ) {
 
 $is_variable_product   = $product->is_type( array( 'variable', 'variation' ) );
 $stock_status          = (string) $product->get_stock_status();
+$is_public_draft_product = function_exists( 'gstore_theme_is_public_draft_product' ) ? gstore_theme_is_public_draft_product( $product ) : false;
 
 // Para produtos variáveis, verificar se TODAS as variações estão sem estoque.
 $all_variations_out_of_stock = false;
@@ -40,8 +41,8 @@ if ( $is_variable_product && $all_variations_out_of_stock ) {
 }
 
 $is_out_of_stock = 'outofstock' === $stock_status;
-$show_price_oos = 'yes' === (string) get_option( 'gstore_show_price_out_of_stock', 'no' );
-$hide_price = function_exists( 'gstore_product_hides_price' ) ? gstore_product_hides_price( $product, 'card' ) : (bool) get_post_meta( $product->get_id(), '_gstore_hide_price', true );
+$show_price_oos = $is_public_draft_product ? false : ( 'yes' === (string) get_option( 'gstore_show_price_out_of_stock', 'no' ) );
+$hide_price = ! $is_public_draft_product && ( function_exists( 'gstore_product_hides_price' ) ? gstore_product_hides_price( $product, 'card' ) : (bool) get_post_meta( $product->get_id(), '_gstore_hide_price', true ) );
 $should_show_discount_badge = ! $hide_price && ! ( $is_out_of_stock && ! $show_price_oos );
 $product_card_style = function_exists( 'gstore_get_product_card_style' ) ? gstore_get_product_card_style() : sanitize_key( (string) get_option( 'gstore_product_card_style', 'default' ) );
 $is_hidden_button_card = 'hidden_button' === $product_card_style;

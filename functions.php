@@ -546,7 +546,7 @@ function gstore_get_catalog_landing_product_image_id() {
 	$product_ids = get_posts(
 		array(
 			'post_type'              => 'product',
-			'post_status'            => 'publish',
+			'post_status'            => gstore_theme_get_public_product_post_statuses(),
 			'fields'                 => 'ids',
 			'posts_per_page'         => 24,
 			'orderby'                => 'meta_value_num',
@@ -554,6 +554,7 @@ function gstore_get_catalog_landing_product_image_id() {
 			'order'                  => 'DESC',
 			'no_found_rows'          => true,
 			'ignore_sticky_posts'    => true,
+			'suppress_filters'       => false,
 			'update_post_meta_cache' => false,
 			'update_post_term_cache' => false,
 			'meta_query'             => array(
@@ -675,6 +676,13 @@ function gstore_get_catalog_landing_product_offer_schema( $product, $permalink )
 		return array();
 	}
 
+	if ( function_exists( 'gstore_theme_is_public_draft_product' ) && gstore_theme_is_public_draft_product( $product ) ) {
+		return array();
+	}
+	if ( function_exists( 'gstore_product_hides_price' ) && gstore_product_hides_price( $product, 'card' ) ) {
+		return array();
+	}
+
 	$raw_price = method_exists( $product, 'get_price' ) ? $product->get_price() : '';
 	if ( ( '' === $raw_price || null === $raw_price ) && method_exists( $product, 'get_regular_price' ) ) {
 		$raw_price = $product->get_regular_price();
@@ -723,7 +731,7 @@ function gstore_get_catalog_landing_item_list_schema( $page_url ) {
 	$products = get_posts(
 		array(
 			'post_type'              => 'product',
-			'post_status'            => 'publish',
+			'post_status'            => gstore_theme_get_public_product_post_statuses(),
 			'fields'                 => 'ids',
 			'posts_per_page'         => $per_page,
 			'offset'                 => $offset,
@@ -732,6 +740,7 @@ function gstore_get_catalog_landing_item_list_schema( $page_url ) {
 			'order'                  => 'DESC',
 			'no_found_rows'          => true,
 			'ignore_sticky_posts'    => true,
+			'suppress_filters'       => false,
 			'update_post_meta_cache' => false,
 			'update_post_term_cache' => false,
 		)
@@ -2135,7 +2144,80 @@ function gstore_get_product_id( $product ) {
 }
 
 /**
- * Normaliza um contexto de ocultação de preço no tema.
+ * Retorna se um produto em rascunho deve aparecer no storefront como publico.
+ *
+ * @param WC_Product|int|null $product Produto, variacao ou ID.
+ * @return bool
+ */
+function gstore_theme_is_public_draft_product( $product ) {
+	if ( function_exists( 'gstore_is_public_draft_product' ) ) {
+		return (bool) gstore_is_public_draft_product( $product );
+	}
+
+	$product_id = gstore_get_product_id( $product );
+	if ( class_exists( 'WC_Product_Variation' ) && $product instanceof WC_Product_Variation && method_exists( $product, 'get_parent_id' ) ) {
+		$parent_id  = (int) $product->get_parent_id();
+		$product_id = $parent_id > 0 ? $parent_id : $product_id;
+	}
+
+	$post = $product_id > 0 ? get_post( $product_id ) : null;
+	return $post instanceof WP_Post
+		&& 'product' === $post->post_type
+		&& 'draft' === $post->post_status
+		&& '' === (string) $post->post_password;
+}
+
+/**
+ * Statuses publicos para consultas de produto no tema.
+ *
+ * @return array<int, string>
+ */
+function gstore_theme_get_public_product_post_statuses() {
+	if ( function_exists( 'gstore_get_public_product_post_statuses' ) ) {
+		$statuses = gstore_get_public_product_post_statuses();
+		return array_values( array_unique( array_filter( array_map( 'sanitize_key', (array) $statuses ) ) ) );
+	}
+
+	return array( 'publish' );
+}
+
+/**
+ * Verifica se um produto e publico para buscas/listas do tema.
+ *
+ * @param int $product_id Product ID.
+ * @return bool
+ */
+function gstore_theme_is_public_product_for_storefront( $product_id ) {
+	$product_id = absint( $product_id );
+	if ( $product_id <= 0 ) {
+		return false;
+	}
+
+	return 'publish' === get_post_status( $product_id ) || gstore_theme_is_public_draft_product( $product_id );
+}
+
+/**
+ * SQL de status publico para consultas diretas do tema.
+ *
+ * @param string $alias Alias da tabela posts.
+ * @return string
+ */
+function gstore_theme_public_product_status_where_sql( $alias = 'posts' ) {
+	$alias = preg_replace( '/[^A-Za-z0-9_\.]/', '', (string) $alias );
+	if ( '' === $alias ) {
+		$alias = 'posts';
+	}
+
+	$statuses = gstore_theme_get_public_product_post_statuses();
+	if ( in_array( 'draft', $statuses, true ) ) {
+		return "({$alias}.post_status = 'publish' OR ({$alias}.post_status = 'draft' AND {$alias}.post_password = ''))";
+	}
+
+	return "{$alias}.post_status = 'publish'";
+}
+
+/**
+ * Normaliza um contexto de ocultacao de preco no tema.
  *
  * @param string $context Contexto bruto.
  * @return string
@@ -5540,8 +5622,9 @@ function gstore_ajax_favorites_render() {
 
 	$args = array(
 		'post_type'           => 'product',
-		'post_status'         => 'publish',
+		'post_status'         => gstore_theme_get_public_product_post_statuses(),
 		'ignore_sticky_posts' => true,
+		'suppress_filters'    => false,
 		'posts_per_page'      => count( $ids ),
 		'post__in'            => $ids,
 		'orderby'             => 'post__in',
@@ -13782,10 +13865,11 @@ function gstore_count_brand_products_in_categories_for_breadcrumb( $brand_term, 
 	$query = new WP_Query(
 		array(
 			'post_type'              => 'product',
-			'post_status'            => 'publish',
+			'post_status'            => gstore_theme_get_public_product_post_statuses(),
 			'fields'                 => 'ids',
 			'posts_per_page'         => 1,
 			'ignore_sticky_posts'    => true,
+			'suppress_filters'       => false,
 			'update_post_meta_cache' => false,
 			'update_post_term_cache' => false,
 			'tax_query'              => array(
@@ -13830,11 +13914,12 @@ function gstore_get_brand_published_product_ids_for_breadcrumb( $brand_term ) {
 	$product_ids = get_posts(
 		array(
 			'post_type'              => 'product',
-			'post_status'            => 'publish',
+			'post_status'            => gstore_theme_get_public_product_post_statuses(),
 			'fields'                 => 'ids',
 			'posts_per_page'         => -1,
 			'ignore_sticky_posts'    => true,
 			'no_found_rows'          => true,
+			'suppress_filters'       => false,
 			'update_post_meta_cache' => false,
 			'update_post_term_cache' => false,
 			'tax_query'              => array(
@@ -14252,13 +14337,14 @@ function gstore_get_catalog_archive_brand_product_image_id( $term = null ) {
 	$product_ids = get_posts(
 		array(
 			'post_type'              => 'product',
-			'post_status'            => 'publish',
+			'post_status'            => gstore_theme_get_public_product_post_statuses(),
 			'fields'                 => 'ids',
 			'posts_per_page'         => 16,
 			'orderby'                => 'date',
 			'order'                  => 'DESC',
 			'no_found_rows'          => true,
 			'ignore_sticky_posts'    => true,
+			'suppress_filters'       => false,
 			'update_post_meta_cache' => false,
 			'update_post_term_cache' => false,
 			'tax_query'              => array(
@@ -14774,11 +14860,14 @@ function gstore_catalog_order_by_stock_first( $clauses, $query ) {
 				ON ({$wpdb->posts}.ID = {$meta_alias}.post_id AND {$meta_alias}.meta_key = '_stock_status')";
 		}
 
-		$stock_priority_sql = "CASE {$meta_alias}.meta_value
-			WHEN 'instock' THEN 0
-			WHEN 'onbackorder' THEN 1
-			WHEN 'outofstock' THEN 2
-			ELSE 1
+		$stock_priority_sql = "CASE
+			WHEN {$wpdb->posts}.post_status = 'draft' THEN 2
+			ELSE CASE {$meta_alias}.meta_value
+				WHEN 'instock' THEN 0
+				WHEN 'onbackorder' THEN 1
+				WHEN 'outofstock' THEN 2
+				ELSE 1
+			END
 		END";
 		$order_parts[] = $stock_priority_sql . ' ASC';
 	}
@@ -15036,7 +15125,7 @@ function gstore_find_product_ids_by_exact_sku( $search_term, $limit = 0 ) {
 		INNER JOIN {$wpdb->postmeta} AS sku_meta
 			ON posts.ID = sku_meta.post_id
 		WHERE posts.post_type IN ('product', 'product_variation')
-			AND posts.post_status = 'publish'
+			AND " . gstore_theme_public_product_status_where_sql( 'posts' ) . "
 			AND sku_meta.meta_key = '_sku'
 			AND sku_meta.meta_value = %s
 		ORDER BY posts.post_type ASC, posts.ID DESC
@@ -15063,7 +15152,7 @@ function gstore_find_product_ids_by_exact_sku( $search_term, $limit = 0 ) {
 
 		if ( 'product_variation' === $post_type ) {
 			$parent_id = isset( $row->post_parent ) ? (int) $row->post_parent : 0;
-			if ( $parent_id <= 0 || 'publish' !== get_post_status( $parent_id ) ) {
+			if ( $parent_id <= 0 || ! gstore_theme_is_public_product_for_storefront( $parent_id ) ) {
 				continue;
 			}
 			$post_id = $parent_id;
@@ -15312,7 +15401,7 @@ function gstore_score_product_for_search( $search_term, $product_id ) {
 	}
 
 	$post = get_post( $product_id );
-	if ( ! ( $post instanceof WP_Post ) || 'product' !== $post->post_type || 'publish' !== $post->post_status ) {
+	if ( ! ( $post instanceof WP_Post ) || 'product' !== $post->post_type || ! gstore_theme_is_public_product_for_storefront( $product_id ) ) {
 		return 0;
 	}
 
@@ -15428,7 +15517,7 @@ function gstore_find_product_ids_by_title_tokens( $search_term, $limit = 200 ) {
 
 	$where = array(
 		"post_type = 'product'",
-		"post_status = 'publish'",
+		gstore_theme_public_product_status_where_sql( $wpdb->posts ),
 	);
 
 	foreach ( $tokens as $token ) {
@@ -15569,10 +15658,11 @@ function gstore_find_product_ids_by_search_terms( $search_term, $limit = 120 ) {
 	$ids = get_posts(
 		array(
 			'post_type'              => 'product',
-			'post_status'            => 'publish',
+			'post_status'            => gstore_theme_get_public_product_post_statuses(),
 			'posts_per_page'         => max( 1, absint( $limit ) ),
 			'no_found_rows'          => true,
 			'ignore_sticky_posts'    => true,
+			'suppress_filters'       => false,
 			'fields'                 => 'ids',
 			'update_post_meta_cache' => false,
 			'update_post_term_cache' => false,
@@ -15603,10 +15693,11 @@ function gstore_find_relevant_product_ids_for_search( $search_term, $limit = 80 
 	$text_ids = get_posts(
 		array(
 			'post_type'              => 'product',
-			'post_status'            => 'publish',
+			'post_status'            => gstore_theme_get_public_product_post_statuses(),
 			'posts_per_page'         => 200,
 			'no_found_rows'          => true,
 			'ignore_sticky_posts'    => true,
+			'suppress_filters'       => false,
 			's'                      => $search_term,
 			'fields'                 => 'ids',
 			'update_post_meta_cache' => false,
@@ -15663,9 +15754,9 @@ function gstore_fuzzy_search_products( $search_term, $limit = 20, $exclude_ids =
 		return $cached;
 	}
 
-	// Busca todos os titulos de produtos publicados.
+	// Busca todos os titulos de produtos publicos.
 	$products = $wpdb->get_results(
-		"SELECT ID, post_title FROM {$wpdb->posts} WHERE post_type = 'product' AND post_status = 'publish'"
+		"SELECT ID, post_title FROM {$wpdb->posts} WHERE post_type = 'product' AND " . gstore_theme_public_product_status_where_sql( $wpdb->posts )
 	);
 
 	if ( empty( $products ) ) {
@@ -21707,11 +21798,12 @@ function gstore_related_products_query_candidate_ids( $taxonomy, $term_ids, $exc
 	$query = new WP_Query(
 		array(
 			'post_type'              => 'product',
-			'post_status'            => 'publish',
+			'post_status'            => gstore_theme_get_public_product_post_statuses(),
 			'fields'                 => 'ids',
 			'posts_per_page'         => max( 1, absint( $limit ) ),
 			'no_found_rows'          => true,
 			'ignore_sticky_posts'    => true,
+			'suppress_filters'       => false,
 			'update_post_meta_cache' => false,
 			'update_post_term_cache' => false,
 			'post__not_in'           => array_values( array_unique( array_map( 'absint', (array) $exclude_ids ) ) ),
