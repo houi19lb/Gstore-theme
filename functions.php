@@ -2164,7 +2164,8 @@ function gstore_theme_is_public_draft_product( $product ) {
 	return $post instanceof WP_Post
 		&& 'product' === $post->post_type
 		&& 'draft' === $post->post_status
-		&& '' === (string) $post->post_password;
+		&& '' === (string) $post->post_password
+		&& 'private' !== (string) get_post_meta( $product_id, '_gstore_draft_visibility', true );
 }
 
 /**
@@ -2210,7 +2211,9 @@ function gstore_theme_public_product_status_where_sql( $alias = 'posts' ) {
 
 	$statuses = gstore_theme_get_public_product_post_statuses();
 	if ( in_array( 'draft', $statuses, true ) ) {
-		return "({$alias}.post_status = 'publish' OR ({$alias}.post_status = 'draft' AND {$alias}.post_password = ''))";
+		global $wpdb;
+		$postmeta_table = $wpdb->postmeta;
+		return "({$alias}.post_status = 'publish' OR ({$alias}.post_status = 'draft' AND {$alias}.post_password = '' AND NOT EXISTS (SELECT 1 FROM {$postmeta_table} AS gstore_theme_draft_visibility_meta WHERE gstore_theme_draft_visibility_meta.post_id = {$alias}.ID AND gstore_theme_draft_visibility_meta.meta_key = '_gstore_draft_visibility' AND gstore_theme_draft_visibility_meta.meta_value = 'private')))";
 	}
 
 	return "{$alias}.post_status = 'publish'";
