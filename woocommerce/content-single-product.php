@@ -351,15 +351,19 @@ if ( post_password_required() ) {
 */
 
 // Descrição e avaliações. Usar the_content para que filtros do plugin (normalização) rodem na descrição.
-$short_description = apply_filters( 'woocommerce_short_description', $product->get_short_description() );
-$full_description  = apply_filters( 'the_content', $product->get_description() );
-$review_count      = (int) $product->get_review_count();
-$stock_status      = (string) $product->get_stock_status();
-$is_variable       = $product->is_type( 'variable' );
-$sku               = (string) $product->get_sku();
-$average_rating    = (float) $product->get_average_rating();
-$rating_display    = $average_rating > 0 ? number_format_i18n( $average_rating, 1 ) : '';
-$review_count_i18n = $review_count > 0 ? number_format_i18n( $review_count ) : '';
+$short_description       = apply_filters( 'woocommerce_short_description', $product->get_short_description() );
+$full_description        = apply_filters( 'the_content', $product->get_description() );
+$review_count            = (int) $product->get_review_count();
+$stock_status            = (string) $product->get_stock_status();
+$is_variable             = $product->is_type( 'variable' );
+$sku                     = (string) $product->get_sku();
+$product_id              = (int) $product->get_id();
+$is_public_draft_product = function_exists( 'gstore_theme_is_public_draft_product' )
+	? gstore_theme_is_public_draft_product( $product )
+	: false;
+$average_rating          = (float) $product->get_average_rating();
+$rating_display          = $average_rating > 0 ? number_format_i18n( $average_rating, 1 ) : '';
+$review_count_i18n       = $review_count > 0 ? number_format_i18n( $review_count ) : '';
 
 // Para produtos variáveis, verificar se TODAS as variações estão sem estoque.
 $all_variations_out_of_stock = false;
@@ -388,13 +392,26 @@ if ( $is_variable && $all_variations_out_of_stock ) {
 $is_out_of_stock   = 'outofstock' === $stock_status;
 $is_on_backorder   = 'onbackorder' === $stock_status;
 $is_in_stock       = 'instock' === $stock_status;
+
+if ( $is_public_draft_product ) {
+	$is_out_of_stock = true;
+	$is_on_backorder = false;
+	$is_in_stock     = false;
+}
+
 $buybox_stock_class = $is_out_of_stock ? 'is-out-of-stock' : ( $is_in_stock ? 'is-in-stock' : 'is-on-order' );
-$show_price_oos     = 'yes' === (string) get_option( 'gstore_show_price_out_of_stock', 'no' );
+$show_price_oos     = false;
+if ( ! $is_public_draft_product ) {
+	$show_price_oos = 'yes' === (string) get_option( 'gstore_show_price_out_of_stock', 'no' );
+}
 $oos_price_mode     = $show_price_oos ? 'show' : 'hide';
 
 // Disponibilidade (seleção do admin via plugin GSTORE).
-$product_id = (int) $product->get_id();
-$hide_price = function_exists( 'gstore_product_hides_price' ) ? gstore_product_hides_price( $product, 'single' ) : (bool) get_post_meta( $product_id, '_gstore_hide_price', true );
+$hide_price = ! $is_public_draft_product && (
+	function_exists( 'gstore_product_hides_price' )
+		? gstore_product_hides_price( $product, 'single' )
+		: (bool) get_post_meta( $product_id, '_gstore_hide_price', true )
+);
 
 // Chave correta: _gstore_availability (com underline no começo).
 $slug_disponibilidade = $product_id ? (string) get_post_meta( $product_id, '_gstore_availability', true ) : '';
@@ -462,7 +479,7 @@ $formatted_installment = ! empty( $installment_preview['installments'] ) && ! em
 		$installments
 	)
 	: '' );
-if ( $hide_price ) {
+if ( $hide_price || $is_public_draft_product ) {
 	$formatted_installment = '';
 }
 

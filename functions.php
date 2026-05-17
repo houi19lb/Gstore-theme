@@ -2322,6 +2322,10 @@ function gstore_product_hides_price( $product, $context = 'auto' ) {
 		return false;
 	}
 
+	if ( function_exists( 'gstore_theme_is_public_draft_product' ) && gstore_theme_is_public_draft_product( $product ) ) {
+		return false;
+	}
+
 	if ( class_exists( '\GStore\Services\Hidden_Price_Service' ) ) {
 		return \GStore\Services\Hidden_Price_Service::should_hide_price_on_current_request( $product, $context );
 	}
@@ -7451,6 +7455,14 @@ function gstore_add_payment_info_to_price( $html, $block_content, $block ) {
 	// Se não conseguir pelo contexto, tenta pegar o produto global
 	if ( ! $product ) {
 		global $product;
+	}
+	if (
+		$product
+		&& is_a( $product, 'WC_Product' )
+		&& function_exists( 'gstore_theme_is_public_draft_product' )
+		&& gstore_theme_is_public_draft_product( $product )
+	) {
+		return '';
 	}
 	if ( $product && is_a( $product, 'WC_Product' ) && gstore_product_hides_price( $product, 'card' ) ) {
 		return gstore_get_hidden_price_mask_html( 'block' );
