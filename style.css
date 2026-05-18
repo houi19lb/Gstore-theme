@@ -4584,7 +4584,7 @@ main:not(.Gstore-blog-shell):not(.Gstore-blog-single-shell) {
 		display: block !important;
 		border-radius: 0;
 		overflow: hidden;
-		padding-bottom: 0 !important;
+		padding: 10px 0 !important;
 	}
 
 	.Gstore-home-benefits--floating .Gstore-home-benefits__slider {
