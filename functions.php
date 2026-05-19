@@ -14991,7 +14991,7 @@ function gstore_handle_search_suggest( WP_REST_Request $request ) {
 		);
 	}
 
-	$cache_key = 'gstore_search_suggest_v3_' . md5( strtolower( remove_accents( $term ) ) );
+	$cache_key = 'gstore_search_suggest_v4_' . md5( strtolower( remove_accents( $term ) ) );
 	$cached    = get_transient( $cache_key );
 	if ( is_array( $cached ) ) {
 		return new WP_REST_Response( $cached, 200 );
@@ -15000,14 +15000,20 @@ function gstore_handle_search_suggest( WP_REST_Request $request ) {
 	$limit = 8;
 
 	// Produtos
-	$product_ids        = function_exists( 'gstore_find_product_ids_by_exact_sku' )
+	$exact_sku_ids      = function_exists( 'gstore_find_product_ids_by_exact_sku' )
 		? gstore_find_product_ids_by_exact_sku( $term, $limit )
 		: array();
-	$has_exact_sku_hit = ! empty( $product_ids );
+	$product_ids        = function_exists( 'gstore_find_relevant_product_ids_for_search' )
+		? gstore_find_relevant_product_ids_for_search( $term, $limit )
+		: $exact_sku_ids;
 
-	if ( ! $has_exact_sku_hit && function_exists( 'gstore_find_relevant_product_ids_for_search' ) ) {
-		$product_ids = gstore_find_relevant_product_ids_for_search( $term, $limit );
+	if ( ! empty( $exact_sku_ids ) ) {
+		$product_ids = array_values( array_unique( array_filter( array_merge( $exact_sku_ids, (array) $product_ids ) ) ) );
+		if ( count( $product_ids ) > $limit ) {
+			$product_ids = array_slice( $product_ids, 0, $limit );
+		}
 	}
+	$has_exact_sku_hit = ! empty( $exact_sku_ids ) && empty( array_diff( $product_ids, $exact_sku_ids ) );
 
 	$products = array();
 	foreach ( $product_ids as $product_id ) {
@@ -15701,9 +15707,6 @@ function gstore_find_relevant_product_ids_for_search( $search_term, $limit = 80 
 	$exact_sku_ids = function_exists( 'gstore_find_product_ids_by_exact_sku' )
 		? gstore_find_product_ids_by_exact_sku( $search_term, $limit )
 		: array();
-	if ( ! empty( $exact_sku_ids ) ) {
-		return array_slice( $exact_sku_ids, 0, $limit );
-	}
 
 	$text_ids = get_posts(
 		array(
@@ -15724,8 +15727,15 @@ function gstore_find_relevant_product_ids_for_search( $search_term, $limit = 80 
 	$title_ids = gstore_find_product_ids_by_title_tokens( $search_term, 200 );
 	$term_ids  = gstore_find_product_ids_by_search_terms( $search_term, 120 );
 
-	$candidate_ids = array_values( array_unique( array_filter( array_merge( $title_ids, $text_ids, $term_ids ) ) ) );
-	$ranked_ids    = gstore_rank_product_ids_by_search_precision( $search_term, $candidate_ids, $limit );
+	$candidate_ids = array_values( array_unique( array_filter( array_merge( $exact_sku_ids, $title_ids, $text_ids, $term_ids ) ) ) );
+	$ranked_ids    = array_values(
+		array_unique(
+			array_merge(
+				$exact_sku_ids,
+				gstore_rank_product_ids_by_search_precision( $search_term, $candidate_ids, $limit )
+			)
+		)
+	);
 
 	$fuzzy_floor = empty( $ranked_ids ) ? min( 40, $limit ) : min( 12, $limit );
 	if ( count( $ranked_ids ) < $fuzzy_floor && function_exists( 'gstore_fuzzy_search_products' ) ) {
