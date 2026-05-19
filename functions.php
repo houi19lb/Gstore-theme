@@ -4863,6 +4863,10 @@ function gstore_enqueue_scripts() {
 				'fallbackDescription' => __( 'No Android, abra o menu do navegador e escolha Instalar app ou Adicionar a tela inicial.', 'gstore' ),
 				'fallbackHint' => __( 'Se o botao de instalacao nativo aparecer, use ele para baixar o app automaticamente.', 'gstore' ),
 				'fallbackButton' => __( 'Entendi', 'gstore' ),
+				'iosBadge' => __( 'iPhone / Safari', 'gstore' ),
+				'iosTitle' => __( 'Adicionar a Tela de Inicio', 'gstore' ),
+				'iosDescription' => __( 'No iPhone, o Safari exige que voce adicione manualmente pela opcao Compartilhar.', 'gstore' ),
+				'iosOtherBrowserDescription' => __( 'No iPhone, abra este site no Safari para adicionar como app na tela inicial.', 'gstore' ),
 			),
 		)
 	);

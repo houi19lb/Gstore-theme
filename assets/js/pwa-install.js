@@ -15,6 +15,17 @@
 		return /android/i.test(window.navigator.userAgent || '');
 	}
 
+	function isIosLikely() {
+		var ua = window.navigator.userAgent || '';
+		var platform = window.navigator.platform || '';
+		return /iphone|ipad|ipod/i.test(ua) || (platform === 'MacIntel' && window.navigator.maxTouchPoints > 1);
+	}
+
+	function isSafariLikely() {
+		var ua = window.navigator.userAgent || '';
+		return /safari/i.test(ua) && !/crios|fxios|edgios|opios|chrome|android/i.test(ua);
+	}
+
 	function isMobileUserAgent() {
 		return /android|iphone|ipad|ipod|iemobile|windows phone|mobile/i.test(window.navigator.userAgent || '');
 	}
@@ -45,7 +56,7 @@
 	}
 
 	function canShowPageCta() {
-		return !!config.canShowInstallCta && !!config.isAtendimentoPage && isMobileExperience() && (isAndroidLikely() || !!deferredPrompt);
+		return !!config.canShowInstallCta && !!config.isAtendimentoPage && isMobileExperience() && (isAndroidLikely() || isIosLikely() || !!deferredPrompt);
 	}
 
 	function canOfferInstall() {
@@ -176,26 +187,50 @@
 		if (!el) return;
 
 		var hasNativePrompt = !!deferredPrompt;
+		var isIos = isIosLikely();
+		var isIosSafari = isIos && isSafariLikely();
+		var badge = el.querySelector('.Gstore-pwa-install-modal__badge');
 		var title = el.querySelector('.Gstore-pwa-install-modal__title');
 		var description = el.querySelector('.Gstore-pwa-install-modal__description');
 		var hint = el.querySelector('.Gstore-pwa-install-modal__hint');
+		var steps = el.querySelector('.Gstore-pwa-install-modal__steps');
 		var button = el.querySelector('[data-gstore-pwa-install-button]');
 
 		el.classList.toggle('is-fallback', !hasNativePrompt);
+		el.classList.toggle('is-ios', isIos && !hasNativePrompt);
+
+		if (badge) {
+			badge.textContent = isIos && !hasNativePrompt ? getText('iosBadge', 'iPhone / Safari') : getText('badge', 'Android App');
+		}
 
 		if (title) {
-			title.textContent = getText('title', 'Instalar o site como aplicativo');
+			title.textContent = isIos && !hasNativePrompt
+				? getText('iosTitle', 'Adicionar a Tela de Inicio')
+				: getText('title', 'Instalar o site como aplicativo');
 		}
 
 		if (description) {
-			description.textContent = hasNativePrompt
-				? getText('description', 'Teste a versao instalada no Android para validar navegacao, atalhos e experiencia em modo app.')
-				: getText('fallbackDescription', 'No Android, abra o menu do navegador e escolha Instalar app ou Adicionar a tela inicial.');
+			if (hasNativePrompt) {
+				description.textContent = getText('description', 'Teste a versao instalada no Android para validar navegacao, atalhos e experiencia em modo app.');
+			} else if (isIosSafari) {
+				description.textContent = getText('iosDescription', 'No iPhone, o Safari exige que voce adicione manualmente pela opcao Compartilhar.');
+			} else if (isIos) {
+				description.textContent = getText('iosOtherBrowserDescription', 'No iPhone, abra este site no Safari para adicionar como app na tela inicial.');
+			} else {
+				description.textContent = getText('fallbackDescription', 'No Android, abra o menu do navegador e escolha Instalar app ou Adicionar a tela inicial.');
+			}
 		}
 
 		if (hint) {
-			hint.hidden = hasNativePrompt;
+			hint.hidden = hasNativePrompt || isIos;
 			hint.textContent = getText('fallbackHint', 'Se o botao de instalacao nativo aparecer, use ele para baixar o app automaticamente.');
+		}
+
+		if (steps) {
+			steps.hidden = hasNativePrompt || !isIos;
+			steps.innerHTML = isIosSafari
+				? '<li>Toque em Compartilhar no Safari.</li><li>Escolha Adicionar a Tela de Inicio.</li><li>Confirme em Adicionar.</li>'
+				: '<li>Abra esta pagina no Safari.</li><li>Toque em Compartilhar.</li><li>Escolha Adicionar a Tela de Inicio.</li>';
 		}
 
 		if (button) {
@@ -218,6 +253,7 @@
 				'<h2 id="gstore-pwa-install-title" class="Gstore-pwa-install-modal__title">' + getText('title', 'Instalar o site como aplicativo') + '</h2>' +
 				'<p class="Gstore-pwa-install-modal__description">' + getText('description', 'Teste a versao instalada no Android para validar navegacao, atalhos e experiencia em modo app.') + '</p>' +
 				'<p class="Gstore-pwa-install-modal__hint" hidden></p>' +
+				'<ol class="Gstore-pwa-install-modal__steps" hidden></ol>' +
 				'<div class="Gstore-pwa-install-modal__actions">' +
 					'<button type="button" class="Gstore-pwa-install-modal__button" data-gstore-pwa-install-button>' + getText('button', 'Instalar app') + '</button>' +
 				'</div>' +
