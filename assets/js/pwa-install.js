@@ -6,12 +6,30 @@
 	var modal = null;
 	var ctaVisible = false;
 	var mediaQuery = null;
+	var mobileQuery = null;
 	var installTriggersBound = false;
 	var fallbackTimer = null;
 	var dismissStorageKey = 'gstore_pwa_install_cta_dismissed';
 
 	function isAndroidLikely() {
 		return /android/i.test(window.navigator.userAgent || '');
+	}
+
+	function isMobileUserAgent() {
+		return /android|iphone|ipad|ipod|iemobile|windows phone|mobile/i.test(window.navigator.userAgent || '');
+	}
+
+	function isMobileViewport() {
+		try {
+			mobileQuery = mobileQuery || window.matchMedia('(max-width: 767px)');
+			return !!mobileQuery.matches;
+		} catch (e) {
+			return window.innerWidth ? window.innerWidth <= 767 : false;
+		}
+	}
+
+	function isMobileExperience() {
+		return isMobileUserAgent() || isMobileViewport();
 	}
 
 	function isStandaloneMode() {
@@ -27,7 +45,7 @@
 	}
 
 	function canShowPageCta() {
-		return !!config.canShowInstallCta && !!config.isAtendimentoPage && (isAndroidLikely() || !!deferredPrompt);
+		return !!config.canShowInstallCta && !!config.isAtendimentoPage && isMobileExperience() && (isAndroidLikely() || !!deferredPrompt);
 	}
 
 	function canOfferInstall() {
@@ -350,11 +368,34 @@
 		}
 	}
 
+	function bindMobileWatcher() {
+		try {
+			mobileQuery = mobileQuery || window.matchMedia('(max-width: 767px)');
+			var onChange = function () {
+				updateInstallCards();
+				if (!canShowPageCta()) {
+					hideCta();
+				} else if (canOfferInstall() && !wasDismissed()) {
+					scheduleAutoCta();
+				}
+			};
+
+			if (typeof mobileQuery.addEventListener === 'function') {
+				mobileQuery.addEventListener('change', onChange);
+			} else if (typeof mobileQuery.addListener === 'function') {
+				mobileQuery.addListener(onChange);
+			}
+		} catch (e) {
+			// Sem suporte.
+		}
+	}
+
 	function init() {
 		ensureApi();
 		applyStandaloneClass();
 		registerServiceWorker();
 		bindStandaloneWatcher();
+		bindMobileWatcher();
 		bindInstallTriggers();
 		updateInstallCards();
 
@@ -370,9 +411,14 @@
 	}
 
 	window.addEventListener('beforeinstallprompt', function (event) {
-		event.preventDefault();
 		deferredPrompt = event;
 		updateApiState();
+
+		if (!canShowPageCta()) {
+			return;
+		}
+
+		event.preventDefault();
 		updateInstallCards();
 		updateModalMode();
 		showCta();
