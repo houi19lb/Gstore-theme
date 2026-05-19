@@ -4848,7 +4848,7 @@ function gstore_enqueue_scripts() {
 			'startUrl'          => gstore_get_pwa_start_url(),
 			'scopeUrl'          => gstore_get_pwa_scope_url(),
 			'scopePath'         => gstore_get_pwa_scope_path(),
-			'canShowInstallCta' => is_user_logged_in() && current_user_can( 'manage_options' ),
+			'canShowInstallCta' => (bool) apply_filters( 'gstore_pwa_install_cta_enabled', is_page( 'atendimento' ) ),
 			'isAtendimentoPage' => is_page( 'atendimento' ),
 			'atendimentoUrl'    => home_url( '/atendimento/' ),
 			'myAccountUrl'      => $pwa_myaccount_url,
@@ -4860,6 +4860,9 @@ function gstore_enqueue_scripts() {
 				'button'      => __( 'Instalar app', 'gstore' ),
 				'close'       => __( 'Fechar', 'gstore' ),
 				'hint'        => __( 'O app abre na Home e mantem acesso normal a Atendimento e Minha Conta.', 'gstore' ),
+				'fallbackDescription' => __( 'No Android, abra o menu do navegador e escolha Instalar app ou Adicionar a tela inicial.', 'gstore' ),
+				'fallbackHint' => __( 'Se o botao de instalacao nativo aparecer, use ele para baixar o app automaticamente.', 'gstore' ),
+				'fallbackButton' => __( 'Entendi', 'gstore' ),
 			),
 		)
 	);

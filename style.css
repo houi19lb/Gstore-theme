@@ -6452,6 +6452,10 @@ main.Gstore-support-shell .wp-block-group.is-layout-constrained {
 	transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
 }
 
+.Gstore-support-card[hidden] {
+	display: none !important;
+}
+
 .Gstore-support-card:hover {
 	transform: translateY(-6px);
 	border-color: var(--gstore-color-accent);
@@ -6503,6 +6507,24 @@ main.Gstore-support-shell .wp-block-group.is-layout-constrained {
 .Gstore-support-card__cta:hover {
 	color: var(--gstore-color-accent-hover);
 	transform: translateX(4px);
+}
+
+.Gstore-support-card__cta--button {
+	width: fit-content;
+	padding: 0;
+	border: 0;
+	background: transparent;
+	font-family: inherit;
+	font-size: inherit;
+	text-align: left;
+	cursor: pointer;
+}
+
+.Gstore-support-card__cta--button:disabled,
+.Gstore-support-card__cta--button[aria-disabled="true"] {
+	opacity: 0.55;
+	cursor: not-allowed;
+	transform: none;
 }
 
 .Gstore-support-contact {
@@ -6973,6 +6995,13 @@ main.wp-block-group.alignfull.is-layout-constrained.Gstore-blog-shell {
 	margin: 0;
 	line-height: 1.55;
 	color: var(--text-muted, #6b7280);
+}
+
+.Gstore-pwa-install-modal__hint {
+	margin: -2px 0 0;
+	line-height: 1.5;
+	color: var(--text-main, #1a1a1a);
+	font-size: 0.92rem;
 }
 
 .Gstore-pwa-install-modal__actions {

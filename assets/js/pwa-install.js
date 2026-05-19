@@ -6,6 +6,9 @@
 	var modal = null;
 	var ctaVisible = false;
 	var mediaQuery = null;
+	var installTriggersBound = false;
+	var fallbackTimer = null;
+	var dismissStorageKey = 'gstore_pwa_install_cta_dismissed';
 
 	function isAndroidLikely() {
 		return /android/i.test(window.navigator.userAgent || '');
@@ -24,7 +27,11 @@
 	}
 
 	function canShowPageCta() {
-		return !!config.canShowInstallCta && !!config.isAtendimentoPage && isAndroidLikely();
+		return !!config.canShowInstallCta && !!config.isAtendimentoPage && (isAndroidLikely() || !!deferredPrompt);
+	}
+
+	function canOfferInstall() {
+		return canShowPageCta() && !isStandaloneMode();
 	}
 
 	function ensureApi() {
@@ -55,6 +62,7 @@
 		ensureApi();
 		window.gstorePwa.canInstall = !!deferredPrompt;
 		window.gstorePwa.isStandalone = isStandaloneMode();
+		updateInstallCards();
 	}
 
 	function applyStandaloneClass() {
@@ -80,6 +88,103 @@
 		return fallback;
 	}
 
+	function wasDismissed() {
+		try {
+			return window.sessionStorage.getItem(dismissStorageKey) === '1';
+		} catch (e) {
+			return false;
+		}
+	}
+
+	function markDismissed() {
+		try {
+			window.sessionStorage.setItem(dismissStorageKey, '1');
+		} catch (e) {
+			// Sem suporte a sessionStorage.
+		}
+	}
+
+	function hasBlockingModalOpen() {
+		var ageModal = document.getElementById('gstore-age-modal');
+		return !!ageModal && ageModal.getAttribute('aria-hidden') === 'false';
+	}
+
+	function getInstallCards() {
+		if (!document.querySelectorAll) return [];
+		return Array.prototype.slice.call(document.querySelectorAll('[data-gstore-pwa-card]'));
+	}
+
+	function getInstallTriggers() {
+		if (!document.querySelectorAll) return [];
+		return Array.prototype.slice.call(document.querySelectorAll('[data-gstore-pwa-open]'));
+	}
+
+	function closestInstallTrigger(target) {
+		if (!target) return null;
+
+		if (typeof target.closest === 'function') {
+			return target.closest('[data-gstore-pwa-open]');
+		}
+
+		while (target && target !== document) {
+			if (target.getAttribute && target.getAttribute('data-gstore-pwa-open') !== null) {
+				return target;
+			}
+			target = target.parentNode;
+		}
+
+		return null;
+	}
+
+	function updateInstallCards() {
+		var canOffer = canOfferInstall();
+		var cards = getInstallCards();
+		var triggers = getInstallTriggers();
+
+		cards.forEach(function (card) {
+			card.hidden = !canOffer;
+		});
+
+		triggers.forEach(function (trigger) {
+			if ('disabled' in trigger) {
+				trigger.disabled = !canOffer;
+			}
+			trigger.setAttribute('aria-disabled', canOffer ? 'false' : 'true');
+		});
+	}
+
+	function updateModalMode() {
+		var el = getModal();
+		if (!el) return;
+
+		var hasNativePrompt = !!deferredPrompt;
+		var title = el.querySelector('.Gstore-pwa-install-modal__title');
+		var description = el.querySelector('.Gstore-pwa-install-modal__description');
+		var hint = el.querySelector('.Gstore-pwa-install-modal__hint');
+		var button = el.querySelector('[data-gstore-pwa-install-button]');
+
+		el.classList.toggle('is-fallback', !hasNativePrompt);
+
+		if (title) {
+			title.textContent = getText('title', 'Instalar o site como aplicativo');
+		}
+
+		if (description) {
+			description.textContent = hasNativePrompt
+				? getText('description', 'Teste a versao instalada no Android para validar navegacao, atalhos e experiencia em modo app.')
+				: getText('fallbackDescription', 'No Android, abra o menu do navegador e escolha Instalar app ou Adicionar a tela inicial.');
+		}
+
+		if (hint) {
+			hint.hidden = hasNativePrompt;
+			hint.textContent = getText('fallbackHint', 'Se o botao de instalacao nativo aparecer, use ele para baixar o app automaticamente.');
+		}
+
+		if (button) {
+			button.textContent = hasNativePrompt ? getText('button', 'Instalar app') : getText('fallbackButton', 'Entendi');
+		}
+	}
+
 	function getModal() {
 		if (modal) return modal;
 		if (!document.body || !canShowPageCta()) return null;
@@ -94,6 +199,7 @@
 				'<p class="Gstore-pwa-install-modal__badge">' + getText('badge', 'Android App') + '</p>' +
 				'<h2 id="gstore-pwa-install-title" class="Gstore-pwa-install-modal__title">' + getText('title', 'Instalar o site como aplicativo') + '</h2>' +
 				'<p class="Gstore-pwa-install-modal__description">' + getText('description', 'Teste a versao instalada no Android para validar navegacao, atalhos e experiencia em modo app.') + '</p>' +
+				'<p class="Gstore-pwa-install-modal__hint" hidden></p>' +
 				'<div class="Gstore-pwa-install-modal__actions">' +
 					'<button type="button" class="Gstore-pwa-install-modal__button" data-gstore-pwa-install-button>' + getText('button', 'Instalar app') + '</button>' +
 				'</div>' +
@@ -104,6 +210,11 @@
 		var installButton = modal.querySelector('[data-gstore-pwa-install-button]');
 		if (installButton) {
 			installButton.addEventListener('click', function () {
+				if (!deferredPrompt) {
+					hideCta(true);
+					return;
+				}
+
 				if (!window.gstorePwa || typeof window.gstorePwa.promptInstall !== 'function') return;
 
 				window.gstorePwa.promptInstall().catch(function () {
@@ -115,23 +226,44 @@
 		var closeButton = modal.querySelector('[data-gstore-pwa-close]');
 		if (closeButton) {
 			closeButton.addEventListener('click', function () {
-				hideCta();
+				hideCta(true);
 			});
 		}
 
 		document.addEventListener('keydown', function (event) {
 			if (event.key === 'Escape' && ctaVisible) {
-				hideCta();
+				hideCta(true);
 			}
 		});
 
 		return modal;
 	}
 
-	function showCta() {
+	function showCta(force) {
+		updateInstallCards();
+
+		if (!canOfferInstall()) {
+			return false;
+		}
+
+		if (!force && wasDismissed()) {
+			return false;
+		}
+
+		if (!force && hasBlockingModalOpen()) {
+			scheduleAutoCta(1200);
+			return false;
+		}
+
 		var el = getModal();
-		if (!el || ctaVisible || !canShowPageCta() || !deferredPrompt || isStandaloneMode()) {
-			return;
+		if (!el) {
+			return false;
+		}
+
+		updateModalMode();
+
+		if (ctaVisible) {
+			return true;
 		}
 
 		el.hidden = false;
@@ -141,11 +273,16 @@
 			el.classList.add('is-visible');
 		});
 		ctaVisible = true;
+		return true;
 	}
 
-	function hideCta() {
+	function hideCta(dismiss) {
 		var el = getModal();
 		if (!el) return;
+
+		if (dismiss) {
+			markDismissed();
+		}
 
 		el.classList.remove('is-visible');
 		el.setAttribute('aria-hidden', 'true');
@@ -156,6 +293,34 @@
 			}
 		}, 260);
 		ctaVisible = false;
+	}
+
+	function scheduleAutoCta(delay) {
+		if (fallbackTimer || !canOfferInstall() || wasDismissed()) return;
+
+		fallbackTimer = window.setTimeout(function () {
+			fallbackTimer = null;
+			if (canOfferInstall() && !wasDismissed()) {
+				showCta();
+			}
+		}, delay || 1600);
+	}
+
+	function bindInstallTriggers() {
+		if (installTriggersBound || !document.addEventListener) return;
+		installTriggersBound = true;
+
+		document.addEventListener('click', function (event) {
+			var trigger = closestInstallTrigger(event.target);
+			if (!trigger) return;
+
+			event.preventDefault();
+			if (trigger.disabled || trigger.getAttribute('aria-disabled') === 'true') {
+				return;
+			}
+
+			showCta(true);
+		});
 	}
 
 	function registerServiceWorker() {
@@ -190,6 +355,14 @@
 		applyStandaloneClass();
 		registerServiceWorker();
 		bindStandaloneWatcher();
+		bindInstallTriggers();
+		updateInstallCards();
+
+		if (canOfferInstall() && deferredPrompt) {
+			showCta();
+		} else {
+			scheduleAutoCta();
+		}
 
 		if (!canShowPageCta()) {
 			hideCta();
@@ -200,6 +373,8 @@
 		event.preventDefault();
 		deferredPrompt = event;
 		updateApiState();
+		updateInstallCards();
+		updateModalMode();
 		showCta();
 	});
 
@@ -207,6 +382,7 @@
 		deferredPrompt = null;
 		updateApiState();
 		applyStandaloneClass();
+		updateInstallCards();
 		hideCta();
 	});
 
