@@ -1,0 +1,470 @@
+<?php
+/**
+ * Partner dashboard inside WooCommerce My Account.
+ *
+ * @package GStore
+ */
+
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
+if ( ! function_exists( 'gstore_partner_account_register_endpoint' ) ) {
+	function gstore_partner_account_register_endpoint() {
+		add_rewrite_endpoint( 'revendedor', EP_ROOT | EP_PAGES );
+	}
+}
+add_action( 'init', 'gstore_partner_account_register_endpoint', 5 );
+
+if ( ! function_exists( 'gstore_partner_account_maybe_flush_endpoint' ) ) {
+	function gstore_partner_account_maybe_flush_endpoint() {
+		$version = '20260520';
+		if ( get_option( 'gstore_partner_account_endpoint_version' ) === $version ) {
+			return;
+		}
+
+		flush_rewrite_rules( false );
+		update_option( 'gstore_partner_account_endpoint_version', $version, true );
+	}
+}
+add_action( 'init', 'gstore_partner_account_maybe_flush_endpoint', 20 );
+
+if ( ! function_exists( 'gstore_partner_account_add_query_var' ) ) {
+	function gstore_partner_account_add_query_var( $vars ) {
+		$vars['revendedor'] = 'revendedor';
+		return $vars;
+	}
+}
+add_filter( 'woocommerce_get_query_vars', 'gstore_partner_account_add_query_var' );
+
+if ( ! function_exists( 'gstore_partner_account_is_visible' ) ) {
+	function gstore_partner_account_is_visible() {
+		return function_exists( 'gstore_partner_user_is_partner' ) && gstore_partner_user_is_partner( get_current_user_id() );
+	}
+}
+
+if ( ! function_exists( 'gstore_partner_account_add_menu_item' ) ) {
+	function gstore_partner_account_add_menu_item( $items ) {
+		if ( ! gstore_partner_account_is_visible() ) {
+			return $items;
+		}
+
+		$next  = array();
+		$added = false;
+		foreach ( $items as $key => $label ) {
+			if ( 'customer-logout' === $key ) {
+				$next['revendedor'] = __( 'Revendedor', 'gstore' );
+				$added              = true;
+			}
+			$next[ $key ] = $label;
+		}
+
+		if ( ! $added ) {
+			$next['revendedor'] = __( 'Revendedor', 'gstore' );
+		}
+
+		return $next;
+	}
+}
+add_filter( 'woocommerce_account_menu_items', 'gstore_partner_account_add_menu_item', 28 );
+
+if ( ! function_exists( 'gstore_partner_account_get_data' ) ) {
+	function gstore_partner_account_get_data() {
+		if ( function_exists( 'gstore_partner_get_dashboard_data' ) ) {
+			$data = gstore_partner_get_dashboard_data( get_current_user_id() );
+			return is_array( $data ) ? $data : array();
+		}
+
+		if ( class_exists( 'GStore\\Services\\Partner_Program_Service' ) ) {
+			return GStore\Services\Partner_Program_Service::get_dashboard_data( get_current_user_id() );
+		}
+
+		return array(
+			'enabled'   => false,
+			'isPartner' => false,
+		);
+	}
+}
+
+if ( ! function_exists( 'gstore_partner_account_request_redemption' ) ) {
+	function gstore_partner_account_request_redemption( $amount, $method, $note ) {
+		if ( function_exists( 'gstore_partner_request_redemption' ) ) {
+			return gstore_partner_request_redemption( get_current_user_id(), $amount, $method, $note, false );
+		}
+
+		if ( class_exists( 'GStore\\Services\\Partner_Program_Service' ) ) {
+			$amount_cents = GStore\Services\Partner_Program_Service::decimal_to_cents( $amount );
+			return GStore\Services\Partner_Program_Service::request_redemption( get_current_user_id(), $amount_cents, $method, $note );
+		}
+
+		return new WP_Error( 'partner_service_missing', __( 'Programa de revendedores indisponivel.', 'gstore' ) );
+	}
+}
+
+if ( ! function_exists( 'gstore_partner_account_handle_redemption_submission' ) ) {
+	function gstore_partner_account_handle_redemption_submission() {
+		if ( empty( $_POST['gstore_partner_redemption_action'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Missing
+			return;
+		}
+
+		if ( ! is_user_logged_in() || ! gstore_partner_account_is_visible() ) {
+			return;
+		}
+
+		$nonce = isset( $_POST['gstore_partner_redemption_nonce'] ) ? sanitize_text_field( wp_unslash( $_POST['gstore_partner_redemption_nonce'] ) ) : '';
+		if ( ! wp_verify_nonce( $nonce, 'gstore_partner_redemption' ) ) {
+			if ( function_exists( 'wc_add_notice' ) ) {
+				wc_add_notice( __( 'Nao foi possivel validar o resgate. Atualize a pagina e tente novamente.', 'gstore' ), 'error' );
+			}
+			return;
+		}
+
+		$amount = isset( $_POST['gstore_partner_redemption_amount'] ) ? wp_unslash( $_POST['gstore_partner_redemption_amount'] ) : '';
+		$method = isset( $_POST['gstore_partner_redemption_method'] ) ? sanitize_key( wp_unslash( $_POST['gstore_partner_redemption_method'] ) ) : 'external';
+		$note   = isset( $_POST['gstore_partner_redemption_note'] ) ? sanitize_textarea_field( wp_unslash( $_POST['gstore_partner_redemption_note'] ) ) : '';
+
+		$result = gstore_partner_account_request_redemption( $amount, $method, $note );
+		if ( function_exists( 'wc_add_notice' ) ) {
+			if ( is_wp_error( $result ) ) {
+				wc_add_notice( $result->get_error_message(), 'error' );
+			} else {
+				wc_add_notice( __( 'Solicitacao de resgate enviada.', 'gstore' ), 'success' );
+			}
+		}
+
+		wp_safe_redirect( add_query_arg( 'view', 'creditos', wc_get_account_endpoint_url( 'revendedor' ) ) );
+		exit;
+	}
+}
+add_action( 'template_redirect', 'gstore_partner_account_handle_redemption_submission', 8 );
+
+if ( ! function_exists( 'gstore_partner_account_view_url' ) ) {
+	function gstore_partner_account_view_url( $view ) {
+		return add_query_arg( 'view', sanitize_key( $view ), wc_get_account_endpoint_url( 'revendedor' ) );
+	}
+}
+
+if ( ! function_exists( 'gstore_partner_account_icon' ) ) {
+	function gstore_partner_account_icon( $name ) {
+		$icons = array(
+			'link'    => '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.07 0l2.12-2.12a5 5 0 0 0-7.07-7.07L11 4.93"></path><path d="M14 11a5 5 0 0 0-7.07 0L4.81 13.12a5 5 0 0 0 7.07 7.07L13 19.07"></path></svg>',
+			'cart'    => '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>',
+			'coins'   => '<svg viewBox="0 0 24 24" aria-hidden="true"><ellipse cx="12" cy="5" rx="8" ry="3"></ellipse><path d="M4 5v6c0 1.66 3.58 3 8 3s8-1.34 8-3V5"></path><path d="M4 11v6c0 1.66 3.58 3 8 3s8-1.34 8-3v-6"></path></svg>',
+			'percent' => '<svg viewBox="0 0 24 24" aria-hidden="true"><line x1="19" y1="5" x2="5" y2="19"></line><circle cx="6.5" cy="6.5" r="2.5"></circle><circle cx="17.5" cy="17.5" r="2.5"></circle></svg>',
+			'gift'    => '<svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="20 12 20 22 4 22 4 12"></polyline><rect x="2" y="7" width="20" height="5"></rect><line x1="12" y1="22" x2="12" y2="7"></line><path d="M12 7H7.5a2.5 2.5 0 1 1 0-5C11 2 12 7 12 7z"></path><path d="M12 7h4.5a2.5 2.5 0 1 0 0-5C13 2 12 7 12 7z"></path></svg>',
+			'info'    => '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18h6"></path><path d="M10 22h4"></path><path d="M12 2a7 7 0 0 0-4 12.74V17h8v-2.26A7 7 0 0 0 12 2z"></path></svg>',
+		);
+
+		return isset( $icons[ $name ] ) ? $icons[ $name ] : $icons['info'];
+	}
+}
+
+if ( ! function_exists( 'gstore_partner_account_render_stat' ) ) {
+	function gstore_partner_account_render_stat( $icon, $title, $value, $meta = '', $status = '' ) {
+		?>
+		<section class="gstore-partner-stat">
+			<div class="gstore-partner-icon"><?php echo gstore_partner_account_icon( $icon ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></div>
+			<div>
+				<span><?php echo esc_html( $title ); ?></span>
+				<?php if ( '' !== (string) $value ) : ?>
+					<strong><?php echo esc_html( $value ); ?></strong>
+				<?php endif; ?>
+				<?php if ( $status ) : ?>
+					<small class="is-status"><?php echo esc_html( $status ); ?></small>
+				<?php elseif ( $meta ) : ?>
+					<small><?php echo esc_html( $meta ); ?></small>
+				<?php endif; ?>
+			</div>
+		</section>
+		<?php
+	}
+}
+
+if ( ! function_exists( 'gstore_partner_account_sale_label' ) ) {
+	function gstore_partner_account_sale_label( $sale ) {
+		if ( isset( $sale['type'] ) && 'refund' === $sale['type'] ) {
+			return __( 'Comissao estornada', 'gstore' );
+		}
+
+		return __( 'Comissao aprovada', 'gstore' );
+	}
+}
+
+if ( ! function_exists( 'gstore_partner_account_render_sales_table' ) ) {
+	function gstore_partner_account_render_sales_table( $sales, $compact = false ) {
+		?>
+		<div class="gstore-partner-table-wrap">
+			<table class="gstore-partner-table">
+				<thead>
+					<tr>
+						<th><?php esc_html_e( 'Pedido', 'gstore' ); ?></th>
+						<th><?php esc_html_e( 'Cliente', 'gstore' ); ?></th>
+						<th><?php esc_html_e( 'E-mail', 'gstore' ); ?></th>
+						<th><?php esc_html_e( 'Valor da venda', 'gstore' ); ?></th>
+						<th><?php esc_html_e( 'Comissao/moedas', 'gstore' ); ?></th>
+						<th><?php esc_html_e( 'Status', 'gstore' ); ?></th>
+					</tr>
+				</thead>
+				<tbody>
+				<?php if ( empty( $sales ) ) : ?>
+					<tr><td colspan="6"><?php esc_html_e( 'Nenhuma venda indicada ainda.', 'gstore' ); ?></td></tr>
+				<?php else : ?>
+					<?php foreach ( $sales as $sale ) : ?>
+						<tr>
+							<td data-label="<?php esc_attr_e( 'Pedido', 'gstore' ); ?>"><?php echo esc_html( $sale['orderNumber'] ); ?></td>
+							<td data-label="<?php esc_attr_e( 'Cliente', 'gstore' ); ?>"><?php echo esc_html( $sale['customerName'] ); ?></td>
+							<td data-label="<?php esc_attr_e( 'E-mail', 'gstore' ); ?>"><?php echo esc_html( $sale['customerEmail'] ); ?></td>
+							<td data-label="<?php esc_attr_e( 'Valor', 'gstore' ); ?>"><?php echo esc_html( $sale['orderTotalFormatted'] ); ?></td>
+							<td data-label="<?php esc_attr_e( 'Comissao', 'gstore' ); ?>"><strong><?php echo esc_html( $sale['amountFormatted'] ); ?></strong></td>
+							<td data-label="<?php esc_attr_e( 'Status', 'gstore' ); ?>">
+								<span class="<?php echo esc_attr( 'gstore-partner-pill ' . ( isset( $sale['type'] ) && 'refund' === $sale['type'] ? 'is-warning' : 'is-success' ) ); ?>">
+									<?php echo esc_html( gstore_partner_account_sale_label( $sale ) ); ?>
+								</span>
+							</td>
+						</tr>
+						<?php if ( $compact && count( $sales ) > 4 ) : ?>
+							<?php break; ?>
+						<?php endif; ?>
+					<?php endforeach; ?>
+				<?php endif; ?>
+				</tbody>
+			</table>
+		</div>
+		<?php
+	}
+}
+
+if ( ! function_exists( 'gstore_partner_account_render_redemptions' ) ) {
+	function gstore_partner_account_render_redemptions( $redemptions ) {
+		$labels = array(
+			'pending'   => __( 'Pendente', 'gstore' ),
+			'approved'  => __( 'Aprovado', 'gstore' ),
+			'rejected'  => __( 'Rejeitado', 'gstore' ),
+			'cancelled' => __( 'Cancelado', 'gstore' ),
+		);
+		?>
+		<div class="gstore-partner-redemption-list">
+			<?php if ( empty( $redemptions ) ) : ?>
+				<p><?php esc_html_e( 'Nenhum resgate solicitado ainda.', 'gstore' ); ?></p>
+			<?php else : ?>
+				<?php foreach ( $redemptions as $item ) : ?>
+					<div class="gstore-partner-redemption">
+						<div>
+							<strong><?php echo esc_html( $item['amountFormatted'] ); ?></strong>
+							<span><?php echo esc_html( 'coupon' === $item['method'] ? __( 'Cupom de loja', 'gstore' ) : __( 'Pagamento externo', 'gstore' ) ); ?></span>
+						</div>
+						<div>
+							<span class="<?php echo esc_attr( 'gstore-partner-pill is-' . sanitize_key( $item['status'] ) ); ?>">
+								<?php echo esc_html( isset( $labels[ $item['status'] ] ) ? $labels[ $item['status'] ] : $item['status'] ); ?>
+							</span>
+							<?php if ( ! empty( $item['coupon_code'] ) ) : ?>
+								<code><?php echo esc_html( $item['coupon_code'] ); ?></code>
+							<?php elseif ( ! empty( $item['external_reference'] ) ) : ?>
+								<small><?php echo esc_html( $item['external_reference'] ); ?></small>
+							<?php endif; ?>
+						</div>
+					</div>
+				<?php endforeach; ?>
+			<?php endif; ?>
+		</div>
+		<?php
+	}
+}
+
+if ( ! function_exists( 'gstore_partner_account_render_endpoint' ) ) {
+	function gstore_partner_account_render_endpoint() {
+		$data = gstore_partner_account_get_data();
+		if ( empty( $data['isPartner'] ) || empty( $data['partner'] ) ) {
+			?>
+			<div class="gstore-partner-account">
+				<section class="gstore-partner-panel">
+					<h2><?php esc_html_e( 'Programa Revendedor', 'gstore' ); ?></h2>
+					<p><?php esc_html_e( 'Sua conta ainda nao esta habilitada como revendedora.', 'gstore' ); ?></p>
+				</section>
+			</div>
+			<?php
+			return;
+		}
+
+		$user      = isset( $data['user'] ) && is_array( $data['user'] ) ? $data['user'] : array();
+		$partner   = $data['partner'];
+		$settings  = isset( $data['settings'] ) && is_array( $data['settings'] ) ? $data['settings'] : array();
+		$sales     = isset( $partner['sales'] ) && is_array( $partner['sales'] ) ? $partner['sales'] : array();
+		$redemptions = isset( $partner['redemptions'] ) && is_array( $partner['redemptions'] ) ? $partner['redemptions'] : array();
+		$view      = isset( $_GET['view'] ) ? sanitize_key( wp_unslash( $_GET['view'] ) ) : 'painel';
+		$view      = in_array( $view, array( 'painel', 'vendas', 'creditos' ), true ) ? $view : 'painel';
+		$name      = ! empty( $user['name'] ) ? $user['name'] : wp_get_current_user()->display_name;
+		$min_value = isset( $settings['minRedeemAmount'] ) ? $settings['minRedeemAmount'] : '10.00';
+		$commission_display = rtrim( rtrim( (string) ( isset( $partner['commissionPercent'] ) ? $partner['commissionPercent'] : 0 ), '0' ), '.' );
+		$commission_display = '' === $commission_display ? '0' : $commission_display;
+		?>
+		<div class="gstore-partner-account" data-gstore-partner-account>
+			<section class="gstore-partner-hero">
+				<h2>
+					<?php
+					printf(
+						/* translators: %s: user display name. */
+						esc_html__( 'Ola, %s!', 'gstore' ),
+						esc_html( $name )
+					);
+					?>
+				</h2>
+				<p><?php esc_html_e( 'Gerencie sua conta revendedora, acompanhe suas vendas e acompanhe seus creditos.', 'gstore' ); ?></p>
+			</section>
+
+			<nav class="gstore-partner-tabs" aria-label="<?php esc_attr_e( 'Area revendedor', 'gstore' ); ?>">
+				<a class="<?php echo 'painel' === $view ? 'is-active' : ''; ?>" href="<?php echo esc_url( gstore_partner_account_view_url( 'painel' ) ); ?>"><?php esc_html_e( 'Meu Painel', 'gstore' ); ?></a>
+				<a class="<?php echo 'vendas' === $view ? 'is-active' : ''; ?>" href="<?php echo esc_url( gstore_partner_account_view_url( 'vendas' ) ); ?>"><?php esc_html_e( 'Minhas Vendas', 'gstore' ); ?></a>
+				<a class="<?php echo 'creditos' === $view ? 'is-active' : ''; ?>" href="<?php echo esc_url( gstore_partner_account_view_url( 'creditos' ) ); ?>"><?php esc_html_e( 'Meus Creditos', 'gstore' ); ?></a>
+			</nav>
+
+			<?php if ( 'painel' === $view ) : ?>
+				<div class="gstore-partner-stats">
+					<?php
+					gstore_partner_account_render_stat( 'link', __( 'Link exclusivo', 'gstore' ), '', '', __( 'Ativo', 'gstore' ) );
+					gstore_partner_account_render_stat( 'cart', __( 'Vendas indicadas', 'gstore' ), (string) absint( $partner['salesLast30'] ), __( 'Nos ultimos 30 dias', 'gstore' ) );
+					gstore_partner_account_render_stat( 'coins', __( 'Creditos disponiveis', 'gstore' ), $partner['balanceFormatted'], __( 'Em moedas Armastore', 'gstore' ) );
+					gstore_partner_account_render_stat( 'percent', __( 'Comissao atual', 'gstore' ), $commission_display . '%', __( 'Sobre o valor da venda', 'gstore' ) );
+					?>
+				</div>
+
+				<section class="gstore-partner-link-panel">
+					<div class="gstore-partner-icon"><?php echo gstore_partner_account_icon( 'link' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></div>
+					<div>
+						<h3><?php esc_html_e( 'Seu link de parceiro', 'gstore' ); ?></h3>
+						<p><?php esc_html_e( 'Divulgue seu link exclusivo e ganhe creditos por cada venda realizada.', 'gstore' ); ?></p>
+						<input type="text" readonly value="<?php echo esc_attr( $partner['url'] ); ?>" data-gstore-partner-link />
+					</div>
+					<button type="button" class="button gstore-partner-copy" data-gstore-copy-partner-link><?php esc_html_e( 'Copiar link', 'gstore' ); ?></button>
+					<button type="button" class="button gstore-partner-share" data-gstore-share-partner-link><?php esc_html_e( 'Compartilhar', 'gstore' ); ?></button>
+				</section>
+
+				<section class="gstore-partner-panel">
+					<header class="gstore-partner-panel__header">
+						<h3><?php esc_html_e( 'Minhas Vendas', 'gstore' ); ?></h3>
+						<a href="<?php echo esc_url( gstore_partner_account_view_url( 'vendas' ) ); ?>"><?php esc_html_e( 'Ver todas', 'gstore' ); ?></a>
+					</header>
+					<?php gstore_partner_account_render_sales_table( array_slice( $sales, 0, 4 ), true ); ?>
+				</section>
+
+				<div class="gstore-partner-bottom-grid">
+					<section class="gstore-partner-panel gstore-partner-balance-panel">
+						<h3><?php esc_html_e( 'Saldo em moedas', 'gstore' ); ?></h3>
+						<div class="gstore-partner-balance">
+							<div class="gstore-partner-icon"><?php echo gstore_partner_account_icon( 'coins' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></div>
+							<div>
+								<span><?php esc_html_e( 'Seu saldo atual', 'gstore' ); ?></span>
+								<strong><?php echo esc_html( $partner['balanceFormatted'] ); ?></strong>
+								<small><?php esc_html_e( '1 moeda = R$ 1,00', 'gstore' ); ?></small>
+							</div>
+						</div>
+						<a class="button gstore-partner-primary-button" href="<?php echo esc_url( gstore_partner_account_view_url( 'creditos' ) ); ?>"><?php esc_html_e( 'Usar creditos', 'gstore' ); ?></a>
+					</section>
+
+					<section class="gstore-partner-panel gstore-partner-how">
+						<h3><?php esc_html_e( 'Como funciona', 'gstore' ); ?></h3>
+						<div class="gstore-partner-how__body">
+							<div class="gstore-partner-icon"><?php echo gstore_partner_account_icon( 'info' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></div>
+							<ul>
+								<li><?php esc_html_e( 'Divulgue seu link exclusivo para amigos e clientes.', 'gstore' ); ?></li>
+								<li><?php esc_html_e( 'Cada compra realizada atraves do seu link gera creditos para voce.', 'gstore' ); ?></li>
+								<li><?php esc_html_e( 'Os creditos sao liberados apos o pedido ser concluido ou processado.', 'gstore' ); ?></li>
+							</ul>
+						</div>
+					</section>
+				</div>
+			<?php elseif ( 'vendas' === $view ) : ?>
+				<section class="gstore-partner-panel">
+					<header class="gstore-partner-panel__header">
+						<h3><?php esc_html_e( 'Minhas Vendas', 'gstore' ); ?></h3>
+						<span><?php echo esc_html( sprintf( _n( '%d venda rastreada', '%d vendas rastreadas', count( $sales ), 'gstore' ), count( $sales ) ) ); ?></span>
+					</header>
+					<?php gstore_partner_account_render_sales_table( $sales ); ?>
+				</section>
+			<?php else : ?>
+				<div class="gstore-partner-credit-grid">
+					<section class="gstore-partner-panel">
+						<h3><?php esc_html_e( 'Solicitar resgate', 'gstore' ); ?></h3>
+						<div class="gstore-partner-balance is-credit-view">
+							<div class="gstore-partner-icon"><?php echo gstore_partner_account_icon( 'coins' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></div>
+							<div>
+								<span><?php esc_html_e( 'Saldo disponivel', 'gstore' ); ?></span>
+								<strong><?php echo esc_html( $partner['balanceFormatted'] ); ?></strong>
+								<small>
+									<?php
+									printf(
+										/* translators: %s: minimum redemption amount. */
+										esc_html__( 'Minimo para resgate: R$ %s', 'gstore' ),
+										esc_html( number_format_i18n( (float) $min_value, 2 ) )
+									);
+									?>
+								</small>
+							</div>
+						</div>
+						<form class="gstore-partner-redemption-form" method="post">
+							<input type="hidden" name="gstore_partner_redemption_action" value="request" />
+							<?php wp_nonce_field( 'gstore_partner_redemption', 'gstore_partner_redemption_nonce' ); ?>
+							<label>
+								<span><?php esc_html_e( 'Valor do resgate', 'gstore' ); ?></span>
+								<input type="text" name="gstore_partner_redemption_amount" placeholder="0,00" required />
+							</label>
+							<label>
+								<span><?php esc_html_e( 'Metodo de resgate', 'gstore' ); ?></span>
+								<select name="gstore_partner_redemption_method">
+									<option value="external"><?php esc_html_e( 'Pagamento externo', 'gstore' ); ?></option>
+									<option value="coupon"><?php esc_html_e( 'Cupom de loja', 'gstore' ); ?></option>
+								</select>
+							</label>
+							<label>
+								<span><?php esc_html_e( 'Observacao', 'gstore' ); ?></span>
+								<textarea name="gstore_partner_redemption_note" rows="3"></textarea>
+							</label>
+							<button type="submit" class="button gstore-partner-primary-button"><?php esc_html_e( 'Solicitar resgate', 'gstore' ); ?></button>
+						</form>
+					</section>
+
+					<section class="gstore-partner-panel">
+						<h3><?php esc_html_e( 'Historico de creditos', 'gstore' ); ?></h3>
+						<?php gstore_partner_account_render_redemptions( $redemptions ); ?>
+					</section>
+				</div>
+			<?php endif; ?>
+		</div>
+		<script>
+			(function(){
+				var root = document.querySelector('[data-gstore-partner-account]');
+				if (!root) return;
+				var input = root.querySelector('[data-gstore-partner-link]');
+				var copy = root.querySelector('[data-gstore-copy-partner-link]');
+				var share = root.querySelector('[data-gstore-share-partner-link]');
+				function link(){ return input ? input.value : ''; }
+				if (copy) {
+					copy.addEventListener('click', function(){
+						var value = link();
+						if (!value) return;
+						if (navigator.clipboard && navigator.clipboard.writeText) {
+							navigator.clipboard.writeText(value);
+						} else if (input) {
+							input.select();
+							document.execCommand('copy');
+						}
+						copy.textContent = '<?php echo esc_js( __( 'Copiado', 'gstore' ) ); ?>';
+						window.setTimeout(function(){ copy.textContent = '<?php echo esc_js( __( 'Copiar link', 'gstore' ) ); ?>'; }, 1600);
+					});
+				}
+				if (share) {
+					share.addEventListener('click', function(){
+						var value = link();
+						if (navigator.share && value) {
+							navigator.share({ title: 'Armastore', url: value });
+						} else if (copy) {
+							copy.click();
+						}
+					});
+				}
+			})();
+		</script>
+		<?php
+	}
+}
+add_action( 'woocommerce_account_revendedor_endpoint', 'gstore_partner_account_render_endpoint' );

@@ -2457,3 +2457,524 @@ form.woocommerce-form {
 		min-height: 420px;
 	}
 }
+
+/* Minha Conta - Programa Revendedor */
+.gstore-myaccount-nav__children {
+	list-style: none;
+	margin: -6px 0 8px 42px;
+	padding: 0 0 0 12px;
+	border-left: 1px solid rgba(172, 145, 43, 0.28);
+	display: grid;
+	gap: 2px;
+}
+
+.gstore-myaccount-nav__children a {
+	display: block;
+	padding: 8px 10px;
+	border-radius: 6px;
+	color: var(--gstore-color-text-secondary, #6b6b6b);
+	font-size: 13px;
+	font-weight: 600;
+	text-decoration: none;
+}
+
+.gstore-myaccount-nav__children li.is-active a,
+.gstore-myaccount-nav__children a:hover {
+	color: #a8912b;
+	background: rgba(172, 145, 43, 0.09);
+}
+
+.gstore-partner-account {
+	--partner-gold: #aa942e;
+	--partner-gold-dark: #8a761b;
+	--partner-border: #1f2933;
+	--partner-muted: #6b7280;
+	display: grid;
+	gap: 22px;
+	color: #161616;
+}
+
+.gstore-partner-hero,
+.gstore-partner-panel,
+.gstore-partner-stat,
+.gstore-partner-link-panel {
+	background: #fff;
+	border: 1px solid var(--partner-border);
+	border-radius: 6px;
+	box-shadow: 0 2px 10px rgba(15, 23, 42, 0.04);
+}
+
+.gstore-partner-hero {
+	padding: 26px 30px;
+}
+
+.gstore-partner-hero h2 {
+	margin: 0 0 8px;
+	font-size: 30px;
+	line-height: 1.15;
+	letter-spacing: 0;
+}
+
+.gstore-partner-hero h2,
+.gstore-partner-hero h2 * {
+	font-weight: 800;
+}
+
+.gstore-partner-hero h2::first-letter {
+	color: inherit;
+}
+
+.gstore-partner-hero p,
+.gstore-partner-panel p {
+	margin: 0;
+	color: var(--partner-muted);
+	font-size: 14px;
+	line-height: 1.55;
+}
+
+.gstore-partner-tabs {
+	display: flex;
+	gap: 8px;
+	flex-wrap: wrap;
+}
+
+.gstore-partner-tabs a {
+	border: 1px solid rgba(31, 41, 51, 0.28);
+	border-radius: 6px;
+	color: #242424;
+	font-size: 13px;
+	font-weight: 700;
+	padding: 10px 14px;
+	text-decoration: none;
+}
+
+.gstore-partner-tabs a.is-active,
+.gstore-partner-tabs a:hover {
+	background: rgba(172, 145, 43, 0.1);
+	border-color: var(--partner-gold);
+	color: var(--partner-gold-dark);
+}
+
+.gstore-partner-stats {
+	display: grid;
+	grid-template-columns: repeat(4, minmax(0, 1fr));
+	gap: 18px;
+}
+
+.gstore-partner-stat {
+	display: grid;
+	grid-template-columns: 66px minmax(0, 1fr);
+	align-items: center;
+	gap: 16px;
+	min-height: 104px;
+	padding: 18px;
+}
+
+.gstore-partner-icon {
+	width: 58px;
+	height: 58px;
+	border-radius: 6px;
+	background: rgba(172, 145, 43, 0.1);
+	color: var(--partner-gold);
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	flex: 0 0 auto;
+}
+
+.gstore-partner-icon svg {
+	width: 30px;
+	height: 30px;
+	fill: none;
+	stroke: currentColor;
+	stroke-width: 1.9;
+	stroke-linecap: round;
+	stroke-linejoin: round;
+}
+
+.gstore-partner-stat span,
+.gstore-partner-balance span {
+	display: block;
+	font-size: 13px;
+	font-weight: 700;
+	color: #2b2b2b;
+}
+
+.gstore-partner-stat strong,
+.gstore-partner-balance strong {
+	display: block;
+	margin-top: 4px;
+	font-size: 25px;
+	line-height: 1.1;
+	letter-spacing: 0;
+	color: #070707;
+}
+
+.gstore-partner-stat small,
+.gstore-partner-balance small {
+	display: block;
+	margin-top: 5px;
+	font-size: 12px;
+	color: var(--partner-muted);
+}
+
+.gstore-partner-stat .is-status {
+	color: #138242;
+	font-weight: 800;
+}
+
+.gstore-partner-stat .is-status::after {
+	content: "";
+	display: inline-block;
+	width: 7px;
+	height: 7px;
+	margin-left: 7px;
+	border-radius: 999px;
+	background: #138242;
+	vertical-align: 1px;
+}
+
+.gstore-partner-link-panel {
+	display: grid;
+	grid-template-columns: 66px minmax(0, 1fr) auto auto;
+	align-items: center;
+	gap: 16px;
+	padding: 20px;
+}
+
+.gstore-partner-link-panel h3,
+.gstore-partner-panel h3 {
+	margin: 0 0 6px;
+	font-size: 18px;
+	line-height: 1.25;
+	letter-spacing: 0;
+}
+
+.gstore-partner-link-panel input {
+	width: 100%;
+	min-height: 44px;
+	margin-top: 8px;
+	border: 1px solid #d8dde5;
+	border-radius: 4px;
+	padding: 0 14px;
+	color: #374151;
+	background: #fff;
+}
+
+.gstore-myaccount__content .gstore-partner-account .button,
+.gstore-partner-account button.button {
+	min-height: 44px;
+	border-radius: 5px;
+	padding: 0 20px;
+	font-weight: 800;
+	white-space: nowrap;
+}
+
+.gstore-partner-primary-button,
+.gstore-partner-copy {
+	background: linear-gradient(180deg, #bda83c 0%, #9f881f 100%) !important;
+	border-color: #8f7a1c !important;
+	color: #fff !important;
+}
+
+.gstore-partner-share {
+	background: #fff !important;
+	border-color: #1f2933 !important;
+	color: #1f2933 !important;
+}
+
+.gstore-partner-panel {
+	padding: 20px;
+}
+
+.gstore-partner-panel__header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 16px;
+	margin-bottom: 14px;
+}
+
+.gstore-partner-panel__header h3 {
+	margin-bottom: 0;
+}
+
+.gstore-partner-panel__header a,
+.gstore-partner-panel__header span {
+	color: var(--partner-gold-dark);
+	font-size: 13px;
+	font-weight: 800;
+	text-decoration: none;
+}
+
+.gstore-partner-table-wrap {
+	overflow-x: auto;
+}
+
+.gstore-partner-table {
+	width: 100%;
+	border-collapse: collapse;
+	min-width: 760px;
+}
+
+.gstore-partner-table th,
+.gstore-partner-table td {
+	padding: 13px 14px;
+	border-bottom: 1px solid #e7e9ee;
+	text-align: left;
+	font-size: 13px;
+	vertical-align: middle;
+}
+
+.gstore-partner-table th {
+	color: #6b7280;
+	font-weight: 800;
+	background: #fafafa;
+}
+
+.gstore-partner-table td {
+	color: #1f2933;
+}
+
+.gstore-partner-pill {
+	display: inline-flex;
+	align-items: center;
+	min-height: 25px;
+	border-radius: 6px;
+	padding: 4px 9px;
+	font-size: 12px;
+	font-weight: 800;
+	background: rgba(172, 145, 43, 0.12);
+	color: #8a6810;
+}
+
+.gstore-partner-pill.is-success,
+.gstore-partner-pill.is-approved {
+	background: #e8f6ec;
+	color: #247044;
+}
+
+.gstore-partner-pill.is-warning,
+.gstore-partner-pill.is-pending {
+	background: #fff3d9;
+	color: #85610b;
+}
+
+.gstore-partner-pill.is-rejected,
+.gstore-partner-pill.is-cancelled {
+	background: #fbe8e8;
+	color: #982a2a;
+}
+
+.gstore-partner-bottom-grid,
+.gstore-partner-credit-grid {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+	gap: 20px;
+}
+
+.gstore-partner-balance {
+	display: grid;
+	grid-template-columns: 72px minmax(0, 1fr);
+	align-items: center;
+	gap: 18px;
+	margin: 18px 0;
+}
+
+.gstore-partner-balance.is-credit-view {
+	margin-top: 0;
+	padding-bottom: 18px;
+	border-bottom: 1px solid #eceef2;
+}
+
+.gstore-partner-how__body {
+	display: grid;
+	grid-template-columns: 72px minmax(0, 1fr);
+	gap: 18px;
+	align-items: start;
+	margin-top: 18px;
+}
+
+.gstore-partner-how ul {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: grid;
+	gap: 12px;
+}
+
+.gstore-partner-how li {
+	position: relative;
+	padding-left: 24px;
+	color: #4b5563;
+	font-size: 14px;
+	line-height: 1.45;
+}
+
+.gstore-partner-how li::before {
+	content: "\2713";
+	position: absolute;
+	left: 0;
+	top: 0;
+	color: var(--partner-gold);
+	font-weight: 900;
+}
+
+.gstore-partner-redemption-form {
+	display: grid;
+	gap: 14px;
+	margin-top: 18px;
+}
+
+.gstore-partner-redemption-form label span {
+	display: block;
+	margin-bottom: 6px;
+	color: #374151;
+	font-size: 13px;
+	font-weight: 800;
+}
+
+.gstore-partner-redemption-form input,
+.gstore-partner-redemption-form select,
+.gstore-partner-redemption-form textarea {
+	width: 100%;
+	border: 1px solid #d8dde5;
+	border-radius: 5px;
+	padding: 11px 12px;
+	background: #fff;
+	color: #111827;
+}
+
+.gstore-partner-redemption-list {
+	display: grid;
+	gap: 10px;
+	margin-top: 16px;
+}
+
+.gstore-partner-redemption {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 14px;
+	padding: 13px;
+	border: 1px solid #e5e7eb;
+	border-radius: 6px;
+	background: #fff;
+}
+
+.gstore-partner-redemption strong,
+.gstore-partner-redemption span,
+.gstore-partner-redemption small,
+.gstore-partner-redemption code {
+	display: block;
+}
+
+.gstore-partner-redemption > div:last-child {
+	display: grid;
+	justify-items: end;
+	gap: 5px;
+}
+
+@media (max-width: 1180px) {
+	.gstore-partner-stats {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+	}
+
+	.gstore-partner-link-panel {
+		grid-template-columns: 66px minmax(0, 1fr);
+	}
+}
+
+@media (max-width: 860px) {
+	.gstore-partner-bottom-grid,
+	.gstore-partner-credit-grid {
+		grid-template-columns: 1fr;
+	}
+}
+
+@media (max-width: 640px) {
+	.gstore-myaccount-nav__children {
+		margin-left: 34px;
+	}
+
+	.gstore-partner-hero,
+	.gstore-partner-panel,
+	.gstore-partner-link-panel {
+		padding: 16px;
+	}
+
+	.gstore-partner-hero h2 {
+		font-size: 24px;
+	}
+
+	.gstore-partner-stats {
+		grid-template-columns: 1fr;
+	}
+
+	.gstore-partner-stat,
+	.gstore-partner-link-panel,
+	.gstore-partner-balance,
+	.gstore-partner-how__body {
+		grid-template-columns: 54px minmax(0, 1fr);
+	}
+
+	.gstore-partner-icon {
+		width: 48px;
+		height: 48px;
+	}
+
+	.gstore-partner-icon svg {
+		width: 25px;
+		height: 25px;
+	}
+
+	.gstore-partner-link-panel .button {
+		grid-column: 1 / -1;
+		width: 100%;
+		justify-content: center;
+	}
+
+	.gstore-partner-table,
+	.gstore-partner-table tbody,
+	.gstore-partner-table tr,
+	.gstore-partner-table td {
+		display: block;
+		min-width: 0;
+		width: 100%;
+	}
+
+	.gstore-partner-table thead {
+		display: none;
+	}
+
+	.gstore-partner-table tr {
+		border: 1px solid #e5e7eb;
+		border-radius: 6px;
+		margin-bottom: 10px;
+		overflow: hidden;
+	}
+
+	.gstore-partner-table td {
+		display: flex;
+		justify-content: space-between;
+		gap: 14px;
+		padding: 10px 12px;
+		text-align: right;
+	}
+
+	.gstore-partner-table td::before {
+		content: attr(data-label);
+		color: #6b7280;
+		font-weight: 800;
+		text-align: left;
+	}
+
+	.gstore-partner-redemption {
+		align-items: flex-start;
+		flex-direction: column;
+	}
+
+	.gstore-partner-redemption > div:last-child {
+		justify-items: start;
+	}
+}

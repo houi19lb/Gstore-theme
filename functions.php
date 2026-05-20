@@ -1064,6 +1064,78 @@ function gstore_get_public_product_taxonomies() {
 }
 
 /**
+ * Indica se tags de produto devem ser noindex por padrao.
+ *
+ * @return bool
+ */
+function gstore_product_tags_noindex_by_default() {
+	return (bool) apply_filters( 'gstore_product_tags_noindex_by_default', true );
+}
+
+/**
+ * Slugs de tags de produto estrategicas que podem permanecer indexaveis.
+ *
+ * @return string[]
+ */
+function gstore_get_indexable_product_tag_slugs() {
+	$slugs = apply_filters( 'gstore_indexable_product_tag_slugs', array() );
+
+	return array_values(
+		array_unique(
+			array_filter(
+				array_map(
+					'sanitize_title',
+					(array) $slugs
+				)
+			)
+		)
+	);
+}
+
+/**
+ * Indica se uma tag de produto especifica deve ser indexavel.
+ *
+ * @param mixed $term Termo consultado.
+ * @return bool
+ */
+function gstore_is_indexable_product_tag( $term ) {
+	if ( ! $term instanceof WP_Term || 'product_tag' !== $term->taxonomy ) {
+		return true;
+	}
+
+	if ( ! gstore_product_tags_noindex_by_default() ) {
+		return true;
+	}
+
+	return in_array( sanitize_title( (string) $term->slug ), gstore_get_indexable_product_tag_slugs(), true );
+}
+
+/**
+ * IDs de tags de produto estrategicas que podem aparecer no sitemap.
+ *
+ * @return int[]
+ */
+function gstore_get_indexable_product_tag_ids_for_sitemap() {
+	$slugs = gstore_get_indexable_product_tag_slugs();
+	if ( empty( $slugs ) || ! taxonomy_exists( 'product_tag' ) ) {
+		return array();
+	}
+
+	$term_ids = get_terms(
+		array(
+			'taxonomy'   => 'product_tag',
+			'hide_empty' => false,
+			'slug'       => $slugs,
+			'fields'     => 'ids',
+		)
+	);
+
+	return is_wp_error( $term_ids )
+		? array()
+		: array_values( array_unique( array_filter( array_map( 'absint', (array) $term_ids ) ) ) );
+}
+
+/**
  * Indica se o termo de produto deve ser indexavel.
  *
  * @param mixed $term Termo consultado.
@@ -1072,6 +1144,10 @@ function gstore_get_public_product_taxonomies() {
 function gstore_is_indexable_product_term( $term ) {
 	if ( ! $term instanceof WP_Term || ! in_array( $term->taxonomy, gstore_get_public_product_taxonomies(), true ) ) {
 		return true;
+	}
+
+	if ( 'product_tag' === $term->taxonomy ) {
+		return gstore_is_indexable_product_tag( $term );
 	}
 
 	$blocked_slugs = apply_filters(
@@ -1314,6 +1390,25 @@ add_filter( 'rank_math/frontend/robots', 'gstore_catalog_array_robots_directives
 add_filter( 'aioseo_robots_meta', 'gstore_catalog_array_robots_directives', 20 );
 
 /**
+ * Remove product_tag do indice de sitemaps nativo quando nao ha allowlist estrategica.
+ *
+ * @param array $taxonomies Taxonomias do sitemap.
+ * @return array
+ */
+function gstore_filter_public_product_sitemap_taxonomies( $taxonomies ) {
+	if ( ! is_array( $taxonomies ) || ! gstore_product_tags_noindex_by_default() ) {
+		return $taxonomies;
+	}
+
+	if ( empty( gstore_get_indexable_product_tag_slugs() ) ) {
+		unset( $taxonomies['product_tag'] );
+	}
+
+	return $taxonomies;
+}
+add_filter( 'wp_sitemaps_taxonomies', 'gstore_filter_public_product_sitemap_taxonomies', 20 );
+
+/**
  * Mantem sitemaps nativos livres de categorias vazias.
  *
  * @param array  $args     Args de get_terms().
@@ -1321,6 +1416,27 @@ add_filter( 'aioseo_robots_meta', 'gstore_catalog_array_robots_directives', 20 )
  * @return array
  */
 function gstore_filter_product_taxonomy_sitemap_args( $args, $taxonomy ) {
+	if ( 'product_tag' === $taxonomy ) {
+		$args['hide_empty'] = true;
+
+		if ( ! gstore_product_tags_noindex_by_default() ) {
+			return $args;
+		}
+
+		$allowed_ids = gstore_get_indexable_product_tag_ids_for_sitemap();
+		if ( empty( $allowed_ids ) ) {
+			$args['include'] = array( 0 );
+			return $args;
+		}
+
+		$current_include = array_values( array_unique( array_filter( array_map( 'absint', (array) ( $args['include'] ?? array() ) ) ) ) );
+		$args['include'] = empty( $current_include )
+			? $allowed_ids
+			: array_values( array_intersect( $current_include, $allowed_ids ) );
+
+		return $args;
+	}
+
 	if ( in_array( $taxonomy, gstore_get_public_product_taxonomies(), true ) ) {
 		$args['hide_empty'] = true;
 		$args['exclude']    = array_values(
@@ -8713,6 +8829,11 @@ require_once get_theme_file_path( 'inc/informativo-airports.php' );
 require_once get_theme_file_path( 'inc/gstore-vip-account.php' );
 
 /**
+ * Area Revendedor em Minha conta.
+ */
+require_once get_theme_file_path( 'inc/gstore-partner-account.php' );
+
+/**
  * Função helper para fazer log de debug.
  *
  * @param string $location Localização (arquivo:linha).
@@ -9868,6 +9989,7 @@ function gstore_get_myaccount_icon( $endpoint ) {
 		'edit-address'    => '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>',
 		'edit-account'    => '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>',
 		'vip'             => '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m2 4 3 12h14l3-12-6 7-4-7-4 7-6-7z"></path><path d="M5 20h14"></path></svg>',
+		'revendedor'      => '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M22 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>',
 		'customer-logout' => '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>',
 		'payment-methods' => '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg>',
 	);

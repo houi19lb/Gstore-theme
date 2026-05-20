@@ -11,6 +11,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 $current_user = wp_get_current_user();
+$partner_view = isset( $_GET['view'] ) ? sanitize_key( wp_unslash( $_GET['view'] ) ) : 'painel';
+$partner_view = in_array( $partner_view, array( 'painel', 'vendas', 'creditos' ), true ) ? $partner_view : 'painel';
 ?>
 
 <nav class="gstore-myaccount-nav" aria-label="<?php esc_attr_e( 'Navegação da conta', 'gstore' ); ?>">
@@ -52,6 +54,25 @@ $current_user = wp_get_current_user();
 						<?php endif; ?>
 					<?php endif; ?>
 				</a>
+				<?php if ( 'revendedor' === $endpoint && $is_current ) : ?>
+					<ul class="gstore-myaccount-nav__children">
+						<?php
+						$partner_children = array(
+							'painel'   => __( 'Meu Painel', 'gstore' ),
+							'vendas'   => __( 'Minhas Vendas', 'gstore' ),
+							'creditos' => __( 'Meus Creditos', 'gstore' ),
+						);
+						foreach ( $partner_children as $child_view => $child_label ) :
+							$child_url = add_query_arg( 'view', $child_view, wc_get_account_endpoint_url( 'revendedor' ) );
+							?>
+							<li class="<?php echo esc_attr( $partner_view === $child_view ? 'is-active' : '' ); ?>">
+								<a href="<?php echo esc_url( $child_url ); ?>" <?php echo $partner_view === $child_view ? 'aria-current="page"' : ''; ?>>
+									<?php echo esc_html( $child_label ); ?>
+								</a>
+							</li>
+						<?php endforeach; ?>
+					</ul>
+				<?php endif; ?>
 			</li>
 		<?php endforeach; ?>
 	</ul>
