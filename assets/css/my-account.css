@@ -2563,24 +2563,24 @@ form.woocommerce-form {
 
 .gstore-partner-stat {
 	display: grid;
-	grid-template-columns: 28px minmax(0, 1fr);
+	grid-template-columns: 24px minmax(0, 1fr);
 	align-items: start;
-	gap: 10px;
+	gap: 8px;
 	min-height: 104px;
-	padding: 18px;
+	padding: 18px 14px;
 }
 
 .gstore-partner-stat .gstore-partner-icon {
-	width: 24px;
-	height: 24px;
+	width: 22px;
+	height: 22px;
 	margin-top: 1px;
 	border-radius: 0;
 	background: transparent;
 }
 
 .gstore-partner-stat .gstore-partner-icon svg {
-	width: 22px;
-	height: 22px;
+	width: 21px;
+	height: 21px;
 	stroke-width: 2.2;
 }
 
@@ -2612,6 +2612,10 @@ form.woocommerce-form {
 	font-size: 13px;
 	font-weight: 700;
 	color: #2b2b2b;
+}
+
+.gstore-partner-stat span {
+	white-space: nowrap;
 }
 
 .gstore-partner-stat strong,
@@ -3094,7 +3098,7 @@ form.woocommerce-form {
 	}
 
 	.gstore-partner-stat {
-		grid-template-columns: 28px minmax(0, 1fr);
+		grid-template-columns: 24px minmax(0, 1fr);
 	}
 
 	.gstore-partner-icon {
