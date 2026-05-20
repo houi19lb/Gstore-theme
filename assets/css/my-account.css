@@ -2563,11 +2563,25 @@ form.woocommerce-form {
 
 .gstore-partner-stat {
 	display: grid;
-	grid-template-columns: 66px minmax(0, 1fr);
-	align-items: center;
-	gap: 16px;
+	grid-template-columns: 28px minmax(0, 1fr);
+	align-items: start;
+	gap: 10px;
 	min-height: 104px;
 	padding: 18px;
+}
+
+.gstore-partner-stat .gstore-partner-icon {
+	width: 24px;
+	height: 24px;
+	margin-top: 1px;
+	border-radius: 0;
+	background: transparent;
+}
+
+.gstore-partner-stat .gstore-partner-icon svg {
+	width: 22px;
+	height: 22px;
+	stroke-width: 2.2;
 }
 
 .gstore-partner-icon {
@@ -2875,6 +2889,167 @@ form.woocommerce-form {
 	gap: 5px;
 }
 
+.gstore-partner-contract {
+	margin-top: 0;
+}
+
+.gstore-partner-contract .gstore-account-contract__header {
+	align-items: flex-start;
+}
+
+.gstore-partner-contract .gstore-account-contract__title {
+	margin: 0 0 4px;
+	font-size: 19px;
+	line-height: 1.25;
+	letter-spacing: 0;
+}
+
+.gstore-partner-contract .gstore-account-contract__status {
+	margin: 0;
+	line-height: 1.5;
+}
+
+.gstore-partner-contract .gstore-account-contract__preview {
+	background: #f5f6f8;
+	padding: 20px;
+}
+
+.gstore-partner-contract-document {
+	max-width: 900px;
+	margin: 0 auto;
+	padding: 30px;
+	border: 1px solid #d9dde4;
+	background: #fff;
+	color: #1f2933;
+	font-size: 14px;
+	line-height: 1.65;
+	box-shadow: 0 10px 28px rgba(15, 23, 42, 0.08);
+}
+
+.gstore-partner-contract-document__header {
+	display: flex;
+	align-items: flex-start;
+	justify-content: space-between;
+	gap: 18px;
+	margin-bottom: 22px;
+	padding-bottom: 18px;
+	border-bottom: 2px solid #1f2933;
+}
+
+.gstore-partner-contract-document__header strong {
+	display: block;
+	color: #111827;
+	font-size: 18px;
+	line-height: 1.25;
+}
+
+.gstore-partner-contract-document__header span {
+	color: var(--partner-muted);
+	font-size: 12px;
+	font-weight: 800;
+	text-transform: uppercase;
+	white-space: nowrap;
+}
+
+.gstore-partner-contract-document table {
+	width: 100%;
+	margin: 0 0 24px;
+	border-collapse: collapse;
+}
+
+.gstore-partner-contract-document th,
+.gstore-partner-contract-document td {
+	padding: 10px 12px;
+	border: 1px solid #e5e7eb;
+	text-align: left;
+	vertical-align: top;
+	word-break: break-word;
+}
+
+.gstore-partner-contract-document th {
+	width: 210px;
+	background: #f9fafb;
+	color: #374151;
+	font-size: 12px;
+	font-weight: 800;
+	text-transform: uppercase;
+}
+
+.gstore-partner-contract-document h4 {
+	margin: 20px 0 8px;
+	color: #111827;
+	font-size: 15px;
+	line-height: 1.35;
+	letter-spacing: 0;
+}
+
+.gstore-partner-contract-document p {
+	margin: 0;
+	color: #374151;
+}
+
+.gstore-partner-contract-document__signatures {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 24px;
+	margin-top: 34px;
+}
+
+.gstore-partner-contract-document__signatures div {
+	padding-top: 12px;
+	border-top: 1px solid #111827;
+}
+
+.gstore-partner-contract-document__signatures span,
+.gstore-partner-contract-document__signatures strong {
+	display: block;
+}
+
+.gstore-partner-contract-document__signatures span {
+	color: var(--partner-muted);
+	font-size: 12px;
+	font-weight: 800;
+	text-transform: uppercase;
+}
+
+.gstore-partner-contract-document__signatures strong {
+	margin-top: 3px;
+	color: #111827;
+	font-size: 14px;
+}
+
+.gstore-partner-contract-accept {
+	display: grid;
+	gap: 14px;
+	margin-top: 18px;
+	padding: 16px;
+	border: 1px solid rgba(172, 145, 43, 0.28);
+	border-radius: 6px;
+	background: rgba(172, 145, 43, 0.08);
+}
+
+.gstore-partner-contract-accept label {
+	display: flex;
+	align-items: flex-start;
+	gap: 10px;
+	margin: 0;
+	color: #1f2933;
+	font-size: 14px;
+	font-weight: 700;
+	line-height: 1.45;
+}
+
+.gstore-partner-contract-accept input[type="checkbox"] {
+	width: 18px;
+	height: 18px;
+	margin-top: 1px;
+	flex: 0 0 auto;
+}
+
+.gstore-partner-contract-accept .button {
+	justify-self: start;
+}
+
 @media (max-width: 1180px) {
 	.gstore-partner-stats {
 		grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -2916,6 +3091,10 @@ form.woocommerce-form {
 	.gstore-partner-balance,
 	.gstore-partner-how__body {
 		grid-template-columns: 54px minmax(0, 1fr);
+	}
+
+	.gstore-partner-stat {
+		grid-template-columns: 28px minmax(0, 1fr);
 	}
 
 	.gstore-partner-icon {
@@ -2976,5 +3155,44 @@ form.woocommerce-form {
 
 	.gstore-partner-redemption > div:last-child {
 		justify-items: start;
+	}
+
+	.gstore-partner-contract .gstore-account-contract__preview {
+		padding: 12px;
+	}
+
+	.gstore-partner-contract-document {
+		padding: 20px;
+	}
+
+	.gstore-partner-contract-document__header,
+	.gstore-partner-contract-document__signatures {
+		grid-template-columns: 1fr;
+	}
+
+	.gstore-partner-contract-document__header {
+		display: grid;
+	}
+
+	.gstore-partner-contract-document__header span {
+		white-space: normal;
+	}
+
+	.gstore-partner-contract-document table,
+	.gstore-partner-contract-document tbody,
+	.gstore-partner-contract-document tr,
+	.gstore-partner-contract-document th,
+	.gstore-partner-contract-document td {
+		display: block;
+		width: 100%;
+	}
+
+	.gstore-partner-contract-document th {
+		border-bottom: 0;
+	}
+
+	.gstore-partner-contract-accept .button {
+		width: 100%;
+		justify-content: center;
 	}
 }

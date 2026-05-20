@@ -101,6 +101,33 @@ if ( ! function_exists( 'gstore_partner_account_request_redemption' ) ) {
 	}
 }
 
+if ( ! function_exists( 'gstore_partner_account_contract_version' ) ) {
+	function gstore_partner_account_contract_version() {
+		return (string) apply_filters( 'gstore_partner_contract_version', '20260520' );
+	}
+}
+
+if ( ! function_exists( 'gstore_partner_account_contract_is_accepted' ) ) {
+	function gstore_partner_account_contract_is_accepted( $user_id = null ) {
+		$user_id = null === $user_id ? get_current_user_id() : absint( $user_id );
+		if ( $user_id <= 0 ) {
+			return false;
+		}
+
+		$accepted = (bool) get_user_meta( $user_id, '_gstore_partner_contract_accepted', true );
+		$version  = (string) get_user_meta( $user_id, '_gstore_partner_contract_version', true );
+
+		return $accepted && $version === gstore_partner_account_contract_version();
+	}
+}
+
+if ( ! function_exists( 'gstore_partner_account_contract_accepted_at' ) ) {
+	function gstore_partner_account_contract_accepted_at( $user_id = null ) {
+		$user_id = null === $user_id ? get_current_user_id() : absint( $user_id );
+		return $user_id > 0 ? (string) get_user_meta( $user_id, '_gstore_partner_contract_accepted_at', true ) : '';
+	}
+}
+
 if ( ! function_exists( 'gstore_partner_account_handle_redemption_submission' ) ) {
 	function gstore_partner_account_handle_redemption_submission() {
 		if ( empty( $_POST['gstore_partner_redemption_action'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Missing
@@ -109,6 +136,15 @@ if ( ! function_exists( 'gstore_partner_account_handle_redemption_submission' ) 
 
 		if ( ! is_user_logged_in() || ! gstore_partner_account_is_visible() ) {
 			return;
+		}
+
+		if ( ! gstore_partner_account_contract_is_accepted( get_current_user_id() ) ) {
+			if ( function_exists( 'wc_add_notice' ) ) {
+				wc_add_notice( __( 'Aceite o contrato do Programa Revendedor antes de solicitar resgates.', 'gstore' ), 'error' );
+			}
+
+			wp_safe_redirect( gstore_partner_account_view_url( 'contrato' ) );
+			exit;
 		}
 
 		$nonce = isset( $_POST['gstore_partner_redemption_nonce'] ) ? sanitize_text_field( wp_unslash( $_POST['gstore_partner_redemption_nonce'] ) ) : '';
@@ -137,6 +173,57 @@ if ( ! function_exists( 'gstore_partner_account_handle_redemption_submission' ) 
 	}
 }
 add_action( 'template_redirect', 'gstore_partner_account_handle_redemption_submission', 8 );
+
+if ( ! function_exists( 'gstore_partner_account_handle_contract_submission' ) ) {
+	function gstore_partner_account_handle_contract_submission() {
+		if ( empty( $_POST['gstore_partner_contract_action'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Missing
+			return;
+		}
+
+		if ( ! is_user_logged_in() || ! gstore_partner_account_is_visible() ) {
+			return;
+		}
+
+		$nonce = isset( $_POST['gstore_partner_contract_nonce'] ) ? sanitize_text_field( wp_unslash( $_POST['gstore_partner_contract_nonce'] ) ) : '';
+		if ( ! wp_verify_nonce( $nonce, 'gstore_partner_contract_accept' ) ) {
+			if ( function_exists( 'wc_add_notice' ) ) {
+				wc_add_notice( __( 'Nao foi possivel validar o aceite do contrato. Atualize a pagina e tente novamente.', 'gstore' ), 'error' );
+			}
+			return;
+		}
+
+		if ( empty( $_POST['gstore_partner_contract_accept'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Missing
+			if ( function_exists( 'wc_add_notice' ) ) {
+				wc_add_notice( __( 'Voce precisa aceitar os termos do contrato para acessar o painel de revendedor.', 'gstore' ), 'error' );
+			}
+			wp_safe_redirect( gstore_partner_account_view_url( 'contrato' ) );
+			exit;
+		}
+
+		$user_id = get_current_user_id();
+		update_user_meta( $user_id, '_gstore_partner_contract_accepted', '1' );
+		update_user_meta( $user_id, '_gstore_partner_contract_version', gstore_partner_account_contract_version() );
+		update_user_meta( $user_id, '_gstore_partner_contract_accepted_at', current_time( 'mysql' ) );
+		update_user_meta(
+			$user_id,
+			'_gstore_partner_contract_acceptance',
+			array(
+				'version'    => gstore_partner_account_contract_version(),
+				'accepted_at' => current_time( 'mysql' ),
+				'ip'         => isset( $_SERVER['REMOTE_ADDR'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ) ) : '',
+				'user_agent' => isset( $_SERVER['HTTP_USER_AGENT'] ) ? substr( sanitize_text_field( wp_unslash( $_SERVER['HTTP_USER_AGENT'] ) ), 0, 250 ) : '',
+			)
+		);
+
+		if ( function_exists( 'wc_add_notice' ) ) {
+			wc_add_notice( __( 'Contrato de revendedor aceito com sucesso.', 'gstore' ), 'success' );
+		}
+
+		wp_safe_redirect( gstore_partner_account_view_url( 'painel' ) );
+		exit;
+	}
+}
+add_action( 'template_redirect', 'gstore_partner_account_handle_contract_submission', 8 );
 
 if ( ! function_exists( 'gstore_partner_account_view_url' ) ) {
 	function gstore_partner_account_view_url( $view ) {
@@ -271,6 +358,127 @@ if ( ! function_exists( 'gstore_partner_account_render_redemptions' ) ) {
 	}
 }
 
+if ( ! function_exists( 'gstore_partner_account_render_contract' ) ) {
+	function gstore_partner_account_render_contract( $data, $accepted = false ) {
+		$user         = wp_get_current_user();
+		$partner      = isset( $data['partner'] ) && is_array( $data['partner'] ) ? $data['partner'] : array();
+		$settings     = isset( $data['settings'] ) && is_array( $data['settings'] ) ? $data['settings'] : array();
+		$accepted_at  = gstore_partner_account_contract_accepted_at( $user->ID );
+		$commission   = isset( $partner['commissionPercent'] )
+			? (string) $partner['commissionPercent']
+			: ( isset( $settings['defaultPercent'] ) ? (string) $settings['defaultPercent'] : '5' );
+		$commission   = rtrim( rtrim( $commission, '0' ), '.' );
+		$commission   = '' === $commission ? '0' : $commission;
+		$referral_url = isset( $partner['url'] ) ? (string) $partner['url'] : '';
+		$slug         = isset( $partner['slug'] ) ? (string) $partner['slug'] : '';
+		?>
+		<section class="gstore-account-contract gstore-partner-contract">
+			<header class="gstore-account-contract__header">
+				<div>
+					<h3 class="gstore-account-contract__title"><?php esc_html_e( 'Contrato do Programa Revendedor', 'gstore' ); ?></h3>
+					<p class="gstore-account-contract__status">
+						<?php if ( $accepted && $accepted_at ) : ?>
+							<?php
+							printf(
+								/* translators: %s: accepted date. */
+								esc_html__( 'Aceito em %s.', 'gstore' ),
+								esc_html( mysql2date( get_option( 'date_format' ) . ' H:i', $accepted_at ) )
+							);
+							?>
+						<?php else : ?>
+							<?php esc_html_e( 'Aceite obrigatorio para liberar o painel de revendedor.', 'gstore' ); ?>
+						<?php endif; ?>
+					</p>
+				</div>
+				<span class="<?php echo esc_attr( 'gstore-partner-pill ' . ( $accepted ? 'is-approved' : 'is-pending' ) ); ?>">
+					<?php echo esc_html( $accepted ? __( 'Aceito', 'gstore' ) : __( 'Pendente', 'gstore' ) ); ?>
+				</span>
+			</header>
+
+			<div class="gstore-account-contract__preview">
+				<div class="gstore-partner-contract-document">
+					<div class="gstore-partner-contract-document__header">
+						<strong><?php esc_html_e( 'Termos de Participacao - Programa Revendedor Armastore', 'gstore' ); ?></strong>
+						<span>
+							<?php
+							printf(
+								/* translators: %s: contract version. */
+								esc_html__( 'Versao %s', 'gstore' ),
+								esc_html( gstore_partner_account_contract_version() )
+							);
+							?>
+						</span>
+					</div>
+
+					<table>
+						<tbody>
+							<tr>
+								<th><?php esc_html_e( 'Revendedor', 'gstore' ); ?></th>
+								<td><?php echo esc_html( $user->display_name ); ?></td>
+							</tr>
+							<tr>
+								<th><?php esc_html_e( 'E-mail', 'gstore' ); ?></th>
+								<td><?php echo esc_html( $user->user_email ); ?></td>
+							</tr>
+							<tr>
+								<th><?php esc_html_e( 'Slug de indicacao', 'gstore' ); ?></th>
+								<td><?php echo esc_html( $slug ); ?></td>
+							</tr>
+							<tr>
+								<th><?php esc_html_e( 'Comissao vigente', 'gstore' ); ?></th>
+								<td><?php echo esc_html( $commission ); ?>%</td>
+							</tr>
+							<tr>
+								<th><?php esc_html_e( 'Link de indicacao', 'gstore' ); ?></th>
+								<td><?php echo esc_html( $referral_url ); ?></td>
+							</tr>
+						</tbody>
+					</table>
+
+					<h4><?php esc_html_e( '1. Objeto', 'gstore' ); ?></h4>
+					<p><?php esc_html_e( 'O presente instrumento regula a participacao do revendedor no programa de indicacao da Armastore, por meio de link exclusivo associado ao seu cadastro.', 'gstore' ); ?></p>
+
+					<h4><?php esc_html_e( '2. Regras de comissionamento', 'gstore' ); ?></h4>
+					<p><?php esc_html_e( 'A comissao e calculada sobre o subtotal pago dos produtos, apos descontos, sem incluir frete, taxas ou impostos. Pedidos cancelados, reembolsados ou invalidados podem gerar estorno de creditos.', 'gstore' ); ?></p>
+
+					<h4><?php esc_html_e( '3. Uso do link e restricoes', 'gstore' ); ?></h4>
+					<p><?php esc_html_e( 'O revendedor deve divulgar seu link de forma clara e regular. Indicacoes para compras feitas pelo proprio revendedor, ou por e-mail de cobranca equivalente ao seu cadastro, nao geram credito.', 'gstore' ); ?></p>
+
+					<h4><?php esc_html_e( '4. Creditos e resgates', 'gstore' ); ?></h4>
+					<p><?php esc_html_e( 'Os creditos sao liberados conforme aprovacao do pagamento e podem ser resgatados pelos metodos disponiveis no painel. Solicitacoes pendentes reservam saldo ate aprovacao, rejeicao ou cancelamento administrativo.', 'gstore' ); ?></p>
+
+					<h4><?php esc_html_e( '5. Auditoria e alteracoes', 'gstore' ); ?></h4>
+					<p><?php esc_html_e( 'A Armastore pode auditar vendas, corrigir lancamentos e alterar regras do programa mediante atualizacao da versao destes termos. A continuidade de uso do painel depende do aceite dos termos vigentes.', 'gstore' ); ?></p>
+
+					<div class="gstore-partner-contract-document__signatures">
+						<div>
+							<span><?php esc_html_e( 'Armastore', 'gstore' ); ?></span>
+							<strong><?php esc_html_e( 'Administracao do programa', 'gstore' ); ?></strong>
+						</div>
+						<div>
+							<span><?php esc_html_e( 'Revendedor', 'gstore' ); ?></span>
+							<strong><?php echo esc_html( $user->display_name ); ?></strong>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<?php if ( ! $accepted ) : ?>
+				<form class="gstore-partner-contract-accept" method="post">
+					<input type="hidden" name="gstore_partner_contract_action" value="accept" />
+					<?php wp_nonce_field( 'gstore_partner_contract_accept', 'gstore_partner_contract_nonce' ); ?>
+					<label>
+						<input type="checkbox" name="gstore_partner_contract_accept" value="1" required />
+						<span><?php esc_html_e( 'Li e concordo com os termos do contrato do Programa Revendedor Armastore.', 'gstore' ); ?></span>
+					</label>
+					<button type="submit" class="button gstore-partner-primary-button"><?php esc_html_e( 'Aceitar contrato e acessar painel', 'gstore' ); ?></button>
+				</form>
+			<?php endif; ?>
+		</section>
+		<?php
+	}
+}
+
 if ( ! function_exists( 'gstore_partner_account_render_endpoint' ) ) {
 	function gstore_partner_account_render_endpoint() {
 		$data = gstore_partner_account_get_data();
@@ -286,13 +494,18 @@ if ( ! function_exists( 'gstore_partner_account_render_endpoint' ) ) {
 			return;
 		}
 
-		$user      = isset( $data['user'] ) && is_array( $data['user'] ) ? $data['user'] : array();
-		$partner   = $data['partner'];
-		$settings  = isset( $data['settings'] ) && is_array( $data['settings'] ) ? $data['settings'] : array();
-		$sales     = isset( $partner['sales'] ) && is_array( $partner['sales'] ) ? $partner['sales'] : array();
+		$user        = isset( $data['user'] ) && is_array( $data['user'] ) ? $data['user'] : array();
+		$partner     = $data['partner'];
+		$settings    = isset( $data['settings'] ) && is_array( $data['settings'] ) ? $data['settings'] : array();
+		$sales       = isset( $partner['sales'] ) && is_array( $partner['sales'] ) ? $partner['sales'] : array();
 		$redemptions = isset( $partner['redemptions'] ) && is_array( $partner['redemptions'] ) ? $partner['redemptions'] : array();
-		$view      = isset( $_GET['view'] ) ? sanitize_key( wp_unslash( $_GET['view'] ) ) : 'painel';
-		$view      = in_array( $view, array( 'painel', 'vendas', 'creditos' ), true ) ? $view : 'painel';
+		$view              = isset( $_GET['view'] ) ? sanitize_key( wp_unslash( $_GET['view'] ) ) : 'painel';
+		$view              = in_array( $view, array( 'painel', 'vendas', 'creditos', 'contrato' ), true ) ? $view : 'painel';
+		$contract_accepted = gstore_partner_account_contract_is_accepted( get_current_user_id() );
+		if ( ! $contract_accepted ) {
+			$view = 'contrato';
+		}
+
 		$name      = ! empty( $user['name'] ) ? $user['name'] : wp_get_current_user()->display_name;
 		$min_value = isset( $settings['minRedeemAmount'] ) ? $settings['minRedeemAmount'] : '10.00';
 		$commission_display = rtrim( rtrim( (string) ( isset( $partner['commissionPercent'] ) ? $partner['commissionPercent'] : 0 ), '0' ), '.' );
@@ -316,6 +529,7 @@ if ( ! function_exists( 'gstore_partner_account_render_endpoint' ) ) {
 				<a class="<?php echo 'painel' === $view ? 'is-active' : ''; ?>" href="<?php echo esc_url( gstore_partner_account_view_url( 'painel' ) ); ?>"><?php esc_html_e( 'Meu Painel', 'gstore' ); ?></a>
 				<a class="<?php echo 'vendas' === $view ? 'is-active' : ''; ?>" href="<?php echo esc_url( gstore_partner_account_view_url( 'vendas' ) ); ?>"><?php esc_html_e( 'Minhas Vendas', 'gstore' ); ?></a>
 				<a class="<?php echo 'creditos' === $view ? 'is-active' : ''; ?>" href="<?php echo esc_url( gstore_partner_account_view_url( 'creditos' ) ); ?>"><?php esc_html_e( 'Meus Creditos', 'gstore' ); ?></a>
+				<a class="<?php echo 'contrato' === $view ? 'is-active' : ''; ?>" href="<?php echo esc_url( gstore_partner_account_view_url( 'contrato' ) ); ?>"><?php esc_html_e( 'Contrato', 'gstore' ); ?></a>
 			</nav>
 
 			<?php if ( 'painel' === $view ) : ?>
@@ -381,7 +595,7 @@ if ( ! function_exists( 'gstore_partner_account_render_endpoint' ) ) {
 					</header>
 					<?php gstore_partner_account_render_sales_table( $sales ); ?>
 				</section>
-			<?php else : ?>
+			<?php elseif ( 'creditos' === $view ) : ?>
 				<div class="gstore-partner-credit-grid">
 					<section class="gstore-partner-panel">
 						<h3><?php esc_html_e( 'Solicitar resgate', 'gstore' ); ?></h3>
@@ -428,6 +642,8 @@ if ( ! function_exists( 'gstore_partner_account_render_endpoint' ) ) {
 						<?php gstore_partner_account_render_redemptions( $redemptions ); ?>
 					</section>
 				</div>
+			<?php else : ?>
+				<?php gstore_partner_account_render_contract( $data, $contract_accepted ); ?>
 			<?php endif; ?>
 		</div>
 		<script>

@@ -12,7 +12,10 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 $current_user = wp_get_current_user();
 $partner_view = isset( $_GET['view'] ) ? sanitize_key( wp_unslash( $_GET['view'] ) ) : 'painel';
-$partner_view = in_array( $partner_view, array( 'painel', 'vendas', 'creditos' ), true ) ? $partner_view : 'painel';
+$partner_view = in_array( $partner_view, array( 'painel', 'vendas', 'creditos', 'contrato' ), true ) ? $partner_view : 'painel';
+if ( function_exists( 'gstore_partner_account_is_visible' ) && function_exists( 'gstore_partner_account_contract_is_accepted' ) && gstore_partner_account_is_visible() && ! gstore_partner_account_contract_is_accepted( get_current_user_id() ) ) {
+	$partner_view = 'contrato';
+}
 ?>
 
 <nav class="gstore-myaccount-nav" aria-label="<?php esc_attr_e( 'Navegação da conta', 'gstore' ); ?>">
@@ -61,6 +64,7 @@ $partner_view = in_array( $partner_view, array( 'painel', 'vendas', 'creditos' )
 							'painel'   => __( 'Meu Painel', 'gstore' ),
 							'vendas'   => __( 'Minhas Vendas', 'gstore' ),
 							'creditos' => __( 'Meus Creditos', 'gstore' ),
+							'contrato' => __( 'Contrato', 'gstore' ),
 						);
 						foreach ( $partner_children as $child_view => $child_label ) :
 							$child_url = add_query_arg( 'view', $child_view, wc_get_account_endpoint_url( 'revendedor' ) );

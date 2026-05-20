@@ -946,7 +946,6 @@ function gstore_resolve_legacy_category_public_url( $legacy_url ) {
 	}
 
 	$catalog_filters = array(
-		'tiro-longo' => 'tiro-longo',
 		'lancamento' => 'lancamento',
 	);
 	if ( isset( $catalog_filters[ $legacy_path ] ) ) {
