@@ -61,9 +61,14 @@
 
 						<!-- wp:group {"className":"Gstore-blog-card__content","layout":{"type":"flex","orientation":"vertical","justifyContent":"space-between"}} -->
 						<div class="wp-block-group Gstore-blog-card__content">
-							<!-- wp:post-date {"format":"d/m/Y","className":"Gstore-blog-card__date"} /-->
+							<!-- wp:group {"className":"Gstore-blog-card__meta-row","layout":{"type":"flex","flexWrap":"wrap"}} -->
+							<div class="wp-block-group Gstore-blog-card__meta-row">
+								<!-- wp:post-terms {"term":"post_tag","separator":"","className":"Gstore-blog-card__badge"} /-->
+								<!-- wp:post-date {"format":"d M Y","className":"Gstore-blog-card__date"} /-->
+							</div>
+							<!-- /wp:group -->
 							<!-- wp:post-title {"isLink":true,"level":3,"className":"Gstore-blog-card__title"} /-->
-							<!-- wp:post-excerpt {"moreText":"Ler mais","excerptLength":25,"className":"Gstore-blog-card__excerpt"} /-->
+							<!-- wp:post-excerpt {"moreText":"Continuar lendo","excerptLength":22,"className":"Gstore-blog-card__excerpt"} /-->
 						</div>
 						<!-- /wp:group -->
 					</article>
