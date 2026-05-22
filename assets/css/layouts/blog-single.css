@@ -476,7 +476,7 @@
 }
 
 .Gstore-blog-single-related__card:hover {
-	border-color: rgba(181, 166, 66, 0.7);
+	border-color: var(--gstore-color-accent, #b5a642);
 	box-shadow: 0 16px 34px rgba(15, 23, 42, 0.12);
 	transform: translateY(-4px);
 }
@@ -579,7 +579,7 @@
 	border: 1px solid var(--gstore-color-accent, #b5a642);
 	border-radius: 8px;
 	background: rgba(255, 255, 255, 0.86);
-	color: #a07400;
+	color: var(--gstore-color-accent, #b5a642);
 	font-size: 0.76rem;
 	font-weight: 800;
 	line-height: 1;
@@ -678,7 +678,7 @@
 	display: inline-flex;
 	align-items: center;
 	gap: 8px;
-	color: #b17c00;
+	color: var(--gstore-color-accent, #b5a642);
 	font-size: 0.95rem;
 	font-weight: 800;
 	text-decoration: none;
