@@ -2,9 +2,16 @@
 <div class="wp-block-group alignfull Gstore-home-section Gstore-home-blog">
 	<!-- wp:group {"className":"Gstore-home-section__header","layout":{"type":"constrained","contentSize":"780px"}} -->
 	<div class="wp-block-group Gstore-home-section__header">
-		<!-- wp:paragraph {"className":"Gstore-home-section__eyebrow"} -->
-		<p class="Gstore-home-section__eyebrow">conteúdo {{store_display_name}}</p>
-		<!-- /wp:paragraph -->
+		<!-- wp:html -->
+		<div class="Gstore-home-blog__kicker">
+			<span class="Gstore-home-blog__kicker-line" aria-hidden="true"></span>
+			<a class="Gstore-home-blog__eyebrow-link" href="/blog/" aria-label="Acessar blog {{store_display_name}}">
+				<i class="fa-solid fa-shield-halved" aria-hidden="true"></i>
+				<span>Blog {{store_display_name}}</span>
+			</a>
+			<span class="Gstore-home-blog__kicker-line" aria-hidden="true"></span>
+		</div>
+		<!-- /wp:html -->
 
 		<!-- wp:heading {"textAlign":"center","level":3,"fontSize":"large"} -->
 		<h3 class="wp-block-heading has-text-align-center has-large-font-size">Fique por dentro das novidades e análises técnicas</h3>
@@ -13,6 +20,14 @@
 		<!-- wp:paragraph {"align":"center","className":"Gstore-home-section__description"} -->
 		<p class="has-text-align-center Gstore-home-section__description">Acompanhe lançamentos de produtos, reviews detalhados e coberturas exclusivas de programas. Conteúdo técnico e atualizado para você tomar as melhores decisões.</p>
 		<!-- /wp:paragraph -->
+
+		<!-- wp:html -->
+		<div class="Gstore-home-blog__decor" aria-hidden="true">
+			<span></span>
+			<i class="fa-solid fa-star"></i>
+			<span></span>
+		</div>
+		<!-- /wp:html -->
 	</div>
 	<!-- /wp:group -->
 

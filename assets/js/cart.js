@@ -16,7 +16,16 @@
 	const CART_CALCULATED_SESSION_KEY = 'gstore_cart_shipping_calculated_session';
 	const CART_RATES_STORAGE_KEY = 'gstore_cart_shipping_rates';
 	const CART_RATES_STORAGE_VERSION_KEY = 'gstore_cart_shipping_rates_version';
-	const CART_RATES_STORAGE_VERSION = '20260512-quote-notice-v2';
+	const CART_RATES_STORAGE_VERSION = '20260523-product-shipping-modes-v1';
+
+	function escapeHtml(value) {
+		return String(value || '')
+			.replace(/&/g, '&amp;')
+			.replace(/</g, '&lt;')
+			.replace(/>/g, '&gt;')
+			.replace(/"/g, '&quot;')
+			.replace(/'/g, '&#039;');
+	}
 
 	function getCartCep() {
 		const cepInput = document.querySelector('.gstore-shipping-calculator__cep');
@@ -688,6 +697,19 @@
 		return label || getRateModeLabel(mode);
 	}
 
+	function getRateGroupLabel(mode, rates) {
+		const normalized = normalizeRateMode(mode);
+		if (normalized === 'pickup') {
+			const labels = (rates || [])
+				.map((rate) => getRateDisplayLabel(rate))
+				.map((label) => String(label || '').trim())
+				.filter(Boolean);
+			const uniqueLabels = Array.from(new Set(labels));
+			return uniqueLabels.length === 1 ? uniqueLabels[0] : 'Retirada na loja';
+		}
+		return getRateModeLabel(mode);
+	}
+
 	function groupRatesByMode(rates) {
 		const groups = new Map();
 		(rates || []).forEach((rate) => {
@@ -705,7 +727,7 @@
 			.filter((mode) => groups.has(mode))
 			.map((mode) => ({
 				mode,
-				label: getRateModeLabel(mode),
+				label: getRateGroupLabel(mode, groups.get(mode) || []),
 				rates: groups.get(mode) || [],
 			}));
 	}
@@ -801,7 +823,7 @@
 					return `
 					<label class="Gstore-cart-card__shipping-option">
 						<input type="radio" name="gstore_selected_shipping_rate[${cartItemKey}]" value="${rate.rate_id}" data-gstore-mode="${group.mode}" ${checked} />
-						<span class="Gstore-cart-card__shipping-text">${label}</span>
+						<span class="Gstore-cart-card__shipping-text">${escapeHtml(label)}</span>
 						<span class="Gstore-cart-card__shipping-price">${cost}</span>
 					</label>
 				`;
@@ -809,7 +831,7 @@
 
 				return `
 				<div class="Gstore-cart-card__shipping-group Gstore-cart-card__shipping-group--${group.mode}">
-					<div class="Gstore-cart-card__shipping-group-title">${group.label}</div>
+					<div class="Gstore-cart-card__shipping-group-title">${escapeHtml(group.label)}</div>
 					<div class="Gstore-cart-card__shipping-group-options">
 						${groupOptionsHtml}
 					</div>
@@ -821,16 +843,16 @@
 		const fixedHtml = !hasMultiple
 			? (() => {
 				const onlyRate = normalizedRates[0];
-				const modeLabel = getRateModeLabel(onlyRate.mode);
+				const modeLabel = getRateGroupLabel(onlyRate.mode, [onlyRate]);
 				const label = getRateDisplayLabel(onlyRate);
 				const cost = onlyRate.cost_formatted || '-';
 				storeShippingMode(cartItemKey, onlyRate.mode);
 				storeSelectedRateId(cartItemKey, onlyRate.rate_id);
 				return `
 					<div class="Gstore-cart-card__shipping-group Gstore-cart-card__shipping-group--${onlyRate.mode}">
-						<div class="Gstore-cart-card__shipping-group-title">${modeLabel}</div>
+						<div class="Gstore-cart-card__shipping-group-title">${escapeHtml(modeLabel)}</div>
 						<div class="Gstore-cart-card__shipping-fixed-option">
-							<span class="Gstore-cart-card__shipping-text">${label}</span>
+							<span class="Gstore-cart-card__shipping-text">${escapeHtml(label)}</span>
 							<span class="Gstore-cart-card__shipping-price">${cost}</span>
 							<input type="hidden" name="gstore_selected_shipping_rate[${cartItemKey}]" value="${onlyRate.rate_id}" />
 							<input type="hidden" name="gstore_shipping_mode[${cartItemKey}]" value="${onlyRate.mode}" />

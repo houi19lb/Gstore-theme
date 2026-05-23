@@ -58,7 +58,7 @@
 	const CART_SELECTED_RATE_STORAGE_KEY = 'gstore_cart_selected_shipping_rate';
 	const CART_RATES_STORAGE_KEY = 'gstore_cart_shipping_rates';
 	const CART_RATES_STORAGE_VERSION_KEY = 'gstore_cart_shipping_rates_version';
-	const CART_RATES_STORAGE_VERSION = '20260512-quote-notice-v2';
+	const CART_RATES_STORAGE_VERSION = '20260523-product-shipping-modes-v1';
 	let checkoutSelectedShippingMode = 'land';
 	let checkoutShippingRates = [];
 	let checkoutShippingStatus = 'idle';
@@ -1169,18 +1169,20 @@ const subtotal = decodeHtmlEntities(stripHtmlText(it.subtotal || ''));
 	}
 
 	function getShippingTotalsLabelHtml(label) {
+		const safeLabel = escapeHtml(label);
 		return `
 			<span class="Gstore-checkout-shipping-totals__label">
-				<span>${label}</span>
+				<span>${safeLabel}</span>
 				${getShippingChangeButtonHtml()}
 			</span>
 		`;
 	}
 
 	function getOrderReviewShippingLabelHtml(label) {
+		const safeLabel = escapeHtml(label);
 		return `
 			<span class="Gstore-order-review-shipping-row">
-				<span class="Gstore-order-review-shipping-row__label">${label}</span>
+				<span class="Gstore-order-review-shipping-row__label">${safeLabel}</span>
 				${getShippingChangeButtonHtml()}
 			</span>
 		`;
@@ -2041,6 +2043,47 @@ const subtotal = decodeHtmlEntities(stripHtmlText(it.subtotal || ''));
 		return label || getRateModeLabel(mode);
 	}
 
+	function addSelectedModeLabel(labelsByMode, mode, rate) {
+		const normalized = normalizeRateMode(mode);
+		if (!normalized || !labelsByMode || !labelsByMode[normalized]) {
+			return;
+		}
+
+		const label = getRateDisplayLabel(rate);
+		if (label) {
+			labelsByMode[normalized].add(label);
+		}
+	}
+
+	function getSelectedModeLabel(mode, labelsByMode) {
+		const normalized = normalizeRateMode(mode);
+		if (normalized === 'air') {
+			return 'Frete aéreo';
+		}
+		if (normalized === 'pickup') {
+			const source = labelsByMode && labelsByMode.pickup ? labelsByMode.pickup : [];
+			const labels = Array.isArray(source)
+				? source
+				: (source instanceof Set ? Array.from(source) : []);
+			const uniqueLabels = Array.from(new Set(labels.map((label) => String(label || '').trim()).filter(Boolean)));
+			return uniqueLabels.length === 1 ? uniqueLabels[0] : 'Retirada na loja';
+		}
+		return 'Frete terrestre';
+	}
+
+	function getRateGroupLabel(mode, rates) {
+		const normalized = normalizeRateMode(mode);
+		if (normalized === 'pickup') {
+			const labels = (rates || [])
+				.map((rate) => getRateDisplayLabel(rate))
+				.map((label) => String(label || '').trim())
+				.filter(Boolean);
+			const uniqueLabels = Array.from(new Set(labels));
+			return uniqueLabels.length === 1 ? uniqueLabels[0] : 'Retirada na loja';
+		}
+		return getRateModeLabel(mode);
+	}
+
 	function normalizeShippingRate(rate) {
 		const raw = rate && typeof rate === 'object' ? rate : {};
 		const quoteValueEnabled = raw.quote_value_enabled;
@@ -2107,7 +2150,7 @@ const subtotal = decodeHtmlEntities(stripHtmlText(it.subtotal || ''));
 			.filter((mode) => groups.has(mode))
 			.map((mode) => ({
 				mode,
-				label: getRateModeLabel(mode),
+				label: getRateGroupLabel(mode, groups.get(mode) || []),
 				rates: groups.get(mode) || [],
 			}));
 	}
@@ -2812,7 +2855,7 @@ function getInstallmentDisplayTotals(summaryData) {
 						return `
 							<label class="Gstore-checkout-item-shipping-option${selectedClass}${noticeClass}"${noticeOptionStyle}>
 								<input type="radio" name="gstore_selected_shipping_rate[${cartItemKey}]" data-cart-item-key="${cartItemKey}" data-gstore-mode="${group.mode}" value="${rate.rate_id}" ${checked}${noticeInputStyle} />
-								<span class="Gstore-checkout-item-shipping-option__label"${noticeLabelStyle}>${label}</span>
+								<span class="Gstore-checkout-item-shipping-option__label"${noticeLabelStyle}>${escapeHtml(label)}</span>
 								<span class="Gstore-checkout-item-shipping-option__price${priceNoticeClass}"${noticePriceStyle}>${cost}</span>
 							</label>
 						`;
@@ -2820,7 +2863,7 @@ function getInstallmentDisplayTotals(summaryData) {
 
 					return `
 						<div class="Gstore-checkout-item-shipping-group Gstore-checkout-item-shipping-group--${group.mode}">
-							<div class="Gstore-checkout-item-shipping-group__title">${group.label}</div>
+							<div class="Gstore-checkout-item-shipping-group__title">${escapeHtml(group.label)}</div>
 							<div class="Gstore-checkout-item-shipping-group__options">
 								${groupOptionsHtml}
 							</div>
@@ -2926,6 +2969,7 @@ function getInstallmentDisplayTotals(summaryData) {
 		let selectedAirTotal = 0;
 		let selectedPickupTotal = 0;
 		const selectedModes = new Set();
+		const selectedLabelsByMode = { land: new Set(), air: new Set(), pickup: new Set() };
 		const processedSelectionGroups = new Set();
 
 		if (hasItemRates && items.length) {
@@ -2960,23 +3004,28 @@ function getInstallmentDisplayTotals(summaryData) {
 				selectedModes.add(selectedModeForItem);
 				const selectedRateId = checkoutSelectedShippingRateByItem[cartItemKey] || '';
 				const selectedRate = resolveCheckoutSelectedRate(itemRates, selectedRateId, selectedModeForItem);
-					if (selectedRate) {
-						const selectedCost = Number.isFinite(Number(selectedRate.cost))
-							? Number(selectedRate.cost)
-							: parsePriceValue(selectedRate.cost_formatted || '');
-						if (Number.isFinite(selectedCost)) {
-							selectedTotal += selectedCost;
-							if (selectedModeForItem === 'air') {
-								selectedAirTotal += selectedCost;
-							} else if (selectedModeForItem === 'pickup') {
-								selectedPickupTotal += selectedCost;
-							} else {
-								selectedLandTotal += selectedCost;
-							}
+				if (selectedRate) {
+					addSelectedModeLabel(selectedLabelsByMode, selectedModeForItem, selectedRate);
+					const selectedCost = Number.isFinite(Number(selectedRate.cost))
+						? Number(selectedRate.cost)
+						: parsePriceValue(selectedRate.cost_formatted || '');
+					if (Number.isFinite(selectedCost)) {
+						selectedTotal += selectedCost;
+						if (selectedModeForItem === 'air') {
+							selectedAirTotal += selectedCost;
+						} else if (selectedModeForItem === 'pickup') {
+							selectedPickupTotal += selectedCost;
+						} else {
+							selectedLandTotal += selectedCost;
 						}
 					}
+				}
 				});
 			} else if (rates.length) {
+				const selectedRate = resolveCheckoutSelectedRate(rates, '', selectedMode);
+				if (selectedRate) {
+					addSelectedModeLabel(selectedLabelsByMode, selectedMode, selectedRate);
+				}
 				selectedTotal = getSelectedShippingCost(rates, selectedMode);
 				if (selectedMode === 'air') {
 					airTotal = selectedTotal;
@@ -3040,6 +3089,11 @@ function getInstallmentDisplayTotals(summaryData) {
 				selectedTotal,
 				totalValue,
 				selectedModes: Array.from(selectedModes),
+				selectedLabelsByMode: {
+					land: Array.from(selectedLabelsByMode.land),
+					air: Array.from(selectedLabelsByMode.air),
+					pickup: Array.from(selectedLabelsByMode.pickup),
+				},
 				selectedLandTotal,
 				selectedAirTotal,
 				selectedPickupTotal,
@@ -3054,9 +3108,9 @@ function getInstallmentDisplayTotals(summaryData) {
 
 			if (selectedModes.size > 1) {
 				const modeRows = [
-					{ key: 'land', label: 'Frete terrestre', value: selectedLandTotal },
-					{ key: 'air', label: 'Frete aéreo', value: selectedAirTotal },
-					{ key: 'pickup', label: 'Retirada na loja', value: selectedPickupTotal },
+					{ key: 'land', label: getSelectedModeLabel('land', selectedLabelsByMode), value: selectedLandTotal },
+					{ key: 'air', label: getSelectedModeLabel('air', selectedLabelsByMode), value: selectedAirTotal },
+					{ key: 'pickup', label: getSelectedModeLabel('pickup', selectedLabelsByMode), value: selectedPickupTotal },
 				];
 				modeRows.forEach((row) => {
 					if (!selectedModes.has(row.key)) {
@@ -3076,11 +3130,7 @@ function getInstallmentDisplayTotals(summaryData) {
 					: onlyMode === 'pickup'
 						? selectedPickupTotal
 						: selectedLandTotal;
-				const onlyModeLabel = onlyMode === 'air'
-					? 'Frete aéreo'
-					: onlyMode === 'pickup'
-						? 'Retirada na loja'
-						: 'Frete terrestre';
+				const onlyModeLabel = getSelectedModeLabel(onlyMode, selectedLabelsByMode);
 				totalsHtml += `
 					<div class="Gstore-checkout-shipping-totals__row Gstore-checkout-shipping-totals__row--shipping">
 						${getShippingTotalsLabelHtml(onlyModeLabel)}
@@ -3148,12 +3198,13 @@ function getInstallmentDisplayTotals(summaryData) {
 			$existing.remove();
 
 			const modes = lastSummaryTotals.selectedModes || [];
+			const labelsByMode = lastSummaryTotals.selectedLabelsByMode || {};
 			let rowsHtml = '';
 			if (modes.length > 1) {
 				const modeRows = [
-					{ key: 'land', label: 'Frete terrestre', value: lastSummaryTotals.selectedLandTotal || 0 },
-					{ key: 'air', label: 'Frete aéreo', value: lastSummaryTotals.selectedAirTotal || 0 },
-					{ key: 'pickup', label: 'Retirada na loja', value: lastSummaryTotals.selectedPickupTotal || 0 },
+					{ key: 'land', label: getSelectedModeLabel('land', labelsByMode), value: lastSummaryTotals.selectedLandTotal || 0 },
+					{ key: 'air', label: getSelectedModeLabel('air', labelsByMode), value: lastSummaryTotals.selectedAirTotal || 0 },
+					{ key: 'pickup', label: getSelectedModeLabel('pickup', labelsByMode), value: lastSummaryTotals.selectedPickupTotal || 0 },
 				];
 				modeRows.forEach((row) => {
 					if (!modes.includes(row.key)) {
@@ -3168,7 +3219,7 @@ function getInstallmentDisplayTotals(summaryData) {
 				});
 			} else if (modes.length === 1) {
 				const modeKey = modes[0];
-				const onlyLabel = modeKey === 'air' ? 'Frete aéreo' : modeKey === 'pickup' ? 'Retirada na loja' : 'Frete terrestre';
+				const onlyLabel = getSelectedModeLabel(modeKey, labelsByMode);
 				const onlyValue = modeKey === 'air'
 					? lastSummaryTotals.selectedAirTotal
 					: modeKey === 'pickup'
