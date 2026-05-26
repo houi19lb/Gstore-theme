@@ -1303,6 +1303,10 @@ function gstore_should_noindex_catalog_request() {
 		return true;
 	}
 
+	if ( gstore_is_catalog_pagination_request() ) {
+		return true;
+	}
+
 	if ( ! gstore_has_catalog_non_pagination_operational_query() ) {
 		return false;
 	}
@@ -1546,13 +1550,8 @@ function gstore_get_catalog_landing_canonical_url( $canonical_url = '' ) {
 		return $canonical_url;
 	}
 
-	if ( gstore_has_catalog_non_pagination_operational_query() ) {
+	if ( gstore_has_catalog_non_pagination_operational_query() || gstore_is_catalog_pagination_request() ) {
 		return gstore_get_catalog_url();
-	}
-
-	$page = gstore_get_catalog_product_page_request();
-	if ( $page > 1 ) {
-		return add_query_arg( 'product-page', $page, gstore_get_catalog_url() );
 	}
 
 	return gstore_get_catalog_url();
@@ -1622,11 +1621,6 @@ function gstore_get_product_taxonomy_canonical_url() {
 
 	if ( gstore_has_catalog_non_pagination_operational_query() ) {
 		return $term_link;
-	}
-
-	$paged = max( absint( get_query_var( 'paged' ) ), absint( get_query_var( 'page' ) ), gstore_get_catalog_product_page_request() );
-	if ( $paged > 1 ) {
-		return gstore_get_product_taxonomy_clean_pagination_url( $term_link, $paged );
 	}
 
 	return $term_link;
@@ -1844,6 +1838,36 @@ function gstore_get_catalog_product_page_request() {
 	$page = isset( $_GET['product-page'] ) ? absint( wp_unslash( $_GET['product-page'] ) ) : 0; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 
 	return max( 1, $page );
+}
+
+/**
+ * Indica se a requisicao atual e uma paginacao de catalogo que deve consolidar na raiz.
+ *
+ * @return bool
+ */
+function gstore_is_catalog_pagination_request() {
+	if ( is_admin() || wp_doing_ajax() || wp_doing_cron() ) {
+		return false;
+	}
+
+	$page = max( absint( get_query_var( 'paged' ) ), absint( get_query_var( 'page' ) ), gstore_get_catalog_product_page_request() );
+	if ( $page <= 1 ) {
+		return false;
+	}
+
+	if ( function_exists( 'is_shop' ) && is_shop() ) {
+		return true;
+	}
+
+	if ( function_exists( 'is_tax' ) && is_tax( gstore_get_public_product_taxonomies() ) ) {
+		return true;
+	}
+
+	if ( function_exists( 'is_page' ) && is_page( array( 'catalogo', 'loja', 'ofertas' ) ) ) {
+		return true;
+	}
+
+	return function_exists( 'gstore_is_generated_category_catalog_page' ) && gstore_is_generated_category_catalog_page();
 }
 
 /**
