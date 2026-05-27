@@ -65,6 +65,8 @@
 	let checkoutShippingError = '';
 	let shippingSummaryHighlightTimer = null;
 	let checkoutShippingRatesByItem = {};
+	let checkoutSelectedRateGroupRates = {};
+	let checkoutSelectedRateGroupRatesCep = '';
 	let checkoutSelectedShippingByItem = {};
 	let checkoutSelectedShippingRateByItem = {};
 	let lastSummaryTotals = null;
@@ -2133,6 +2135,23 @@ const subtotal = decodeHtmlEntities(stripHtmlText(it.subtotal || ''));
 		return rate.cost_formatted || '-';
 	}
 
+	function getNumericRateCost(rate) {
+		if (!rate) {
+			return 0;
+		}
+		const rawCost = Object.prototype.hasOwnProperty.call(rate, 'cost') ? Number(rate.cost) : NaN;
+		if (Number.isFinite(rawCost)) {
+			return rawCost;
+		}
+		return parsePriceValue(rate.cost_formatted || '');
+	}
+
+	function getCurrentCheckoutCep() {
+		const raw = String($('#billing_postcode').val() || '');
+		const digits = raw.replace(/\D/g, '');
+		return digits.length === 8 ? digits : '';
+	}
+
 	function groupRatesByMode(rates) {
 		const groups = new Map();
 		(rates || []).forEach((rate) => {
@@ -2328,6 +2347,98 @@ const subtotal = decodeHtmlEntities(stripHtmlText(it.subtotal || ''));
 			groups[groupKey].quantity += quantity;
 		});
 		return Object.keys(groups).map((key) => groups[key]);
+	}
+
+	function getSelectedRateGroupKey(rate, selectedRateId, selectedMode) {
+		const rateId = String(selectedRateId || (rate && rate.rate_id) || '').trim();
+		if (rateId) {
+			return `rate:${rateId}`;
+		}
+		return `mode:${normalizeRateMode(selectedMode || (rate && rate.mode) || '') || 'land'}`;
+	}
+
+	function buildSelectedRateGroups(items, ratesByItem) {
+		const groups = {};
+		(items || []).forEach((item) => {
+			const cartItemKey = getCartItemKey(item);
+			const itemRates = cartItemKey && ratesByItem ? (ratesByItem[cartItemKey] || []) : [];
+			if (!cartItemKey || !itemRates.length) {
+				return;
+			}
+
+			const selectedModeForItem = checkoutSelectedShippingByItem[cartItemKey] || resolveCheckoutShippingMode(itemRates, 'land');
+			const preferredRateId = checkoutSelectedShippingRateByItem[cartItemKey] || '';
+			const selectedRate = resolveCheckoutSelectedRate(itemRates, preferredRateId, selectedModeForItem);
+			if (!selectedRate) {
+				return;
+			}
+
+			const selectedMode = normalizeRateMode(selectedRate.mode || selectedModeForItem) || selectedModeForItem || 'land';
+			const selectedRateId = String(selectedRate.rate_id || preferredRateId || '').trim();
+			const groupKey = getSelectedRateGroupKey(selectedRate, selectedRateId, selectedMode);
+			if (!groups[groupKey]) {
+				groups[groupKey] = {
+					key: groupKey,
+					mode: selectedMode,
+					rateId: selectedRateId,
+					rate: selectedRate,
+					cartItemKeys: [],
+					fallbackTotal: 0,
+				};
+			}
+
+			groups[groupKey].cartItemKeys.push(cartItemKey);
+			groups[groupKey].mode = selectedMode;
+			groups[groupKey].rateId = selectedRateId || groups[groupKey].rateId;
+			groups[groupKey].rate = selectedRate;
+			groups[groupKey].fallbackTotal += getNumericRateCost(selectedRate);
+		});
+
+		return Object.keys(groups).map((key) => groups[key]);
+	}
+
+	function getStoredSelectedRateGroupRate(group) {
+		if (!group || checkoutSelectedRateGroupRatesCep !== (getCurrentCheckoutCep() || lastCalculatedShippingCep)) {
+			return null;
+		}
+		const stored = checkoutSelectedRateGroupRates[group.key];
+		if (!stored || !Array.isArray(stored.rates)) {
+			return null;
+		}
+		return resolveCheckoutSelectedRate(stored.rates, group.rateId, group.mode);
+	}
+
+	function refreshCheckoutSelectedRateGroupRates(postcode, nonce, ajaxUrl) {
+		const cleanCep = String(postcode || '').replace(/\D/g, '');
+		const items = lastCartSummaryData && Array.isArray(lastCartSummaryData.items) ? lastCartSummaryData.items : [];
+		const groups = buildSelectedRateGroups(items, checkoutShippingRatesByItem || {});
+		if (cleanCep.length !== 8 || !groups.length) {
+			checkoutSelectedRateGroupRates = {};
+			checkoutSelectedRateGroupRatesCep = '';
+			return Promise.resolve();
+		}
+
+		return Promise.all(groups.map((group) => {
+			return fetchCheckoutRatesForGroup({ cart_item_keys: group.cartItemKeys }, cleanCep, nonce, ajaxUrl)
+				.then((rates) => {
+					const normalizedRates = (rates || [])
+						.map(normalizeShippingRate)
+						.filter((rate) => rate.mode && rate.rate_id);
+					return { group, rates: normalizedRates };
+				});
+		})).then((results) => {
+			const next = {};
+			results.forEach((result) => {
+				if (result && result.group && Array.isArray(result.rates) && result.rates.length) {
+					next[result.group.key] = { rates: result.rates };
+				}
+			});
+			checkoutSelectedRateGroupRates = next;
+			checkoutSelectedRateGroupRatesCep = cleanCep;
+		}).catch(() => {
+			checkoutSelectedRateGroupRates = {};
+			checkoutSelectedRateGroupRatesCep = '';
+		});
 	}
 
 	function parsePriceValue(rawText) {
@@ -2970,74 +3081,50 @@ function getInstallmentDisplayTotals(summaryData) {
 		let selectedPickupTotal = 0;
 		const selectedModes = new Set();
 		const selectedLabelsByMode = { land: new Set(), air: new Set(), pickup: new Set() };
-		const processedSelectionGroups = new Set();
 
 		if (hasItemRates && items.length) {
-			items.forEach((item) => {
-				const cartItemKey = item.key || item.cart_item_key || item.cartItemKey || '';
-				if (!cartItemKey || !ratesByItem[cartItemKey]) {
+			const selectedRateGroups = buildSelectedRateGroups(items, ratesByItem);
+			selectedRateGroups.forEach((group) => {
+				if (!group || !group.rate) {
 					return;
 				}
-				const selectionGroupKey = getItemShippingBillingMode(item) === 'per_variation'
-					? (getItemShippingGroupKey(item) || `item:${cartItemKey}`)
-					: `item:${cartItemKey}`;
-				if (processedSelectionGroups.has(selectionGroupKey)) {
-					return;
-				}
-				processedSelectionGroups.add(selectionGroupKey);
-				const itemRates = ratesByItem[cartItemKey] || [];
-				itemRates.forEach((rate) => {
-					const mode = normalizeRateMode(rate.mode);
-					const costValue = Number.isFinite(Number(rate.cost))
-						? Number(rate.cost)
-						: parsePriceValue(rate.cost_formatted || '');
-					if (!mode || !Number.isFinite(costValue)) {
-						return;
-					}
-					if (mode === 'land') {
-						groundTotal += costValue;
-					} else if (mode === 'air') {
-						airTotal += costValue;
-					}
-				});
-				const selectedModeForItem = checkoutSelectedShippingByItem[cartItemKey] || resolveCheckoutShippingMode(itemRates, 'land');
-				selectedModes.add(selectedModeForItem);
-				const selectedRateId = checkoutSelectedShippingRateByItem[cartItemKey] || '';
-				const selectedRate = resolveCheckoutSelectedRate(itemRates, selectedRateId, selectedModeForItem);
-				if (selectedRate) {
-					addSelectedModeLabel(selectedLabelsByMode, selectedModeForItem, selectedRate);
-					const selectedCost = Number.isFinite(Number(selectedRate.cost))
-						? Number(selectedRate.cost)
-						: parsePriceValue(selectedRate.cost_formatted || '');
-					if (Number.isFinite(selectedCost)) {
-						selectedTotal += selectedCost;
-						if (selectedModeForItem === 'air') {
-							selectedAirTotal += selectedCost;
-						} else if (selectedModeForItem === 'pickup') {
-							selectedPickupTotal += selectedCost;
-						} else {
-							selectedLandTotal += selectedCost;
-						}
+
+				const selectedModeForGroup = normalizeRateMode(group.mode) || 'land';
+				selectedModes.add(selectedModeForGroup);
+				addSelectedModeLabel(selectedLabelsByMode, selectedModeForGroup, group.rate);
+
+				const groupedRate = getStoredSelectedRateGroupRate(group);
+				const selectedCost = groupedRate ? getNumericRateCost(groupedRate) : group.fallbackTotal;
+				if (Number.isFinite(selectedCost)) {
+					selectedTotal += selectedCost;
+					if (selectedModeForGroup === 'air') {
+						airTotal += selectedCost;
+						selectedAirTotal += selectedCost;
+					} else if (selectedModeForGroup === 'pickup') {
+						selectedPickupTotal += selectedCost;
+					} else {
+						groundTotal += selectedCost;
+						selectedLandTotal += selectedCost;
 					}
 				}
-				});
-			} else if (rates.length) {
-				const selectedRate = resolveCheckoutSelectedRate(rates, '', selectedMode);
-				if (selectedRate) {
-					addSelectedModeLabel(selectedLabelsByMode, selectedMode, selectedRate);
-				}
-				selectedTotal = getSelectedShippingCost(rates, selectedMode);
-				if (selectedMode === 'air') {
-					airTotal = selectedTotal;
-					selectedAirTotal = selectedTotal;
-				} else if (selectedMode === 'pickup') {
-					selectedPickupTotal = selectedTotal;
-				} else {
-					groundTotal = selectedTotal;
-					selectedLandTotal = selectedTotal;
-				}
-				selectedModes.add(selectedMode);
+			});
+		} else if (rates.length) {
+			const selectedRate = resolveCheckoutSelectedRate(rates, '', selectedMode);
+			if (selectedRate) {
+				addSelectedModeLabel(selectedLabelsByMode, selectedMode, selectedRate);
 			}
+			selectedTotal = getSelectedShippingCost(rates, selectedMode);
+			if (selectedMode === 'air') {
+				airTotal = selectedTotal;
+				selectedAirTotal = selectedTotal;
+			} else if (selectedMode === 'pickup') {
+				selectedPickupTotal = selectedTotal;
+			} else {
+				groundTotal = selectedTotal;
+				selectedLandTotal = selectedTotal;
+			}
+			selectedModes.add(selectedMode);
+		}
 
 		const fees = (data && data.totals && data.totals.fees && Array.isArray(data.totals.fees)) ? data.totals.fees : [];
 		let feesTotal = 0;
@@ -3403,9 +3490,11 @@ function getInstallmentDisplayTotals(summaryData) {
 			// Atualiza UI
 			checkoutShippingStatus = 'ready';
 			checkoutShippingError = '';
-			renderItemShippingOptions(lastCartSummaryData);
-			renderShippingSummary(lastCartSummaryData);
-			updateSummaryWithShipping({ ratesByItem: checkoutShippingRatesByItem });
+			refreshCheckoutSelectedRateGroupRates(cleanCep, nonce, ajaxUrl).then(function() {
+				renderItemShippingOptions(lastCartSummaryData);
+				renderShippingSummary(lastCartSummaryData);
+				updateSummaryWithShipping({ ratesByItem: checkoutShippingRatesByItem });
+			});
 		}).catch(function() {
 			isCalculatingShipping = false;
 			showShippingError('Erro ao calcular frete. Tente novamente.');
@@ -3449,6 +3538,8 @@ function getInstallmentDisplayTotals(summaryData) {
 		checkoutShippingStatus = 'error';
 		checkoutShippingError = message || 'Erro ao calcular frete.';
 		checkoutShippingRates = [];
+		checkoutSelectedRateGroupRates = {};
+		checkoutSelectedRateGroupRatesCep = '';
 		renderShippingSummary(lastCartSummaryData);
 	}
 
@@ -3459,6 +3550,8 @@ function getInstallmentDisplayTotals(summaryData) {
 		checkoutShippingStatus = 'idle';
 		checkoutShippingError = '';
 		checkoutShippingRates = [];
+		checkoutSelectedRateGroupRates = {};
+		checkoutSelectedRateGroupRatesCep = '';
 		renderShippingSummary(lastCartSummaryData);
 	}
 
@@ -4210,8 +4303,21 @@ function getInstallmentDisplayTotals(summaryData) {
 					}, 100);
 				});
 				
-				renderItemShippingOptions(lastCartSummaryData);
-				renderShippingSummary(lastCartSummaryData);
+				const cleanCep = getCurrentCheckoutCep();
+				const ajaxUrl = typeof gstoreShippingCalculator !== 'undefined' && gstoreShippingCalculator.ajaxUrl
+					? gstoreShippingCalculator.ajaxUrl
+					: (typeof wc_checkout_params !== 'undefined' ? wc_checkout_params.ajax_url : '/wp-admin/admin-ajax.php');
+				const nonce = typeof gstoreShippingCalculator !== 'undefined' && gstoreShippingCalculator.nonce
+					? gstoreShippingCalculator.nonce
+					: '';
+				const refreshGroups = cleanCep
+					? refreshCheckoutSelectedRateGroupRates(cleanCep, nonce, ajaxUrl)
+					: Promise.resolve();
+				refreshGroups.then(function() {
+					renderItemShippingOptions(lastCartSummaryData);
+					renderShippingSummary(lastCartSummaryData);
+					updateOrderReviewTotals();
+				});
 			}
 		});
 
