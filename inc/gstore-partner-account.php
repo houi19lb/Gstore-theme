@@ -269,17 +269,89 @@ if ( ! function_exists( 'gstore_partner_account_render_stat' ) ) {
 
 if ( ! function_exists( 'gstore_partner_account_sale_label' ) ) {
 	function gstore_partner_account_sale_label( $sale ) {
+		if ( 'cancelled' === gstore_partner_account_sale_status( $sale ) ) {
+			return __( 'Venda cancelada', 'gstore' );
+		}
+
 		if ( isset( $sale['type'] ) && 'refund' === $sale['type'] ) {
 			return __( 'Comissao estornada', 'gstore' );
 		}
 
-		return __( 'Comissao aprovada', 'gstore' );
+		return __( 'Pagamento confirmado', 'gstore' );
+	}
+}
+
+if ( ! function_exists( 'gstore_partner_account_sale_status' ) ) {
+	function gstore_partner_account_sale_status( $sale ) {
+		if ( isset( $sale['saleStatus'] ) && in_array( $sale['saleStatus'], array( 'cancelled', 'confirmed' ), true ) ) {
+			return $sale['saleStatus'];
+		}
+
+		$type         = isset( $sale['type'] ) ? sanitize_key( $sale['type'] ) : '';
+		$order_status = isset( $sale['orderStatus'] ) ? sanitize_key( $sale['orderStatus'] ) : '';
+
+		if ( 'cancelled' === $type || in_array( $order_status, array( 'cancelled', 'failed' ), true ) ) {
+			return 'cancelled';
+		}
+
+		return 'confirmed';
+	}
+}
+
+if ( ! function_exists( 'gstore_partner_account_normalize_sales_filter' ) ) {
+	function gstore_partner_account_normalize_sales_filter( $filter ) {
+		$filter = sanitize_key( (string) $filter );
+		return in_array( $filter, array( 'todos', 'cancelados', 'concluidos' ), true ) ? $filter : 'todos';
+	}
+}
+
+if ( ! function_exists( 'gstore_partner_account_filter_sales' ) ) {
+	function gstore_partner_account_filter_sales( $sales, $filter = 'todos' ) {
+		$filter = gstore_partner_account_normalize_sales_filter( $filter );
+		if ( 'todos' === $filter ) {
+			return $sales;
+		}
+
+		$target = 'cancelados' === $filter ? 'cancelled' : 'confirmed';
+		return array_values(
+			array_filter(
+				$sales,
+				static function( $sale ) use ( $target ) {
+					return $target === gstore_partner_account_sale_status( $sale );
+				}
+			)
+		);
+	}
+}
+
+if ( ! function_exists( 'gstore_partner_account_render_sales_filters' ) ) {
+	function gstore_partner_account_render_sales_filters( $active_filter = 'todos' ) {
+		$active_filter = gstore_partner_account_normalize_sales_filter( $active_filter );
+		$filters       = array(
+			'todos'      => __( 'Todos', 'gstore' ),
+			'cancelados' => __( 'Cancelados', 'gstore' ),
+			'concluidos' => __( 'Concluidos', 'gstore' ),
+		);
+		?>
+		<div class="gstore-partner-sales-filter" role="group" aria-label="<?php esc_attr_e( 'Filtrar vendas', 'gstore' ); ?>">
+			<?php foreach ( $filters as $filter => $label ) : ?>
+				<a class="<?php echo esc_attr( $active_filter === $filter ? 'is-active' : '' ); ?>" href="<?php echo esc_url( add_query_arg( array( 'view' => 'vendas', 'vendas_status' => $filter ), wc_get_account_endpoint_url( 'revendedor' ) ) ); ?>" <?php echo $active_filter === $filter ? 'aria-current="true"' : ''; ?>>
+					<?php echo esc_html( $label ); ?>
+				</a>
+			<?php endforeach; ?>
+		</div>
+		<?php
 	}
 }
 
 if ( ! function_exists( 'gstore_partner_account_render_sales_table' ) ) {
-	function gstore_partner_account_render_sales_table( $sales, $compact = false ) {
+	function gstore_partner_account_render_sales_table( $sales, $compact = false, $active_filter = 'todos' ) {
+		$active_filter = gstore_partner_account_normalize_sales_filter( $active_filter );
+		$visible_sales = $compact ? $sales : gstore_partner_account_filter_sales( $sales, $active_filter );
 		?>
+		<?php if ( ! $compact ) : ?>
+			<?php gstore_partner_account_render_sales_filters( $active_filter ); ?>
+		<?php endif; ?>
 		<div class="gstore-partner-table-wrap">
 			<table class="gstore-partner-table">
 				<thead>
@@ -293,10 +365,14 @@ if ( ! function_exists( 'gstore_partner_account_render_sales_table' ) ) {
 					</tr>
 				</thead>
 				<tbody>
-				<?php if ( empty( $sales ) ) : ?>
-					<tr><td colspan="6"><?php esc_html_e( 'Nenhuma venda indicada ainda.', 'gstore' ); ?></td></tr>
+				<?php if ( empty( $visible_sales ) ) : ?>
+					<tr><td colspan="6"><?php echo esc_html( 'todos' === $active_filter ? __( 'Nenhuma venda indicada ainda.', 'gstore' ) : __( 'Nenhuma venda encontrada para este filtro.', 'gstore' ) ); ?></td></tr>
 				<?php else : ?>
-					<?php foreach ( $sales as $sale ) : ?>
+					<?php foreach ( $visible_sales as $sale ) : ?>
+						<?php
+						$sale_status = gstore_partner_account_sale_status( $sale );
+						$pill_class   = 'cancelled' === $sale_status ? 'is-cancelled' : ( isset( $sale['type'] ) && 'refund' === $sale['type'] ? 'is-warning' : 'is-success' );
+						?>
 						<tr>
 							<td data-label="<?php esc_attr_e( 'Pedido', 'gstore' ); ?>"><?php echo esc_html( $sale['orderNumber'] ); ?></td>
 							<td data-label="<?php esc_attr_e( 'Cliente', 'gstore' ); ?>"><?php echo esc_html( $sale['customerName'] ); ?></td>
@@ -304,12 +380,12 @@ if ( ! function_exists( 'gstore_partner_account_render_sales_table' ) ) {
 							<td data-label="<?php esc_attr_e( 'Valor', 'gstore' ); ?>"><?php echo esc_html( $sale['orderTotalFormatted'] ); ?></td>
 							<td data-label="<?php esc_attr_e( 'Comissao', 'gstore' ); ?>"><strong><?php echo esc_html( $sale['amountFormatted'] ); ?></strong></td>
 							<td data-label="<?php esc_attr_e( 'Status', 'gstore' ); ?>">
-								<span class="<?php echo esc_attr( 'gstore-partner-pill ' . ( isset( $sale['type'] ) && 'refund' === $sale['type'] ? 'is-warning' : 'is-success' ) ); ?>">
+								<span class="<?php echo esc_attr( 'gstore-partner-pill ' . $pill_class ); ?>">
 									<?php echo esc_html( gstore_partner_account_sale_label( $sale ) ); ?>
 								</span>
 							</td>
 						</tr>
-						<?php if ( $compact && count( $sales ) > 4 ) : ?>
+						<?php if ( $compact && count( $visible_sales ) > 4 ) : ?>
 							<?php break; ?>
 						<?php endif; ?>
 					<?php endforeach; ?>
@@ -501,6 +577,8 @@ if ( ! function_exists( 'gstore_partner_account_render_endpoint' ) ) {
 		$redemptions = isset( $partner['redemptions'] ) && is_array( $partner['redemptions'] ) ? $partner['redemptions'] : array();
 		$view              = isset( $_GET['view'] ) ? sanitize_key( wp_unslash( $_GET['view'] ) ) : 'painel';
 		$view              = in_array( $view, array( 'painel', 'vendas', 'creditos', 'contrato' ), true ) ? $view : 'painel';
+		$sales_filter      = isset( $_GET['vendas_status'] ) ? gstore_partner_account_normalize_sales_filter( wp_unslash( $_GET['vendas_status'] ) ) : 'todos';
+		$filtered_sales    = gstore_partner_account_filter_sales( $sales, $sales_filter );
 		$contract_accepted = gstore_partner_account_contract_is_accepted( get_current_user_id() );
 		if ( ! $contract_accepted ) {
 			$view = 'contrato';
@@ -591,9 +669,9 @@ if ( ! function_exists( 'gstore_partner_account_render_endpoint' ) ) {
 				<section class="gstore-partner-panel">
 					<header class="gstore-partner-panel__header">
 						<h3><?php esc_html_e( 'Minhas Vendas', 'gstore' ); ?></h3>
-						<span><?php echo esc_html( sprintf( _n( '%d venda rastreada', '%d vendas rastreadas', count( $sales ), 'gstore' ), count( $sales ) ) ); ?></span>
+						<span><?php echo esc_html( sprintf( _n( '%d venda rastreada', '%d vendas rastreadas', count( $filtered_sales ), 'gstore' ), count( $filtered_sales ) ) ); ?></span>
 					</header>
-					<?php gstore_partner_account_render_sales_table( $sales ); ?>
+					<?php gstore_partner_account_render_sales_table( $sales, false, $sales_filter ); ?>
 				</section>
 			<?php elseif ( 'creditos' === $view ) : ?>
 				<div class="gstore-partner-credit-grid">

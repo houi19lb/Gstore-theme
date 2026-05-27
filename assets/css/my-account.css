@@ -2725,6 +2725,36 @@ form.woocommerce-form {
 	text-decoration: none;
 }
 
+.gstore-partner-sales-filter {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	margin: 0 0 14px;
+}
+
+.gstore-partner-sales-filter a {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-height: 34px;
+	padding: 7px 13px;
+	border: 1px solid #dce1e8;
+	border-radius: 6px;
+	background: #fff;
+	color: #374151;
+	font-size: 13px;
+	font-weight: 800;
+	line-height: 1.2;
+	text-decoration: none;
+}
+
+.gstore-partner-sales-filter a.is-active,
+.gstore-partner-sales-filter a:hover {
+	border-color: #1f2933;
+	background: #1f2933;
+	color: #fff;
+}
+
 .gstore-partner-table-wrap {
 	overflow-x: auto;
 }

@@ -10,6 +10,8 @@
 	let shippingChoicesDelegated = false;
 	let initialRatesHydrated = false;
 	let mixedCartActionsDelegated = false;
+	let cartLevelRates = [];
+	let cartLevelRatesCep = '';
 	const CART_CEP_STORAGE_KEY = 'gstore_cart_cep';
 	const CART_MODE_STORAGE_KEY = 'gstore_cart_shipping_mode';
 	const CART_SELECTED_RATE_STORAGE_KEY = 'gstore_cart_selected_shipping_rate';
@@ -527,6 +529,35 @@
 		}
 	}
 
+	function getNumericRateCost(rate) {
+		if (!rate) {
+			return 0;
+		}
+		const rawCost = Object.prototype.hasOwnProperty.call(rate, 'cost') ? Number(rate.cost) : NaN;
+		if (Number.isFinite(rawCost)) {
+			return rawCost;
+		}
+		return parsePriceValue(rate.cost_formatted || '');
+	}
+
+	function getCartLevelSelectedRate(selectedRateIds, selectedModes) {
+		const cep = getCartCep();
+		if (!cep || cartLevelRatesCep !== cep || !Array.isArray(cartLevelRates) || !cartLevelRates.length) {
+			return null;
+		}
+		if (selectedRateIds.size > 1 || selectedModes.size !== 1) {
+			return null;
+		}
+
+		const [selectedMode] = Array.from(selectedModes);
+		const [selectedRateId] = Array.from(selectedRateIds);
+		if (selectedRateId) {
+			return cartLevelRates.find((rate) => String(rate.rate_id || '') === selectedRateId) || null;
+		}
+
+		return cartLevelRates.find((rate) => normalizeRateMode(rate.mode) === selectedMode) || null;
+	}
+
 	function resolveSelectedRate(shippingBlock, cartItemKey, rates) {
 		const selectedInput = shippingBlock.querySelector('input[type="radio"]:checked');
 		const hiddenMode = shippingBlock.querySelector(`input[type="hidden"][name="gstore_shipping_mode[${cartItemKey}]"]`);
@@ -583,6 +614,7 @@
 		let hasGround = false;
 		let hasAir = false;
 		const selectedModes = new Set();
+		const selectedRateIds = new Set();
 
 		shippingBlocks.forEach((shippingBlock) => {
 			const itemEl = shippingBlock.closest('[data-cart-item-key]');
@@ -602,9 +634,10 @@
 			if (selectedRate) {
 				const selectedMode = normalizeRateMode(selectedRate.mode);
 				selectedModes.add(selectedMode);
-				const selectedCost = Number.isFinite(Number(selectedRate.cost))
-					? Number(selectedRate.cost)
-					: parsePriceValue(selectedRate.cost_formatted || '');
+				if (selectedRate.rate_id) {
+					selectedRateIds.add(String(selectedRate.rate_id));
+				}
+				const selectedCost = getNumericRateCost(selectedRate);
 				if (Number.isFinite(selectedCost)) {
 					selectedTotal += selectedCost;
 					if (selectedMode === 'land') {
@@ -617,6 +650,17 @@
 				}
 			}
 		});
+
+		const cartLevelSelectedRate = getCartLevelSelectedRate(selectedRateIds, selectedModes);
+		if (cartLevelSelectedRate) {
+			const cartLevelMode = normalizeRateMode(cartLevelSelectedRate.mode);
+			const cartLevelCost = getNumericRateCost(cartLevelSelectedRate);
+			selectedTotal = cartLevelCost;
+			groundTotal = cartLevelMode === 'land' ? cartLevelCost : 0;
+			airTotal = cartLevelMode === 'air' ? cartLevelCost : 0;
+			hasGround = cartLevelMode === 'land';
+			hasAir = cartLevelMode === 'air';
+		}
 
 		if (groundRow) {
 			const valueCell = groundRow.querySelector('[data-gstore-value="true"]') || groundRow.querySelector('td');
@@ -750,6 +794,28 @@
 				postcode: cep,
 				product_id: productId,
 				quantity: quantity,
+			},
+		}).then((response) => {
+			if (!response || !response.success || !response.data || !Array.isArray(response.data.rates)) {
+				return null;
+			}
+			return response.data.rates;
+		}).catch(() => null);
+	}
+
+	function fetchRatesForCart(cep) {
+		if (!cep) {
+			return Promise.resolve(null);
+		}
+
+		return jQuery.ajax({
+			url: getShippingAjaxUrl(),
+			type: 'POST',
+			dataType: 'json',
+			data: {
+				action: 'gstore_calculate_shipping',
+				nonce: typeof gstoreShippingCalculator !== 'undefined' ? gstoreShippingCalculator.nonce : '',
+				postcode: cep,
 			},
 		}).then((response) => {
 			if (!response || !response.success || !response.data || !Array.isArray(response.data.rates)) {
@@ -948,6 +1014,17 @@
 		ratesSyncInProgress = true;
 
 		const requests = [];
+		requests.push(
+			fetchRatesForCart(cep).then((rates) => {
+				if (!rates) {
+					cartLevelRates = [];
+					cartLevelRatesCep = '';
+					return;
+				}
+				cartLevelRates = parseAndNormalizeRates(rates);
+				cartLevelRatesCep = cep;
+			})
+		);
 		shippingBlocks.forEach((shippingBlock) => {
 			const itemEl = shippingBlock.closest('article.Gstore-cart-card, [data-cart-item-key]');
 			if (!itemEl) {
@@ -1490,6 +1567,8 @@
 			storeCartCep(this.value || '');
 			if (!getCartCep()) {
 				setCalculatedShippingFlag(false);
+				cartLevelRates = [];
+				cartLevelRatesCep = '';
 			}
 			updateCheckoutAvailability();
 		});
