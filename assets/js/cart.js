@@ -670,6 +670,64 @@
 		return selectedRate;
 	}
 
+	function ensureSelectionHiddenInputs(shippingBlock, cartItemKey, selectedRateId, selectedMode) {
+		if (!shippingBlock || !cartItemKey) {
+			return;
+		}
+
+		let hiddenModeInput = shippingBlock.querySelector(`input[data-gstore-mode-hidden="true"][name="gstore_shipping_mode[${cartItemKey}]"]`);
+		if (!hiddenModeInput) {
+			hiddenModeInput = document.createElement('input');
+			hiddenModeInput.type = 'hidden';
+			hiddenModeInput.name = `gstore_shipping_mode[${cartItemKey}]`;
+			hiddenModeInput.setAttribute('data-gstore-mode-hidden', 'true');
+			shippingBlock.appendChild(hiddenModeInput);
+		}
+		hiddenModeInput.value = selectedMode;
+
+		let hiddenRateInput = shippingBlock.querySelector(`input[data-gstore-rate-hidden="true"][name="gstore_selected_shipping_rate[${cartItemKey}]"]`);
+		if (!hiddenRateInput) {
+			hiddenRateInput = document.createElement('input');
+			hiddenRateInput.type = 'hidden';
+			hiddenRateInput.name = `gstore_selected_shipping_rate[${cartItemKey}]`;
+			hiddenRateInput.setAttribute('data-gstore-rate-hidden', 'true');
+			shippingBlock.appendChild(hiddenRateInput);
+		}
+		hiddenRateInput.value = selectedRateId;
+	}
+
+	function syncCurrentShippingSelectionsToStorage() {
+		let changed = false;
+		document.querySelectorAll('[data-gstore-shipping-item]').forEach((shippingBlock) => {
+			const itemEl = shippingBlock.closest('[data-cart-item-key]');
+			if (!itemEl) {
+				return;
+			}
+			const cartItemKey = itemEl.dataset.cartItemKey || itemEl.getAttribute('data-cart-item-key');
+			if (!cartItemKey) {
+				return;
+			}
+			const rates = getRatesForItem(cartItemKey);
+			if (!rates.length) {
+				return;
+			}
+			const selectedRate = resolveSelectedRate(shippingBlock, cartItemKey, rates);
+			if (!selectedRate) {
+				return;
+			}
+
+			const selectedRateId = String(selectedRate.rate_id || '').trim();
+			const selectedMode = normalizeRateMode(selectedRate.mode) || 'land';
+			shippingBlock.dataset.lastSelectedMode = selectedMode;
+			shippingBlock.dataset.lastSelectedRateId = selectedRateId;
+			storeShippingMode(cartItemKey, selectedMode);
+			storeSelectedRateId(cartItemKey, selectedRateId);
+			ensureSelectionHiddenInputs(shippingBlock, cartItemKey, selectedRateId, selectedMode);
+			changed = true;
+		});
+		return changed;
+	}
+
 	function ensureTotalsRow(table, className, label) {
 		if (!table) {
 			return null;
@@ -1511,29 +1569,11 @@
 			shippingBlock.dataset.lastSelectedRateId = selectedRateId;
 			storeShippingMode(cartItemKey, selectedMode);
 			storeSelectedRateId(cartItemKey, selectedRateId);
-
-			let hiddenModeInput = shippingBlock.querySelector(`input[data-gstore-mode-hidden="true"][name="gstore_shipping_mode[${cartItemKey}]"]`);
-			if (!hiddenModeInput) {
-				hiddenModeInput = document.createElement('input');
-				hiddenModeInput.type = 'hidden';
-				hiddenModeInput.name = `gstore_shipping_mode[${cartItemKey}]`;
-				hiddenModeInput.setAttribute('data-gstore-mode-hidden', 'true');
-				shippingBlock.appendChild(hiddenModeInput);
-			}
-			hiddenModeInput.value = selectedMode;
-
-			let hiddenRateInput = shippingBlock.querySelector(`input[data-gstore-rate-hidden="true"][name="gstore_selected_shipping_rate[${cartItemKey}]"]`);
-			if (!hiddenRateInput) {
-				hiddenRateInput = document.createElement('input');
-				hiddenRateInput.type = 'hidden';
-				hiddenRateInput.name = `gstore_selected_shipping_rate[${cartItemKey}]`;
-				hiddenRateInput.setAttribute('data-gstore-rate-hidden', 'true');
-				shippingBlock.appendChild(hiddenRateInput);
-			}
-			hiddenRateInput.value = selectedRateId;
+			ensureSelectionHiddenInputs(shippingBlock, cartItemKey, selectedRateId, selectedMode);
 
 			updateCartTotalsSummary();
 			updateCheckoutAvailability();
+			scheduleCartUpdate();
 		});
 
 		shippingChoicesDelegated = true;
@@ -1560,6 +1600,7 @@
 		ensureShippingBlocksExist();
 		initMixedCartActions();
 		restoreShippingRatesFromStorage();
+		syncCurrentShippingSelectionsToStorage();
 		updateCartTotalsSummary();
 		updateCheckoutAvailability();
 
@@ -1689,6 +1730,7 @@
 
 		jQuery(document).on('click', '.checkout-button, .wc-proceed-to-checkout .button', function (event) {
 			const target = event.currentTarget;
+			syncCurrentShippingSelectionsToStorage();
 			if (target && target.dataset.gstoreDisabled === 'true') {
 				event.preventDefault();
 				updateCheckoutAvailability();

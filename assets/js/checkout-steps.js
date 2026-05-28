@@ -3132,13 +3132,13 @@ function getInstallmentDisplayTotals(summaryData) {
 			}
 
 			const itemRates = checkoutShippingRatesByItem[cartItemKey] || [];
+			const storedMode = getStoredShippingModeForItem(cartItemKey);
+			const storedRateId = getStoredSelectedRateForItem(cartItemKey);
 			const serverRateId = String(item.gstore_selected_shipping_rate || item.gstoreSelectedShippingRate || '').trim();
 			const serverMode = normalizeRateMode(item.gstore_shipping_mode || item.gstoreShippingMode || '')
 				|| getRateModeFromId(serverRateId);
-			const storedMode = getStoredShippingModeForItem(cartItemKey);
-			const storedRateId = getStoredSelectedRateForItem(cartItemKey);
-			const preferredRateId = serverRateId || storedRateId || '';
-			const preferredMode = serverMode || storedMode || 'land';
+			const preferredRateId = storedRateId || serverRateId || '';
+			const preferredMode = storedMode || serverMode || 'land';
 			const selectedRate = itemRates.length
 				? resolveCheckoutSelectedRate(itemRates, preferredRateId, preferredMode)
 				: null;
@@ -4322,6 +4322,7 @@ function getInstallmentDisplayTotals(summaryData) {
 		syncShippingFromStorage(data);
 		renderItemShippingOptions(data);
 		renderShippingSummary(data);
+		updateCheckoutShippingHiddenFields();
 
 		// Renderiza totais
 		let totalsHtml = '';
