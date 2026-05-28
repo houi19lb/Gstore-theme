@@ -2539,6 +2539,7 @@ const subtotal = decodeHtmlEntities(stripHtmlText(it.subtotal || ''));
 					rate: selectedRate,
 					cartItemKeys: [],
 					fallbackTotal: 0,
+					fallbackMax: 0,
 				};
 			}
 
@@ -2546,10 +2547,16 @@ const subtotal = decodeHtmlEntities(stripHtmlText(it.subtotal || ''));
 			groups[groupKey].mode = selectedMode;
 			groups[groupKey].rateId = selectedRateId || groups[groupKey].rateId;
 			groups[groupKey].rate = selectedRate;
-			groups[groupKey].fallbackTotal += getNumericRateCost(selectedRate);
+			const selectedCost = getNumericRateCost(selectedRate);
+			groups[groupKey].fallbackTotal += selectedCost;
+			groups[groupKey].fallbackMax = Math.max(groups[groupKey].fallbackMax || 0, selectedCost);
 		});
 
-		return Object.keys(groups).map((key) => groups[key]);
+		return Object.keys(groups).map((key) => {
+			const group = groups[key];
+			group.fallbackCost = group.fallbackMax > 0 ? group.fallbackMax : group.fallbackTotal;
+			return group;
+		});
 	}
 
 	function getStoredSelectedRateGroupRate(group) {
@@ -3117,10 +3124,31 @@ function getInstallmentDisplayTotals(summaryData) {
 			if (!cartItemKey) {
 				return;
 			}
+			const serverRates = Array.isArray(item.gstore_shipping_rates)
+				? item.gstore_shipping_rates.map(normalizeShippingRate).filter((rate) => rate.mode && rate.rate_id)
+				: [];
+			if (serverRates.length) {
+				checkoutShippingRatesByItem[cartItemKey] = serverRates;
+			}
+
+			const itemRates = checkoutShippingRatesByItem[cartItemKey] || [];
+			const serverRateId = String(item.gstore_selected_shipping_rate || item.gstoreSelectedShippingRate || '').trim();
+			const serverMode = normalizeRateMode(item.gstore_shipping_mode || item.gstoreShippingMode || '')
+				|| getRateModeFromId(serverRateId);
 			const storedMode = getStoredShippingModeForItem(cartItemKey);
 			const storedRateId = getStoredSelectedRateForItem(cartItemKey);
-			checkoutSelectedShippingByItem[cartItemKey] = storedMode || 'land';
-			checkoutSelectedShippingRateByItem[cartItemKey] = storedRateId || '';
+			const preferredRateId = serverRateId || storedRateId || '';
+			const preferredMode = serverMode || storedMode || 'land';
+			const selectedRate = itemRates.length
+				? resolveCheckoutSelectedRate(itemRates, preferredRateId, preferredMode)
+				: null;
+
+			checkoutSelectedShippingByItem[cartItemKey] = selectedRate
+				? (normalizeRateMode(selectedRate.mode) || preferredMode)
+				: preferredMode;
+			checkoutSelectedShippingRateByItem[cartItemKey] = selectedRate
+				? String(selectedRate.rate_id || preferredRateId || '')
+				: preferredRateId;
 		});
 		synchronizeSharedShippingSelections(items, false);
 	}
@@ -3316,7 +3344,7 @@ function getInstallmentDisplayTotals(summaryData) {
 				addSelectedModeLabel(selectedLabelsByMode, selectedModeForGroup, group.rate);
 
 				const groupedRate = getStoredSelectedRateGroupRate(group);
-				const selectedCost = groupedRate ? getNumericRateCost(groupedRate) : group.fallbackTotal;
+				const selectedCost = groupedRate ? getNumericRateCost(groupedRate) : group.fallbackCost;
 				if (Number.isFinite(selectedCost)) {
 					selectedTotal += selectedCost;
 					if (selectedModeForGroup === 'air') {

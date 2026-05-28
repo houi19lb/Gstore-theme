@@ -582,6 +582,15 @@
 		return '';
 	}
 
+	function getSelectedRateGroupKeyForItem(rate, itemEl) {
+		const rateId = String((rate && rate.rate_id) || '').trim();
+		const mode = normalizeRateMode(rate && rate.mode) || 'land';
+		const suffix = shouldSplitRateByShippingProfile(rate, rateId)
+			? getItemShippingProfileGroupSuffix(itemEl)
+			: '';
+		return rateId ? `${rateId}${suffix}` : `${mode}${suffix}`;
+	}
+
 	function canUseCartLevelRateForSelection(shippingBlocks, selectedRateIds, selectedModes) {
 		if (!shippingBlocks || !shippingBlocks.length) {
 			return true;
@@ -701,6 +710,7 @@
 		let hasAir = false;
 		const selectedModes = new Set();
 		const selectedRateIds = new Set();
+		const selectedCostGroups = new Map();
 
 		shippingBlocks.forEach((shippingBlock) => {
 			const itemEl = shippingBlock.closest('[data-cart-item-key]');
@@ -725,15 +735,31 @@
 				}
 				const selectedCost = getNumericRateCost(selectedRate);
 				if (Number.isFinite(selectedCost)) {
-					selectedTotal += selectedCost;
-					if (selectedMode === 'land') {
-						groundTotal += selectedCost;
-						hasGround = true;
-					} else if (selectedMode === 'air') {
-						airTotal += selectedCost;
-						hasAir = true;
+					const groupKey = getSelectedRateGroupKeyForItem(selectedRate, itemEl);
+					if (!selectedCostGroups.has(groupKey)) {
+						selectedCostGroups.set(groupKey, {
+							mode: selectedMode,
+							total: 0,
+							max: 0,
+						});
 					}
+					const group = selectedCostGroups.get(groupKey);
+					group.mode = selectedMode || group.mode;
+					group.total += selectedCost;
+					group.max = Math.max(group.max, selectedCost);
 				}
+			}
+		});
+
+		selectedCostGroups.forEach((group) => {
+			const groupedCost = Number.isFinite(group.max) && group.max > 0 ? group.max : group.total;
+			selectedTotal += groupedCost;
+			if (group.mode === 'land') {
+				groundTotal += groupedCost;
+				hasGround = true;
+			} else if (group.mode === 'air') {
+				airTotal += groupedCost;
+				hasAir = true;
 			}
 		});
 
