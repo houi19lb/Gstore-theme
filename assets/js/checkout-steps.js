@@ -2918,6 +2918,47 @@ function getInstallmentDisplayTotals(summaryData) {
 		return shippingMethodValue;
 	}
 
+	function appendCheckoutShippingDataToPayload(formDataObj, items) {
+		if (!formDataObj || typeof formDataObj !== 'object') {
+			return '';
+		}
+
+		const summaryItems = Array.isArray(items)
+			? items
+			: (lastCartSummaryData && Array.isArray(lastCartSummaryData.items) ? lastCartSummaryData.items : []);
+
+		summaryItems.forEach((item) => {
+			const cartItemKey = item.key || item.cart_item_key || item.cartItemKey || '';
+			if (!cartItemKey) {
+				return;
+			}
+
+			const selectedMode = normalizeRateMode(checkoutSelectedShippingByItem[cartItemKey] || checkoutSelectedShippingMode || 'land');
+			const selectedRateId = String(checkoutSelectedShippingRateByItem[cartItemKey] || '').trim();
+			const rates = Array.isArray(checkoutShippingRatesByItem[cartItemKey])
+				? checkoutShippingRatesByItem[cartItemKey]
+				: [];
+
+			if (selectedRateId) {
+				formDataObj[`gstore_selected_shipping_rate[${cartItemKey}]`] = selectedRateId;
+			}
+			if (selectedMode) {
+				formDataObj[`gstore_shipping_mode[${cartItemKey}]`] = selectedMode;
+			}
+			if (rates.length > 0) {
+				formDataObj[`gstore_shipping_rates[${cartItemKey}]`] = JSON.stringify(rates);
+			}
+		});
+
+		const shippingMethodValue = syncCheckoutShippingMethodField(summaryItems)
+			|| resolveUnifiedShippingMethodValue(summaryItems);
+		if (shippingMethodValue) {
+			formDataObj['shipping_method[0]'] = shippingMethodValue;
+		}
+
+		return shippingMethodValue;
+	}
+
 	function updateCheckoutShippingHiddenFields() {
 		const $checkoutForm = $('form.checkout');
 		if (!$checkoutForm.length) {
@@ -5032,6 +5073,10 @@ function getInstallmentDisplayTotals(summaryData) {
 				}
 			});
 			
+			// Reforca a selecao real de frete depois de coletar o form.
+			// Radios nativos do Woo podem ficar ocultos/stale ao trocar modalidade por item.
+			appendCheckoutShippingDataToPayload(formDataObj);
+
 			// 7. Garante campos obrigatórios para o WooCommerce
 			formDataObj['woocommerce_checkout_place_order'] = '1';
 
