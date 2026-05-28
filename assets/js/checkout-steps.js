@@ -2233,6 +2233,32 @@ const subtotal = decodeHtmlEntities(stripHtmlText(it.subtotal || ''));
 		return cartItemKey ? `item:${cartItemKey}` : '';
 	}
 
+	function isTruthyShippingFlag(value) {
+		return value === true || value === 1 || value === '1' || value === 'true' || value === 'yes';
+	}
+
+	function shouldSplitRateByShippingProfile(rate, selectedRateId) {
+		const rateId = String(selectedRateId || (rate && rate.rate_id) || '').trim();
+		if (rateId.indexOf('gstore_custom_shipping:service:') !== -1) {
+			return false;
+		}
+
+		const kind = String((rate && rate.rate_kind) || '').trim();
+		return kind === 'legacy_mode'
+			|| rateId === 'gstore_custom_shipping:land'
+			|| rateId === 'gstore_custom_shipping:air';
+	}
+
+	function getItemShippingProfileGroupSuffix(item) {
+		if (isTruthyShippingFlag(item && (item.shipping_is_gun || item.shippingIsGun || item.is_gun || item.isGun))) {
+			return '|profile:gun';
+		}
+		if (isTruthyShippingFlag(item && (item.shipping_is_ammo || item.shippingIsAmmo || item.is_ammo || item.isAmmo))) {
+			return '|profile:ammo';
+		}
+		return '';
+	}
+
 	function getShippingGroupMemberKeys(cartItemKey, items) {
 		const summaryItems = Array.isArray(items)
 			? items
@@ -2349,12 +2375,15 @@ const subtotal = decodeHtmlEntities(stripHtmlText(it.subtotal || ''));
 		return Object.keys(groups).map((key) => groups[key]);
 	}
 
-	function getSelectedRateGroupKey(rate, selectedRateId, selectedMode) {
+	function getSelectedRateGroupKey(rate, selectedRateId, selectedMode, item) {
 		const rateId = String(selectedRateId || (rate && rate.rate_id) || '').trim();
+		const profileSuffix = shouldSplitRateByShippingProfile(rate, rateId)
+			? getItemShippingProfileGroupSuffix(item)
+			: '';
 		if (rateId) {
-			return `rate:${rateId}`;
+			return `rate:${rateId}${profileSuffix}`;
 		}
-		return `mode:${normalizeRateMode(selectedMode || (rate && rate.mode) || '') || 'land'}`;
+		return `mode:${normalizeRateMode(selectedMode || (rate && rate.mode) || '') || 'land'}${profileSuffix}`;
 	}
 
 	function buildSelectedRateGroups(items, ratesByItem) {
@@ -2375,7 +2404,7 @@ const subtotal = decodeHtmlEntities(stripHtmlText(it.subtotal || ''));
 
 			const selectedMode = normalizeRateMode(selectedRate.mode || selectedModeForItem) || selectedModeForItem || 'land';
 			const selectedRateId = String(selectedRate.rate_id || preferredRateId || '').trim();
-			const groupKey = getSelectedRateGroupKey(selectedRate, selectedRateId, selectedMode);
+			const groupKey = getSelectedRateGroupKey(selectedRate, selectedRateId, selectedMode, item);
 			if (!groups[groupKey]) {
 				groups[groupKey] = {
 					key: groupKey,
@@ -3047,6 +3076,23 @@ function getInstallmentDisplayTotals(summaryData) {
 		return totalText ? parsePriceValue(totalText) : 0;
 	}
 
+	function getSelectedPaymentMethodForSummary() {
+		return String(
+			$('input[name="payment_method"]:checked').val()
+			|| $('#gstore_payment_method_fallback').val()
+			|| ''
+		);
+	}
+
+	function getSelectedInstallmentTotalValue() {
+		if (getSelectedPaymentMethodForSummary() !== 'blu_checkout') {
+			return 0;
+		}
+
+		const rawCents = parseInt(String($('#gstore_blu_installments_total_amount').val() || '').replace(/\D/g, ''), 10);
+		return Number.isFinite(rawCents) && rawCents > 0 ? rawCents / 100 : 0;
+	}
+
 	function renderShippingSummary(data) {
 		const $shippingSummary = $('[data-gstore-shipping-summary]');
 		if (!$shippingSummary.length) {
@@ -3323,9 +3369,10 @@ function getInstallmentDisplayTotals(summaryData) {
 		if ($subtotalRow.length && rowsHtml) {
 			$subtotalRow.after(rowsHtml);
 		}
-		const hasNativeFeeRows = getOrderReviewFeeRows().length > 0;
-		if ($orderTotal.length && !hasNativeFeeRows) {
-			$orderTotal.html(formatCurrency(lastSummaryTotals.totalValue || 0));
+		if ($orderTotal.length) {
+			const installmentTotal = getSelectedInstallmentTotalValue();
+			const reviewTotal = installmentTotal > 0 ? installmentTotal : (lastSummaryTotals.totalValue || 0);
+			$orderTotal.html(formatCurrency(reviewTotal));
 		}
 	}
 
