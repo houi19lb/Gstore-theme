@@ -58,6 +58,7 @@
 	const CART_MODE_STORAGE_KEY = 'gstore_cart_shipping_mode';
 	const CART_SELECTED_RATE_STORAGE_KEY = 'gstore_cart_selected_shipping_rate';
 	const CART_CEP_STORAGE_KEY = 'gstore_cart_cep';
+	const CART_DESTINATION_STORAGE_KEY = 'gstore_cart_shipping_destination';
 	const CART_RATES_STORAGE_KEY = 'gstore_cart_shipping_rates';
 	const CART_RATES_STORAGE_VERSION_KEY = 'gstore_cart_shipping_rates_version';
 	const CART_RATES_STORAGE_VERSION = '20260523-product-shipping-modes-v1';
@@ -2245,6 +2246,86 @@ const subtotal = decodeHtmlEntities(stripHtmlText(it.subtotal || ''));
 		return `${clean.slice(0, 5)}-${clean.slice(5)}`;
 	}
 
+	function normalizeShippingDestination(destination, postcode) {
+		const source = destination && typeof destination === 'object' ? destination : {};
+		const cleanPostcode = String(source.postcode || source.cep || postcode || '').replace(/\D/g, '');
+		const state = String(source.state || source.uf || '').trim().toUpperCase();
+		const city = String(source.city || source.localidade || '').trim();
+		if (cleanPostcode.length !== 8 && !state && !city) {
+			return null;
+		}
+		return {
+			postcode: cleanPostcode,
+			state,
+			city
+		};
+	}
+
+	function getStoredCartDestination() {
+		const storage = getStorageObject('localStorage');
+		if (!storage) {
+			return null;
+		}
+		try {
+			return normalizeShippingDestination(JSON.parse(storage.getItem(CART_DESTINATION_STORAGE_KEY) || 'null'));
+		} catch (e) {
+			return null;
+		}
+	}
+
+	function storeCartDestination(destination) {
+		const storage = getStorageObject('localStorage');
+		const normalized = normalizeShippingDestination(destination);
+		if (!storage || !normalized) {
+			return;
+		}
+		try {
+			storage.setItem(CART_DESTINATION_STORAGE_KEY, JSON.stringify(normalized));
+		} catch (e) {
+			// Ignore storage errors.
+		}
+	}
+
+	function setCheckoutFieldValue(selector, value, triggerChange) {
+		if (!value) {
+			return;
+		}
+		const $fields = $(selector);
+		$fields.each(function() {
+			const $field = $(this);
+			if (String($field.val() || '') === String(value)) {
+				return;
+			}
+			$field.val(value);
+			if (triggerChange !== false) {
+				$field.trigger('input').trigger('change');
+			}
+		});
+	}
+
+	function applyShippingDestinationToCheckout(destination, postcode) {
+		const normalized = normalizeShippingDestination(destination, postcode);
+		if (!normalized) {
+			return null;
+		}
+
+		lastCalculatedDestination = normalized;
+		storeCartDestination(normalized);
+
+		const formatted = formatCepForInput(normalized.postcode);
+		if (formatted) {
+			setCheckoutFieldValue('#billing_postcode, #shipping_postcode', formatted);
+		}
+		if (normalized.city) {
+			setCheckoutFieldValue('#billing_city, #shipping_city', normalized.city);
+		}
+		if (normalized.state) {
+			setCheckoutFieldValue('#billing_state, #shipping_state', normalized.state);
+		}
+
+		return normalized;
+	}
+
 	function applyStoredCartCepToCheckout() {
 		const storedCep = getStoredCartCep();
 		if (!storedCep) {
@@ -2262,6 +2343,10 @@ const subtotal = decodeHtmlEntities(stripHtmlText(it.subtotal || ''));
 				.trigger('input')
 				.trigger('change');
 		});
+		const storedDestination = getStoredCartDestination();
+		if (storedDestination && storedDestination.postcode === storedCep) {
+			applyShippingDestinationToCheckout(storedDestination, storedCep);
+		}
 		return storedCep;
 	}
 
@@ -2311,6 +2396,7 @@ const subtotal = decodeHtmlEntities(stripHtmlText(it.subtotal || ''));
 			if (!response || !response.success || !response.data || !Array.isArray(response.data.rates)) {
 				return null;
 			}
+			applyShippingDestinationToCheckout(response.data.destination || null, postcode);
 			return response.data.rates;
 		}).catch(function() {
 			return null;

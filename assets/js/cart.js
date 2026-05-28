@@ -13,6 +13,7 @@
 	let cartLevelRates = [];
 	let cartLevelRatesCep = '';
 	const CART_CEP_STORAGE_KEY = 'gstore_cart_cep';
+	const CART_DESTINATION_STORAGE_KEY = 'gstore_cart_shipping_destination';
 	const CART_MODE_STORAGE_KEY = 'gstore_cart_shipping_mode';
 	const CART_SELECTED_RATE_STORAGE_KEY = 'gstore_cart_selected_shipping_rate';
 	const CART_CALCULATED_SESSION_KEY = 'gstore_cart_shipping_calculated_session';
@@ -67,6 +68,29 @@
 		const digits = String(cep || '').replace(/\D/g, '');
 		if (digits.length === 8) {
 			window.localStorage.setItem(CART_CEP_STORAGE_KEY, digits);
+		}
+	}
+
+	function storeCartDestination(destination, cep) {
+		if (typeof window === 'undefined' || !window.localStorage || !destination || typeof destination !== 'object') {
+			return;
+		}
+
+		const digits = String(destination.postcode || destination.cep || cep || '').replace(/\D/g, '');
+		const state = String(destination.state || destination.uf || '').trim().toUpperCase();
+		const city = String(destination.city || destination.localidade || '').trim();
+		if (digits.length !== 8 && !state && !city) {
+			return;
+		}
+
+		try {
+			window.localStorage.setItem(CART_DESTINATION_STORAGE_KEY, JSON.stringify({
+				postcode: digits,
+				state,
+				city
+			}));
+		} catch (e) {
+			// ignore storage errors
 		}
 	}
 
@@ -971,6 +995,7 @@
 			if (!response || !response.success || !response.data || !Array.isArray(response.data.rates)) {
 				return null;
 			}
+			storeCartDestination(response.data.destination, cep);
 			return response.data.rates;
 		}).catch(() => null);
 	}
@@ -993,6 +1018,7 @@
 			if (!response || !response.success || !response.data || !Array.isArray(response.data.rates)) {
 				return null;
 			}
+			storeCartDestination(response.data.destination, cep);
 			return response.data.rates;
 		}).catch(() => null);
 	}
