@@ -2209,7 +2209,16 @@ const subtotal = decodeHtmlEntities(stripHtmlText(it.subtotal || ''));
 				);
 			}
 		}
-		return rate.cost_formatted || '-';
+		if (rate.cost_formatted) {
+			return rate.cost_formatted;
+		}
+		if (Object.prototype.hasOwnProperty.call(rate, 'cost')) {
+			const numericCost = Number(rate.cost);
+			if (Number.isFinite(numericCost)) {
+				return formatCurrency(numericCost);
+			}
+		}
+		return '-';
 	}
 
 	function getNumericRateCost(rate) {
@@ -3052,6 +3061,9 @@ function getInstallmentDisplayTotals(summaryData) {
 		if (allRateIds.size === 1) {
 			const rateId = Array.from(allRateIds)[0];
 			if (/^gstore_custom_shipping:(land|air|pickup|mixed)$/.test(rateId)) {
+				return rateId;
+			}
+			if (rateId.indexOf('gstore_custom_shipping:service:') === 0) {
 				return rateId;
 			}
 			const modeFromRate = getRateModeFromId(rateId);
