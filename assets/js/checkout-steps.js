@@ -4868,6 +4868,7 @@ function getInstallmentDisplayTotals(summaryData) {
 					    name.indexOf('woocommerce') === 0 || 
 					    name.indexOf('_wp') === 0 ||
 						name.indexOf('gstore_') === 0 || // Campos do GStore (parcelas, etc.)
+						name.indexOf('shipping_method[') === 0 ||
 					    name === 'terms' ||
 					    name === 'terms-field' ||
 					    name === 'ship_to_different_address') {
@@ -4880,6 +4881,10 @@ function getInstallmentDisplayTotals(summaryData) {
 			const $bluInstallments = $('#gstore_blu_installments');
 			if ($bluInstallments.length && $bluInstallments.val()) {
 				formDataObj['gstore_blu_installments'] = $bluInstallments.val();
+			}
+			const $shippingMethod = $form.find('input[name="shipping_method[0]"][type="hidden"]').last();
+			if ($shippingMethod.length && $shippingMethod.val()) {
+				formDataObj['shipping_method[0]'] = $shippingMethod.val();
 			}
 			
 			// 6. Coleta campos do formulário original que ainda existem
@@ -5034,13 +5039,7 @@ function getInstallmentDisplayTotals(summaryData) {
 	}
 
 	function shouldUseExternalBluCheckoutFlow() {
-		if (!isBluCheckoutSelected()) return false;
-		if (typeof window.matchMedia !== 'function') return false;
-
-		const isSmallViewport = window.matchMedia('(max-width: 768px)').matches;
-		const isCoarsePointer = window.matchMedia('(hover: none) and (pointer: coarse)').matches;
-
-		return isSmallViewport || isCoarsePointer;
+		return isBluCheckoutSelected();
 	}
 
 	function handleBluCheckoutRedirect(url) {
