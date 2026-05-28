@@ -91,6 +91,48 @@
 			.replace(/'/g, '&#039;');
 	}
 
+	function isCheckoutDebugEnabled() {
+		try {
+			const search = window.location && window.location.search ? window.location.search : '';
+			if (/[?&]gstore_checkout_debug=1(?:&|$)/.test(search)) {
+				return true;
+			}
+			return window.sessionStorage && window.sessionStorage.getItem('gstore_checkout_debug') === '1';
+		} catch (e) {
+			return false;
+		}
+	}
+
+	function debugCheckout(label, data) {
+		if (!isCheckoutDebugEnabled() || !window.console || !window.console.info) {
+			return;
+		}
+		try {
+			window.console.info('[Gstore checkout debug]', label, data || {});
+		} catch (e) {}
+	}
+
+	function getCheckoutDebugPayload(formDataObj) {
+		const payload = {};
+		Object.keys(formDataObj || {}).forEach(function(key) {
+			if (
+				key === 'shipping_method[0]' ||
+				key === 'payment_method' ||
+				key === 'billing_postcode' ||
+				key === 'shipping_postcode' ||
+				key === 'gstore_checkout_step' ||
+				key === 'gstore_shipping_mode' ||
+				key.indexOf('gstore_shipping_mode[') === 0 ||
+				key.indexOf('gstore_selected_shipping_rate[') === 0
+			) {
+				payload[key] = formDataObj[key];
+			}
+		});
+		payload.currentStep = currentStep;
+		payload.activeStepIndex = $('.Gstore-checkout-step').index($('.Gstore-checkout-step.is-active').first());
+		return payload;
+	}
+
 	function getBluResumeConfig() {
 		return (window.gstoreCheckout && window.gstoreCheckout.bluResume) ? window.gstoreCheckout.bluResume : null;
 	}
@@ -1050,6 +1092,18 @@ const subtotal = decodeHtmlEntities(stripHtmlText(it.subtotal || ''));
 	/**
 	 * Inicializa o checkout de etapas
 	 */
+	function ensureCheckoutFormId() {
+		if (!$checkoutForm || !$checkoutForm.length) {
+			return 'gstore_checkout_form';
+		}
+		let formId = $checkoutForm.attr('id');
+		if (!formId) {
+			formId = 'gstore_checkout_form';
+			$checkoutForm.attr('id', formId);
+		}
+		return formId;
+	}
+
 	function init() {
 		if (initialized) return;
 		
@@ -1058,6 +1112,7 @@ const subtotal = decodeHtmlEntities(stripHtmlText(it.subtotal || ''));
 		if (!$checkoutForm.length) {
 			return;
 		}
+		ensureCheckoutFormId();
 
 		// Verifica se já foi inicializado
 		if ($('.Gstore-checkout-steps').length) {
@@ -1121,6 +1176,7 @@ const subtotal = decodeHtmlEntities(stripHtmlText(it.subtotal || ''));
 
 		// Move campos para as etapas corretas
 		organizeFields();
+		$('#place_order').attr('form', ensureCheckoutFormId());
 
 		// Ativa primeira etapa sem forçar scroll (evita pular para o fim na carga inicial)
 		setActiveStep(0, false);
@@ -2020,6 +2076,23 @@ const subtotal = decodeHtmlEntities(stripHtmlText(it.subtotal || ''));
 		return '';
 	}
 
+	function getRateModeFromId(rateId) {
+		const value = String(rateId || '').toLowerCase();
+		if (!value) {
+			return '';
+		}
+		if (value.indexOf(':pickup') !== -1 || /(?:^|[-_:])pickup(?:$|[-_:])/.test(value)) {
+			return 'pickup';
+		}
+		if (value.indexOf(':air') !== -1 || /(?:^|[-_:])air(?:$|[-_:])/.test(value) || /(?:^|[-_:])aereo(?:$|[-_:])/.test(value)) {
+			return 'air';
+		}
+		if (value.indexOf(':land') !== -1 || /(?:^|[-_:])land(?:$|[-_:])/.test(value) || /(?:^|[-_:])terrestre(?:$|[-_:])/.test(value)) {
+			return 'land';
+		}
+		return '';
+	}
+
 	function getRateModeLabel(mode) {
 		const normalized = normalizeRateMode(mode);
 		if (normalized === 'air') {
@@ -2866,8 +2939,9 @@ function getInstallmentDisplayTotals(summaryData) {
 				return;
 			}
 
-			const selectedMode = normalizeRateMode(checkoutSelectedShippingByItem[key] || '');
 			const selectedRateId = String(checkoutSelectedShippingRateByItem[key] || '').trim();
+			const selectedMode = normalizeRateMode(checkoutSelectedShippingByItem[key] || '')
+				|| getRateModeFromId(selectedRateId);
 
 			if (selectedMode) {
 				allModes.add(selectedMode);
@@ -2878,12 +2952,20 @@ function getInstallmentDisplayTotals(summaryData) {
 			}
 		});
 
-		if (allRateIds.size === 1) {
-			return Array.from(allRateIds)[0];
-		}
-
 		if (allRateIds.size > 1 || allModes.size > 1) {
 			return 'gstore_custom_shipping:mixed';
+		}
+
+		if (allRateIds.size === 1) {
+			const rateId = Array.from(allRateIds)[0];
+			if (/^gstore_custom_shipping:(land|air|pickup|mixed)$/.test(rateId)) {
+				return rateId;
+			}
+			const modeFromRate = getRateModeFromId(rateId);
+			const singleMode = modeFromRate || Array.from(allModes)[0];
+			if (singleMode) {
+				return 'gstore_custom_shipping:' + singleMode;
+			}
 		}
 
 		const fallbackMode = normalizeRateMode(checkoutSelectedShippingMode || '')
@@ -3857,6 +3939,7 @@ function getInstallmentDisplayTotals(summaryData) {
 		const lastStepIndex = STEPS.length - 1;
 		const $placeOrderBtn = $('#place_order, .place-order');
 		if ($placeOrderBtn.length) {
+			$placeOrderBtn.attr('form', ensureCheckoutFormId());
 			if (index === lastStepIndex) {
 				// Mostra o botão apenas na última etapa
 				$placeOrderBtn.show();
@@ -4729,8 +4812,20 @@ function getInstallmentDisplayTotals(summaryData) {
 		}
 
 		// Garante que o botão de finalizar pedido funcione corretamente
-		$(document).on('click', '#place_order', function(e) {
+		$(document)
+			.off('click.gstoreCheckoutPlaceOrder', '#place_order')
+			.on('click.gstoreCheckoutPlaceOrder', '#place_order', function(e) {
 			const lastStepIndex = STEPS.length - 1;
+			const domStepIndex = $('.Gstore-checkout-step').index($('.Gstore-checkout-step.is-active').first());
+			if (domStepIndex >= 0 && domStepIndex !== currentStep) {
+				currentStep = domStepIndex;
+			}
+			debugCheckout('place_order_click', {
+				currentStep: currentStep,
+				activeStepIndex: domStepIndex,
+				lastStepIndex: lastStepIndex,
+				formProcessing: $checkoutForm.hasClass('processing')
+			});
 			if (currentStep !== lastStepIndex) {
 				e.preventDefault();
 				setActiveStep(lastStepIndex);
@@ -5076,6 +5171,10 @@ function getInstallmentDisplayTotals(summaryData) {
 			// Reforca a selecao real de frete depois de coletar o form.
 			// Radios nativos do Woo podem ficar ocultos/stale ao trocar modalidade por item.
 			appendCheckoutShippingDataToPayload(formDataObj);
+			if (isCheckoutDebugEnabled()) {
+				formDataObj['gstore_checkout_debug'] = '1';
+				debugCheckout('submit_payload', getCheckoutDebugPayload(formDataObj));
+			}
 
 			// 7. Garante campos obrigatórios para o WooCommerce
 			formDataObj['woocommerce_checkout_place_order'] = '1';
@@ -5106,6 +5205,11 @@ function getInstallmentDisplayTotals(summaryData) {
 				data: formData,
 				dataType: 'json',
 				success: function(response) {
+					debugCheckout('checkout_response', {
+						result: response && response.result,
+						messages: response && response.messages,
+						redirect: response && response.redirect
+					});
 					updateProcessingStep(3);
 					
 						if (response.result === 'success') {
@@ -5151,7 +5255,13 @@ function getInstallmentDisplayTotals(summaryData) {
 						}
 					}
 				},
-				error: function() {
+				error: function(xhr, statusText, errorThrown) {
+					debugCheckout('checkout_error', {
+						status: xhr && xhr.status,
+						statusText: statusText,
+						error: errorThrown,
+						response: xhr && xhr.responseText
+					});
 					hideProcessingModal();
 					$form.removeClass('processing').unblock();
 					showNotice('Ocorreu um erro ao processar o pedido. Por favor, tente novamente.', 'error');
