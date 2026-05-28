@@ -540,6 +540,79 @@
 		return parsePriceValue(rate.cost_formatted || '');
 	}
 
+	function isTruthyShippingFlag(value) {
+		return value === true || value === 1 || value === '1' || value === 'true' || value === 'yes';
+	}
+
+	function shouldSplitRateByShippingProfile(rate, selectedRateId) {
+		const rateId = String(selectedRateId || (rate && rate.rate_id) || '').trim();
+		if (rateId.indexOf('gstore_custom_shipping:service:') !== -1) {
+			return false;
+		}
+
+		const kind = String((rate && rate.rate_kind) || '').trim();
+		return kind === 'legacy_mode'
+			|| rateId === 'gstore_custom_shipping:land'
+			|| rateId === 'gstore_custom_shipping:air';
+	}
+
+	function getItemShippingProfileGroupSuffix(itemEl) {
+		if (!itemEl || !itemEl.dataset) {
+			return '';
+		}
+		if (isTruthyShippingFlag(itemEl.dataset.shippingIsGun || itemEl.getAttribute('data-shipping-is-gun'))) {
+			return '|profile:gun';
+		}
+		if (isTruthyShippingFlag(itemEl.dataset.shippingIsAmmo || itemEl.getAttribute('data-shipping-is-ammo'))) {
+			return '|profile:ammo';
+		}
+		return '';
+	}
+
+	function canUseCartLevelRateForSelection(shippingBlocks, selectedRateIds, selectedModes) {
+		if (!shippingBlocks || !shippingBlocks.length) {
+			return true;
+		}
+
+		const selectedRateId = selectedRateIds && selectedRateIds.size === 1 ? Array.from(selectedRateIds)[0] : '';
+		const profileGroups = new Set();
+		let hasProfileSplitRate = false;
+
+		shippingBlocks.forEach((shippingBlock) => {
+			const itemEl = shippingBlock.closest('[data-cart-item-key]');
+			if (!itemEl) {
+				return;
+			}
+
+			const cartItemKey = itemEl.dataset.cartItemKey || itemEl.getAttribute('data-cart-item-key');
+			if (!cartItemKey) {
+				return;
+			}
+
+			const rates = getRatesForItem(cartItemKey);
+			if (!rates.length) {
+				return;
+			}
+
+			const selectedRate = resolveSelectedRate(shippingBlock, cartItemKey, rates);
+			if (!selectedRate) {
+				return;
+			}
+
+			const rateId = String(selectedRate.rate_id || selectedRateId || '').trim();
+			if (!shouldSplitRateByShippingProfile(selectedRate, rateId)) {
+				return;
+			}
+
+			hasProfileSplitRate = true;
+			const mode = normalizeRateMode(selectedRate.mode || (selectedModes && selectedModes.size === 1 ? Array.from(selectedModes)[0] : '')) || 'land';
+			const suffix = getItemShippingProfileGroupSuffix(itemEl);
+			profileGroups.add(`${rateId || mode}${suffix}`);
+		});
+
+		return !hasProfileSplitRate || profileGroups.size <= 1;
+	}
+
 	function getCartLevelSelectedRate(selectedRateIds, selectedModes) {
 		const cep = getCartCep();
 		if (!cep || cartLevelRatesCep !== cep || !Array.isArray(cartLevelRates) || !cartLevelRates.length) {
@@ -651,7 +724,9 @@
 			}
 		});
 
-		const cartLevelSelectedRate = getCartLevelSelectedRate(selectedRateIds, selectedModes);
+		const cartLevelSelectedRate = canUseCartLevelRateForSelection(shippingBlocks, selectedRateIds, selectedModes)
+			? getCartLevelSelectedRate(selectedRateIds, selectedModes)
+			: null;
 		if (cartLevelSelectedRate) {
 			const cartLevelMode = normalizeRateMode(cartLevelSelectedRate.mode);
 			const cartLevelCost = getNumericRateCost(cartLevelSelectedRate);

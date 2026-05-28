@@ -73,6 +73,14 @@ if ( function_exists( 'wc_wp_theme_get_element_class_name' ) ) {
 						<?php do_action( 'woocommerce_before_cart_contents' ); ?>
 
 						<?php
+						$gstore_freight_variations = array();
+						if ( class_exists( '\GStore\Services\Freight_Service' ) ) {
+							$gstore_freight_config = \GStore\Services\Freight_Service::get_config();
+							$gstore_freight_variations = isset( $gstore_freight_config['variations'] ) && is_array( $gstore_freight_config['variations'] )
+								? $gstore_freight_config['variations']
+								: array();
+						}
+
 						foreach ( WC()->cart->get_cart() as $cart_item_key => $cart_item ) {
 							$_product   = apply_filters( 'woocommerce_cart_item_product', $cart_item['data'], $cart_item, $cart_item_key );
 							$product_id = apply_filters( 'woocommerce_cart_item_product_id', $cart_item['product_id'], $cart_item, $cart_item_key );
@@ -92,9 +100,21 @@ if ( function_exists( 'wc_wp_theme_get_element_class_name' ) ) {
 										$item_token_group = 'store';
 									}
 								}
+
+								$gstore_shipping_profile = array(
+									'is_ammo' => false,
+									'is_gun'  => false,
+								);
+								if ( class_exists( '\GStore\Services\Freight_Service' ) ) {
+									$gstore_shipping_profile = \GStore\Services\Freight_Service::resolve_shipping_profile_for_cart_item(
+										$cart_item,
+										(string) $cart_item_key,
+										$gstore_freight_variations
+									);
+								}
 								?>
 
-								<article class="Gstore-cart-card <?php echo esc_attr( $cart_item_class ); ?><?php echo '' !== $item_token_group ? ' Gstore-cart-card--' . esc_attr( $item_token_group ) : ''; ?>" role="listitem" data-cart-item-key="<?php echo esc_attr( $cart_item_key ); ?>" data-product-id="<?php echo esc_attr( $product_id ); ?>" data-quantity="<?php echo esc_attr( $cart_item['quantity'] ); ?>"<?php echo '' !== $item_token_group ? ' data-token-group="' . esc_attr( $item_token_group ) . '"' : ''; ?>>
+								<article class="Gstore-cart-card <?php echo esc_attr( $cart_item_class ); ?><?php echo '' !== $item_token_group ? ' Gstore-cart-card--' . esc_attr( $item_token_group ) : ''; ?>" role="listitem" data-cart-item-key="<?php echo esc_attr( $cart_item_key ); ?>" data-product-id="<?php echo esc_attr( $product_id ); ?>" data-quantity="<?php echo esc_attr( $cart_item['quantity'] ); ?>" data-shipping-is-ammo="<?php echo ! empty( $gstore_shipping_profile['is_ammo'] ) ? '1' : '0'; ?>" data-shipping-is-gun="<?php echo ! empty( $gstore_shipping_profile['is_gun'] ) ? '1' : '0'; ?>"<?php echo '' !== $item_token_group ? ' data-token-group="' . esc_attr( $item_token_group ) . '"' : ''; ?>>
 									<div class="Gstore-cart-card__content">
 										<div class="Gstore-cart-card__media-column">
 											<?php if ( '' !== $item_token_group ) : ?>
@@ -437,4 +457,3 @@ if ( function_exists( 'wc_wp_theme_get_element_class_name' ) ) {
 </section>
 
 <?php do_action( 'woocommerce_after_cart' ); ?>
-
