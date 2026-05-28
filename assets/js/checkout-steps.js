@@ -57,6 +57,7 @@
 	let lastCalculatedDestination = null; // Destino (cidade/UF) do último frete calculado
 	const CART_MODE_STORAGE_KEY = 'gstore_cart_shipping_mode';
 	const CART_SELECTED_RATE_STORAGE_KEY = 'gstore_cart_selected_shipping_rate';
+	const CART_CEP_STORAGE_KEY = 'gstore_cart_cep';
 	const CART_RATES_STORAGE_KEY = 'gstore_cart_shipping_rates';
 	const CART_RATES_STORAGE_VERSION_KEY = 'gstore_cart_shipping_rates_version';
 	const CART_RATES_STORAGE_VERSION = '20260523-product-shipping-modes-v1';
@@ -1029,6 +1030,7 @@ const subtotal = decodeHtmlEntities(stripHtmlText(it.subtotal || ''));
 		const $postcodeInput = $('#billing_postcode');
 		if (!$postcodeInput.length) return;
 
+		applyStoredCartCepToCheckout();
 		const raw = String($postcodeInput.val() || '');
 		const cleanCep = raw.replace(/\D/g, '');
 
@@ -2151,6 +2153,43 @@ const subtotal = decodeHtmlEntities(stripHtmlText(it.subtotal || ''));
 		const raw = String($('#billing_postcode').val() || '');
 		const digits = raw.replace(/\D/g, '');
 		return digits.length === 8 ? digits : '';
+	}
+
+	function getStoredCartCep() {
+		const storage = getStorageObject('localStorage');
+		if (!storage) {
+			return '';
+		}
+		const digits = String(storage.getItem(CART_CEP_STORAGE_KEY) || '').replace(/\D/g, '');
+		return digits.length === 8 ? digits : '';
+	}
+
+	function formatCepForInput(digits) {
+		const clean = String(digits || '').replace(/\D/g, '');
+		if (clean.length !== 8) {
+			return '';
+		}
+		return `${clean.slice(0, 5)}-${clean.slice(5)}`;
+	}
+
+	function applyStoredCartCepToCheckout() {
+		const storedCep = getStoredCartCep();
+		if (!storedCep) {
+			return '';
+		}
+		const currentCep = getCurrentCheckoutCep();
+		if (currentCep === storedCep) {
+			return storedCep;
+		}
+		const formatted = formatCepForInput(storedCep);
+		const $fields = $('#billing_postcode, #shipping_postcode');
+		$fields.each(function() {
+			$(this)
+				.val(formatted)
+				.trigger('input')
+				.trigger('change');
+		});
+		return storedCep;
 	}
 
 	function groupRatesByMode(rates) {
@@ -4039,6 +4078,7 @@ function getInstallmentDisplayTotals(summaryData) {
 		const installmentsValue = $('#gstore_blu_installments').val() || $('#gstore_blu_installments_select').val() || '';
 		const $form = $('form.checkout').first();
 		if ($form.length && typeof updateCheckoutShippingHiddenFields === 'function') {
+			applyStoredCartCepToCheckout();
 			updateCheckoutShippingHiddenFields();
 		}
 		const paymentMethod = resolveSelectedPaymentMethod($form);
