@@ -5446,7 +5446,9 @@ function getInstallmentDisplayTotals(summaryData) {
 	}
 
 	function shouldUseExternalBluCheckoutFlow() {
-		return isBluCheckoutSelected();
+		// Mantem o cliente no checkout para poder fechar o modal e trocar parcelas
+		// sem perder o carrinho. O proprio modal oferece link externo como fallback.
+		return false;
 	}
 
 	function handleBluCheckoutRedirect(url) {
