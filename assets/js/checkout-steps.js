@@ -51,6 +51,7 @@
 	let isUpdatingPayment = false; // Flag para evitar loops ao atualizar pagamento
 	let calculatedShipping = null; // Armazena o frete calculado
 	let isCalculatingShipping = false; // Flag para evitar múltiplos cálculos simultâneos
+	let shippingAutofillRetryPending = false;
 	let lastCalculatedShippingCep = ''; // CEP (somente dígitos) do último frete calculado com sucesso
 	let lastRequestedShippingCep = ''; // CEP (somente dígitos) da última requisição de frete disparada
 	let lastCalculatedDestination = null; // Destino (cidade/UF) do último frete calculado
@@ -2242,11 +2243,24 @@ const subtotal = decodeHtmlEntities(stripHtmlText(it.subtotal || ''));
 		if (rateId.indexOf('gstore_custom_shipping:service:') !== -1) {
 			return false;
 		}
+		if (isRpaShippingRate(rate)) {
+			return false;
+		}
 
 		const kind = String((rate && rate.rate_kind) || '').trim();
 		return kind === 'legacy_mode'
 			|| rateId === 'gstore_custom_shipping:land'
 			|| rateId === 'gstore_custom_shipping:air';
+	}
+
+	function isRpaShippingRate(rate) {
+		const label = String(
+			(rate && (rate.label || rate.carrier_name || rate.carrierName || rate.service_name || rate.serviceName)) || ''
+		)
+			.normalize('NFD')
+			.replace(/[\u0300-\u036f]/g, '')
+			.toLowerCase();
+		return /\brpa\b/.test(label);
 	}
 
 	function getItemShippingProfileGroupSuffix(item) {
@@ -3172,6 +3186,19 @@ function getInstallmentDisplayTotals(summaryData) {
 			selectedModes.add(selectedMode);
 		}
 
+		const backendShippingValue = data && data.totals && data.totals.shipping
+			? parsePriceValue(data.totals.shipping)
+			: 0;
+		if (backendShippingValue > 0 && selectedModes.size <= 1 && Math.abs(backendShippingValue - selectedTotal) > 0.01) {
+			const onlyMode = selectedModes.values().next().value || selectedMode || 'land';
+			selectedTotal = backendShippingValue;
+			selectedLandTotal = onlyMode === 'land' ? backendShippingValue : 0;
+			selectedAirTotal = onlyMode === 'air' ? backendShippingValue : 0;
+			selectedPickupTotal = onlyMode === 'pickup' ? backendShippingValue : 0;
+			groundTotal = selectedLandTotal;
+			airTotal = selectedAirTotal;
+		}
+
 		const fees = (data && data.totals && data.totals.fees && Array.isArray(data.totals.fees)) ? data.totals.fees : [];
 		let feesTotal = 0;
 		const otherFees = [];
@@ -3416,9 +3443,20 @@ function getInstallmentDisplayTotals(summaryData) {
 			// Verifica se productId é válido
 			if (!checkoutItem.productId || checkoutItem.productId === 0) {
 				isCalculatingShipping = false;
-				showShippingError('Não foi possível identificar os itens do carrinho. Atualize a página.');
 				calculatedShipping = null;
 				lastCalculatedShippingCep = '';
+				if (!shippingAutofillRetryPending) {
+					shippingAutofillRetryPending = true;
+					loadCartSummary(function() {
+						shippingAutofillRetryPending = false;
+						const refreshedItems = lastCartSummaryData && Array.isArray(lastCartSummaryData.items)
+							? lastCartSummaryData.items
+							: [];
+						if (refreshedItems.length) {
+							calculateShipping(cleanCep);
+						}
+					});
+				}
 				return;
 			}
 			

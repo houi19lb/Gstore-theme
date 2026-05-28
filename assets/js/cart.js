@@ -549,11 +549,24 @@
 		if (rateId.indexOf('gstore_custom_shipping:service:') !== -1) {
 			return false;
 		}
+		if (isRpaShippingRate(rate)) {
+			return false;
+		}
 
 		const kind = String((rate && rate.rate_kind) || '').trim();
 		return kind === 'legacy_mode'
 			|| rateId === 'gstore_custom_shipping:land'
 			|| rateId === 'gstore_custom_shipping:air';
+	}
+
+	function isRpaShippingRate(rate) {
+		const label = String(
+			(rate && (rate.label || rate.carrier_name || rate.carrierName || rate.service_name || rate.serviceName)) || ''
+		)
+			.normalize('NFD')
+			.replace(/[\u0300-\u036f]/g, '')
+			.toLowerCase();
+		return /\brpa\b/.test(label);
 	}
 
 	function getItemShippingProfileGroupSuffix(itemEl) {
