@@ -2247,6 +2247,22 @@ const subtotal = decodeHtmlEntities(stripHtmlText(it.subtotal || ''));
 		return digits.length === 8 ? digits : '';
 	}
 
+	function storeCartCep(cep) {
+		const storage = getStorageObject('localStorage');
+		if (!storage) {
+			return;
+		}
+		const digits = String(cep || '').replace(/\D/g, '');
+		if (digits.length !== 8) {
+			return;
+		}
+		try {
+			storage.setItem(CART_CEP_STORAGE_KEY, digits);
+		} catch (e) {
+			// Ignore storage errors.
+		}
+	}
+
 	function formatCepForInput(digits) {
 		const clean = String(digits || '').replace(/\D/g, '');
 		if (clean.length !== 8) {
@@ -2319,6 +2335,7 @@ const subtotal = decodeHtmlEntities(stripHtmlText(it.subtotal || ''));
 		}
 
 		lastCalculatedDestination = normalized;
+		storeCartCep(normalized.postcode);
 		storeCartDestination(normalized);
 
 		const formatted = formatCepForInput(normalized.postcode);
@@ -2343,6 +2360,10 @@ const subtotal = decodeHtmlEntities(stripHtmlText(it.subtotal || ''));
 		const currentCep = getCurrentCheckoutCep();
 		if (currentCep === storedCep) {
 			return storedCep;
+		}
+		if (currentCep && (isCalculatingShipping || lastRequestedShippingCep === currentCep || lastCalculatedShippingCep === currentCep)) {
+			storeCartCep(currentCep);
+			return currentCep;
 		}
 		const formatted = formatCepForInput(storedCep);
 		const $fields = $('#billing_postcode, #shipping_postcode');
@@ -3702,6 +3723,8 @@ function getInstallmentDisplayTotals(summaryData) {
 		}
 
 		// Evita múltiplos cálculos simultâneos
+		storeCartCep(cleanCep);
+
 		if (isCalculatingShipping) {
 			return;
 		}
@@ -4784,7 +4807,14 @@ function getInstallmentDisplayTotals(summaryData) {
 			$(this).val(value);
 			
 			// Limpa resultado anterior quando CEP muda
-			if (value.replace(/\D/g, '').length < 8) {
+			const cleanCep = value.replace(/\D/g, '');
+			if (cleanCep.length === 8) {
+				storeCartCep(cleanCep);
+				if (lastCalculatedShippingCep && lastCalculatedShippingCep !== cleanCep) {
+					calculatedShipping = null;
+					lastCalculatedDestination = null;
+				}
+			} else {
 				hideShippingResult();
 				calculatedShipping = null;
 				lastCalculatedDestination = null;
