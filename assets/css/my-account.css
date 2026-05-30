@@ -1645,6 +1645,173 @@ form.woocommerce-form {
    MODAL DE INFORMAÇÕES SOBRE CADASTRO
    ======================================== */
 
+/* ========================================
+   SOLICITACAO DE REVENDEDOR
+   ======================================== */
+
+.gstore-partner-application {
+	margin-top: 18px;
+	padding: 18px;
+	border: 1px solid var(--gstore-color-border, #e6e6e6);
+	border-radius: var(--gstore-radius-lg, 8px);
+	background: #ffffff;
+	box-shadow: var(--gstore-shadow-sm);
+}
+
+.gstore-partner-application--account {
+	margin: 22px 0;
+}
+
+.gstore-partner-application__intro {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 16px;
+}
+
+.gstore-partner-application__intro strong {
+	display: block;
+	color: var(--gstore-color-text-primary, #1a1a1a);
+	font-size: 16px;
+	font-weight: 800;
+	line-height: 1.25;
+}
+
+.gstore-partner-application__intro p,
+.gstore-partner-application__status {
+	margin: 4px 0 0;
+	color: var(--gstore-color-text-secondary, #666);
+	font-size: 13px;
+	line-height: 1.45;
+}
+
+.gstore-partner-application__toggle,
+.gstore-partner-application .gstore-partner-primary-button {
+	white-space: nowrap;
+}
+
+.gstore-partner-application__badge {
+	display: inline-flex;
+	align-items: center;
+	min-height: 32px;
+	padding: 5px 10px;
+	border-radius: 999px;
+	background: #fff7e6;
+	color: #8a5a00;
+	font-size: 12px;
+	font-weight: 800;
+}
+
+.gstore-partner-application__form {
+	display: grid;
+	gap: 16px;
+	margin-top: 18px;
+	padding-top: 18px;
+	border-top: 1px solid var(--gstore-color-border, #e6e6e6);
+}
+
+.gstore-partner-application__form[hidden] {
+	display: none;
+}
+
+.gstore-partner-application__grid {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 14px;
+}
+
+.gstore-partner-application label,
+.gstore-partner-application__profile {
+	margin: 0;
+}
+
+.gstore-partner-application label > span,
+.gstore-partner-application__profile legend {
+	display: block;
+	margin-bottom: 7px;
+	color: var(--gstore-color-text-primary, #1a1a1a);
+	font-size: 13px;
+	font-weight: 700;
+	line-height: 1.3;
+}
+
+.gstore-partner-application input[type="text"],
+.gstore-partner-application input[type="email"],
+.gstore-partner-application input[type="file"],
+.gstore-partner-application textarea {
+	width: 100%;
+	min-height: 44px;
+	border: 1px solid var(--gstore-color-border, #d8d8d8);
+	border-radius: var(--gstore-radius-base, 4px);
+	background: #fff;
+	color: var(--gstore-color-text-primary, #1a1a1a);
+	font-size: 14px;
+}
+
+.gstore-partner-application input[readonly] {
+	background: #f7f7f7;
+	color: var(--gstore-color-text-secondary, #666);
+}
+
+.gstore-partner-application__file {
+	grid-column: 1 / -1;
+}
+
+.gstore-partner-application__profile {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 10px;
+	padding: 0;
+	border: 0;
+}
+
+.gstore-partner-application__profile legend {
+	width: 100%;
+}
+
+.gstore-partner-application__profile label {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	padding: 8px 11px;
+	border: 1px solid var(--gstore-color-border, #d8d8d8);
+	border-radius: 6px;
+	background: #fff;
+	cursor: pointer;
+}
+
+.gstore-partner-application__profile input {
+	margin: 0;
+	accent-color: var(--gstore-color-accent, #b5a642);
+}
+
+.gstore-partner-application__profile label > span {
+	margin: 0;
+	font-size: 13px;
+}
+
+.gstore-partner-application__about textarea {
+	min-height: 118px;
+	resize: vertical;
+}
+
+@media (max-width: 640px) {
+	.gstore-partner-application__intro {
+		align-items: stretch;
+		flex-direction: column;
+	}
+
+	.gstore-partner-application__toggle,
+	.gstore-partner-application .gstore-partner-primary-button {
+		width: 100%;
+	}
+
+	.gstore-partner-application__grid {
+		grid-template-columns: 1fr;
+	}
+}
+
+/* Modal de informacoes sobre cadastro */
 .gstore-modal {
 	position: fixed;
 	top: 0;

@@ -107,6 +107,48 @@ if ( ! function_exists( 'gstore_partner_account_contract_version' ) ) {
 	}
 }
 
+if ( ! function_exists( 'gstore_partner_account_store_name' ) ) {
+	function gstore_partner_account_store_name() {
+		$store_name = '';
+
+		if ( function_exists( 'get_option' ) ) {
+			$store_name = (string) get_option( 'woocommerce_email_from_name', '' );
+		}
+
+		if ( '' === trim( $store_name ) ) {
+			$store_name = (string) get_bloginfo( 'name' );
+		}
+
+		$store_name = trim( wp_specialchars_decode( $store_name, ENT_QUOTES ) );
+
+		return (string) apply_filters( 'gstore_partner_account_store_name', '' !== $store_name ? $store_name : __( 'Loja', 'gstore' ) );
+	}
+}
+
+if ( ! function_exists( 'gstore_partner_account_application_status_label' ) ) {
+	function gstore_partner_account_application_status_label( $status ) {
+		$labels = array(
+			'pending'   => __( 'Em analise', 'gstore' ),
+			'approved'  => __( 'Aprovada', 'gstore' ),
+			'rejected'  => __( 'Rejeitada', 'gstore' ),
+			'cancelled' => __( 'Cancelada', 'gstore' ),
+		);
+
+		$status = sanitize_key( (string) $status );
+		return isset( $labels[ $status ] ) ? $labels[ $status ] : $status;
+	}
+}
+
+if ( ! function_exists( 'gstore_partner_account_can_show_application' ) ) {
+	function gstore_partner_account_can_show_application() {
+		if ( ! function_exists( 'gstore_partner_is_enabled' ) || ! gstore_partner_is_enabled() ) {
+			return false;
+		}
+
+		return ! function_exists( 'gstore_partner_user_is_partner' ) || ! gstore_partner_user_is_partner( get_current_user_id() );
+	}
+}
+
 if ( ! function_exists( 'gstore_partner_account_contract_is_accepted' ) ) {
 	function gstore_partner_account_contract_is_accepted( $user_id = null ) {
 		$user_id = null === $user_id ? get_current_user_id() : absint( $user_id );
@@ -225,6 +267,70 @@ if ( ! function_exists( 'gstore_partner_account_handle_contract_submission' ) ) 
 }
 add_action( 'template_redirect', 'gstore_partner_account_handle_contract_submission', 8 );
 
+if ( ! function_exists( 'gstore_partner_account_handle_application_submission' ) ) {
+	function gstore_partner_account_handle_application_submission() {
+		if ( empty( $_POST['gstore_partner_application_action'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Missing
+			return;
+		}
+
+		$redirect = wp_get_referer();
+		if ( ! $redirect ) {
+			$redirect = function_exists( 'wc_get_page_permalink' ) ? wc_get_page_permalink( 'myaccount' ) : home_url( '/' );
+		}
+
+		if ( ! gstore_partner_account_can_show_application() ) {
+			if ( function_exists( 'wc_add_notice' ) ) {
+				wc_add_notice( __( 'O programa de revendedores nao esta disponivel para esta conta.', 'gstore' ), 'error' );
+			}
+			wp_safe_redirect( $redirect );
+			exit;
+		}
+
+		$nonce = isset( $_POST['gstore_partner_application_nonce'] ) ? sanitize_text_field( wp_unslash( $_POST['gstore_partner_application_nonce'] ) ) : '';
+		if ( ! wp_verify_nonce( $nonce, 'gstore_partner_application' ) ) {
+			if ( function_exists( 'wc_add_notice' ) ) {
+				wc_add_notice( __( 'Nao foi possivel validar a solicitacao. Atualize a pagina e tente novamente.', 'gstore' ), 'error' );
+			}
+			wp_safe_redirect( $redirect );
+			exit;
+		}
+
+		if ( ! function_exists( 'gstore_partner_submit_application' ) ) {
+			if ( function_exists( 'wc_add_notice' ) ) {
+				wc_add_notice( __( 'Programa de revendedores indisponivel no momento.', 'gstore' ), 'error' );
+			}
+			wp_safe_redirect( $redirect );
+			exit;
+		}
+
+		$data = array(
+			'name'         => isset( $_POST['gstore_partner_application_name'] ) ? wp_unslash( $_POST['gstore_partner_application_name'] ) : '',
+			'email'        => isset( $_POST['gstore_partner_application_email'] ) ? wp_unslash( $_POST['gstore_partner_application_email'] ) : '',
+			'cpf'          => isset( $_POST['gstore_partner_application_cpf'] ) ? wp_unslash( $_POST['gstore_partner_application_cpf'] ) : '',
+			'cnpj'         => isset( $_POST['gstore_partner_application_cnpj'] ) ? wp_unslash( $_POST['gstore_partner_application_cnpj'] ) : '',
+			'profile_type' => isset( $_POST['gstore_partner_application_profile_type'] ) ? wp_unslash( $_POST['gstore_partner_application_profile_type'] ) : '',
+			'about'        => isset( $_POST['gstore_partner_application_about'] ) ? wp_unslash( $_POST['gstore_partner_application_about'] ) : '',
+		);
+
+		$result = gstore_partner_submit_application( $data, $_FILES ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+		if ( is_wp_error( $result ) ) {
+			if ( function_exists( 'wc_add_notice' ) ) {
+				wc_add_notice( $result->get_error_message(), 'error' );
+			}
+			wp_safe_redirect( add_query_arg( 'partner_application', 'error', $redirect ) . '#gstore-partner-application' );
+			exit;
+		}
+
+		if ( function_exists( 'wc_add_notice' ) ) {
+			wc_add_notice( __( 'Solicitacao enviada com sucesso. Nossa equipe vai analisar seus dados.', 'gstore' ), 'success' );
+		}
+
+		wp_safe_redirect( add_query_arg( 'partner_application', 'sent', $redirect ) . '#gstore-partner-application' );
+		exit;
+	}
+}
+add_action( 'template_redirect', 'gstore_partner_account_handle_application_submission', 8 );
+
 if ( ! function_exists( 'gstore_partner_account_view_url' ) ) {
 	function gstore_partner_account_view_url( $view ) {
 		return add_query_arg( 'view', sanitize_key( $view ), wc_get_account_endpoint_url( 'revendedor' ) );
@@ -245,6 +351,135 @@ if ( ! function_exists( 'gstore_partner_account_icon' ) ) {
 		return isset( $icons[ $name ] ) ? $icons[ $name ] : $icons['info'];
 	}
 }
+
+if ( ! function_exists( 'gstore_partner_account_render_application_form' ) ) {
+	function gstore_partner_account_render_application_form( $context = 'account' ) {
+		if ( ! gstore_partner_account_can_show_application() ) {
+			return;
+		}
+
+		$current_user = wp_get_current_user();
+		$user_id      = $current_user && $current_user->exists() ? absint( $current_user->ID ) : 0;
+		$user_name    = $user_id > 0 ? (string) $current_user->display_name : '';
+		$user_email   = $user_id > 0 ? (string) $current_user->user_email : '';
+		$latest       = null;
+
+		if ( $user_id > 0 && function_exists( 'gstore_partner_get_latest_application' ) ) {
+			$latest = gstore_partner_get_latest_application( $user_id, $user_email );
+		}
+
+		$context       = sanitize_key( (string) $context );
+		$panel_id      = function_exists( 'wp_unique_id' ) ? wp_unique_id( 'gstore-partner-application-panel-' ) : 'gstore-partner-application-panel-' . wp_rand( 1000, 9999 );
+		$expanded      = isset( $_GET['partner_application'] ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$section_class = 'gstore-partner-application gstore-partner-application--' . ( 'register' === $context ? 'register' : 'account' );
+		?>
+		<section id="gstore-partner-application" class="<?php echo esc_attr( $section_class ); ?>">
+			<div class="gstore-partner-application__intro">
+				<div>
+					<strong><?php esc_html_e( 'Seja um revendedor', 'gstore' ); ?></strong>
+					<p><?php esc_html_e( 'Envie seus dados para avaliarmos sua participacao no programa de revendedores.', 'gstore' ); ?></p>
+				</div>
+				<?php if ( ! empty( $latest ) && 'pending' === $latest['status'] ) : ?>
+					<span class="gstore-partner-application__badge"><?php echo esc_html( gstore_partner_account_application_status_label( $latest['status'] ) ); ?></span>
+				<?php else : ?>
+					<button type="button" class="button gstore-partner-application__toggle" data-gstore-partner-application-toggle data-target="<?php echo esc_attr( '#' . $panel_id ); ?>" aria-expanded="<?php echo esc_attr( $expanded ? 'true' : 'false' ); ?>">
+						<?php esc_html_e( 'Seja um revendedor', 'gstore' ); ?>
+					</button>
+				<?php endif; ?>
+			</div>
+
+			<?php if ( ! empty( $latest ) && 'pending' === $latest['status'] ) : ?>
+				<p class="gstore-partner-application__status"><?php esc_html_e( 'Sua solicitacao ja foi enviada e esta em analise. Assim que for aprovada, a aba Revendedor fica disponivel nesta conta.', 'gstore' ); ?></p>
+			<?php else : ?>
+				<form id="<?php echo esc_attr( $panel_id ); ?>" class="gstore-partner-application__form" method="post" enctype="multipart/form-data" <?php echo $expanded ? '' : 'hidden'; ?>>
+					<input type="hidden" name="gstore_partner_application_action" value="submit" />
+					<?php wp_nonce_field( 'gstore_partner_application', 'gstore_partner_application_nonce' ); ?>
+
+					<div class="gstore-partner-application__grid">
+						<label>
+							<span><?php esc_html_e( 'Nome completo', 'gstore' ); ?></span>
+							<input type="text" name="gstore_partner_application_name" value="<?php echo esc_attr( $user_name ); ?>" required autocomplete="name" />
+						</label>
+						<label>
+							<span><?php esc_html_e( 'E-mail', 'gstore' ); ?></span>
+							<input type="email" name="gstore_partner_application_email" value="<?php echo esc_attr( $user_email ); ?>" required autocomplete="email" <?php echo $user_email ? 'readonly' : ''; ?> />
+						</label>
+						<label>
+							<span><?php esc_html_e( 'CPF', 'gstore' ); ?></span>
+							<input type="text" name="gstore_partner_application_cpf" inputmode="numeric" required autocomplete="off" />
+						</label>
+						<label>
+							<span><?php esc_html_e( 'CNPJ', 'gstore' ); ?></span>
+							<input type="text" name="gstore_partner_application_cnpj" inputmode="numeric" autocomplete="off" />
+						</label>
+						<label class="gstore-partner-application__file">
+							<span><?php esc_html_e( 'Documento de identidade', 'gstore' ); ?></span>
+							<input type="file" name="gstore_partner_identity_document" accept=".jpg,.jpeg,.png,.pdf" required />
+						</label>
+					</div>
+
+					<fieldset class="gstore-partner-application__profile">
+						<legend><?php esc_html_e( 'Voce e:', 'gstore' ); ?></legend>
+						<label><input type="radio" name="gstore_partner_application_profile_type" value="store" required /> <span><?php esc_html_e( 'Loja', 'gstore' ); ?></span></label>
+						<label><input type="radio" name="gstore_partner_application_profile_type" value="dispatcher" /> <span><?php esc_html_e( 'Despachante', 'gstore' ); ?></span></label>
+						<label><input type="radio" name="gstore_partner_application_profile_type" value="other" /> <span><?php esc_html_e( 'Outro', 'gstore' ); ?></span></label>
+					</fieldset>
+
+					<label class="gstore-partner-application__about">
+						<span><?php esc_html_e( 'Nos conte um pouco mais sobre voce', 'gstore' ); ?></span>
+						<textarea name="gstore_partner_application_about" rows="5" required></textarea>
+					</label>
+
+					<button type="submit" class="button gstore-partner-primary-button"><?php esc_html_e( 'Enviar solicitacao', 'gstore' ); ?></button>
+				</form>
+			<?php endif; ?>
+		</section>
+		<?php
+		gstore_partner_account_print_application_script();
+	}
+}
+
+if ( ! function_exists( 'gstore_partner_account_print_application_script' ) ) {
+	function gstore_partner_account_print_application_script() {
+		static $printed = false;
+		if ( $printed ) {
+			return;
+		}
+		$printed = true;
+		?>
+		<script>
+			(function(){
+				if (window.gstorePartnerApplicationToggleReady) return;
+				window.gstorePartnerApplicationToggleReady = true;
+				document.addEventListener('click', function(event){
+					var toggle = event.target.closest('[data-gstore-partner-application-toggle]');
+					if (!toggle) return;
+					var target = document.querySelector(toggle.getAttribute('data-target'));
+					if (!target) return;
+					var isHidden = target.hasAttribute('hidden');
+					if (isHidden) {
+						target.removeAttribute('hidden');
+					} else {
+						target.setAttribute('hidden', 'hidden');
+					}
+					toggle.setAttribute('aria-expanded', isHidden ? 'true' : 'false');
+				});
+			})();
+		</script>
+		<?php
+	}
+}
+
+if ( ! function_exists( 'gstore_partner_account_render_dashboard_application' ) ) {
+	function gstore_partner_account_render_dashboard_application() {
+		if ( ! is_user_logged_in() ) {
+			return;
+		}
+
+		gstore_partner_account_render_application_form( 'account' );
+	}
+}
+add_action( 'woocommerce_account_dashboard', 'gstore_partner_account_render_dashboard_application', 18 );
 
 if ( ! function_exists( 'gstore_partner_account_render_stat' ) ) {
 	function gstore_partner_account_render_stat( $icon, $title, $value, $meta = '', $status = '' ) {
@@ -447,6 +682,7 @@ if ( ! function_exists( 'gstore_partner_account_render_contract' ) ) {
 		$commission   = '' === $commission ? '0' : $commission;
 		$referral_url = isset( $partner['url'] ) ? (string) $partner['url'] : '';
 		$slug         = isset( $partner['slug'] ) ? (string) $partner['slug'] : '';
+		$store_name   = gstore_partner_account_store_name();
 		?>
 		<section class="gstore-account-contract gstore-partner-contract">
 			<header class="gstore-account-contract__header">
@@ -474,7 +710,15 @@ if ( ! function_exists( 'gstore_partner_account_render_contract' ) ) {
 			<div class="gstore-account-contract__preview">
 				<div class="gstore-partner-contract-document">
 					<div class="gstore-partner-contract-document__header">
-						<strong><?php esc_html_e( 'Termos de Participacao - Programa Revendedor Armastore', 'gstore' ); ?></strong>
+						<strong>
+							<?php
+							printf(
+								/* translators: %s: store name. */
+								esc_html__( 'Termos de Participacao - Programa Revendedor %s', 'gstore' ),
+								esc_html( $store_name )
+							);
+							?>
+						</strong>
 						<span>
 							<?php
 							printf(
@@ -512,7 +756,15 @@ if ( ! function_exists( 'gstore_partner_account_render_contract' ) ) {
 					</table>
 
 					<h4><?php esc_html_e( '1. Objeto', 'gstore' ); ?></h4>
-					<p><?php esc_html_e( 'O presente instrumento regula a participacao do revendedor no programa de indicacao da Armastore, por meio de link exclusivo associado ao seu cadastro.', 'gstore' ); ?></p>
+					<p>
+						<?php
+						printf(
+							/* translators: %s: store name. */
+							esc_html__( 'O presente instrumento regula a participacao do revendedor no programa de indicacao da loja %s, por meio de link exclusivo associado ao seu cadastro.', 'gstore' ),
+							esc_html( $store_name )
+						);
+						?>
+					</p>
 
 					<h4><?php esc_html_e( '2. Regras de comissionamento', 'gstore' ); ?></h4>
 					<p><?php esc_html_e( 'A comissao e calculada sobre o subtotal pago dos produtos, apos descontos, sem incluir frete, taxas ou impostos. Pedidos cancelados, reembolsados ou invalidados podem gerar estorno de creditos.', 'gstore' ); ?></p>
@@ -524,11 +776,19 @@ if ( ! function_exists( 'gstore_partner_account_render_contract' ) ) {
 					<p><?php esc_html_e( 'Os creditos sao liberados conforme aprovacao do pagamento e podem ser resgatados pelos metodos disponiveis no painel. Solicitacoes pendentes reservam saldo ate aprovacao, rejeicao ou cancelamento administrativo.', 'gstore' ); ?></p>
 
 					<h4><?php esc_html_e( '5. Auditoria e alteracoes', 'gstore' ); ?></h4>
-					<p><?php esc_html_e( 'A Armastore pode auditar vendas, corrigir lancamentos e alterar regras do programa mediante atualizacao da versao destes termos. A continuidade de uso do painel depende do aceite dos termos vigentes.', 'gstore' ); ?></p>
+					<p>
+						<?php
+						printf(
+							/* translators: %s: store name. */
+							esc_html__( 'A loja %s pode auditar vendas, corrigir lancamentos e alterar regras do programa mediante atualizacao da versao destes termos. A continuidade de uso do painel depende do aceite dos termos vigentes.', 'gstore' ),
+							esc_html( $store_name )
+						);
+						?>
+					</p>
 
 					<div class="gstore-partner-contract-document__signatures">
 						<div>
-							<span><?php esc_html_e( 'Armastore', 'gstore' ); ?></span>
+							<span><?php echo esc_html( $store_name ); ?></span>
 							<strong><?php esc_html_e( 'Administracao do programa', 'gstore' ); ?></strong>
 						</div>
 						<div>
@@ -545,7 +805,15 @@ if ( ! function_exists( 'gstore_partner_account_render_contract' ) ) {
 					<?php wp_nonce_field( 'gstore_partner_contract_accept', 'gstore_partner_contract_nonce' ); ?>
 					<label>
 						<input type="checkbox" name="gstore_partner_contract_accept" value="1" required />
-						<span><?php esc_html_e( 'Li e concordo com os termos do contrato do Programa Revendedor Armastore.', 'gstore' ); ?></span>
+						<span>
+							<?php
+							printf(
+								/* translators: %s: store name. */
+								esc_html__( 'Li e concordo com os termos do contrato do Programa Revendedor %s.', 'gstore' ),
+								esc_html( $store_name )
+							);
+							?>
+						</span>
 					</label>
 					<button type="submit" class="button gstore-partner-primary-button"><?php esc_html_e( 'Aceitar contrato e acessar painel', 'gstore' ); ?></button>
 				</form>
@@ -584,8 +852,9 @@ if ( ! function_exists( 'gstore_partner_account_render_endpoint' ) ) {
 			$view = 'contrato';
 		}
 
-		$name      = ! empty( $user['name'] ) ? $user['name'] : wp_get_current_user()->display_name;
-		$min_value = isset( $settings['minRedeemAmount'] ) ? $settings['minRedeemAmount'] : '10.00';
+		$name               = ! empty( $user['name'] ) ? $user['name'] : wp_get_current_user()->display_name;
+		$min_value          = isset( $settings['minRedeemAmount'] ) ? $settings['minRedeemAmount'] : '10.00';
+		$store_name         = gstore_partner_account_store_name();
 		$commission_display = rtrim( rtrim( (string) ( isset( $partner['commissionPercent'] ) ? $partner['commissionPercent'] : 0 ), '0' ), '.' );
 		$commission_display = '' === $commission_display ? '0' : $commission_display;
 		?>
@@ -615,7 +884,16 @@ if ( ! function_exists( 'gstore_partner_account_render_endpoint' ) ) {
 					<?php
 					gstore_partner_account_render_stat( 'link', __( 'Link exclusivo', 'gstore' ), '', '', __( 'Ativo', 'gstore' ) );
 					gstore_partner_account_render_stat( 'cart', __( 'Vendas indicadas', 'gstore' ), (string) absint( $partner['salesLast30'] ), __( 'Nos ultimos 30 dias', 'gstore' ) );
-					gstore_partner_account_render_stat( 'coins', __( 'Creditos disponiveis', 'gstore' ), $partner['balanceFormatted'], __( 'Em moedas Armastore', 'gstore' ) );
+					gstore_partner_account_render_stat(
+						'coins',
+						__( 'Creditos disponiveis', 'gstore' ),
+						$partner['balanceFormatted'],
+						sprintf(
+							/* translators: %s: store name. */
+							__( 'Em moedas %s', 'gstore' ),
+							$store_name
+						)
+					);
 					gstore_partner_account_render_stat( 'percent', __( 'Comissao atual', 'gstore' ), $commission_display . '%', __( 'Sobre o valor da venda', 'gstore' ) );
 					?>
 				</div>
@@ -750,7 +1028,7 @@ if ( ! function_exists( 'gstore_partner_account_render_endpoint' ) ) {
 					share.addEventListener('click', function(){
 						var value = link();
 						if (navigator.share && value) {
-							navigator.share({ title: 'Armastore', url: value });
+							navigator.share({ title: '<?php echo esc_js( $store_name ); ?>', url: value });
 						} else if (copy) {
 							copy.click();
 						}

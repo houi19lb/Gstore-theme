@@ -118,6 +118,12 @@ do_action( 'woocommerce_before_customer_login_form' ); ?>
 
 		</form>
 
+		<?php
+		if ( function_exists( 'gstore_partner_account_render_application_form' ) ) {
+			gstore_partner_account_render_application_form( 'register' );
+		}
+		?>
+
 	</div>
 
 </div>
