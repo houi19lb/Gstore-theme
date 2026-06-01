@@ -4003,8 +4003,12 @@ function gstore_enqueue_styles() {
 		$theme_version
 	);
 
-	// CSS da página de minha conta (login/registro)
-	if ( class_exists( 'WooCommerce' ) && function_exists( 'is_account_page' ) && is_account_page() ) {
+	// CSS da Minha Conta e da pagina publica do programa de parceiros.
+	$gstore_is_partner_program_page = (bool) get_query_var( 'gstore_partner_application_page' );
+	if (
+		( class_exists( 'WooCommerce' ) && function_exists( 'is_account_page' ) && is_account_page() )
+		|| $gstore_is_partner_program_page
+	) {
 		$my_account_css_file    = get_theme_file_path( 'assets/css/my-account.css' );
 		$my_account_css_version = file_exists( $my_account_css_file ) ? (string) filemtime( $my_account_css_file ) : $theme_version;
 		wp_enqueue_style(

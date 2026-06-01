@@ -1823,6 +1823,16 @@ form.woocommerce-form {
 	line-height: 1.45;
 }
 
+.gstore-partner-application-cta .gstore-partner-application__toggle {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	flex: 0 0 auto;
+	min-height: 42px;
+	padding: 0 18px;
+	white-space: nowrap;
+}
+
 .gstore-partner-program-page {
 	--partner-orange: #ff4b00;
 	--partner-ink: #07111f;
@@ -2259,6 +2269,10 @@ form.woocommerce-form {
 	.gstore-partner-application-cta {
 		align-items: stretch;
 		flex-direction: column;
+	}
+
+	.gstore-partner-application-cta .gstore-partner-application__toggle {
+		width: 100%;
 	}
 
 	.gstore-partner-program-container {

@@ -467,8 +467,8 @@ if ( ! function_exists( 'gstore_partner_account_render_application_cta' ) ) {
 			<?php if ( ! empty( $latest ) && 'pending' === $latest['status'] ) : ?>
 				<span class="gstore-partner-application__badge"><?php echo esc_html( gstore_partner_account_application_status_label( $latest['status'] ) ); ?></span>
 			<?php else : ?>
-				<a class="button gstore-partner-primary-button" href="<?php echo esc_url( gstore_partner_account_application_page_url() ); ?>">
-					<?php esc_html_e( 'Quero ser um revendedor', 'gstore' ); ?>
+				<a class="button gstore-partner-application__toggle" href="<?php echo esc_url( gstore_partner_account_application_page_url() ); ?>">
+					<?php esc_html_e( 'Seja um revendedor', 'gstore' ); ?>
 				</a>
 			<?php endif; ?>
 		</section>
