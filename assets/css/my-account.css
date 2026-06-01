@@ -1968,8 +1968,17 @@ form.woocommerce-form {
 	height: 46px;
 	border: 1px solid rgba(255, 255, 255, 0.45);
 	border-radius: 6px;
-	font-size: 22px;
-	font-weight: 900;
+	color: #fff;
+}
+
+.gstore-partner-program-benefits span svg {
+	width: 25px;
+	height: 25px;
+	fill: none;
+	stroke: currentColor;
+	stroke-width: 2;
+	stroke-linecap: round;
+	stroke-linejoin: round;
 }
 
 .gstore-partner-program-benefits strong,

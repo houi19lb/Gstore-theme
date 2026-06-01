@@ -428,6 +428,8 @@ if ( ! function_exists( 'gstore_partner_account_icon' ) ) {
 			'cart'    => '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>',
 			'coins'   => '<svg viewBox="0 0 24 24" aria-hidden="true"><ellipse cx="12" cy="5" rx="8" ry="3"></ellipse><path d="M4 5v6c0 1.66 3.58 3 8 3s8-1.34 8-3V5"></path><path d="M4 11v6c0 1.66 3.58 3 8 3s8-1.34 8-3v-6"></path></svg>',
 			'percent' => '<svg viewBox="0 0 24 24" aria-hidden="true"><line x1="19" y1="5" x2="5" y2="19"></line><circle cx="6.5" cy="6.5" r="2.5"></circle><circle cx="17.5" cy="17.5" r="2.5"></circle></svg>',
+			'check'   => '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 11l2 2 4-4"></path><path d="M8 3h8l2 3v13a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V6z"></path><path d="M8 3v4h8V3"></path></svg>',
+			'headset' => '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 13a8 8 0 0 1 16 0"></path><path d="M4 13v4a2 2 0 0 0 2 2h2v-8H6a2 2 0 0 0-2 2z"></path><path d="M20 13v4a2 2 0 0 1-2 2h-2v-8h2a2 2 0 0 1 2 2z"></path><path d="M16 19a4 4 0 0 1-4 3h-1"></path></svg>',
 			'gift'    => '<svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="20 12 20 22 4 22 4 12"></polyline><rect x="2" y="7" width="20" height="5"></rect><line x1="12" y1="22" x2="12" y2="7"></line><path d="M12 7H7.5a2.5 2.5 0 1 1 0-5C11 2 12 7 12 7z"></path><path d="M12 7h4.5a2.5 2.5 0 1 0 0-5C13 2 12 7 12 7z"></path></svg>',
 			'info'    => '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18h6"></path><path d="M10 22h4"></path><path d="M12 2a7 7 0 0 0-4 12.74V17h8v-2.26A7 7 0 0 0 12 2z"></path></svg>',
 		);
@@ -674,10 +676,10 @@ if ( ! function_exists( 'gstore_partner_account_render_application_page' ) ) {
 
 			<section class="gstore-partner-program-benefits" aria-label="<?php esc_attr_e( 'Beneficios do programa', 'gstore' ); ?>">
 				<div class="gstore-partner-program-container">
-					<div><span>%</span><strong><?php esc_html_e( 'Comissao por indicacao', 'gstore' ); ?></strong><small><?php esc_html_e( 'Ganhe em vendas aprovadas', 'gstore' ); ?></small></div>
-					<div><span>$</span><strong><?php esc_html_e( 'Cashback em vendas', 'gstore' ); ?></strong><small><?php esc_html_e( 'Beneficios para parceiros ativos', 'gstore' ); ?></small></div>
-					<div><span>OK</span><strong><?php esc_html_e( 'Vendas aprovadas', 'gstore' ); ?></strong><small><?php esc_html_e( 'Processo com analise e registro', 'gstore' ); ?></small></div>
-					<div><span>TEL</span><strong><?php esc_html_e( 'Suporte comercial', 'gstore' ); ?></strong><small><?php esc_html_e( 'Equipe para orientar sua operacao', 'gstore' ); ?></small></div>
+					<div><span><?php echo gstore_partner_account_icon( 'percent' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></span><strong><?php esc_html_e( 'Comissao por indicacao', 'gstore' ); ?></strong><small><?php esc_html_e( 'Ganhe em vendas aprovadas', 'gstore' ); ?></small></div>
+					<div><span><?php echo gstore_partner_account_icon( 'coins' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></span><strong><?php esc_html_e( 'Cashback em vendas', 'gstore' ); ?></strong><small><?php esc_html_e( 'Beneficios para parceiros ativos', 'gstore' ); ?></small></div>
+					<div><span><?php echo gstore_partner_account_icon( 'check' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></span><strong><?php esc_html_e( 'Vendas aprovadas', 'gstore' ); ?></strong><small><?php esc_html_e( 'Processo com analise e registro', 'gstore' ); ?></small></div>
+					<div><span><?php echo gstore_partner_account_icon( 'headset' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></span><strong><?php esc_html_e( 'Suporte comercial', 'gstore' ); ?></strong><small><?php esc_html_e( 'Equipe para orientar sua operacao', 'gstore' ); ?></small></div>
 				</div>
 			</section>
 
