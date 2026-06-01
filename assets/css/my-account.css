@@ -1870,7 +1870,7 @@ form.woocommerce-form {
 
 .gstore-partner-program-hero {
 	position: relative;
-	min-height: 520px;
+	min-height: 416px;
 	display: flex;
 	align-items: center;
 	background-image:
@@ -1894,7 +1894,7 @@ form.woocommerce-form {
 .gstore-partner-program-hero__content {
 	position: relative;
 	z-index: 1;
-	padding: 88px 0 116px;
+	padding: 70px 0 92px;
 }
 
 .gstore-partner-program-eyebrow {
@@ -1915,7 +1915,7 @@ form.woocommerce-form {
 	max-width: 660px;
 	margin: 0;
 	color: var(--partner-text);
-	font-size: clamp(46px, 6vw, 84px);
+	font-size: clamp(42px, 5.35vw, 74px);
 	font-weight: 950;
 	line-height: 1.02;
 	letter-spacing: 0;
@@ -1930,7 +1930,7 @@ form.woocommerce-form {
 	max-width: 520px;
 	margin: 20px 0 0;
 	color: var(--partner-muted);
-	font-size: 20px;
+	font-size: 18px;
 	font-weight: 700;
 	line-height: 1.45;
 }
@@ -1939,7 +1939,7 @@ form.woocommerce-form {
 	display: flex;
 	flex-wrap: wrap;
 	gap: 12px;
-	margin-top: 32px;
+	margin-top: 28px;
 }
 
 .gstore-partner-program-button,
@@ -1947,7 +1947,7 @@ form.woocommerce-form {
 	display: inline-flex !important;
 	align-items: center;
 	justify-content: center;
-	min-height: 54px;
+	min-height: 50px;
 	padding: 0 32px !important;
 	border: 1px solid var(--partner-orange) !important;
 	border-radius: 7px !important;
@@ -2514,16 +2514,16 @@ form.woocommerce-form {
 	}
 
 	.gstore-partner-program-hero {
-		min-height: 520px;
+		min-height: 416px;
 		background-position: 62% center;
 	}
 
 	.gstore-partner-program-hero__content {
-		padding: 70px 0 100px;
+		padding: 56px 0 80px;
 	}
 
 	.gstore-partner-program-hero h1 {
-		font-size: 42px;
+		font-size: 38px;
 	}
 
 	.gstore-partner-program-hero p {
