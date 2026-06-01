@@ -20,6 +20,9 @@ if ( function_exists( 'wp_body_open' ) ) {
 }
 ?>
 <?php
+echo do_blocks( '<!-- wp:template-part {"slug":"header","area":"header"} /-->' );
+?>
+<?php
 if ( function_exists( 'gstore_partner_account_render_application_page' ) ) {
 	gstore_partner_account_render_application_page();
 }
