@@ -13365,6 +13365,21 @@ function gstore_get_catalog_search_request_term() {
 }
 
 /**
+ * Indica se o cliente escolheu uma ordenacao explicita no catalogo.
+ *
+ * @return bool
+ */
+function gstore_catalog_has_requested_orderby() {
+	if ( ! isset( $_GET['orderby'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		return false;
+	}
+
+	$orderby = sanitize_text_field( wp_unslash( $_GET['orderby'] ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+
+	return '' !== trim( $orderby );
+}
+
+/**
  * Mapeia rotas raiz "/{categoria-principal}" para o template de catálogo.
  *
  * Exemplo:
@@ -13475,7 +13490,10 @@ function gstore_catalog_apply_search_to_products_shortcode( $query_args, $attr, 
 	}
 
 	$query_args['post__in'] = $product_ids;
-	$query_args['orderby']  = 'post__in';
+
+	if ( ! gstore_catalog_has_requested_orderby() ) {
+		$query_args['orderby'] = 'post__in';
+	}
 
 	return $query_args;
 }
@@ -14936,7 +14954,7 @@ function gstore_catalog_mark_shortcode_stock_priority( $query_args, $attr, $type
 	$has_catalog_search = function_exists( 'gstore_get_catalog_search_request_term' ) && '' !== gstore_get_catalog_search_request_term();
 
 	$query_args['gstore_instock_first'] = 1;
-	if ( ! $has_catalog_search ) {
+	if ( ! $has_catalog_search && ! gstore_catalog_has_requested_orderby() ) {
 		$query_args['gstore_featured_first'] = 1;
 	}
 
@@ -14955,7 +14973,7 @@ function gstore_catalog_mark_main_query_stock_priority( $query ) {
 	$has_catalog_search = function_exists( 'gstore_get_catalog_search_request_term' ) && '' !== gstore_get_catalog_search_request_term();
 
 	$query->set( 'gstore_instock_first', 1 );
-	if ( ! $has_catalog_search ) {
+	if ( ! $has_catalog_search && ! gstore_catalog_has_requested_orderby() ) {
 		$query->set( 'gstore_featured_first', 1 );
 	}
 }
