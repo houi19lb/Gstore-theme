@@ -2650,25 +2650,53 @@ form.woocommerce-form {
 		width: 100%;
 	}
 
-	.gstore-partner-program-benefits .gstore-partner-program-container,
-	.gstore-partner-program-profile-grid,
-	.gstore-partner-program-steps,
-	.gstore-partner-program-safety,
 	.gstore-partner-program-page .gstore-partner-application__grid,
 	.gstore-partner-program-page .gstore-partner-application__profile {
 		grid-template-columns: 1fr;
 	}
 
+	.gstore-partner-program-benefits .gstore-partner-program-container,
+	.gstore-partner-program-profile-grid,
+	.gstore-partner-program-steps,
+	.gstore-partner-program-safety {
+		grid-template-columns: none;
+		grid-auto-flow: column;
+		overflow-x: auto;
+		overflow-y: hidden;
+		scroll-snap-type: x mandatory;
+		scroll-padding-inline: 14px;
+		-webkit-overflow-scrolling: touch;
+		overscroll-behavior-inline: contain;
+		touch-action: pan-x;
+		padding-bottom: 12px;
+		scrollbar-width: none;
+	}
+
+	.gstore-partner-program-benefits .gstore-partner-program-container::-webkit-scrollbar,
+	.gstore-partner-program-profile-grid::-webkit-scrollbar,
+	.gstore-partner-program-steps::-webkit-scrollbar,
+	.gstore-partner-program-safety::-webkit-scrollbar {
+		display: none;
+	}
+
+	.gstore-partner-program-benefits .gstore-partner-program-container {
+		grid-auto-columns: minmax(260px, 82vw);
+		gap: 12px;
+	}
+
 	.gstore-partner-program-benefits article,
 	.gstore-partner-program-benefits article:nth-child(2n) {
 		min-height: 72px;
-		padding: 12px 0;
-		border-right: 0;
-		border-bottom: 1px solid rgba(255, 255, 255, 0.24);
+		padding: 12px 14px;
+		border: 1px solid rgba(255, 255, 255, 0.3);
+		border-radius: 4px;
+		background: rgba(255, 255, 255, 0.08);
+		scroll-snap-align: start;
+		scroll-snap-stop: always;
 	}
 
 	.gstore-partner-program-benefits article:last-child {
-		border-bottom: 0;
+		border-right: 1px solid rgba(255, 255, 255, 0.3);
 	}
 
 	.gstore-partner-program-section {
@@ -2700,6 +2728,46 @@ form.woocommerce-form {
 		grid-template-columns: 1fr;
 	}
 
+	.gstore-partner-program-profile-grid {
+		grid-auto-columns: minmax(246px, 78vw);
+		gap: 14px;
+	}
+
+	.gstore-partner-program-profile-grid article,
+	.gstore-partner-program-steps article,
+	.gstore-partner-program-safety article {
+		scroll-snap-align: start;
+		scroll-snap-stop: always;
+	}
+
+	.gstore-partner-program-steps {
+		grid-auto-columns: minmax(230px, 74vw);
+		gap: 14px;
+	}
+
+	.gstore-partner-program-steps article {
+		min-height: 190px;
+		justify-content: flex-start;
+		align-items: flex-start;
+		padding: 20px 18px;
+		border: 1px solid var(--partner-line);
+		border-radius: 7px;
+		background: var(--partner-card);
+		text-align: left;
+	}
+
+	.gstore-partner-program-steps article > span {
+		position: static;
+		margin-bottom: 14px;
+	}
+
+	.gstore-partner-program-safety {
+		grid-auto-columns: minmax(260px, 82vw);
+		gap: 12px;
+		border: 0;
+		background: transparent;
+	}
+
 	.gstore-partner-program-form-copy {
 		min-height: 280px;
 		padding: 28px;
@@ -2711,11 +2779,13 @@ form.woocommerce-form {
 
 	.gstore-partner-program-safety article,
 	.gstore-partner-program-safety article:nth-child(2) {
-		border-right: 0;
+		border: 1px solid var(--partner-line);
+		border-radius: 7px;
+		background: var(--partner-card);
 	}
 
 	.gstore-partner-program-safety article:not(:last-child) {
-		border-bottom: 1px solid rgba(255, 90, 0, 0.32);
+		border-bottom: 1px solid var(--partner-line);
 	}
 }
 
