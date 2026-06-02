@@ -633,10 +633,11 @@ if ( ! function_exists( 'gstore_partner_account_render_application_page' ) ) {
 			return;
 		}
 
-		$store_name  = gstore_partner_account_store_name();
-		$hero_image  = (string) apply_filters( 'gstore_partner_application_hero_image', get_theme_file_uri( 'assets/images/partners/partner-program-hero.jpg' ) );
-		$form_image  = (string) apply_filters( 'gstore_partner_application_form_image', get_theme_file_uri( 'assets/images/partners/partner-program-revendedores.jpg' ) );
-		$benefits    = array(
+		$store_name     = gstore_partner_account_store_name();
+		$hero_image     = (string) apply_filters( 'gstore_partner_application_hero_image', get_theme_file_uri( 'assets/images/partners/partner-program-hero.jpg' ) );
+		$form_image     = (string) apply_filters( 'gstore_partner_application_form_image', get_theme_file_uri( 'assets/images/partners/partner-program-revendedores.jpg' ) );
+		$process_image  = (string) apply_filters( 'gstore_partner_application_process_image', get_theme_file_uri( 'assets/images/partners/partner-program-process.jpg' ) );
+		$benefits       = array(
 			array(
 				'icon'  => 'users',
 				'title' => __( 'Comissão por indicação', 'gstore' ),
@@ -797,6 +798,28 @@ if ( ! function_exists( 'gstore_partner_account_render_application_page' ) ) {
 							</article>
 						<?php endforeach; ?>
 					</div>
+					<article class="gstore-partner-program-process-detail">
+						<figure class="gstore-partner-program-process-detail__media">
+							<img
+								src="<?php echo esc_url( $process_image ); ?>"
+								alt="<?php esc_attr_e( 'Mesa de trabalho com painel de vendas e formulário de cadastro do programa de parceiros', 'gstore' ); ?>"
+								loading="lazy"
+								decoding="async"
+							/>
+						</figure>
+						<div class="gstore-partner-program-process-detail__content">
+							<span class="gstore-partner-program-eyebrow is-dark"><?php esc_html_e( 'Processo detalhado', 'gstore' ); ?></span>
+							<h3><?php esc_html_e( 'Da solicitação ao cashback, tudo fica registrado.', 'gstore' ); ?></h3>
+							<p><?php esc_html_e( 'O primeiro passo é enviar seus dados, documento e perfil comercial. A equipe confere as informações, entende sua atuação e valida se o cadastro combina com o programa de parceiros.', 'gstore' ); ?></p>
+							<p><?php esc_html_e( 'Depois da aprovação, seu link de indicação e suas condições comerciais ficam ativos. As vendas geradas pela sua indicação entram no acompanhamento do painel e só viram crédito quando o pagamento é confirmado.', 'gstore' ); ?></p>
+							<ul>
+								<li><strong><?php esc_html_e( 'Análise manual:', 'gstore' ); ?></strong> <?php esc_html_e( 'cada solicitação é revisada antes da liberação.', 'gstore' ); ?></li>
+								<li><strong><?php esc_html_e( 'Venda vinculada:', 'gstore' ); ?></strong> <?php esc_html_e( 'o pedido precisa estar associado ao seu link ou cupom.', 'gstore' ); ?></li>
+								<li><strong><?php esc_html_e( 'Pagamento confirmado:', 'gstore' ); ?></strong> <?php esc_html_e( 'pedidos cancelados ou sem pagamento aprovado não geram comissão.', 'gstore' ); ?></li>
+								<li><strong><?php esc_html_e( 'Painel do parceiro:', 'gstore' ); ?></strong> <?php esc_html_e( 'acompanhe vendas, status e valores disponíveis para resgate.', 'gstore' ); ?></li>
+							</ul>
+						</div>
+					</article>
 				</div>
 			</section>
 

@@ -2241,6 +2241,91 @@ form.woocommerce-form {
 	margin-top: 2px;
 }
 
+.gstore-partner-program-process-detail {
+	display: grid;
+	grid-template-columns: minmax(280px, 0.92fr) minmax(0, 1.08fr);
+	gap: 0;
+	overflow: hidden;
+	margin-top: 54px;
+	border: 1px solid var(--partner-line);
+	border-radius: 7px;
+	background: var(--partner-card);
+	box-shadow: 0 18px 42px rgba(0, 0, 0, 0.26);
+}
+
+.gstore-partner-program-process-detail__media {
+	min-height: 360px;
+	margin: 0;
+	background: #070809;
+}
+
+.gstore-partner-program-process-detail__media img {
+	display: block;
+	width: 100%;
+	height: 100%;
+	min-height: 360px;
+	object-fit: cover;
+}
+
+.gstore-partner-program-process-detail__content {
+	padding: 38px 40px;
+}
+
+.gstore-partner-program-process-detail__content .gstore-partner-program-eyebrow {
+	margin-bottom: 12px;
+	font-size: 13px;
+}
+
+.gstore-partner-program-process-detail h3 {
+	margin: 0 0 16px;
+	color: var(--partner-text);
+	font-size: clamp(22px, 2vw, 32px);
+	font-weight: 950;
+	line-height: 1.18;
+}
+
+.gstore-partner-program-process-detail p {
+	margin: 0 0 14px;
+	color: var(--partner-muted);
+	font-size: 14px;
+	font-weight: 600;
+	line-height: 1.65;
+}
+
+.gstore-partner-program-process-detail ul {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 12px 18px;
+	margin: 22px 0 0;
+	padding: 0;
+	list-style: none;
+}
+
+.gstore-partner-program-process-detail li {
+	position: relative;
+	margin: 0;
+	padding-left: 16px;
+	color: var(--partner-muted);
+	font-size: 13px;
+	font-weight: 600;
+	line-height: 1.5;
+}
+
+.gstore-partner-program-process-detail li::before {
+	content: "";
+	position: absolute;
+	top: 0.58em;
+	left: 0;
+	width: 6px;
+	height: 6px;
+	border-radius: 999px;
+	background: var(--partner-orange);
+}
+
+.gstore-partner-program-process-detail strong {
+	color: var(--partner-text);
+}
+
 .gstore-partner-program-section.is-security {
 	padding-top: 26px;
 }
@@ -2354,6 +2439,7 @@ form.woocommerce-form {
 }
 
 .gstore-partner-program-page .gstore-partner-application__form {
+	gap: 24px;
 	margin: 0;
 	padding: 0;
 	border: 0;
@@ -2362,7 +2448,7 @@ form.woocommerce-form {
 .gstore-partner-program-page .gstore-partner-application__grid {
 	display: grid;
 	grid-template-columns: repeat(2, minmax(0, 1fr));
-	gap: 9px;
+	gap: 14px;
 }
 
 .gstore-partner-program-page .gstore-partner-application label,
@@ -2402,11 +2488,17 @@ form.woocommerce-form {
 .gstore-partner-program-page .gstore-partner-application textarea {
 	width: 100%;
 	min-height: 42px;
+	padding: 0 14px;
 	border: 1px solid rgba(255, 255, 255, 0.09);
 	border-radius: 6px;
 	background: #191a1c;
 	color: #fff;
 	box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.gstore-partner-program-page .gstore-partner-application textarea {
+	padding-top: 12px;
+	padding-bottom: 12px;
 }
 
 .gstore-partner-program-page .gstore-partner-application input::placeholder,
@@ -2415,7 +2507,7 @@ form.woocommerce-form {
 }
 
 .gstore-partner-program-page .gstore-partner-application input[type="file"] {
-	padding: 12px;
+	padding: 12px 14px;
 }
 
 .gstore-partner-program-page .gstore-partner-application textarea {
@@ -2432,7 +2524,7 @@ form.woocommerce-form {
 .gstore-partner-program-page .gstore-partner-application__profile {
 	display: grid;
 	grid-template-columns: repeat(3, minmax(0, 1fr));
-	gap: 8px;
+	gap: 12px;
 	margin: 12px 0;
 	padding: 0;
 	border: 0;
@@ -2496,6 +2588,7 @@ form.woocommerce-form {
 
 	.gstore-partner-program-how,
 	.gstore-partner-program-gains,
+	.gstore-partner-program-process-detail,
 	.gstore-partner-program-form-shell {
 		grid-template-columns: 1fr;
 	}
@@ -2587,6 +2680,23 @@ form.woocommerce-form {
 	}
 
 	.gstore-partner-program-form-shell {
+		grid-template-columns: 1fr;
+	}
+
+	.gstore-partner-program-process-detail {
+		margin-top: 38px;
+	}
+
+	.gstore-partner-program-process-detail__media,
+	.gstore-partner-program-process-detail__media img {
+		min-height: 240px;
+	}
+
+	.gstore-partner-program-process-detail__content {
+		padding: 26px 22px;
+	}
+
+	.gstore-partner-program-process-detail ul {
 		grid-template-columns: 1fr;
 	}
 
