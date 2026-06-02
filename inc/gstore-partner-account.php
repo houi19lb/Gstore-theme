@@ -814,7 +814,7 @@ if ( ! function_exists( 'gstore_partner_account_render_application_page' ) ) {
 							<p><?php esc_html_e( 'Depois da aprovação, seu link de indicação e suas condições comerciais ficam ativos. As vendas geradas pela sua indicação entram no acompanhamento do painel e só viram crédito quando o pagamento é confirmado.', 'gstore' ); ?></p>
 							<ul>
 								<li><strong><?php esc_html_e( 'Análise manual:', 'gstore' ); ?></strong> <?php esc_html_e( 'cada solicitação é revisada antes da liberação.', 'gstore' ); ?></li>
-								<li><strong><?php esc_html_e( 'Venda vinculada:', 'gstore' ); ?></strong> <?php esc_html_e( 'o pedido precisa estar associado ao seu link ou cupom.', 'gstore' ); ?></li>
+								<li><strong><?php esc_html_e( 'Venda vinculada:', 'gstore' ); ?></strong> <?php esc_html_e( 'o pedido precisa estar associado ao seu link de indicação.', 'gstore' ); ?></li>
 								<li><strong><?php esc_html_e( 'Pagamento confirmado:', 'gstore' ); ?></strong> <?php esc_html_e( 'pedidos cancelados ou sem pagamento aprovado não geram comissão.', 'gstore' ); ?></li>
 								<li><strong><?php esc_html_e( 'Painel do parceiro:', 'gstore' ); ?></strong> <?php esc_html_e( 'acompanhe vendas, status e valores disponíveis para resgate.', 'gstore' ); ?></li>
 							</ul>
