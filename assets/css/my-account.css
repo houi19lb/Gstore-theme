@@ -1686,11 +1686,18 @@ form.woocommerce-form {
 }
 
 .gstore-partner-application__status--sent,
+.gstore-partner-application__status--info,
 .gstore-partner-application__status--error {
 	margin-top: 14px;
 	padding: 12px 14px;
 	border-radius: 6px;
 	font-weight: 700;
+}
+
+.gstore-partner-application__status--info {
+	border: 1px solid rgba(255, 90, 0, 0.32);
+	background: rgba(255, 90, 0, 0.1);
+	color: #d94c00;
 }
 
 .gstore-partner-application__status--sent {
@@ -1781,6 +1788,11 @@ form.woocommerce-form {
 	stroke-linejoin: round;
 }
 
+.gstore-partner-application-modal--error .gstore-partner-application-modal__icon {
+	border-color: rgba(255, 189, 89, 0.72);
+	color: #ffbd59;
+}
+
 .gstore-partner-application-modal h3 {
 	margin: 0 0 10px;
 	color: #fff;
@@ -1805,6 +1817,11 @@ form.woocommerce-form {
 .gstore-partner-application__toggle,
 .gstore-partner-application .gstore-partner-primary-button {
 	white-space: nowrap;
+}
+
+.gstore-partner-application .gstore-partner-primary-button.is-submitting {
+	cursor: progress;
+	opacity: 0.82;
 }
 
 .gstore-partner-application__badge {

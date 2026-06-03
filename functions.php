@@ -9172,7 +9172,39 @@ if ( ! function_exists( 'gstore_normalize_cart_rates' ) ) {
 				$cost_formatted = wc_price( $cost );
 			}
 
-			$normalized[] = array(
+			$meta = isset( $rate['meta_data'] ) && is_array( $rate['meta_data'] ) ? $rate['meta_data'] : array();
+			$quote_value_enabled_raw = array_key_exists( 'quote_value_enabled', $rate )
+				? $rate['quote_value_enabled']
+				: ( $meta['quote_value_enabled'] ?? true );
+			$quote_value_enabled = ! (
+				false === $quote_value_enabled_raw
+				|| 0 === $quote_value_enabled_raw
+				|| '0' === (string) $quote_value_enabled_raw
+				|| 'false' === strtolower( (string) $quote_value_enabled_raw )
+			);
+			$quote_notice_message = isset( $rate['quote_notice_message'] )
+				? sanitize_textarea_field( (string) $rate['quote_notice_message'] )
+				: ( isset( $meta['quote_notice_message'] ) ? sanitize_textarea_field( (string) $meta['quote_notice_message'] ) : '' );
+			$quote_notice_html = isset( $rate['quote_notice_html'] )
+				? wp_kses_post( (string) $rate['quote_notice_html'] )
+				: '';
+			if ( '' === $quote_notice_html && isset( $rate['cost_formatted'] ) && false !== strpos( (string) $rate['cost_formatted'], 'gstore-shipping-quote-notice' ) ) {
+				$quote_notice_html = wp_kses_post( (string) $rate['cost_formatted'] );
+			}
+			if ( '' === $quote_notice_message && '' !== $quote_notice_html ) {
+				$quote_notice_message = sanitize_textarea_field( wp_strip_all_tags( $quote_notice_html ) );
+			}
+			if ( '' !== $quote_notice_message || '' !== $quote_notice_html ) {
+				$quote_value_enabled = false;
+			}
+			if ( ! $quote_value_enabled && '' === $quote_notice_html && '' !== $quote_notice_message ) {
+				$quote_notice_html = '<span class="gstore-shipping-quote-notice">' . esc_html( $quote_notice_message ) . '</span>';
+			}
+			if ( ! $quote_value_enabled && '' !== $quote_notice_html ) {
+				$cost_formatted = $quote_notice_html;
+			}
+
+			$normalized_rate = array(
 				'rate_id'        => isset( $rate['rate_id'] ) ? sanitize_text_field( (string) $rate['rate_id'] ) : ( isset( $rate['id'] ) ? sanitize_text_field( (string) $rate['id'] ) : '' ),
 				'mode'           => $mode,
 				'label'          => $label,
@@ -9181,6 +9213,13 @@ if ( ! function_exists( 'gstore_normalize_cart_rates' ) ) {
 				'cost'           => $cost,
 				'cost_formatted' => $cost_formatted,
 			);
+			if ( ! $quote_value_enabled || '' !== $quote_notice_message || '' !== $quote_notice_html ) {
+				$normalized_rate['quote_value_enabled'] = $quote_value_enabled;
+				$normalized_rate['quote_notice_message'] = $quote_notice_message;
+				$normalized_rate['quote_notice_html'] = $quote_notice_html;
+			}
+
+			$normalized[] = $normalized_rate;
 		}
 
 		return $normalized;

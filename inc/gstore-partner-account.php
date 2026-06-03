@@ -445,6 +445,7 @@ if ( ! function_exists( 'gstore_partner_account_icon' ) ) {
 			'lock'    => '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"></rect><path d="M8 11V7a4 4 0 0 1 8 0v4"></path><path d="M12 15v2"></path></svg>',
 			'document' => '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h7l4 4v14H7z"></path><path d="M14 3v5h5"></path><path d="M9 13h6"></path><path d="M9 17h4"></path></svg>',
 			'gift'    => '<svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="20 12 20 22 4 22 4 12"></polyline><rect x="2" y="7" width="20" height="5"></rect><line x1="12" y1="22" x2="12" y2="7"></line><path d="M12 7H7.5a2.5 2.5 0 1 1 0-5C11 2 12 7 12 7z"></path><path d="M12 7h4.5a2.5 2.5 0 1 0 0-5C13 2 12 7 12 7z"></path></svg>',
+			'alert'   => '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l9 16H3z"></path><path d="M12 9v5"></path><path d="M12 17h.01"></path></svg>',
 			'info'    => '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18h6"></path><path d="M10 22h4"></path><path d="M12 2a7 7 0 0 0-4 12.74V17h8v-2.26A7 7 0 0 0 12 2z"></path></svg>',
 		);
 
@@ -508,36 +509,30 @@ if ( ! function_exists( 'gstore_partner_account_render_application_feedback' ) )
 			return;
 		}
 
-		if ( 'sent' === $status ) {
-			?>
-			<div class="gstore-partner-application-modal" data-gstore-partner-application-modal role="dialog" aria-modal="true" aria-labelledby="gstore-partner-application-modal-title">
-				<div class="gstore-partner-application-modal__backdrop" data-gstore-partner-application-modal-close></div>
-				<div class="gstore-partner-application-modal__panel">
-					<button type="button" class="gstore-partner-application-modal__close" data-gstore-partner-application-modal-close aria-label="<?php esc_attr_e( 'Fechar aviso', 'gstore' ); ?>">
-						&times;
-					</button>
-					<span class="gstore-partner-application-modal__icon"><?php echo gstore_partner_account_icon( 'check' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></span>
-					<h3 id="gstore-partner-application-modal-title"><?php esc_html_e( 'Solicitacao enviada', 'gstore' ); ?></h3>
-					<p><?php esc_html_e( 'Sua solicitacao foi enviada e esta em analise. Nossa equipe vai revisar seus dados e entrar em contato.', 'gstore' ); ?></p>
-					<button type="button" class="button gstore-partner-primary-button" data-gstore-partner-application-modal-close>
-						<?php esc_html_e( 'Entendi', 'gstore' ); ?>
-					</button>
-				</div>
-			</div>
-			<?php
-			return;
-		}
-
 		$message = isset( $_GET['partner_application_message'] ) ? sanitize_text_field( wp_unslash( $_GET['partner_application_message'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		if ( '' === $message ) {
 			$message = 'sent' === $status
 				? __( 'Solicitacao enviada com sucesso. Nossa equipe vai analisar seus dados.', 'gstore' )
 				: __( 'Nao foi possivel enviar sua solicitacao. Revise os dados e tente novamente.', 'gstore' );
 		}
+		$is_success = 'sent' === $status;
 		?>
-		<p class="<?php echo esc_attr( 'gstore-partner-application__status gstore-partner-application__status--' . $status ); ?>">
-			<?php echo esc_html( $message ); ?>
-		</p>
+		<div class="<?php echo esc_attr( 'gstore-partner-application-modal gstore-partner-application-modal--' . $status ); ?>" data-gstore-partner-application-modal role="dialog" aria-modal="true" aria-labelledby="gstore-partner-application-modal-title">
+			<div class="gstore-partner-application-modal__backdrop" data-gstore-partner-application-modal-close></div>
+			<div class="gstore-partner-application-modal__panel">
+				<button type="button" class="gstore-partner-application-modal__close" data-gstore-partner-application-modal-close aria-label="<?php esc_attr_e( 'Fechar aviso', 'gstore' ); ?>">
+					&times;
+				</button>
+				<span class="gstore-partner-application-modal__icon"><?php echo gstore_partner_account_icon( $is_success ? 'check' : 'alert' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></span>
+				<h3 id="gstore-partner-application-modal-title">
+					<?php echo esc_html( $is_success ? __( 'Solicitacao enviada', 'gstore' ) : __( 'Nao foi possivel enviar', 'gstore' ) ); ?>
+				</h3>
+				<p><?php echo esc_html( $is_success ? __( 'Sua solicitacao foi enviada e esta em analise. Nossa equipe vai revisar seus dados e entrar em contato.', 'gstore' ) : $message ); ?></p>
+				<button type="button" class="button gstore-partner-primary-button" data-gstore-partner-application-modal-close>
+					<?php echo esc_html( $is_success ? __( 'Entendi', 'gstore' ) : __( 'Revisar dados', 'gstore' ) ); ?>
+				</button>
+			</div>
+		</div>
 		<?php
 	}
 }
@@ -612,7 +607,7 @@ if ( ! function_exists( 'gstore_partner_account_render_application_form' ) ) {
 						</label>
 						<label class="gstore-partner-application__file">
 							<span><?php esc_html_e( 'Documento de identidade', 'gstore' ); ?></span>
-							<input type="file" name="gstore_partner_identity_document" accept=".jpg,.jpeg,.png,.pdf" required />
+							<input type="file" name="gstore_partner_identity_document" accept=".jpg,.jpeg,.png,.pdf" required data-gstore-partner-document-input />
 						</label>
 					</div>
 
@@ -631,7 +626,7 @@ if ( ! function_exists( 'gstore_partner_account_render_application_form' ) ) {
 						<textarea name="gstore_partner_application_about" rows="5" placeholder="<?php esc_attr_e( 'Conte para nós um pouco mais sobre você', 'gstore' ); ?>" required></textarea>
 					</label>
 
-					<button type="submit" class="button gstore-partner-primary-button"><?php esc_html_e( 'Enviar cadastro', 'gstore' ); ?></button>
+					<button type="submit" class="button gstore-partner-primary-button" data-submitting-text="<?php esc_attr_e( 'Enviando cadastro...', 'gstore' ); ?>"><?php esc_html_e( 'Enviar cadastro', 'gstore' ); ?></button>
 				</form>
 			<?php endif; ?>
 		</section>
@@ -704,6 +699,69 @@ if ( ! function_exists( 'gstore_partner_account_print_application_script' ) ) {
 						option.addEventListener('change', syncRequiredState);
 					});
 					syncRequiredState();
+				});
+				document.querySelectorAll('.gstore-partner-application__form').forEach(function(form){
+					var maxDocumentSize = 8 * 1024 * 1024;
+					var documentInput = form.querySelector('[data-gstore-partner-document-input]');
+					var submitButton = form.querySelector('button[type="submit"]');
+					function formatFileSize(bytes) {
+						return (bytes / (1024 * 1024)).toFixed(bytes >= 10 * 1024 * 1024 ? 0 : 1).replace('.', ',') + ' MB';
+					}
+					function getStatus() {
+						var status = form.querySelector('[data-gstore-partner-form-status]');
+						if (!status) {
+							status = document.createElement('p');
+							status.setAttribute('data-gstore-partner-form-status', '1');
+							status.setAttribute('aria-live', 'polite');
+							form.insertBefore(status, form.firstChild);
+						}
+						return status;
+					}
+					function setStatus(type, message) {
+						var status = getStatus();
+						status.className = 'gstore-partner-application__status gstore-partner-application__status--' + type;
+						status.textContent = message;
+					}
+					function clearStatus() {
+						var status = form.querySelector('[data-gstore-partner-form-status]');
+						if (status) {
+							status.remove();
+						}
+					}
+					function validateDocumentSize() {
+						if (!documentInput || !documentInput.files || !documentInput.files.length) {
+							return true;
+						}
+						var file = documentInput.files[0];
+						if (file.size > maxDocumentSize) {
+							setStatus('error', 'O documento selecionado tem ' + formatFileSize(file.size) + '. Envie um arquivo de ate 8 MB.');
+							documentInput.focus();
+							return false;
+						}
+						clearStatus();
+						return true;
+					}
+					if (documentInput) {
+						documentInput.addEventListener('change', validateDocumentSize);
+					}
+					form.addEventListener('submit', function(event){
+						if (!validateDocumentSize()) {
+							event.preventDefault();
+							event.stopPropagation();
+							return;
+						}
+						if (typeof form.checkValidity === 'function' && !form.checkValidity()) {
+							return;
+						}
+						form.setAttribute('aria-busy', 'true');
+						setStatus('info', 'Enviando cadastro. Aguarde a confirmacao na tela.');
+						if (submitButton) {
+							submitButton.dataset.originalText = submitButton.textContent;
+							submitButton.textContent = submitButton.getAttribute('data-submitting-text') || 'Enviando cadastro...';
+							submitButton.disabled = true;
+							submitButton.classList.add('is-submitting');
+						}
+					});
 				});
 				function setupSafetyCarousel(carousel) {
 					var items = Array.prototype.slice.call(carousel.querySelectorAll('article'));
