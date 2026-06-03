@@ -480,7 +480,7 @@ if ( ! function_exists( 'gstore_partner_account_render_application_cta' ) ) {
 				<strong><?php esc_html_e( 'Seja um revendedor', 'gstore' ); ?></strong>
 				<p><?php esc_html_e( 'Conheça o programa, envie seus dados e acompanhe a análise da equipe comercial.', 'gstore' ); ?></p>
 			</div>
-			<?php if ( ! empty( $latest ) && 'pending' === $latest['status'] ) : ?>
+			<?php if ( $was_sent || ( ! empty( $latest ) && 'pending' === $latest['status'] ) ) : ?>
 				<span class="gstore-partner-application__badge"><?php echo esc_html( gstore_partner_account_application_status_label( $latest['status'] ) ); ?></span>
 			<?php else : ?>
 				<a class="button gstore-partner-application__toggle" href="<?php echo esc_url( gstore_partner_account_application_page_url() ); ?>">
@@ -488,6 +488,56 @@ if ( ! function_exists( 'gstore_partner_account_render_application_cta' ) ) {
 				</a>
 			<?php endif; ?>
 		</section>
+		<?php
+	}
+}
+
+if ( ! function_exists( 'gstore_partner_account_render_application_feedback' ) ) {
+	function gstore_partner_account_application_feedback_status() {
+		if ( empty( $_GET['partner_application'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			return '';
+		}
+
+		$status = sanitize_key( wp_unslash( $_GET['partner_application'] ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		return in_array( $status, array( 'sent', 'error' ), true ) ? $status : '';
+	}
+
+	function gstore_partner_account_render_application_feedback() {
+		$status = gstore_partner_account_application_feedback_status();
+		if ( '' === $status ) {
+			return;
+		}
+
+		if ( 'sent' === $status ) {
+			?>
+			<div class="gstore-partner-application-modal" data-gstore-partner-application-modal role="dialog" aria-modal="true" aria-labelledby="gstore-partner-application-modal-title">
+				<div class="gstore-partner-application-modal__backdrop" data-gstore-partner-application-modal-close></div>
+				<div class="gstore-partner-application-modal__panel">
+					<button type="button" class="gstore-partner-application-modal__close" data-gstore-partner-application-modal-close aria-label="<?php esc_attr_e( 'Fechar aviso', 'gstore' ); ?>">
+						&times;
+					</button>
+					<span class="gstore-partner-application-modal__icon"><?php echo gstore_partner_account_icon( 'check' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></span>
+					<h3 id="gstore-partner-application-modal-title"><?php esc_html_e( 'Solicitacao enviada', 'gstore' ); ?></h3>
+					<p><?php esc_html_e( 'Sua solicitacao foi enviada e esta em analise. Nossa equipe vai revisar seus dados e entrar em contato.', 'gstore' ); ?></p>
+					<button type="button" class="button gstore-partner-primary-button" data-gstore-partner-application-modal-close>
+						<?php esc_html_e( 'Entendi', 'gstore' ); ?>
+					</button>
+				</div>
+			</div>
+			<?php
+			return;
+		}
+
+		$message = isset( $_GET['partner_application_message'] ) ? sanitize_text_field( wp_unslash( $_GET['partner_application_message'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		if ( '' === $message ) {
+			$message = 'sent' === $status
+				? __( 'Solicitacao enviada com sucesso. Nossa equipe vai analisar seus dados.', 'gstore' )
+				: __( 'Nao foi possivel enviar sua solicitacao. Revise os dados e tente novamente.', 'gstore' );
+		}
+		?>
+		<p class="<?php echo esc_attr( 'gstore-partner-application__status gstore-partner-application__status--' . $status ); ?>">
+			<?php echo esc_html( $message ); ?>
+		</p>
 		<?php
 	}
 }
@@ -509,6 +559,7 @@ if ( ! function_exists( 'gstore_partner_account_render_application_form' ) ) {
 		$user_name    = $user_id > 0 ? (string) $current_user->display_name : '';
 		$user_email   = $user_id > 0 ? (string) $current_user->user_email : '';
 		$latest       = gstore_partner_account_latest_application();
+		$was_sent     = 'sent' === gstore_partner_account_application_feedback_status();
 
 		$panel_id      = function_exists( 'wp_unique_id' ) ? wp_unique_id( 'gstore-partner-application-panel-' ) : 'gstore-partner-application-panel-' . wp_rand( 1000, 9999 );
 		$section_class = 'gstore-partner-application gstore-partner-application--page';
@@ -523,12 +574,15 @@ if ( ! function_exists( 'gstore_partner_account_render_application_form' ) ) {
 					<span class="gstore-partner-application__badge"><?php echo esc_html( gstore_partner_account_application_status_label( $latest['status'] ) ); ?></span>
 				<?php endif; ?>
 			</div>
+			<?php gstore_partner_account_render_application_feedback(); ?>
 
 			<?php if ( ! empty( $latest ) && 'pending' === $latest['status'] ) : ?>
 				<p class="gstore-partner-application__status"><?php esc_html_e( 'Sua solicitação já foi enviada e está em análise. Assim que for aprovada, a aba Revendedor fica disponível nesta conta.', 'gstore' ); ?></p>
 			<?php else : ?>
-				<form id="<?php echo esc_attr( $panel_id ); ?>" class="gstore-partner-application__form" method="post" enctype="multipart/form-data">
+				<form id="<?php echo esc_attr( $panel_id ); ?>" class="gstore-partner-application__form" method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" enctype="multipart/form-data">
+					<input type="hidden" name="action" value="gstore_partner_submit_application" />
 					<input type="hidden" name="gstore_partner_application_action" value="submit" />
+					<input type="hidden" name="gstore_partner_application_redirect" value="<?php echo esc_url( gstore_partner_account_application_page_url() ); ?>" />
 					<?php wp_nonce_field( 'gstore_partner_application', 'gstore_partner_application_nonce' ); ?>
 
 					<div class="gstore-partner-application__grid">
@@ -562,14 +616,14 @@ if ( ! function_exists( 'gstore_partner_account_render_application_form' ) ) {
 						</label>
 					</div>
 
-					<fieldset class="gstore-partner-application__profile">
+					<fieldset class="gstore-partner-application__profile" data-gstore-partner-profile-group>
 						<legend><?php esc_html_e( 'Você é:', 'gstore' ); ?></legend>
-						<label><input type="radio" name="gstore_partner_application_profile_type" value="store" required /> <span><?php esc_html_e( 'Loja', 'gstore' ); ?></span></label>
-						<label><input type="radio" name="gstore_partner_application_profile_type" value="dispatcher" /> <span><?php esc_html_e( 'Despachante', 'gstore' ); ?></span></label>
-						<label><input type="radio" name="gstore_partner_application_profile_type" value="club" /> <span><?php esc_html_e( 'Clube de tiro', 'gstore' ); ?></span></label>
-						<label><input type="radio" name="gstore_partner_application_profile_type" value="instructor" /> <span><?php esc_html_e( 'Instrutor', 'gstore' ); ?></span></label>
-						<label><input type="radio" name="gstore_partner_application_profile_type" value="reseller" /> <span><?php esc_html_e( 'Revendedor', 'gstore' ); ?></span></label>
-						<label><input type="radio" name="gstore_partner_application_profile_type" value="other" /> <span><?php esc_html_e( 'Outro perfil comercial', 'gstore' ); ?></span></label>
+						<label><input type="checkbox" name="gstore_partner_application_profile_type[]" value="store" data-gstore-partner-profile-option /> <span><?php esc_html_e( 'Loja', 'gstore' ); ?></span></label>
+						<label><input type="checkbox" name="gstore_partner_application_profile_type[]" value="dispatcher" data-gstore-partner-profile-option /> <span><?php esc_html_e( 'Despachante', 'gstore' ); ?></span></label>
+						<label><input type="checkbox" name="gstore_partner_application_profile_type[]" value="club" data-gstore-partner-profile-option /> <span><?php esc_html_e( 'Clube de tiro', 'gstore' ); ?></span></label>
+						<label><input type="checkbox" name="gstore_partner_application_profile_type[]" value="instructor" data-gstore-partner-profile-option /> <span><?php esc_html_e( 'Instrutor', 'gstore' ); ?></span></label>
+						<label><input type="checkbox" name="gstore_partner_application_profile_type[]" value="reseller" data-gstore-partner-profile-option /> <span><?php esc_html_e( 'Revendedor', 'gstore' ); ?></span></label>
+						<label><input type="checkbox" name="gstore_partner_application_profile_type[]" value="other" data-gstore-partner-profile-option /> <span><?php esc_html_e( 'Outro perfil comercial', 'gstore' ); ?></span></label>
 					</fieldset>
 
 					<label class="gstore-partner-application__about">
@@ -597,6 +651,33 @@ if ( ! function_exists( 'gstore_partner_account_print_application_script' ) ) {
 			(function(){
 				if (window.gstorePartnerApplicationToggleReady) return;
 				window.gstorePartnerApplicationToggleReady = true;
+				var applicationModal = document.querySelector('[data-gstore-partner-application-modal]');
+				if (applicationModal) {
+					document.documentElement.classList.add('gstore-partner-application-modal-open');
+					var modalCloseButtons = applicationModal.querySelectorAll('[data-gstore-partner-application-modal-close]');
+					var focusTarget = applicationModal.querySelector('.gstore-partner-application-modal__close');
+					function closeApplicationModal() {
+						applicationModal.setAttribute('hidden', 'hidden');
+						document.documentElement.classList.remove('gstore-partner-application-modal-open');
+						if (window.history && window.history.replaceState) {
+							var nextUrl = new URL(window.location.href);
+							nextUrl.searchParams.delete('partner_application');
+							nextUrl.searchParams.delete('partner_application_message');
+							window.history.replaceState({}, document.title, nextUrl.pathname + nextUrl.search + nextUrl.hash);
+						}
+					}
+					modalCloseButtons.forEach(function(button){
+						button.addEventListener('click', closeApplicationModal);
+					});
+					document.addEventListener('keydown', function(event){
+						if (event.key === 'Escape' && !applicationModal.hasAttribute('hidden')) {
+							closeApplicationModal();
+						}
+					});
+					if (focusTarget) {
+						focusTarget.focus();
+					}
+				}
 				document.addEventListener('click', function(event){
 					var toggle = event.target.closest('[data-gstore-partner-application-toggle]');
 					if (!toggle) return;
@@ -610,11 +691,80 @@ if ( ! function_exists( 'gstore_partner_account_print_application_script' ) ) {
 					}
 					toggle.setAttribute('aria-expanded', isHidden ? 'true' : 'false');
 				});
+				document.querySelectorAll('[data-gstore-partner-profile-group]').forEach(function(group){
+					var options = Array.prototype.slice.call(group.querySelectorAll('[data-gstore-partner-profile-option]'));
+					if (!options.length) return;
+					function syncRequiredState() {
+						var hasChecked = options.some(function(option){ return option.checked; });
+						options.forEach(function(option){
+							option.required = !hasChecked;
+						});
+					}
+					options.forEach(function(option){
+						option.addEventListener('change', syncRequiredState);
+					});
+					syncRequiredState();
+				});
+				function setupSafetyCarousel(carousel) {
+					var items = Array.prototype.slice.call(carousel.querySelectorAll('article'));
+					var indicator = carousel.parentElement ? carousel.parentElement.querySelector('[data-gstore-partner-safety-indicator]') : null;
+					if (!items.length || !indicator) return;
+					var fill = indicator.querySelector('[data-gstore-partner-safety-fill]');
+					var current = indicator.querySelector('[data-gstore-partner-safety-current]');
+					var total = indicator.querySelector('[data-gstore-partner-safety-total]');
+					var startX = 0;
+					var startedAtEnd = false;
+					if (!fill || !current || !total) return;
+					total.textContent = String(items.length);
+					function isMobile() {
+						return window.matchMedia('(max-width: 640px)').matches;
+					}
+					function isAtEnd() {
+						var maxScroll = carousel.scrollWidth - carousel.clientWidth;
+						return maxScroll > 0 && carousel.scrollLeft >= maxScroll - 2;
+					}
+					function update() {
+						if (!isMobile()) return;
+						var maxScroll = Math.max(1, carousel.scrollWidth - carousel.clientWidth);
+						var index = Math.round((carousel.scrollLeft / maxScroll) * (items.length - 1));
+						index = Math.max(0, Math.min(items.length - 1, index));
+						current.textContent = String(index + 1);
+						fill.style.transform = 'scaleX(' + ((index + 1) / items.length) + ')';
+					}
+					function goToFirst() {
+						if (!isMobile()) return;
+						carousel.scrollTo({ left: 0, behavior: 'smooth' });
+					}
+					carousel.addEventListener('scroll', function(){
+						update();
+					}, { passive: true });
+					carousel.addEventListener('touchstart', function(event){
+						if (!isMobile() || !event.touches.length) return;
+						startX = event.touches[0].clientX;
+						startedAtEnd = isAtEnd();
+					}, { passive: true });
+					carousel.addEventListener('touchmove', function(event){
+						if (!isMobile() || !startedAtEnd || !event.touches.length) return;
+						if (startX - event.touches[0].clientX > 28) {
+							startedAtEnd = false;
+							goToFirst();
+						}
+					}, { passive: true });
+					carousel.addEventListener('wheel', function(event){
+						if (isAtEnd() && event.deltaX > 0) {
+							goToFirst();
+						}
+					}, { passive: true });
+					window.addEventListener('resize', update, { passive: true });
+					update();
+				}
+				document.querySelectorAll('.gstore-partner-program-safety').forEach(setupSafetyCarousel);
 			})();
 		</script>
 		<?php
 	}
 }
+add_action( 'wp_footer', 'gstore_partner_account_print_application_script', 30 );
 
 if ( ! function_exists( 'gstore_partner_account_render_dashboard_application' ) ) {
 	function gstore_partner_account_render_dashboard_application() {
@@ -838,6 +988,12 @@ if ( ! function_exists( 'gstore_partner_account_render_application_page' ) ) {
 								</div>
 							</article>
 						<?php endforeach; ?>
+					</div>
+					<div class="gstore-partner-program-safety-indicator" data-gstore-partner-safety-indicator aria-hidden="true">
+						<div class="gstore-partner-program-safety-indicator__track">
+							<span data-gstore-partner-safety-fill></span>
+						</div>
+						<span class="gstore-partner-program-safety-indicator__count"><b data-gstore-partner-safety-current>1</b>/<span data-gstore-partner-safety-total>4</span></span>
 					</div>
 				</div>
 			</section>
