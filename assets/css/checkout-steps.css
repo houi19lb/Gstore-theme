@@ -3265,6 +3265,26 @@ body.woocommerce-checkout .Gstore-checkout-summary-top__details .Gstore-summary-
 	outline: none;
 }
 
+.gstore-shipping-quote-value-cell {
+	text-align: right;
+}
+
+.Gstore-checkout-shipping-totals__row--shipping > .gstore-shipping-quote-value-cell {
+	display: inline-flex;
+	align-items: center;
+	justify-content: flex-end;
+	margin-left: auto;
+	min-width: max-content;
+}
+
+tr[class*="gstore-shipping-"] td.gstore-shipping-quote-value-cell {
+	vertical-align: middle;
+}
+
+.gstore-shipping-quote-jump--value {
+	margin-left: auto;
+}
+
 .gstore-shipping-quote-target-highlight {
 	outline: 2px solid var(--gstore-brass);
 	outline-offset: 4px;

@@ -112,6 +112,12 @@
 		return button;
 	}
 
+	function createValueJumpButton() {
+		var button = createJumpButton();
+		button.classList.add('gstore-shipping-quote-jump--value');
+		return button;
+	}
+
 	function findExpandDetailsButton() {
 		return Array.prototype.slice.call(document.querySelectorAll('button')).find(function (button) {
 			return /ver detalhes/i.test(button.textContent || '');
@@ -159,15 +165,59 @@
 		}, 220);
 	}
 
-	function addButtonTo(container) {
-		if (!container || container.querySelector(buttonSelector)) {
+	function restoreQuoteValueCells() {
+		document.querySelectorAll('[data-gstore-quote-notice-value-cell="1"]').forEach(function (container) {
+			var originalHtml = container.getAttribute('data-gstore-quote-original-html');
+
+			if (originalHtml !== null) {
+				container.innerHTML = originalHtml;
+			}
+
+			container.removeAttribute('data-gstore-quote-notice-value-cell');
+			container.removeAttribute('data-gstore-quote-original-html');
+			container.classList.remove('gstore-shipping-quote-value-cell');
+		});
+	}
+
+	function addValueButtonTo(container) {
+		if (!container) {
 			return;
 		}
 
-		container.appendChild(createJumpButton());
+		if (container.getAttribute('data-gstore-quote-notice-value-cell') === '1') {
+			return;
+		}
+
+		container.setAttribute('data-gstore-quote-original-html', container.innerHTML);
+		container.setAttribute('data-gstore-quote-notice-value-cell', '1');
+		container.classList.add('gstore-shipping-quote-value-cell');
+		container.innerHTML = '';
+		container.appendChild(createValueJumpButton());
+	}
+
+	function removeInlineNoticeButtons() {
+		document
+			.querySelectorAll(
+				'.Gstore-checkout-shipping-totals__label > [data-gstore-quote-notice-jump], ' +
+				'.Gstore-order-review-shipping-row > [data-gstore-quote-notice-jump]'
+			)
+			.forEach(function (button) {
+				button.remove();
+			});
+	}
+
+	function enhanceValueCells() {
+		document.querySelectorAll('.Gstore-checkout-shipping-totals__row--shipping').forEach(function (row) {
+			addValueButtonTo(row.lastElementChild);
+		});
+
+		document.querySelectorAll('tr[class*="gstore-shipping-"]').forEach(function (row) {
+			addValueButtonTo(row.querySelector('td'));
+		});
 	}
 
 	function removeButtons() {
+		restoreQuoteValueCells();
 		document.querySelectorAll(buttonSelector).forEach(function (button) {
 			button.remove();
 		});
@@ -179,11 +229,8 @@
 			return;
 		}
 
-		document.querySelectorAll('.Gstore-checkout-shipping-totals__row--shipping .Gstore-checkout-shipping-totals__label')
-			.forEach(addButtonTo);
-
-		document.querySelectorAll('tr[class*="gstore-shipping-"] .Gstore-order-review-shipping-row')
-			.forEach(addButtonTo);
+		removeInlineNoticeButtons();
+		enhanceValueCells();
 	}
 
 	function scheduleEnhance() {
