@@ -2651,7 +2651,7 @@ form.woocommerce-form {
 	}
 
 	.gstore-partner-program-benefits {
-		padding: 6px 0;
+		padding: 14px 0;
 	}
 
 	.gstore-partner-program-page .gstore-partner-application__grid,
@@ -2700,9 +2700,9 @@ form.woocommerce-form {
 		display: flex;
 		flex-direction: column;
 		align-items: center;
-		justify-content: center;
-		min-height: 58px;
-		padding: 0 3px;
+		justify-content: flex-start;
+		min-height: 118px;
+		padding: 4px 6px 0;
 		border: 0;
 		border-right: 1px solid rgba(255, 255, 255, 0.24);
 		border-bottom: 0;
@@ -2722,20 +2722,20 @@ form.woocommerce-form {
 	}
 
 	.gstore-partner-program-benefits span {
-		width: 28px;
-		height: 28px;
-		margin-bottom: 2px;
-		border-radius: 4px;
+		width: 52px;
+		height: 52px;
+		margin-bottom: 15px;
+		border-radius: 6px;
 	}
 
 	.gstore-partner-program-benefits span svg {
-		width: 16px;
-		height: 16px;
+		width: 31px;
+		height: 31px;
 	}
 
 	.gstore-partner-program-benefits strong {
-		font-size: 8.5px;
-		line-height: 1.12;
+		font-size: 11px;
+		line-height: 1.28;
 	}
 
 	.gstore-partner-program-benefits small {
