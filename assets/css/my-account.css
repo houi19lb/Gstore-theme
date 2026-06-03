@@ -1970,7 +1970,7 @@ form.woocommerce-form {
 	position: relative;
 	z-index: 2;
 	margin-top: 0;
-	padding: 10px 0;
+	padding: 18px 0;
 	background: var(--gstore-benefits-bar-background, linear-gradient(90deg, var(--gstore-color-accent, #b5a642), var(--gstore-color-accent-light, #c7b648)));
 	color: #fff;
 }
@@ -1983,17 +1983,16 @@ form.woocommerce-form {
 }
 
 .gstore-partner-program-benefits article {
-	display: flex;
-	flex-direction: column;
+	display: grid;
+	grid-template-columns: 48px minmax(0, 1fr);
+	gap: 18px;
 	align-items: center;
-	justify-content: center;
-	min-height: 80px;
-	padding: 0 18px;
+	min-height: 76px;
+	padding: 0 26px;
 	border-right: 1px solid rgba(255, 255, 255, 0.24);
 	border-radius: 0;
 	background: transparent;
 	box-shadow: none;
-	text-align: center;
 }
 
 .gstore-partner-program-benefits article:last-child {
@@ -2004,17 +2003,16 @@ form.woocommerce-form {
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
-	width: 38px;
-	height: 38px;
-	margin-bottom: 7px;
+	width: 48px;
+	height: 48px;
 	border: 1px solid rgba(255, 255, 255, 0.6);
 	border-radius: 5px;
 	color: #fff;
 }
 
 .gstore-partner-program-benefits span svg {
-	width: 22px;
-	height: 22px;
+	width: 27px;
+	height: 27px;
 	fill: none;
 	stroke: currentColor;
 	stroke-width: 1.55;
@@ -2030,14 +2028,17 @@ form.woocommerce-form {
 
 .gstore-partner-program-benefits strong {
 	color: #fff;
-	font-size: 12px;
+	font-size: 14px;
 	font-weight: 900;
-	line-height: 1.18;
 	text-transform: uppercase;
 }
 
 .gstore-partner-program-benefits small {
-	display: none;
+	margin-top: 6px;
+	color: rgba(255, 255, 255, 0.86);
+	font-size: 11px;
+	font-weight: 800;
+	text-transform: uppercase;
 }
 
 .gstore-partner-program-section {
@@ -2649,6 +2650,10 @@ form.woocommerce-form {
 		width: 100%;
 	}
 
+	.gstore-partner-program-benefits {
+		padding: 10px 0;
+	}
+
 	.gstore-partner-program-page .gstore-partner-application__grid,
 	.gstore-partner-program-page .gstore-partner-application__profile {
 		grid-template-columns: 1fr;
@@ -2683,6 +2688,10 @@ form.woocommerce-form {
 
 	.gstore-partner-program-benefits article,
 	.gstore-partner-program-benefits article:nth-child(2n) {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
 		min-height: 80px;
 		padding: 0 10px;
 		border: 0;
@@ -2691,10 +2700,31 @@ form.woocommerce-form {
 		background: transparent;
 		scroll-snap-align: start;
 		scroll-snap-stop: always;
+		text-align: center;
 	}
 
 	.gstore-partner-program-benefits article:last-child {
 		border-right: 0;
+	}
+
+	.gstore-partner-program-benefits span {
+		width: 38px;
+		height: 38px;
+		margin-bottom: 7px;
+	}
+
+	.gstore-partner-program-benefits span svg {
+		width: 22px;
+		height: 22px;
+	}
+
+	.gstore-partner-program-benefits strong {
+		font-size: 12px;
+		line-height: 1.18;
+	}
+
+	.gstore-partner-program-benefits small {
+		display: none;
 	}
 
 	.gstore-partner-program-section {
@@ -2703,6 +2733,14 @@ form.woocommerce-form {
 
 	.gstore-partner-program-heading {
 		text-align: center;
+	}
+
+	.gstore-partner-program-section.is-muted .gstore-partner-program-heading {
+		text-align: left;
+	}
+
+	.gstore-partner-program-section.is-muted .gstore-partner-program-heading h2 {
+		color: #f7f7f4;
 	}
 
 	.gstore-partner-program-form-shell {
@@ -2742,23 +2780,23 @@ form.woocommerce-form {
 		grid-template-columns: 1fr;
 		gap: 0;
 		overflow: visible;
-		margin-top: 16px;
-		padding: 22px 18px;
-		border: 1px solid var(--partner-line);
+		margin-top: 14px;
+		padding: 18px 18px 20px;
+		border: 1px solid rgba(0, 0, 0, 0.13);
 		border-radius: 18px;
-		background: var(--partner-card);
-		box-shadow: 0 18px 38px rgba(0, 0, 0, 0.22);
+		background: #fff;
+		box-shadow: 0 12px 26px rgba(0, 0, 0, 0.14);
 	}
 
 	.gstore-partner-program-steps::before {
 		display: block;
-		top: 48px;
-		bottom: 48px;
+		top: 44px;
+		bottom: 44px;
 		left: 43px;
 		right: auto;
 		width: 1px;
 		height: auto;
-		background: rgba(255, 90, 0, 0.34);
+		background: #d7d7d7;
 		opacity: 1;
 	}
 
@@ -2768,7 +2806,7 @@ form.woocommerce-form {
 		grid-template-columns: 52px minmax(0, 1fr);
 		column-gap: 16px;
 		min-height: 0;
-		padding: 0 0 26px;
+		padding: 0 0 24px;
 		border: 0;
 		border-radius: 0;
 		background: transparent;
@@ -2794,7 +2832,7 @@ form.woocommerce-form {
 		background: #070809;
 		color: var(--partner-orange);
 		font-size: 16px;
-		box-shadow: 0 0 0 1px rgba(255, 90, 0, 0.18);
+		box-shadow: none;
 	}
 
 	.gstore-partner-program-steps__icon {
@@ -2803,14 +2841,20 @@ form.woocommerce-form {
 
 	.gstore-partner-program-steps h3 {
 		grid-column: 2;
-		margin: 4px 0 6px;
+		margin: 5px 0 7px;
+		color: #030507;
 		font-size: 18px;
+		line-height: 1.2;
 		text-align: left;
 	}
 
 	.gstore-partner-program-steps p {
 		grid-column: 2;
 		margin: 0;
+		color: #3d5269;
+		font-size: 15px;
+		font-weight: 500;
+		line-height: 1.45;
 		text-align: left;
 	}
 
