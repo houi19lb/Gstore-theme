@@ -2651,7 +2651,7 @@ form.woocommerce-form {
 	}
 
 	.gstore-partner-program-benefits {
-		padding: 10px 0;
+		padding: 6px 0;
 	}
 
 	.gstore-partner-program-page .gstore-partner-application__grid,
@@ -2675,6 +2675,16 @@ form.woocommerce-form {
 		scrollbar-width: none;
 	}
 
+	.gstore-partner-program-benefits .gstore-partner-program-container {
+		grid-template-columns: repeat(4, minmax(0, 1fr));
+		grid-auto-flow: row;
+		grid-auto-columns: auto;
+		overflow: visible;
+		scroll-snap-type: none;
+		scroll-padding-inline: 0;
+		padding-bottom: 0;
+	}
+
 	.gstore-partner-program-benefits .gstore-partner-program-container::-webkit-scrollbar,
 	.gstore-partner-program-profile-grid::-webkit-scrollbar,
 	.gstore-partner-program-safety::-webkit-scrollbar {
@@ -2682,7 +2692,6 @@ form.woocommerce-form {
 	}
 
 	.gstore-partner-program-benefits .gstore-partner-program-container {
-		grid-auto-columns: minmax(142px, 44vw);
 		gap: 0;
 	}
 
@@ -2692,14 +2701,14 @@ form.woocommerce-form {
 		flex-direction: column;
 		align-items: center;
 		justify-content: center;
-		min-height: 80px;
-		padding: 0 10px;
+		min-height: 58px;
+		padding: 0 3px;
 		border: 0;
 		border-right: 1px solid rgba(255, 255, 255, 0.24);
 		border-radius: 0;
 		background: transparent;
-		scroll-snap-align: start;
-		scroll-snap-stop: always;
+		scroll-snap-align: none;
+		scroll-snap-stop: normal;
 		text-align: center;
 	}
 
@@ -2708,19 +2717,20 @@ form.woocommerce-form {
 	}
 
 	.gstore-partner-program-benefits span {
-		width: 38px;
-		height: 38px;
-		margin-bottom: 7px;
+		width: 28px;
+		height: 28px;
+		margin-bottom: 5px;
+		border-radius: 4px;
 	}
 
 	.gstore-partner-program-benefits span svg {
-		width: 22px;
-		height: 22px;
+		width: 16px;
+		height: 16px;
 	}
 
 	.gstore-partner-program-benefits strong {
-		font-size: 12px;
-		line-height: 1.18;
+		font-size: 8.5px;
+		line-height: 1.12;
 	}
 
 	.gstore-partner-program-benefits small {
