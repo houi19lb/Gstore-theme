@@ -2697,6 +2697,7 @@ form.woocommerce-form {
 
 	.gstore-partner-program-benefits article,
 	.gstore-partner-program-benefits article:nth-child(2n) {
+		position: relative;
 		display: flex;
 		flex-direction: column;
 		align-items: center;
@@ -2704,7 +2705,6 @@ form.woocommerce-form {
 		min-height: 118px;
 		padding: 4px 6px 0;
 		border: 0;
-		border-right: 1px solid rgba(255, 255, 255, 0.24);
 		border-bottom: 0;
 		border-radius: 0;
 		background: transparent;
@@ -2713,12 +2713,26 @@ form.woocommerce-form {
 		text-align: center;
 	}
 
+	.gstore-partner-program-benefits article::after {
+		content: "";
+		position: absolute;
+		top: 4px;
+		right: 0;
+		height: 86px;
+		width: 1px;
+		background: rgba(255, 255, 255, 0.24);
+	}
+
 	.gstore-partner-program-benefits article:nth-child(-n+2) {
 		border-bottom: 0;
 	}
 
 	.gstore-partner-program-benefits article:last-child {
 		border-right: 0;
+	}
+
+	.gstore-partner-program-benefits article:last-child::after {
+		display: none;
 	}
 
 	.gstore-partner-program-benefits span {
