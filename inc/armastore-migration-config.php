@@ -53,6 +53,28 @@ add_filter(
 add_filter( 'gstore_migration_noindex_feeds', '__return_true' );
 
 add_filter(
+	'gstore_public_surface_robots_disallow_rules',
+	static function ( $rules ) {
+		$rules = is_array( $rules ) ? $rules : array();
+		$host  = function_exists( 'home_url' ) ? wp_parse_url( home_url( '/' ), PHP_URL_HOST ) : '';
+		$host  = strtolower( preg_replace( '#^www\.#', '', (string) $host ) );
+
+		if ( 'armastore.com.br' !== $host ) {
+			return $rules;
+		}
+
+		return array_values(
+			array_filter(
+				$rules,
+				static function ( $rule ) {
+					return ! in_array( trim( (string) $rule ), array( '/feed/', '*/feed/' ), true );
+				}
+			)
+		);
+	}
+);
+
+add_filter(
 	'gstore_migration_legacy_category_map',
 	static function ( $map ) {
 		$map = is_array( $map ) ? $map : array();
