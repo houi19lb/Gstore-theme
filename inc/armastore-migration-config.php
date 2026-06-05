@@ -56,10 +56,8 @@ add_filter(
 	'gstore_public_surface_robots_disallow_rules',
 	static function ( $rules ) {
 		$rules = is_array( $rules ) ? $rules : array();
-		$host  = function_exists( 'home_url' ) ? wp_parse_url( home_url( '/' ), PHP_URL_HOST ) : '';
-		$host  = strtolower( preg_replace( '#^www\.#', '', (string) $host ) );
 
-		if ( 'armastore.com.br' !== $host ) {
+		if ( ! gstore_armastore_is_current_host() ) {
 			return $rules;
 		}
 
@@ -73,6 +71,58 @@ add_filter(
 		);
 	}
 );
+
+if ( ! function_exists( 'gstore_armastore_is_current_host' ) ) {
+	function gstore_armastore_is_current_host() {
+		$host = function_exists( 'home_url' ) ? wp_parse_url( home_url( '/' ), PHP_URL_HOST ) : '';
+		$host = strtolower( preg_replace( '#^www\.#', '', (string) $host ) );
+
+		return 'armastore.com.br' === $host;
+	}
+}
+
+if ( ! function_exists( 'gstore_armastore_sync_physical_robots_txt' ) ) {
+	function gstore_armastore_sync_physical_robots_txt() {
+		if ( ! gstore_armastore_is_current_host() || ! defined( 'ABSPATH' ) || ! defined( 'WP_CONTENT_DIR' ) ) {
+			return;
+		}
+
+		$content = apply_filters( 'robots_txt', "User-agent: *\n", true );
+		$content = trim( preg_replace( "/\n{3,}/", "\n\n", (string) $content ) ) . "\n";
+		if ( "User-agent: *\n" === $content ) {
+			return;
+		}
+
+		$targets = apply_filters(
+			'gstore_armastore_physical_robots_targets',
+			array(
+				ABSPATH . 'robots.txt',
+				trailingslashit( WP_CONTENT_DIR ) . 'litespeed/robots.txt',
+			)
+		);
+
+		foreach ( (array) $targets as $target ) {
+			$target = (string) $target;
+			if ( '' === $target ) {
+				continue;
+			}
+
+			$dir = dirname( $target );
+			if ( ! is_dir( $dir ) && function_exists( 'wp_mkdir_p' ) ) {
+				wp_mkdir_p( $dir );
+			}
+
+			if ( is_file( $target ) && hash_equals( sha1( $content ), sha1( (string) file_get_contents( $target ) ) ) ) {
+				continue;
+			}
+
+			if ( is_dir( $dir ) && is_writable( $dir ) ) {
+				file_put_contents( $target, $content, LOCK_EX );
+			}
+		}
+	}
+}
+add_action( 'init', 'gstore_armastore_sync_physical_robots_txt', 30 );
 
 add_filter(
 	'gstore_migration_legacy_category_map',
