@@ -3278,7 +3278,6 @@ function gstore_add_resource_hints() {
 	echo '<link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>' . "\n";
 
 	// DNS-prefetch para outras origens externas (menos crítico)
-	echo '<link rel="dns-prefetch" href="https://upload.wikimedia.org">' . "\n";
 	echo '<link rel="dns-prefetch" href="https://secure.gravatar.com">' . "\n";
 }
 add_action( 'wp_head', 'gstore_add_resource_hints', 1 );
@@ -20877,6 +20876,9 @@ function gstore_process_store_info_placeholders( $content ) {
 		'{{footer_legal_line}}'   => gstore_get_footer_legal_line(),
 		'{{footer_trust_line}}'   => gstore_get_footer_trust_line(),
 		'{{footer_category_brand_summary}}' => $footer_category_brand_summary,
+		'{{payment_mastercard_logo_url}}' => esc_url( get_theme_file_uri( 'assets/images/payments/mastercard-logo.png' ) ),
+		'{{payment_visa_logo_url}}' => esc_url( get_theme_file_uri( 'assets/images/payments/visa-logo.png' ) ),
+		'{{payment_whatsapp_logo_url}}' => esc_url( get_theme_file_uri( 'assets/images/payments/whatsapp-logo.svg' ) ),
 
 		// Meta
 		'{{meta_description}}'    => gstore_get_meta( 'description' ),
