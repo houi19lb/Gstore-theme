@@ -4304,13 +4304,15 @@ function getInstallmentDisplayTotals(summaryData) {
 	 * para casos em que o rádio ainda não existe/foi desmarcado no DOM.
 	 */
 	function resolveSelectedPaymentMethod($form) {
+		const $selected = $('input[name="payment_method"]:checked').filter(function() {
+			return $(this).attr('type') !== 'hidden';
+		});
+		if ($selected.length) return $selected.val();
+
 		if ($form && $form.length) {
 			const $hidden = $form.find('input[name="payment_method"][type="hidden"]').first();
 			if ($hidden.length && $hidden.val()) return $hidden.val();
 		}
-
-		const $selected = $('input[name="payment_method"]:checked');
-		if ($selected.length) return $selected.val();
 		
 		if (lastSelectedPaymentMethod) return lastSelectedPaymentMethod;
 		return '';
