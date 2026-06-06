@@ -4712,6 +4712,7 @@ add_action( 'template_redirect', 'gstore_output_pwa_icon', 0 );
 function gstore_build_pwa_service_worker() {
 	$version_seed = array(
 		wp_get_theme()->get( 'Version' ),
+		file_exists( get_theme_file_path( 'functions.php' ) ) ? (string) filemtime( get_theme_file_path( 'functions.php' ) ) : '',
 		file_exists( get_theme_file_path( 'assets/js/pwa-install.js' ) ) ? (string) filemtime( get_theme_file_path( 'assets/js/pwa-install.js' ) ) : '',
 		file_exists( get_theme_file_path( 'style.css' ) ) ? (string) filemtime( get_theme_file_path( 'style.css' ) ) : '',
 	);
@@ -4759,6 +4760,10 @@ function hasBlockedQuery(url) {
   return BYPASS_QUERY_KEYS.some((key) => url.searchParams.has(key));
 }
 
+function isRasterImageRequest(url) {
+  return /\.(?:png|jpe?g|webp|gif|avif)$/i.test(url.pathname);
+}
+
 function shouldBypass(request) {
   if (request.method !== 'GET') {
     return true;
@@ -4771,6 +4776,10 @@ function shouldBypass(request) {
   }
 
   if (hasBlockedPath(url) || hasBlockedQuery(url)) {
+    return true;
+  }
+
+  if (isRasterImageRequest(url)) {
     return true;
   }
 
@@ -10493,6 +10502,23 @@ function gstore_get_image_url( $attachment_id, $size = 'full' ) {
 }
 
 /**
+ * Envolve uma tag <img> do tema em <picture> com WebP quando o plugin GStore
+ * gerou o arquivo correspondente.
+ *
+ * @param string       $img_tag       HTML da imagem.
+ * @param int          $attachment_id ID do attachment.
+ * @param string|array $size          Tamanho solicitado.
+ * @return string
+ */
+function gstore_maybe_wrap_webp_picture( $img_tag, $attachment_id, $size = 'full' ) {
+	if ( function_exists( 'gstore_wrap_webp_picture' ) ) {
+		return gstore_wrap_webp_picture( $img_tag, $attachment_id, $size );
+	}
+
+	return (string) $img_tag;
+}
+
+/**
  * Retorna a tag <img> completa de uma imagem da biblioteca.
  *
  * @param int    $attachment_id ID da imagem na biblioteca.
@@ -10603,7 +10629,7 @@ function gstore_get_image_tag( $attachment_id, $size = 'full', $alt = '', $attr 
 	}
 	$img_tag .= ' />';
 
-	return $img_tag;
+	return gstore_maybe_wrap_webp_picture( $img_tag, $attachment_id, $size );
 }
 
 /**
@@ -10780,6 +10806,7 @@ function gstore_banner_youtube_shortcode() {
 		esc_url( $banner_url ),
 		$banner_alt
 	);
+	$img_tag = gstore_maybe_wrap_webp_picture( $img_tag, $banner_id, 'full' );
 
 	// Se houver link configurado, envolve a imagem em um link
 	if ( ! empty( $banner_link ) ) {
@@ -12612,12 +12639,20 @@ function gstore_custom_site_logo_block( $block_content, $block ) {
 			// Substitui o conteúdo do bloco pela logo configurada
 			$home_url = esc_url( home_url( '/' ) );
 			$site_name = esc_attr( get_bloginfo( 'name' ) );
+			$logo_img = gstore_maybe_wrap_webp_picture(
+				sprintf(
+					'<img src="%s" alt="%s" style="max-height: 36px; max-width: 180px; width: auto; height: auto;" loading="eager" />',
+					esc_url( $logo_url ),
+					esc_attr( $logo_alt )
+				),
+				$logo_id,
+				'full'
+			);
 			$logo_html = sprintf(
-				'<div class="wp-block-site-logo Gstore-header__logo" data-gstore-logo="1" style="grid-area: logo;"><a href="%s" rel="home" aria-label="%s"><img src="%s" alt="%s" style="max-height: 36px; max-width: 180px; width: auto; height: auto;" loading="eager" /></a></div>',
+				'<div class="wp-block-site-logo Gstore-header__logo" data-gstore-logo="1" style="grid-area: logo;"><a href="%s" rel="home" aria-label="%s">%s</a></div>',
 				$home_url,
 				$site_name,
-				esc_url( $logo_url ),
-				esc_attr( $logo_alt )
+				$logo_img
 			);
 
 			return $logo_html;
@@ -12669,12 +12704,20 @@ function gstore_custom_footer_logo_block( $block_content, $block ) {
 			// Substitui o conteúdo do bloco pela logo configurada
 			$home_url = esc_url( home_url( '/' ) );
 			$site_name = esc_attr( get_bloginfo( 'name' ) );
+			$logo_img = gstore_maybe_wrap_webp_picture(
+				sprintf(
+					'<img src="%s" alt="%s" style="max-height: 50px; max-width: 200px; width: auto; height: auto;" loading="lazy" />',
+					esc_url( $logo_url ),
+					esc_attr( $logo_alt )
+				),
+				$logo_id,
+				'full'
+			);
 			$logo_html = sprintf(
-				'<div class="wp-block-site-logo footer-logo" data-gstore-footer-logo="1"><a href="%s" rel="home" aria-label="%s"><img src="%s" alt="%s" style="max-height: 50px; max-width: 200px; width: auto; height: auto;" loading="lazy" /></a></div>',
+				'<div class="wp-block-site-logo footer-logo" data-gstore-footer-logo="1"><a href="%s" rel="home" aria-label="%s">%s</a></div>',
 				$home_url,
 				$site_name,
-				esc_url( $logo_url ),
-				esc_attr( $logo_alt )
+				$logo_img
 			);
 
 			return $logo_html;
@@ -12726,12 +12769,20 @@ function gstore_custom_checkout_header_logo_block( $block_content, $block ) {
 			// Substitui o conteúdo do bloco pela logo configurada
 			$home_url = esc_url( home_url( '/' ) );
 			$site_name = esc_attr( get_bloginfo( 'name' ) );
+			$logo_img = gstore_maybe_wrap_webp_picture(
+				sprintf(
+					'<img src="%s" alt="%s" style="max-height: 36px; max-width: 180px; width: auto; height: auto;" loading="eager" />',
+					esc_url( $logo_url ),
+					esc_attr( $logo_alt )
+				),
+				$logo_id,
+				'full'
+			);
 			$logo_html = sprintf(
-				'<p class="Gstore-checkout-header__logo wp-block-site-title" data-gstore-checkout-logo="1"><a href="%s" rel="home" aria-label="%s"><img src="%s" alt="%s" style="max-height: 36px; max-width: 180px; width: auto; height: auto;" loading="eager" /></a></p>',
+				'<p class="Gstore-checkout-header__logo wp-block-site-title" data-gstore-checkout-logo="1"><a href="%s" rel="home" aria-label="%s">%s</a></p>',
 				$home_url,
 				$site_name,
-				esc_url( $logo_url ),
-				esc_attr( $logo_alt )
+				$logo_img
 			);
 
 			return $logo_html;
@@ -12795,18 +12846,26 @@ function gstore_replace_header_logo_html( $content ) {
 	$site_name = esc_attr( get_bloginfo( 'name' ) );
 
 	// HTML da logo com imagem (para substituição via regex)
+	$logo_img = gstore_maybe_wrap_webp_picture(
+		sprintf(
+			'<img src="%s" alt="%s" style="max-height: 36px; max-width: 180px; width: auto; height: auto;" loading="eager" />',
+			esc_url( $logo_url ),
+			esc_attr( $logo_alt )
+		),
+		$logo_id,
+		'full'
+	);
 	$logo_html = sprintf(
-		'<div class="wp-block-site-logo Gstore-header__logo" data-gstore-logo="1" style="grid-area: logo;"><a href="%s" rel="home" aria-label="%s"><img src="%s" alt="%s" style="max-height: 36px; max-width: 180px; width: auto; height: auto;" loading="eager" /></a></div>',
+		'<div class="wp-block-site-logo Gstore-header__logo" data-gstore-logo="1" style="grid-area: logo;"><a href="%s" rel="home" aria-label="%s">%s</a></div>',
 		$home_url,
 		$site_name,
-		esc_url( $logo_url ),
-		esc_attr( $logo_alt )
+		$logo_img
 	);
 
 	// Padrão 1: Substitui apenas o bloco site-logo renderizado pelo WordPress
 	// Captura: <div class="wp-block-site-logo...">...</div> (bloco completo)
 	$pattern1 = '/<div\s+[^>]*class="[^"]*wp-block-site-logo[^"]*"[^>]*>.*?<\/div>/is';
-	$replacement1 = '<div class="wp-block-site-logo Gstore-header__logo" data-gstore-logo="1" style="grid-area: logo;"><a href="' . $home_url . '" rel="home" aria-label="' . $site_name . '"><img src="' . esc_url( $logo_url ) . '" alt="' . esc_attr( $logo_alt ) . '" style="max-height: 36px; max-width: 180px; width: auto; height: auto;" loading="eager" /></a></div>';
+	$replacement1 = '<div class="wp-block-site-logo Gstore-header__logo" data-gstore-logo="1" style="grid-area: logo;"><a href="' . $home_url . '" rel="home" aria-label="' . $site_name . '">' . $logo_img . '</a></div>';
 	$content = preg_replace( $pattern1, $replacement1, $content, 1 );
 
 	// Padrão 2: Link com classe Gstore-header__logo (mas sem imagem) - apenas dentro do header content
@@ -12866,12 +12925,20 @@ function gstore_replace_mobile_drawer_logo_html( $content ) {
 
 	$home_url  = esc_url( home_url( '/' ) );
 	$site_name = esc_attr( get_bloginfo( 'name' ) );
+	$logo_img  = gstore_maybe_wrap_webp_picture(
+		sprintf(
+			'<img src="%s" alt="%s" loading="eager" />',
+			esc_url( $logo_url ),
+			esc_attr( $logo_alt )
+		),
+		$logo_id,
+		'full'
+	);
 	$logo_html = sprintf(
-		'<a href="%s" class="Gstore-mobile-drawer__logo" rel="home" aria-label="%s" data-gstore-drawer-logo="1"><img src="%s" alt="%s" loading="eager" /></a>',
+		'<a href="%s" class="Gstore-mobile-drawer__logo" rel="home" aria-label="%s" data-gstore-drawer-logo="1">%s</a>',
 		$home_url,
 		$site_name,
-		esc_url( $logo_url ),
-		esc_attr( $logo_alt )
+		$logo_img
 	);
 
 	$pattern = '/<a\s+[^>]*class="[^"]*Gstore-mobile-drawer__logo[^"]*"[^>]*>.*?<\/a>/is';
@@ -12916,12 +12983,20 @@ function gstore_replace_footer_logo_html( $content ) {
 	$site_name = esc_attr( get_bloginfo( 'name' ) );
 
 	// HTML da logo com imagem para o footer
+	$logo_img = gstore_maybe_wrap_webp_picture(
+		sprintf(
+			'<img src="%s" alt="%s" style="max-height: 50px; max-width: 200px; width: auto; height: auto;" loading="lazy" />',
+			esc_url( $logo_url ),
+			esc_attr( $logo_alt )
+		),
+		$logo_id,
+		'full'
+	);
 	$logo_html = sprintf(
-		'<div class="wp-block-site-logo footer-logo" data-gstore-footer-logo="1"><a href="%s" rel="home" aria-label="%s"><img src="%s" alt="%s" style="max-height: 50px; max-width: 200px; width: auto; height: auto;" loading="lazy" /></a></div>',
+		'<div class="wp-block-site-logo footer-logo" data-gstore-footer-logo="1"><a href="%s" rel="home" aria-label="%s">%s</a></div>',
 		$home_url,
 		$site_name,
-		esc_url( $logo_url ),
-		esc_attr( $logo_alt )
+		$logo_img
 	);
 
 	// Padrão 1: Substitui o bloco site-logo renderizado pelo WordPress no footer
@@ -13038,7 +13113,7 @@ function gstore_get_hero_image_tag( $attachment_id, $alt = '', $is_first_slide =
 	}
 	$img_tag .= ' />';
 
-	return $img_tag;
+	return gstore_maybe_wrap_webp_picture( $img_tag, $attachment_id, 'full' );
 }
 
 /**
@@ -13118,6 +13193,7 @@ function gstore_process_image_placeholders( $content ) {
 			esc_url( $banner_youtube_url ),
 			$banner_youtube_alt
 		);
+		$img_tag = gstore_maybe_wrap_webp_picture( $img_tag, $banner_youtube_id, 'full' );
 
 		// Se houver link configurado, envolve a imagem em um link
 		if ( ! empty( $banner_youtube_link ) ) {
