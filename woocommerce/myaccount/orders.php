@@ -11,7 +11,14 @@ defined( 'ABSPATH' ) || exit;
 do_action( 'woocommerce_before_account_orders', $has_orders );
 
 if ( $has_orders ) :
-	$account_orders_columns = wc_get_account_orders_columns();
+	$account_orders_columns = array(
+		'order-number'   => __( 'Pedido', 'gstore' ),
+		'order-date'     => __( 'Data', 'gstore' ),
+		'order-status'   => __( 'Status', 'gstore' ),
+		'order-tracking' => __( 'Rastreio', 'gstore' ),
+		'order-total'    => __( 'Total', 'gstore' ),
+		'order-actions'  => __( 'Ações', 'gstore' ),
+	);
 	$sortable_columns       = array(
 		'order-number' => 'order_number',
 		'order-date'   => 'order_date',
@@ -91,6 +98,75 @@ if ( $has_orders ) :
 			default:
 				return 50;
 		}
+	};
+
+	$get_order_tracking = static function( WC_Order $order ) {
+		$tracking_meta_keys = array(
+			'_wc_shipment_tracking_items',
+			'_tracking_number',
+			'tracking_number',
+			'_tracking_code',
+			'tracking_code',
+			'_correios_tracking_code',
+			'_correios_tracking_number',
+			'_codigo_rastreio',
+			'codigo_rastreio',
+			'_melhor_envio_tracking',
+			'_melhor_envio_tracking_code',
+			'_aftership_tracking_number',
+		);
+
+		foreach ( $tracking_meta_keys as $meta_key ) {
+			$raw_value = $order->get_meta( $meta_key, true );
+
+			if ( empty( $raw_value ) ) {
+				continue;
+			}
+
+			if ( is_array( $raw_value ) ) {
+				foreach ( $raw_value as $item ) {
+					if ( ! is_array( $item ) ) {
+						continue;
+					}
+
+					$tracking_number = '';
+					if ( ! empty( $item['tracking_number'] ) ) {
+						$tracking_number = (string) $item['tracking_number'];
+					} elseif ( ! empty( $item['tracking_code'] ) ) {
+						$tracking_number = (string) $item['tracking_code'];
+					}
+
+					$tracking_number = trim( wp_strip_all_tags( $tracking_number ) );
+					if ( '' === $tracking_number ) {
+						continue;
+					}
+
+					$tracking_url = '';
+					if ( ! empty( $item['custom_tracking_link'] ) ) {
+						$tracking_url = (string) $item['custom_tracking_link'];
+					} elseif ( ! empty( $item['tracking_link'] ) ) {
+						$tracking_url = (string) $item['tracking_link'];
+					}
+
+					return array(
+						'label' => $tracking_number,
+						'url'   => esc_url_raw( $tracking_url ),
+					);
+				}
+
+				continue;
+			}
+
+			$tracking_number = trim( wp_strip_all_tags( (string) $raw_value ) );
+			if ( '' !== $tracking_number ) {
+				return array(
+					'label' => $tracking_number,
+					'url'   => '',
+				);
+			}
+		}
+
+		return false;
 	};
 
 	if ( count( $display_order_rows ) > 1 ) {
@@ -201,8 +277,23 @@ if ( $has_orders ) :
 								$status_label = function_exists( 'gstore_my_account_get_orders_tab_status_label' )
 									? gstore_my_account_get_orders_tab_status_label( $order )
 									: wc_get_order_status_name( $order->get_status() );
-								echo esc_html( $status_label );
 								?>
+								<span class="gstore-orders-status gstore-orders-status--<?php echo esc_attr( $order->get_status() ); ?>">
+									<?php echo esc_html( $status_label ); ?>
+								</span>
+							<?php elseif ( 'order-tracking' === $column_id ) : ?>
+								<?php $tracking = $get_order_tracking( $order ); ?>
+								<?php if ( is_array( $tracking ) && ! empty( $tracking['label'] ) ) : ?>
+									<?php if ( ! empty( $tracking['url'] ) ) : ?>
+										<a class="gstore-orders-tracking" href="<?php echo esc_url( $tracking['url'] ); ?>" target="_blank" rel="noopener">
+											<?php echo esc_html( $tracking['label'] ); ?>
+										</a>
+									<?php else : ?>
+										<span class="gstore-orders-tracking"><?php echo esc_html( $tracking['label'] ); ?></span>
+									<?php endif; ?>
+								<?php else : ?>
+									<span class="gstore-orders-tracking is-empty"><?php esc_html_e( 'Não Disponível', 'gstore' ); ?></span>
+								<?php endif; ?>
 							<?php elseif ( 'order-total' === $column_id ) : ?>
 								<?php
 								printf(
