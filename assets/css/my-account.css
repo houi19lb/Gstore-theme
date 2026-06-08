@@ -3945,6 +3945,16 @@ a.gstore-orders-tracking:hover {
 	margin: 0 0 14px;
 }
 
+.gstore-myaccount__content .woocommerce-EditAccountForm.edit-account .woocommerce-form-row,
+.gstore-myaccount__content .woocommerce-EditAccountForm.edit-account .form-row-wide,
+.gstore-myaccount__content .woocommerce-EditAccountForm.edit-account .form-row-first,
+.gstore-myaccount__content .woocommerce-EditAccountForm.edit-account .form-row-last {
+	clear: both !important;
+	float: none !important;
+	width: 100% !important;
+	max-width: none !important;
+}
+
 .gstore-myaccount__content .woocommerce-EditAccountForm.edit-account .woocommerce-form-row em {
 	display: block;
 	margin-top: -4px;
@@ -4028,6 +4038,12 @@ a.gstore-orders-tracking:hover {
 	grid-template-columns: repeat(2, minmax(260px, 1fr));
 	gap: 18px;
 	max-width: 760px;
+}
+
+.gstore-myaccount__content .woocommerce-Addresses::before,
+.gstore-myaccount__content .woocommerce-Addresses::after {
+	content: none !important;
+	display: none !important;
 }
 
 .gstore-myaccount__content .woocommerce-Addresses .u-column1,
