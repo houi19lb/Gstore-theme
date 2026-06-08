@@ -12,11 +12,12 @@
 	display: flex;
 	align-items: flex-start;
 	gap: 0;
-	padding: var(--gstore-spacing-lg, 24px) var(--gstore-spacing-md, 16px);
-	margin-bottom: var(--gstore-spacing-lg, 24px);
-	background: var(--gstore-color-bg-light, #fff);
-	border: 1px solid var(--gstore-color-border, #e6e6e6);
-	border-radius: var(--gstore-radius-lg, 16px);
+	padding: 18px 16px;
+	margin-bottom: 18px;
+	background: var(--gstore-account-surface, var(--gstore-color-bg-light, #fff));
+	border: 1px solid var(--gstore-account-border, var(--gstore-color-border, #e6e6e6));
+	border-radius: var(--gstore-account-radius, 8px);
+	box-shadow: var(--gstore-account-shadow-soft, 0 1px 2px rgba(17, 24, 39, 0.05));
 	overflow-x: auto;
 }
 
@@ -34,8 +35,8 @@
 }
 
 .gstore-fulfillment-timeline__icon {
-	width: 36px;
-	height: 36px;
+	width: 32px;
+	height: 32px;
 	border-radius: 50%;
 	display: flex;
 	align-items: center;
@@ -51,6 +52,7 @@
 	background: var(--gstore-color-success, #2e9b3b);
 	color: #fff;
 	border: 2px solid var(--gstore-color-success, #2e9b3b);
+	box-shadow: 0 0 0 4px rgba(46, 155, 59, 0.12);
 }
 
 /* Atual */
@@ -58,14 +60,14 @@
 	background: var(--gstore-color-accent, #b5a642);
 	color: #fff;
 	border: 2px solid var(--gstore-color-accent, #b5a642);
-	box-shadow: 0 0 0 4px rgba(181, 166, 66, 0.15);
+	box-shadow: 0 0 0 4px var(--gstore-account-accent-soft, rgba(181, 166, 66, 0.15));
 }
 
 /* Pendente */
 .gstore-fulfillment-timeline__step.is-pending .gstore-fulfillment-timeline__icon {
-	background: var(--gstore-color-bg-muted, #f0f2f5);
+	background: var(--gstore-account-surface-muted, var(--gstore-color-bg-muted, #f0f2f5));
 	color: var(--gstore-color-text-muted, #7a7a7a);
-	border: 2px solid var(--gstore-color-border, #e6e6e6);
+	border: 2px solid var(--gstore-account-border, var(--gstore-color-border, #e6e6e6));
 }
 
 /* Pulse animado na etapa atual */
@@ -95,7 +97,7 @@
 /* Label */
 .gstore-fulfillment-timeline__label {
 	margin-top: 8px;
-	font-size: clamp(0.625rem, 1vw + 0.25rem, 0.75rem);
+	font-size: 0.75rem;
 	line-height: 1.3;
 	text-align: center;
 	max-width: 100px;
@@ -104,12 +106,12 @@
 
 .gstore-fulfillment-timeline__step.is-completed .gstore-fulfillment-timeline__label {
 	color: var(--gstore-color-success, #2e9b3b);
-	font-weight: 500;
+	font-weight: 600;
 }
 
 .gstore-fulfillment-timeline__step.is-current .gstore-fulfillment-timeline__label {
 	color: var(--gstore-color-accent, #b5a642);
-	font-weight: 600;
+	font-weight: 700;
 }
 
 .gstore-fulfillment-timeline__step.is-pending .gstore-fulfillment-timeline__label {
@@ -119,11 +121,11 @@
 /* Connector line */
 .gstore-fulfillment-timeline__connector {
 	position: absolute;
-	top: 18px;
-	left: calc(50% + 18px);
-	right: calc(-50% + 18px);
+	top: 16px;
+	left: calc(50% + 16px);
+	right: calc(-50% + 16px);
 	height: 2px;
-	background: var(--gstore-color-border, #e6e6e6);
+	background: var(--gstore-account-border, var(--gstore-color-border, #e6e6e6));
 	z-index: 1;
 }
 
@@ -134,23 +136,24 @@
 /* ═══════════ Upload de Documentos ═══════════ */
 
 .gstore-fulfillment-upload {
-	padding: var(--gstore-spacing-lg, 24px);
-	margin-bottom: var(--gstore-spacing-lg, 24px);
-	background: var(--gstore-color-bg-light, #fff);
-	border: 1px solid var(--gstore-color-border, #e6e6e6);
-	border-radius: var(--gstore-radius-lg, 16px);
+	padding: clamp(18px, 3vw, 24px);
+	margin-bottom: 18px;
+	background: var(--gstore-account-surface, var(--gstore-color-bg-light, #fff));
+	border: 1px solid var(--gstore-account-border, var(--gstore-color-border, #e6e6e6));
+	border-radius: var(--gstore-account-radius, 8px);
+	box-shadow: var(--gstore-account-shadow-soft, 0 1px 2px rgba(17, 24, 39, 0.05));
 }
 
 .gstore-fulfillment-upload__title {
 	font-size: 1.1rem;
 	font-weight: 600;
-	color: var(--gstore-color-text-primary, #1a1a1a);
+	color: var(--gstore-account-text, var(--gstore-color-text-primary, #1a1a1a));
 	margin: 0 0 8px;
 }
 
 .gstore-fulfillment-upload__desc {
 	font-size: 0.85rem;
-	color: var(--gstore-color-text-secondary, #6b6b6b);
+	color: var(--gstore-account-muted, var(--gstore-color-text-secondary, #6b6b6b));
 	margin: 0 0 20px;
 	line-height: 1.5;
 }
@@ -162,10 +165,10 @@
 }
 
 .gstore-fulfillment-upload__slot {
-	border: 1px solid var(--gstore-color-border, #e6e6e6);
-	border-radius: var(--gstore-radius-md, 12px);
+	border: 1px solid var(--gstore-account-border, var(--gstore-color-border, #e6e6e6));
+	border-radius: 8px;
 	padding: 16px;
-	background: var(--gstore-color-bg-muted, #f0f2f5);
+	background: var(--gstore-account-surface-muted, var(--gstore-color-bg-muted, #f0f2f5));
 	transition: border-color 0.2s;
 }
 
@@ -239,9 +242,9 @@
 	align-items: center;
 	gap: 10px;
 	padding: 10px 14px;
-	border-radius: var(--gstore-radius-sm, 8px);
-	background: var(--gstore-color-bg-muted, #f0f2f5);
-	border: 1px solid var(--gstore-color-border, #e6e6e6);
+	border-radius: 6px;
+	background: var(--gstore-account-surface-muted, var(--gstore-color-bg-muted, #f0f2f5));
+	border: 1px solid var(--gstore-account-border, var(--gstore-color-border, #e6e6e6));
 	flex-wrap: wrap;
 }
 
@@ -274,7 +277,7 @@
 	font-size: 0.7rem;
 	font-weight: 600;
 	text-transform: uppercase;
-	letter-spacing: 0.02em;
+	letter-spacing: 0;
 }
 
 .gstore-fulfillment-upload__status-badge--pending {
@@ -306,9 +309,9 @@
 	justify-content: center;
 	width: 30px;
 	height: 30px;
-	border: 1px solid var(--gstore-color-border, #e6e6e6);
-	border-radius: var(--gstore-radius-sm, 8px);
-	background: var(--gstore-color-bg-light, #fff);
+	border: 1px solid var(--gstore-account-border, var(--gstore-color-border, #e6e6e6));
+	border-radius: 6px;
+	background: var(--gstore-account-surface, var(--gstore-color-bg-light, #fff));
 	cursor: pointer;
 	transition: all 0.15s ease;
 	padding: 0;
@@ -395,25 +398,25 @@
 
 /* Dropzone */
 .gstore-fulfillment-upload__dropzone {
-	border: 2px dashed var(--gstore-color-border, #e6e6e6);
-	border-radius: var(--gstore-radius-md, 12px);
+	border: 1px dashed var(--gstore-account-border, var(--gstore-color-border, #e6e6e6));
+	border-radius: 8px;
 	padding: 24px;
 	text-align: center;
 	cursor: pointer;
 	transition: all 0.2s ease;
 	position: relative;
-	background: var(--gstore-color-bg-light, #fff);
+	background: var(--gstore-account-surface, var(--gstore-color-bg-light, #fff));
 }
 
 .gstore-fulfillment-upload__dropzone:hover,
 .gstore-fulfillment-upload__dropzone:focus-visible {
 	border-color: var(--gstore-color-accent, #b5a642);
-	background: #fff8f5;
+	background: var(--gstore-account-accent-soft, #fff8f5);
 }
 
 .gstore-fulfillment-upload__dropzone.is-dragover {
 	border-color: var(--gstore-color-accent, #b5a642);
-	background: #fff2eb;
+	background: var(--gstore-account-accent-soft, #fff2eb);
 	transform: scale(1.01);
 }
 
@@ -501,12 +504,12 @@
 
 .gstore-fulfillment-info {
 	padding: 16px 20px;
-	margin-bottom: var(--gstore-spacing-lg, 24px);
-	background: var(--gstore-color-bg-light, #fff);
-	border: 1px solid var(--gstore-color-border, #e6e6e6);
-	border-radius: var(--gstore-radius-lg, 16px);
+	margin-bottom: 18px;
+	background: var(--gstore-account-surface, var(--gstore-color-bg-light, #fff));
+	border: 1px solid var(--gstore-account-border, var(--gstore-color-border, #e6e6e6));
+	border-radius: var(--gstore-account-radius, 8px);
 	font-size: 0.9rem;
-	color: var(--gstore-color-text-secondary, #6b6b6b);
+	color: var(--gstore-account-muted, var(--gstore-color-text-secondary, #6b6b6b));
 }
 
 .gstore-fulfillment-info p {
@@ -516,18 +519,19 @@
 /* ═══════════ Documents summary ═══════════ */
 
 .gstore-fulfillment-docs-summary {
-	padding: var(--gstore-spacing-lg, 24px);
-	margin-bottom: var(--gstore-spacing-lg, 24px);
-	background: var(--gstore-color-bg-light, #fff);
-	border: 1px solid var(--gstore-color-border, #e6e6e6);
-	border-radius: var(--gstore-radius-lg, 16px);
+	padding: clamp(18px, 3vw, 24px);
+	margin-bottom: 18px;
+	background: var(--gstore-account-surface, var(--gstore-color-bg-light, #fff));
+	border: 1px solid var(--gstore-account-border, var(--gstore-color-border, #e6e6e6));
+	border-radius: var(--gstore-account-radius, 8px);
+	box-shadow: var(--gstore-account-shadow-soft, 0 1px 2px rgba(17, 24, 39, 0.05));
 }
 
 .gstore-fulfillment-docs-summary h3 {
 	font-size: 1rem;
 	font-weight: 600;
 	margin: 0 0 12px;
-	color: var(--gstore-color-text-primary, #1a1a1a);
+	color: var(--gstore-account-text, var(--gstore-color-text-primary, #1a1a1a));
 }
 
 .gstore-fulfillment-docs-summary__list {
@@ -541,8 +545,8 @@
 	align-items: center;
 	gap: 8px;
 	padding: 8px 12px;
-	background: var(--gstore-color-bg-muted, #f0f2f5);
-	border-radius: var(--gstore-radius-sm, 8px);
+	background: var(--gstore-account-surface-muted, var(--gstore-color-bg-muted, #f0f2f5));
+	border-radius: 6px;
 	font-size: 0.85rem;
 }
 
@@ -553,7 +557,7 @@
 
 .gstore-fulfillment-docs-summary__name {
 	flex: 1;
-	color: var(--gstore-color-text-primary, #1a1a1a);
+	color: var(--gstore-account-text, var(--gstore-color-text-primary, #1a1a1a));
 }
 
 /* ═══════════ Responsivo ═══════════ */

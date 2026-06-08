@@ -3933,6 +3933,253 @@ a.gstore-orders-tracking:hover {
 	color: var(--gstore-color-accent, #b5a642);
 }
 
+.gstore-myaccount__content .woocommerce-EditAccountForm.edit-account {
+	display: grid;
+	gap: 18px;
+	max-width: 680px;
+}
+
+.gstore-myaccount__content .woocommerce-EditAccountForm.edit-account .form-row {
+	display: grid;
+	gap: 7px;
+	margin: 0 0 14px;
+}
+
+.gstore-myaccount__content .woocommerce-EditAccountForm.edit-account .woocommerce-form-row em {
+	display: block;
+	margin-top: -4px;
+	color: var(--gstore-account-muted);
+	font-size: var(--gstore-font-size-xs, 0.75rem);
+	line-height: 1.45;
+}
+
+.gstore-myaccount__content .woocommerce-EditAccountForm.edit-account fieldset {
+	display: grid;
+	gap: 14px;
+	padding: clamp(18px, 3vw, 24px);
+	border-color: var(--gstore-account-border) !important;
+	background: var(--gstore-account-surface) !important;
+}
+
+.gstore-myaccount__content .woocommerce-EditAccountForm.edit-account legend {
+	width: auto;
+	margin: 0 0 6px;
+	padding: 0 8px;
+	color: var(--gstore-account-text);
+	font-size: var(--gstore-font-size-sm, 0.875rem);
+	font-weight: var(--gstore-font-weight-semibold, 600);
+	letter-spacing: 0;
+}
+
+.gstore-myaccount__content .woocommerce-EditAccountForm.edit-account .woocommerce-Button {
+	justify-self: start;
+	min-width: 128px;
+}
+
+.gstore-myaccount__content .input-text,
+.gstore-myaccount__content input[type="text"],
+.gstore-myaccount__content input[type="email"],
+.gstore-myaccount__content input[type="password"],
+.gstore-myaccount__content input[type="tel"],
+.gstore-myaccount__content input[type="number"],
+.gstore-myaccount__content select,
+.gstore-myaccount__content textarea {
+	border: 1px solid var(--gstore-account-border) !important;
+	border-radius: 6px !important;
+	background: var(--gstore-account-surface, #ffffff) !important;
+	color: var(--gstore-account-text, #1a1a1a) !important;
+	box-shadow: 0 1px 0 rgba(17, 24, 39, 0.02) !important;
+	letter-spacing: 0;
+}
+
+.gstore-myaccount__content .input-text:focus,
+.gstore-myaccount__content input[type="text"]:focus,
+.gstore-myaccount__content input[type="email"]:focus,
+.gstore-myaccount__content input[type="password"]:focus,
+.gstore-myaccount__content input[type="tel"]:focus,
+.gstore-myaccount__content input[type="number"]:focus,
+.gstore-myaccount__content select:focus,
+.gstore-myaccount__content textarea:focus {
+	border-color: var(--gstore-color-accent, #b5a642) !important;
+	box-shadow: 0 0 0 3px var(--gstore-account-focus) !important;
+	outline: none !important;
+}
+
+.gstore-myaccount__content .woocommerce-Addresses {
+	grid-template-columns: repeat(2, minmax(260px, 1fr));
+	max-width: 760px;
+}
+
+.gstore-myaccount__content .woocommerce-Address {
+	border-color: var(--gstore-account-border) !important;
+	box-shadow: var(--gstore-account-shadow-soft);
+}
+
+.gstore-myaccount__content .woocommerce-Address-title {
+	gap: 14px;
+}
+
+.gstore-myaccount__content .woocommerce-Address-title h2,
+.gstore-myaccount__content .woocommerce-Address-title h3 {
+	font-size: var(--gstore-font-size-lg, 1.125rem) !important;
+	line-height: 1.25 !important;
+}
+
+.gstore-myaccount__content .woocommerce-Address-title a {
+	min-height: 28px;
+	padding: 6px 12px !important;
+	border-radius: 6px !important;
+	font-size: var(--gstore-font-size-xs, 0.75rem) !important;
+	line-height: 1;
+	text-transform: uppercase;
+}
+
+.gstore-myaccount__content .woocommerce-Address address {
+	border-color: var(--gstore-account-border) !important;
+	background: var(--gstore-account-surface-muted) !important;
+	color: var(--gstore-account-muted) !important;
+	line-height: 1.65;
+}
+
+.gstore-view-order {
+	display: grid;
+	gap: 18px;
+	color: var(--gstore-account-text);
+}
+
+.gstore-view-order__details {
+	padding: clamp(20px, 3vw, 28px);
+	border-color: var(--gstore-account-border) !important;
+	background: var(--gstore-account-surface) !important;
+	box-shadow: var(--gstore-account-shadow-soft);
+}
+
+.gstore-view-order__details .woocommerce-order {
+	display: grid;
+	gap: 22px;
+}
+
+.gstore-view-order__details .woocommerce-order-details,
+.gstore-view-order__details .woocommerce-customer-details {
+	margin: 0;
+	padding: 0;
+	border: 0;
+	background: transparent;
+	box-shadow: none;
+}
+
+.gstore-view-order__details .woocommerce-order-details__title,
+.gstore-view-order__details .woocommerce-customer-details h2,
+.gstore-view-order__details .woocommerce-customer-details .woocommerce-column__title,
+.gstore-view-order__details .woocommerce-order h2 {
+	margin: 0 0 14px;
+	padding: 0 0 12px;
+	border-bottom: 1px solid var(--gstore-account-border);
+	color: var(--gstore-account-text);
+	font-size: var(--gstore-font-size-lg, 1.125rem) !important;
+	font-weight: var(--gstore-font-weight-semibold, 600);
+	letter-spacing: 0;
+	line-height: 1.3 !important;
+}
+
+.gstore-view-order__details .woocommerce-table--order-details,
+.gstore-view-order__details .woocommerce-table {
+	border-color: var(--gstore-account-border) !important;
+	border-radius: var(--gstore-account-radius, 8px);
+	overflow: hidden;
+	box-shadow: none;
+}
+
+.gstore-view-order__details .woocommerce-table--order-details th,
+.gstore-view-order__details .woocommerce-table--order-details td,
+.gstore-view-order__details .woocommerce-table th,
+.gstore-view-order__details .woocommerce-table td {
+	padding: 14px 16px;
+	border-color: var(--gstore-account-border) !important;
+	color: var(--gstore-account-text);
+	font-size: var(--gstore-font-size-sm, 0.875rem);
+	line-height: 1.45;
+}
+
+.gstore-view-order__details .woocommerce-table--order-details thead th,
+.gstore-view-order__details .woocommerce-table thead th {
+	background: var(--gstore-account-surface-muted) !important;
+	color: var(--gstore-account-muted);
+	font-size: var(--gstore-font-size-xs, 0.75rem);
+	font-weight: var(--gstore-font-weight-medium, 500);
+	letter-spacing: 0;
+	text-transform: none;
+}
+
+.gstore-view-order__details .woocommerce-table--order-details tbody td,
+.gstore-view-order__details .woocommerce-table--order-details tfoot th,
+.gstore-view-order__details .woocommerce-table--order-details tfoot td {
+	background: var(--gstore-account-surface) !important;
+}
+
+.gstore-view-order__details .woocommerce-table--order-details tfoot th {
+	color: var(--gstore-account-muted);
+	font-weight: var(--gstore-font-weight-medium, 500);
+}
+
+.gstore-view-order__details .woocommerce-table--order-details tfoot td {
+	font-weight: var(--gstore-font-weight-semibold, 600);
+}
+
+.gstore-view-order__details .woocommerce-table--order-details a {
+	color: var(--gstore-account-text);
+	text-decoration: none;
+}
+
+.gstore-view-order__details .woocommerce-table--order-details a:hover {
+	color: var(--gstore-color-accent, #b5a642);
+	text-decoration: underline;
+	text-underline-offset: 3px;
+}
+
+.gstore-view-order__details .woocommerce-customer-details .col2-set {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 20px;
+}
+
+.gstore-view-order__details .woocommerce-customer-details .col-1,
+.gstore-view-order__details .woocommerce-customer-details .col-2 {
+	float: none;
+	width: auto;
+	max-width: none;
+}
+
+.gstore-view-order__details .woocommerce-customer-details address {
+	margin: 0;
+	padding: 16px;
+	border-color: var(--gstore-account-border) !important;
+	border-radius: var(--gstore-account-radius, 8px);
+	background: var(--gstore-account-surface-muted) !important;
+	color: var(--gstore-account-muted) !important;
+	font-size: var(--gstore-font-size-sm, 0.875rem);
+	line-height: 1.65;
+}
+
+.gstore-view-order__details .woocommerce-customer-details address p {
+	margin: 8px 0 0;
+	color: inherit !important;
+}
+
+.gstore-view-order__details .button,
+.gstore-view-order__details .woocommerce-button {
+	border-color: var(--gstore-account-accent-medium) !important;
+	background: var(--gstore-account-accent-soft) !important;
+	color: var(--gstore-color-accent, #b5a642) !important;
+}
+
+.gstore-view-order__details .button:hover,
+.gstore-view-order__details .woocommerce-button:hover {
+	border-color: var(--gstore-color-accent, #b5a642) !important;
+	background: var(--gstore-color-accent, #b5a642) !important;
+	color: #ffffff !important;
+}
+
 @media (max-width: 1024px) {
 	.gstore-myaccount__layout {
 		grid-template-columns: 220px minmax(0, 1fr);
@@ -4012,6 +4259,12 @@ a.gstore-orders-tracking:hover {
 
 	.gstore-myaccount__content .woocommerce-orders-table.shop_table_responsive .woocommerce-orders-table__cell-order-number {
 		background: var(--gstore-account-surface-muted);
+	}
+
+	.gstore-myaccount__content .woocommerce-Addresses,
+	.gstore-view-order__details .woocommerce-customer-details .col2-set {
+		grid-template-columns: 1fr;
+		max-width: none;
 	}
 }
 
