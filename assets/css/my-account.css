@@ -3976,6 +3976,24 @@ a.gstore-orders-tracking:hover {
 	min-width: 128px;
 }
 
+.gstore-myaccount__content .woocommerce-EditAccountForm.edit-account .password-input {
+	display: block !important;
+	width: 100% !important;
+	max-width: none !important;
+	position: relative;
+}
+
+.gstore-myaccount__content .woocommerce-EditAccountForm.edit-account .password-input .input-text {
+	width: 100% !important;
+	padding-right: 48px !important;
+}
+
+.gstore-myaccount__content .woocommerce-EditAccountForm.edit-account .show-password-input {
+	right: 14px;
+	top: 50%;
+	transform: translateY(-50%);
+}
+
 .gstore-myaccount__content .input-text,
 .gstore-myaccount__content input[type="text"],
 .gstore-myaccount__content input[type="email"],
@@ -4006,8 +4024,21 @@ a.gstore-orders-tracking:hover {
 }
 
 .gstore-myaccount__content .woocommerce-Addresses {
+	display: grid !important;
 	grid-template-columns: repeat(2, minmax(260px, 1fr));
+	gap: 18px;
 	max-width: 760px;
+}
+
+.gstore-myaccount__content .woocommerce-Addresses .u-column1,
+.gstore-myaccount__content .woocommerce-Addresses .u-column2,
+.gstore-myaccount__content .woocommerce-Addresses .col-1,
+.gstore-myaccount__content .woocommerce-Addresses .col-2 {
+	display: block !important;
+	float: none !important;
+	width: auto !important;
+	max-width: none !important;
+	margin: 0 !important;
 }
 
 .gstore-myaccount__content .woocommerce-Address {
@@ -4017,21 +4048,42 @@ a.gstore-orders-tracking:hover {
 
 .gstore-myaccount__content .woocommerce-Address-title {
 	gap: 14px;
+	display: grid !important;
+	grid-template-columns: minmax(0, 1fr) auto;
+	align-items: start;
 }
 
 .gstore-myaccount__content .woocommerce-Address-title h2,
 .gstore-myaccount__content .woocommerce-Address-title h3 {
+	display: block !important;
+	width: auto !important;
+	min-width: 0;
 	font-size: var(--gstore-font-size-lg, 1.125rem) !important;
 	line-height: 1.25 !important;
 }
 
 .gstore-myaccount__content .woocommerce-Address-title a {
+	display: inline-flex !important;
+	align-items: center;
+	justify-content: center;
 	min-height: 28px;
+	min-width: 66px;
 	padding: 6px 12px !important;
 	border-radius: 6px !important;
-	font-size: var(--gstore-font-size-xs, 0.75rem) !important;
+	font-size: 0 !important;
 	line-height: 1;
 	text-transform: uppercase;
+	white-space: nowrap;
+}
+
+.gstore-myaccount__content .woocommerce-Address-title a::before {
+	content: none !important;
+}
+
+.gstore-myaccount__content .woocommerce-Address-title a::after {
+	content: "Editar";
+	font-size: var(--gstore-font-size-xs, 0.75rem);
+	line-height: 1;
 }
 
 .gstore-myaccount__content .woocommerce-Address address {
