@@ -5484,6 +5484,7 @@ a.gstore-orders-tracking:hover {
 .gstore-myaccount__content .woocommerce-EditAccountForm.edit-account .form-row-last {
 	clear: both !important;
 	float: none !important;
+	min-width: 0 !important;
 	width: 100% !important;
 	max-width: none !important;
 }
@@ -5498,6 +5499,7 @@ a.gstore-orders-tracking:hover {
 
 .gstore-myaccount__content .woocommerce-EditAccountForm.edit-account fieldset {
 	display: grid;
+	grid-template-columns: minmax(0, 1fr);
 	gap: 14px;
 	padding: clamp(18px, 3vw, 24px);
 	border-color: var(--gstore-account-border) !important;
@@ -5521,6 +5523,7 @@ a.gstore-orders-tracking:hover {
 
 .gstore-myaccount__content .woocommerce-EditAccountForm.edit-account .password-input {
 	display: block !important;
+	min-width: 0 !important;
 	width: 100% !important;
 	max-width: none !important;
 	position: relative;
