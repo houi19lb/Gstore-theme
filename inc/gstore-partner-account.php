@@ -70,6 +70,13 @@ add_filter( 'woocommerce_account_menu_items', 'gstore_partner_account_add_menu_i
 
 if ( ! function_exists( 'gstore_partner_account_get_data' ) ) {
 	function gstore_partner_account_get_data() {
+		if ( ! is_user_logged_in() ) {
+			return array(
+				'enabled'   => false,
+				'isPartner' => false,
+			);
+		}
+
 		if ( function_exists( 'gstore_partner_get_dashboard_data' ) ) {
 			$data = gstore_partner_get_dashboard_data( get_current_user_id() );
 			return is_array( $data ) ? $data : array();

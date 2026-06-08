@@ -118,6 +118,16 @@ do_action( 'woocommerce_before_customer_login_form' ); ?>
 
 		</form>
 
+		<section class="gstore-register-partner-card" aria-labelledby="gstore-register-partner-title">
+			<div>
+				<strong id="gstore-register-partner-title"><?php esc_html_e( 'Seja um revendedor', 'gstore' ); ?></strong>
+				<p><?php esc_html_e( 'Conheca o programa, envie seus dados e acompanhe a analise da equipe comercial.', 'gstore' ); ?></p>
+			</div>
+			<a class="button button--outline" href="<?php echo esc_url( home_url( '/programa-de-parceiros/' ) ); ?>">
+				<?php esc_html_e( 'Ver programa', 'gstore' ); ?>
+			</a>
+		</section>
+
 	</div>
 
 </div>
