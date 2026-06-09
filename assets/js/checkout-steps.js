@@ -74,6 +74,7 @@
 	let checkoutSelectedShippingRateByItem = {};
 	let lastSummaryTotals = null;
 	let lastCartSummaryData = null;
+	let lastSelectedPaymentMethod = null;
 	let lastNonEmptyCartSummaryData = null; // Mantém o último resumo com itens para não zerar o topo quando o Woo esvazia o carrinho
 	let installmentQuotes = null;
 	let isLoadingInstallmentQuotes = false;
@@ -1174,6 +1175,7 @@ const subtotal = decodeHtmlEntities(stripHtmlText(it.subtotal || ''));
 		$checkoutForm = $('form.checkout.woocommerce-checkout');
 		
 		if (!$checkoutForm.length) {
+			revealNativeCheckoutFallback();
 			return;
 		}
 		ensureCheckoutFormId();
@@ -1210,11 +1212,25 @@ const subtotal = decodeHtmlEntities(stripHtmlText(it.subtotal || ''));
 	/**
 	 * Constrói a interface do checkout em etapas
 	 */
+	function revealNativeCheckoutFallback() {
+		const $shell = $('.Gstore-checkout-steps-shell');
+		if (!$shell.length) return;
+		if ($('form.checkout.woocommerce-checkout').length || $('.Gstore-checkout-steps').length) return;
+
+		$shell.addClass('Gstore-checkout-steps-shell--native-fallback');
+		$shell.find('.Gstore-checkout').css('display', 'flex');
+	}
+
 	function buildStepsUI() {
 		const $shell = $('.Gstore-checkout-steps-shell');
 		if (!$shell.length) return;
 
 		// Esconde o wrapper original do checkout (mas NÃO o form)
+		if (!$('form.checkout.woocommerce-checkout').length) {
+			revealNativeCheckoutFallback();
+			return;
+		}
+
 		$shell.find('.Gstore-checkout').hide();
 
 		// Cria container principal
@@ -5797,7 +5813,6 @@ function getInstallmentDisplayTotals(summaryData) {
 	});
 
 	// Variável para armazenar o método selecionado antes do update
-	let lastSelectedPaymentMethod = null;
 	
 	// Armazena a seleção antes do update e garante campos hidden de frete
 	$(document.body).on('update_checkout', function() {

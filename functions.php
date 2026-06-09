@@ -5984,6 +5984,10 @@ add_action( 'init', 'gstore_ensure_ajax_add_to_cart_enabled', 5 );
  * correspondem a esse padrão específico, preservando todos os outros avisos.
  */
 function gstore_suppress_variable_product_choose_options_notice() {
+	if ( function_exists( 'is_checkout' ) && is_checkout() ) {
+		return;
+	}
+
 	if ( ! function_exists( 'wc_get_notices' ) || ! function_exists( 'wc_clear_notices' ) ) {
 		return;
 	}
