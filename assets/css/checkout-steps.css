@@ -1522,6 +1522,18 @@ body.woocommerce-checkout .Gstore-checkout-steps-shell {
 	display: none !important;
 }
 
+.Gstore-checkout-steps-shell.Gstore-checkout-steps-shell--native-fallback .Gstore-checkout {
+	display: flex !important;
+	max-width: 1000px;
+	margin: 0 auto;
+	width: 100%;
+}
+
+.Gstore-checkout-steps-shell.Gstore-checkout-steps-shell--native-fallback .Gstore-checkout__flow,
+.Gstore-checkout-steps-shell.Gstore-checkout-steps-shell--native-fallback .Gstore-checkout__flow .woocommerce {
+	width: 100%;
+}
+
 /* Form wrapper - visível apenas quando JS não carregou */
 .Gstore-checkout-steps-shell form.checkout.woocommerce-checkout {
 	max-width: 1000px;

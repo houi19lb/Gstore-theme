@@ -1218,7 +1218,13 @@ const subtotal = decodeHtmlEntities(stripHtmlText(it.subtotal || ''));
 		if ($('form.checkout.woocommerce-checkout').length || $('.Gstore-checkout-steps').length) return;
 
 		$shell.addClass('Gstore-checkout-steps-shell--native-fallback');
-		$shell.find('.Gstore-checkout').css('display', 'flex');
+		$shell.find('.Gstore-checkout').each(function() {
+			if (this && this.style && this.style.setProperty) {
+				this.style.setProperty('display', 'flex', 'important');
+			} else {
+				$(this).css('display', 'flex');
+			}
+		});
 	}
 
 	function buildStepsUI() {
