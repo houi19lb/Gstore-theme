@@ -17925,6 +17925,59 @@ function gstore_force_blog_page_template( $template ) {
 }
 add_filter( 'template_include', 'gstore_force_blog_page_template', 99 );
 
+if ( ! defined( 'GSTORE_BLOG_POSTS_PER_PAGE' ) ) {
+	define( 'GSTORE_BLOG_POSTS_PER_PAGE', 12 );
+}
+
+/**
+ * Mantem a pagina de posts do blog com a mesma quantidade de cards do template.
+ *
+ * @param WP_Query $query Query principal.
+ * @return void
+ */
+function gstore_blog_posts_page_per_page( $query ) {
+	if ( is_admin() || ! ( $query instanceof WP_Query ) || ! $query->is_main_query() || ! $query->is_home() ) {
+		return;
+	}
+
+	if ( 'page' !== get_option( 'show_on_front' ) || ! absint( get_option( 'page_for_posts' ) ) ) {
+		return;
+	}
+
+	$query->set( 'posts_per_page', GSTORE_BLOG_POSTS_PER_PAGE );
+}
+add_action( 'pre_get_posts', 'gstore_blog_posts_page_per_page', 20 );
+
+/**
+ * Faz o Query Loop principal do /blog herdar a query nativa da pagina de posts.
+ *
+ * Isso preserva URLs como /blog/page/2/ mesmo quando o template page-blog.html
+ * e carregado para a pagina de posts.
+ *
+ * @param array $parsed_block Dados parseados do bloco.
+ * @return array
+ */
+function gstore_blog_posts_page_inherit_main_query( $parsed_block ) {
+	if ( is_admin() || ! is_home() || is_front_page() || ! is_array( $parsed_block ) || 'core/query' !== ( $parsed_block['blockName'] ?? '' ) ) {
+		return $parsed_block;
+	}
+
+	$class_name = isset( $parsed_block['attrs']['className'] ) ? (string) $parsed_block['attrs']['className'] : '';
+	if ( false === strpos( $class_name, 'Gstore-blog-query' ) ) {
+		return $parsed_block;
+	}
+
+	if ( ! isset( $parsed_block['attrs']['query'] ) || ! is_array( $parsed_block['attrs']['query'] ) ) {
+		$parsed_block['attrs']['query'] = array();
+	}
+
+	$parsed_block['attrs']['query']['inherit'] = true;
+	$parsed_block['attrs']['query']['perPage'] = GSTORE_BLOG_POSTS_PER_PAGE;
+
+	return $parsed_block;
+}
+add_filter( 'render_block_data', 'gstore_blog_posts_page_inherit_main_query', 8, 1 );
+
 /**
  * Força o uso do template page-blog.html via Block Template API quando for a página de posts.
  *

@@ -50,7 +50,7 @@
 			<!-- Posts Grid -->
 			<div class="Gstore-blog-posts-area">
 	<!-- /wp:html -->
-				<!-- wp:query {"queryId":1,"query":{"perPage":12,"pages":0,"offset":0,"postType":"post","order":"desc","orderBy":"date","author":"","search":"","exclude":[],"sticky":"","inherit":false},"displayLayout":{"type":"flex","columns":3},"className":"Gstore-blog-query"} -->
+				<!-- wp:query {"queryId":1,"query":{"perPage":12,"pages":0,"offset":0,"postType":"post","order":"desc","orderBy":"date","author":"","search":"","exclude":[],"sticky":"","inherit":true},"displayLayout":{"type":"flex","columns":3},"className":"Gstore-blog-query"} -->
 				<div class="wp-block-query Gstore-blog-query">
 					<!-- wp:post-template {"layout":{"type":"grid","columnCount":3},"className":"Gstore-blog-grid"} -->
 					<!-- wp:group {"className":"Gstore-blog-card","layout":{"type":"flex","orientation":"vertical","justifyContent":"space-between"}} -->
@@ -78,6 +78,11 @@
 					<!-- /wp:paragraph -->
 					<!-- /wp:query-no-results -->
 
+					<!-- wp:query-pagination {"layout":{"type":"flex","justifyContent":"center"},"className":"Gstore-blog-pagination"} -->
+					<!-- wp:query-pagination-previous {"label":"Artigos anteriores"} /-->
+					<!-- wp:query-pagination-numbers /-->
+					<!-- wp:query-pagination-next {"label":"Próximos artigos"} /-->
+					<!-- /wp:query-pagination -->
 				</div>
 				<!-- /wp:query -->
 	<!-- wp:html -->

@@ -371,7 +371,43 @@
 	}
 
 	function getCurrentBluInstallmentsValue() {
+		const paymentMethod = getEffectivePaymentMethod($('form.checkout').first());
+		if (paymentMethod && paymentMethod !== 'blu_checkout') {
+			return '1';
+		}
 		return String($('#gstore_blu_installments').val() || $('#gstore_blu_installments_select').val() || '1');
+	}
+
+	function getEffectivePaymentMethod($form) {
+		return String(resolveSelectedPaymentMethod($form || $('form.checkout').first()) || '').trim();
+	}
+
+	function resetBluInstallmentsToSingle() {
+		$('#gstore_blu_installments').val('1');
+		$('#gstore_blu_installments_select').val('1');
+		$('#gstore_blu_installments_total_amount').val('');
+		$('.Gstore-blu-installments__preview').html('');
+	}
+
+	function syncBluInstallmentsVisibility(paymentMethod) {
+		const $form = $('form.checkout').first();
+		const effectiveMethod = String(getEffectivePaymentMethod($form) || '').trim();
+		const method = effectiveMethod || String(paymentMethod || '').trim();
+		const isCard = method === 'blu_checkout';
+		const $installments = $('.Gstore-blu-installments');
+		const $firstInstallments = $installments.first();
+		const allow = $firstInstallments.length
+			&& ($firstInstallments.data('allow') === 1 || $firstInstallments.data('allow') === '1');
+
+		if (!isCard) {
+			resetBluInstallmentsToSingle();
+		}
+
+		if ($installments.length) {
+			$installments.toggle(Boolean(allow && isCard));
+		}
+
+		return isCard;
 	}
 
 	function getCurrentBluResumeSignaturePayload() {
@@ -1576,14 +1612,9 @@ const subtotal = decodeHtmlEntities(stripHtmlText(it.subtotal || ''));
 				}
 
 				// Esconde/mostra parcelamento imediatamente (PIX não tem parcelamento)
-				$('.Gstore-blu-installments').toggle(isCheckout);
+				syncBluInstallmentsVisibility(selectedMethod);
 
 				// CORREÇÃO: Reseta parcelas para 1 quando muda para PIX
-				if (!isCheckout) {
-					$('#gstore_blu_installments').val('1');
-					$('#gstore_blu_installments_select').val('1');
-				}
-
 				// Atualiza totais/sessão do WooCommerce
 				$(document.body).trigger('update_checkout');
 				setTimeout(loadCartSummary, 150);
@@ -1622,7 +1653,7 @@ const subtotal = decodeHtmlEntities(stripHtmlText(it.subtotal || ''));
 				toggleBillingFieldsForPaymentMethod(!isCheckout);
 
 				// Esconde/mostra parcelamento (PIX não tem parcelamento)
-				$('.Gstore-blu-installments').toggle(isCheckout);
+				syncBluInstallmentsVisibility(method);
 
 				if ($content && $content.length) {
 					$content.empty();
@@ -1649,7 +1680,7 @@ const subtotal = decodeHtmlEntities(stripHtmlText(it.subtotal || ''));
 			if ($pixRadioClone) $pixRadioClone.prop('checked', !isCheckout);
 			
 			// Esconde/mostra parcelamento na inicialização (PIX não tem parcelamento)
-			$('.Gstore-blu-installments').toggle(isCheckout);
+			syncBluInstallmentsVisibility(method);
 			
 			updatePaymentContent();
 		}, 100);
@@ -1693,17 +1724,19 @@ const subtotal = decodeHtmlEntities(stripHtmlText(it.subtotal || ''));
 		}
 
 		const allow = $installments.data('allow') === 1 || $installments.data('allow') === '1';
-		// Usa lastSelectedPaymentMethod (mais confiável que checar radios em meio a race conditions de updated_checkout)
-		const isCheckoutSelected = lastSelectedPaymentMethod === 'blu_checkout' ||
-			(!lastSelectedPaymentMethod && $('input[name="payment_method"][value="blu_checkout"]').filter(':checked').length > 0);
+		// Usa a escolha efetiva da UI para resistir a radios/hidden recriados pelo updated_checkout.
+		const selectedPaymentMethod = getEffectivePaymentMethod($('form.checkout').first());
+		const isCheckoutSelected = syncBluInstallmentsVisibility(selectedPaymentMethod);
 
 		// Só faz sentido mostrar quando cartão estiver selecionado
-		$installments.toggle(allow && isCheckoutSelected);
-
 		const $hidden = $('#gstore_blu_installments');
 		const $select = $('#gstore_blu_installments_select');
 
-		if (allow && $hidden.length && $select.length) {
+		if (!allow || !isCheckoutSelected) {
+			return;
+		}
+
+		if ($hidden.length && $select.length) {
 			// Sincroniza select <- hidden
 			if ($hidden.val() && $select.val() !== $hidden.val()) {
 				$select.val($hidden.val());
@@ -1740,6 +1773,7 @@ const subtotal = decodeHtmlEntities(stripHtmlText(it.subtotal || ''));
 		if (!allow) return;
 
 		// Só faz sentido para blu_checkout
+		if (getEffectivePaymentMethod($('form.checkout').first()) !== 'blu_checkout') return;
 		if (!lastCartSummaryData || lastCartSummaryData.payment_method !== 'blu_checkout') return;
 
 		const max = parseInt($installments.data('max'), 10) || 1;
@@ -1792,6 +1826,7 @@ const subtotal = decodeHtmlEntities(stripHtmlText(it.subtotal || ''));
 		const $select = $('#gstore_blu_installments_select');
 		if (!$select.length) return;
 		if (!installmentQuotes) return;
+		if (getEffectivePaymentMethod($('form.checkout').first()) !== 'blu_checkout') return;
 
 		$select.find('option').each(function() {
 			const $opt = $(this);
@@ -3400,11 +3435,7 @@ function getInstallmentDisplayTotals(summaryData) {
 	}
 
 	function getSelectedPaymentMethodForSummary() {
-		return String(
-			$('input[name="payment_method"]:checked').val()
-			|| $('#gstore_payment_method_fallback').val()
-			|| ''
-		);
+		return String(getEffectivePaymentMethod($('form.checkout').first()) || '');
 	}
 
 	function getSelectedInstallmentTotalValue() {
@@ -4062,6 +4093,9 @@ function getInstallmentDisplayTotals(summaryData) {
 		$('.Gstore-checkout-step').removeClass('is-active')
 			.eq(index).addClass('is-active');
 
+		const selectedPaymentMethod = getEffectivePaymentMethod($checkoutForm);
+		syncBluInstallmentsVisibility(selectedPaymentMethod);
+
 		// Atualiza stepper
 		$('.Gstore-checkout-stepper__step').each(function(i) {
 			$(this).removeClass('is-active is-complete');
@@ -4102,6 +4136,8 @@ function getInstallmentDisplayTotals(summaryData) {
 		// NÃO dispara update_checkout aqui pois nextStep() já o faz (evita duplo refresh que causa race conditions)
 		if (index === lastStepIndex) {
 			setTimeout(function() {
+				ensureBluInstallmentsUI();
+				syncBluInstallmentsVisibility(getEffectivePaymentMethod($checkoutForm));
 				updateOrderReviewTotals();
 				
 				// Garante que o botão place_order esteja visível e clicável
@@ -4350,7 +4386,7 @@ function getInstallmentDisplayTotals(summaryData) {
 	 * Preferência: window.gstoreCartSummary (plugin) para URL e nonce corretos do endpoint gstore_get_cart_summary.
 	 */
 	function loadCartSummary(onSuccess) {
-		const installmentsValue = $('#gstore_blu_installments').val() || $('#gstore_blu_installments_select').val() || '';
+		const installmentsValue = getCurrentBluInstallmentsValue();
 		const $form = $('form.checkout').first();
 		if ($form.length && typeof updateCheckoutShippingHiddenFields === 'function') {
 			applyStoredCartCepToCheckout();
@@ -4462,8 +4498,9 @@ function getInstallmentDisplayTotals(summaryData) {
 
 		// "Você pagará" só aparece quando cartão Blu e parcelas > 1, mostrando o total real com taxa
 		// Usa getInstallmentDisplayTotals para incluir frete quando o API retorna total sem frete
+		const selectedPaymentMethodForSummary = getEffectivePaymentMethod($('form.checkout').first()) || String(data.payment_method || '');
 		const selectedN = parseInt((data.installments && data.installments.selected) ? data.installments.selected : '1', 10) || 1;
-		if (data.payment_method === 'blu_checkout' && selectedN > 1) {
+		if (selectedPaymentMethodForSummary === 'blu_checkout' && data.payment_method === 'blu_checkout' && selectedN > 1) {
 			const quoteValues = getInstallmentQuoteValues(selectedN);
 			const displayTotals = getInstallmentDisplayTotals(data);
 			const totalToShow = quoteValues ? quoteValues.totalValue : (displayTotals.displayTotal > 0 ? displayTotals.displayTotal : parsePriceValue(data.total || 0));
@@ -4481,13 +4518,15 @@ function getInstallmentDisplayTotals(summaryData) {
 		$('.Gstore-checkout-summary-top__totals').html(totalsHtml);
 
 		updateCheckoutShippingHiddenFields();
+		syncBluInstallmentsVisibility(selectedPaymentMethodForSummary);
 		updateInstallmentsPreview(data);
-		setTimeout(maybeFetchInstallmentQuotes, 0);
+		if (selectedPaymentMethodForSummary === 'blu_checkout') {
+			setTimeout(maybeFetchInstallmentQuotes, 0);
+		}
 
-		// Garante visibilidade correta do parcelamento baseado no método de pagamento do backend
-		// (resolve race condition onde o elemento fica visível ao trocar de Cartão para PIX)
-		const isCardMethod = data.payment_method === 'blu_checkout';
-		$('.Gstore-blu-installments').toggle(isCardMethod);
+		// Garante visibilidade correta do parcelamento baseado na escolha atual da UI.
+		// Respostas AJAX antigas podem voltar com um método de pagamento anterior.
+		syncBluInstallmentsVisibility(selectedPaymentMethodForSummary);
 		
 		// FIX: Chamar updateOrderReviewTotals AQUI, após lastSummaryTotals ser definido
 		// em vez de no evento updated_checkout com setTimeout(0) que executava antes do AJAX completar
@@ -4500,6 +4539,11 @@ function getInstallmentDisplayTotals(summaryData) {
 
 		if (!data || !data.installments || !data.installments.selected) {
 			$preview.text('');
+			return;
+		}
+
+		if (getEffectivePaymentMethod($('form.checkout').first()) !== 'blu_checkout') {
+			$preview.html('');
 			return;
 		}
 
@@ -5231,6 +5275,11 @@ function getInstallmentDisplayTotals(summaryData) {
 			}
 			
 			// 4. Coleta o nonce - procura em TODOS os lugares possíveis
+			const selectedPaymentMethodForSubmit = String(formDataObj['payment_method'] || getEffectivePaymentMethod($form) || '');
+			if (selectedPaymentMethodForSubmit !== 'blu_checkout') {
+				resetBluInstallmentsToSingle();
+			}
+
 			let nonceValue = null;
 			
 			// Procura em toda a página (os campos podem estar em qualquer lugar)
@@ -5300,7 +5349,11 @@ function getInstallmentDisplayTotals(summaryData) {
 			// 5.1 Garante que o valor das parcelas Blu seja coletado (mesmo se estiver fora do form)
 			const $bluInstallments = $('#gstore_blu_installments');
 			if ($bluInstallments.length && $bluInstallments.val()) {
-				formDataObj['gstore_blu_installments'] = $bluInstallments.val();
+				formDataObj['gstore_blu_installments'] = selectedPaymentMethodForSubmit === 'blu_checkout' ? $bluInstallments.val() : '1';
+			}
+			if (selectedPaymentMethodForSubmit !== 'blu_checkout') {
+				formDataObj['gstore_blu_installments'] = '1';
+				delete formDataObj['gstore_blu_installments_total_amount'];
 			}
 			const $shippingMethod = $form.find('input[name="shipping_method[0]"][type="hidden"]').last();
 			if ($shippingMethod.length && $shippingMethod.val()) {
@@ -5473,7 +5526,7 @@ function getInstallmentDisplayTotals(summaryData) {
 	 * Se o embed for bloqueado (X-Frame-Options/CSP), o botão "Abrir em nova aba" funciona como fallback.
 	 */
 	function isBluCheckoutSelected() {
-		const selected = $('input[name="payment_method"]:checked').val();
+		const selected = getEffectivePaymentMethod($('form.checkout').first());
 		return selected === 'blu_checkout';
 	}
 
@@ -5690,6 +5743,7 @@ function getInstallmentDisplayTotals(summaryData) {
 		const method = $(this).val();
 		if (method) {
 			persistSelectedPaymentMethod(method);
+			syncBluInstallmentsVisibility(method);
 			setTimeout(loadCartSummary, 150);
 			setTimeout(renderBluResumeCard, 50);
 		}
@@ -5739,6 +5793,10 @@ function getInstallmentDisplayTotals(summaryData) {
 			}
 
 			// Etapa atual do checkout (0, 1, 2) para o backend só aplicar taxa de parcelamento na etapa 3
+			if (getEffectivePaymentMethod($checkoutForm) !== 'blu_checkout') {
+				resetBluInstallmentsToSingle();
+			}
+
 			let $stepInput = $checkoutForm.find('input[name="gstore_checkout_step"]');
 			if (!$stepInput.length) {
 				$stepInput = $('<input>', { type: 'hidden', name: 'gstore_checkout_step', id: 'gstore_checkout_step' });
