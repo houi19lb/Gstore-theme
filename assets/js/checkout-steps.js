@@ -410,6 +410,33 @@
 		return isCard;
 	}
 
+	function scheduleBluInstallmentsVisibilitySync() {
+		const run = function() {
+			const $form = $('form.checkout').first();
+			const method = getEffectivePaymentMethod($form);
+			const isCard = syncBluInstallmentsVisibility(method);
+			const isFinalStep = (typeof currentStep !== 'undefined' && currentStep === STEPS.length - 1)
+				|| $('.Gstore-checkout-step.is-active').data('step') === 'payment';
+
+			if (!isCard || !isFinalStep) {
+				return;
+			}
+
+			const $installments = $('.Gstore-blu-installments').first();
+			const allow = $installments.length
+				&& ($installments.data('allow') === 1 || $installments.data('allow') === '1');
+
+			if (allow) {
+				$installments.show();
+			}
+		};
+
+		run();
+		setTimeout(run, 80);
+		setTimeout(run, 250);
+		setTimeout(run, 600);
+	}
+
 	function getCurrentBluResumeSignaturePayload() {
 		const summary = lastCartSummaryData || lastNonEmptyCartSummaryData || {};
 		const items = Array.isArray(summary.items) ? summary.items : [];
@@ -4095,6 +4122,7 @@ function getInstallmentDisplayTotals(summaryData) {
 
 		const selectedPaymentMethod = getEffectivePaymentMethod($checkoutForm);
 		syncBluInstallmentsVisibility(selectedPaymentMethod);
+		scheduleBluInstallmentsVisibilitySync();
 
 		// Atualiza stepper
 		$('.Gstore-checkout-stepper__step').each(function(i) {
@@ -4137,7 +4165,7 @@ function getInstallmentDisplayTotals(summaryData) {
 		if (index === lastStepIndex) {
 			setTimeout(function() {
 				ensureBluInstallmentsUI();
-				syncBluInstallmentsVisibility(getEffectivePaymentMethod($checkoutForm));
+				scheduleBluInstallmentsVisibilitySync();
 				updateOrderReviewTotals();
 				
 				// Garante que o botão place_order esteja visível e clicável
@@ -4340,17 +4368,23 @@ function getInstallmentDisplayTotals(summaryData) {
 	 * para casos em que o rádio ainda não existe/foi desmarcado no DOM.
 	 */
 	function resolveSelectedPaymentMethod($form) {
-		const $selected = $('input[name="payment_method"]:checked').filter(function() {
+		if (lastSelectedPaymentMethod) return lastSelectedPaymentMethod;
+
+		const $unifiedSelected = $('.Gstore-blu-payment-unified input[name="payment_method"]:checked').filter(function() {
 			return $(this).attr('type') !== 'hidden';
-		});
-		if ($selected.length) return $selected.val();
+		}).first();
+		if ($unifiedSelected.length && $unifiedSelected.val()) return $unifiedSelected.val();
 
 		if ($form && $form.length) {
 			const $hidden = $form.find('input[name="payment_method"][type="hidden"]').first();
 			if ($hidden.length && $hidden.val()) return $hidden.val();
 		}
+
+		const $selected = $('input[name="payment_method"]:checked').filter(function() {
+			return $(this).attr('type') !== 'hidden';
+		}).first();
+		if ($selected.length && $selected.val()) return $selected.val();
 		
-		if (lastSelectedPaymentMethod) return lastSelectedPaymentMethod;
 		return '';
 	}
 
@@ -4519,10 +4553,13 @@ function getInstallmentDisplayTotals(summaryData) {
 
 		updateCheckoutShippingHiddenFields();
 		syncBluInstallmentsVisibility(selectedPaymentMethodForSummary);
+		scheduleBluInstallmentsVisibilitySync();
 		updateInstallmentsPreview(data);
 		if (selectedPaymentMethodForSummary === 'blu_checkout') {
 			setTimeout(maybeFetchInstallmentQuotes, 0);
 		}
+
+		scheduleBluInstallmentsVisibilitySync();
 
 		// Garante visibilidade correta do parcelamento baseado na escolha atual da UI.
 		// Respostas AJAX antigas podem voltar com um método de pagamento anterior.
@@ -5744,9 +5781,14 @@ function getInstallmentDisplayTotals(summaryData) {
 		if (method) {
 			persistSelectedPaymentMethod(method);
 			syncBluInstallmentsVisibility(method);
+			scheduleBluInstallmentsVisibilitySync();
 			setTimeout(loadCartSummary, 150);
 			setTimeout(renderBluResumeCard, 50);
 		}
+	});
+
+	$(document.body).on('updated_checkout gstore_checkout_step_changed', function() {
+		scheduleBluInstallmentsVisibilitySync();
 	});
 
 	// Persistência leve de rascunho do checkout para retorno após sair para a Blu
