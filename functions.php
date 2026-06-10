@@ -22304,6 +22304,18 @@ function gstore_related_products_rank_by_relevance( $related_posts, $product_id,
 	$product_id    = absint( $product_id );
 	$related_posts = array_map( 'absint', (array) $related_posts );
 	$limit         = isset( $args['limit'] ) ? max( 1, absint( $args['limit'] ) ) : 4;
+
+	// O ranking abaixo custa ~0,7-1,0s por pageview (3 WP_Query com rand + carga de
+	// ~100 produtos candidatos). O resultado so muda quando produtos/estoque mudam,
+	// entao fica em transient por 6h, invalidado em gstore_related_products_flush_rank_cache().
+	// Produto que esgotar dentro da janela ainda e filtrado na renderizacao pelo
+	// wc_products_array_filter_visible, entao nao ha risco de exibir item oculto.
+	$cache_key = 'gstore_related_rank_' . $product_id . '_' . $limit;
+	$cached    = get_transient( $cache_key );
+	if ( is_array( $cached ) && ! empty( $cached ) ) {
+		return array_map( 'absint', $cached );
+	}
+
 	$exclude_ids   = isset( $args['excluded_ids'] ) ? array_map( 'absint', (array) $args['excluded_ids'] ) : array();
 	$exclude_ids[] = $product_id;
 	$exclude_ids   = array_values( array_unique( array_filter( $exclude_ids ) ) );
@@ -22358,12 +22370,39 @@ function gstore_related_products_rank_by_relevance( $related_posts, $product_id,
 		}
 	}
 
-	return array_merge(
+	$ranked = array_merge(
 		gstore_related_products_build_priority_mix( $in_stock_specific, $in_stock_category, $in_stock_tags, $in_stock_fallback, $limit ),
 		gstore_related_products_order_by_popularity( $out_of_stock )
 	);
+
+	set_transient( $cache_key, $ranked, 6 * HOUR_IN_SECONDS );
+
+	return $ranked;
 }
 add_filter( 'woocommerce_related_products', 'gstore_related_products_rank_by_relevance', 10, 3 );
+
+/**
+ * Invalida o cache de relacionados de um produto ao salvar ou mudar estoque.
+ *
+ * @param int|WC_Product $product_id ID do produto (ou objeto, conforme o hook).
+ */
+function gstore_related_products_flush_rank_cache( $product_id ) {
+	if ( is_object( $product_id ) && method_exists( $product_id, 'get_id' ) ) {
+		$product_id = $product_id->get_id();
+	}
+
+	$product_id = absint( $product_id );
+	if ( ! $product_id ) {
+		return;
+	}
+
+	// O limite vem de woocommerce_output_related_products_args; cobre os valores usuais.
+	foreach ( array( 2, 3, 4, 6, 8, 12 ) as $limit ) {
+		delete_transient( 'gstore_related_rank_' . $product_id . '_' . $limit );
+	}
+}
+add_action( 'save_post_product', 'gstore_related_products_flush_rank_cache' );
+add_action( 'woocommerce_product_set_stock_status', 'gstore_related_products_flush_rank_cache' );
 
 // Impede o WooCommerce de embaralhar os IDs apos nosso ranking ponderado.
 add_filter( 'woocommerce_product_related_posts_shuffle', '__return_false' );
