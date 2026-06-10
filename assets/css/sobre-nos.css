@@ -945,6 +945,11 @@ main.Gstore-about-shell,
 	color: var(--gstore-institutional-accent);
 }
 
+.Gstore-about-intro .Gstore-about-card p,
+.Gstore-about-intro .Gstore-about-checklist li {
+	color: var(--gstore-color-text-primary, var(--gstore-institutional-text, #1a1a1a));
+}
+
 .Gstore-about-intro .Gstore-about-checklist {
 	border-top: 1px solid var(--gstore-color-border-light, var(--gstore-institutional-border-light));
 	margin-top: 18px;
