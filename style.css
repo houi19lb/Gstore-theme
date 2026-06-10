@@ -2056,6 +2056,11 @@ body.single-product .onsale {
 
 /* Vídeo do produto (coluna esquerda) */
 
+.Gstore-single-product__video {
+	width: 100%;
+	max-width: 100%;
+}
+
 .Gstore-single-product__video-wrapper {
 	position: relative;
 	width: 100%;
@@ -2066,12 +2071,21 @@ body.single-product .onsale {
 	background: #000;
 }
 
+@supports (aspect-ratio: 1 / 1) {
+	.Gstore-single-product__video-wrapper {
+		aspect-ratio: 16 / 9;
+		height: auto;
+		padding-bottom: 0;
+	}
+}
+
 .Gstore-single-product__video-wrapper iframe {
 	position: absolute;
-	top: 0;
-	left: 0;
+	inset: 0;
 	width: 100%;
 	height: 100%;
+	max-width: none;
+	display: block;
 	border: 0;
 }
 
@@ -3828,6 +3842,12 @@ body.single-product .onsale {
 	.Gstore-single-product__main iframe {
 		max-width: 100%;
 		height: auto;
+	}
+
+	.Gstore-single-product__main .Gstore-single-product__video-wrapper iframe {
+		width: 100%;
+		height: 100%;
+		max-width: none;
 	}
 
 	.Gstore-single-product__main * {
