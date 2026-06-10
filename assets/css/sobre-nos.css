@@ -932,3 +932,21 @@ main.Gstore-about-shell,
 		font-size: clamp(2rem, 10vw, 2.75rem);
 	}
 }
+
+/* P2.2 - Equilibra cards da introducao */
+.Gstore-about-intro .Gstore-about-card,
+.Gstore-about-intro .Gstore-about-card:not(.Gstore-about-card--story) {
+	background: var(--gstore-institutional-surface) !important;
+	border-color: var(--gstore-color-border-light, var(--gstore-institutional-border-light)) !important;
+	box-shadow: none;
+}
+
+.Gstore-about-intro .Gstore-about-card h3 i {
+	color: var(--gstore-institutional-accent);
+}
+
+.Gstore-about-intro .Gstore-about-checklist {
+	border-top: 1px solid var(--gstore-color-border-light, var(--gstore-institutional-border-light));
+	margin-top: 18px;
+	padding-top: 16px;
+}
