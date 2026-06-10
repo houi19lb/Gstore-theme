@@ -11111,6 +11111,7 @@ body:has(.Gstore-catalog-shell--light) main {
 	:where(.Gstore-support-shell, .Gstore-blog-single-shell) {
 		--gstore-institutional-border: color-mix(in srgb, var(--gstore-institutional-text-muted) 22%, #ffffff);
 		--gstore-institutional-border-light: color-mix(in srgb, var(--gstore-institutional-text-muted) 14%, #ffffff);
+		--gstore-institutional-action-border: color-mix(in srgb, var(--gstore-institutional-text-muted) 16%, #ffffff);
 		--gstore-institutional-accent-soft: color-mix(in srgb, var(--gstore-institutional-accent) 8%, #ffffff);
 		--gstore-institutional-accent-line: color-mix(in srgb, var(--gstore-institutional-accent) 28%, var(--gstore-institutional-border));
 		--gstore-institutional-hover: color-mix(in srgb, var(--gstore-institutional-muted) 58%, #ffffff);
@@ -11482,5 +11483,95 @@ body:has(.Gstore-catalog-shell--light) main {
 	.Gstore-blog-single-content,
 	.wp-block-group.Gstore-blog-single-content {
 		padding-top: 28px;
+	}
+}
+
+/* P2.1 - Loja Teste refinements */
+.Gstore-support-shell,
+main.Gstore-support-shell,
+.wp-block-group.Gstore-support-shell {
+	padding-block: clamp(18px, 2.6vw, 40px) clamp(40px, 5vw, 72px);
+}
+
+.Gstore-support-container,
+.Gstore-blog-single-container {
+	gap: clamp(20px, 2.6vw, 32px);
+}
+
+.Gstore-support-hero,
+.Gstore-blog-single-header {
+	padding: clamp(18px, 2.8vw, 34px) 0 clamp(24px, 3.4vw, 42px);
+}
+
+.Gstore-support-shell .Gstore-support-card {
+	background: var(--gstore-institutional-surface);
+	border-color: var(--gstore-institutional-border-light);
+	padding: clamp(18px, 2vw, 22px);
+}
+
+.Gstore-support-card__icon {
+	width: 36px;
+	height: 36px;
+	background: transparent;
+	border: 0;
+	color: var(--gstore-institutional-accent);
+	font-size: 1.1rem;
+}
+
+.Gstore-support-shell .Gstore-support-card:hover {
+	border-color: var(--gstore-institutional-border);
+	transform: none;
+}
+
+.Gstore-support-contact {
+	background: transparent;
+	border: 0;
+	border-top: 1px solid var(--gstore-institutional-border);
+	border-radius: 0;
+	box-shadow: none;
+	padding: clamp(26px, 4vw, 40px) 0 0;
+}
+
+.Gstore-support-contact__item,
+.Gstore-support-assurance > div {
+	background: var(--gstore-institutional-surface);
+	border-color: var(--gstore-institutional-border-light);
+}
+
+.Gstore-support-shell .Gstore-btn--secondary,
+.Gstore-blog-single-shell .Gstore-btn--secondary {
+	background: var(--gstore-institutional-surface);
+	border: 1px solid var(--gstore-color-border-light, var(--gstore-institutional-border-light)) !important;
+	color: var(--gstore-institutional-text) !important;
+}
+
+.Gstore-support-shell .Gstore-btn--secondary:hover,
+.Gstore-support-shell .Gstore-btn--secondary:focus-visible,
+.Gstore-blog-single-shell .Gstore-btn--secondary:hover,
+.Gstore-blog-single-shell .Gstore-btn--secondary:focus-visible {
+	background: var(--gstore-institutional-accent-soft);
+	border-color: var(--gstore-institutional-accent-line, var(--gstore-institutional-border));
+	color: var(--gstore-institutional-accent) !important;
+	transform: none;
+}
+
+.Gstore-blog-single-share__button,
+.Gstore-blog-single-related__content,
+.Gstore-support-shell .Gstore-blog-card__content {
+	background: var(--gstore-institutional-surface);
+}
+
+@media (max-width: 900px) {
+	.Gstore-support-shell,
+	main.Gstore-support-shell,
+	.wp-block-group.Gstore-support-shell {
+		padding-block: 22px 48px;
+	}
+}
+
+@media (max-width: 640px) {
+	.Gstore-support-hero,
+	.Gstore-blog-single-header {
+		padding: 18px 0 28px;
 	}
 }
