@@ -13137,6 +13137,14 @@ function gstore_process_image_placeholders( $content ) {
 		return $content;
 	}
 
+	// Toda substituicao desta funcao mira placeholders {{...}}. Sem "{{" no
+	// conteudo ela seria um no-op, mas pagaria o custo de montar as tags de
+	// hero/banner (srcset, options, attachment meta) mesmo assim — e ela roda
+	// para TODO bloco core/html e the_content do site (~20ms por bloco).
+	if ( strpos( $content, '{{' ) === false ) {
+		return $content;
+	}
+
 	// NOVO SISTEMA: Hero Slider dinâmico com Desktop/Mobile
 	if ( strpos( $content, '{{gstore_hero_slider}}' ) !== false ) {
 		$slider_html = gstore_render_hero_slider();
