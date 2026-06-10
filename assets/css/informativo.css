@@ -751,6 +751,8 @@ main.Gstore-informativo-shell .wp-block-group.is-layout-constrained {
 .Gstore-informativo-shell {
 	--gstore-institutional-accent: var(--gstore-color-accent);
 	--gstore-institutional-accent-hover: var(--gstore-color-accent-hover, var(--gstore-institutional-accent));
+	--gstore-institutional-accent-readable: var(--gstore-color-accent-readable, var(--gstore-color-accent-dark, var(--gstore-institutional-accent)));
+	--gstore-institutional-accent-contrast: var(--gstore-color-accent-contrast, var(--gstore-color-bg-dark, #0a0a0a));
 	--gstore-institutional-accent-soft: var(--gstore-color-accent-08, var(--gstore-color-bg-muted, #f0f2f5));
 	--gstore-institutional-border: var(--gstore-color-border-light, var(--gstore-color-border, #e6e6e6));
 	--gstore-institutional-border-light: var(--gstore-color-border-light, #e8e8e6);
@@ -788,7 +790,7 @@ main.Gstore-informativo-shell .wp-block-group.is-layout-constrained {
 }
 
 .Gstore-informativo-eyebrow {
-	color: var(--gstore-institutional-accent);
+	color: var(--gstore-institutional-accent-readable);
 	letter-spacing: 0.04em;
 }
 
@@ -823,7 +825,7 @@ main.Gstore-informativo-shell .wp-block-group.is-layout-constrained {
 .Gstore-informativo-mini i,
 .Gstore-informativo-faq__item summary::after,
 .Gstore-informativo-link {
-	color: var(--gstore-institutional-accent);
+	color: var(--gstore-institutional-accent-readable);
 }
 
 .Gstore-informativo-section {
@@ -882,7 +884,7 @@ main.Gstore-informativo-shell .wp-block-group.is-layout-constrained {
 
 .Gstore-informativo-step__n {
 	background: var(--gstore-institutional-accent);
-	color: var(--gstore-color-text-light, #ffffff);
+	color: var(--gstore-institutional-accent-contrast);
 }
 
 .Gstore-informativo-badge--warn,
@@ -906,7 +908,7 @@ main.Gstore-informativo-shell .wp-block-group.is-layout-constrained {
 }
 
 .Gstore-informativo-input:focus {
-	border-color: var(--gstore-institutional-accent);
+	border-color: var(--gstore-institutional-accent-readable);
 }
 
 @media (max-width: 900px) {
@@ -959,8 +961,19 @@ main.Gstore-informativo-shell,
 .Gstore-informativo-container .Gstore-btn--secondary:focus-visible {
 	background: var(--gstore-institutional-accent-soft);
 	border-color: var(--gstore-institutional-accent-line, var(--gstore-institutional-border));
-	color: var(--gstore-institutional-accent) !important;
+	color: var(--gstore-institutional-accent-readable) !important;
 	transform: none;
+}
+
+.Gstore-informativo-container .Gstore-btn--primary {
+	background-color: var(--gstore-institutional-accent);
+	color: var(--gstore-institutional-accent-contrast) !important;
+}
+
+.Gstore-informativo-container .Gstore-btn--primary:hover,
+.Gstore-informativo-container .Gstore-btn--primary:focus-visible {
+	background-color: var(--gstore-institutional-accent-hover);
+	color: var(--gstore-institutional-accent-contrast) !important;
 }
 
 .Gstore-informativo-highlight__item,
