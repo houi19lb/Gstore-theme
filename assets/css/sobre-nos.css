@@ -616,3 +616,224 @@ main.Gstore-about-shell .wp-block-group.is-layout-constrained {
 		padding: 16px;
 	}
 }
+
+/* ========================================
+   P2 - Polimento alinhado ao e-commerce
+   ======================================== */
+
+.Gstore-about-shell {
+	--gstore-institutional-accent: var(--gstore-color-accent);
+	--gstore-institutional-accent-hover: var(--gstore-color-accent-hover, var(--gstore-institutional-accent));
+	--gstore-institutional-accent-soft: var(--gstore-color-accent-08, var(--gstore-color-bg-muted, #f0f2f5));
+	--gstore-institutional-border: var(--gstore-color-border-light, var(--gstore-color-border, #e6e6e6));
+	--gstore-institutional-border-light: var(--gstore-color-border-light, #e8e8e6);
+	--gstore-institutional-surface: var(--gstore-color-bg-light, #ffffff);
+	--gstore-institutional-muted: var(--gstore-color-bg-muted, #f0f2f5);
+	--gstore-institutional-base: var(--gstore-color-bg-base, #f5f5f2);
+	--gstore-institutional-text: var(--gstore-color-text-primary, #1a1a1a);
+	--gstore-institutional-text-muted: var(--gstore-color-text-secondary, #6b6b6b);
+	--gstore-institutional-radius: var(--gstore-radius-base, 4px);
+	background: var(--gstore-institutional-surface) !important;
+	color: var(--gstore-institutional-text);
+}
+
+@supports (color: color-mix(in srgb, #000000 10%, #ffffff)) {
+	.Gstore-about-shell {
+		--gstore-institutional-border: color-mix(in srgb, var(--gstore-institutional-text-muted) 22%, #ffffff);
+		--gstore-institutional-border-light: color-mix(in srgb, var(--gstore-institutional-text-muted) 14%, #ffffff);
+		--gstore-institutional-accent-soft: color-mix(in srgb, var(--gstore-institutional-accent) 8%, #ffffff);
+		--gstore-institutional-accent-line: color-mix(in srgb, var(--gstore-institutional-accent) 28%, var(--gstore-institutional-border));
+		--gstore-institutional-hover: color-mix(in srgb, var(--gstore-institutional-muted) 58%, #ffffff);
+	}
+}
+
+.Gstore-about-container {
+	gap: clamp(22px, 3vw, 34px);
+}
+
+.Gstore-about-hero {
+	background: transparent;
+	border: 0;
+	border-bottom: 1px solid var(--gstore-institutional-border);
+	border-radius: 0;
+	gap: clamp(24px, 4vw, 48px);
+	padding: clamp(28px, 4vw, 54px) 0 clamp(32px, 4vw, 56px);
+}
+
+.Gstore-about-eyebrow,
+.Gstore-about-kicker {
+	color: var(--gstore-institutional-accent);
+	letter-spacing: 0.04em;
+}
+
+.Gstore-about-hero h1,
+.Gstore-about-section__head h2,
+.Gstore-about-sources h2 {
+	color: var(--gstore-institutional-text);
+}
+
+.Gstore-about-hero__subtitle,
+.Gstore-about-section__head p,
+.Gstore-about-card p,
+.Gstore-about-mini p,
+.Gstore-about-steps p,
+.Gstore-about-shipping p,
+.Gstore-about-faq__item p,
+.Gstore-about-sources p {
+	color: var(--gstore-institutional-text-muted);
+}
+
+.Gstore-about-trust {
+	background: var(--gstore-institutional-surface);
+	border-color: var(--gstore-institutional-border);
+	border-radius: var(--gstore-institutional-radius);
+	box-shadow: none;
+}
+
+.Gstore-about-trust__logo {
+	border-color: var(--gstore-color-border-dark, #2a2a2a);
+	border-radius: var(--gstore-institutional-radius);
+}
+
+.Gstore-about-trust__items div,
+.Gstore-about-data__row {
+	border-color: var(--gstore-institutional-border);
+}
+
+.Gstore-about-trust__items span,
+.Gstore-about-data__row span {
+	color: var(--gstore-institutional-text-muted);
+}
+
+.Gstore-about-nav {
+	align-items: center;
+	background: transparent;
+	border: 0;
+	border-bottom: 1px solid var(--gstore-institutional-border);
+	border-radius: 0;
+	gap: 6px 18px;
+	padding: 0 0 12px;
+}
+
+.Gstore-about-nav span {
+	color: var(--gstore-institutional-text);
+	margin-right: 2px;
+}
+
+.Gstore-about-nav a {
+	background: transparent;
+	border: 0;
+	border-bottom: 2px solid transparent;
+	border-radius: 0;
+	color: var(--gstore-institutional-text-muted);
+	min-height: 34px;
+	padding: 8px 0 6px;
+}
+
+.Gstore-about-nav a:hover,
+.Gstore-about-nav a:focus-visible {
+	border-color: var(--gstore-institutional-accent);
+	color: var(--gstore-institutional-accent);
+}
+
+.Gstore-about-section {
+	background: transparent;
+	border-top-color: var(--gstore-institutional-border);
+	padding-inline: 0;
+}
+
+.Gstore-about-sources {
+	background: var(--gstore-institutional-muted);
+	border-radius: var(--gstore-institutional-radius);
+}
+
+.Gstore-about-card,
+.Gstore-about-mini,
+.Gstore-about-shipping > div,
+.Gstore-about-compliance__summary,
+.Gstore-about-steps li,
+.Gstore-about-faq__item {
+	background: var(--gstore-institutional-muted);
+	border-color: var(--gstore-institutional-border);
+	border-radius: var(--gstore-institutional-radius);
+}
+
+.Gstore-about-card--story {
+	background: var(--gstore-institutional-surface);
+}
+
+.Gstore-about-mini > i,
+.Gstore-about-compliance__summary i {
+	background: var(--gstore-institutional-accent-soft);
+	border-color: var(--gstore-institutional-accent-line, var(--gstore-institutional-border));
+	color: var(--gstore-institutional-accent);
+}
+
+.Gstore-about-card h3 i,
+.Gstore-about-mini i,
+.Gstore-about-shipping h3 i,
+.Gstore-about-checklist li::before,
+.Gstore-about-faq__item summary::after {
+	color: var(--gstore-institutional-accent);
+}
+
+.Gstore-about-data {
+	border-color: var(--gstore-institutional-border);
+	border-radius: var(--gstore-institutional-radius);
+}
+
+.Gstore-about-data__row:nth-child(even) {
+	background: var(--gstore-institutional-muted);
+}
+
+.Gstore-about-steps li > span {
+	background: var(--gstore-institutional-accent);
+	color: var(--gstore-color-text-light, #ffffff);
+}
+
+.Gstore-about-callout {
+	background: var(--gstore-institutional-accent-soft);
+	border-color: var(--gstore-institutional-accent-line, var(--gstore-institutional-border));
+	border-radius: var(--gstore-institutional-radius);
+}
+
+.Gstore-about-callout--neutral {
+	background: var(--gstore-institutional-surface);
+	border-color: var(--gstore-institutional-border);
+}
+
+.Gstore-about-sources__links a {
+	border-color: var(--gstore-institutional-border);
+	border-radius: var(--gstore-institutional-radius);
+}
+
+.Gstore-about-sources__links a:hover {
+	border-color: var(--gstore-institutional-accent);
+	color: var(--gstore-institutional-accent);
+}
+
+@media (max-width: 640px) {
+	.Gstore-about-hero {
+		padding: 22px 0 30px;
+	}
+
+	.Gstore-about-nav {
+		align-items: center;
+		flex-direction: row;
+		flex-wrap: nowrap;
+		margin-inline: -14px;
+		overflow-x: auto;
+		padding: 0 14px 12px;
+		scrollbar-width: none;
+	}
+
+	.Gstore-about-nav::-webkit-scrollbar {
+		display: none;
+	}
+
+	.Gstore-about-nav span,
+	.Gstore-about-nav a {
+		flex: 0 0 auto;
+		white-space: nowrap;
+	}
+}

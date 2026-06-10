@@ -743,3 +743,191 @@ main.Gstore-informativo-shell .wp-block-group.is-layout-constrained {
 		display: none;
 	}
 }
+
+/* ========================================
+   P2 - Polimento alinhado ao e-commerce
+   ======================================== */
+
+.Gstore-informativo-shell {
+	--gstore-institutional-accent: var(--gstore-color-accent);
+	--gstore-institutional-accent-hover: var(--gstore-color-accent-hover, var(--gstore-institutional-accent));
+	--gstore-institutional-accent-soft: var(--gstore-color-accent-08, var(--gstore-color-bg-muted, #f0f2f5));
+	--gstore-institutional-border: var(--gstore-color-border-light, var(--gstore-color-border, #e6e6e6));
+	--gstore-institutional-border-light: var(--gstore-color-border-light, #e8e8e6);
+	--gstore-institutional-surface: var(--gstore-color-bg-light, #ffffff);
+	--gstore-institutional-muted: var(--gstore-color-bg-muted, #f0f2f5);
+	--gstore-institutional-base: var(--gstore-color-bg-base, #f5f5f2);
+	--gstore-institutional-text: var(--gstore-color-text-primary, #1a1a1a);
+	--gstore-institutional-text-muted: var(--gstore-color-text-secondary, #6b6b6b);
+	--gstore-institutional-radius: var(--gstore-radius-base, 4px);
+	background: var(--gstore-institutional-surface) !important;
+	color: var(--gstore-institutional-text);
+}
+
+@supports (color: color-mix(in srgb, #000000 10%, #ffffff)) {
+	.Gstore-informativo-shell {
+		--gstore-institutional-border: color-mix(in srgb, var(--gstore-institutional-text-muted) 22%, #ffffff);
+		--gstore-institutional-border-light: color-mix(in srgb, var(--gstore-institutional-text-muted) 14%, #ffffff);
+		--gstore-institutional-accent-soft: color-mix(in srgb, var(--gstore-institutional-accent) 8%, #ffffff);
+		--gstore-institutional-accent-line: color-mix(in srgb, var(--gstore-institutional-accent) 28%, var(--gstore-institutional-border));
+		--gstore-institutional-hover: color-mix(in srgb, var(--gstore-institutional-muted) 58%, #ffffff);
+	}
+}
+
+.Gstore-informativo-container {
+	gap: clamp(24px, 3vw, 36px);
+}
+
+.Gstore-informativo-hero {
+	background: transparent;
+	border: 0;
+	border-bottom: 1px solid var(--gstore-institutional-border);
+	border-radius: 0;
+	padding: clamp(28px, 4vw, 50px) 0 clamp(30px, 4vw, 52px);
+}
+
+.Gstore-informativo-eyebrow {
+	color: var(--gstore-institutional-accent);
+	letter-spacing: 0.04em;
+}
+
+.Gstore-informativo-hero h1,
+.Gstore-informativo-hero__title,
+.Gstore-informativo-section h2,
+.Gstore-informativo-block-title,
+.Gstore-informativo-modal__title {
+	color: var(--gstore-institutional-text);
+}
+
+.Gstore-informativo-muted,
+.Gstore-informativo-hero__subtitle,
+.Gstore-informativo-hero .Gstore-informativo-muted,
+.Gstore-informativo-section .Gstore-informativo-card-head p,
+.Gstore-informativo-section > .Gstore-informativo-muted {
+	color: var(--gstore-institutional-text-muted);
+}
+
+.Gstore-informativo-hero__actions {
+	flex-wrap: wrap;
+}
+
+.Gstore-informativo-highlight__item,
+.Gstore-informativo-mini {
+	background: var(--gstore-institutional-muted);
+	border-color: var(--gstore-institutional-border);
+	border-radius: var(--gstore-institutional-radius);
+}
+
+.Gstore-informativo-highlight__item i,
+.Gstore-informativo-mini i,
+.Gstore-informativo-faq__item summary::after,
+.Gstore-informativo-link {
+	color: var(--gstore-institutional-accent);
+}
+
+.Gstore-informativo-section {
+	background: transparent;
+	border: 0;
+	border-top: 1px solid var(--gstore-institutional-border);
+	border-radius: 0;
+	padding: clamp(26px, 4vw, 42px) 0 0;
+}
+
+.Gstore-informativo-grid-2 > .Gstore-informativo-section,
+.Gstore-informativo-arms-block .Gstore-informativo-section {
+	background: var(--gstore-institutional-surface);
+	border: 1px solid var(--gstore-institutional-border);
+	border-radius: var(--gstore-institutional-radius);
+	padding: clamp(22px, 3vw, 32px);
+}
+
+.Gstore-informativo-arms-block {
+	border-top: 1px solid var(--gstore-institutional-border);
+	padding-top: clamp(26px, 4vw, 42px);
+}
+
+.Gstore-informativo-arms-block > .Gstore-informativo-block-title {
+	margin-bottom: 16px;
+}
+
+.Gstore-informativo-faq__items {
+	gap: 0;
+	border: 1px solid var(--gstore-institutional-border);
+	border-radius: var(--gstore-institutional-radius);
+	overflow: hidden;
+}
+
+.Gstore-informativo-faq__item {
+	background: var(--gstore-institutional-surface);
+	border: 0;
+	border-top: 1px solid var(--gstore-institutional-border);
+	border-radius: 0;
+}
+
+.Gstore-informativo-faq__item:first-child {
+	border-top: 0;
+}
+
+.Gstore-informativo-faq__item[open] {
+	background: var(--gstore-institutional-hover, var(--gstore-institutional-surface));
+	border-color: var(--gstore-institutional-border);
+}
+
+.Gstore-informativo-step {
+	background: var(--gstore-institutional-muted);
+	border-color: var(--gstore-institutional-border);
+	border-radius: var(--gstore-institutional-radius);
+}
+
+.Gstore-informativo-step__n {
+	background: var(--gstore-institutional-accent);
+	color: var(--gstore-color-text-light, #ffffff);
+}
+
+.Gstore-informativo-badge--warn,
+.Gstore-informativo-callout--warn {
+	background: var(--gstore-institutional-accent-soft);
+	border-color: var(--gstore-institutional-accent-line, var(--gstore-institutional-border));
+	color: var(--gstore-institutional-text);
+}
+
+.Gstore-informativo-callout {
+	border-color: var(--gstore-institutional-border);
+	border-radius: var(--gstore-institutional-radius);
+}
+
+.Gstore-informativo-modal__panel,
+.Gstore-informativo-modal__head,
+.Gstore-informativo-input,
+.Gstore-informativo-table {
+	border-color: var(--gstore-institutional-border);
+	border-radius: var(--gstore-institutional-radius);
+}
+
+.Gstore-informativo-input:focus {
+	border-color: var(--gstore-institutional-accent);
+}
+
+@media (max-width: 900px) {
+	.Gstore-informativo-hero {
+		padding: 24px 0 30px;
+	}
+
+	.Gstore-informativo-grid-2 > .Gstore-informativo-section,
+	.Gstore-informativo-arms-block .Gstore-informativo-section {
+		padding: 24px;
+	}
+}
+
+@media (max-width: 640px) {
+	.Gstore-informativo-hero {
+		padding: 22px 0 28px;
+	}
+
+	.Gstore-informativo-hero-carousel {
+		margin-left: -12px;
+		margin-right: -12px;
+		padding-left: 12px;
+		padding-right: 12px;
+	}
+}
