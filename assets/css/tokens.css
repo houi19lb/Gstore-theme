@@ -31,7 +31,8 @@
 	--gstore-color-accent: #b5a642;
 	--gstore-color-accent-hover: #9f923a;
 	--gstore-color-accent-readable: var(--gstore-color-accent-dark);
-	--gstore-color-accent-contrast: var(--gstore-color-bg-dark);
+	--gstore-color-accent-fill: var(--gstore-color-accent-readable);
+	--gstore-color-accent-contrast: var(--gstore-color-text-light);
 	--gstore-color-accent-dark: #877c31;
 	--gstore-color-accent-light: #c7b648;
 	--gstore-color-accent-secondary: #5a8900;
@@ -270,6 +271,7 @@
 @supports (color: color-mix(in srgb, #000000 10%, #ffffff)) {
 	:root {
 		--gstore-color-accent-readable: color-mix(in srgb, var(--gstore-color-accent) 60%, var(--gstore-color-text-primary));
+		--gstore-color-accent-fill: color-mix(in srgb, var(--gstore-color-accent) 50%, var(--gstore-color-text-primary));
 	}
 }
 

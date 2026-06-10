@@ -625,7 +625,8 @@ main.Gstore-about-shell .wp-block-group.is-layout-constrained {
 	--gstore-institutional-accent: var(--gstore-color-accent);
 	--gstore-institutional-accent-hover: var(--gstore-color-accent-hover, var(--gstore-institutional-accent));
 	--gstore-institutional-accent-readable: var(--gstore-color-accent-readable, var(--gstore-color-accent-dark, var(--gstore-institutional-accent)));
-	--gstore-institutional-accent-contrast: var(--gstore-color-accent-contrast, var(--gstore-color-bg-dark, #0a0a0a));
+	--gstore-institutional-accent-fill: var(--gstore-color-accent-fill, var(--gstore-institutional-accent-readable));
+	--gstore-institutional-accent-contrast: var(--gstore-color-accent-contrast, var(--gstore-color-text-light, #ffffff));
 	--gstore-institutional-accent-soft: var(--gstore-color-accent-08, var(--gstore-color-bg-muted, #f0f2f5));
 	--gstore-institutional-border: var(--gstore-color-border-light, var(--gstore-color-border, #e6e6e6));
 	--gstore-institutional-border-light: var(--gstore-color-border-light, #e8e8e6);
@@ -790,7 +791,7 @@ main.Gstore-about-shell .wp-block-group.is-layout-constrained {
 }
 
 .Gstore-about-steps li > span {
-	background: var(--gstore-institutional-accent);
+	background: var(--gstore-institutional-accent-fill);
 	color: var(--gstore-institutional-accent-contrast);
 }
 
@@ -889,13 +890,13 @@ main.Gstore-about-shell,
 }
 
 .Gstore-about-container .Gstore-btn--primary {
-	background-color: var(--gstore-institutional-accent);
+	background-color: var(--gstore-institutional-accent-fill);
 	color: var(--gstore-institutional-accent-contrast) !important;
 }
 
 .Gstore-about-container .Gstore-btn--primary:hover,
 .Gstore-about-container .Gstore-btn--primary:focus-visible {
-	background-color: var(--gstore-institutional-accent-hover);
+	background-color: var(--gstore-institutional-accent-fill);
 	color: var(--gstore-institutional-accent-contrast) !important;
 }
 
