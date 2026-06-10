@@ -11238,6 +11238,8 @@ body:has(.Gstore-catalog-shell--light) main {
 :where(.Gstore-support-shell, .Gstore-blog-single-shell) {
 	--gstore-institutional-accent: var(--gstore-color-accent);
 	--gstore-institutional-accent-hover: var(--gstore-color-accent-hover, var(--gstore-institutional-accent));
+	--gstore-institutional-accent-readable: var(--gstore-color-accent-readable, var(--gstore-color-accent-dark, var(--gstore-institutional-accent)));
+	--gstore-institutional-accent-contrast: var(--gstore-color-accent-contrast, var(--gstore-color-bg-dark, #0a0a0a));
 	--gstore-institutional-accent-soft: var(--gstore-color-accent-08, var(--gstore-color-bg-muted, #f0f2f5));
 	--gstore-institutional-border: var(--gstore-color-border-light, var(--gstore-color-border, #e6e6e6));
 	--gstore-institutional-border-light: var(--gstore-color-border-light, #e8e8e6);
@@ -11280,7 +11282,7 @@ body:has(.Gstore-catalog-shell--light) main {
 
 .Gstore-support-eyebrow,
 .Gstore-blog-single-eyebrow {
-	color: var(--gstore-institutional-accent);
+	color: var(--gstore-institutional-accent-readable);
 	letter-spacing: 0.04em;
 }
 
@@ -11328,7 +11330,7 @@ body:has(.Gstore-catalog-shell--light) main {
 	border: 1px solid var(--gstore-institutional-accent-line, var(--gstore-institutional-border));
 	border-radius: var(--gstore-institutional-radius);
 	box-shadow: none;
-	color: var(--gstore-institutional-accent);
+	color: var(--gstore-institutional-accent-readable);
 	font-size: 1.2rem;
 }
 
@@ -11343,11 +11345,11 @@ body:has(.Gstore-catalog-shell--light) main {
 }
 
 .Gstore-support-card__cta {
-	color: var(--gstore-institutional-accent);
+	color: var(--gstore-color-accent-readable, var(--gstore-institutional-accent-readable)) !important;
 }
 
 .Gstore-support-card__cta:hover {
-	color: var(--gstore-institutional-accent-hover);
+	color: var(--gstore-color-accent-readable, var(--gstore-institutional-accent-readable)) !important;
 }
 
 .Gstore-support-faq,
@@ -11385,7 +11387,7 @@ body:has(.Gstore-catalog-shell--light) main {
 
 .Gstore-support-faq__item summary::after,
 .Gstore-support-assurance i {
-	color: var(--gstore-institutional-accent);
+	color: var(--gstore-institutional-accent-readable);
 }
 
 .Gstore-support-assurance {
@@ -11418,7 +11420,7 @@ body:has(.Gstore-catalog-shell--light) main {
 }
 
 .Gstore-blog-search__input:focus {
-	border-color: var(--gstore-institutional-accent);
+	border-color: var(--gstore-institutional-accent-readable);
 	box-shadow: 0 0 0 3px var(--gstore-institutional-accent-soft);
 }
 
@@ -11426,7 +11428,7 @@ body:has(.Gstore-catalog-shell--light) main {
 	background: var(--gstore-institutional-accent);
 	border-color: var(--gstore-institutional-accent);
 	border-radius: 0 var(--gstore-institutional-radius) var(--gstore-institutional-radius) 0;
-	color: var(--gstore-color-text-light, #ffffff);
+	color: var(--gstore-institutional-accent-contrast);
 }
 
 .Gstore-blog-search__button:hover {
@@ -11450,8 +11452,8 @@ body:has(.Gstore-catalog-shell--light) main {
 .Gstore-blog-filter-btn:hover,
 .Gstore-blog-filter-btn.active {
 	background: transparent;
-	border-color: var(--gstore-institutional-accent);
-	color: var(--gstore-institutional-accent);
+	border-color: var(--gstore-color-accent-readable, var(--gstore-institutional-accent-readable)) !important;
+	color: var(--gstore-institutional-text) !important;
 }
 
 .Gstore-blog-content-wrapper {
@@ -11480,7 +11482,7 @@ body:has(.Gstore-catalog-shell--light) main {
 .Gstore-blog-single-related__badge a {
 	border-color: var(--gstore-institutional-accent-line, var(--gstore-institutional-border));
 	border-radius: var(--gstore-institutional-radius);
-	color: var(--gstore-institutional-accent);
+	color: var(--gstore-color-accent-readable, var(--gstore-institutional-accent-readable)) !important;
 }
 
 .Gstore-support-shell .Gstore-blog-card__date,
@@ -11514,7 +11516,7 @@ body:has(.Gstore-catalog-shell--light) main {
 .Gstore-blog-widget__tags a:hover {
 	background: var(--gstore-institutional-accent);
 	border-color: var(--gstore-institutional-accent);
-	color: var(--gstore-color-text-light, #ffffff);
+	color: var(--gstore-institutional-accent-contrast);
 }
 
 .Gstore-blog-single-image {
@@ -11536,11 +11538,11 @@ body:has(.Gstore-catalog-shell--light) main {
 }
 
 .Gstore-blog-single-content a {
-	color: var(--gstore-institutional-accent);
+	color: var(--gstore-color-accent-readable, var(--gstore-institutional-accent-readable)) !important;
 }
 
 .Gstore-blog-single-content a:hover {
-	color: var(--gstore-institutional-accent-hover);
+	color: var(--gstore-color-accent-readable, var(--gstore-institutional-accent-readable)) !important;
 }
 
 .Gstore-blog-single-content blockquote {
@@ -11570,8 +11572,8 @@ body:has(.Gstore-catalog-shell--light) main {
 }
 
 .Gstore-blog-single-share__button:hover {
-	border-color: var(--gstore-institutional-accent);
-	color: var(--gstore-institutional-accent);
+	border-color: var(--gstore-color-accent-readable, var(--gstore-institutional-accent-readable)) !important;
+	color: var(--gstore-color-accent-readable, var(--gstore-institutional-accent-readable)) !important;
 	transform: translateY(-1px);
 }
 
@@ -11659,7 +11661,7 @@ main.Gstore-support-shell,
 	height: 36px;
 	background: transparent;
 	border: 0;
-	color: var(--gstore-institutional-accent);
+	color: var(--gstore-institutional-accent-readable);
 	font-size: 1.1rem;
 }
 
@@ -11696,8 +11698,22 @@ main.Gstore-support-shell,
 .Gstore-blog-single-shell .Gstore-btn--secondary:focus-visible {
 	background: var(--gstore-institutional-accent-soft);
 	border-color: var(--gstore-institutional-accent-line, var(--gstore-institutional-border));
-	color: var(--gstore-institutional-accent) !important;
+	color: var(--gstore-institutional-accent-readable) !important;
 	transform: none;
+}
+
+.Gstore-support-shell .Gstore-btn--primary,
+.Gstore-blog-single-shell .Gstore-btn--primary {
+	background-color: var(--gstore-institutional-accent);
+	color: var(--gstore-institutional-accent-contrast) !important;
+}
+
+.Gstore-support-shell .Gstore-btn--primary:hover,
+.Gstore-support-shell .Gstore-btn--primary:focus-visible,
+.Gstore-blog-single-shell .Gstore-btn--primary:hover,
+.Gstore-blog-single-shell .Gstore-btn--primary:focus-visible {
+	background-color: var(--gstore-institutional-accent-hover);
+	color: var(--gstore-institutional-accent-contrast) !important;
 }
 
 .Gstore-blog-single-share__button,
