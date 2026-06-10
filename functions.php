@@ -7559,7 +7559,11 @@ function gstore_get_product_installment_preview_data( $product, $max_installment
 	$data['product_id']  = $product_id;
 
 	if ( $product_id > 0 && function_exists( 'gstore_blu_get_product_installment_quotes_data' ) ) {
-		$quotes_data = gstore_blu_get_product_installment_quotes_data( $product_id, $quantity, $max_installments );
+		// 4o argumento: o preview exibe uma unica cotacao (a maior), entao pede so ela
+		// em vez da tabela 1..21 (que custava ~84 formatacoes de moeda por card).
+		// Plugins antigos sem o parametro ignoram o argumento extra e devolvem a tabela
+		// completa, que o gstore_get_preferred_installment_quote resolve do mesmo jeito.
+		$quotes_data = gstore_blu_get_product_installment_quotes_data( $product_id, $quantity, $max_installments, $max_installments );
 		if ( ! is_wp_error( $quotes_data ) && ! empty( $quotes_data['quotes'] ) && is_array( $quotes_data['quotes'] ) ) {
 			$preferred_quote = gstore_get_preferred_installment_quote( $quotes_data['quotes'], $max_installments );
 			if ( ! empty( $preferred_quote['installments'] ) && ! empty( $preferred_quote['per_installment'] ) ) {
@@ -22329,7 +22333,9 @@ function gstore_related_products_rank_by_relevance( $related_posts, $product_id,
 		return $related_posts;
 	}
 
-	$query_limit   = max( 48, $limit * 16 );
+	// 24 candidatos por taxonomia bastam para preencher 4 slots com variedade;
+	// o valor antigo (64) gerava ~180 candidatos e dominava o custo da pagina.
+	$query_limit   = max( 24, $limit * 6 );
 	$candidate_ids = array_merge(
 		$related_posts,
 		gstore_related_products_query_candidate_ids( 'product_cat', $specific_category_ids, $exclude_ids, $query_limit, true ),
@@ -22337,6 +22343,12 @@ function gstore_related_products_rank_by_relevance( $related_posts, $product_id,
 		gstore_related_products_query_candidate_ids( 'product_tag', $tag_ids, $exclude_ids, $query_limit, false )
 	);
 	$candidate_ids = array_values( array_diff( array_unique( array_map( 'absint', $candidate_ids ) ), $exclude_ids ) );
+
+	// Carrega posts, metas e termos de todos os candidatos em ~4 queries; sem isso,
+	// cada wc_get_product()/get_the_terms() do loop abaixo dispara queries proprias.
+	if ( ! empty( $candidate_ids ) ) {
+		_prime_post_caches( $candidate_ids, true, true );
+	}
 
 	$in_stock_specific = array();
 	$in_stock_category = array();
