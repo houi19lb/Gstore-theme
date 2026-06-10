@@ -23,6 +23,17 @@ add_filter(
 );
 
 add_filter(
+	'gstore_migration_auto_product_redirects_enabled',
+	static function ( $enabled ) {
+		if ( ! gstore_armastore_is_current_host() ) {
+			return $enabled;
+		}
+
+		return false;
+	}
+);
+
+add_filter(
 	'gstore_migration_static_redirects',
 	static function ( $redirects ) {
 		$redirects = is_array( $redirects ) ? $redirects : array();
