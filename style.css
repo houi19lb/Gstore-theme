@@ -11239,7 +11239,8 @@ body:has(.Gstore-catalog-shell--light) main {
 	--gstore-institutional-accent: var(--gstore-color-accent);
 	--gstore-institutional-accent-hover: var(--gstore-color-accent-hover, var(--gstore-institutional-accent));
 	--gstore-institutional-accent-readable: var(--gstore-color-accent-readable, var(--gstore-color-accent-dark, var(--gstore-institutional-accent)));
-	--gstore-institutional-accent-contrast: var(--gstore-color-accent-contrast, var(--gstore-color-bg-dark, #0a0a0a));
+	--gstore-institutional-accent-fill: var(--gstore-color-accent-fill, var(--gstore-institutional-accent-readable));
+	--gstore-institutional-accent-contrast: var(--gstore-color-accent-contrast, var(--gstore-color-text-light, #ffffff));
 	--gstore-institutional-accent-soft: var(--gstore-color-accent-08, var(--gstore-color-bg-muted, #f0f2f5));
 	--gstore-institutional-border: var(--gstore-color-border-light, var(--gstore-color-border, #e6e6e6));
 	--gstore-institutional-border-light: var(--gstore-color-border-light, #e8e8e6);
@@ -11425,15 +11426,15 @@ body:has(.Gstore-catalog-shell--light) main {
 }
 
 .Gstore-blog-search__button {
-	background: var(--gstore-institutional-accent);
-	border-color: var(--gstore-institutional-accent);
+	background: var(--gstore-institutional-accent-fill);
+	border-color: var(--gstore-institutional-accent-fill);
 	border-radius: 0 var(--gstore-institutional-radius) var(--gstore-institutional-radius) 0;
 	color: var(--gstore-institutional-accent-contrast);
 }
 
 .Gstore-blog-search__button:hover {
-	background: var(--gstore-institutional-accent-hover);
-	border-color: var(--gstore-institutional-accent-hover);
+	background: var(--gstore-institutional-accent-fill);
+	border-color: var(--gstore-institutional-accent-fill);
 }
 
 .Gstore-blog-category-filters {
@@ -11514,8 +11515,8 @@ body:has(.Gstore-catalog-shell--light) main {
 }
 
 .Gstore-blog-widget__tags a:hover {
-	background: var(--gstore-institutional-accent);
-	border-color: var(--gstore-institutional-accent);
+	background: var(--gstore-institutional-accent-fill);
+	border-color: var(--gstore-institutional-accent-fill);
 	color: var(--gstore-institutional-accent-contrast);
 }
 
@@ -11704,7 +11705,7 @@ main.Gstore-support-shell,
 
 .Gstore-support-shell .Gstore-btn--primary,
 .Gstore-blog-single-shell .Gstore-btn--primary {
-	background-color: var(--gstore-institutional-accent);
+	background-color: var(--gstore-institutional-accent-fill);
 	color: var(--gstore-institutional-accent-contrast) !important;
 }
 
@@ -11712,7 +11713,7 @@ main.Gstore-support-shell,
 .Gstore-support-shell .Gstore-btn--primary:focus-visible,
 .Gstore-blog-single-shell .Gstore-btn--primary:hover,
 .Gstore-blog-single-shell .Gstore-btn--primary:focus-visible {
-	background-color: var(--gstore-institutional-accent-hover);
+	background-color: var(--gstore-institutional-accent-fill);
 	color: var(--gstore-institutional-accent-contrast) !important;
 }
 
