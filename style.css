@@ -6348,9 +6348,6 @@ body.gstore-product-card-style-hidden-button .Gstore-products-grid .wc-block-pro
 .Gstore-support-shell,
 main.Gstore-support-shell,
 .wp-block-group.Gstore-support-shell {
-	/* Harmoniza com o accent usado no footer */
-	--gstore-color-accent: #b5a642;
-	--gstore-color-accent-hover: #9f923a;
 	background: #ffffff !important;
 	background-color: #ffffff !important;
 	color: var(--text-main);
@@ -11088,4 +11085,402 @@ body:has(.Gstore-catalog-shell--light) main {
 .woocommerce-checkout .wc-proceed-to-checkout a.checkout-button,
 .woocommerce-checkout .wc-proceed-to-checkout .checkout-button {
 	font-size: var(--gstore-font-size-xl) !important;
+}
+
+/* =========================================
+ * P2 - Institutional polish aligned to ecommerce
+ * ========================================= */
+:where(.Gstore-support-shell, .Gstore-blog-single-shell) {
+	--gstore-institutional-accent: var(--gstore-color-accent);
+	--gstore-institutional-accent-hover: var(--gstore-color-accent-hover, var(--gstore-institutional-accent));
+	--gstore-institutional-accent-soft: var(--gstore-color-accent-08, var(--gstore-color-bg-muted, #f0f2f5));
+	--gstore-institutional-border: var(--gstore-color-border-light, var(--gstore-color-border, #e6e6e6));
+	--gstore-institutional-border-light: var(--gstore-color-border-light, #e8e8e6);
+	--gstore-institutional-surface: var(--gstore-color-bg-light, #ffffff);
+	--gstore-institutional-muted: var(--gstore-color-bg-muted, #f0f2f5);
+	--gstore-institutional-base: var(--gstore-color-bg-base, #f5f5f2);
+	--gstore-institutional-text: var(--gstore-color-text-primary, var(--text-main, #1a1a1a));
+	--gstore-institutional-text-muted: var(--gstore-color-text-secondary, var(--text-muted, #6b6b6b));
+	--gstore-institutional-radius: var(--gstore-radius-base, 4px);
+	background: var(--gstore-institutional-surface) !important;
+	background-color: var(--gstore-institutional-surface) !important;
+	color: var(--gstore-institutional-text);
+}
+
+@supports (color: color-mix(in srgb, #000000 10%, #ffffff)) {
+	:where(.Gstore-support-shell, .Gstore-blog-single-shell) {
+		--gstore-institutional-border: color-mix(in srgb, var(--gstore-institutional-text-muted) 22%, #ffffff);
+		--gstore-institutional-border-light: color-mix(in srgb, var(--gstore-institutional-text-muted) 14%, #ffffff);
+		--gstore-institutional-accent-soft: color-mix(in srgb, var(--gstore-institutional-accent) 8%, #ffffff);
+		--gstore-institutional-accent-line: color-mix(in srgb, var(--gstore-institutional-accent) 28%, var(--gstore-institutional-border));
+		--gstore-institutional-hover: color-mix(in srgb, var(--gstore-institutional-muted) 58%, #ffffff);
+	}
+}
+
+.Gstore-support-container,
+.Gstore-blog-single-container {
+	gap: clamp(24px, 3vw, 36px);
+}
+
+.Gstore-support-hero,
+.Gstore-blog-single-header {
+	background: transparent;
+	border: 0;
+	border-bottom: 1px solid var(--gstore-institutional-border);
+	border-radius: 0;
+	box-shadow: none;
+	padding: clamp(28px, 4vw, 48px) 0 clamp(30px, 4vw, 52px);
+}
+
+.Gstore-support-eyebrow,
+.Gstore-blog-single-eyebrow {
+	color: var(--gstore-institutional-accent);
+	letter-spacing: 0.04em;
+}
+
+.Gstore-support-hero h1,
+.Gstore-blog-single-title {
+	max-width: 860px;
+	color: var(--gstore-institutional-text);
+	letter-spacing: 0;
+}
+
+.Gstore-support-subtitle,
+.Gstore-blog-single-meta,
+.Gstore-blog-single-date {
+	color: var(--gstore-institutional-text-muted);
+}
+
+.Gstore-support-grid {
+	gap: clamp(14px, 2vw, 20px);
+}
+
+.Gstore-support-shell .Gstore-support-card {
+	background: var(--gstore-institutional-surface);
+	border-color: var(--gstore-institutional-border);
+	border-radius: var(--gstore-institutional-radius);
+	box-shadow: none;
+	padding: clamp(20px, 2.2vw, 24px);
+	transform: none;
+	transition:
+		border-color 180ms ease,
+		background-color 180ms ease,
+		transform 180ms ease;
+}
+
+.Gstore-support-shell .Gstore-support-card:hover {
+	background: var(--gstore-institutional-hover, var(--gstore-institutional-surface));
+	border-color: var(--gstore-institutional-accent-line, var(--gstore-institutional-border));
+	box-shadow: none;
+	transform: translateY(-2px);
+}
+
+.Gstore-support-card__icon {
+	width: 44px;
+	height: 44px;
+	background: var(--gstore-institutional-accent-soft);
+	border: 1px solid var(--gstore-institutional-accent-line, var(--gstore-institutional-border));
+	border-radius: var(--gstore-institutional-radius);
+	box-shadow: none;
+	color: var(--gstore-institutional-accent);
+	font-size: 1.2rem;
+}
+
+.Gstore-support-card h2,
+.Gstore-support-card p {
+	color: var(--gstore-institutional-text);
+}
+
+.Gstore-support-card p,
+.Gstore-support-card__meta {
+	color: var(--gstore-institutional-text-muted);
+}
+
+.Gstore-support-card__cta {
+	color: var(--gstore-institutional-accent);
+}
+
+.Gstore-support-card__cta:hover {
+	color: var(--gstore-institutional-accent-hover);
+}
+
+.Gstore-support-faq,
+.Gstore-support-assurance {
+	background: transparent;
+	border: 0;
+	border-top: 1px solid var(--gstore-institutional-border);
+	border-radius: 0;
+	box-shadow: none;
+	padding: clamp(26px, 4vw, 40px) 0 0;
+}
+
+.Gstore-support-faq__items {
+	gap: 0;
+	border: 1px solid var(--gstore-institutional-border);
+	border-radius: var(--gstore-institutional-radius);
+	overflow: hidden;
+}
+
+.Gstore-support-faq__item {
+	background: var(--gstore-institutional-surface);
+	border: 0;
+	border-top: 1px solid var(--gstore-institutional-border);
+	border-radius: 0;
+}
+
+.Gstore-support-faq__item:first-child {
+	border-top: 0;
+}
+
+.Gstore-support-faq__item[open] {
+	background: var(--gstore-institutional-hover, var(--gstore-institutional-surface));
+	border-color: var(--gstore-institutional-border);
+}
+
+.Gstore-support-faq__item summary::after,
+.Gstore-support-assurance i {
+	color: var(--gstore-institutional-accent);
+}
+
+.Gstore-support-assurance {
+	grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+	gap: 18px 28px;
+}
+
+.Gstore-support-assurance > div {
+	min-width: 0;
+}
+
+.Gstore-blog-filters-section {
+	background: transparent;
+	border: 0;
+	border-bottom: 1px solid var(--gstore-institutional-border);
+	border-top: 1px solid var(--gstore-institutional-border);
+	border-radius: 0;
+	gap: 16px;
+	padding: 20px 0;
+}
+
+.Gstore-blog-search {
+	max-width: 520px;
+}
+
+.Gstore-blog-search__input {
+	border-color: var(--gstore-institutional-border);
+	border-radius: var(--gstore-institutional-radius) 0 0 var(--gstore-institutional-radius);
+	color: var(--gstore-institutional-text);
+}
+
+.Gstore-blog-search__input:focus {
+	border-color: var(--gstore-institutional-accent);
+	box-shadow: 0 0 0 3px var(--gstore-institutional-accent-soft);
+}
+
+.Gstore-blog-search__button {
+	background: var(--gstore-institutional-accent);
+	border-color: var(--gstore-institutional-accent);
+	border-radius: 0 var(--gstore-institutional-radius) var(--gstore-institutional-radius) 0;
+	color: var(--gstore-color-text-light, #ffffff);
+}
+
+.Gstore-blog-search__button:hover {
+	background: var(--gstore-institutional-accent-hover);
+	border-color: var(--gstore-institutional-accent-hover);
+}
+
+.Gstore-blog-category-filters {
+	gap: 6px 18px;
+}
+
+.Gstore-blog-filter-btn {
+	background: transparent;
+	border: 0;
+	border-bottom: 2px solid transparent;
+	border-radius: 0;
+	color: var(--gstore-institutional-text-muted);
+	padding: 8px 0 6px;
+}
+
+.Gstore-blog-filter-btn:hover,
+.Gstore-blog-filter-btn.active {
+	background: transparent;
+	border-color: var(--gstore-institutional-accent);
+	color: var(--gstore-institutional-accent);
+}
+
+.Gstore-blog-content-wrapper {
+	gap: clamp(24px, 3vw, 36px);
+}
+
+.Gstore-support-shell .Gstore-blog-card {
+	background: var(--gstore-institutional-surface);
+	border-color: var(--gstore-institutional-border);
+	box-shadow: none;
+}
+
+.Gstore-support-shell .Gstore-blog-card:hover {
+	border-color: var(--gstore-institutional-accent-line, var(--gstore-institutional-border));
+	box-shadow: none;
+	transform: translateY(-2px);
+}
+
+.Gstore-support-shell .Gstore-blog-card__content {
+	background: var(--gstore-institutional-muted);
+	border-top: 1px solid var(--gstore-institutional-border-light);
+	min-height: 260px;
+}
+
+.Gstore-support-shell .Gstore-blog-card__badge a,
+.Gstore-blog-single-related__badge a {
+	border-color: var(--gstore-institutional-accent-line, var(--gstore-institutional-border));
+	border-radius: var(--gstore-institutional-radius);
+	color: var(--gstore-institutional-accent);
+}
+
+.Gstore-support-shell .Gstore-blog-card__date,
+.Gstore-blog-single-related__date {
+	border-color: var(--gstore-institutional-border);
+	border-radius: var(--gstore-institutional-radius);
+}
+
+.Gstore-blog-sidebar {
+	gap: 20px;
+}
+
+.Gstore-support-card.Gstore-blog-widget:hover {
+	background: var(--gstore-institutional-surface);
+	border-color: var(--gstore-institutional-border);
+	transform: none;
+}
+
+.Gstore-support-card.Gstore-blog-widget h2,
+.Gstore-blog-widget__title {
+	border-bottom: 1px solid var(--gstore-institutional-border);
+	padding-bottom: 12px;
+}
+
+.Gstore-blog-widget__tags a {
+	background: var(--gstore-institutional-muted);
+	border-color: var(--gstore-institutional-border);
+	color: var(--gstore-institutional-text);
+}
+
+.Gstore-blog-widget__tags a:hover {
+	background: var(--gstore-institutional-accent);
+	border-color: var(--gstore-institutional-accent);
+	color: var(--gstore-color-text-light, #ffffff);
+}
+
+.Gstore-blog-single-image {
+	border: 1px solid var(--gstore-institutional-border);
+	border-radius: var(--gstore-institutional-radius);
+	background: var(--gstore-institutional-muted);
+}
+
+.Gstore-blog-single-content,
+.wp-block-group.Gstore-blog-single-content {
+	background: transparent;
+	border: 0;
+	border-top: 1px solid var(--gstore-institutional-border);
+	border-radius: 0;
+	box-shadow: none;
+	margin-inline: auto;
+	max-width: 860px;
+	padding: clamp(34px, 5vw, 56px) 0 0;
+}
+
+.Gstore-blog-single-content a {
+	color: var(--gstore-institutional-accent);
+}
+
+.Gstore-blog-single-content a:hover {
+	color: var(--gstore-institutional-accent-hover);
+}
+
+.Gstore-blog-single-content blockquote {
+	background: var(--gstore-institutional-muted);
+	border-left-color: var(--gstore-institutional-accent);
+	border-radius: var(--gstore-institutional-radius);
+	padding: 18px 20px;
+}
+
+.Gstore-blog-single-share,
+.Gstore-blog-single-navigation,
+.Gstore-blog-single-related {
+	background: transparent;
+	border-color: var(--gstore-institutional-border);
+	box-shadow: none;
+}
+
+.Gstore-blog-single-share {
+	border: 1px solid var(--gstore-institutional-border);
+	border-radius: var(--gstore-institutional-radius);
+}
+
+.Gstore-blog-single-share__button {
+	background: var(--gstore-institutional-muted);
+	border: 1px solid var(--gstore-institutional-border);
+	color: var(--gstore-institutional-text);
+}
+
+.Gstore-blog-single-share__button:hover {
+	border-color: var(--gstore-institutional-accent);
+	color: var(--gstore-institutional-accent);
+	transform: translateY(-1px);
+}
+
+.Gstore-blog-single-related {
+	border-top: 1px solid var(--gstore-institutional-border);
+	border-radius: 0;
+	padding-top: clamp(28px, 4vw, 44px);
+}
+
+.Gstore-blog-single-related__card {
+	background: var(--gstore-institutional-surface);
+	border-color: var(--gstore-institutional-border);
+	box-shadow: none;
+}
+
+.Gstore-blog-single-related__card:hover {
+	border-color: var(--gstore-institutional-accent-line, var(--gstore-institutional-border));
+	box-shadow: none;
+	transform: translateY(-2px);
+}
+
+.Gstore-blog-single-related__content {
+	background: var(--gstore-institutional-muted);
+	border-top: 1px solid var(--gstore-institutional-border-light);
+}
+
+@media (max-width: 640px) {
+	.Gstore-support-hero,
+	.Gstore-blog-single-header {
+		padding: 22px 0 28px;
+	}
+
+	.Gstore-blog-filters-section {
+		padding: 16px 0;
+	}
+
+	.Gstore-blog-category-filters {
+		flex-wrap: nowrap;
+		margin-inline: -12px;
+		overflow-x: auto;
+		padding: 0 12px 4px;
+		scrollbar-width: none;
+	}
+
+	.Gstore-blog-category-filters::-webkit-scrollbar {
+		display: none;
+	}
+
+	.Gstore-blog-filter-btn {
+		flex: 0 0 auto;
+		white-space: nowrap;
+	}
+
+	.Gstore-blog-single-content,
+	.wp-block-group.Gstore-blog-single-content {
+		padding-top: 28px;
+	}
 }

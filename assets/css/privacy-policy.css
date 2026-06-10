@@ -148,3 +148,109 @@
 .woocommerce-privacy-policy-text a:hover {
 	color: #6b7280;
 }
+
+/* ========================================
+   P2 - Polimento alinhado ao e-commerce
+   ======================================== */
+
+.Gstore-privacy-shell {
+	--gstore-institutional-accent: var(--gstore-color-accent);
+	--gstore-institutional-accent-hover: var(--gstore-color-accent-hover, var(--gstore-institutional-accent));
+	--gstore-institutional-accent-soft: var(--gstore-color-accent-08, var(--gstore-color-bg-muted, #f0f2f5));
+	--gstore-institutional-border: var(--gstore-color-border-light, var(--gstore-color-border, #e6e6e6));
+	--gstore-institutional-surface: var(--gstore-color-bg-light, #ffffff);
+	--gstore-institutional-muted: var(--gstore-color-bg-muted, #f0f2f5);
+	--gstore-institutional-text: var(--gstore-color-text-primary, #1a1a1a);
+	--gstore-institutional-text-muted: var(--gstore-color-text-secondary, #6b6b6b);
+	--gstore-institutional-radius: var(--gstore-radius-base, 4px);
+	background: var(--gstore-institutional-surface);
+	padding: clamp(30px, 4vw, 58px) 0 clamp(52px, 8vw, 84px);
+}
+
+@supports (color: color-mix(in srgb, #000000 10%, #ffffff)) {
+	.Gstore-privacy-shell {
+		--gstore-institutional-border: color-mix(in srgb, var(--gstore-institutional-text-muted) 22%, #ffffff);
+		--gstore-institutional-accent-soft: color-mix(in srgb, var(--gstore-institutional-accent) 8%, #ffffff);
+		--gstore-institutional-accent-line: color-mix(in srgb, var(--gstore-institutional-accent) 28%, var(--gstore-institutional-border));
+	}
+}
+
+.Gstore-privacy-container {
+	width: min(100%, 900px);
+}
+
+.Gstore-privacy-breadcrumb {
+	background: transparent;
+	border-radius: 0;
+	color: var(--gstore-institutional-text-muted);
+	margin-bottom: clamp(16px, 3vw, 24px);
+	padding: 0;
+}
+
+.Gstore-privacy-breadcrumb a {
+	color: var(--gstore-institutional-accent);
+}
+
+.Gstore-privacy-hero {
+	background: transparent;
+	border: 0;
+	border-bottom: 1px solid var(--gstore-institutional-border);
+	border-radius: 0;
+	box-shadow: none;
+	margin-bottom: 0;
+	padding: 0 0 clamp(24px, 4vw, 36px);
+}
+
+.Gstore-privacy-eyebrow {
+	background: transparent;
+	border-radius: 0;
+	color: var(--gstore-institutional-accent);
+	letter-spacing: 0.04em;
+	padding: 0;
+}
+
+.Gstore-privacy-hero h1,
+.Gstore-privacy-section h2 {
+	color: var(--gstore-institutional-text);
+}
+
+.Gstore-privacy-hero p,
+.Gstore-privacy-section p,
+.Gstore-privacy-section--meta li {
+	color: var(--gstore-institutional-text-muted);
+}
+
+.Gstore-privacy-section {
+	background: transparent;
+	border: 0;
+	border-bottom: 1px solid var(--gstore-institutional-border);
+	border-radius: 0;
+	margin-bottom: 0;
+	padding: clamp(20px, 3vw, 28px) 0;
+}
+
+.Gstore-privacy-section--meta {
+	background: var(--gstore-institutional-muted);
+	border: 1px solid var(--gstore-institutional-border);
+	border-radius: var(--gstore-institutional-radius);
+	margin-top: clamp(18px, 3vw, 24px);
+	padding: clamp(18px, 3vw, 24px);
+}
+
+.Gstore-privacy-section a {
+	color: var(--gstore-institutional-accent);
+}
+
+.Gstore-privacy-section a:hover {
+	color: var(--gstore-institutional-accent-hover);
+}
+
+@media (max-width: 768px) {
+	.Gstore-privacy-section {
+		border-radius: 0;
+	}
+
+	.Gstore-privacy-section--meta {
+		border-radius: var(--gstore-institutional-radius);
+	}
+}
