@@ -13137,11 +13137,14 @@ function gstore_process_image_placeholders( $content ) {
 		return $content;
 	}
 
-	// Toda substituicao desta funcao mira placeholders {{...}}. Sem "{{" no
-	// conteudo ela seria um no-op, mas pagaria o custo de montar as tags de
-	// hero/banner (srcset, options, attachment meta) mesmo assim — e ela roda
-	// para TODO bloco core/html e the_content do site (~20ms por bloco).
-	if ( strpos( $content, '{{' ) === false ) {
+	// Toda substituicao desta funcao mira placeholders {{gstore_...}} (hero,
+	// banners e imagens). Sem esse prefixo no conteudo ela seria um no-op, mas
+	// pagaria o custo de montar as tags de hero/banner (srcset, options,
+	// attachment meta) mesmo assim — e ela roda para TODO bloco core/html e
+	// the_content do site (~20ms por bloco). Os placeholders de dados da loja
+	// ({{address_short}}, {{instagram_link}} etc. no footer/header) sao de
+	// outro sistema e nao passam por aqui.
+	if ( strpos( $content, '{{gstore_' ) === false ) {
 		return $content;
 	}
 
