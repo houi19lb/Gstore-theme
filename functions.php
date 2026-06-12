@@ -3929,14 +3929,10 @@ function gstore_enqueue_styles() {
 		wp_register_style( $parent_handle, false );
 	}
 
-	// Font Awesome - Carregado de forma não bloqueante
-	// Usa técnica de media="print" + onload para evitar render blocking
-	wp_enqueue_style(
-		'gstore-fontawesome',
-		'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css',
-		array(),
-		'6.5.1'
-	);
+	// Font Awesome: carregado APENAS pelo preload assincrono de
+	// gstore_preload_fontawesome() (com fallback <noscript>). O enqueue
+	// sincrono que existia aqui duplicava o download e bloqueava a
+	// renderizacao — removido.
 
 	// Sistema modular Gstore (tokens, base, utilities, components, layouts)
 	// Usa versão com timestamp para forçar recarregamento quando tokens são atualizados
@@ -12607,6 +12603,34 @@ function gstore_get_logo_id() {
 }
 
 /**
+ * Monta a tag <img> do logo com width/height intrinsecos do attachment.
+ *
+ * As dimensoes reservam o espaco correto no layout (evita CLS); o tamanho
+ * exibido continua controlado pelo style inline, entao trocar o logo por
+ * outro de dimensoes diferentes segue funcionando sem ajuste manual.
+ *
+ * @param int    $logo_id  Attachment ID do logo.
+ * @param string $logo_url URL do logo.
+ * @param string $logo_alt Texto alternativo.
+ * @return string
+ */
+function gstore_get_logo_img_tag( $logo_id, $logo_url, $logo_alt ) {
+	$dims = '';
+	$src  = wp_get_attachment_image_src( absint( $logo_id ), 'full' );
+
+	if ( $src && ! empty( $src[1] ) && ! empty( $src[2] ) ) {
+		$dims = sprintf( ' width="%d" height="%d"', (int) $src[1], (int) $src[2] );
+	}
+
+	return sprintf(
+		'<img src="%s" alt="%s"%s style="max-height: 36px; max-width: 180px; width: auto; height: auto;" loading="eager" />',
+		esc_url( $logo_url ),
+		esc_attr( $logo_alt ),
+		$dims
+	);
+}
+
+/**
  * Filtro para modificar o bloco site-logo para usar a logo configurada.
  *
  * @param string $block_content Conteúdo do bloco.
@@ -12648,11 +12672,7 @@ function gstore_custom_site_logo_block( $block_content, $block ) {
 			$home_url = esc_url( home_url( '/' ) );
 			$site_name = esc_attr( get_bloginfo( 'name' ) );
 			$logo_img = gstore_maybe_wrap_webp_picture(
-				sprintf(
-					'<img src="%s" alt="%s" style="max-height: 36px; max-width: 180px; width: auto; height: auto;" loading="eager" />',
-					esc_url( $logo_url ),
-					esc_attr( $logo_alt )
-				),
+				gstore_get_logo_img_tag( $logo_id, $logo_url, $logo_alt ),
 				$logo_id,
 				'full'
 			);
@@ -12778,11 +12798,7 @@ function gstore_custom_checkout_header_logo_block( $block_content, $block ) {
 			$home_url = esc_url( home_url( '/' ) );
 			$site_name = esc_attr( get_bloginfo( 'name' ) );
 			$logo_img = gstore_maybe_wrap_webp_picture(
-				sprintf(
-					'<img src="%s" alt="%s" style="max-height: 36px; max-width: 180px; width: auto; height: auto;" loading="eager" />',
-					esc_url( $logo_url ),
-					esc_attr( $logo_alt )
-				),
+				gstore_get_logo_img_tag( $logo_id, $logo_url, $logo_alt ),
 				$logo_id,
 				'full'
 			);
@@ -12855,11 +12871,7 @@ function gstore_replace_header_logo_html( $content ) {
 
 	// HTML da logo com imagem (para substituição via regex)
 	$logo_img = gstore_maybe_wrap_webp_picture(
-		sprintf(
-			'<img src="%s" alt="%s" style="max-height: 36px; max-width: 180px; width: auto; height: auto;" loading="eager" />',
-			esc_url( $logo_url ),
-			esc_attr( $logo_alt )
-		),
+		gstore_get_logo_img_tag( $logo_id, $logo_url, $logo_alt ),
 		$logo_id,
 		'full'
 	);
@@ -13207,10 +13219,17 @@ function gstore_process_image_placeholders( $content ) {
 		$banner_youtube_alt = esc_attr( get_option( 'gstore_banner_youtube_alt', 'Banner do YouTube' ) );
 		$banner_youtube_link = esc_url( get_option( 'gstore_banner_youtube_link', '' ) );
 
+		$banner_youtube_dims = '';
+		$banner_youtube_src  = wp_get_attachment_image_src( $banner_youtube_id, 'full' );
+		if ( $banner_youtube_src && ! empty( $banner_youtube_src[1] ) && ! empty( $banner_youtube_src[2] ) ) {
+			$banner_youtube_dims = sprintf( ' width="%d" height="%d"', (int) $banner_youtube_src[1], (int) $banner_youtube_src[2] );
+		}
+
 		$img_tag = sprintf(
-			'<img src="%s" alt="%s" />',
+			'<img src="%s" alt="%s"%s loading="lazy" decoding="async" />',
 			esc_url( $banner_youtube_url ),
-			$banner_youtube_alt
+			$banner_youtube_alt,
+			$banner_youtube_dims
 		);
 		$img_tag = gstore_maybe_wrap_webp_picture( $img_tag, $banner_youtube_id, 'full' );
 
@@ -22948,3 +22967,103 @@ function gstore_render_blog_single_banner_image( $block_content, $block ) {
 	);
 }
 add_filter( 'render_block_core/post-featured-image', 'gstore_render_blog_single_banner_image', 10, 2 );
+
+/* ═══════════════════════════════════════════════
+ * PERFORMANCE — defer de scripts, versionamento por filemtime e sizes dos cards
+ * ═══════════════════════════════════════════════ */
+
+/**
+ * Adiciona defer aos scripts do tema que nao sao criticos para o primeiro paint.
+ *
+ * Lista conservadora: somente scripts proprios, vanilla/auto-inicializados em
+ * DOMContentLoaded. Scripts de checkout, carrinho, pagamento e produto single
+ * ficam de fora de proposito — o fluxo de compra nao muda. jQuery permanece
+ * sincrono, entao scripts deferidos que usam jQuery rodam depois dele.
+ *
+ * @param string $tag    Tag <script> gerada.
+ * @param string $handle Handle registrado.
+ * @return string
+ */
+function gstore_defer_noncritical_scripts( $tag, $handle ) {
+	static $defer_handles = array(
+		'gstore-header',
+		'gstore-telegram-floating',
+		'gstore-pwa-install',
+		'gstore-home-hero',
+		'gstore-home-benefits',
+		'gstore-home-blog-pagination',
+		'gstore-home-products-carousel',
+		'gstore-blog-image-fit',
+		'gstore-blog-single',
+		'gstore-product-search-autocomplete',
+		'gstore-category-filter-js',
+		'gstore-catalog-categories-tree',
+		'gstore-catalog-filters',
+		'gstore-catalog-mega-menu',
+		'gstore-notices',
+		'gstore-add-to-cart-toast',
+		'gstore-favorites-core',
+		'gstore-favorites-page',
+		'gstore-mini-cart-block-bridge',
+		'gstore-product-card',
+		'gstore-informativo-js',
+	);
+
+	if ( in_array( $handle, $defer_handles, true )
+		&& false === strpos( $tag, ' defer' )
+		&& false === strpos( $tag, ' async' ) ) {
+		$tag = str_replace( '<script ', '<script defer ', $tag );
+	}
+
+	return $tag;
+}
+add_filter( 'script_loader_tag', 'gstore_defer_noncritical_scripts', 20, 2 );
+
+/**
+ * Versiona todo asset do tema pelo filemtime do arquivo.
+ *
+ * Garante que qualquer alteracao em CSS/JS apareca imediatamente para quem ja
+ * visitou o site (a URL muda), o que permite usar cache de navegador longo nos
+ * estaticos sem risco de informacao desatualizada. Nao afeta HTML/paginas.
+ *
+ * @param string $src URL do asset.
+ * @return string
+ */
+function gstore_filemtime_asset_version( $src ) {
+	$theme_uri = get_stylesheet_directory_uri();
+
+	if ( 0 !== strpos( $src, $theme_uri ) ) {
+		return $src;
+	}
+
+	$path = (string) wp_parse_url( $src, PHP_URL_PATH );
+	$base = (string) wp_parse_url( $theme_uri, PHP_URL_PATH );
+	$file = get_stylesheet_directory() . substr( $path, strlen( $base ) );
+
+	if ( '' !== $file && file_exists( $file ) ) {
+		$src = add_query_arg( 'ver', (string) filemtime( $file ), $src );
+	}
+
+	return $src;
+}
+add_filter( 'style_loader_src', 'gstore_filemtime_asset_version', 20 );
+add_filter( 'script_loader_src', 'gstore_filemtime_asset_version', 20 );
+
+/**
+ * Ajusta o atributo sizes das thumbnails de produto para a largura real dos
+ * cards (~180px na grade; ~45vw em telas estreitas), evitando que o navegador
+ * baixe imagens maiores do que o necessario no mobile.
+ *
+ * @param array        $attr       Atributos da tag img.
+ * @param WP_Post      $attachment Attachment.
+ * @param string|array $size       Tamanho solicitado.
+ * @return array
+ */
+function gstore_product_thumbnail_sizes_attr( $attr, $attachment, $size ) {
+	if ( 'woocommerce_thumbnail' === $size ) {
+		$attr['sizes'] = '(max-width: 768px) 45vw, 220px';
+	}
+
+	return $attr;
+}
+add_filter( 'wp_get_attachment_image_attributes', 'gstore_product_thumbnail_sizes_attr', 20, 3 );
