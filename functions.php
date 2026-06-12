@@ -20915,6 +20915,43 @@ function gstore_process_store_info_placeholders( $content ) {
 		return $content;
 	}
 
+	// O mapa de valores e constante durante a requisicao, mas esta funcao roda
+	// varias vezes por pagina (header, footer, drawer e blocos HTML) e montar o
+	// mapa custava ~25ms por chamada (dezenas de helpers de store info). Com o
+	// memo, a montagem acontece uma unica vez; cada chamada faz so o replace.
+	static $placeholders = null;
+
+	if ( null === $placeholders ) {
+		$placeholders = gstore_build_store_info_placeholders_map();
+	}
+
+	// Resumo de categorias/marcas e o unico valor caro e raro: calcula apenas
+	// se algum bloco da pagina realmente usa, e somente na primeira vez.
+	if ( '' === $placeholders['{{footer_category_brand_summary}}'] && false !== strpos( $content, '{{footer_category_brand_summary}}' ) ) {
+		$placeholders['{{footer_category_brand_summary}}'] = (string) gstore_get_footer_category_brand_summary();
+	}
+
+	// Substitui os placeholders
+	$content = str_replace( array_keys( $placeholders ), array_values( $placeholders ), $content );
+	$content = preg_replace( '/<div\s+class="Gstore-about-data__row">\s*<span>[^<]*<\/span>\s*<strong>\s*<\/strong>\s*<\/div>\s*/is', '', $content );
+	$content = preg_replace( '/<a\b(?=[^>]*class="[^"]*\bGstore-top-bar__link\b[^"]*")[^>]*href=""[^>]*>.*?<\/a>\s*/is', '', $content );
+	$content = preg_replace( '/<div\s+class="contact-item">\s*<i\b[^>]*><\/i>\s*<a\b[^>]*href=""[^>]*>.*?<\/a>\s*<\/div>\s*/is', '', $content );
+	$content = preg_replace( '/<div\s+class="contact-item">\s*<i\b[^>]*><\/i>\s*<\/div>\s*/is', '', $content );
+	$content = preg_replace( '/<a\b[^>]*href=""[^>]*>\s*<i\b[^>]*fa-brands[^>]*><\/i>\s*<\/a>\s*/is', '', $content );
+
+	return $content;
+}
+
+/**
+ * Monta o mapa de placeholders de dados da loja.
+ *
+ * Todos os valores sao constantes durante a requisicao. O resumo de
+ * categorias/marcas ({{footer_category_brand_summary}}) entra vazio e e
+ * preenchido sob demanda por gstore_process_store_info_placeholders().
+ *
+ * @return array<string,string>
+ */
+function gstore_build_store_info_placeholders_map() {
 	// Resolve o link principal de contato (header/footer): se configurado usa o do JSON, senão usa o WhatsApp.
 	$contact_primary_link = gstore_store_info()->get_value( 'contact.contact_primary_link', '' );
 	if ( empty( $contact_primary_link ) ) {
@@ -20924,7 +20961,8 @@ function gstore_process_store_info_placeholders( $content ) {
 	$phone_raw  = trim( (string) gstore_get_phone( 'raw' ) );
 	$email_link = gstore_get_store_email_link();
 	$phone_link = '' !== $phone_raw ? 'tel:+' . preg_replace( '/\D/', '', $phone_raw ) : '';
-	$footer_category_brand_summary = false !== strpos( $content, '{{footer_category_brand_summary}}' ) ? gstore_get_footer_category_brand_summary() : '';
+	// Preenchido sob demanda no processamento (ver gstore_process_store_info_placeholders).
+	$footer_category_brand_summary = '';
 	$home_seo_h1 = trim( wp_strip_all_tags( (string) gstore_store_info()->get_value( 'meta.home_h1', '' ) ) );
 	if ( '' === $home_seo_h1 ) {
 		$home_seo_h1 = trim(
@@ -21046,15 +21084,7 @@ function gstore_process_store_info_placeholders( $content ) {
 		}
 	}
 
-	// Substitui os placeholders
-	$content = str_replace( array_keys( $placeholders ), array_values( $placeholders ), $content );
-	$content = preg_replace( '/<div\s+class="Gstore-about-data__row">\s*<span>[^<]*<\/span>\s*<strong>\s*<\/strong>\s*<\/div>\s*/is', '', $content );
-	$content = preg_replace( '/<a\b(?=[^>]*class="[^"]*\bGstore-top-bar__link\b[^"]*")[^>]*href=""[^>]*>.*?<\/a>\s*/is', '', $content );
-	$content = preg_replace( '/<div\s+class="contact-item">\s*<i\b[^>]*><\/i>\s*<a\b[^>]*href=""[^>]*>.*?<\/a>\s*<\/div>\s*/is', '', $content );
-	$content = preg_replace( '/<div\s+class="contact-item">\s*<i\b[^>]*><\/i>\s*<\/div>\s*/is', '', $content );
-	$content = preg_replace( '/<a\b[^>]*href=""[^>]*>\s*<i\b[^>]*fa-brands[^>]*><\/i>\s*<\/a>\s*/is', '', $content );
-
-	return $content;
+	return $placeholders;
 }
 
 /**
