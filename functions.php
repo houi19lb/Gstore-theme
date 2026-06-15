@@ -15016,6 +15016,195 @@ add_action( 'wp', 'gstore_setup_catalog_archive_description', 20 );
  *
  * @return string
  */
+/**
+ * Gera a tabela comparativa dos produtos do termo atual (categoria, subcategoria,
+ * marca ou tag). Genérica: usa a taxonomia do termo consultado, então segue o
+ * mesmo escopo da descrição automática que ja existe.
+ *
+ * Custo (query + carga de N produtos) fica em transient por termo, invalidado
+ * quando um produto do termo e salvo ou muda estoque
+ * (gstore_flush_comparison_table_cache). Em categoria hierarquica inclui filhos.
+ *
+ * @param WP_Term|null $term Termo; se null, usa get_queried_object().
+ * @return string HTML da tabela (vazio se < 2 produtos comparaveis).
+ */
+function gstore_get_archive_comparison_table_html( $term = null ) {
+	if ( ! $term instanceof WP_Term ) {
+		$term = get_queried_object();
+	}
+
+	if ( ! $term instanceof WP_Term || empty( $term->taxonomy ) ) {
+		return '';
+	}
+
+	if ( ! in_array( $term->taxonomy, array( 'product_cat', 'product_brand', 'product_tag' ), true ) ) {
+		return '';
+	}
+
+	$cache_key = 'gstore_cmptbl_' . $term->taxonomy . '_' . (int) $term->term_id;
+	$cached    = get_transient( $cache_key );
+	if ( is_string( $cached ) ) {
+		return $cached;
+	}
+
+	$max_rows = 50; // teto para nao gerar tabelas gigantes em categorias-pai.
+	$is_brand = ( 'product_brand' === $term->taxonomy );
+
+	$query = new WP_Query(
+		array(
+			'post_type'              => 'product',
+			'post_status'            => 'publish',
+			'posts_per_page'         => $max_rows + 1,
+			'fields'                 => 'ids',
+			'ignore_sticky_posts'    => true,
+			'orderby'                => 'meta_value_num',
+			'meta_key'               => 'total_sales', // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key
+			'order'                  => 'DESC',
+			'update_post_term_cache' => false,
+			'tax_query'              => array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_tax_query
+				array(
+					'taxonomy'         => $term->taxonomy,
+					'field'            => 'term_id',
+					'terms'            => (int) $term->term_id,
+					'include_children' => is_taxonomy_hierarchical( $term->taxonomy ),
+				),
+			),
+			'meta_query'             => array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
+				array(
+					'key'   => '_stock_status',
+					'value' => 'instock',
+				),
+			),
+		)
+	);
+
+	$ids         = array_map( 'absint', $query->posts );
+	$total_found = (int) $query->found_posts;
+
+	if ( count( $ids ) < 2 ) {
+		set_transient( $cache_key, '', 12 * HOUR_IN_SECONDS );
+		return '';
+	}
+
+	$has_more = count( $ids ) > $max_rows;
+	$ids      = array_slice( $ids, 0, $max_rows );
+
+	// Aquece posts + termos numa tacada (evita query por produto no loop).
+	_prime_post_caches( $ids, true, true );
+
+	$rows = '';
+	foreach ( $ids as $pid ) {
+		$product = wc_get_product( $pid );
+		if ( ! $product || ! $product->is_visible() ) {
+			continue;
+		}
+
+		$model_cell = '<a href="' . esc_url( get_permalink( $pid ) ) . '">' . esc_html( $product->get_name() ) . '</a>';
+
+		$context_cell = '';
+		if ( ! $is_brand ) {
+			$brands       = wp_get_post_terms( $pid, 'product_brand', array( 'fields' => 'names' ) );
+			$context_cell = ( ! is_wp_error( $brands ) && ! empty( $brands ) ) ? esc_html( $brands[0] ) : '&mdash;';
+		}
+
+		$stock_cell = $product->is_in_stock()
+			? esc_html__( 'Em estoque', 'gstore' )
+			: esc_html__( 'Sob consulta', 'gstore' );
+
+		$rows .= '<tr>'
+			. '<td class="Gstore-comparison-table__model">' . $model_cell . '</td>'
+			. ( $is_brand ? '' : '<td>' . $context_cell . '</td>' )
+			. '<td>' . wp_kses_post( $product->get_price_html() ) . '</td>'
+			. '<td>' . $stock_cell . '</td>'
+			. '</tr>';
+	}
+
+	if ( '' === $rows ) {
+		set_transient( $cache_key, '', 12 * HOUR_IN_SECONDS );
+		return '';
+	}
+
+	$head = '<tr><th>' . esc_html__( 'Modelo', 'gstore' ) . '</th>'
+		. ( $is_brand ? '' : '<th>' . esc_html__( 'Marca', 'gstore' ) . '</th>' )
+		. '<th>' . esc_html__( 'Preço', 'gstore' ) . '</th>'
+		. '<th>' . esc_html__( 'Disponibilidade', 'gstore' ) . '</th></tr>';
+
+	$html = '<div class="Gstore-comparison-table-wrap">'
+		. '<table class="Gstore-comparison-table"><thead>' . $head . '</thead><tbody>' . $rows . '</tbody></table>';
+
+	if ( $has_more ) {
+		$html .= '<p class="Gstore-comparison-table__more">'
+			. esc_html( sprintf( _n( 'E mais %d modelo no catálogo acima.', 'E mais %d modelos no catálogo acima.', max( 0, $total_found - $max_rows ), 'gstore' ), max( 0, $total_found - $max_rows ) ) )
+			. '</p>';
+	}
+
+	$html .= '</div>';
+
+	set_transient( $cache_key, $html, 12 * HOUR_IN_SECONDS );
+
+	return $html;
+}
+
+/**
+ * Invalida o cache da tabela comparativa dos termos de um produto ao salvar
+ * ou mudar estoque (inclui ancestrais em taxonomias hierarquicas).
+ *
+ * @param int|WC_Product $product_id Produto.
+ * @return void
+ */
+function gstore_flush_comparison_table_cache( $product_id ) {
+	if ( is_object( $product_id ) && method_exists( $product_id, 'get_id' ) ) {
+		$product_id = $product_id->get_id();
+	}
+
+	$product_id = absint( $product_id );
+	if ( ! $product_id ) {
+		return;
+	}
+
+	foreach ( array( 'product_cat', 'product_brand', 'product_tag' ) as $tax ) {
+		$term_ids = wp_get_post_terms( $product_id, $tax, array( 'fields' => 'ids' ) );
+		if ( is_wp_error( $term_ids ) ) {
+			continue;
+		}
+
+		$all_ids = $term_ids;
+		if ( is_taxonomy_hierarchical( $tax ) ) {
+			foreach ( $term_ids as $tid ) {
+				$all_ids = array_merge( $all_ids, get_ancestors( (int) $tid, $tax ) );
+			}
+		}
+
+		foreach ( array_unique( array_map( 'absint', $all_ids ) ) as $tid ) {
+			delete_transient( 'gstore_cmptbl_' . $tax . '_' . $tid );
+		}
+	}
+}
+add_action( 'save_post_product', 'gstore_flush_comparison_table_cache' );
+add_action( 'woocommerce_update_product', 'gstore_flush_comparison_table_cache' );
+add_action( 'woocommerce_product_set_stock_status', 'gstore_flush_comparison_table_cache' );
+
+/**
+ * CSS compacto da tabela comparativa (inline no gstore-main, sem novo arquivo).
+ *
+ * @return void
+ */
+function gstore_comparison_table_inline_css() {
+	$css = '.Gstore-comparison-table-wrap{overflow-x:auto;margin:0}'
+		. '.Gstore-comparison-table{width:100%;border-collapse:collapse;font-size:14px;line-height:1.4}'
+		. '.Gstore-comparison-table th,.Gstore-comparison-table td{padding:8px 10px;text-align:left;border-bottom:1px solid rgba(0,0,0,.08);vertical-align:top}'
+		. '.Gstore-comparison-table th{font-weight:600;white-space:nowrap}'
+		. '.Gstore-comparison-table__model{font-weight:500}'
+		. '.Gstore-comparison-table td a{color:inherit;text-decoration:none}'
+		. '.Gstore-comparison-table td a:hover{text-decoration:underline}'
+		. '.Gstore-comparison-table__more{font-size:13px;opacity:.7;margin:10px 0 0}';
+
+	if ( wp_style_is( 'gstore-main', 'enqueued' ) || wp_style_is( 'gstore-main', 'registered' ) ) {
+		wp_add_inline_style( 'gstore-main', $css );
+	}
+}
+add_action( 'wp_enqueue_scripts', 'gstore_comparison_table_inline_css', 25 );
+
 function gstore_get_catalog_archive_description_details_html() {
 	$filtered_html = apply_filters( 'gstore_catalog_archive_description_details_html', '', get_queried_object() );
 	if ( is_string( $filtered_html ) && '' !== trim( $filtered_html ) ) {
@@ -15023,7 +15212,13 @@ function gstore_get_catalog_archive_description_details_html() {
 	}
 
 	$description = gstore_get_catalog_archive_description_html();
-	if ( '' === trim( wp_strip_all_tags( $description ) ) ) {
+	$has_desc    = '' !== trim( wp_strip_all_tags( $description ) );
+
+	$comparison     = gstore_get_archive_comparison_table_html();
+	$has_comparison = '' !== trim( $comparison );
+
+	// Section so aparece se houver descricao OU tabela (antes exigia descricao).
+	if ( ! $has_desc && ! $has_comparison ) {
 		return '';
 	}
 
@@ -15031,15 +15226,36 @@ function gstore_get_catalog_archive_description_details_html() {
 	$store_name = function_exists( 'gstore_get_store_name' ) ? gstore_get_store_name( 'display' ) : get_bloginfo( 'name' );
 	$label      = trim( sprintf( __( 'Sobre %1$s na %2$s', 'gstore' ), $title ? $title : __( 'produtos', 'gstore' ), $store_name ) );
 
+	$items = '';
+
+	if ( $has_desc ) {
+		$items .= '<details class="Gstore-catalog-archive-details__item">'
+			. '<summary class="Gstore-catalog-archive-details__summary">'
+			. '<span class="Gstore-catalog-archive-details__icon" aria-hidden="true"></span>'
+			. '<span>' . esc_html( $label ) . '</span>'
+			. '</summary>'
+			. '<div class="Gstore-catalog-archive-details__content">' . wp_kses_post( $description ) . '</div>'
+			. '</details>';
+	}
+
+	if ( $has_comparison ) {
+		/* translators: %s: nome da categoria/marca. */
+		$cmp_label = $title
+			? trim( sprintf( __( 'Comparar modelos de %s', 'gstore' ), $title ) )
+			: __( 'Comparar modelos', 'gstore' );
+
+		$items .= '<details class="Gstore-catalog-archive-details__item">'
+			. '<summary class="Gstore-catalog-archive-details__summary">'
+			. '<span class="Gstore-catalog-archive-details__icon" aria-hidden="true"></span>'
+			. '<span>' . esc_html( $cmp_label ) . '</span>'
+			. '</summary>'
+			. '<div class="Gstore-catalog-archive-details__content">' . $comparison . '</div>'
+			. '</details>';
+	}
+
 	return '<section class="Gstore-catalog-archive-details" aria-label="' . esc_attr__( 'Conteúdo e informações', 'gstore' ) . '">'
 		. '<h2 class="Gstore-catalog-archive-details__heading">' . esc_html__( 'Conteúdo e informações', 'gstore' ) . '</h2>'
-		. '<details class="Gstore-catalog-archive-details__item">'
-		. '<summary class="Gstore-catalog-archive-details__summary">'
-		. '<span class="Gstore-catalog-archive-details__icon" aria-hidden="true"></span>'
-		. '<span>' . esc_html( $label ) . '</span>'
-		. '</summary>'
-		. '<div class="Gstore-catalog-archive-details__content">' . wp_kses_post( $description ) . '</div>'
-		. '</details>'
+		. $items
 		. '</section>';
 }
 
@@ -23055,3 +23271,48 @@ function gstore_product_thumbnail_sizes_attr( $attr, $attachment, $size ) {
 	return $attr;
 }
 add_filter( 'wp_get_attachment_image_attributes', 'gstore_product_thumbnail_sizes_attr', 20, 3 );
+
+/**
+ * Carrega de forma assincrona (sem bloquear a renderizacao) os CSS que NAO
+ * afetam a primeira tela: footer (fim da pagina), botao flutuante do Telegram,
+ * avisos, toast de carrinho e mini-cart (abrem on-click/on-action).
+ *
+ * Tecnica: media="print" + onload faz o navegador baixar a folha em segundo
+ * plano e aplica-la apos o load, removendo-a do caminho critico de render. Um
+ * <noscript> garante o estilo mesmo com JS desligado. Os handles continuam
+ * registrados (deps intactas) — so a forma de aplicar muda. CSS above-the-fold
+ * (style.css, header.css, gstore-main) NAO entra aqui de proposito.
+ *
+ * @param string $tag    Tag <link> gerada.
+ * @param string $handle Handle do estilo.
+ * @return string
+ */
+function gstore_async_noncritical_css( $tag, $handle ) {
+	static $async_handles = array(
+		'gstore-footer-css',
+		'gstore-telegram-floating-css',
+		'gstore-notices-css',
+		'gstore-add-to-cart-toast-css',
+		'gstore-mini-cart-css',
+	);
+
+	if ( ! in_array( $handle, $async_handles, true ) ) {
+		return $tag;
+	}
+
+	// Só converte se a tag tem o media padrao e ainda nao foi processada.
+	if ( false === strpos( $tag, "media='all'" ) || false !== strpos( $tag, 'onload=' ) ) {
+		return $tag;
+	}
+
+	$async_tag = str_replace(
+		"media='all'",
+		"media='print' onload=\"this.onload=null;this.media='all'\"",
+		$tag
+	);
+
+	$noscript = '<noscript>' . $tag . '</noscript>';
+
+	return $async_tag . $noscript;
+}
+add_filter( 'style_loader_tag', 'gstore_async_noncritical_css', 20, 2 );
