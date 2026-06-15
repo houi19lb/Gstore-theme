@@ -13103,13 +13103,14 @@ function gstore_get_hero_image_tag( $attachment_id, $alt = '', $is_first_slide =
 		'alt' => $alt ? $alt : '',
 	);
 
-	// O primeiro slide é o LCP: força o arquivo full para evitar variação/pixelização inicial.
-	// Demais slides podem usar srcset normalmente.
-	if ( ! $is_first_slide ) {
-		$attr['sizes'] = '100vw';
-		if ( ! empty( $srcset_array ) ) {
-			$attr['srcset'] = implode( ', ', $srcset_array );
-		}
+	// Todos os slides (inclusive o primeiro/LCP) usam srcset + sizes: com sizes
+	// correto o navegador ja escolhe o tamanho certo no primeiro paint, sem
+	// pixelizacao nem troca de imagem. Antes o primeiro slide forcava o arquivo
+	// full, fazendo o mobile baixar ~1450px para exibir num espaco bem menor —
+	// principal peso do LCP no celular.
+	$attr['sizes'] = '100vw';
+	if ( ! empty( $srcset_array ) ) {
+		$attr['srcset'] = implode( ', ', $srcset_array );
 	}
 
 	// Primeira imagem do hero: alta prioridade, sem lazy loading
