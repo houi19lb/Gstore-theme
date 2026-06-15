@@ -15091,20 +15091,39 @@ function gstore_get_archive_comparison_table_html( $term = null ) {
 	// Aquece posts + termos numa tacada (evita query por produto no loop).
 	_prime_post_caches( $ids, true, true );
 
-	$rows_instock = '';
-	$rows_consult = '';
+	$rows_instock  = '';
+	$rows_consult  = '';
+	$brand_names   = array(); // marcas distintas, para o resumo automático.
+	$price_min     = null;
+	$price_max     = null;
+	$model_count   = 0;
 	foreach ( $ids as $pid ) {
 		$product = wc_get_product( $pid );
 		if ( ! $product || ! $product->is_visible() ) {
 			continue;
 		}
 
+		++$model_count;
+
 		$model_cell = '<a href="' . esc_url( get_permalink( $pid ) ) . '">' . esc_html( $product->get_name() ) . '</a>';
+
+		$product_brands = wp_get_post_terms( $pid, 'product_brand', array( 'fields' => 'names' ) );
+		if ( ! is_wp_error( $product_brands ) ) {
+			foreach ( $product_brands as $bn ) {
+				$brand_names[ $bn ] = true;
+			}
+		}
 
 		$context_cell = '';
 		if ( ! $is_brand ) {
-			$brands       = wp_get_post_terms( $pid, 'product_brand', array( 'fields' => 'names' ) );
-			$context_cell = ( ! is_wp_error( $brands ) && ! empty( $brands ) ) ? esc_html( $brands[0] ) : '&mdash;';
+			$context_cell = ( ! is_wp_error( $product_brands ) && ! empty( $product_brands ) ) ? esc_html( $product_brands[0] ) : '&mdash;';
+		}
+
+		// >= 1 ignora placeholders (R$ 0,01 / 0,00) que distorceriam a faixa.
+		$price = (float) $product->get_price();
+		if ( $price >= 1 ) {
+			$price_min = ( null === $price_min ) ? $price : min( $price_min, $price );
+			$price_max = ( null === $price_max ) ? $price : max( $price_max, $price );
 		}
 
 		$in_stock   = $product->is_in_stock();
@@ -15139,7 +15158,12 @@ function gstore_get_archive_comparison_table_html( $term = null ) {
 		. '<th>' . esc_html__( 'Preço', 'gstore' ) . '</th>'
 		. '<th>' . esc_html__( 'Disponibilidade', 'gstore' ) . '</th></tr>';
 
+	// Bloco-guia acima da tabela: texto manual da categoria (se houver) +
+	// resumo automático factual (sempre, como fallback).
+	$guide_html = gstore_get_archive_guide_block_html( $term, $model_count, array_keys( $brand_names ), $price_min, $price_max );
+
 	$html = '<div class="Gstore-comparison-table-wrap">'
+		. $guide_html
 		. '<table class="Gstore-comparison-table"><thead>' . $head . '</thead><tbody>' . $rows . '</tbody></table>';
 
 	if ( $has_more ) {
@@ -15153,6 +15177,75 @@ function gstore_get_archive_comparison_table_html( $term = null ) {
 	set_transient( $cache_key, $html, 12 * HOUR_IN_SECONDS );
 
 	return $html;
+}
+
+/**
+ * Monta o bloco-guia exibido acima da tabela comparativa.
+ *
+ * Combina, nesta ordem: (1) o texto educacional opcional cadastrado pelo admin
+ * no termo e (2) um resumo automático factual — nº de modelos, marcas e faixa
+ * de preço — gerado dos próprios produtos. O resumo é o fallback: sempre
+ * aparece, mesmo sem texto manual.
+ *
+ * O texto manual é apenas LIDO aqui (render do front). Seu cadastro/edição é
+ * responsabilidade do plugin (gstore-white-label), no mesmo painel SEO da
+ * categoria — meta `_gstore_seo_comparison_guide`.
+ *
+ * @param WP_Term  $term        Termo do arquivo.
+ * @param int      $count       Modelos listados.
+ * @param string[] $brand_names Marcas distintas presentes.
+ * @param float|null $price_min Menor preço (> 0) ou null.
+ * @param float|null $price_max Maior preço (> 0) ou null.
+ * @return string
+ */
+function gstore_get_archive_guide_block_html( $term, $count, $brand_names, $price_min, $price_max ) {
+	$out = '';
+
+	// 1) Texto manual (opcional), cadastrado pelo plugin no painel SEO do termo.
+	$manual = $term instanceof WP_Term ? (string) get_term_meta( $term->term_id, '_gstore_seo_comparison_guide', true ) : '';
+	$manual = trim( $manual );
+	if ( '' !== $manual ) {
+		$out .= '<div class="Gstore-comparison-guide__text">' . wp_kses_post( wpautop( $manual ) ) . '</div>';
+	}
+
+	// 2) Resumo automático (fallback factual, sempre).
+	$facts = array();
+
+	$count = (int) $count;
+	if ( $count > 0 ) {
+		/* translators: %d: número de modelos. */
+		$facts[] = esc_html( sprintf( _n( '%d modelo', '%d modelos', $count, 'gstore' ), $count ) );
+	}
+
+	$brand_names = array_values( array_filter( array_map( 'trim', (array) $brand_names ) ) );
+	if ( ! empty( $brand_names ) ) {
+		sort( $brand_names );
+		$shown    = array_slice( $brand_names, 0, 5 );
+		$brand_txt = implode( ', ', array_map( 'esc_html', $shown ) );
+		if ( count( $brand_names ) > count( $shown ) ) {
+			$brand_txt .= '&hellip;';
+		}
+		/* translators: %s: lista de marcas. */
+		$facts[] = sprintf( esc_html__( 'marcas: %s', 'gstore' ), $brand_txt );
+	}
+
+	if ( null !== $price_min && null !== $price_max && function_exists( 'wc_price' ) ) {
+		// wc_price devolve "R$" como entidades (&#82;&#36;); decodifica para texto.
+		$fmt_min = html_entity_decode( wp_strip_all_tags( wc_price( $price_min ) ), ENT_QUOTES, 'UTF-8' );
+		$fmt_max = html_entity_decode( wp_strip_all_tags( wc_price( $price_max ) ), ENT_QUOTES, 'UTF-8' );
+		if ( $price_min < $price_max ) {
+			/* translators: 1: menor preço, 2: maior preço. */
+			$facts[] = sprintf( esc_html__( 'de %1$s a %2$s', 'gstore' ), esc_html( $fmt_min ), esc_html( $fmt_max ) );
+		} else {
+			$facts[] = esc_html( $fmt_min );
+		}
+	}
+
+	if ( ! empty( $facts ) ) {
+		$out .= '<p class="Gstore-comparison-guide__summary">' . implode( ' &middot; ', $facts ) . '</p>';
+	}
+
+	return $out;
 }
 
 /**
@@ -15207,7 +15300,9 @@ function gstore_comparison_table_inline_css() {
 		. '.Gstore-comparison-table__model{font-weight:500}'
 		. '.Gstore-comparison-table td a{color:inherit;text-decoration:none}'
 		. '.Gstore-comparison-table td a:hover{text-decoration:underline}'
-		. '.Gstore-comparison-table__more{font-size:13px;opacity:.7;margin:10px 0 0}';
+		. '.Gstore-comparison-table__more{font-size:13px;opacity:.7;margin:10px 0 0}'
+		. '.Gstore-comparison-guide__text{font-size:14px;line-height:1.6;margin:0 0 10px}'
+		. '.Gstore-comparison-guide__summary{font-size:13px;opacity:.75;margin:0 0 12px}';
 
 	if ( wp_style_is( 'gstore-main', 'enqueued' ) || wp_style_is( 'gstore-main', 'registered' ) ) {
 		wp_add_inline_style( 'gstore-main', $css );
