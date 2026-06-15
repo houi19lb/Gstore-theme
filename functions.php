@@ -15041,7 +15041,9 @@ function gstore_get_archive_comparison_table_html( $term = null ) {
 		return '';
 	}
 
-	$cache_key = 'gstore_cmptbl_' . $term->taxonomy . '_' . (int) $term->term_id;
+	// v2: inclui produtos sem estoque ("sob consulta"). O sufixo de versao
+	// descarta caches gerados por versoes anteriores da lógica automaticamente.
+	$cache_key = 'gstore_cmptbl_v2_' . $term->taxonomy . '_' . (int) $term->term_id;
 	$cached    = get_transient( $cache_key );
 	if ( is_string( $cached ) ) {
 		return $cached;
@@ -15069,12 +15071,9 @@ function gstore_get_archive_comparison_table_html( $term = null ) {
 					'include_children' => is_taxonomy_hierarchical( $term->taxonomy ),
 				),
 			),
-			'meta_query'             => array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
-				array(
-					'key'   => '_stock_status',
-					'value' => 'instock',
-				),
-			),
+			// Inclui TODOS os produtos publicados, com ou sem estoque. Numa loja
+			// de armas muitos itens ficam "sob consulta"; a coluna Disponibilidade
+			// informa o status e os in-stock são listados primeiro (abaixo).
 		)
 	);
 
@@ -15092,7 +15091,8 @@ function gstore_get_archive_comparison_table_html( $term = null ) {
 	// Aquece posts + termos numa tacada (evita query por produto no loop).
 	_prime_post_caches( $ids, true, true );
 
-	$rows = '';
+	$rows_instock = '';
+	$rows_consult = '';
 	foreach ( $ids as $pid ) {
 		$product = wc_get_product( $pid );
 		if ( ! $product || ! $product->is_visible() ) {
@@ -15107,17 +15107,27 @@ function gstore_get_archive_comparison_table_html( $term = null ) {
 			$context_cell = ( ! is_wp_error( $brands ) && ! empty( $brands ) ) ? esc_html( $brands[0] ) : '&mdash;';
 		}
 
-		$stock_cell = $product->is_in_stock()
+		$in_stock   = $product->is_in_stock();
+		$stock_cell = $in_stock
 			? esc_html__( 'Em estoque', 'gstore' )
 			: esc_html__( 'Sob consulta', 'gstore' );
 
-		$rows .= '<tr>'
+		$row = '<tr>'
 			. '<td class="Gstore-comparison-table__model">' . $model_cell . '</td>'
 			. ( $is_brand ? '' : '<td>' . $context_cell . '</td>' )
 			. '<td>' . wp_kses_post( $product->get_price_html() ) . '</td>'
 			. '<td>' . $stock_cell . '</td>'
 			. '</tr>';
+
+		if ( $in_stock ) {
+			$rows_instock .= $row;
+		} else {
+			$rows_consult .= $row;
+		}
 	}
+
+	// Disponíveis primeiro, depois os "sob consulta".
+	$rows = $rows_instock . $rows_consult;
 
 	if ( '' === $rows ) {
 		set_transient( $cache_key, '', 12 * HOUR_IN_SECONDS );
@@ -15176,7 +15186,7 @@ function gstore_flush_comparison_table_cache( $product_id ) {
 		}
 
 		foreach ( array_unique( array_map( 'absint', $all_ids ) ) as $tid ) {
-			delete_transient( 'gstore_cmptbl_' . $tax . '_' . $tid );
+			delete_transient( 'gstore_cmptbl_v2_' . $tax . '_' . $tid );
 		}
 	}
 }
@@ -15283,6 +15293,56 @@ function gstore_output_catalog_archive_description_details() {
 	echo $html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 }
 add_action( 'woocommerce_after_shop_loop', 'gstore_output_catalog_archive_description_details', 30 );
+
+/**
+ * Insere a tabela comparativa como item extra na section "Conteúdo e
+ * informações" quando o plugin (gstore-white-label) é quem monta os accordions.
+ *
+ * O plugin engancha em 'gstore_catalog_archive_description_details_html' na
+ * prioridade 10 e retorna a <section> pronta — o que curto-circuita a função do
+ * tema. Por isso a tabela é anexada aqui (prioridade 20), inserida antes do
+ * </section> com o mesmo markup de <details> dos demais itens. A modificação na
+ * função do tema continua valendo como fallback quando o plugin está inativo.
+ *
+ * @param string $html HTML da section gerado pelo plugin.
+ * @param mixed  $term Objeto consultado (WP_Term em arquivos de taxonomia).
+ * @return string
+ */
+function gstore_append_comparison_table_to_details_html( $html, $term = null ) {
+	if ( ! is_string( $html ) || '' === trim( $html ) ) {
+		return $html;
+	}
+
+	// Já contém tabela? Não duplica.
+	if ( false !== strpos( $html, 'Gstore-comparison-table' ) ) {
+		return $html;
+	}
+
+	$comparison = gstore_get_archive_comparison_table_html( $term instanceof WP_Term ? $term : null );
+	if ( '' === trim( $comparison ) ) {
+		return $html;
+	}
+
+	$title = gstore_get_catalog_archive_title();
+	/* translators: %s: nome da categoria/marca. */
+	$label = $title ? trim( sprintf( __( 'Comparar modelos de %s', 'gstore' ), $title ) ) : __( 'Comparar modelos', 'gstore' );
+
+	$details = '<details class="Gstore-catalog-archive-details__item">'
+		. '<summary class="Gstore-catalog-archive-details__summary">'
+		. '<span class="Gstore-catalog-archive-details__icon" aria-hidden="true"></span>'
+		. '<span>' . esc_html( $label ) . '</span>'
+		. '</summary>'
+		. '<div class="Gstore-catalog-archive-details__content">' . $comparison . '</div>'
+		. '</details>';
+
+	$pos = strrpos( $html, '</section>' );
+	if ( false !== $pos ) {
+		return substr( $html, 0, $pos ) . $details . substr( $html, $pos );
+	}
+
+	return $html . $details;
+}
+add_filter( 'gstore_catalog_archive_description_details_html', 'gstore_append_comparison_table_to_details_html', 20, 2 );
 
 /**
  * Acrescenta o accordion depois de shortcodes [products] em paginas de catalogo.
