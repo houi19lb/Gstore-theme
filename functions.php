@@ -3929,10 +3929,18 @@ function gstore_enqueue_styles() {
 		wp_register_style( $parent_handle, false );
 	}
 
-	// Font Awesome: carregado APENAS pelo preload assincrono de
-	// gstore_preload_fontawesome() (com fallback <noscript>). O enqueue
-	// sincrono que existia aqui duplicava o download e bloqueava a
-	// renderizacao — removido.
+	// Font Awesome: enfileirado aqui porque varios estilos do tema declaram
+	// 'gstore-fontawesome' como dependencia (gstore-main e toda a cascata).
+	// NAO remover este enqueue — sem o handle, o WordPress descarta gstore-main
+	// e derruba TODO o CSS do tema. O carregamento em si e feito de forma
+	// nao-bloqueante pelo preload em gstore_preload_fontawesome(); a tag <link>
+	// bloqueante deste enqueue e suprimida por gstore_suppress_fontawesome_tag().
+	wp_enqueue_style(
+		'gstore-fontawesome',
+		'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css',
+		array(),
+		'6.5.1'
+	);
 
 	// Sistema modular Gstore (tokens, base, utilities, components, layouts)
 	// Usa versão com timestamp para forçar recarregamento quando tokens são atualizados
@@ -22973,51 +22981,26 @@ add_filter( 'render_block_core/post-featured-image', 'gstore_render_blog_single_
  * ═══════════════════════════════════════════════ */
 
 /**
- * Adiciona defer aos scripts do tema que nao sao criticos para o primeiro paint.
+ * Suprime a tag <link> bloqueante do Font Awesome enfileirado.
  *
- * Lista conservadora: somente scripts proprios, vanilla/auto-inicializados em
- * DOMContentLoaded. Scripts de checkout, carrinho, pagamento e produto single
- * ficam de fora de proposito — o fluxo de compra nao muda. jQuery permanece
- * sincrono, entao scripts deferidos que usam jQuery rodam depois dele.
+ * O handle 'gstore-fontawesome' precisa existir no sistema de enqueue para
+ * satisfazer as dependencias dos CSS do tema, mas o download em si ja e feito
+ * sem bloquear pelo preload em gstore_preload_fontawesome(). Esta supressao
+ * evita duplicar a requisicao e remove o render-blocking, sem mexer na cadeia
+ * de dependencias.
  *
- * @param string $tag    Tag <script> gerada.
- * @param string $handle Handle registrado.
+ * @param string $tag    Tag <link> gerada.
+ * @param string $handle Handle do estilo.
  * @return string
  */
-function gstore_defer_noncritical_scripts( $tag, $handle ) {
-	static $defer_handles = array(
-		'gstore-header',
-		'gstore-telegram-floating',
-		'gstore-pwa-install',
-		'gstore-home-hero',
-		'gstore-home-benefits',
-		'gstore-home-blog-pagination',
-		'gstore-home-products-carousel',
-		'gstore-blog-image-fit',
-		'gstore-blog-single',
-		'gstore-product-search-autocomplete',
-		'gstore-category-filter-js',
-		'gstore-catalog-categories-tree',
-		'gstore-catalog-filters',
-		'gstore-catalog-mega-menu',
-		'gstore-notices',
-		'gstore-add-to-cart-toast',
-		'gstore-favorites-core',
-		'gstore-favorites-page',
-		'gstore-mini-cart-block-bridge',
-		'gstore-product-card',
-		'gstore-informativo-js',
-	);
-
-	if ( in_array( $handle, $defer_handles, true )
-		&& false === strpos( $tag, ' defer' )
-		&& false === strpos( $tag, ' async' ) ) {
-		$tag = str_replace( '<script ', '<script defer ', $tag );
+function gstore_suppress_fontawesome_tag( $tag, $handle ) {
+	if ( 'gstore-fontawesome' === $handle ) {
+		return '';
 	}
 
 	return $tag;
 }
-add_filter( 'script_loader_tag', 'gstore_defer_noncritical_scripts', 20, 2 );
+add_filter( 'style_loader_tag', 'gstore_suppress_fontawesome_tag', 20, 2 );
 
 /**
  * Versiona todo asset do tema pelo filemtime do arquivo.
@@ -23030,6 +23013,10 @@ add_filter( 'script_loader_tag', 'gstore_defer_noncritical_scripts', 20, 2 );
  * @return string
  */
 function gstore_filemtime_asset_version( $src ) {
+	if ( ! is_string( $src ) || '' === $src ) {
+		return $src;
+	}
+
 	$theme_uri = get_stylesheet_directory_uri();
 
 	if ( 0 !== strpos( $src, $theme_uri ) ) {
