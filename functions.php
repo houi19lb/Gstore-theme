@@ -15041,9 +15041,10 @@ function gstore_get_archive_comparison_table_html( $term = null ) {
 		return '';
 	}
 
-	// v2: inclui produtos sem estoque ("sob consulta"). O sufixo de versao
-	// descarta caches gerados por versoes anteriores da lógica automaticamente.
-	$cache_key = 'gstore_cmptbl_v2_' . $term->taxonomy . '_' . (int) $term->term_id;
+	// v3: fallback de texto do calibre acima da tabela. O sufixo de versao
+	// descarta caches de versoes anteriores automaticamente — bump sempre que o
+	// HTML gerado mudar.
+	$cache_key = 'gstore_cmptbl_v3_' . $term->taxonomy . '_' . (int) $term->term_id;
 	$cached    = get_transient( $cache_key );
 	if ( is_string( $cached ) ) {
 		return $cached;
@@ -15201,11 +15202,38 @@ function gstore_get_archive_comparison_table_html( $term = null ) {
 function gstore_get_archive_guide_block_html( $term, $count, $brand_names, $price_min, $price_max ) {
 	$out = '';
 
-	// 1) Texto manual (opcional), cadastrado pelo plugin no painel SEO do termo.
-	$manual = $term instanceof WP_Term ? (string) get_term_meta( $term->term_id, '_gstore_seo_comparison_guide', true ) : '';
-	$manual = trim( $manual );
+	// 1) Texto do calibre. Prioridade: (a) texto manual cadastrado no painel SEO
+	// do termo; (b) fallback padronizado, gerado com o nome do calibre que já
+	// existe na estrutura (nome da subcategoria) + os dados — sem escrever nada
+	// por calibre.
+	$manual = $term instanceof WP_Term ? trim( (string) get_term_meta( $term->term_id, '_gstore_seo_comparison_guide', true ) ) : '';
+
 	if ( '' !== $manual ) {
 		$out .= '<div class="Gstore-comparison-guide__text">' . wp_kses_post( wpautop( $manual ) ) . '</div>';
+	} elseif ( $term instanceof WP_Term ) {
+		$caliber   = trim( wp_strip_all_tags( $term->name ) ); // o nome do termo JÁ é o calibre.
+		$store_name = function_exists( 'gstore_get_store_name' ) ? gstore_get_store_name( 'display' ) : get_bloginfo( 'name' );
+
+		if ( '' !== $caliber ) {
+			$brands_list = array_values( array_filter( array_map( 'trim', (array) $brand_names ) ) );
+			sort( $brands_list );
+			$brands_phrase = '';
+			if ( ! empty( $brands_list ) ) {
+				$shown = array_slice( $brands_list, 0, 4 );
+				/* translators: %s: lista de marcas. */
+				$brands_phrase = ' ' . sprintf( esc_html__( 'de marcas como %s', 'gstore' ), esc_html( implode( ', ', $shown ) ) );
+			}
+
+			/* translators: 1: calibre, 2: nome da loja. */
+			$fallback_text = sprintf(
+				esc_html__( 'Confira os modelos calibre %1$s disponíveis na %2$s. Compare especificações, preço e disponibilidade%3$s e fale com nossos especialistas para escolher o ideal conforme seu uso (defesa, tiro esportivo ou coleção) e a documentação exigida (CR/CAC).', 'gstore' ),
+				esc_html( $caliber ),
+				esc_html( $store_name ),
+				$brands_phrase
+			);
+
+			$out .= '<div class="Gstore-comparison-guide__text">' . wpautop( $fallback_text ) . '</div>';
+		}
 	}
 
 	// 2) Resumo automático (fallback factual, sempre).
@@ -15279,7 +15307,7 @@ function gstore_flush_comparison_table_cache( $product_id ) {
 		}
 
 		foreach ( array_unique( array_map( 'absint', $all_ids ) ) as $tid ) {
-			delete_transient( 'gstore_cmptbl_v2_' . $tax . '_' . $tid );
+			delete_transient( 'gstore_cmptbl_v3_' . $tax . '_' . $tid );
 		}
 	}
 }
