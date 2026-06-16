@@ -8902,6 +8902,11 @@ function gstore_debug_log( $location, $message, $data = array(), $session_id = '
 // Movido para o plugin gstore-core (persistência em wp_options).
 
 /**
+ * Google tag / GA4 tracking.
+ */
+require_once get_theme_file_path( 'inc/gstore-google-tag.php' );
+
+/**
  * API Visualizer (React + Mermaid) - shortcode e enqueue dos assets.
  */
 require_once get_theme_file_path( 'inc/api-visualizer.php' );
