@@ -3964,11 +3964,11 @@ form.woocommerce-form {
 /* Minha Conta - Programa Revendedor */
 .gstore-myaccount-nav__children {
 	list-style: none;
-	margin: -6px 0 8px 42px;
+	margin: 8px 0 10px 42px;
 	padding: 0 0 0 12px;
 	border-left: 1px solid rgba(172, 145, 43, 0.28);
 	display: grid;
-	gap: 2px;
+	gap: 4px;
 }
 
 .gstore-myaccount-nav__children a {
