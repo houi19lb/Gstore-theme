@@ -15041,10 +15041,10 @@ function gstore_get_archive_comparison_table_html( $term = null ) {
 		return '';
 	}
 
-	// v3: fallback de texto do calibre acima da tabela. O sufixo de versao
+	// v4: tabela so in-stock, sem coluna disponibilidade; fallback de texto do calibre acima da tabela. O sufixo de versao
 	// descarta caches de versoes anteriores automaticamente — bump sempre que o
 	// HTML gerado mudar.
-	$cache_key = 'gstore_cmptbl_v3_' . $term->taxonomy . '_' . (int) $term->term_id;
+	$cache_key = 'gstore_cmptbl_v4_' . $term->taxonomy . '_' . (int) $term->term_id;
 	$cached    = get_transient( $cache_key );
 	if ( is_string( $cached ) ) {
 		return $cached;
@@ -15072,9 +15072,14 @@ function gstore_get_archive_comparison_table_html( $term = null ) {
 					'include_children' => is_taxonomy_hierarchical( $term->taxonomy ),
 				),
 			),
-			// Inclui TODOS os produtos publicados, com ou sem estoque. Numa loja
-			// de armas muitos itens ficam "sob consulta"; a coluna Disponibilidade
-			// informa o status e os in-stock são listados primeiro (abaixo).
+			// Só produtos EM ESTOQUE: a tabela compara o que está disponível para
+			// compra. Categorias 100% esgotadas não geram tabela (accordion some).
+			'meta_query'             => array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
+				array(
+					'key'   => '_stock_status',
+					'value' => 'instock',
+				),
+			),
 		)
 	);
 
@@ -15092,15 +15097,15 @@ function gstore_get_archive_comparison_table_html( $term = null ) {
 	// Aquece posts + termos numa tacada (evita query por produto no loop).
 	_prime_post_caches( $ids, true, true );
 
-	$rows_instock  = '';
-	$rows_consult  = '';
-	$brand_names   = array(); // marcas distintas, para o resumo automático.
-	$price_min     = null;
-	$price_max     = null;
-	$model_count   = 0;
+	$rows        = '';
+	$brand_names = array(); // marcas distintas, para o resumo automático.
+	$price_min   = null;
+	$price_max   = null;
+	$model_count = 0;
 	foreach ( $ids as $pid ) {
 		$product = wc_get_product( $pid );
-		if ( ! $product || ! $product->is_visible() ) {
+		// Dupla checagem de estoque (a query já filtra; cobre cache/edge cases).
+		if ( ! $product || ! $product->is_visible() || ! $product->is_in_stock() ) {
 			continue;
 		}
 
@@ -15127,37 +15132,23 @@ function gstore_get_archive_comparison_table_html( $term = null ) {
 			$price_max = ( null === $price_max ) ? $price : max( $price_max, $price );
 		}
 
-		$in_stock   = $product->is_in_stock();
-		$stock_cell = $in_stock
-			? esc_html__( 'Em estoque', 'gstore' )
-			: esc_html__( 'Sob consulta', 'gstore' );
-
-		$row = '<tr>'
+		$rows .= '<tr>'
 			. '<td class="Gstore-comparison-table__model">' . $model_cell . '</td>'
 			. ( $is_brand ? '' : '<td>' . $context_cell . '</td>' )
 			. '<td>' . wp_kses_post( $product->get_price_html() ) . '</td>'
-			. '<td>' . $stock_cell . '</td>'
 			. '</tr>';
-
-		if ( $in_stock ) {
-			$rows_instock .= $row;
-		} else {
-			$rows_consult .= $row;
-		}
 	}
 
-	// Disponíveis primeiro, depois os "sob consulta".
-	$rows = $rows_instock . $rows_consult;
-
-	if ( '' === $rows ) {
+	// Menos de 2 modelos em estoque: nada a comparar, accordion não aparece.
+	if ( $model_count < 2 ) {
 		set_transient( $cache_key, '', 12 * HOUR_IN_SECONDS );
 		return '';
 	}
 
+	// Coluna Disponibilidade foi removida: a tabela só lista itens em estoque.
 	$head = '<tr><th>' . esc_html__( 'Modelo', 'gstore' ) . '</th>'
 		. ( $is_brand ? '' : '<th>' . esc_html__( 'Marca', 'gstore' ) . '</th>' )
-		. '<th>' . esc_html__( 'Preço', 'gstore' ) . '</th>'
-		. '<th>' . esc_html__( 'Disponibilidade', 'gstore' ) . '</th></tr>';
+		. '<th>' . esc_html__( 'Preço', 'gstore' ) . '</th></tr>';
 
 	// Bloco-guia acima da tabela: texto manual da categoria (se houver) +
 	// resumo automático factual (sempre, como fallback).
@@ -15307,7 +15298,7 @@ function gstore_flush_comparison_table_cache( $product_id ) {
 		}
 
 		foreach ( array_unique( array_map( 'absint', $all_ids ) ) as $tid ) {
-			delete_transient( 'gstore_cmptbl_v3_' . $tax . '_' . $tid );
+			delete_transient( 'gstore_cmptbl_v4_' . $tax . '_' . $tid );
 		}
 	}
 }
