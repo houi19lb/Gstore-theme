@@ -178,26 +178,39 @@ if ( ! function_exists( 'gstore_get_product_category_product_count' ) ) :
 	}
 endif;
 
-if ( ! function_exists( 'gstore_get_product_category_preview_image_html' ) ) :
+if ( ! function_exists( 'gstore_get_product_category_preview_image_data' ) ) :
 	/**
-	 * Retorna a imagem do primeiro produto publicado da categoria.
+	 * Retorna dados da imagem de preview para uma categoria.
 	 *
-	 * @param WP_Term $term Categoria.
-	 * @return string
+	 * @param WP_Term $term                 Categoria.
+	 * @param array   $excluded_product_ids Produtos que nao devem ser repetidos.
+	 * @param array   $excluded_image_ids   Imagens que nao devem ser repetidas.
+	 * @return array{image_html:string, product_id:int, image_id:int}
 	 */
-	function gstore_get_product_category_preview_image_html( $term ) {
+	function gstore_get_product_category_preview_image_data( $term, $excluded_product_ids = array(), $excluded_image_ids = array() ) {
 		if ( ! $term instanceof WP_Term ) {
-			return '';
+			return array(
+				'image_html' => '',
+				'product_id' => 0,
+				'image_id'   => 0,
+			);
 		}
 
-		static $cache = array();
-		$term_id = (int) $term->term_id;
+		static $cache         = array();
+		$term_id              = (int) $term->term_id;
+		$excluded_product_ids = array_values( array_unique( array_filter( array_map( 'absint', (array) $excluded_product_ids ) ) ) );
+		$excluded_image_ids   = array_values( array_unique( array_filter( array_map( 'absint', (array) $excluded_image_ids ) ) ) );
+		$cache_key            = $term_id . '|' . implode( ',', $excluded_product_ids ) . '|' . implode( ',', $excluded_image_ids );
 
-		if ( isset( $cache[ $term_id ] ) ) {
-			return $cache[ $term_id ];
+		if ( isset( $cache[ $cache_key ] ) ) {
+			return $cache[ $cache_key ];
 		}
 
-		$image_html = '';
+		$image_data = array(
+			'image_html' => '',
+			'product_id' => 0,
+			'image_id'   => 0,
+		);
 		$tax_query  = array(
 			'relation' => 'AND',
 			array(
@@ -248,32 +261,43 @@ if ( ! function_exists( 'gstore_get_product_category_preview_image_html' ) ) :
 
 		$product_ids = array_map( 'absint', (array) $query->posts );
 		foreach ( $product_ids as $product_id ) {
+			if ( in_array( $product_id, $excluded_product_ids, true ) ) {
+				continue;
+			}
+
 			$title = get_the_title( $product_id );
 			if ( ! gstore_product_category_preview_title_is_relevant( $title, $term ) ) {
 				continue;
 			}
 
 			$image_id = absint( get_post_thumbnail_id( $product_id ) );
-			if ( $image_id > 0 ) {
-				$image_html = wp_get_attachment_image(
-					$image_id,
-					'woocommerce_thumbnail',
-					false,
-					array(
-						'class'   => 'Gstore-product-category-links__thumb-img',
-						'loading' => 'lazy',
-					)
-				);
+			if ( $image_id <= 0 || in_array( $image_id, $excluded_image_ids, true ) ) {
+				continue;
 			}
 
+			$image_html = wp_get_attachment_image(
+				$image_id,
+				'woocommerce_thumbnail',
+				false,
+				array(
+					'class'   => 'Gstore-product-category-links__thumb-img',
+					'loading' => 'lazy',
+				)
+			);
+
 			if ( '' !== $image_html ) {
+				$image_data = array(
+					'image_html' => $image_html,
+					'product_id' => $product_id,
+					'image_id'   => $image_id,
+				);
 				break;
 			}
 		}
 
-		if ( '' === $image_html ) {
+		if ( '' === $image_data['image_html'] ) {
 			$image_id = absint( get_term_meta( $term_id, 'thumbnail_id', true ) );
-			if ( $image_id > 0 ) {
+			if ( $image_id > 0 && ! in_array( $image_id, $excluded_image_ids, true ) ) {
 				$image_html = wp_get_attachment_image(
 					$image_id,
 					'thumbnail',
@@ -283,12 +307,34 @@ if ( ! function_exists( 'gstore_get_product_category_preview_image_html' ) ) :
 						'loading' => 'lazy',
 					)
 				);
+
+				if ( '' !== $image_html ) {
+					$image_data = array(
+						'image_html' => $image_html,
+						'product_id' => 0,
+						'image_id'   => $image_id,
+					);
+				}
 			}
 		}
 
-		$cache[ $term_id ] = (string) $image_html;
+		$cache[ $cache_key ] = $image_data;
 
-		return $cache[ $term_id ];
+		return $cache[ $cache_key ];
+	}
+endif;
+
+if ( ! function_exists( 'gstore_get_product_category_preview_image_html' ) ) :
+	/**
+	 * Retorna apenas o HTML da imagem de preview da categoria.
+	 *
+	 * @param WP_Term $term Categoria.
+	 * @return string
+	 */
+	function gstore_get_product_category_preview_image_html( $term ) {
+		$image_data = gstore_get_product_category_preview_image_data( $term );
+
+		return isset( $image_data['image_html'] ) ? (string) $image_data['image_html'] : '';
 	}
 endif;
 
@@ -416,8 +462,10 @@ if ( ! function_exists( 'gstore_get_product_related_category_cards' ) ) :
 			$card_terms[] = $parent_term;
 		}
 
-		$cards     = array();
-		$seen_ids  = array();
+		$cards                    = array();
+		$seen_ids                 = array();
+		$used_preview_product_ids = array();
+		$used_preview_image_ids   = array();
 		foreach ( $card_terms as $term ) {
 			if ( ! $term instanceof WP_Term || isset( $seen_ids[ (int) $term->term_id ] ) ) {
 				continue;
@@ -429,6 +477,10 @@ if ( ! function_exists( 'gstore_get_product_related_category_cards' ) ) :
 			}
 
 			$product_count = gstore_get_product_category_product_count( $term );
+			$preview_image = gstore_get_product_category_preview_image_data( $term, $used_preview_product_ids, $used_preview_image_ids );
+			$image_html    = isset( $preview_image['image_html'] ) ? (string) $preview_image['image_html'] : '';
+			$product_used  = isset( $preview_image['product_id'] ) ? absint( $preview_image['product_id'] ) : 0;
+			$image_used    = isset( $preview_image['image_id'] ) ? absint( $preview_image['image_id'] ) : 0;
 
 			$cards[] = array(
 				'title'      => wp_strip_all_tags( (string) $term->name ),
@@ -438,10 +490,16 @@ if ( ! function_exists( 'gstore_get_product_related_category_cards' ) ) :
 					number_format_i18n( $product_count )
 				),
 				'url'        => $link,
-				'image_html' => gstore_get_product_category_preview_image_html( $term ),
+				'image_html' => $image_html,
 			);
 
 			$seen_ids[ (int) $term->term_id ] = true;
+			if ( $product_used > 0 ) {
+				$used_preview_product_ids[] = $product_used;
+			}
+			if ( $image_used > 0 ) {
+				$used_preview_image_ids[] = $image_used;
+			}
 		}
 
 		return $cards;
