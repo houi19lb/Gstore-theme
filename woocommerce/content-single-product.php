@@ -162,84 +162,101 @@ if ( ! function_exists( 'gstore_get_product_category_depth' ) ) :
 	}
 endif;
 
-if ( ! function_exists( 'gstore_get_product_category_trail' ) ) :
+if ( ! function_exists( 'gstore_get_product_category_product_count' ) ) :
 	/**
-	 * Monta o caminho textual de uma categoria.
+	 * Retorna a quantidade de produtos publicados em uma categoria.
 	 *
 	 * @param WP_Term $term Categoria.
-	 * @return array<int, array{label:string}>
+	 * @return int
 	 */
-	function gstore_get_product_category_trail( $term ) {
+	function gstore_get_product_category_product_count( $term ) {
 		if ( ! $term instanceof WP_Term ) {
-			return array();
+			return 0;
 		}
 
-		$trail = array(
-			array(
-				'label' => __( 'Início', 'gstore' ),
-			),
-		);
-
-		$ancestor_ids = array_reverse( array_map( 'absint', get_ancestors( (int) $term->term_id, 'product_cat', 'taxonomy' ) ) );
-		foreach ( $ancestor_ids as $ancestor_id ) {
-			$ancestor = get_term( $ancestor_id, 'product_cat' );
-			if ( ! $ancestor instanceof WP_Term || is_wp_error( $ancestor ) ) {
-				continue;
-			}
-
-			$trail[] = array(
-				'label' => $ancestor->name,
-			);
-		}
-
-		$trail[] = array(
-			'label' => $term->name,
-		);
-
-		return $trail;
+		return max( 0, (int) $term->count );
 	}
 endif;
 
-if ( ! function_exists( 'gstore_get_product_related_category_title' ) ) :
+if ( ! function_exists( 'gstore_get_product_category_preview_image_html' ) ) :
 	/**
-	 * Retorna o texto principal do card de categoria relacionada.
+	 * Retorna a imagem do primeiro produto publicado da categoria.
 	 *
-	 * @param WP_Term      $term        Categoria do card.
-	 * @param WP_Term|null $parent_term Categoria pai da categoria principal.
+	 * @param WP_Term $term Categoria.
 	 * @return string
 	 */
-	function gstore_get_product_related_category_title( $term, $parent_term = null ) {
+	function gstore_get_product_category_preview_image_html( $term ) {
 		if ( ! $term instanceof WP_Term ) {
 			return '';
 		}
 
-		$term_name = wp_strip_all_tags( (string) $term->name );
-		if ( '' === $term_name ) {
-			return '';
+		static $cache = array();
+		$term_id = (int) $term->term_id;
+
+		if ( isset( $cache[ $term_id ] ) ) {
+			return $cache[ $term_id ];
 		}
 
-		$parent_name_normalized = $parent_term instanceof WP_Term
-			? strtolower( remove_accents( wp_strip_all_tags( (string) $parent_term->name ) ) )
-			: '';
-		$term_name_normalized   = strtolower( remove_accents( $term_name ) );
-
-		if ( false !== strpos( $term_name_normalized, 'pistola' ) ) {
-			return __( 'Ver todas as pistolas', 'gstore' );
-		}
-
-		if ( $parent_term instanceof WP_Term && false !== strpos( $parent_name_normalized, 'pistola' ) ) {
-			return sprintf(
-				/* translators: %s: Nome da categoria especifica, por exemplo 380 ACP. */
-				__( 'Ver todas as pistolas %s', 'gstore' ),
-				$term_name
-			);
-		}
-
-		return sprintf(
-			/* translators: %s: Nome da categoria. */
-			__( 'Ver produtos em %s', 'gstore' ),
-			$term_name
+		$image_html = '';
+		$query      = new WP_Query(
+			array(
+				'post_type'              => 'product',
+				'post_status'            => 'publish',
+				'posts_per_page'         => 1,
+				'fields'                 => 'ids',
+				'orderby'                => array(
+					'menu_order' => 'ASC',
+					'title'      => 'ASC',
+				),
+				'no_found_rows'          => true,
+				'ignore_sticky_posts'    => true,
+				'update_post_meta_cache' => false,
+				'update_post_term_cache' => false,
+				'tax_query'              => array(
+					array(
+						'taxonomy'         => 'product_cat',
+						'field'            => 'term_id',
+						'terms'            => array( $term_id ),
+						'include_children' => true,
+					),
+				),
+			)
 		);
+
+		$product_id = ! empty( $query->posts[0] ) ? absint( $query->posts[0] ) : 0;
+		if ( $product_id > 0 ) {
+			$image_id = absint( get_post_thumbnail_id( $product_id ) );
+			if ( $image_id > 0 ) {
+				$image_html = wp_get_attachment_image(
+					$image_id,
+					'woocommerce_thumbnail',
+					false,
+					array(
+						'class'   => 'Gstore-product-category-links__thumb-img',
+						'loading' => 'lazy',
+					)
+				);
+			}
+		}
+
+		if ( '' === $image_html ) {
+			$image_id = absint( get_term_meta( $term_id, 'thumbnail_id', true ) );
+			if ( $image_id > 0 ) {
+				$image_html = wp_get_attachment_image(
+					$image_id,
+					'thumbnail',
+					false,
+					array(
+						'class'   => 'Gstore-product-category-links__thumb-img',
+						'loading' => 'lazy',
+					)
+				);
+			}
+		}
+
+		$cache[ $term_id ] = (string) $image_html;
+
+		return $cache[ $term_id ];
 	}
 endif;
 
@@ -338,24 +355,17 @@ if ( ! function_exists( 'gstore_get_product_related_category_cards' ) ) :
 				continue;
 			}
 
-			$image_id   = absint( get_term_meta( (int) $term->term_id, 'thumbnail_id', true ) );
-			$image_html = $image_id > 0
-				? wp_get_attachment_image(
-					$image_id,
-					'thumbnail',
-					false,
-					array(
-						'class'   => 'Gstore-product-category-links__thumb-img',
-						'loading' => 'lazy',
-					)
-				)
-				: '';
+			$product_count = gstore_get_product_category_product_count( $term );
 
 			$cards[] = array(
-				'title'      => gstore_get_product_related_category_title( $term, $parent_term ),
+				'title'      => wp_strip_all_tags( (string) $term->name ),
+				'subtitle'   => sprintf(
+					/* translators: %s: Quantidade de produtos. */
+					__( 'Ver produtos (%s)', 'gstore' ),
+					number_format_i18n( $product_count )
+				),
 				'url'        => $link,
-				'trail'      => gstore_get_product_category_trail( $term ),
-				'image_html' => $image_html,
+				'image_html' => gstore_get_product_category_preview_image_html( $term ),
 			);
 
 			$seen_ids[ (int) $term->term_id ] = true;
@@ -382,16 +392,16 @@ if ( ! function_exists( 'gstore_render_product_related_category_links' ) ) :
 		?>
 		<section class="Gstore-product-category-links Gstore-product-category-links--<?php echo esc_attr( $context ); ?>" aria-label="<?php esc_attr_e( 'Categorias relacionadas', 'gstore' ); ?>">
 			<div class="Gstore-product-category-links__header">
-				<h3 class="Gstore-product-category-links__title"><?php esc_html_e( 'Explore categorias relacionadas', 'gstore' ); ?></h3>
-				<p class="Gstore-product-category-links__subtitle"><?php esc_html_e( 'Encontre produtos semelhantes dentro das categorias mais próximas.', 'gstore' ); ?></p>
+				<h3 class="Gstore-product-category-links__title"><?php esc_html_e( 'Navegue por categorias', 'gstore' ); ?></h3>
+				<p class="Gstore-product-category-links__subtitle"><?php esc_html_e( 'Encontre mais opções dentro das categorias mais próximas.', 'gstore' ); ?></p>
 			</div>
 
 			<div class="Gstore-product-category-links__list">
 				<?php foreach ( $cards as $card ) : ?>
 					<?php
 					$title      = isset( $card['title'] ) ? (string) $card['title'] : '';
+					$subtitle   = isset( $card['subtitle'] ) ? (string) $card['subtitle'] : '';
 					$url        = isset( $card['url'] ) ? (string) $card['url'] : '';
-					$trail      = isset( $card['trail'] ) && is_array( $card['trail'] ) ? $card['trail'] : array();
 					$image_html = isset( $card['image_html'] ) ? (string) $card['image_html'] : '';
 
 					if ( '' === $title || '' === $url ) {
@@ -409,22 +419,8 @@ if ( ! function_exists( 'gstore_render_product_related_category_links' ) ) :
 
 						<span class="Gstore-product-category-links__body">
 							<span class="Gstore-product-category-links__item-title"><?php echo esc_html( $title ); ?></span>
-
-							<?php if ( ! empty( $trail ) ) : ?>
-								<span class="Gstore-product-category-links__trail">
-									<?php foreach ( $trail as $trail_index => $trail_item ) : ?>
-										<?php
-										$trail_label = isset( $trail_item['label'] ) ? (string) $trail_item['label'] : '';
-										if ( '' === $trail_label ) {
-											continue;
-										}
-										?>
-										<span><?php echo esc_html( $trail_label ); ?></span>
-										<?php if ( $trail_index < count( $trail ) - 1 ) : ?>
-											<span class="Gstore-product-category-links__trail-separator" aria-hidden="true">/</span>
-										<?php endif; ?>
-									<?php endforeach; ?>
-								</span>
+							<?php if ( '' !== $subtitle ) : ?>
+								<span class="Gstore-product-category-links__item-subtitle"><?php echo esc_html( $subtitle ); ?></span>
 							<?php endif; ?>
 						</span>
 
