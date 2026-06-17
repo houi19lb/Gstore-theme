@@ -1150,11 +1150,6 @@ body.single-product .onsale {
 	color: var(--gstore-color-accent-hover);
 }
 
-.Gstore-single-product__summary-extra {
-	margin: 0;
-	padding-top: 0;
-}
-
 /* Ajustes específicos para produtos de pronta entrega */
 .Gstore-single-product__summary-card.is-in-stock .Gstore-single-product__add-to-cart {
 	margin-bottom: 24px;

@@ -1440,10 +1440,6 @@ $gstore_tab_next_cta_labels = array(
 
 						<?php gstore_render_product_related_category_links( $related_category_cards, 'desktop' ); ?>
 
-						<!-- Extra (hooks de plugins) -->
-						<div class="Gstore-single-product__summary-extra">
-							<?php do_action( 'woocommerce_single_product_summary' ); ?>
-						</div>
 					</div>
 				</div>
 			</section>
