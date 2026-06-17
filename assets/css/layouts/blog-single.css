@@ -54,16 +54,22 @@
 	align-items: center;
 	justify-content: center;
 	flex: 0 0 auto;
-	width: 0.75em;
+	width: 0.95rem;
+	height: 1.1em;
 	color: var(--gstore-color-text-muted);
 	font-size: 0;
 	line-height: 1;
 }
 
 .Gstore-breadcrumb__separator::before {
-	content: "\203A";
-	font-size: 0.95rem;
-	font-weight: var(--gstore-font-weight-bold);
+	content: "";
+	display: block;
+	width: 0.42rem;
+	height: 0.42rem;
+	border-top: 2px solid currentColor;
+	border-right: 2px solid currentColor;
+	box-sizing: border-box;
+	transform: rotate(45deg);
 }
 
 .Gstore-breadcrumb__current {
