@@ -3694,6 +3694,168 @@ body.single-product .onsale {
 	white-space: nowrap;
 }
 
+.Gstore-product-category-links {
+	background: #ffffff;
+	border: 1px solid #e7e0d1;
+	border-radius: var(--gstore-radius-base, 4px);
+	padding: 12px;
+	box-shadow: 0 1px 2px rgba(17, 24, 39, 0.04);
+}
+
+.buybox .Gstore-product-category-links {
+	margin-top: 16px;
+}
+
+.Gstore-product-category-links--mobile {
+	display: none;
+}
+
+.Gstore-product-category-links__header {
+	margin-bottom: 10px;
+}
+
+.Gstore-product-category-links__title {
+	margin: 0;
+	color: var(--gstore-color-text-primary, #111827);
+	font-size: 13px;
+	font-weight: var(--gstore-font-weight-bold, 700);
+	line-height: 1.25;
+}
+
+.Gstore-product-category-links__subtitle {
+	margin: 3px 0 0;
+	color: var(--gstore-color-text-secondary, #6b7280);
+	font-size: 11px;
+	line-height: 1.35;
+}
+
+.Gstore-product-category-links__list {
+	display: grid;
+	gap: 8px;
+}
+
+.Gstore-product-category-links__item {
+	display: grid;
+	grid-template-columns: 38px minmax(0, 1fr) 24px;
+	gap: 10px;
+	align-items: center;
+	min-height: 58px;
+	padding: 8px;
+	background: #fffdf9;
+	border: 1px solid #eee7d9;
+	border-radius: var(--gstore-radius-base, 4px);
+	color: inherit;
+	text-decoration: none;
+	transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+}
+
+.Gstore-product-category-links__item:hover,
+.Gstore-product-category-links__item:focus-visible {
+	background: #ffffff;
+	border-color: var(--gstore-color-accent, #b5a642);
+	box-shadow: 0 4px 14px rgba(17, 24, 39, 0.08);
+	outline: none;
+}
+
+.Gstore-product-category-links__thumb {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 34px;
+	height: 34px;
+	overflow: hidden;
+	background: var(--gstore-color-bg-gray-50, #f7f7f7);
+	border: 1px solid #ece4d4;
+	border-radius: var(--gstore-radius-base, 4px);
+	color: var(--gstore-color-accent, #b5a642);
+	font-size: 14px;
+}
+
+.Gstore-product-category-links__thumb-img {
+	display: block;
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+}
+
+.Gstore-product-category-links__body {
+	display: grid;
+	gap: 3px;
+	min-width: 0;
+}
+
+.Gstore-product-category-links__item-title {
+	color: var(--gstore-color-text-primary, #111827);
+	font-size: 12px;
+	font-weight: var(--gstore-font-weight-bold, 700);
+	line-height: 1.25;
+}
+
+.Gstore-product-category-links__trail {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 3px;
+	color: var(--gstore-color-text-secondary, #6b7280);
+	font-size: 10px;
+	line-height: 1.25;
+}
+
+.Gstore-product-category-links__trail-separator {
+	color: #a8a29e;
+}
+
+.Gstore-product-category-links__arrow {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 24px;
+	height: 24px;
+	color: var(--gstore-color-text-primary, #111827);
+}
+
+.Gstore-product-category-links__arrow::before {
+	content: "";
+	display: block;
+	width: 7px;
+	height: 7px;
+	border-top: 2px solid currentColor;
+	border-right: 2px solid currentColor;
+	box-sizing: border-box;
+	transform: rotate(45deg);
+}
+
+@media (max-width: 1024px) {
+	.Gstore-product-category-links--desktop {
+		display: none;
+	}
+
+	.Gstore-product-category-links--mobile {
+		display: block;
+		margin: 24px 0;
+	}
+}
+
+@media (max-width: 640px) {
+	.Gstore-product-category-links--mobile {
+		margin: 20px 0;
+	}
+
+	.Gstore-product-category-links {
+		padding: 10px;
+	}
+
+	.Gstore-product-category-links__item {
+		grid-template-columns: 36px minmax(0, 1fr) 22px;
+		gap: 8px;
+		padding: 8px;
+	}
+
+	.Gstore-product-category-links__thumb {
+		width: 32px;
+		height: 32px;
+	}
+}
+
 /* Faixa compacta (scroll horizontal) com os 3 cards dentro do buybox (mobile) */
 .Gstore-single-product__buybox-meta-strip {
 	display: none;
