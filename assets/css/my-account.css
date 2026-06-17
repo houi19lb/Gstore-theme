@@ -4645,9 +4645,13 @@ form.woocommerce-form {
 .gstore-partner-contract .gstore-account-contract__preview {
 	background: transparent;
 	padding: 0;
+	max-width: 100%;
+	overflow-x: auto;
 }
 
 .gstore-partner-contract-document {
+	box-sizing: border-box;
+	width: 100%;
 	max-width: none;
 	margin: 0 auto;
 	padding: 28px 32px;
@@ -4657,6 +4661,7 @@ form.woocommerce-form {
 	color: #1f2933;
 	font-size: 14px;
 	line-height: 1.65;
+	overflow-wrap: anywhere;
 	box-shadow: none;
 }
 
@@ -4917,11 +4922,11 @@ form.woocommerce-form {
 	}
 
 	.gstore-partner-contract .gstore-account-contract__preview {
-		padding: 12px;
+		padding: 0;
 	}
 
 	.gstore-partner-contract-document {
-		padding: 20px;
+		padding: 18px;
 	}
 
 	.gstore-partner-contract-document__header,
@@ -5017,6 +5022,7 @@ body.woocommerce-account main#wp--skip-link--target.wp-block-group.wp-block-grou
 
 .gstore-myaccount__sidebar {
 	top: calc(var(--gstore-sticky-offset, 110px) + 16px);
+	min-width: 0;
 }
 
 .gstore-myaccount__content,
@@ -5085,6 +5091,7 @@ main.gstore-myaccount__content,
 .gstore-myaccount-nav {
 	overflow: hidden;
 	overflow: clip;
+	min-width: 0;
 }
 
 .gstore-myaccount-nav__user {
