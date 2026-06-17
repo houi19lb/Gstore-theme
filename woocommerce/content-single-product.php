@@ -198,33 +198,61 @@ if ( ! function_exists( 'gstore_get_product_category_preview_image_html' ) ) :
 		}
 
 		$image_html = '';
+		$tax_query  = array(
+			'relation' => 'AND',
+			array(
+				'taxonomy'         => 'product_cat',
+				'field'            => 'term_id',
+				'terms'            => array( $term_id ),
+				'include_children' => true,
+			),
+		);
+
+		if ( function_exists( 'wc_get_product_visibility_term_ids' ) ) {
+			$visibility_terms = wc_get_product_visibility_term_ids();
+			$excluded_terms   = array_filter(
+				array(
+					isset( $visibility_terms['exclude-from-catalog'] ) ? absint( $visibility_terms['exclude-from-catalog'] ) : 0,
+				)
+			);
+
+			if ( ! empty( $excluded_terms ) ) {
+				$tax_query[] = array(
+					'taxonomy' => 'product_visibility',
+					'field'    => 'term_taxonomy_id',
+					'terms'    => $excluded_terms,
+					'operator' => 'NOT IN',
+				);
+			}
+		}
+
 		$query      = new WP_Query(
 			array(
 				'post_type'              => 'product',
 				'post_status'            => 'publish',
-				'posts_per_page'         => 1,
+				'posts_per_page'         => 12,
 				'fields'                 => 'ids',
 				'orderby'                => array(
 					'menu_order' => 'ASC',
 					'title'      => 'ASC',
 				),
+				'gstore_instock_first'   => 1,
+				'gstore_featured_first'  => 1,
 				'no_found_rows'          => true,
 				'ignore_sticky_posts'    => true,
 				'update_post_meta_cache' => false,
 				'update_post_term_cache' => false,
-				'tax_query'              => array(
-					array(
-						'taxonomy'         => 'product_cat',
-						'field'            => 'term_id',
-						'terms'            => array( $term_id ),
-						'include_children' => true,
-					),
-				),
+				'tax_query'              => $tax_query, // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_tax_query
 			)
 		);
 
-		$product_id = ! empty( $query->posts[0] ) ? absint( $query->posts[0] ) : 0;
-		if ( $product_id > 0 ) {
+		$product_ids = array_map( 'absint', (array) $query->posts );
+		foreach ( $product_ids as $product_id ) {
+			$title = get_the_title( $product_id );
+			if ( ! gstore_product_category_preview_title_is_relevant( $title, $term ) ) {
+				continue;
+			}
+
 			$image_id = absint( get_post_thumbnail_id( $product_id ) );
 			if ( $image_id > 0 ) {
 				$image_html = wp_get_attachment_image(
@@ -236,6 +264,10 @@ if ( ! function_exists( 'gstore_get_product_category_preview_image_html' ) ) :
 						'loading' => 'lazy',
 					)
 				);
+			}
+
+			if ( '' !== $image_html ) {
+				break;
 			}
 		}
 
@@ -257,6 +289,47 @@ if ( ! function_exists( 'gstore_get_product_category_preview_image_html' ) ) :
 		$cache[ $term_id ] = (string) $image_html;
 
 		return $cache[ $term_id ];
+	}
+endif;
+
+if ( ! function_exists( 'gstore_product_category_preview_title_is_relevant' ) ) :
+	/**
+	 * Evita usar acessorios como imagem de previa para categorias de armas.
+	 *
+	 * @param string  $title Titulo do produto candidato.
+	 * @param WP_Term $term  Categoria.
+	 * @return bool
+	 */
+	function gstore_product_category_preview_title_is_relevant( $title, $term ) {
+		$title = strtolower( remove_accents( wp_strip_all_tags( (string) $title ) ) );
+		if ( '' === $title || ! $term instanceof WP_Term ) {
+			return false;
+		}
+
+		$lineage_terms = array( $term );
+		foreach ( get_ancestors( (int) $term->term_id, 'product_cat', 'taxonomy' ) as $ancestor_id ) {
+			$ancestor = get_term( (int) $ancestor_id, 'product_cat' );
+			if ( $ancestor instanceof WP_Term && ! is_wp_error( $ancestor ) ) {
+				$lineage_terms[] = $ancestor;
+			}
+		}
+
+		$lineage_text = '';
+		foreach ( $lineage_terms as $lineage_term ) {
+			$lineage_text .= ' ' . strtolower( remove_accents( (string) $lineage_term->name . ' ' . (string) $lineage_term->slug ) );
+		}
+
+		$is_firearm_category = preg_match( '/\b(revolver|revolveres|pistola|pistolas|carabina|carabinas|espingarda|espingardas|rifle|rifles)\b/', $lineage_text );
+		if ( ! $is_firearm_category ) {
+			return true;
+		}
+
+		$accessory_pattern = '/\b(coldre|capa|case|maleta|bolsa|porta|suporte|trilho|bandoleira|municao|municoes|chumbinho|chumbinhos|carregador|magazine|clip|kit|alvo|oleo|limpeza)\b/';
+		if ( preg_match( $accessory_pattern, $title ) ) {
+			return false;
+		}
+
+		return true;
 	}
 endif;
 
