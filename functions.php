@@ -4013,7 +4013,14 @@ function gstore_enqueue_styles() {
 		|| $gstore_is_partner_program_page
 	) {
 		$my_account_css_file    = get_theme_file_path( 'assets/css/my-account.css' );
-		$my_account_css_version = file_exists( $my_account_css_file ) ? (string) filemtime( $my_account_css_file ) : $theme_version;
+		$my_account_css_version = $theme_version;
+		if ( file_exists( $my_account_css_file ) ) {
+			$my_account_css_hash    = md5_file( $my_account_css_file );
+			$my_account_css_version = (string) filemtime( $my_account_css_file );
+			if ( is_string( $my_account_css_hash ) && '' !== $my_account_css_hash ) {
+				$my_account_css_version .= '-' . substr( $my_account_css_hash, 0, 8 );
+			}
+		}
 		wp_enqueue_style(
 			'gstore-my-account-css',
 			get_theme_file_uri( 'assets/css/my-account.css' ),
