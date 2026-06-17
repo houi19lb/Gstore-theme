@@ -1328,9 +1328,12 @@ if ( ! function_exists( 'gstore_partner_account_render_redemptions' ) ) {
 			'cancelled' => __( 'Cancelado', 'gstore' ),
 		);
 		?>
-		<div class="gstore-partner-redemption-list">
+		<div class="<?php echo esc_attr( 'gstore-partner-redemption-list' . ( empty( $redemptions ) ? ' is-empty' : '' ) ); ?>">
 			<?php if ( empty( $redemptions ) ) : ?>
-				<p><?php esc_html_e( 'Nenhum resgate solicitado ainda.', 'gstore' ); ?></p>
+				<div class="gstore-partner-empty-state">
+					<span class="gstore-partner-empty-state__icon"><?php echo gstore_partner_account_icon( 'coins' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></span>
+					<p><?php esc_html_e( 'Nenhum resgate solicitado ainda.', 'gstore' ); ?></p>
+				</div>
 			<?php else : ?>
 				<?php foreach ( $redemptions as $item ) : ?>
 					<div class="gstore-partner-redemption">
@@ -1374,7 +1377,10 @@ if ( ! function_exists( 'gstore_partner_account_render_contract' ) ) {
 		<section class="gstore-account-contract gstore-partner-contract">
 			<header class="gstore-account-contract__header">
 				<div>
-					<h3 class="gstore-account-contract__title"><?php esc_html_e( 'Contrato do Programa Revendedor', 'gstore' ); ?></h3>
+					<h3 class="gstore-account-contract__title gstore-partner-section-title">
+						<span class="gstore-partner-title-icon"><?php echo gstore_partner_account_icon( 'document' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></span>
+						<span><?php esc_html_e( 'Contrato do Programa Revendedor', 'gstore' ); ?></span>
+					</h3>
 					<p class="gstore-account-contract__status">
 						<?php if ( $accepted && $accepted_at ) : ?>
 							<?php
@@ -1650,8 +1656,11 @@ if ( ! function_exists( 'gstore_partner_account_render_endpoint' ) ) {
 				</section>
 			<?php elseif ( 'creditos' === $view ) : ?>
 				<div class="gstore-partner-credit-grid">
-					<section class="gstore-partner-panel">
-						<h3><?php esc_html_e( 'Solicitar resgate', 'gstore' ); ?></h3>
+					<section class="gstore-partner-panel gstore-partner-credit-request">
+						<h3 class="gstore-partner-credit-title gstore-partner-section-title">
+							<span class="gstore-partner-title-icon"><?php echo gstore_partner_account_icon( 'coins' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></span>
+							<span><?php esc_html_e( 'Solicitar resgate', 'gstore' ); ?></span>
+						</h3>
 						<div class="gstore-partner-balance is-credit-view">
 							<div class="gstore-partner-icon"><?php echo gstore_partner_account_icon( 'coins' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></div>
 							<div>
@@ -1690,8 +1699,11 @@ if ( ! function_exists( 'gstore_partner_account_render_endpoint' ) ) {
 						</form>
 					</section>
 
-					<section class="gstore-partner-panel">
-						<h3><?php esc_html_e( 'Histórico de créditos', 'gstore' ); ?></h3>
+					<section class="gstore-partner-panel gstore-partner-credit-history">
+						<h3 class="gstore-partner-section-title">
+							<span class="gstore-partner-title-icon"><?php echo gstore_partner_account_icon( 'coins' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></span>
+							<span><?php esc_html_e( 'Histórico de créditos', 'gstore' ); ?></span>
+						</h3>
 						<?php gstore_partner_account_render_redemptions( $redemptions ); ?>
 					</section>
 				</div>
