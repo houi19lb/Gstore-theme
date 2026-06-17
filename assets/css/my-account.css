@@ -4087,10 +4087,19 @@ form.woocommerce-form {
 
 .gstore-partner-stat {
 	display: grid;
+	grid-template-columns: minmax(0, 1fr);
+	grid-auto-flow: row;
 	align-content: start;
+	justify-items: start;
 	gap: 10px;
 	min-height: 116px;
 	padding: 20px 22px;
+}
+
+.gstore-partner-stat__title,
+.gstore-partner-stat > strong,
+.gstore-partner-stat > small {
+	grid-column: 1 / -1;
 }
 
 .gstore-partner-stat__title,
@@ -4099,6 +4108,11 @@ form.woocommerce-form {
 	display: flex;
 	align-items: center;
 	gap: 9px;
+}
+
+.gstore-partner-stat__title {
+	width: 100%;
+	min-width: 0;
 }
 
 .gstore-partner-stat__icon,
@@ -4176,6 +4190,10 @@ form.woocommerce-form {
 	color: #070707;
 }
 
+.gstore-partner-stat > strong {
+	white-space: nowrap;
+}
+
 .gstore-partner-stat small,
 .gstore-partner-balance small {
 	display: block;
@@ -4184,6 +4202,11 @@ form.woocommerce-form {
 	font-weight: 400;
 	color: var(--partner-muted);
 	opacity: 0.74;
+}
+
+.gstore-partner-stat > small {
+	max-width: 100%;
+	line-height: 1.35;
 }
 
 .gstore-partner-stat .is-status {
