@@ -23431,7 +23431,14 @@ function gstore_filemtime_asset_version( $src ) {
 	$file = get_stylesheet_directory() . substr( $path, strlen( $base ) );
 
 	if ( '' !== $file && file_exists( $file ) ) {
-		$src = add_query_arg( 'ver', (string) filemtime( $file ), $src );
+		$asset_version = (string) filemtime( $file );
+		if ( false !== strpos( str_replace( '\\', '/', $file ), '/assets/css/my-account.css' ) ) {
+			$asset_hash = md5_file( $file );
+			if ( is_string( $asset_hash ) && '' !== $asset_hash ) {
+				$asset_version .= '-' . substr( $asset_hash, 0, 8 );
+			}
+		}
+		$src = add_query_arg( 'ver', $asset_version, $src );
 	}
 
 	return $src;
