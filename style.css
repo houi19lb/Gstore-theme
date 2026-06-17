@@ -104,7 +104,7 @@ h2.wp-block-heading.has-text-align-center.has-x-large-font-size {
 .Gstore-breadcrumb a {
 	color: var(--gstore-color-accent, #b5a642);
 	text-decoration: none;
-	font-weight: 600;
+	font-weight: var(--gstore-font-weight-bold, 700);
 }
 
 .Gstore-single-product__entry {
@@ -10292,8 +10292,9 @@ body:has(.Gstore-catalog-shell--light) main {
 }
 
 .Gstore-breadcrumb a {
-	color: var(--text-muted, #6b6b6b);
+	color: var(--text-main, var(--gstore-color-text-primary, #1a1a1a));
 	text-decoration: none;
+	font-weight: var(--gstore-font-weight-bold, 700);
 	transition: color 0.2s ease;
 }
 
@@ -10302,7 +10303,21 @@ body:has(.Gstore-catalog-shell--light) main {
 }
 
 .Gstore-breadcrumb__separator {
-	color: var(--gray-border, #e6e6e6);
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	flex: 0 0 auto;
+	width: 0.75em;
+	color: var(--gstore-color-accent, #b5a642);
+	font-size: 0;
+	line-height: 1;
+	opacity: 0.7;
+}
+
+.Gstore-breadcrumb__separator::before {
+	content: "\203A";
+	font-size: 0.95rem;
+	font-weight: var(--gstore-font-weight-bold, 700);
 }
 
 .Gstore-breadcrumb__current {

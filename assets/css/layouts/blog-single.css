@@ -41,6 +41,7 @@
 
 .Gstore-breadcrumb a {
 	color: var(--gstore-color-text-secondary);
+	font-weight: var(--gstore-font-weight-bold);
 	transition: color var(--gstore-transition-fast);
 }
 
@@ -49,7 +50,20 @@
 }
 
 .Gstore-breadcrumb__separator {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	flex: 0 0 auto;
+	width: 0.75em;
 	color: var(--gstore-color-text-muted);
+	font-size: 0;
+	line-height: 1;
+}
+
+.Gstore-breadcrumb__separator::before {
+	content: "\203A";
+	font-size: 0.95rem;
+	font-weight: var(--gstore-font-weight-bold);
 }
 
 .Gstore-breadcrumb__current {

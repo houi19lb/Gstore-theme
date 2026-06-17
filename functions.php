@@ -16868,7 +16868,7 @@ function gstore_get_catalog_archive_breadcrumb_html() {
 		}
 
 		if ( $index > 0 ) {
-			$html .= '<span class="Gstore-breadcrumb__separator">/</span>';
+			$html .= '<span class="Gstore-breadcrumb__separator" aria-hidden="true"></span>';
 		}
 
 		$url = isset( $item['item'] ) ? (string) $item['item'] : '';
@@ -16937,7 +16937,7 @@ function gstore_get_product_category_archive_breadcrumb_html() {
 	$last = count( $items ) - 1;
 	foreach ( $items as $index => $item ) {
 		if ( $index > 0 ) {
-			$html .= '<span class="Gstore-breadcrumb__separator">/</span>';
+			$html .= '<span class="Gstore-breadcrumb__separator" aria-hidden="true"></span>';
 		}
 
 		if ( $index === $last || empty( $item['url'] ) ) {

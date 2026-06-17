@@ -631,7 +631,7 @@ $gstore_tab_next_cta_labels = array(
 				if ( function_exists( 'woocommerce_breadcrumb' ) ) {
 					woocommerce_breadcrumb(
 						array(
-							'delimiter'   => '<span aria-hidden="true">/</span>',
+							'delimiter'   => '<span class="Gstore-breadcrumb__separator" aria-hidden="true"></span>',
 							'wrap_before' => '<div class="Gstore-breadcrumb">',
 							'wrap_after'  => '</div>',
 						)
