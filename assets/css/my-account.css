@@ -4620,9 +4620,8 @@ form.woocommerce-form {
 
 .gstore-partner-contract {
 	margin-top: 0;
-	--partner-contract-border: rgba(31, 41, 51, 0.12);
-	--partner-contract-divider: rgba(31, 41, 51, 0.1);
-	--partner-contract-divider-strong: rgba(31, 41, 51, 0.2);
+	--partner-contract-divider: rgba(31, 41, 51, 0.08);
+	--partner-contract-divider-strong: rgba(31, 41, 51, 0.12);
 }
 
 .gstore-partner-contract .gstore-account-contract__header {
@@ -4646,6 +4645,8 @@ form.woocommerce-form {
 }
 
 .gstore-partner-contract .gstore-account-contract__preview {
+	border: 0;
+	border-radius: 0;
 	background: transparent;
 	padding: 0;
 	max-width: 100%;
@@ -4658,9 +4659,9 @@ form.woocommerce-form {
 	max-width: none;
 	margin: 0 auto;
 	padding: 28px 32px;
-	border: 1px solid var(--partner-contract-border);
-	border-radius: 6px;
-	background: #fff;
+	border: 0;
+	border-radius: 0;
+	background: transparent;
 	color: #1f2933;
 	font-size: 14px;
 	line-height: 1.65;
