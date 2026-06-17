@@ -3993,7 +3993,7 @@ form.woocommerce-form {
 	--partner-border: #1f2933;
 	--partner-muted: #6b7280;
 	display: grid;
-	gap: 22px;
+	gap: 20px;
 	color: #161616;
 }
 
@@ -4008,19 +4008,19 @@ form.woocommerce-form {
 }
 
 .gstore-partner-hero {
-	padding: 26px 30px;
+	padding: 24px 28px;
 }
 
 .gstore-partner-hero h2 {
 	margin: 0 0 8px;
-	font-size: 30px;
-	line-height: 1.15;
+	font-size: 27px;
+	line-height: 1.18;
 	letter-spacing: 0;
 }
 
 .gstore-partner-hero h2,
 .gstore-partner-hero h2 * {
-	font-weight: 800;
+	font-weight: 750;
 }
 
 .gstore-partner-hero h2::first-letter {
@@ -4037,54 +4037,90 @@ form.woocommerce-form {
 
 .gstore-partner-tabs {
 	display: flex;
-	gap: 8px;
+	align-items: flex-end;
+	gap: clamp(22px, 4vw, 46px);
 	flex-wrap: wrap;
+	border-bottom: 1px solid #e6e8ed;
 }
 
 .gstore-partner-tabs a {
-	border: 1px solid rgba(31, 41, 51, 0.28);
-	border-radius: 6px;
-	color: #242424;
-	font-size: 13px;
+	position: relative;
+	border: 0;
+	border-radius: 0;
+	color: rgba(36, 36, 36, 0.62);
+	font-size: 14px;
 	font-weight: 700;
-	padding: 10px 14px;
+	padding: 0 0 14px;
 	text-decoration: none;
+	transition: color 160ms ease, opacity 160ms ease;
 }
 
 .gstore-partner-tabs a.is-active,
 .gstore-partner-tabs a:hover {
-	background: rgba(172, 145, 43, 0.1);
-	border-color: var(--partner-gold);
+	background: transparent;
+	border-color: transparent;
 	color: var(--partner-gold-dark);
+}
+
+.gstore-partner-tabs a::after {
+	content: "";
+	position: absolute;
+	left: 0;
+	right: 0;
+	bottom: -1px;
+	height: 2px;
+	border-radius: 999px;
+	background: currentColor;
+	opacity: 0;
+}
+
+.gstore-partner-tabs a.is-active::after,
+.gstore-partner-tabs a:hover::after {
+	opacity: 1;
 }
 
 .gstore-partner-stats {
 	display: grid;
-	grid-template-columns: repeat(4, minmax(0, 1fr));
+	grid-template-columns: repeat(3, minmax(0, 1fr));
 	gap: 18px;
 }
 
 .gstore-partner-stat {
 	display: grid;
-	grid-template-columns: 24px minmax(0, 1fr);
-	align-items: start;
-	gap: 8px;
-	min-height: 104px;
-	padding: 18px 14px;
+	align-content: start;
+	gap: 10px;
+	min-height: 116px;
+	padding: 20px 22px;
 }
 
-.gstore-partner-stat .gstore-partner-icon {
-	width: 22px;
-	height: 22px;
-	margin-top: 1px;
-	border-radius: 0;
-	background: transparent;
+.gstore-partner-stat__title,
+.gstore-partner-section-title,
+.gstore-partner-link-panel__header h3 {
+	display: flex;
+	align-items: center;
+	gap: 9px;
 }
 
-.gstore-partner-stat .gstore-partner-icon svg {
-	width: 21px;
-	height: 21px;
-	stroke-width: 2.2;
+.gstore-partner-stat__icon,
+.gstore-partner-title-icon {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 17px;
+	height: 17px;
+	color: var(--partner-gold);
+	flex: 0 0 auto;
+}
+
+.gstore-partner-stat__icon svg,
+.gstore-partner-title-icon svg {
+	width: 17px;
+	height: 17px;
+	fill: none;
+	stroke: currentColor;
+	stroke-width: 2.1;
+	stroke-linecap: round;
+	stroke-linejoin: round;
 }
 
 .gstore-partner-icon {
@@ -4121,11 +4157,20 @@ form.woocommerce-form {
 	white-space: nowrap;
 }
 
+.gstore-partner-stat__icon,
+.gstore-partner-title-icon {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	color: var(--partner-gold);
+}
+
 .gstore-partner-stat strong,
 .gstore-partner-balance strong {
 	display: block;
-	margin-top: 4px;
+	margin-top: 2px;
 	font-size: 25px;
+	font-weight: 720;
 	line-height: 1.1;
 	letter-spacing: 0;
 	color: #070707;
@@ -4134,9 +4179,11 @@ form.woocommerce-form {
 .gstore-partner-stat small,
 .gstore-partner-balance small {
 	display: block;
-	margin-top: 5px;
+	margin-top: 2px;
 	font-size: 12px;
+	font-weight: 400;
 	color: var(--partner-muted);
+	opacity: 0.74;
 }
 
 .gstore-partner-stat .is-status {
@@ -4156,11 +4203,49 @@ form.woocommerce-form {
 }
 
 .gstore-partner-link-panel {
+	display: block;
+	padding: 22px 24px;
+}
+
+.gstore-partner-link-panel__content {
 	display: grid;
-	grid-template-columns: 66px minmax(0, 1fr) auto auto;
+	gap: 12px;
+}
+
+.gstore-partner-link-panel__header {
+	display: flex;
 	align-items: center;
+	justify-content: space-between;
 	gap: 16px;
-	padding: 20px;
+}
+
+.gstore-partner-status-pill {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	min-height: 25px;
+	border-radius: 999px;
+	padding: 4px 10px;
+	background: #e8f6ec;
+	color: #19733f;
+	font-size: 12px;
+	font-weight: 700;
+	white-space: nowrap;
+}
+
+.gstore-partner-status-pill::before {
+	content: "";
+	width: 7px;
+	height: 7px;
+	border-radius: 999px;
+	background: currentColor;
+}
+
+.gstore-partner-link-panel__actions {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) auto auto;
+	align-items: center;
+	gap: 14px;
 }
 
 .gstore-partner-link-panel h3,
@@ -4171,10 +4256,19 @@ form.woocommerce-form {
 	letter-spacing: 0;
 }
 
+.gstore-partner-link-panel__header h3,
+.gstore-partner-section-title {
+	margin-bottom: 0;
+	font-size: 17px;
+	font-weight: 740;
+}
+
 .gstore-partner-link-panel input {
+	box-sizing: border-box;
 	width: 100%;
+	min-width: 0;
 	min-height: 44px;
-	margin-top: 8px;
+	margin-top: 0;
 	border: 1px solid #d8dde5;
 	border-radius: 4px;
 	padding: 0 14px;
@@ -4287,6 +4381,17 @@ form.woocommerce-form {
 	color: #1f2933;
 }
 
+.gstore-partner-table__item {
+	font-weight: 600;
+	color: #111827;
+}
+
+.gstore-partner-table__value {
+	display: inline-block;
+	max-width: 100%;
+	overflow-wrap: anywhere;
+}
+
 .gstore-partner-pill {
 	display: inline-flex;
 	align-items: center;
@@ -4332,6 +4437,11 @@ form.woocommerce-form {
 	margin: 18px 0;
 }
 
+.gstore-partner-balance-panel .gstore-partner-balance {
+	display: block;
+	margin: 16px 0 18px;
+}
+
 .gstore-partner-balance.is-credit-view {
 	margin-top: 0;
 	padding-bottom: 18px;
@@ -4344,6 +4454,11 @@ form.woocommerce-form {
 	gap: 18px;
 	align-items: start;
 	margin-top: 18px;
+}
+
+.gstore-partner-how__body--plain {
+	display: block;
+	margin-top: 16px;
 }
 
 .gstore-partner-how ul {
@@ -4592,8 +4707,8 @@ form.woocommerce-form {
 		grid-template-columns: repeat(2, minmax(0, 1fr));
 	}
 
-	.gstore-partner-link-panel {
-		grid-template-columns: 66px minmax(0, 1fr);
+	.gstore-partner-link-panel__actions {
+		grid-template-columns: 1fr;
 	}
 }
 
@@ -4623,7 +4738,6 @@ form.woocommerce-form {
 		grid-template-columns: 1fr;
 	}
 
-	.gstore-partner-stat,
 	.gstore-partner-link-panel,
 	.gstore-partner-balance,
 	.gstore-partner-how__body {
@@ -4631,7 +4745,7 @@ form.woocommerce-form {
 	}
 
 	.gstore-partner-stat {
-		grid-template-columns: 24px minmax(0, 1fr);
+		min-height: auto;
 	}
 
 	.gstore-partner-icon {
@@ -4650,10 +4764,20 @@ form.woocommerce-form {
 		justify-content: center;
 	}
 
+	.gstore-partner-link-panel__header {
+		align-items: flex-start;
+		flex-direction: column;
+	}
+
+	.gstore-partner-link-panel__actions {
+		grid-template-columns: 1fr;
+	}
+
 	.gstore-partner-table,
 	.gstore-partner-table tbody,
 	.gstore-partner-table tr,
 	.gstore-partner-table td {
+		box-sizing: border-box;
 		display: block;
 		min-width: 0;
 		width: 100%;
@@ -4672,6 +4796,7 @@ form.woocommerce-form {
 
 	.gstore-partner-table td {
 		display: flex;
+		align-items: center;
 		justify-content: space-between;
 		gap: 14px;
 		padding: 10px 12px;
@@ -4680,9 +4805,24 @@ form.woocommerce-form {
 
 	.gstore-partner-table td::before {
 		content: attr(data-label);
+		flex: 0 0 42%;
 		color: #6b7280;
 		font-weight: 800;
 		text-align: left;
+	}
+
+	.gstore-partner-table td > .gstore-partner-table__value {
+		flex: 1 1 0;
+		min-width: 0;
+		text-align: right;
+	}
+
+	.gstore-partner-table td > .gstore-partner-pill {
+		flex: 0 1 auto;
+		max-width: 100%;
+		justify-content: center;
+		text-align: center;
+		white-space: normal;
 	}
 
 	.gstore-partner-redemption {
@@ -5451,18 +5591,26 @@ a.gstore-orders-tracking:hover {
 	color: var(--gstore-account-text) !important;
 }
 
-.gstore-partner-tabs a,
 .gstore-myaccount-nav__children a {
 	border-radius: 6px;
 	letter-spacing: 0;
 }
 
-.gstore-partner-tabs a.is-active,
-.gstore-partner-tabs a:hover,
 .gstore-myaccount-nav__children li.is-active a,
 .gstore-myaccount-nav__children a:hover {
 	background: var(--gstore-account-accent-soft);
 	border-color: var(--gstore-account-accent-medium);
+	color: var(--gstore-color-accent, #b5a642);
+}
+
+.gstore-partner-tabs a {
+	letter-spacing: 0;
+}
+
+.gstore-partner-tabs a.is-active,
+.gstore-partner-tabs a:hover {
+	background: transparent;
+	border-color: transparent;
 	color: var(--gstore-color-accent, #b5a642);
 }
 

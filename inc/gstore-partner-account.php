@@ -1081,18 +1081,18 @@ if ( ! function_exists( 'gstore_partner_account_render_stat' ) ) {
 	function gstore_partner_account_render_stat( $icon, $title, $value, $meta = '', $status = '' ) {
 		?>
 		<section class="gstore-partner-stat">
-			<div class="gstore-partner-icon"><?php echo gstore_partner_account_icon( $icon ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></div>
-			<div>
+			<div class="gstore-partner-stat__title">
+				<span class="gstore-partner-stat__icon"><?php echo gstore_partner_account_icon( $icon ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></span>
 				<span><?php echo esc_html( $title ); ?></span>
-				<?php if ( '' !== (string) $value ) : ?>
-					<strong><?php echo esc_html( $value ); ?></strong>
-				<?php endif; ?>
-				<?php if ( $status ) : ?>
-					<small class="is-status"><?php echo esc_html( $status ); ?></small>
-				<?php elseif ( $meta ) : ?>
-					<small><?php echo esc_html( $meta ); ?></small>
-				<?php endif; ?>
 			</div>
+			<?php if ( '' !== (string) $value ) : ?>
+				<strong><?php echo esc_html( $value ); ?></strong>
+			<?php endif; ?>
+			<?php if ( $status ) : ?>
+				<small class="is-status"><?php echo esc_html( $status ); ?></small>
+			<?php elseif ( $meta ) : ?>
+				<small><?php echo esc_html( $meta ); ?></small>
+			<?php endif; ?>
 		</section>
 		<?php
 	}
@@ -1109,6 +1109,97 @@ if ( ! function_exists( 'gstore_partner_account_sale_label' ) ) {
 		}
 
 		return __( 'Pagamento confirmado', 'gstore' );
+	}
+}
+
+if ( ! function_exists( 'gstore_partner_account_sale_item_label' ) ) {
+	function gstore_partner_account_sale_item_label( $sale ) {
+		$item_keys = array(
+			'itemName',
+			'item',
+			'itemLabel',
+			'productName',
+			'product',
+			'productTitle',
+			'product_title',
+			'orderItem',
+			'order_item',
+		);
+
+		foreach ( $item_keys as $key ) {
+			if ( ! empty( $sale[ $key ] ) && ! is_array( $sale[ $key ] ) ) {
+				return (string) $sale[ $key ];
+			}
+		}
+
+		$items = array();
+		foreach ( array( 'items', 'products', 'lineItems', 'line_items', 'orderItems', 'order_items' ) as $items_key ) {
+			if ( empty( $sale[ $items_key ] ) || ! is_array( $sale[ $items_key ] ) ) {
+				continue;
+			}
+
+			foreach ( $sale[ $items_key ] as $item ) {
+				if ( is_array( $item ) ) {
+					foreach ( array( 'name', 'title', 'productName', 'product_name', 'itemName', 'item_name' ) as $name_key ) {
+						if ( ! empty( $item[ $name_key ] ) ) {
+							$items[] = (string) $item[ $name_key ];
+							break;
+						}
+					}
+				} elseif ( is_scalar( $item ) ) {
+					$items[] = (string) $item;
+				}
+			}
+		}
+
+		if ( ! empty( $items ) ) {
+			$items = array_values( array_filter( array_unique( $items ) ) );
+			if ( count( $items ) > 1 ) {
+				return sprintf(
+					/* translators: 1: first item name, 2: additional item count. */
+					__( '%1$s +%2$d itens', 'gstore' ),
+					$items[0],
+					count( $items ) - 1
+				);
+			}
+
+			return $items[0];
+		}
+
+		if ( function_exists( 'wc_get_order' ) ) {
+			$order_id = 0;
+			foreach ( array( 'orderId', 'order_id', 'orderNumber', 'order_number' ) as $order_key ) {
+				if ( ! empty( $sale[ $order_key ] ) ) {
+					$order_id = absint( $sale[ $order_key ] );
+					break;
+				}
+			}
+
+			if ( $order_id ) {
+				$order = wc_get_order( $order_id );
+				if ( $order ) {
+					foreach ( $order->get_items() as $order_item ) {
+						$items[] = $order_item->get_name();
+					}
+
+					$items = array_values( array_filter( array_unique( $items ) ) );
+					if ( count( $items ) > 1 ) {
+						return sprintf(
+							/* translators: 1: first item name, 2: additional item count. */
+							__( '%1$s +%2$d itens', 'gstore' ),
+							$items[0],
+							count( $items ) - 1
+						);
+					}
+
+					if ( ! empty( $items[0] ) ) {
+						return $items[0];
+					}
+				}
+			}
+		}
+
+		return __( 'Item indisponivel', 'gstore' );
 	}
 }
 
@@ -1189,7 +1280,7 @@ if ( ! function_exists( 'gstore_partner_account_render_sales_table' ) ) {
 					<tr>
 						<th><?php esc_html_e( 'Pedido', 'gstore' ); ?></th>
 						<th><?php esc_html_e( 'Cliente', 'gstore' ); ?></th>
-						<th><?php esc_html_e( 'E-mail', 'gstore' ); ?></th>
+						<th><?php esc_html_e( 'Item', 'gstore' ); ?></th>
 						<th><?php esc_html_e( 'Valor da venda', 'gstore' ); ?></th>
 						<th><?php esc_html_e( 'Comissão/moedas', 'gstore' ); ?></th>
 						<th><?php esc_html_e( 'Status', 'gstore' ); ?></th>
@@ -1205,11 +1296,11 @@ if ( ! function_exists( 'gstore_partner_account_render_sales_table' ) ) {
 						$pill_class   = 'cancelled' === $sale_status ? 'is-cancelled' : ( isset( $sale['type'] ) && 'refund' === $sale['type'] ? 'is-warning' : 'is-success' );
 						?>
 						<tr>
-							<td data-label="<?php esc_attr_e( 'Pedido', 'gstore' ); ?>"><?php echo esc_html( $sale['orderNumber'] ); ?></td>
-							<td data-label="<?php esc_attr_e( 'Cliente', 'gstore' ); ?>"><?php echo esc_html( $sale['customerName'] ); ?></td>
-							<td data-label="<?php esc_attr_e( 'E-mail', 'gstore' ); ?>"><?php echo esc_html( $sale['customerEmail'] ); ?></td>
-							<td data-label="<?php esc_attr_e( 'Valor', 'gstore' ); ?>"><?php echo esc_html( $sale['orderTotalFormatted'] ); ?></td>
-							<td data-label="<?php esc_attr_e( 'Comissão', 'gstore' ); ?>"><strong><?php echo esc_html( $sale['amountFormatted'] ); ?></strong></td>
+							<td data-label="<?php esc_attr_e( 'Pedido', 'gstore' ); ?>"><span class="gstore-partner-table__value"><?php echo esc_html( $sale['orderNumber'] ); ?></span></td>
+							<td data-label="<?php esc_attr_e( 'Cliente', 'gstore' ); ?>"><span class="gstore-partner-table__value"><?php echo esc_html( $sale['customerName'] ); ?></span></td>
+							<td class="gstore-partner-table__item" data-label="<?php esc_attr_e( 'Item', 'gstore' ); ?>"><span class="gstore-partner-table__value"><?php echo esc_html( gstore_partner_account_sale_item_label( $sale ) ); ?></span></td>
+							<td data-label="<?php esc_attr_e( 'Valor', 'gstore' ); ?>"><span class="gstore-partner-table__value"><?php echo esc_html( $sale['orderTotalFormatted'] ); ?></span></td>
+							<td data-label="<?php esc_attr_e( 'Comissão', 'gstore' ); ?>"><span class="gstore-partner-table__value"><strong><?php echo esc_html( $sale['amountFormatted'] ); ?></strong></span></td>
 							<td data-label="<?php esc_attr_e( 'Status', 'gstore' ); ?>">
 								<span class="<?php echo esc_attr( 'gstore-partner-pill ' . $pill_class ); ?>">
 									<?php echo esc_html( gstore_partner_account_sale_label( $sale ) ); ?>
@@ -1478,7 +1569,6 @@ if ( ! function_exists( 'gstore_partner_account_render_endpoint' ) ) {
 			<?php if ( 'painel' === $view ) : ?>
 				<div class="gstore-partner-stats">
 					<?php
-					gstore_partner_account_render_stat( 'link', __( 'Link exclusivo', 'gstore' ), '', '', __( 'Ativo', 'gstore' ) );
 					gstore_partner_account_render_stat( 'cart', __( 'Vendas indicadas', 'gstore' ), (string) absint( $partner['salesLast30'] ), __( 'Nos últimos 30 dias', 'gstore' ) );
 					gstore_partner_account_render_stat(
 						'coins',
@@ -1495,14 +1585,21 @@ if ( ! function_exists( 'gstore_partner_account_render_endpoint' ) ) {
 				</div>
 
 				<section class="gstore-partner-link-panel">
-					<div class="gstore-partner-icon"><?php echo gstore_partner_account_icon( 'link' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></div>
-					<div>
-						<h3><?php esc_html_e( 'Seu link de parceiro', 'gstore' ); ?></h3>
+					<div class="gstore-partner-link-panel__content">
+						<header class="gstore-partner-link-panel__header">
+							<h3>
+								<span class="gstore-partner-title-icon"><?php echo gstore_partner_account_icon( 'link' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></span>
+								<?php esc_html_e( 'Seu link de parceiro', 'gstore' ); ?>
+							</h3>
+							<span class="gstore-partner-status-pill is-active"><?php esc_html_e( 'Ativo', 'gstore' ); ?></span>
+						</header>
 						<p><?php esc_html_e( 'Divulgue seu link exclusivo e ganhe créditos por cada venda realizada.', 'gstore' ); ?></p>
-						<input type="text" readonly value="<?php echo esc_attr( $partner['url'] ); ?>" data-gstore-partner-link />
+						<div class="gstore-partner-link-panel__actions">
+							<input type="text" readonly value="<?php echo esc_attr( $partner['url'] ); ?>" data-gstore-partner-link />
+							<button type="button" class="button gstore-partner-copy" data-gstore-copy-partner-link><?php esc_html_e( 'Copiar link', 'gstore' ); ?></button>
+							<button type="button" class="button gstore-partner-share" data-gstore-share-partner-link><?php esc_html_e( 'Compartilhar', 'gstore' ); ?></button>
+						</div>
 					</div>
-					<button type="button" class="button gstore-partner-copy" data-gstore-copy-partner-link><?php esc_html_e( 'Copiar link', 'gstore' ); ?></button>
-					<button type="button" class="button gstore-partner-share" data-gstore-share-partner-link><?php esc_html_e( 'Compartilhar', 'gstore' ); ?></button>
 				</section>
 
 				<section class="gstore-partner-panel">
@@ -1515,9 +1612,11 @@ if ( ! function_exists( 'gstore_partner_account_render_endpoint' ) ) {
 
 				<div class="gstore-partner-bottom-grid">
 					<section class="gstore-partner-panel gstore-partner-balance-panel">
-						<h3><?php esc_html_e( 'Saldo em moedas', 'gstore' ); ?></h3>
+						<h3 class="gstore-partner-section-title">
+							<span class="gstore-partner-title-icon"><?php echo gstore_partner_account_icon( 'coins' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></span>
+							<?php esc_html_e( 'Saldo em moedas', 'gstore' ); ?>
+						</h3>
 						<div class="gstore-partner-balance">
-							<div class="gstore-partner-icon"><?php echo gstore_partner_account_icon( 'coins' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></div>
 							<div>
 								<span><?php esc_html_e( 'Seu saldo atual', 'gstore' ); ?></span>
 								<strong><?php echo esc_html( $partner['balanceFormatted'] ); ?></strong>
@@ -1528,9 +1627,11 @@ if ( ! function_exists( 'gstore_partner_account_render_endpoint' ) ) {
 					</section>
 
 					<section class="gstore-partner-panel gstore-partner-how">
-						<h3><?php esc_html_e( 'Como funciona', 'gstore' ); ?></h3>
-						<div class="gstore-partner-how__body">
-							<div class="gstore-partner-icon"><?php echo gstore_partner_account_icon( 'info' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></div>
+						<h3 class="gstore-partner-section-title">
+							<span class="gstore-partner-title-icon"><?php echo gstore_partner_account_icon( 'info' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></span>
+							<?php esc_html_e( 'Como funciona', 'gstore' ); ?>
+						</h3>
+						<div class="gstore-partner-how__body gstore-partner-how__body--plain">
 							<ul>
 								<li><?php esc_html_e( 'Divulgue seu link exclusivo para amigos e clientes.', 'gstore' ); ?></li>
 								<li><?php esc_html_e( 'Cada compra realizada através do seu link gera créditos para você.', 'gstore' ); ?></li>
