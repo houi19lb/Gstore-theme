@@ -62,6 +62,84 @@ if ( ! function_exists( 'gstore_get_product_attributes' ) ) :
 	}
 endif;
 
+if ( ! function_exists( 'gstore_get_single_product_brand_buybox_data' ) ) :
+	/**
+	 * Retorna dados da primeira marca do produto com imagem valida.
+	 *
+	 * @param WC_Product $product Produto.
+	 * @return array
+	 */
+	function gstore_get_single_product_brand_buybox_data( $product ) {
+		if ( ! ( $product instanceof WC_Product ) || ! taxonomy_exists( 'product_brand' ) ) {
+			return array();
+		}
+
+		$product_id = function_exists( 'gstore_get_product_id' ) ? (int) gstore_get_product_id( $product ) : (int) $product->get_id();
+		if ( $product_id <= 0 ) {
+			return array();
+		}
+
+		$terms = wp_get_post_terms( $product_id, 'product_brand' );
+		if ( is_wp_error( $terms ) || empty( $terms ) ) {
+			return array();
+		}
+
+		foreach ( $terms as $term ) {
+			if ( ! $term instanceof WP_Term ) {
+				continue;
+			}
+
+			$link = get_term_link( $term, 'product_brand' );
+			if ( is_wp_error( $link ) || empty( $link ) ) {
+				continue;
+			}
+
+			$image_id = function_exists( 'gstore_get_catalog_archive_brand_image_id' )
+				? (int) gstore_get_catalog_archive_brand_image_id( $term )
+				: 0;
+
+			if ( $image_id <= 0 ) {
+				continue;
+			}
+
+			$image_alt = trim( (string) get_post_meta( $image_id, '_wp_attachment_image_alt', true ) );
+			if ( '' === $image_alt ) {
+				$image_alt = sprintf(
+					/* translators: %s: nome da marca. */
+					__( 'Logo %s', 'gstore' ),
+					$term->name
+				);
+			}
+
+			$image_html = wp_get_attachment_image(
+				$image_id,
+				'medium',
+				false,
+				array(
+					'class'    => 'Gstore-single-product__brand-logo',
+					'loading'  => 'eager',
+					'decoding' => 'async',
+					'alt'      => $image_alt,
+				)
+			);
+
+			if ( empty( $image_html ) ) {
+				continue;
+			}
+
+			return array(
+				'term'       => $term,
+				'name'       => $term->name,
+				'link'       => $link,
+				'image_id'   => $image_id,
+				'image_html' => $image_html,
+			);
+		}
+
+		return array();
+	}
+endif;
+
 if ( ! function_exists( 'gstore_get_hero_meta_cards' ) ) :
 	/**
 	 * Retorna cards de meta informações.
@@ -944,6 +1022,7 @@ if ( $hide_price && isset( $hero_meta_cards[1] ) && is_array( $hero_meta_cards[1
 	$hero_meta_cards[1]['text']       = __( 'O valor continua disponível nas áreas liberadas para este produto.', 'gstore' );
 	$hero_meta_cards[1]['allow_html'] = false;
 }
+$brand_buybox_data = gstore_get_single_product_brand_buybox_data( $product );
 $contact_entries   = gstore_get_contact_entries();
 $guarantee_badges  = gstore_get_guarantee_badges();
 
@@ -1289,12 +1368,12 @@ $gstore_tab_next_cta_labels = array(
 						<!-- Preço -->
 						<?php if ( $hide_price || ! $is_out_of_stock || $show_price_oos ) : ?>
 							<div
-								class="buybox-header<?php echo ( $is_out_of_stock && $show_price_oos && ! $hide_price ) ? ' is-unavailable' : ''; ?><?php echo $hide_price ? ' is-price-hidden' : ''; ?>"
+								class="buybox-header<?php echo ! empty( $brand_buybox_data ) ? ' has-brand' : ''; ?><?php echo ( $is_out_of_stock && $show_price_oos && ! $hide_price ) ? ' is-unavailable' : ''; ?><?php echo $hide_price ? ' is-price-hidden' : ''; ?>"
 								data-gstore-price-header
 								data-gstore-oos-price-mode="<?php echo esc_attr( $oos_price_mode ); ?>"
 								data-gstore-hide-price="<?php echo $hide_price ? '1' : '0'; ?>"
 							>
-								<div>
+								<div class="Gstore-single-product__price-panel">
 									<?php if ( $hide_price ) : ?>
 										<div class="price-label"><?php esc_html_e( 'Preço oculto no site', 'gstore' ); ?></div>
 										<div class="price" id="price" data-gstore-price data-pix-percent="0">
@@ -1347,6 +1426,21 @@ $gstore_tab_next_cta_labels = array(
 										<?php endif; ?>
 									<?php endif; ?>
 								</div>
+
+								<?php if ( ! empty( $brand_buybox_data ) ) : ?>
+									<aside class="Gstore-single-product__brand-lockup" aria-label="<?php echo esc_attr( sprintf( __( 'Marca %s', 'gstore' ), $brand_buybox_data['name'] ) ); ?>">
+										<a class="Gstore-single-product__brand-logo-link" href="<?php echo esc_url( $brand_buybox_data['link'] ); ?>" aria-label="<?php echo esc_attr( sprintf( __( 'Ver produtos da marca %s', 'gstore' ), $brand_buybox_data['name'] ) ); ?>">
+											<?php echo wp_kses_post( $brand_buybox_data['image_html'] ); ?>
+										</a>
+										<div class="Gstore-single-product__brand-badge">
+											<span class="Gstore-single-product__brand-badge-dot" aria-hidden="true"></span>
+											<span><?php esc_html_e( 'Marca oficial', 'gstore' ); ?></span>
+										</div>
+										<a class="Gstore-single-product__brand-link" href="<?php echo esc_url( $brand_buybox_data['link'] ); ?>">
+											<?php esc_html_e( 'Ver marca', 'gstore' ); ?>
+										</a>
+									</aside>
+								<?php endif; ?>
 
 								<?php if ( ! $hide_price && $show_price_oos ) : ?>
 									<div class="price-unavailable-notice" data-gstore-price-unavailable-notice<?php echo $is_out_of_stock ? '' : ' hidden'; ?>>
