@@ -613,7 +613,10 @@ if ( ! function_exists( 'gstore_partner_account_render_application_form' ) ) {
 							<input type="text" name="gstore_partner_application_cnpj" placeholder="<?php esc_attr_e( 'CNPJ se aplicável', 'gstore' ); ?>" inputmode="numeric" autocomplete="off" />
 						</label>
 						<label class="gstore-partner-application__file">
-							<span><?php esc_html_e( 'Documento de identidade', 'gstore' ); ?></span>
+							<span class="gstore-partner-application__file-label">
+								<?php esc_html_e( 'Documento de identidade', 'gstore' ); ?>
+								<small class="gstore-partner-application__file-required"><?php esc_html_e( '(campo obrigatório)', 'gstore' ); ?></small>
+							</span>
 							<input type="file" name="gstore_partner_identity_document" accept=".jpg,.jpeg,.png,.pdf" required data-gstore-partner-document-input />
 						</label>
 					</div>
@@ -710,6 +713,7 @@ if ( ! function_exists( 'gstore_partner_account_print_application_script' ) ) {
 				document.querySelectorAll('.gstore-partner-application__form').forEach(function(form){
 					var maxDocumentSize = 8 * 1024 * 1024;
 					var documentInput = form.querySelector('[data-gstore-partner-document-input]');
+					var documentField = documentInput ? documentInput.closest('.gstore-partner-application__file') : null;
 					var submitButton = form.querySelector('button[type="submit"]');
 					function formatFileSize(bytes) {
 						return (bytes / (1024 * 1024)).toFixed(bytes >= 10 * 1024 * 1024 ? 0 : 1).replace('.', ',') + ' MB';
@@ -735,24 +739,82 @@ if ( ! function_exists( 'gstore_partner_account_print_application_script' ) ) {
 							status.remove();
 						}
 					}
+					function setDocumentInvalid(message) {
+						if (!documentInput) {
+							return;
+						}
+						documentInput.setAttribute('aria-invalid', 'true');
+						documentInput.classList.add('is-invalid');
+						if (documentField) {
+							documentField.classList.add('is-invalid');
+						}
+						if (typeof documentInput.setCustomValidity === 'function') {
+							documentInput.setCustomValidity(message);
+						}
+					}
+					function clearDocumentInvalid() {
+						if (!documentInput) {
+							return;
+						}
+						documentInput.removeAttribute('aria-invalid');
+						documentInput.classList.remove('is-invalid');
+						if (documentField) {
+							documentField.classList.remove('is-invalid');
+						}
+						if (typeof documentInput.setCustomValidity === 'function') {
+							documentInput.setCustomValidity('');
+						}
+					}
+					function validateDocumentRequired() {
+						if (!documentInput || (documentInput.files && documentInput.files.length)) {
+							clearDocumentInvalid();
+							return true;
+						}
+						var message = '<?php echo esc_js( __( 'Inclua o documento de identidade obrigatório antes de enviar. Os dados preenchidos continuam na tela.', 'gstore' ) ); ?>';
+						setDocumentInvalid(message);
+						setStatus('error', message);
+						documentInput.focus();
+						return false;
+					}
 					function validateDocumentSize() {
 						if (!documentInput || !documentInput.files || !documentInput.files.length) {
 							return true;
 						}
 						var file = documentInput.files[0];
 						if (file.size > maxDocumentSize) {
-							setStatus('error', 'O documento selecionado tem ' + formatFileSize(file.size) + '. Envie um arquivo de ate 8 MB.');
+							var message = 'O documento selecionado tem ' + formatFileSize(file.size) + '. Envie um arquivo de ate 8 MB.';
+							setDocumentInvalid(message);
+							setStatus('error', message);
 							documentInput.focus();
 							return false;
 						}
+						clearDocumentInvalid();
 						clearStatus();
 						return true;
 					}
 					if (documentInput) {
-						documentInput.addEventListener('change', validateDocumentSize);
+						documentInput.addEventListener('change', function(){
+							if (validateDocumentRequired()) {
+								validateDocumentSize();
+							}
+						});
+						documentInput.addEventListener('invalid', function(event){
+							if (!documentInput.files || !documentInput.files.length) {
+								event.preventDefault();
+								validateDocumentRequired();
+							}
+						});
+					}
+					if (submitButton) {
+						submitButton.addEventListener('click', function(event){
+							if (!validateDocumentRequired()) {
+								event.preventDefault();
+								event.stopPropagation();
+							}
+						});
 					}
 					form.addEventListener('submit', function(event){
-						if (!validateDocumentSize()) {
+						if (!validateDocumentRequired() || !validateDocumentSize()) {
 							event.preventDefault();
 							event.stopPropagation();
 							return;

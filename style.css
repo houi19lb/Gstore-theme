@@ -2992,7 +2992,7 @@ body.single-product .onsale {
 
 .Gstore-single-product__brand-logo-link {
 	width: 100%;
-	min-height: 44px;
+	min-height: 48px;
 	display: flex;
 	align-items: center;
 	justify-content: center;
@@ -3003,8 +3003,8 @@ body.single-product .onsale {
 	display: block;
 	width: auto;
 	height: auto;
-	max-width: 132px;
-	max-height: 42px;
+	max-width: 136px;
+	max-height: 46px;
 	object-fit: contain;
 }
 
@@ -3062,7 +3062,7 @@ body.single-product .onsale {
 
 @media (max-width: 640px) {
 	.buybox-header.has-brand {
-		grid-template-columns: minmax(0, 1fr) minmax(88px, 104px);
+		grid-template-columns: minmax(0, 1fr) minmax(96px, 112px);
 		column-gap: 10px;
 	}
 
@@ -3072,12 +3072,12 @@ body.single-product .onsale {
 	}
 
 	.Gstore-single-product__brand-logo-link {
-		min-height: 32px;
+		min-height: 38px;
 	}
 
 	.buybox-header.has-brand .Gstore-single-product__brand-logo {
-		max-width: 82px;
-		max-height: 28px;
+		max-width: 92px;
+		max-height: 34px;
 	}
 
 	.Gstore-single-product__brand-badge {

@@ -1869,6 +1869,19 @@ form.woocommerce-form {
 	line-height: 1.3;
 }
 
+.gstore-partner-application label > .gstore-partner-application__file-label {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	flex-wrap: wrap;
+}
+
+.gstore-partner-application__file-required {
+	color: #b42323;
+	font-size: 12px;
+	font-weight: 800;
+}
+
 .gstore-partner-application input[type="text"],
 .gstore-partner-application input[type="email"],
 .gstore-partner-application input[type="file"],
@@ -1880,6 +1893,12 @@ form.woocommerce-form {
 	background: #fff;
 	color: var(--gstore-color-text-primary, #1a1a1a);
 	font-size: 14px;
+}
+
+.gstore-partner-application input[type="file"].is-invalid,
+.gstore-partner-application input[type="file"][aria-invalid="true"] {
+	border-color: rgba(215, 43, 43, 0.64);
+	box-shadow: 0 0 0 2px rgba(215, 43, 43, 0.12);
 }
 
 .gstore-partner-application input[readonly] {
@@ -2636,6 +2655,10 @@ form.woocommerce-form {
 	font-weight: 800;
 }
 
+.gstore-partner-program-page .gstore-partner-application__file-required {
+	color: #ffbd59;
+}
+
 .gstore-partner-program-page .gstore-partner-application input[type="text"],
 .gstore-partner-program-page .gstore-partner-application input[type="email"],
 .gstore-partner-program-page .gstore-partner-application input[type="file"],
@@ -2648,6 +2671,14 @@ form.woocommerce-form {
 	background: #191a1c;
 	color: #fff;
 	box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.gstore-partner-program-page .gstore-partner-application input[type="file"].is-invalid,
+.gstore-partner-program-page .gstore-partner-application input[type="file"][aria-invalid="true"] {
+	border-color: rgba(255, 189, 89, 0.76);
+	box-shadow:
+		inset 0 1px 0 rgba(255, 255, 255, 0.04),
+		0 0 0 2px rgba(255, 189, 89, 0.16);
 }
 
 .gstore-partner-program-page .gstore-partner-application textarea {
