@@ -1707,9 +1707,9 @@ form.woocommerce-form {
 }
 
 .gstore-partner-application__status--error {
-	border: 1px solid rgba(215, 43, 43, 0.32);
-	background: rgba(215, 43, 43, 0.12);
-	color: #b42323;
+	border: 1px solid var(--gstore-color-accent-20);
+	background: var(--gstore-color-accent-10);
+	color: var(--gstore-color-accent);
 }
 
 .gstore-partner-application-modal-open body {
@@ -1877,7 +1877,7 @@ form.woocommerce-form {
 }
 
 .gstore-partner-application__file-required {
-	color: #b42323;
+	color: var(--gstore-color-accent);
 	font-size: 12px;
 	font-weight: 800;
 }
@@ -1897,8 +1897,8 @@ form.woocommerce-form {
 
 .gstore-partner-application input[type="file"].is-invalid,
 .gstore-partner-application input[type="file"][aria-invalid="true"] {
-	border-color: rgba(215, 43, 43, 0.64);
-	box-shadow: 0 0 0 2px rgba(215, 43, 43, 0.12);
+	border-color: var(--gstore-color-accent);
+	box-shadow: 0 0 0 2px var(--gstore-color-accent-12);
 }
 
 .gstore-partner-application input[readonly] {
@@ -2621,9 +2621,9 @@ form.woocommerce-form {
 }
 
 .gstore-partner-program-page .gstore-partner-application__status--error {
-	border-color: rgba(255, 92, 92, 0.38);
-	background: rgba(255, 92, 92, 0.12);
-	color: #ffe2e2;
+	border-color: var(--partner-line-accent);
+	background: var(--partner-accent-soft);
+	color: var(--partner-accent-readable, var(--partner-accent));
 }
 
 .gstore-partner-program-page .gstore-partner-application__form {
