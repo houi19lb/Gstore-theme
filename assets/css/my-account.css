@@ -1695,9 +1695,9 @@ form.woocommerce-form {
 }
 
 .gstore-partner-application__status--info {
-	border: 1px solid var(--gstore-color-accent-secondary-20, var(--gstore-color-accent-20));
-	background: var(--gstore-color-accent-secondary-10, var(--gstore-color-accent-10));
-	color: var(--gstore-color-accent-secondary, var(--gstore-color-accent));
+	border: 1px solid var(--gstore-color-accent-20);
+	background: var(--gstore-color-accent-10);
+	color: var(--gstore-color-accent);
 }
 
 .gstore-partner-application__status--sent {
@@ -1740,7 +1740,7 @@ form.woocommerce-form {
 	position: relative;
 	width: min(100%, 430px);
 	padding: 34px 30px 30px;
-	border: 1px solid var(--gstore-color-accent-secondary-20, var(--gstore-color-accent-20));
+	border: 1px solid var(--gstore-color-accent-20);
 	border-radius: 8px;
 	background: #101214;
 	color: #fff;
@@ -1773,9 +1773,9 @@ form.woocommerce-form {
 	width: 58px;
 	height: 58px;
 	margin-bottom: 18px;
-	border: 1px solid var(--gstore-color-accent-secondary, var(--gstore-color-accent));
+	border: 1px solid var(--gstore-color-accent);
 	border-radius: 50%;
-	color: var(--gstore-color-accent-secondary, var(--gstore-color-accent));
+	color: var(--gstore-color-accent);
 }
 
 .gstore-partner-application-modal__icon svg {
@@ -1830,8 +1830,8 @@ form.woocommerce-form {
 	min-height: 32px;
 	padding: 5px 10px;
 	border-radius: 999px;
-	background: var(--gstore-color-accent-secondary-10, var(--gstore-color-accent-10));
-	color: var(--gstore-color-accent-secondary, var(--gstore-color-accent));
+	background: var(--gstore-color-accent-10);
+	color: var(--gstore-color-accent);
 	font-size: 12px;
 	font-weight: 800;
 }
@@ -1987,11 +1987,11 @@ form.woocommerce-form {
 }
 
 .gstore-partner-program-page {
-	--partner-accent: var(--wp--preset--color--accent, var(--gstore-color-accent-secondary, var(--gstore-color-accent)));
-	--partner-accent-hover: var(--gstore-color-accent-secondary-hover, var(--gstore-color-accent-hover, var(--partner-accent)));
-	--partner-accent-strong: var(--gstore-color-accent-secondary-dark, var(--gstore-color-accent-dark, var(--partner-accent)));
-	--partner-accent-soft: var(--gstore-color-accent-secondary-12, var(--gstore-color-accent-12));
-	--partner-accent-medium: var(--gstore-color-accent-secondary-20, var(--gstore-color-accent-20));
+	--partner-accent: var(--gstore-color-accent, #b5a642);
+	--partner-accent-hover: var(--gstore-color-accent-hover, var(--partner-accent));
+	--partner-accent-strong: var(--gstore-color-accent-dark, var(--partner-accent));
+	--partner-accent-soft: var(--gstore-color-accent-12, rgba(181, 166, 66, 0.12));
+	--partner-accent-medium: var(--gstore-color-accent-20, rgba(181, 166, 66, 0.2));
 	--partner-accent-contrast: var(--gstore-color-accent-contrast, var(--gstore-color-text-light));
 	--partner-bg: #050607;
 	--partner-bg-soft: #0b0d0f;
