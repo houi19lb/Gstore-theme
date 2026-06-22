@@ -1695,9 +1695,9 @@ form.woocommerce-form {
 }
 
 .gstore-partner-application__status--info {
-	border: 1px solid rgba(255, 90, 0, 0.32);
-	background: rgba(255, 90, 0, 0.1);
-	color: #d94c00;
+	border: 1px solid var(--gstore-color-accent-secondary-20, var(--gstore-color-accent-20));
+	background: var(--gstore-color-accent-secondary-10, var(--gstore-color-accent-10));
+	color: var(--gstore-color-accent-secondary, var(--gstore-color-accent));
 }
 
 .gstore-partner-application__status--sent {
@@ -1740,7 +1740,7 @@ form.woocommerce-form {
 	position: relative;
 	width: min(100%, 430px);
 	padding: 34px 30px 30px;
-	border: 1px solid rgba(255, 90, 0, 0.42);
+	border: 1px solid var(--gstore-color-accent-secondary-20, var(--gstore-color-accent-20));
 	border-radius: 8px;
 	background: #101214;
 	color: #fff;
@@ -1773,9 +1773,9 @@ form.woocommerce-form {
 	width: 58px;
 	height: 58px;
 	margin-bottom: 18px;
-	border: 1px solid rgba(255, 90, 0, 0.7);
+	border: 1px solid var(--gstore-color-accent-secondary, var(--gstore-color-accent));
 	border-radius: 50%;
-	color: #ff5a00;
+	color: var(--gstore-color-accent-secondary, var(--gstore-color-accent));
 }
 
 .gstore-partner-application-modal__icon svg {
@@ -1789,8 +1789,8 @@ form.woocommerce-form {
 }
 
 .gstore-partner-application-modal--error .gstore-partner-application-modal__icon {
-	border-color: rgba(255, 189, 89, 0.72);
-	color: #ffbd59;
+	border-color: var(--gstore-color-warning, var(--gstore-color-accent));
+	color: var(--gstore-color-warning, var(--gstore-color-accent));
 }
 
 .gstore-partner-application-modal h3 {
@@ -1830,8 +1830,8 @@ form.woocommerce-form {
 	min-height: 32px;
 	padding: 5px 10px;
 	border-radius: 999px;
-	background: #fff7e6;
-	color: #8a5a00;
+	background: var(--gstore-color-accent-secondary-10, var(--gstore-color-accent-10));
+	color: var(--gstore-color-accent-secondary, var(--gstore-color-accent));
 	font-size: 12px;
 	font-weight: 800;
 }
@@ -1987,23 +1987,38 @@ form.woocommerce-form {
 }
 
 .gstore-partner-program-page {
-	--partner-orange: #ff5a00;
-	--partner-orange-dark: #d74600;
+	--partner-accent: var(--wp--preset--color--accent, var(--gstore-color-accent-secondary, var(--gstore-color-accent)));
+	--partner-accent-hover: var(--gstore-color-accent-secondary-hover, var(--gstore-color-accent-hover, var(--partner-accent)));
+	--partner-accent-strong: var(--gstore-color-accent-secondary-dark, var(--gstore-color-accent-dark, var(--partner-accent)));
+	--partner-accent-soft: var(--gstore-color-accent-secondary-12, var(--gstore-color-accent-12));
+	--partner-accent-medium: var(--gstore-color-accent-secondary-20, var(--gstore-color-accent-20));
+	--partner-accent-contrast: var(--gstore-color-accent-contrast, var(--gstore-color-text-light));
 	--partner-bg: #050607;
 	--partner-bg-soft: #0b0d0f;
 	--partner-card: rgba(15, 17, 19, 0.92);
 	--partner-card-strong: rgba(22, 24, 26, 0.96);
 	--partner-line: rgba(255, 255, 255, 0.14);
-	--partner-line-orange: rgba(255, 90, 0, 0.58);
+	--partner-line-accent: var(--partner-accent-medium);
 	--partner-text: #f7f7f4;
 	--partner-muted: #c6c8cc;
 	--partner-muted-strong: #e4e5e7;
 	width: 100%;
 	background:
-		radial-gradient(circle at 50% 0%, rgba(255, 90, 0, 0.15), transparent 30%),
+		radial-gradient(circle at 50% 0%, var(--partner-accent-soft), transparent 30%),
 		linear-gradient(180deg, #040404 0%, var(--partner-bg) 42%, #08090a 100%);
 	color: var(--partner-text);
 	overflow: hidden;
+}
+
+@supports (color: color-mix(in srgb, #000000 10%, transparent)) {
+	.gstore-partner-program-page {
+		--partner-accent-soft: color-mix(in srgb, var(--partner-accent) 14%, transparent);
+		--partner-accent-medium: color-mix(in srgb, var(--partner-accent) 28%, transparent);
+		--partner-line-accent: color-mix(in srgb, var(--partner-accent) 58%, transparent);
+		--partner-accent-shadow: color-mix(in srgb, var(--partner-accent) 26%, transparent);
+		--partner-accent-ring: color-mix(in srgb, var(--partner-accent) 16%, transparent);
+		--partner-accent-readable: color-mix(in srgb, var(--partner-accent) 72%, var(--partner-text));
+	}
 }
 
 .gstore-partner-program-body {
@@ -2040,7 +2055,7 @@ form.woocommerce-form {
 	inset: 0;
 	background:
 		linear-gradient(180deg, rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0.45)),
-		radial-gradient(circle at 75% 42%, rgba(255, 90, 0, 0.16), transparent 26%);
+		radial-gradient(circle at 75% 42%, var(--partner-accent-soft), transparent 26%);
 	pointer-events: none;
 }
 
@@ -2053,7 +2068,7 @@ form.woocommerce-form {
 .gstore-partner-program-eyebrow {
 	display: inline-block;
 	margin-bottom: 16px;
-	color: var(--partner-orange);
+	color: var(--partner-accent-readable, var(--partner-accent));
 	font-size: 18px;
 	font-weight: 900;
 	letter-spacing: 0;
@@ -2061,7 +2076,7 @@ form.woocommerce-form {
 }
 
 .gstore-partner-program-eyebrow.is-dark {
-	color: var(--partner-orange);
+	color: var(--partner-accent-readable, var(--partner-accent));
 }
 
 .gstore-partner-program-hero h1 {
@@ -2076,7 +2091,7 @@ form.woocommerce-form {
 }
 
 .gstore-partner-program-hero h1 span {
-	color: var(--partner-orange);
+	color: var(--partner-accent-readable, var(--partner-accent));
 }
 
 .gstore-partner-program-hero p {
@@ -2102,11 +2117,11 @@ form.woocommerce-form {
 	justify-content: center;
 	min-height: 50px;
 	padding: 0 32px !important;
-	border: 1px solid var(--partner-orange) !important;
+	border: 1px solid var(--partner-accent) !important;
 	border-radius: 4px !important;
-	background: linear-gradient(180deg, #ff7417, var(--partner-orange)) !important;
-	color: #fff !important;
-	box-shadow: 0 14px 30px rgba(255, 90, 0, 0.26);
+	background: linear-gradient(180deg, var(--partner-accent), var(--partner-accent-hover)) !important;
+	color: var(--partner-accent-contrast) !important;
+	box-shadow: 0 14px 30px var(--partner-accent-shadow, var(--partner-accent-medium));
 	font-size: 14px;
 	font-weight: 900;
 	line-height: 1 !important;
@@ -2218,7 +2233,7 @@ form.woocommerce-form {
 	display: inline-flex;
 	align-items: center;
 	gap: 16px;
-	color: var(--partner-orange);
+	color: var(--partner-accent-readable, var(--partner-accent));
 	font-size: 12px;
 	font-weight: 900;
 	text-transform: uppercase;
@@ -2280,7 +2295,7 @@ form.woocommerce-form {
 	width: 52px;
 	height: 52px;
 	margin-bottom: 16px;
-	color: var(--partner-orange);
+	color: var(--partner-accent-readable, var(--partner-accent));
 }
 
 .gstore-partner-program-profile-grid article > span svg {
@@ -2333,7 +2348,7 @@ form.woocommerce-form {
 	left: 12%;
 	right: 12%;
 	height: 1px;
-	background: linear-gradient(90deg, transparent, var(--partner-orange), transparent);
+	background: linear-gradient(90deg, transparent, var(--partner-accent), transparent);
 	opacity: 0.72;
 }
 
@@ -2360,11 +2375,11 @@ form.woocommerce-form {
 	width: 28px;
 	height: 28px;
 	border-radius: 999px;
-	background: var(--partner-orange);
-	color: #fff;
+	background: var(--partner-accent);
+	color: var(--partner-accent-contrast);
 	font-size: 13px;
 	font-weight: 900;
-	box-shadow: 0 0 0 6px rgba(255, 90, 0, 0.14);
+	box-shadow: 0 0 0 6px var(--partner-accent-ring, var(--partner-accent-soft));
 }
 
 .gstore-partner-program-steps__icon {
@@ -2374,7 +2389,7 @@ form.woocommerce-form {
 	width: 68px;
 	height: 68px;
 	margin-bottom: 16px;
-	border: 1px solid var(--partner-orange);
+	border: 1px solid var(--partner-accent);
 	border-radius: 999px;
 	background: #070809;
 	color: var(--partner-text);
@@ -2472,7 +2487,7 @@ form.woocommerce-form {
 	width: 6px;
 	height: 6px;
 	border-radius: 999px;
-	background: var(--partner-orange);
+	background: var(--partner-accent);
 }
 
 .gstore-partner-program-process-detail strong {
@@ -2498,7 +2513,7 @@ form.woocommerce-form {
 	gap: 14px;
 	align-items: center;
 	padding: 20px 22px;
-	border-right: 1px solid rgba(255, 90, 0, 0.32);
+	border-right: 1px solid var(--partner-accent-medium);
 }
 
 .gstore-partner-program-safety article:last-child {
@@ -2511,7 +2526,7 @@ form.woocommerce-form {
 	justify-content: center;
 	width: 46px;
 	height: 46px;
-	color: #ffd9bb;
+	color: var(--partner-accent-readable, var(--partner-accent));
 }
 
 .gstore-partner-program-safety span svg {
@@ -2553,7 +2568,7 @@ form.woocommerce-form {
 	gap: 0;
 	align-items: stretch;
 	overflow: hidden;
-	border: 1px solid var(--partner-line-orange);
+	border: 1px solid var(--partner-line-accent);
 	border-radius: 7px;
 	background: var(--partner-card-strong);
 	box-shadow: 0 24px 64px rgba(0, 0, 0, 0.42);
@@ -2656,7 +2671,7 @@ form.woocommerce-form {
 }
 
 .gstore-partner-program-page .gstore-partner-application__file-required {
-	color: #ffbd59;
+	color: var(--partner-accent-readable, var(--partner-accent));
 }
 
 .gstore-partner-program-page .gstore-partner-application input[type="text"],
@@ -2675,10 +2690,10 @@ form.woocommerce-form {
 
 .gstore-partner-program-page .gstore-partner-application input[type="file"].is-invalid,
 .gstore-partner-program-page .gstore-partner-application input[type="file"][aria-invalid="true"] {
-	border-color: rgba(255, 189, 89, 0.76);
+	border-color: var(--partner-line-accent);
 	box-shadow:
 		inset 0 1px 0 rgba(255, 255, 255, 0.04),
-		0 0 0 2px rgba(255, 189, 89, 0.16);
+		0 0 0 2px var(--partner-accent-ring, var(--partner-accent-soft));
 }
 
 .gstore-partner-program-page .gstore-partner-application textarea {
@@ -2795,7 +2810,7 @@ form.woocommerce-form {
 	}
 
 	.gstore-partner-program-safety article:nth-child(-n+2) {
-		border-bottom: 1px solid rgba(255, 90, 0, 0.32);
+		border-bottom: 1px solid var(--partner-accent-medium);
 	}
 }
 
@@ -3047,7 +3062,7 @@ form.woocommerce-form {
 		right: auto;
 		width: 1px;
 		height: auto;
-		background: rgba(255, 90, 0, 0.34);
+		background: var(--partner-accent-medium);
 		opacity: 1;
 	}
 
@@ -3083,7 +3098,7 @@ form.woocommerce-form {
 		height: 52px;
 		margin: 0;
 		background: #070809;
-		color: var(--partner-orange);
+		color: var(--partner-accent-readable, var(--partner-accent));
 		font-size: 16px;
 		box-shadow: none;
 	}
@@ -3140,7 +3155,7 @@ form.woocommerce-form {
 		transform: scaleX(0.25);
 		transform-origin: left center;
 		border-radius: inherit;
-		background: linear-gradient(90deg, #ffb13b, var(--partner-orange));
+		background: linear-gradient(90deg, var(--partner-accent), var(--partner-accent-hover));
 		transition: transform 0.22s ease;
 	}
 
