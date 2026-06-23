@@ -1511,10 +1511,25 @@ const subtotal = decodeHtmlEntities(stripHtmlText(it.subtotal || ''));
 	/**
 	 * Unifica métodos de pagamento Blu em um card único
 	 */
+	const BLU_UNIFIED_NATIVE_SELECTOR = '.Gstore-blu-payment-unified .payment_method_blu_checkout, .Gstore-blu-payment-unified .payment_method_blu_pix';
+
+	function getNativeBluPaymentMethods(selector) {
+		return $(selector || '.payment_method_blu_checkout, .payment_method_blu_pix').not(BLU_UNIFIED_NATIVE_SELECTOR);
+	}
+
+	function hideNativeBluPaymentMethodsForUnified() {
+		const $methods = getNativeBluPaymentMethods();
+		if ($methods.length) {
+			$methods.addClass('gstore-hidden-for-unified');
+		}
+		return $methods;
+	}
+
 	function unifyBluPaymentMethods() {
 		// Verifica se já existe o card unificado
 		const $existingUnified = $('.Gstore-blu-payment-unified');
 		if ($existingUnified.length) {
+			hideNativeBluPaymentMethodsForUnified();
 			// Se já existe, apenas sincroniza a seleção
 			const $selected = $('input[name="payment_method"]:checked');
 			if ($selected.length) {
@@ -1527,8 +1542,8 @@ const subtotal = decodeHtmlEntities(stripHtmlText(it.subtotal || ''));
 			return;
 		}
 		
-		const $bluCheckout = $('.payment_method_blu_checkout').not('.Gstore-blu-payment-unified .payment_method_blu_checkout');
-		const $bluPix = $('.payment_method_blu_pix').not('.Gstore-blu-payment-unified .payment_method_blu_pix');
+		const $bluCheckout = getNativeBluPaymentMethods('.payment_method_blu_checkout');
+		const $bluPix = getNativeBluPaymentMethods('.payment_method_blu_pix');
 
 		// Quando a regra do produto deixa apenas um método Blu disponível, mantém o
 		// mesmo card unificado para evitar o layout nativo quebrado do WooCommerce.
@@ -1568,8 +1583,7 @@ const subtotal = decodeHtmlEntities(stripHtmlText(it.subtotal || ''));
 			$bluUnified.append($optionsContainer);
 
 			function syncSingleBluMethod() {
-				const $liveSourceInput = $(`.payment_method_${method}`)
-					.not('.Gstore-blu-payment-unified .payment_method_blu_checkout, .Gstore-blu-payment-unified .payment_method_blu_pix')
+				const $liveSourceInput = getNativeBluPaymentMethods(`.payment_method_${method}`)
 					.find('input[name="payment_method"]')
 					.first();
 				const $input = $liveSourceInput.length ? $liveSourceInput : $sourceInput;
@@ -1595,7 +1609,11 @@ const subtotal = decodeHtmlEntities(stripHtmlText(it.subtotal || ''));
 
 			$(document.body).off('updated_checkout.gstore-unify-single').on('updated_checkout.gstore-unify-single', function() {
 				setTimeout(function() {
-					$(`.payment_method_${method}`).not('.Gstore-blu-payment-unified .payment_method_blu_checkout, .Gstore-blu-payment-unified .payment_method_blu_pix').addClass('gstore-hidden-for-unified');
+					getNativeBluPaymentMethods(`.payment_method_${method}`).addClass('gstore-hidden-for-unified');
+					if (!$('.Gstore-blu-payment-unified').length) {
+						unifyBluPaymentMethods();
+						return;
+					}
 					syncSingleBluMethod();
 				}, 50);
 			});
@@ -1771,8 +1789,7 @@ const subtotal = decodeHtmlEntities(stripHtmlText(it.subtotal || ''));
 		// Remove handler anterior para evitar acumulação (cada unifyBluPaymentMethods registra um novo)
 		$(document.body).off('updated_checkout.gstore-unify').on('updated_checkout.gstore-unify', function() {
 			// Re-esconde os elementos originais que podem ter sido recriados
-			$('.payment_method_blu_checkout').not('.Gstore-blu-payment-unified .payment_method_blu_checkout').addClass('gstore-hidden-for-unified');
-			$('.payment_method_blu_pix').not('.Gstore-blu-payment-unified .payment_method_blu_pix').addClass('gstore-hidden-for-unified');
+			hideNativeBluPaymentMethodsForUnified();
 			
 			// Usa lastSelectedPaymentMethod como fonte de verdade (evita race conditions com radios)
 			setTimeout(function() {
@@ -2109,6 +2126,8 @@ const subtotal = decodeHtmlEntities(stripHtmlText(it.subtotal || ''));
 				// Remove botão de finalizar (será recriado na última etapa)
 				$paymentSection.find('.place-order').remove();
 				$paymentMethodStep.append($paymentSection.detach());
+				hideNativeBluPaymentMethodsForUnified();
+				unifyBluPaymentMethods();
 				setTimeout(unifyBluPaymentMethods, 150);
 			}
 		}
@@ -5993,7 +6012,12 @@ function getInstallmentDisplayTotals(summaryData) {
 		}
 		
 		// Re-aplica unificação dos métodos Blu após atualização
+		hideNativeBluPaymentMethodsForUnified();
+		unifyBluPaymentMethods();
+		renderBluResumeCard();
+
 		setTimeout(function() {
+			hideNativeBluPaymentMethodsForUnified();
 			unifyBluPaymentMethods();
 			renderBluResumeCard();
 		}, 200);
@@ -6063,8 +6087,9 @@ function getInstallmentDisplayTotals(summaryData) {
 		
 		// Garante que o Pix esteja visível quando estiver ativo (especialmente no pré-checkout)
 		const $pixGateway = $('.payment_method_blu_pix');
-		if ($pixGateway.length && isBluGatewayAvailable()) {
-			$pixGateway.show();
+		const $visiblePixGateway = $pixGateway.not('.gstore-hidden-for-unified').not('.Gstore-blu-payment-unified .payment_method_blu_pix');
+		if ($visiblePixGateway.length && isBluGatewayAvailable()) {
+			$visiblePixGateway.show();
 		}
 	}
 
