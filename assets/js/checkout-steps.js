@@ -1529,6 +1529,92 @@ const subtotal = decodeHtmlEntities(stripHtmlText(it.subtotal || ''));
 		
 		const $bluCheckout = $('.payment_method_blu_checkout').not('.Gstore-blu-payment-unified .payment_method_blu_checkout');
 		const $bluPix = $('.payment_method_blu_pix').not('.Gstore-blu-payment-unified .payment_method_blu_pix');
+
+		// Quando a regra do produto deixa apenas um método Blu disponível, mantém o
+		// mesmo card unificado para evitar o layout nativo quebrado do WooCommerce.
+		if (($bluCheckout.length || $bluPix.length) && !($bluCheckout.length && $bluPix.length)) {
+			const isCheckoutOnly = $bluCheckout.length > 0;
+			const method = isCheckoutOnly ? 'blu_checkout' : 'blu_pix';
+			const $source = isCheckoutOnly ? $bluCheckout : $bluPix;
+			const $sourceInput = $source.find('input[name="payment_method"]').first();
+			const sourceId = $sourceInput.attr('id') || (isCheckoutOnly ? 'payment_method_blu_checkout' : 'payment_method_blu_pix');
+			const visualId = `${sourceId}_unified`;
+			const icon = isCheckoutOnly ? 'fa-credit-card' : 'fa-qrcode';
+			const label = isCheckoutOnly ? 'Cartão (Link de Pagamento)' : 'Pix';
+
+			$source.addClass('gstore-hidden-for-unified');
+
+			const $bluUnified = $('<li class="payment_method_blu_unified Gstore-blu-payment-unified Gstore-blu-payment-unified--single"></li>');
+			$bluUnified.append('<div class="Gstore-blu-payment-unified__title">Pagamento via Blu</div>');
+
+			const $optionsContainer = $('<div class="Gstore-blu-payment-options"></div>');
+			const $option = $('<div class="Gstore-blu-payment-option"></div>');
+			const $visualRadio = $('<input>', {
+				type: 'radio',
+				name: 'payment_method',
+				id: visualId,
+				value: method,
+				checked: true,
+			});
+
+			$visualRadio.appendTo($option);
+			$option.append(`
+				<label for="${visualId}" class="Gstore-blu-payment-option__label">
+					<i class="fa-solid ${icon}"></i>
+					<span>${label}</span>
+				</label>
+			`);
+			$optionsContainer.append($option);
+			$bluUnified.append($optionsContainer);
+
+			function syncSingleBluMethod() {
+				const $liveSourceInput = $(`.payment_method_${method}`)
+					.not('.Gstore-blu-payment-unified .payment_method_blu_checkout, .Gstore-blu-payment-unified .payment_method_blu_pix')
+					.find('input[name="payment_method"]')
+					.first();
+				const $input = $liveSourceInput.length ? $liveSourceInput : $sourceInput;
+
+				persistSelectedPaymentMethod(method);
+				if ($input.length) {
+					if ($input.attr('type') === 'radio') {
+						$input.prop('checked', true);
+					} else {
+						$input.val(method);
+					}
+				}
+				$visualRadio.prop('checked', true);
+				toggleBillingFieldsForPaymentMethod(method === 'blu_pix');
+				syncBluInstallmentsVisibility(method);
+			}
+
+			$option.find('label').on('click', function(e) {
+				e.preventDefault();
+				e.stopPropagation();
+				syncSingleBluMethod();
+			});
+
+			$(document.body).off('updated_checkout.gstore-unify-single').on('updated_checkout.gstore-unify-single', function() {
+				setTimeout(function() {
+					$(`.payment_method_${method}`).not('.Gstore-blu-payment-unified .payment_method_blu_checkout, .Gstore-blu-payment-unified .payment_method_blu_pix').addClass('gstore-hidden-for-unified');
+					syncSingleBluMethod();
+				}, 50);
+			});
+
+			const $paymentMethods = $('#payment .payment_methods');
+			if ($paymentMethods.length) {
+				$paymentMethods.prepend($bluUnified);
+			} else {
+				const $paymentSection = $('#payment');
+				if ($paymentSection.length) {
+					const $newPaymentMethods = $('<ul class="payment_methods"></ul>');
+					$newPaymentMethods.append($bluUnified);
+					$paymentSection.prepend($newPaymentMethods);
+				}
+			}
+
+			setTimeout(syncSingleBluMethod, 100);
+			return;
+		}
 		
 		// Se ambos os métodos Blu estão disponíveis, unifica em um card
 		if ($bluCheckout.length && $bluPix.length) {
