@@ -83,6 +83,15 @@
 	let bluRedirectInProgress = false; // Evita abrir modal/redirect da Blu em duplicidade (ex.: submit + ajaxComplete)
 	let bluResumeState = null; // Estado persistente do link Blu para retomada no mobile/checkout
 	let checkoutDraftRestoreDone = false;
+	let cpfPurchaseLimitDebounceTimer = null;
+	let cpfPurchaseLimitState = {
+		cpf: '',
+		status: 'idle',
+		allowed: true,
+		message: '',
+		promise: null,
+		xhr: null
+	};
 
 	function escapeHtml(value) {
 		return String(value || '')
@@ -91,6 +100,192 @@
 			.replace(/>/g, '&gt;')
 			.replace(/"/g, '&quot;')
 			.replace(/'/g, '&#039;');
+	}
+
+	function getCpfPurchaseLimitConfig() {
+		return (window.gstoreCheckout && window.gstoreCheckout.cpfPurchaseLimit)
+			? window.gstoreCheckout.cpfPurchaseLimit
+			: {};
+	}
+
+	function hasCpfPurchaseLimitProducts() {
+		const cfg = getCpfPurchaseLimitConfig();
+		return Boolean(cfg.enabled && cfg.hasLimitedProducts);
+	}
+
+	function getCpfDigits(value) {
+		return String(value || '').replace(/\D/g, '');
+	}
+
+	function getCpfPurchaseLimitAjaxUrl() {
+		const cfg = getCpfPurchaseLimitConfig();
+		if (cfg.ajaxUrl) return cfg.ajaxUrl;
+		if (typeof wc_checkout_params !== 'undefined' && wc_checkout_params.ajax_url) return wc_checkout_params.ajax_url;
+		return '/wp-admin/admin-ajax.php';
+	}
+
+	function setCpfPurchaseLimitFieldState(isValid) {
+		const $field = $('#billing_cpf_field');
+		if (!$field.length) return;
+		$field.toggleClass('woocommerce-invalid woocommerce-invalid-required-field', !isValid);
+	}
+
+	function ensureCpfPurchaseLimitFieldVisibility() {
+		if (!hasCpfPurchaseLimitProducts()) return;
+
+		const $contactStep = $('[data-step="contact"] .Gstore-checkout-step__fields');
+		const $cpfField = $('#billing_cpf_field');
+		const $cpfInput = $('#billing_cpf');
+		if ($cpfField.length && $contactStep.length && !$contactStep.find('#billing_cpf_field').length) {
+			$contactStep.append($cpfField.detach());
+		}
+		$cpfField.show().addClass('validate-required');
+		$cpfInput.prop('required', true).attr('aria-required', 'true');
+	}
+
+	function clearCpfPurchaseLimitState() {
+		cpfPurchaseLimitState = {
+			cpf: '',
+			status: 'idle',
+			allowed: true,
+			message: '',
+			promise: null,
+			xhr: null
+		};
+		setCpfPurchaseLimitFieldState(true);
+	}
+
+	function validateCpfPurchaseLimit(options) {
+		const opts = options || {};
+		const cfg = getCpfPurchaseLimitConfig();
+		const cpf = getCpfDigits($('#billing_cpf').val());
+		const deferred = $.Deferred();
+
+		if (!hasCpfPurchaseLimitProducts()) {
+			deferred.resolve(true, null);
+			return deferred.promise();
+		}
+
+		if (cpf.length !== 11) {
+			cpfPurchaseLimitState = {
+				cpf: cpf,
+				status: 'blocked',
+				allowed: false,
+				message: 'Informe um CPF válido para validar o limite de compra deste produto.',
+				promise: null,
+				xhr: null
+			};
+			setCpfPurchaseLimitFieldState(false);
+			if (!opts.silent) {
+				showNotice(escapeHtml(cpfPurchaseLimitState.message), 'error', 15000);
+			}
+			deferred.resolve(false, cpfPurchaseLimitState);
+			return deferred.promise();
+		}
+
+		if (cpfPurchaseLimitState.cpf === cpf && cpfPurchaseLimitState.status === 'allowed') {
+			deferred.resolve(true, cpfPurchaseLimitState);
+			return deferred.promise();
+		}
+
+		if (cpfPurchaseLimitState.cpf === cpf && cpfPurchaseLimitState.status === 'blocked') {
+			setCpfPurchaseLimitFieldState(false);
+			if (!opts.silent) {
+				showNotice(escapeHtml(cpfPurchaseLimitState.message), 'error', 15000);
+			}
+			deferred.resolve(false, cpfPurchaseLimitState);
+			return deferred.promise();
+		}
+
+		if (cpfPurchaseLimitState.cpf === cpf && cpfPurchaseLimitState.status === 'checking' && cpfPurchaseLimitState.promise) {
+			return cpfPurchaseLimitState.promise;
+		}
+
+		if (cpfPurchaseLimitState.xhr && cpfPurchaseLimitState.xhr.readyState !== 4) {
+			cpfPurchaseLimitState.xhr.abort();
+		}
+
+		cpfPurchaseLimitState = {
+			cpf: cpf,
+			status: 'checking',
+			allowed: false,
+			message: '',
+			promise: deferred.promise(),
+			xhr: null
+		};
+		setCpfPurchaseLimitFieldState(true);
+
+		const xhr = $.ajax({
+			type: 'POST',
+			url: getCpfPurchaseLimitAjaxUrl(),
+			dataType: 'json',
+			timeout: 15000,
+			data: {
+				action: cfg.action || 'gstore_validate_cpf_purchase_limit',
+				nonce: cfg.nonce || '',
+				cpf: cpf
+			}
+		});
+		cpfPurchaseLimitState.xhr = xhr;
+
+		xhr.done(function(response) {
+			const data = response && response.data ? response.data : response;
+			const allowed = Boolean(data && data.allowed);
+			cpfPurchaseLimitState = {
+				cpf: cpf,
+				status: allowed ? 'allowed' : 'blocked',
+				allowed: allowed,
+				message: data && data.message ? String(data.message) : '',
+				promise: null,
+				xhr: null
+			};
+
+			setCpfPurchaseLimitFieldState(allowed);
+			if (!allowed && !opts.silent) {
+				showNotice(escapeHtml(cpfPurchaseLimitState.message || 'Este CPF já atingiu o limite para este produto.'), 'error', 15000);
+			}
+			deferred.resolve(allowed, cpfPurchaseLimitState);
+		}).fail(function(xhrObj, status) {
+			if (status === 'abort') {
+				deferred.resolve(false, cpfPurchaseLimitState);
+				return;
+			}
+
+			cpfPurchaseLimitState = {
+				cpf: cpf,
+				status: 'blocked',
+				allowed: false,
+				message: 'Não foi possível validar o limite por CPF agora. Tente novamente em instantes.',
+				promise: null,
+				xhr: null
+			};
+			setCpfPurchaseLimitFieldState(false);
+			if (!opts.silent) {
+				showNotice(escapeHtml(cpfPurchaseLimitState.message), 'error', 15000);
+			}
+			deferred.resolve(false, cpfPurchaseLimitState);
+		});
+
+		return deferred.promise();
+	}
+
+	function scheduleCpfPurchaseLimitValidation() {
+		if (!hasCpfPurchaseLimitProducts()) return;
+
+		clearTimeout(cpfPurchaseLimitDebounceTimer);
+		const cpf = getCpfDigits($('#billing_cpf').val());
+		if (cpfPurchaseLimitState.cpf && cpfPurchaseLimitState.cpf !== cpf) {
+			clearCpfPurchaseLimitState();
+			cpfPurchaseLimitState.cpf = cpf;
+		}
+		if (cpf.length !== 11) {
+			setCpfPurchaseLimitFieldState(true);
+			return;
+		}
+
+		cpfPurchaseLimitDebounceTimer = setTimeout(function() {
+			validateCpfPurchaseLimit({ silent: true });
+		}, 450);
 	}
 
 	function isCheckoutDebugEnabled() {
@@ -2085,11 +2280,12 @@ const subtotal = decodeHtmlEntities(stripHtmlText(it.subtotal || ''));
 			$stepDescription.text('Preencha seus dados completos para finalizar o pedido via Pix.');
 		} else {
 			// CARTÃO selecionado: Mostra apenas email, telefone e CEP
+			const shouldShowCpfForLimit = hasCpfPurchaseLimitProducts();
 			PIX_BILLING_FIELDS.forEach(fieldId => {
 				const $field = $(`#${fieldId}_field`);
 				if ($field.length) {
 					// Mostra apenas CEP, esconde os demais
-					if (fieldId === 'billing_postcode') {
+					if (fieldId === 'billing_postcode' || (fieldId === 'billing_cpf' && shouldShowCpfForLimit)) {
 						$field.show();
 					} else {
 						$field.hide();
@@ -2112,6 +2308,7 @@ const subtotal = decodeHtmlEntities(stripHtmlText(it.subtotal || ''));
 			const $stepDescription = $('[data-step="contact"] .Gstore-checkout-step__description');
 			$stepDescription.text('Informe seu email, telefone e CEP para calcular o frete.');
 		}
+		ensureCpfPurchaseLimitFieldVisibility();
 	}
 
 	/**
@@ -2142,6 +2339,7 @@ const subtotal = decodeHtmlEntities(stripHtmlText(it.subtotal || ''));
 					
 				}
 			});
+			ensureCpfPurchaseLimitFieldVisibility();
 		}
 
 		// Etapa 3: Footer de finalização (termos + privacidade + CTA)
@@ -4348,7 +4546,12 @@ function getInstallmentDisplayTotals(summaryData) {
 			}
 		}
 
-		step.fields.forEach(fieldId => {
+		const fieldsToValidate = step.fields.slice();
+		if (step.id === 'contact' && hasCpfPurchaseLimitProducts() && fieldsToValidate.indexOf('billing_cpf') === -1) {
+			fieldsToValidate.push('billing_cpf');
+		}
+
+		fieldsToValidate.forEach(fieldId => {
 			const $fieldWrapper = $(`#${fieldId}_field`);
 			const $input = $fieldWrapper.find('input, select, textarea');
 			
@@ -4475,15 +4678,29 @@ function getInstallmentDisplayTotals(summaryData) {
 	/**
 	 * Avança para a próxima etapa
 	 */
+	function advanceToNextStep() {
+		if (currentStep < STEPS.length - 1) {
+			setActiveStep(currentStep + 1);
+			$(document.body).trigger('update_checkout');
+		}
+	}
+
 	function nextStep() {
 		if (!validateCurrentStep()) {
 			return;
 		}
 
-		if (currentStep < STEPS.length - 1) {
-			setActiveStep(currentStep + 1);
-			$(document.body).trigger('update_checkout');
+		const step = STEPS[currentStep];
+		if (step && step.id === 'contact' && hasCpfPurchaseLimitProducts()) {
+			validateCpfPurchaseLimit({ silent: false }).done(function(allowed) {
+				if (allowed) {
+					advanceToNextStep();
+				}
+			});
+			return;
 		}
+
+		advanceToNextStep();
 	}
 
 	/**
@@ -5008,6 +5225,7 @@ function getInstallmentDisplayTotals(summaryData) {
 			}
 			
 			$(this).val(value);
+			scheduleCpfPurchaseLimitValidation();
 		});
 
 		// Máscara para CEP e cálculo automático de frete

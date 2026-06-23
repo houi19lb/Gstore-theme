@@ -8559,6 +8559,17 @@ function gstore_enqueue_checkout_assets() {
 		// Garante gstoreCartSummary (resumo do carrinho) com nonce válido para evitar 403 no admin-ajax.
 		$cart_summary_nonce = wp_create_nonce( 'gstore_cart_summary' );
 		$checkout_inline .= 'window.gstoreCartSummary = window.gstoreCartSummary || { ajaxUrl: ' . wp_json_encode( admin_url( 'admin-ajax.php' ) ) . ', nonce: ' . wp_json_encode( $cart_summary_nonce ) . ' };';
+		$cpf_purchase_limit_enabled      = function_exists( 'gstore_cpf_purchase_limit_validate_current_cart' );
+		$cpf_purchase_limit_has_products = function_exists( 'gstore_cpf_purchase_limit_cart_has_limited_products' ) && gstore_cpf_purchase_limit_cart_has_limited_products();
+		$checkout_inline .= 'window.gstoreCheckout.cpfPurchaseLimit = ' . wp_json_encode(
+			array(
+				'enabled'            => $cpf_purchase_limit_enabled,
+				'hasLimitedProducts' => $cpf_purchase_limit_has_products,
+				'ajaxUrl'            => admin_url( 'admin-ajax.php' ),
+				'action'             => 'gstore_validate_cpf_purchase_limit',
+				'nonce'              => wp_create_nonce( 'gstore_cpf_purchase_limit' ),
+			)
+		) . ';';
 		// Termos do contrato: conteúdo do modal (título, texto completo, checkbox, privacidade).
 		$contract_modal_title   = __( 'Termos do contrato', 'gstore' );
 		$contract_checkbox_text = __( 'Li e concordo com os', 'gstore' );
