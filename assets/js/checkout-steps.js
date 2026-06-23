@@ -4446,7 +4446,7 @@ function getInstallmentDisplayTotals(summaryData) {
 	/**
 	 * Mostra uma notificação
 	 */
-	function showNotice(message, type) {
+	function showNotice(message, type, autoHideMs) {
 		const $notice = $(`
 			<div class="woocommerce-notice woocommerce-notice--${type} woocommerce-${type}" role="alert">
 				${message}
@@ -4459,12 +4459,17 @@ function getInstallmentDisplayTotals(summaryData) {
 		// Adiciona nova notificação
 		$('.Gstore-checkout-step.is-active .Gstore-checkout-step__header').after($notice);
 
-		// Remove após 5 segundos
+		// Remove após o tempo configurado
+		const hideDelay = typeof autoHideMs === 'number' ? autoHideMs : 5000;
+		if (hideDelay <= 0) {
+			return;
+		}
+
 		setTimeout(() => {
 			$notice.fadeOut(300, function() {
 				$(this).remove();
 			});
-		}, 5000);
+		}, hideDelay);
 	}
 
 	/**
@@ -5337,6 +5342,11 @@ function getInstallmentDisplayTotals(summaryData) {
 			}, 300);
 		}
 
+		function showCheckoutSubmitError(message) {
+			const fallback = 'Não foi possível concluir o pedido agora. Tente novamente em instantes ou escolha outra forma de pagamento.';
+			showNotice(String(message || fallback), 'error', 15000);
+		}
+
 		/**
 		 * Submete o checkout diretamente
 		 */
@@ -5580,6 +5590,7 @@ function getInstallmentDisplayTotals(summaryData) {
 				url: wc_checkout_params.checkout_url,
 				data: formData,
 				dataType: 'json',
+				timeout: 45000,
 				success: function(response) {
 					debugCheckout('checkout_response', {
 						result: response && response.result,
@@ -5588,7 +5599,7 @@ function getInstallmentDisplayTotals(summaryData) {
 					});
 					updateProcessingStep(3);
 					
-						if (response.result === 'success') {
+						if (response && response.result === 'success') {
 							// Pedido criado com sucesso: limpa rascunho local para evitar restaurar dados antigos.
 							clearCheckoutDraftState();
 							if (response.gstore_blu_resume) {
@@ -5603,7 +5614,7 @@ function getInstallmentDisplayTotals(summaryData) {
 							} else {
 								setTimeout(function() { handleBluCheckoutRedirect(response.redirect); }, 1500);
 							}
-					} else if (response.result === 'failure') {
+					} else if (response && response.result === 'failure') {
 						hideProcessingModal();
 						$form.removeClass('processing').unblock();
 						
@@ -5629,6 +5640,13 @@ function getInstallmentDisplayTotals(summaryData) {
 						if (response.reload) {
 							setTimeout(function() { window.location.reload(); }, 2000);
 						}
+						if (!response.messages) {
+							showCheckoutSubmitError();
+						}
+					} else {
+						hideProcessingModal();
+						$form.removeClass('processing').unblock();
+						showCheckoutSubmitError('O checkout não retornou uma resposta válida. Tente novamente em instantes.');
 					}
 				},
 				error: function(xhr, statusText, errorThrown) {
@@ -5640,7 +5658,15 @@ function getInstallmentDisplayTotals(summaryData) {
 					});
 					hideProcessingModal();
 					$form.removeClass('processing').unblock();
-					showNotice('Ocorreu um erro ao processar o pedido. Por favor, tente novamente.', 'error');
+					let errorMessage = 'Ocorreu um erro ao processar o pedido. Por favor, tente novamente.';
+					if (statusText === 'timeout') {
+						errorMessage = 'A criação do pagamento demorou mais que o esperado. Tente novamente em instantes.';
+					} else if (xhr && [502, 503, 504].indexOf(xhr.status) !== -1) {
+						errorMessage = 'O serviço de pagamento demorou para responder. Tente novamente em instantes.';
+					} else if (xhr && xhr.responseJSON) {
+						errorMessage = xhr.responseJSON.message || xhr.responseJSON.messages || errorMessage;
+					}
+					showCheckoutSubmitError(errorMessage);
 				}
 			});
 		}
