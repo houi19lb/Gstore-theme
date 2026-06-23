@@ -1306,6 +1306,7 @@ body.gstore-cart-template .return-to-shop .button:hover {
 	gap: 12px;
 	width: 100%;
 	margin-top: 4px;
+	margin-bottom: 0;
 }
 
 .Gstore-cart-mixed-warning__actions .Gstore-cart-btn {

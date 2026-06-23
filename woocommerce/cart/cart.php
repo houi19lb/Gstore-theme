@@ -55,7 +55,9 @@ if ( function_exists( 'wc_wp_theme_get_element_class_name' ) ) {
 				</div>
 				<p><?php echo esc_html( $gstore_mixed_description ); ?></p>
 			</div>
-			<div class="Gstore-cart-mixed-warning__actions">
+			<form class="Gstore-cart-mixed-warning__actions" method="post" action="<?php echo esc_url( $cart_url ); ?>" data-gstore-mixed-cart-form>
+				<input type="hidden" name="gstore_cart_group_action" value="keep" />
+				<?php wp_nonce_field( 'gstore_cart_token_group', 'nonce', false ); ?>
 				<?php foreach ( $gstore_mixed_groups as $gstore_group_key => $gstore_group ) : ?>
 					<?php
 					if ( empty( $gstore_group['cart_item_keys'] ) || ! is_array( $gstore_group['cart_item_keys'] ) ) {
@@ -64,11 +66,11 @@ if ( function_exists( 'wc_wp_theme_get_element_class_name' ) ) {
 					$gstore_group_tone   = ! empty( $gstore_group['tone'] ) ? sanitize_html_class( (string) $gstore_group['tone'] ) : ( 'partner' === $gstore_group_key ? 'partner' : 'store' );
 					$gstore_action_label = ! empty( $gstore_group['action_label'] ) ? (string) $gstore_group['action_label'] : ( ! empty( $gstore_group['label'] ) ? (string) $gstore_group['label'] : (string) $gstore_group_key );
 					?>
-					<button type="button" class="Gstore-cart-btn Gstore-cart-btn--<?php echo esc_attr( $gstore_group_tone ); ?>" data-gstore-keep-group="<?php echo esc_attr( $gstore_group_key ); ?>">
+					<button type="submit" name="keep_group" value="<?php echo esc_attr( $gstore_group_key ); ?>" class="Gstore-cart-btn Gstore-cart-btn--<?php echo esc_attr( $gstore_group_tone ); ?>" data-gstore-keep-group="<?php echo esc_attr( $gstore_group_key ); ?>">
 						<?php echo esc_html( $gstore_action_label ); ?>
 					</button>
 				<?php endforeach; ?>
-			</div>
+			</form>
 		</div>
 		<?php endif; ?>
 
