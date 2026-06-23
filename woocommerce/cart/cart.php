@@ -36,11 +36,14 @@ if ( function_exists( 'wc_wp_theme_get_element_class_name' ) ) {
 		</header>
 
 		<?php
-		$gstore_mixed_cart = function_exists( 'gstore_blu_get_cart_token_groups' )
-			? gstore_blu_get_cart_token_groups()
-			: array( 'is_mixed' => false );
+		$gstore_mixed_cart = function_exists( 'gstore_get_cart_checkout_groups' )
+			? gstore_get_cart_checkout_groups()
+			: ( function_exists( 'gstore_blu_get_cart_token_groups' ) ? gstore_blu_get_cart_token_groups() : array( 'is_mixed' => false ) );
 
 		if ( ! empty( $gstore_mixed_cart['is_mixed'] ) ) :
+			$gstore_mixed_groups      = isset( $gstore_mixed_cart['groups'] ) && is_array( $gstore_mixed_cart['groups'] ) ? $gstore_mixed_cart['groups'] : array();
+			$gstore_mixed_headline    = ! empty( $gstore_mixed_cart['headline'] ) ? (string) $gstore_mixed_cart['headline'] : __( 'Produtos do programa não podem ser finalizados junto com outros produtos', 'gstore' );
+			$gstore_mixed_description = ! empty( $gstore_mixed_cart['description'] ) ? (string) $gstore_mixed_cart['description'] : __( 'Escolha qual grupo de produtos deseja finalizar agora. Os demais serão removidos do carrinho.', 'gstore' );
 		?>
 		<div class="Gstore-cart-mixed-warning" role="alert" data-gstore-mixed-cart>
 			<div class="Gstore-cart-mixed-warning__content">
@@ -48,17 +51,23 @@ if ( function_exists( 'wc_wp_theme_get_element_class_name' ) ) {
 					<div class="Gstore-cart-mixed-warning__icon">
 						<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
 					</div>
-					<h2><?php esc_html_e( 'Produtos do programa não podem ser finalizados junto com outros produtos', 'gstore' ); ?></h2>
+					<h2><?php echo esc_html( $gstore_mixed_headline ); ?></h2>
 				</div>
-				<p><?php esc_html_e( 'Escolha qual grupo de produtos deseja finalizar agora. Os demais serão removidos do carrinho.', 'gstore' ); ?></p>
+				<p><?php echo esc_html( $gstore_mixed_description ); ?></p>
 			</div>
 			<div class="Gstore-cart-mixed-warning__actions">
-				<button type="button" class="Gstore-cart-btn Gstore-cart-btn--partner" data-gstore-keep-group="partner">
-					<?php esc_html_e( 'Escolher produtos do programa', 'gstore' ); ?>
-				</button>
-				<button type="button" class="Gstore-cart-btn Gstore-cart-btn--store" data-gstore-keep-group="store">
-					<?php esc_html_e( 'Escolher produtos da loja', 'gstore' ); ?>
-				</button>
+				<?php foreach ( $gstore_mixed_groups as $gstore_group_key => $gstore_group ) : ?>
+					<?php
+					if ( empty( $gstore_group['cart_item_keys'] ) || ! is_array( $gstore_group['cart_item_keys'] ) ) {
+						continue;
+					}
+					$gstore_group_tone   = ! empty( $gstore_group['tone'] ) ? sanitize_html_class( (string) $gstore_group['tone'] ) : ( 'partner' === $gstore_group_key ? 'partner' : 'store' );
+					$gstore_action_label = ! empty( $gstore_group['action_label'] ) ? (string) $gstore_group['action_label'] : ( ! empty( $gstore_group['label'] ) ? (string) $gstore_group['label'] : (string) $gstore_group_key );
+					?>
+					<button type="button" class="Gstore-cart-btn Gstore-cart-btn--<?php echo esc_attr( $gstore_group_tone ); ?>" data-gstore-keep-group="<?php echo esc_attr( $gstore_group_key ); ?>">
+						<?php echo esc_html( $gstore_action_label ); ?>
+					</button>
+				<?php endforeach; ?>
 			</div>
 		</div>
 		<?php endif; ?>
@@ -90,16 +99,21 @@ if ( function_exists( 'wc_wp_theme_get_element_class_name' ) ) {
 								$thumbnail         = apply_filters( 'woocommerce_cart_item_thumbnail', $_product->get_image( 'woocommerce_thumbnail' ), $cart_item, $cart_item_key );
 								$cart_item_class   = implode( ' ', array_map( 'sanitize_html_class', explode( ' ', apply_filters( 'woocommerce_cart_item_class', 'cart_item', $cart_item, $cart_item_key ) ) ) );
 
-								$item_token_group = '';
+								$item_checkout_group = '';
+								$item_checkout_data  = array();
 								if ( ! empty( $gstore_mixed_cart['is_mixed'] ) ) {
-									$partner_keys = isset( $gstore_mixed_cart['groups']['partner']['cart_item_keys'] ) ? $gstore_mixed_cart['groups']['partner']['cart_item_keys'] : array();
-									$store_keys   = isset( $gstore_mixed_cart['groups']['store']['cart_item_keys'] ) ? $gstore_mixed_cart['groups']['store']['cart_item_keys'] : array();
-									if ( in_array( $cart_item_key, $partner_keys, true ) ) {
-										$item_token_group = 'partner';
-									} elseif ( in_array( $cart_item_key, $store_keys, true ) ) {
-										$item_token_group = 'store';
+									$checkout_groups = isset( $gstore_mixed_cart['groups'] ) && is_array( $gstore_mixed_cart['groups'] ) ? $gstore_mixed_cart['groups'] : array();
+									foreach ( $checkout_groups as $checkout_group_key => $checkout_group_data ) {
+										$checkout_group_keys = isset( $checkout_group_data['cart_item_keys'] ) && is_array( $checkout_group_data['cart_item_keys'] ) ? $checkout_group_data['cart_item_keys'] : array();
+										if ( in_array( $cart_item_key, $checkout_group_keys, true ) ) {
+											$item_checkout_group = (string) $checkout_group_key;
+											$item_checkout_data  = $checkout_group_data;
+											break;
+										}
 									}
 								}
+								$item_checkout_tone  = ! empty( $item_checkout_data['tone'] ) ? sanitize_html_class( (string) $item_checkout_data['tone'] ) : ( 'partner' === $item_checkout_group ? 'partner' : 'store' );
+								$item_checkout_label = ! empty( $item_checkout_data['card_label'] ) ? (string) $item_checkout_data['card_label'] : ( ! empty( $item_checkout_data['label'] ) ? (string) $item_checkout_data['label'] : $item_checkout_group );
 
 								$gstore_shipping_profile = array(
 									'is_ammo' => false,
@@ -114,12 +128,12 @@ if ( function_exists( 'wc_wp_theme_get_element_class_name' ) ) {
 								}
 								?>
 
-								<article class="Gstore-cart-card <?php echo esc_attr( $cart_item_class ); ?><?php echo '' !== $item_token_group ? ' Gstore-cart-card--' . esc_attr( $item_token_group ) : ''; ?>" role="listitem" data-cart-item-key="<?php echo esc_attr( $cart_item_key ); ?>" data-product-id="<?php echo esc_attr( $product_id ); ?>" data-quantity="<?php echo esc_attr( $cart_item['quantity'] ); ?>" data-shipping-is-ammo="<?php echo ! empty( $gstore_shipping_profile['is_ammo'] ) ? '1' : '0'; ?>" data-shipping-is-gun="<?php echo ! empty( $gstore_shipping_profile['is_gun'] ) ? '1' : '0'; ?>"<?php echo '' !== $item_token_group ? ' data-token-group="' . esc_attr( $item_token_group ) . '"' : ''; ?>>
+								<article class="Gstore-cart-card <?php echo esc_attr( $cart_item_class ); ?><?php echo '' !== $item_checkout_group ? ' Gstore-cart-card--checkout-group Gstore-cart-card--' . esc_attr( $item_checkout_tone ) : ''; ?>" role="listitem" data-cart-item-key="<?php echo esc_attr( $cart_item_key ); ?>" data-product-id="<?php echo esc_attr( $product_id ); ?>" data-quantity="<?php echo esc_attr( $cart_item['quantity'] ); ?>" data-shipping-is-ammo="<?php echo ! empty( $gstore_shipping_profile['is_ammo'] ) ? '1' : '0'; ?>" data-shipping-is-gun="<?php echo ! empty( $gstore_shipping_profile['is_gun'] ) ? '1' : '0'; ?>"<?php echo '' !== $item_checkout_group ? ' data-checkout-group="' . esc_attr( $item_checkout_group ) . '" data-token-group="' . esc_attr( $item_checkout_group ) . '"' : ''; ?>>
 									<div class="Gstore-cart-card__content">
 										<div class="Gstore-cart-card__media-column">
-											<?php if ( '' !== $item_token_group ) : ?>
-												<div class="Gstore-cart-card__group-label Gstore-cart-card__group-label--<?php echo esc_attr( $item_token_group ); ?>">
-													<?php echo 'partner' === $item_token_group ? esc_html__( 'Programa', 'gstore' ) : esc_html__( 'Loja', 'gstore' ); ?>
+											<?php if ( '' !== $item_checkout_group ) : ?>
+												<div class="Gstore-cart-card__group-label Gstore-cart-card__group-label--<?php echo esc_attr( $item_checkout_tone ); ?>">
+													<?php echo esc_html( $item_checkout_label ); ?>
 												</div>
 											<?php endif; ?>
 											<div class="Gstore-cart-card__media">

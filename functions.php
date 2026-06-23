@@ -5475,7 +5475,7 @@ function gstore_enqueue_scripts() {
 				'ajax_url'         => admin_url( 'admin-ajax.php' ),
 				'cart_url'         => wc_get_cart_url(),
 				'cart_count'       => WC()->cart->get_cart_contents_count(),
-				'mixed_cart'       => function_exists( 'gstore_blu_get_cart_token_groups' ) ? gstore_blu_get_cart_token_groups() : array( 'is_mixed' => false ),
+				'mixed_cart'       => function_exists( 'gstore_get_cart_checkout_groups' ) ? gstore_get_cart_checkout_groups() : ( function_exists( 'gstore_blu_get_cart_token_groups' ) ? gstore_blu_get_cart_token_groups() : array( 'is_mixed' => false ) ),
 				'mixed_cart_nonce' => wp_create_nonce( 'gstore_cart_token_group' ),
 			)
 		);
@@ -5495,15 +5495,16 @@ function gstore_enqueue_scripts() {
 add_action( 'wp_enqueue_scripts', 'gstore_enqueue_scripts' );
 
 /**
- * Redireciona checkout para carrinho quando há mistura de tokens Blu.
+ * Redireciona checkout para carrinho quando há grupos incompatíveis.
  */
 add_action( 'template_redirect', function () {
 	if (
 		function_exists( 'is_checkout' ) && is_checkout()
 		&& ! is_order_received_page()
-		&& function_exists( 'gstore_blu_get_cart_token_groups' )
 	) {
-		$groups = gstore_blu_get_cart_token_groups();
+		$groups = function_exists( 'gstore_get_cart_checkout_groups' )
+			? gstore_get_cart_checkout_groups()
+			: ( function_exists( 'gstore_blu_get_cart_token_groups' ) ? gstore_blu_get_cart_token_groups() : array( 'is_mixed' => false ) );
 		if ( ! empty( $groups['is_mixed'] ) ) {
 			wp_safe_redirect( add_query_arg( 'mixed_cart', '1', wc_get_cart_url() ) );
 			exit;

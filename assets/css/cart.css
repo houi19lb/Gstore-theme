@@ -1343,6 +1343,17 @@ body.gstore-cart-template .return-to-shop .button:hover {
 	color: #fff;
 }
 
+.Gstore-cart-btn--restricted {
+	background: #fff;
+	border-color: #7c3aed;
+	color: #5b21b6;
+}
+
+.Gstore-cart-btn--restricted:hover {
+	background: #7c3aed;
+	color: #fff;
+}
+
 .Gstore-cart-btn--loading {
 	opacity: 0.6;
 	cursor: wait;
@@ -1361,6 +1372,14 @@ body.gstore-cart-template .return-to-shop .button:hover {
 
 .Gstore-cart-card--store {
 	border-left: 4px solid #3b82f6 !important;
+}
+
+.Gstore-cart-card--restricted {
+	border-left: 4px solid #7c3aed !important;
+}
+
+.Gstore-cart-card__group-label--restricted {
+	color: #5b21b6;
 }
 
 @media (max-width: 600px) {
