@@ -177,7 +177,7 @@
 			};
 			setCpfPurchaseLimitFieldState(false);
 			if (!opts.silent) {
-				showNotice(escapeHtml(cpfPurchaseLimitState.message), 'error', 15000);
+				showStepFooterNotice(escapeHtml(cpfPurchaseLimitState.message), 'error', 15000);
 			}
 			deferred.resolve(false, cpfPurchaseLimitState);
 			return deferred.promise();
@@ -191,7 +191,7 @@
 		if (cpfPurchaseLimitState.cpf === cpf && cpfPurchaseLimitState.status === 'blocked') {
 			setCpfPurchaseLimitFieldState(false);
 			if (!opts.silent) {
-				showNotice(escapeHtml(cpfPurchaseLimitState.message), 'error', 15000);
+				showStepFooterNotice(escapeHtml(cpfPurchaseLimitState.message), 'error', 15000);
 			}
 			deferred.resolve(false, cpfPurchaseLimitState);
 			return deferred.promise();
@@ -242,7 +242,7 @@
 
 			setCpfPurchaseLimitFieldState(allowed);
 			if (!allowed && !opts.silent) {
-				showNotice(escapeHtml(cpfPurchaseLimitState.message || 'Este CPF já atingiu o limite para este produto.'), 'error', 15000);
+				showStepFooterNotice(escapeHtml(cpfPurchaseLimitState.message || 'Este CPF já atingiu o limite para este produto.'), 'error', 15000);
 			}
 			deferred.resolve(allowed, cpfPurchaseLimitState);
 		}).fail(function(xhrObj, status) {
@@ -261,7 +261,7 @@
 			};
 			setCpfPurchaseLimitFieldState(false);
 			if (!opts.silent) {
-				showNotice(escapeHtml(cpfPurchaseLimitState.message), 'error', 15000);
+				showStepFooterNotice(escapeHtml(cpfPurchaseLimitState.message), 'error', 15000);
 			}
 			deferred.resolve(false, cpfPurchaseLimitState);
 		});
@@ -4663,6 +4663,40 @@ function getInstallmentDisplayTotals(summaryData) {
 		$('.Gstore-checkout-step.is-active .Gstore-checkout-step__header').after($notice);
 
 		// Remove após o tempo configurado
+		const hideDelay = typeof autoHideMs === 'number' ? autoHideMs : 5000;
+		if (hideDelay <= 0) {
+			return;
+		}
+
+		setTimeout(() => {
+			$notice.fadeOut(300, function() {
+				$(this).remove();
+			});
+		}, hideDelay);
+	}
+
+	function showStepFooterNotice(message, type, autoHideMs) {
+		const $notice = $(`
+			<div class="woocommerce-notice woocommerce-notice--${type} woocommerce-${type}" role="alert">
+				${message}
+			</div>
+		`);
+		const $activeStep = $('.Gstore-checkout-step.is-active').first();
+
+		if (!$activeStep.length) {
+			showNotice(message, type, autoHideMs);
+			return;
+		}
+
+		$activeStep.find('.woocommerce-notice').remove();
+
+		const $actions = $activeStep.find('.Gstore-checkout-step__actions').first();
+		if ($actions.length) {
+			$actions.before($notice);
+		} else {
+			$activeStep.append($notice);
+		}
+
 		const hideDelay = typeof autoHideMs === 'number' ? autoHideMs : 5000;
 		if (hideDelay <= 0) {
 			return;
