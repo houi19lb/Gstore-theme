@@ -64,6 +64,31 @@ add_filter(
 add_filter( 'gstore_migration_noindex_feeds', '__return_true' );
 
 add_filter(
+	'gstore_page_sitemap_excluded_slugs',
+	static function ( $slugs ) {
+		$slugs = is_array( $slugs ) ? $slugs : array();
+
+		if ( ! gstore_armastore_is_current_host() ) {
+			return $slugs;
+		}
+
+		return array_values(
+			array_unique(
+				array_merge(
+					$slugs,
+					array(
+						'loja',
+						'programas',
+						'clube-de-tiro',
+						'pro-training',
+					)
+				)
+			)
+		);
+	}
+);
+
+add_filter(
 	'gstore_public_surface_robots_disallow_rules',
 	static function ( $rules ) {
 		$rules = is_array( $rules ) ? $rules : array();
