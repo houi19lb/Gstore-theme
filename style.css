@@ -2973,6 +2973,17 @@ body.single-product .onsale {
 	grid-column: 1 / -1;
 }
 
+.buybox-header.has-brand.is-price-suppressed {
+	display: flex;
+	justify-content: flex-end;
+}
+
+.buybox-header.has-brand.is-price-suppressed .Gstore-single-product__brand-lockup {
+	width: min(176px, 100%);
+	padding-left: 0;
+	border-left: 0;
+}
+
 .Gstore-single-product__price-panel {
 	min-width: 0;
 }
@@ -3069,6 +3080,16 @@ body.single-product .onsale {
 	.Gstore-single-product__brand-lockup {
 		padding-left: 10px;
 		gap: 5px;
+	}
+
+	.buybox-header.has-brand.is-price-suppressed .Gstore-single-product__brand-lockup {
+		width: min(112px, 100%);
+		padding-left: 0;
+	}
+
+	.buybox-header.has-stock-summary .stock {
+		min-height: 104px;
+		padding: 12px;
 	}
 
 	.Gstore-single-product__brand-logo-link {
@@ -3288,6 +3309,18 @@ body.single-product .onsale {
 	margin-top: 16px;
 	border-radius: var(--gstore-radius-base);
 	padding: 14px;
+}
+
+.buybox .buybox-header .stock {
+	margin-top: 0;
+}
+
+.buybox-header.has-stock-summary .stock {
+	align-self: stretch;
+	min-height: 124px;
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
 }
 
 .buybox.is-in-stock .stock {

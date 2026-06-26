@@ -140,6 +140,42 @@ if ( ! function_exists( 'gstore_get_single_product_brand_buybox_data' ) ) :
 	}
 endif;
 
+if ( ! function_exists( 'gstore_render_single_product_brand_buybox_lockup' ) ) :
+	/**
+	 * Renderiza o bloco de marca usado no topo da buybox.
+	 *
+	 * @param array $brand_buybox_data Dados da marca.
+	 * @return void
+	 */
+	function gstore_render_single_product_brand_buybox_lockup( $brand_buybox_data ) {
+		if ( empty( $brand_buybox_data ) || ! is_array( $brand_buybox_data ) ) {
+			return;
+		}
+
+		$brand_name = isset( $brand_buybox_data['name'] ) ? (string) $brand_buybox_data['name'] : '';
+		$brand_link = isset( $brand_buybox_data['link'] ) ? (string) $brand_buybox_data['link'] : '';
+		$image_html = isset( $brand_buybox_data['image_html'] ) ? (string) $brand_buybox_data['image_html'] : '';
+
+		if ( '' === $brand_name || '' === $brand_link || '' === $image_html ) {
+			return;
+		}
+		?>
+		<aside class="Gstore-single-product__brand-lockup" aria-label="<?php echo esc_attr( sprintf( __( 'Marca %s', 'gstore' ), $brand_name ) ); ?>">
+			<a class="Gstore-single-product__brand-logo-link" href="<?php echo esc_url( $brand_link ); ?>" aria-label="<?php echo esc_attr( sprintf( __( 'Ver produtos da marca %s', 'gstore' ), $brand_name ) ); ?>">
+				<?php echo wp_kses_post( $image_html ); ?>
+			</a>
+			<div class="Gstore-single-product__brand-badge">
+				<span class="Gstore-single-product__brand-badge-dot" aria-hidden="true"></span>
+				<span><?php esc_html_e( 'Marca oficial', 'gstore' ); ?></span>
+			</div>
+			<a class="Gstore-single-product__brand-link" href="<?php echo esc_url( $brand_link ); ?>">
+				<?php esc_html_e( 'Ver marca', 'gstore' ); ?>
+			</a>
+		</aside>
+		<?php
+	}
+endif;
+
 if ( ! function_exists( 'gstore_get_hero_meta_cards' ) ) :
 	/**
 	 * Retorna cards de meta informações.
@@ -172,6 +208,36 @@ if ( ! function_exists( 'gstore_get_hero_meta_cards' ) ) :
 				'is_installment' => false,
 			),
 		);
+	}
+endif;
+
+if ( ! function_exists( 'gstore_render_single_product_buybox_stock_block' ) ) :
+	/**
+	 * Renderiza o bloco de disponibilidade da buybox.
+	 *
+	 * @param string $buybox_stock_class Classe do estado de estoque.
+	 * @param string $stock_title        Titulo exibido.
+	 * @param string $stock_subtitle     Subtitulo exibido.
+	 * @return void
+	 */
+	function gstore_render_single_product_buybox_stock_block( $buybox_stock_class, $stock_title, $stock_subtitle ) {
+		?>
+		<div class="stock <?php echo esc_attr( $buybox_stock_class ); ?>"
+			data-gstore-stock-block
+			data-availability
+			data-default-class="<?php echo esc_attr( $buybox_stock_class ); ?>"
+			data-default-title="<?php echo esc_attr( $stock_title ); ?>"
+			data-default-subtitle="<?php echo esc_attr( $stock_subtitle ); ?>"
+			data-oos-title="<?php echo esc_attr__( 'Indisponível', 'gstore' ); ?>"
+			data-oos-subtitle="<?php echo esc_attr__( 'Sem estoque no momento', 'gstore' ); ?>">
+			<div class="stock-title" data-gstore-stock-title>
+				<?php echo esc_html( $stock_title ); ?>
+			</div>
+			<div class="stock-sub" data-gstore-stock-subtitle>
+				<?php echo esc_html( $stock_subtitle ); ?>
+			</div>
+		</div>
+		<?php
 	}
 endif;
 
@@ -1023,6 +1089,9 @@ if ( $hide_price && isset( $hero_meta_cards[1] ) && is_array( $hero_meta_cards[1
 	$hero_meta_cards[1]['allow_html'] = false;
 }
 $brand_buybox_data = gstore_get_single_product_brand_buybox_data( $product );
+$show_buybox_price_panel      = $hide_price || ! $is_out_of_stock || $show_price_oos;
+$show_buybox_stock_in_header  = ! $show_buybox_price_panel && ! empty( $brand_buybox_data );
+$show_buybox_header           = $show_buybox_price_panel || ! empty( $brand_buybox_data );
 $contact_entries   = gstore_get_contact_entries();
 $guarantee_badges  = gstore_get_guarantee_badges();
 
@@ -1366,14 +1435,16 @@ $gstore_tab_next_cta_labels = array(
 				<div class="Gstore-single-product__summary">
 					<div class="Gstore-single-product__summary-card Gstore-single-product__buybox buybox <?php echo esc_attr( $buybox_stock_class ); ?>">
 						<!-- Preço -->
-						<?php if ( $hide_price || ! $is_out_of_stock || $show_price_oos ) : ?>
+						<?php if ( $show_buybox_header ) : ?>
 							<div
-								class="buybox-header<?php echo ! empty( $brand_buybox_data ) ? ' has-brand' : ''; ?><?php echo ( $is_out_of_stock && $show_price_oos && ! $hide_price ) ? ' is-unavailable' : ''; ?><?php echo $hide_price ? ' is-price-hidden' : ''; ?>"
+								class="buybox-header<?php echo ! empty( $brand_buybox_data ) ? ' has-brand' : ''; ?><?php echo $show_buybox_price_panel ? ' has-price' : ''; ?><?php echo $show_buybox_stock_in_header ? ' has-stock-summary' : ''; ?><?php echo ( $is_out_of_stock && $show_price_oos && ! $hide_price ) ? ' is-unavailable' : ''; ?><?php echo $hide_price ? ' is-price-hidden' : ''; ?>"
 								data-gstore-price-header
 								data-gstore-oos-price-mode="<?php echo esc_attr( $oos_price_mode ); ?>"
 								data-gstore-hide-price="<?php echo $hide_price ? '1' : '0'; ?>"
+								data-gstore-has-brand="<?php echo ! empty( $brand_buybox_data ) ? '1' : '0'; ?>"
 							>
-								<div class="Gstore-single-product__price-panel">
+								<?php if ( $show_buybox_price_panel ) : ?>
+								<div class="Gstore-single-product__price-panel" data-gstore-price-panel>
 									<?php if ( $hide_price ) : ?>
 										<div class="price-label"><?php esc_html_e( 'Preço oculto no site', 'gstore' ); ?></div>
 										<div class="price" id="price" data-gstore-price data-pix-percent="0">
@@ -1426,21 +1497,13 @@ $gstore_tab_next_cta_labels = array(
 										<?php endif; ?>
 									<?php endif; ?>
 								</div>
-
-								<?php if ( ! empty( $brand_buybox_data ) ) : ?>
-									<aside class="Gstore-single-product__brand-lockup" aria-label="<?php echo esc_attr( sprintf( __( 'Marca %s', 'gstore' ), $brand_buybox_data['name'] ) ); ?>">
-										<a class="Gstore-single-product__brand-logo-link" href="<?php echo esc_url( $brand_buybox_data['link'] ); ?>" aria-label="<?php echo esc_attr( sprintf( __( 'Ver produtos da marca %s', 'gstore' ), $brand_buybox_data['name'] ) ); ?>">
-											<?php echo wp_kses_post( $brand_buybox_data['image_html'] ); ?>
-										</a>
-										<div class="Gstore-single-product__brand-badge">
-											<span class="Gstore-single-product__brand-badge-dot" aria-hidden="true"></span>
-											<span><?php esc_html_e( 'Marca oficial', 'gstore' ); ?></span>
-										</div>
-										<a class="Gstore-single-product__brand-link" href="<?php echo esc_url( $brand_buybox_data['link'] ); ?>">
-											<?php esc_html_e( 'Ver marca', 'gstore' ); ?>
-										</a>
-									</aside>
 								<?php endif; ?>
+
+								<?php if ( $show_buybox_stock_in_header ) : ?>
+									<?php gstore_render_single_product_buybox_stock_block( $buybox_stock_class, $stock_title, $stock_subtitle ); ?>
+								<?php endif; ?>
+
+								<?php gstore_render_single_product_brand_buybox_lockup( $brand_buybox_data ); ?>
 
 								<?php if ( ! $hide_price && $show_price_oos ) : ?>
 									<div class="price-unavailable-notice" data-gstore-price-unavailable-notice<?php echo $is_out_of_stock ? '' : ' hidden'; ?>>
@@ -1473,21 +1536,9 @@ $gstore_tab_next_cta_labels = array(
 						<?php endif; ?>
 
 						<!-- Disponibilidade -->
-						<div class="stock <?php echo esc_attr( $buybox_stock_class ); ?>" 
-							data-gstore-stock-block
-							data-availability
-							data-default-class="<?php echo esc_attr( $buybox_stock_class ); ?>"
-							data-default-title="<?php echo esc_attr( $stock_title ); ?>"
-							data-default-subtitle="<?php echo esc_attr( $stock_subtitle ); ?>"
-							data-oos-title="<?php echo esc_attr__( 'Indisponível', 'gstore' ); ?>"
-							data-oos-subtitle="<?php echo esc_attr__( 'Sem estoque no momento', 'gstore' ); ?>">
-							<div class="stock-title" data-gstore-stock-title>
-								<?php echo esc_html( $stock_title ); ?>
-							</div>
-							<div class="stock-sub" data-gstore-stock-subtitle>
-								<?php echo esc_html( $stock_subtitle ); ?>
-							</div>
-						</div>
+						<?php if ( ! $show_buybox_stock_in_header ) : ?>
+							<?php gstore_render_single_product_buybox_stock_block( $buybox_stock_class, $stock_title, $stock_subtitle ); ?>
+						<?php endif; ?>
 
 						<!-- Variações + Quantidade + CTA -->
 						<div class="Gstore-single-product__add-to-cart">

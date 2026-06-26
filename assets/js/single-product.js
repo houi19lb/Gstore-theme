@@ -923,6 +923,8 @@ document.addEventListener('DOMContentLoaded', () => {
 		const stockSubtitle = stockBlock?.querySelector('[data-gstore-stock-subtitle]');
 		const warning = document.querySelector('[data-gstore-variation-warning]');
 		const priceHeader = document.querySelector('[data-gstore-price-header]');
+		const pricePanel = priceHeader?.querySelector('[data-gstore-price-panel]');
+		const priceHeaderHasBrand = String(priceHeader?.dataset?.gstoreHasBrand || '0') === '1';
 		const priceUnavailableNotice = document.querySelector('[data-gstore-price-unavailable-notice]');
 		const oosPriceMode = String(priceHeader?.dataset?.gstoreOosPriceMode || 'hide').toLowerCase() === 'show'
 			? 'show'
@@ -966,13 +968,31 @@ document.addEventListener('DOMContentLoaded', () => {
 					if (oosPriceMode === 'show') {
 						priceHeader.hidden = false;
 						priceHeader.classList.add('is-unavailable');
+						priceHeader.classList.remove('is-price-suppressed');
+						if (pricePanel) {
+							pricePanel.hidden = false;
+						}
 						if (priceUnavailableNotice) {
 							priceUnavailableNotice.hidden = false;
 						}
 						return;
 					}
 
+					if (priceHeaderHasBrand) {
+						priceHeader.hidden = false;
+						priceHeader.classList.remove('is-unavailable');
+						priceHeader.classList.add('is-price-suppressed');
+						if (pricePanel) {
+							pricePanel.hidden = true;
+						}
+						if (priceUnavailableNotice) {
+							priceUnavailableNotice.hidden = true;
+						}
+						return;
+					}
+
 					priceHeader.hidden = true;
+					priceHeader.classList.remove('is-price-suppressed');
 					if (priceUnavailableNotice) {
 						priceUnavailableNotice.hidden = true;
 					}
@@ -980,7 +1000,10 @@ document.addEventListener('DOMContentLoaded', () => {
 				}
 
 				priceHeader.hidden = false;
-				priceHeader.classList.remove('is-unavailable');
+				priceHeader.classList.remove('is-unavailable', 'is-price-suppressed');
+				if (pricePanel) {
+					pricePanel.hidden = false;
+				}
 				if (priceUnavailableNotice) {
 					priceUnavailableNotice.hidden = true;
 				}
