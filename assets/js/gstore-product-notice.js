@@ -82,6 +82,12 @@
 		var buttonsContainer = findButtonsContainer();
 
 		if (availability && availability.parentNode) {
+			var buyboxHeader = availability.closest(".buybox-header");
+			if (buyboxHeader && buyboxHeader.parentNode) {
+				buyboxHeader.parentNode.insertBefore(notice, buyboxHeader.nextSibling);
+				return;
+			}
+
 			availability.parentNode.insertBefore(notice, availability.nextSibling);
 			return;
 		}
