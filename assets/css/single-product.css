@@ -69,9 +69,11 @@ h2.wp-block-heading.has-text-align-center.has-x-large-font-size {
 
 .Gstore-breadcrumb {
 	display: flex;
+	align-items: center;
 	flex-wrap: wrap;
 	gap: 6px;
 	color: inherit;
+	line-height: 1.35;
 }
 
 .Gstore-breadcrumb a {
@@ -101,7 +103,7 @@ h2.wp-block-heading.has-text-align-center.has-x-large-font-size {
 	border-top: 2px solid currentColor;
 	border-right: 2px solid currentColor;
 	box-sizing: border-box;
-	transform: rotate(45deg);
+	transform: translateY(0.04em) rotate(45deg);
 }
 
 .Gstore-single-product__entry {
