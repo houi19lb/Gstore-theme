@@ -857,7 +857,7 @@
    HOME PRODUCTS
    ======================================== */
 .Gstore-home-products {
-	background: var(--gray-bg);
+	background: var(--gstore-color-bg-light, #ffffff);
 }
 
 .Gstore-home-products__filters .wp-block-button__link {

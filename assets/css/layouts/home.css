@@ -285,7 +285,7 @@
    ======================================== */
 
 .Gstore-home-products {
-	background: var(--gstore-color-bg-muted);
+	background: var(--gstore-color-bg-light, #ffffff);
 	padding: clamp(var(--gstore-spacing-8), 4vw, var(--gstore-spacing-16)) 0;
 }
 
