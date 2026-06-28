@@ -637,6 +637,52 @@ function gstore_replace_empty_minicart_checkout_link( $block_content ) {
 	);
 }
 add_filter( 'render_block_woocommerce/mini-cart', 'gstore_replace_empty_minicart_checkout_link', 20 );
+
+/**
+ * Adiciona dimensoes seguras aos templates dinamicos de thumbnail do Woo Blocks.
+ *
+ * A Store API continua dona do src real. Aqui ajustamos apenas o HTML do
+ * template para evitar que PageSpeed trate imagens dinamicas como sem dimensao.
+ *
+ * @param string $block_content HTML renderizado.
+ * @return string
+ */
+function gstore_add_woocommerce_block_thumbnail_dimensions( $block_content ) {
+	if ( ! is_string( $block_content ) || false === strpos( $block_content, 'state.itemThumbnail' ) ) {
+		return $block_content;
+	}
+
+	return (string) preg_replace_callback(
+		'/<img\b(?=[^>]*data-wp-bind--src=(["\'])state\.itemThumbnail\1)[^>]*>/i',
+		static function ( $matches ) {
+			$tag = $matches[0];
+			$attrs = array(
+				'width'    => '300',
+				'height'   => '300',
+				'loading'  => 'lazy',
+				'decoding' => 'async',
+				'sizes'    => '96px',
+			);
+
+			foreach ( $attrs as $name => $value ) {
+				if ( preg_match( '/\s' . preg_quote( $name, '/' ) . '\s*=/i', $tag ) ) {
+					continue;
+				}
+
+				$self_closing = (bool) preg_match( '/\/\s*>$/', $tag );
+				$tag = preg_replace( '/\s*\/?>$/', '', $tag );
+				$tag .= ' ' . esc_attr( $name ) . '="' . esc_attr( $value ) . '"' . ( $self_closing ? ' />' : '>' );
+			}
+
+			return $tag;
+		},
+		$block_content
+	);
+}
+add_filter( 'render_block_woocommerce/mini-cart', 'gstore_add_woocommerce_block_thumbnail_dimensions', 30 );
+add_filter( 'render_block_woocommerce/cart', 'gstore_add_woocommerce_block_thumbnail_dimensions', 30 );
+add_filter( 'render_block', 'gstore_add_woocommerce_block_thumbnail_dimensions', 36 );
+
 add_filter( 'render_block', 'gstore_normalize_internal_public_links', 35 );
 add_filter( 'the_content', 'gstore_normalize_internal_public_links', 35 );
 
@@ -3504,52 +3550,40 @@ function gstore_force_woocommerce_image_options() {
 add_action( 'init', 'gstore_force_woocommerce_image_options' );
 
 /**
- * Adiciona resource hints (preconnect, dns-prefetch) para melhorar performance.
- *
- * Adiciona preconnect para CDNs e recursos externos para reduzir latência
- * na primeira conexão. Isso pode economizar ~300ms no tempo de carregamento.
+ * Adiciona resource hints (dns-prefetch) para origens externas ainda usadas.
  */
 function gstore_add_resource_hints() {
-	// Preconnect para FontAwesome CDN (prioridade alta)
-	echo '<link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>' . "\n";
-
 	// DNS-prefetch para outras origens externas (menos crítico)
 	echo '<link rel="dns-prefetch" href="https://secure.gravatar.com">' . "\n";
 }
 add_action( 'wp_head', 'gstore_add_resource_hints', 1 );
 
 /**
- * Adiciona font-display: swap para FontAwesome para melhorar FCP.
+ * Retorna o caminho local do Font Awesome com font-display: swap.
  *
- * Isso garante que o texto seja visível imediatamente enquanto as fontes carregam,
- * evitando FOIT (Flash of Invisible Text) e melhorando a percepção de velocidade.
+ * @return string
  */
-function gstore_fontawesome_font_display() {
-	?>
-	<style id="gstore-fontawesome-font-display">
-		/* Force font-display: swap for FontAwesome webfonts */
-		@font-face {
-			font-family: 'Font Awesome 6 Brands';
-			font-style: normal;
-			font-weight: 400;
-			font-display: swap;
-		}
-		@font-face {
-			font-family: 'Font Awesome 6 Free';
-			font-style: normal;
-			font-weight: 400;
-			font-display: swap;
-		}
-		@font-face {
-			font-family: 'Font Awesome 6 Free';
-			font-style: normal;
-			font-weight: 900;
-			font-display: swap;
-		}
-	</style>
-	<?php
+function gstore_get_fontawesome_css_asset_path() {
+	return 'assets/vendor/fontawesome/6.5.1/css/all.min.css';
 }
-add_action( 'wp_head', 'gstore_fontawesome_font_display', 2 );
+
+/**
+ * Retorna a URI local do Font Awesome.
+ *
+ * @return string
+ */
+function gstore_get_fontawesome_css_uri() {
+	return gstore_theme_asset_uri( gstore_get_fontawesome_css_asset_path() );
+}
+
+/**
+ * Retorna a versao local do Font Awesome.
+ *
+ * @return string
+ */
+function gstore_get_fontawesome_css_version() {
+	return gstore_theme_asset_version( gstore_get_fontawesome_css_asset_path(), '6.5.1' );
+}
 
 /**
  * Adiciona preload para Font Awesome CSS para melhorar performance.
@@ -3558,9 +3592,14 @@ add_action( 'wp_head', 'gstore_fontawesome_font_display', 2 );
  * sem bloquear a renderização inicial.
  */
 function gstore_preload_fontawesome() {
+	$fontawesome_css_url = add_query_arg(
+		'ver',
+		gstore_get_fontawesome_css_version(),
+		gstore_get_fontawesome_css_uri()
+	);
 	?>
-	<link rel="preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" onload="this.onload=null;this.rel='stylesheet'">
-	<noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"></noscript>
+	<link rel="preload" as="style" href="<?php echo esc_url( $fontawesome_css_url ); ?>" onload="this.onload=null;this.rel='stylesheet'">
+	<noscript><link rel="stylesheet" href="<?php echo esc_url( $fontawesome_css_url ); ?>"></noscript>
 	<?php
 }
 add_action( 'wp_head', 'gstore_preload_fontawesome', 1 );
@@ -3616,6 +3655,131 @@ function gstore_get_hero_image_srcset_with_version( $attachment_id, $cache_versi
 }
 
 /**
+ * Retorna o caminho local de upload correspondente a uma URL de imagem.
+ *
+ * @param string $image_url URL publica da imagem.
+ * @return string
+ */
+function gstore_get_upload_file_path_from_url( $image_url ) {
+	$image_url = preg_replace( '/[?#].*$/', '', (string) $image_url );
+	if ( '' === $image_url ) {
+		return '';
+	}
+
+	$uploads = wp_get_upload_dir();
+	if ( empty( $uploads['baseurl'] ) || empty( $uploads['basedir'] ) ) {
+		return '';
+	}
+
+	$base_url       = untrailingslashit( (string) $uploads['baseurl'] );
+	$base_dir       = wp_normalize_path( (string) $uploads['basedir'] );
+	$normalized_url = preg_replace( '#^https?:#i', '', $image_url );
+	$normalized_base_url = preg_replace( '#^https?:#i', '', $base_url );
+
+	if ( 0 !== strpos( $normalized_url, $normalized_base_url ) ) {
+		return '';
+	}
+
+	$relative_path = substr( $normalized_url, strlen( $normalized_base_url ) );
+	if ( false === $relative_path ) {
+		return '';
+	}
+
+	return wp_normalize_path( $base_dir . $relative_path );
+}
+
+/**
+ * Retorna uma variante WebP existente para uma URL de imagem.
+ *
+ * @param string $image_url     URL original.
+ * @param int    $cache_version Versao de cache.
+ * @return string
+ */
+function gstore_get_webp_image_url_with_version( $image_url, $cache_version = 0 ) {
+	$image_url = preg_replace( '/[?#].*$/', '', (string) $image_url );
+	if ( '' === $image_url || ! preg_match( '/\.(?:jpe?g|png)$/i', $image_url ) ) {
+		return '';
+	}
+
+	$image_path = gstore_get_upload_file_path_from_url( $image_url );
+	if ( '' === $image_path ) {
+		return '';
+	}
+
+	$webp_path = preg_replace( '/\.(?:jpe?g|png)$/i', '.webp', $image_path );
+	if ( ! $webp_path || ! file_exists( $webp_path ) ) {
+		return '';
+	}
+
+	$webp_url = preg_replace( '/\.(?:jpe?g|png)$/i', '.webp', $image_url );
+	if ( ! $webp_url ) {
+		return '';
+	}
+
+	return add_query_arg( 'v', absint( $cache_version ), $webp_url );
+}
+
+/**
+ * Retorna a URL WebP do hero quando o arquivo existir.
+ *
+ * @param int    $attachment_id ID da imagem.
+ * @param string $size          Tamanho solicitado.
+ * @param int    $cache_version Versao de cache.
+ * @return string
+ */
+function gstore_get_hero_webp_image_url_with_version( $attachment_id, $size = 'full', $cache_version = 0 ) {
+	$image_url = gstore_get_image_url( $attachment_id, $size );
+	return gstore_get_webp_image_url_with_version( $image_url, $cache_version );
+}
+
+/**
+ * Monta o srcset WebP do hero apenas com arquivos existentes.
+ *
+ * @param int $attachment_id ID da imagem.
+ * @param int $cache_version Versao de cache.
+ * @return string
+ */
+function gstore_get_hero_webp_image_srcset_with_version( $attachment_id, $cache_version = 0 ) {
+	$srcset_sizes = array( 'medium_large', 'large', 'full' );
+	$srcset_array = array();
+
+	foreach ( $srcset_sizes as $size ) {
+		$size_url = gstore_get_hero_webp_image_url_with_version( $attachment_id, $size, $cache_version );
+		$size_src = wp_get_attachment_image_src( $attachment_id, $size );
+
+		if ( $size_url && $size_src && isset( $size_src[1] ) ) {
+			$srcset_array[] = esc_url( $size_url ) . ' ' . absint( $size_src[1] ) . 'w';
+		}
+	}
+
+	return implode( ', ', array_unique( $srcset_array ) );
+}
+
+/**
+ * Retorna os dados do preload do hero, preferindo WebP com fallback seguro.
+ *
+ * @param int $attachment_id ID da imagem.
+ * @param int $cache_version Versao de cache.
+ * @return array<string,string>
+ */
+function gstore_get_hero_preload_image_data( $attachment_id, $cache_version = 0 ) {
+	$webp_url = gstore_get_hero_webp_image_url_with_version( $attachment_id, 'full', $cache_version );
+	if ( '' !== $webp_url ) {
+		return array(
+			'href'   => $webp_url,
+			'srcset' => gstore_get_hero_webp_image_srcset_with_version( $attachment_id, $cache_version ),
+			'type'   => 'image/webp',
+		);
+	}
+
+	return array(
+		'href'   => gstore_get_hero_image_url_with_version( $attachment_id, 'full', $cache_version ),
+		'srcset' => gstore_get_hero_image_srcset_with_version( $attachment_id, $cache_version ),
+		'type'   => '',
+	);
+}
+
+/**
  * Imprime preload de hero com escopo por media query quando aplicavel.
  *
  * @param int    $attachment_id ID da imagem.
@@ -3629,16 +3793,20 @@ function gstore_print_hero_image_preload( $attachment_id, $media = '' ) {
 	}
 
 	$cache_version = gstore_get_hero_image_cache_version();
-	$hero_url      = gstore_get_hero_image_url_with_version( $attachment_id, 'full', $cache_version );
-	if ( '' === $hero_url ) {
+	$preload_data  = gstore_get_hero_preload_image_data( $attachment_id, $cache_version );
+	if ( empty( $preload_data['href'] ) ) {
 		return;
 	}
 
-	$hero_srcset = gstore_get_hero_image_srcset_with_version( $attachment_id, $cache_version );
-	$preload_tag = '<link rel="preload" as="image" href="' . esc_url( $hero_url ) . '"';
+	$hero_srcset = isset( $preload_data['srcset'] ) ? (string) $preload_data['srcset'] : '';
+	$preload_tag = '<link rel="preload" as="image" href="' . esc_url( $preload_data['href'] ) . '"';
 
 	if ( '' !== $media ) {
 		$preload_tag .= ' media="' . esc_attr( $media ) . '"';
+	}
+
+	if ( ! empty( $preload_data['type'] ) ) {
+		$preload_tag .= ' type="' . esc_attr( $preload_data['type'] ) . '"';
 	}
 
 	if ( '' !== $hero_srcset ) {
@@ -4871,9 +5039,9 @@ function gstore_enqueue_styles() {
 	// bloqueante deste enqueue e suprimida por gstore_suppress_fontawesome_tag().
 	wp_enqueue_style(
 		'gstore-fontawesome',
-		'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css',
+		gstore_get_fontawesome_css_uri(),
 		array(),
-		'6.5.1'
+		gstore_get_fontawesome_css_version()
 	);
 
 	// Sistema modular Gstore (tokens, base, utilities, components, layouts)
@@ -11710,6 +11878,50 @@ function gstore_image_shortcode( $atts ) {
 add_shortcode( 'gstore_image', 'gstore_image_shortcode' );
 
 /**
+ * Retorna a tag otimizada da imagem do banner YouTube.
+ *
+ * @param int    $banner_id  Attachment ID.
+ * @param string $banner_alt Texto alternativo.
+ * @return string
+ */
+function gstore_get_banner_youtube_image_tag( $banner_id, $banner_alt = '' ) {
+	$banner_id = absint( $banner_id );
+	if ( $banner_id <= 0 ) {
+		return '';
+	}
+
+	$cache_version = absint( get_option( 'gstore_banner_cache_version', 0 ) );
+	$banner_url    = gstore_get_hero_image_url_with_version( $banner_id, 'full', $cache_version );
+	if ( '' === $banner_url ) {
+		return '';
+	}
+
+	$attr = array(
+		'src'      => $banner_url,
+		'alt'      => $banner_alt,
+		'loading'  => 'lazy',
+		'decoding' => 'async',
+		'sizes'    => '100vw',
+	);
+
+	$banner_src = wp_get_attachment_image_src( $banner_id, 'full' );
+	if ( $banner_src && ! empty( $banner_src[1] ) && ! empty( $banner_src[2] ) ) {
+		$attr['width']  = (int) $banner_src[1];
+		$attr['height'] = (int) $banner_src[2];
+	}
+
+	$img_tag = '<img';
+	foreach ( $attr as $key => $value ) {
+		if ( ! empty( $value ) || 'alt' === $key ) {
+			$img_tag .= ' ' . esc_attr( $key ) . '="' . esc_attr( $value ) . '"';
+		}
+	}
+	$img_tag .= ' />';
+
+	return gstore_maybe_wrap_webp_picture( $img_tag, $banner_id, 'full' );
+}
+
+/**
  * Shortcode para renderizar o banner do YouTube condicionalmente.
  * Só exibe se o banner estiver configurado em Configurações Gstore.
  *
@@ -11724,24 +11936,13 @@ function gstore_banner_youtube_shortcode() {
 		return ''; // Não exibe nada se não estiver configurado
 	}
 
-	$banner_url = wp_get_attachment_url( $banner_id );
 	$banner_alt = esc_attr( get_option( 'gstore_banner_youtube_alt', 'Banner do YouTube' ) );
 	$banner_link = esc_url( get_option( 'gstore_banner_youtube_link', '' ) );
+	$img_tag = gstore_get_banner_youtube_image_tag( $banner_id, $banner_alt );
 
-	if ( empty( $banner_url ) ) {
+	if ( '' === $img_tag ) {
 		return '';
 	}
-
-	// Cache-busting: adiciona versão à URL para forçar atualização
-	$cache_version = absint( get_option( 'gstore_banner_cache_version', 0 ) );
-	$banner_url = add_query_arg( 'v', $cache_version, $banner_url );
-
-	$img_tag = sprintf(
-		'<img src="%s" alt="%s" />',
-		esc_url( $banner_url ),
-		$banner_alt
-	);
-	$img_tag = gstore_maybe_wrap_webp_picture( $img_tag, $banner_id, 'full' );
 
 	// Se houver link configurado, envolve a imagem em um link
 	if ( ! empty( $banner_link ) ) {
@@ -14053,7 +14254,9 @@ function gstore_get_hero_image_tag( $attachment_id, $alt = '', $is_first_slide =
 	}
 	$img_tag .= ' />';
 
-	return gstore_maybe_wrap_webp_picture( $img_tag, $attachment_id, 'full' );
+	$img_tag = gstore_maybe_wrap_webp_picture( $img_tag, $attachment_id, 'full' );
+
+	return (string) preg_replace( '/\sfetchpriority=(["\'])(.*?)\1/i', '', $img_tag );
 }
 
 /**
@@ -14133,25 +14336,12 @@ function gstore_process_image_placeholders( $content ) {
 
 	// Banner YouTube (não precisa de srcset, não é LCP)
 	if ( $banner_youtube_id > 0 ) {
-		$banner_youtube_url = wp_get_attachment_url( $banner_youtube_id );
 		$cache_v = absint( get_option( 'gstore_banner_cache_version', 0 ) );
-		$banner_youtube_url = add_query_arg( 'v', $cache_v, $banner_youtube_url );
+		$banner_youtube_url = gstore_get_hero_image_url_with_version( $banner_youtube_id, 'full', $cache_v );
 		$banner_youtube_alt = esc_attr( get_option( 'gstore_banner_youtube_alt', 'Banner do YouTube' ) );
 		$banner_youtube_link = esc_url( get_option( 'gstore_banner_youtube_link', '' ) );
 
-		$banner_youtube_dims = '';
-		$banner_youtube_src  = wp_get_attachment_image_src( $banner_youtube_id, 'full' );
-		if ( $banner_youtube_src && ! empty( $banner_youtube_src[1] ) && ! empty( $banner_youtube_src[2] ) ) {
-			$banner_youtube_dims = sprintf( ' width="%d" height="%d"', (int) $banner_youtube_src[1], (int) $banner_youtube_src[2] );
-		}
-
-		$img_tag = sprintf(
-			'<img src="%s" alt="%s"%s loading="lazy" decoding="async" />',
-			esc_url( $banner_youtube_url ),
-			$banner_youtube_alt,
-			$banner_youtube_dims
-		);
-		$img_tag = gstore_maybe_wrap_webp_picture( $img_tag, $banner_youtube_id, 'full' );
+		$img_tag = gstore_get_banner_youtube_image_tag( $banner_youtube_id, $banner_youtube_alt );
 
 		// Se houver link configurado, envolve a imagem em um link
 		if ( ! empty( $banner_youtube_link ) ) {

@@ -10,6 +10,13 @@ Thumbs.db
 # Dependencies / build artifacts
 node_modules/
 vendor/
+!assets/vendor/
+!assets/vendor/fontawesome/
+!assets/vendor/fontawesome/6.5.1/
+!assets/vendor/fontawesome/6.5.1/css/
+!assets/vendor/fontawesome/6.5.1/css/all.min.css
+!assets/vendor/fontawesome/6.5.1/webfonts/
+!assets/vendor/fontawesome/6.5.1/webfonts/*.woff2
 
 # Local env files
 .env

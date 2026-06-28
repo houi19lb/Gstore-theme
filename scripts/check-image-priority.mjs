@@ -56,6 +56,10 @@ function hasDimensions(attrs) {
   return Boolean(attrs.width && attrs.height);
 }
 
+function isWooTemplateThumbnail(attrs) {
+  return attrs['data-wp-bind--src'] === 'state.itemThumbnail';
+}
+
 function isHigh(attrs) {
   return String(attrs.fetchpriority || '').toLowerCase() === 'high';
 }
@@ -87,6 +91,14 @@ function validateCommon(kind, url, images, failures) {
     }
   }
 
+  for (const image of images) {
+    const src = image.src || '';
+    const isUploadedRaster = /\/wp-content\/uploads\/.*\.(?:png|jpe?g|webp|gif|avif)(?:[?#].*)?$/i.test(src);
+    if ((isUploadedRaster || isWooTemplateThumbnail(image)) && !hasDimensions(image)) {
+      failures.push(`${url}: image/template is missing width/height: ${shortSrc(image) || image['data-wp-bind--src'] || 'dynamic thumbnail'}`);
+    }
+  }
+
   if (kind !== 'home') {
     return;
   }
@@ -109,6 +121,12 @@ function validateHome(url, links, failures) {
     const allMediaScoped = highHeroPreloads.every((link) => Boolean(link.media));
     if (!allMediaScoped) {
       failures.push(`${url}: multiple hero preloads must be media-scoped`);
+    }
+  }
+
+  for (const preload of highHeroPreloads) {
+    if (String(preload.type || '').toLowerCase() !== 'image/webp' || !/\.webp(?:[?#]|$)/i.test(preload.href || '')) {
+      failures.push(`${url}: high-priority hero preload should use WebP when available: ${shortSrc(preload)}`);
     }
   }
 }
@@ -152,6 +170,10 @@ async function validateUrl(kind, url) {
   const images = extractTags(html, 'img');
   const links = extractTags(html, 'link');
   const failures = [];
+
+  if (/cdnjs\.cloudflare\.com\/ajax\/libs\/font-awesome\/6\.5\.1\/css\/all\.min\.css/i.test(html)) {
+    failures.push(`${url}: Font Awesome is still loaded from cdnjs`);
+  }
 
   validateCommon(kind, url, images, failures);
 
