@@ -3993,6 +3993,172 @@ function gstore_remove_automatic_stylesheet_preload( $hints, $relation_type ) {
 add_filter( 'wp_resource_hints', 'gstore_remove_automatic_stylesheet_preload', 10, 2 );
 
 /**
+ * Retorna o caminho do asset minificado quando ele existe e esta atualizado.
+ *
+ * Os arquivos originais continuam sendo a fonte editavel. Em producao, o tema
+ * usa .min.css/.min.js para reduzir o peso baixado pelo navegador; em debug ou
+ * quando o fonte esta mais novo que o .min, volta automaticamente ao original.
+ *
+ * @param string $relative_path Caminho relativo ao tema.
+ * @return string
+ */
+function gstore_get_minified_theme_asset_path( $relative_path ) {
+	if ( ! is_string( $relative_path ) || '' === $relative_path ) {
+		return $relative_path;
+	}
+
+	$relative_path = ltrim( str_replace( '\\', '/', $relative_path ), '/' );
+
+	if ( defined( 'SCRIPT_DEBUG' ) && SCRIPT_DEBUG ) {
+		return $relative_path;
+	}
+
+	if ( ! preg_match( '/\.(css|js)$/i', $relative_path ) || preg_match( '/\.min\.(css|js)$/i', $relative_path ) ) {
+		return $relative_path;
+	}
+
+	$source_file = get_theme_file_path( $relative_path );
+	if ( ! file_exists( $source_file ) ) {
+		return $relative_path;
+	}
+
+	$min_relative_path = preg_replace( '/\.(css|js)$/i', '.min.$1', $relative_path );
+	$min_file          = get_theme_file_path( $min_relative_path );
+	if ( ! $min_relative_path || ! file_exists( $min_file ) ) {
+		return $relative_path;
+	}
+
+	$min_mtime    = filemtime( $min_file );
+	$source_mtime = filemtime( $source_file );
+
+	if ( false === $min_mtime || false === $source_mtime || $min_mtime < $source_mtime ) {
+		return $relative_path;
+	}
+
+	if ( 'assets/css/gstore-main.css' === $relative_path && gstore_theme_css_imports_are_newer_than_min( $relative_path, $min_mtime ) ) {
+		return $relative_path;
+	}
+
+	return $min_relative_path;
+}
+
+/**
+ * Retorna URI do asset do tema, preferindo minificado quando seguro.
+ *
+ * @param string $relative_path Caminho relativo ao tema.
+ * @return string
+ */
+function gstore_theme_asset_uri( $relative_path ) {
+	return get_theme_file_uri( gstore_get_minified_theme_asset_path( $relative_path ) );
+}
+
+/**
+ * Verifica se algum @import local de um CSS esta mais novo que o .min gerado.
+ *
+ * @param string $relative_path Caminho relativo ao tema.
+ * @param int    $min_mtime     Timestamp do arquivo minificado.
+ * @return bool
+ */
+function gstore_theme_css_imports_are_newer_than_min( $relative_path, $min_mtime ) {
+	$imports = gstore_collect_local_css_imports( $relative_path );
+
+	foreach ( $imports as $import_relative_path ) {
+		$import_file = get_theme_file_path( $import_relative_path );
+		if ( ! file_exists( $import_file ) ) {
+			continue;
+		}
+
+		$import_mtime = filemtime( $import_file );
+		if ( false !== $import_mtime && $import_mtime > $min_mtime ) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
+/**
+ * Coleta @imports locais de CSS de forma recursiva.
+ *
+ * @param string $relative_path Caminho relativo ao tema.
+ * @param array  $seen          Arquivos ja visitados.
+ * @return array
+ */
+function gstore_collect_local_css_imports( $relative_path, $seen = array() ) {
+	static $cache = array();
+
+	$relative_path = ltrim( str_replace( '\\', '/', (string) $relative_path ), '/' );
+	if ( isset( $cache[ $relative_path ] ) ) {
+		return $cache[ $relative_path ];
+	}
+
+	if ( isset( $seen[ $relative_path ] ) ) {
+		return array();
+	}
+	$seen[ $relative_path ] = true;
+
+	$file = get_theme_file_path( $relative_path );
+	if ( ! file_exists( $file ) || ! is_readable( $file ) ) {
+		$cache[ $relative_path ] = array();
+		return array();
+	}
+
+	$content = file_get_contents( $file );
+	if ( ! is_string( $content ) || '' === $content ) {
+		$cache[ $relative_path ] = array();
+		return array();
+	}
+
+	$imports = array();
+	if ( preg_match_all( '/@import\s+(?:url\(\s*)?[\'"]?([^\'")\s;]+)[\'"]?\s*\)?[^;]*;/i', $content, $matches ) ) {
+		$base_dir = dirname( $relative_path );
+		foreach ( $matches[1] as $import_path ) {
+			if ( preg_match( '#^(?:https?:)?//#i', $import_path ) || 0 === strpos( $import_path, 'data:' ) ) {
+				continue;
+			}
+
+			$import_path = preg_split( '/[?#]/', $import_path )[0];
+			$resolved    = gstore_normalize_relative_asset_path( $base_dir . '/' . $import_path );
+			if ( '' === $resolved || 0 === strpos( $resolved, '../' ) || 0 === strpos( $resolved, '/' ) ) {
+				continue;
+			}
+
+			$imports[] = $resolved;
+			$imports   = array_merge( $imports, gstore_collect_local_css_imports( $resolved, $seen ) );
+		}
+	}
+
+	$cache[ $relative_path ] = array_values( array_unique( $imports ) );
+	return $cache[ $relative_path ];
+}
+
+/**
+ * Normaliza caminhos relativos simples, preservando apenas assets dentro do tema.
+ *
+ * @param string $path Caminho relativo.
+ * @return string
+ */
+function gstore_normalize_relative_asset_path( $path ) {
+	$path  = str_replace( '\\', '/', (string) $path );
+	$parts = array();
+
+	foreach ( explode( '/', $path ) as $part ) {
+		if ( '' === $part || '.' === $part ) {
+			continue;
+		}
+
+		if ( '..' === $part ) {
+			array_pop( $parts );
+			continue;
+		}
+
+		$parts[] = $part;
+	}
+
+	return implode( '/', $parts );
+}
+
+/**
  * Previne conflitos de múltiplas instâncias do React e problemas de acessibilidade.
  *
  * 1. O erro "Failed to execute 'removeChild'" geralmente ocorre quando há
@@ -4194,7 +4360,7 @@ function gstore_enqueue_styles() {
 	// Usa versão com timestamp para forçar recarregamento quando tokens são atualizados
 	wp_enqueue_style(
 		'gstore-main',
-		get_theme_file_uri( 'assets/css/gstore-main.css' ),
+		gstore_theme_asset_uri( 'assets/css/gstore-main.css' ),
 		array( $parent_handle, 'gstore-fontawesome' ),
 		$gstore_version
 	);
@@ -4202,7 +4368,7 @@ function gstore_enqueue_styles() {
 	// Style.css principal (contém estilos legados que ainda não foram migrados)
 	wp_enqueue_style(
 		'gstore-style',
-		get_stylesheet_uri(),
+		gstore_theme_asset_uri( 'style.css' ),
 		array( 'gstore-main' ),
 		$stylesheet_version
 	);
@@ -4210,7 +4376,7 @@ function gstore_enqueue_styles() {
 	// Footer Gstore (migrado do style.css para módulo dedicado)
 	wp_enqueue_style(
 		'gstore-footer-css',
-		get_theme_file_uri( 'assets/css/layouts/footer.css' ),
+		gstore_theme_asset_uri( 'assets/css/layouts/footer.css' ),
 		array( 'gstore-style' ),
 		$footer_css_version
 	);
@@ -4218,7 +4384,7 @@ function gstore_enqueue_styles() {
 	// Header CSS - carregado por último para ter prioridade sobre estilos legados
 	wp_enqueue_style(
 		'gstore-header-css',
-		get_theme_file_uri( 'assets/css/layouts/header.css' ),
+		gstore_theme_asset_uri( 'assets/css/layouts/header.css' ),
 		array( 'gstore-style' ),
 		$header_css_version
 	);
@@ -4228,7 +4394,7 @@ function gstore_enqueue_styles() {
 		if ( file_exists( $catalog_mega_css_file ) ) {
 			wp_enqueue_style(
 				'gstore-catalog-mega-menu-css',
-				get_theme_file_uri( 'assets/css/layouts/catalog-mega-menu.css' ),
+				gstore_theme_asset_uri( 'assets/css/layouts/catalog-mega-menu.css' ),
 				array( 'gstore-header-css' ),
 				filemtime( $catalog_mega_css_file )
 			);
@@ -4241,7 +4407,7 @@ function gstore_enqueue_styles() {
 	$mini_cart_css_version = file_exists( $mini_cart_css_file ) ? (string) filemtime( $mini_cart_css_file ) : $theme_version;
 	wp_enqueue_style(
 		'gstore-mini-cart-css',
-		get_theme_file_uri( 'assets/css/components/mini-cart.css' ),
+		gstore_theme_asset_uri( 'assets/css/components/mini-cart.css' ),
 		array( 'gstore-header-css' ),
 		$mini_cart_css_version
 	);
@@ -4249,7 +4415,7 @@ function gstore_enqueue_styles() {
 	// Botão flutuante do Telegram (usa href dinâmico da top bar; sem hardcode)
 	wp_enqueue_style(
 		'gstore-telegram-floating-css',
-		get_theme_file_uri( 'assets/css/components/telegram-floating.css' ),
+		gstore_theme_asset_uri( 'assets/css/components/telegram-floating.css' ),
 		array( 'gstore-header-css' ),
 		$theme_version
 	);
@@ -4271,7 +4437,7 @@ function gstore_enqueue_styles() {
 		}
 		wp_enqueue_style(
 			'gstore-my-account-css',
-			get_theme_file_uri( 'assets/css/my-account.css' ),
+			gstore_theme_asset_uri( 'assets/css/my-account.css' ),
 			array( 'gstore-style' ),
 			$my_account_css_version
 		);
@@ -4280,7 +4446,7 @@ function gstore_enqueue_styles() {
 		if ( function_exists( 'is_wc_endpoint_url' ) && is_wc_endpoint_url( 'view-order' ) ) {
 			wp_enqueue_style(
 				'gstore-fulfillment-timeline-css',
-				get_theme_file_uri( 'assets/css/fulfillment-timeline.css' ),
+				gstore_theme_asset_uri( 'assets/css/fulfillment-timeline.css' ),
 				array( 'gstore-my-account-css' ),
 				filemtime( get_theme_file_path( 'assets/css/fulfillment-timeline.css' ) )
 			);
@@ -4291,7 +4457,7 @@ function gstore_enqueue_styles() {
 	if ( is_page( 'como-comprar-arma' ) ) {
 		wp_enqueue_style(
 			'gstore-como-comprar-arma-css',
-			get_theme_file_uri( 'assets/css/como-comprar-arma.css' ),
+			gstore_theme_asset_uri( 'assets/css/como-comprar-arma.css' ),
 			array( 'gstore-style' ),
 			$theme_version
 		);
@@ -4301,7 +4467,7 @@ function gstore_enqueue_styles() {
 	if ( is_page( 'informativo' ) ) {
 		wp_enqueue_style(
 			'gstore-informativo-css',
-			get_theme_file_uri( 'assets/css/informativo.css' ),
+			gstore_theme_asset_uri( 'assets/css/informativo.css' ),
 			array( 'gstore-style' ),
 			$theme_version
 		);
@@ -4313,7 +4479,7 @@ function gstore_enqueue_styles() {
 		$sobre_nos_css_version = file_exists( $sobre_nos_css_file ) ? (string) filemtime( $sobre_nos_css_file ) : $theme_version;
 		wp_enqueue_style(
 			'gstore-sobre-nos-css',
-			get_theme_file_uri( 'assets/css/sobre-nos.css' ),
+			gstore_theme_asset_uri( 'assets/css/sobre-nos.css' ),
 			array( 'gstore-style' ),
 			$sobre_nos_css_version
 		);
@@ -4322,7 +4488,7 @@ function gstore_enqueue_styles() {
 	if ( ( function_exists( 'is_privacy_policy' ) && is_privacy_policy() ) || is_page( 'politica-de-privacidade' ) ) {
 		wp_enqueue_style(
 			'gstore-privacy-policy-css',
-			get_theme_file_uri( 'assets/css/privacy-policy.css' ),
+			gstore_theme_asset_uri( 'assets/css/privacy-policy.css' ),
 			array( 'gstore-style' ),
 			$theme_version
 		);
@@ -4331,7 +4497,7 @@ function gstore_enqueue_styles() {
 	// CSS de Notificações e Modais
 	wp_enqueue_style(
 		'gstore-notices-css',
-		get_theme_file_uri( 'assets/css/components/notices.css' ),
+		gstore_theme_asset_uri( 'assets/css/components/notices.css' ),
 		array( 'gstore-main' ),
 		$theme_version
 	);
@@ -4339,7 +4505,7 @@ function gstore_enqueue_styles() {
 	// CSS do Toast de Adicionar ao Carrinho
 	wp_enqueue_style(
 		'gstore-add-to-cart-toast-css',
-		get_theme_file_uri( 'assets/css/components/add-to-cart-toast.css' ),
+		gstore_theme_asset_uri( 'assets/css/components/add-to-cart-toast.css' ),
 		array( 'gstore-main' ),
 		$theme_version
 	);
@@ -4349,7 +4515,7 @@ function gstore_enqueue_styles() {
 	$category_filter_css_version = file_exists( $category_filter_css_file ) ? (string) filemtime( $category_filter_css_file ) : $theme_version;
 	wp_enqueue_style(
 		'gstore-category-filter',
-		get_theme_file_uri( 'assets/css/category-filter.css' ),
+		gstore_theme_asset_uri( 'assets/css/category-filter.css' ),
 		array( 'gstore-style' ),
 		$category_filter_css_version
 	);
@@ -4359,7 +4525,7 @@ function gstore_enqueue_styles() {
 	$category_filter_js_version = file_exists( $category_filter_js_file ) ? (string) filemtime( $category_filter_js_file ) : $theme_version;
 	wp_enqueue_script(
 		'gstore-category-filter-js',
-		get_theme_file_uri( 'assets/js/category-filter.js' ),
+		gstore_theme_asset_uri( 'assets/js/category-filter.js' ),
 		array(),
 		$category_filter_js_version,
 		true
@@ -5202,7 +5368,7 @@ function gstore_enqueue_scripts() {
 
 	wp_enqueue_script(
 		'gstore-header',
-		get_theme_file_uri( 'assets/js/header.js' ),
+		gstore_theme_asset_uri( 'assets/js/header.js' ),
 		array(),
 		$header_js_version,
 		true
@@ -5213,7 +5379,7 @@ function gstore_enqueue_scripts() {
 		if ( file_exists( $catalog_mega_js_file ) ) {
 			wp_enqueue_script(
 				'gstore-catalog-mega-menu',
-				get_theme_file_uri( 'assets/js/catalog-mega-menu.js' ),
+				gstore_theme_asset_uri( 'assets/js/catalog-mega-menu.js' ),
 				array( 'gstore-header' ),
 				filemtime( $catalog_mega_js_file ),
 				true
@@ -5225,7 +5391,7 @@ function gstore_enqueue_scripts() {
 	$pwa_install_js_version = file_exists( $pwa_install_js_path ) ? (string) filemtime( $pwa_install_js_path ) : wp_get_theme()->get( 'Version' );
 	wp_enqueue_script(
 		'gstore-pwa-install',
-		get_theme_file_uri( 'assets/js/pwa-install.js' ),
+		gstore_theme_asset_uri( 'assets/js/pwa-install.js' ),
 		array(),
 		$pwa_install_js_version,
 		true
@@ -5235,7 +5401,7 @@ function gstore_enqueue_scripts() {
 	$blog_image_fit_js_version = file_exists( $blog_image_fit_js_path ) ? (string) filemtime( $blog_image_fit_js_path ) : wp_get_theme()->get( 'Version' );
 	wp_enqueue_script(
 		'gstore-blog-image-fit',
-		get_theme_file_uri( 'assets/js/blog-image-fit.js' ),
+		gstore_theme_asset_uri( 'assets/js/blog-image-fit.js' ),
 		array(),
 		$blog_image_fit_js_version,
 		true
@@ -5286,7 +5452,7 @@ function gstore_enqueue_scripts() {
 	$product_search_js_version = file_exists( $product_search_js_path ) ? (string) filemtime( $product_search_js_path ) : wp_get_theme()->get( 'Version' );
 	wp_enqueue_script(
 		'gstore-product-search-autocomplete',
-		get_theme_file_uri( 'assets/js/product-search-autocomplete.js' ),
+		gstore_theme_asset_uri( 'assets/js/product-search-autocomplete.js' ),
 		array(),
 		$product_search_js_version,
 		true
@@ -5307,7 +5473,7 @@ function gstore_enqueue_scripts() {
 	$telegram_floating_js_version = file_exists( $telegram_floating_js_path ) ? (string) filemtime( $telegram_floating_js_path ) : wp_get_theme()->get( 'Version' );
 	wp_enqueue_script(
 		'gstore-telegram-floating',
-		get_theme_file_uri( 'assets/js/telegram-floating.js' ),
+		gstore_theme_asset_uri( 'assets/js/telegram-floating.js' ),
 		array(),
 		$telegram_floating_js_version,
 		true
@@ -5364,7 +5530,7 @@ function gstore_enqueue_scripts() {
 			$home_hero_js_version = file_exists( $home_hero_js_path ) ? (string) filemtime( $home_hero_js_path ) : wp_get_theme()->get( 'Version' );
 			wp_enqueue_script(
 				'gstore-home-hero',
-				get_theme_file_uri( 'assets/js/home-hero.js' ),
+				gstore_theme_asset_uri( 'assets/js/home-hero.js' ),
 				array(),
 				$home_hero_js_version,
 				true
@@ -5374,7 +5540,7 @@ function gstore_enqueue_scripts() {
 			$home_benefits_js_version = file_exists( $home_benefits_js_path ) ? (string) filemtime( $home_benefits_js_path ) : wp_get_theme()->get( 'Version' );
 			wp_enqueue_script(
 				'gstore-home-benefits',
-				get_theme_file_uri( 'assets/js/home-benefits.js' ),
+				gstore_theme_asset_uri( 'assets/js/home-benefits.js' ),
 				array(),
 				$home_benefits_js_version,
 				true
@@ -5382,7 +5548,7 @@ function gstore_enqueue_scripts() {
 
 			wp_enqueue_script(
 				'gstore-home-products-carousel',
-				get_theme_file_uri( 'assets/js/home-products-carousel.js' ),
+				gstore_theme_asset_uri( 'assets/js/home-products-carousel.js' ),
 				array(),
 				wp_get_theme()->get( 'Version' ),
 				true
@@ -5392,7 +5558,7 @@ function gstore_enqueue_scripts() {
 			$home_blog_pagination_js_version = file_exists( $home_blog_pagination_js_path ) ? (string) filemtime( $home_blog_pagination_js_path ) : wp_get_theme()->get( 'Version' );
 			wp_enqueue_script(
 				'gstore-home-blog-pagination',
-				get_theme_file_uri( 'assets/js/home-blog-pagination.js' ),
+				gstore_theme_asset_uri( 'assets/js/home-blog-pagination.js' ),
 				array(),
 				$home_blog_pagination_js_version,
 				true
@@ -5405,7 +5571,7 @@ function gstore_enqueue_scripts() {
 		$blog_single_js_version = file_exists( $blog_single_js_path ) ? (string) filemtime( $blog_single_js_path ) : wp_get_theme()->get( 'Version' );
 		wp_enqueue_script(
 			'gstore-blog-single',
-			get_theme_file_uri( 'assets/js/blog-single.js' ),
+			gstore_theme_asset_uri( 'assets/js/blog-single.js' ),
 			array(),
 			$blog_single_js_version,
 			true
@@ -5419,7 +5585,7 @@ function gstore_enqueue_scripts() {
 		$favorites_core_js_version = file_exists( $favorites_core_js_path ) ? (string) filemtime( $favorites_core_js_path ) : wp_get_theme()->get( 'Version' );
 		wp_enqueue_script(
 			'gstore-favorites-core',
-			get_theme_file_uri( 'assets/js/favorites-core.js' ),
+			gstore_theme_asset_uri( 'assets/js/favorites-core.js' ),
 			array(),
 			$favorites_core_js_version,
 			true
@@ -5459,7 +5625,7 @@ function gstore_enqueue_scripts() {
 
 		wp_enqueue_script(
 			'gstore-product-card',
-			get_theme_file_uri( 'assets/js/product-card.js' ),
+			gstore_theme_asset_uri( 'assets/js/product-card.js' ),
 			array( 'gstore-favorites-core' ),
 			wp_get_theme()->get( 'Version' ),
 			true
@@ -5473,7 +5639,7 @@ function gstore_enqueue_scripts() {
 
 			wp_enqueue_script(
 				'gstore-single-product',
-				get_theme_file_uri( 'assets/js/single-product.js' ),
+				gstore_theme_asset_uri( 'assets/js/single-product.js' ),
 				array( 'gstore-favorites-core' ),
 				$single_product_js_version,
 				true
@@ -5503,7 +5669,7 @@ function gstore_enqueue_scripts() {
 
 			wp_enqueue_script(
 				'gstore-product-notice',
-				get_theme_file_uri( 'assets/js/gstore-product-notice.js' ),
+				gstore_theme_asset_uri( 'assets/js/gstore-product-notice.js' ),
 				array(),
 				$product_notice_js_version,
 				true
@@ -5514,7 +5680,7 @@ function gstore_enqueue_scripts() {
 
 			wp_enqueue_style(
 				'gstore-product-notice-css',
-				get_theme_file_uri( 'assets/css/components/product-notice.css' ),
+				gstore_theme_asset_uri( 'assets/css/components/product-notice.css' ),
 				array( 'gstore-main' ),
 				$product_notice_css_version
 			);
@@ -5535,7 +5701,7 @@ function gstore_enqueue_scripts() {
 			$favorites_page_js_version = file_exists( $favorites_page_js_path ) ? (string) filemtime( $favorites_page_js_path ) : wp_get_theme()->get( 'Version' );
 			wp_enqueue_script(
 				'gstore-favorites-page',
-				get_theme_file_uri( 'assets/js/favorites-page.js' ),
+				gstore_theme_asset_uri( 'assets/js/favorites-page.js' ),
 				array( 'gstore-favorites-core' ),
 				$favorites_page_js_version,
 				true
@@ -5548,7 +5714,7 @@ function gstore_enqueue_scripts() {
 			$informativo_js_version = file_exists( $informativo_js_path ) ? (string) filemtime( $informativo_js_path ) : wp_get_theme()->get( 'Version' );
 			wp_enqueue_script(
 				'gstore-informativo-js',
-				get_theme_file_uri( 'assets/js/informativo.js' ),
+				gstore_theme_asset_uri( 'assets/js/informativo.js' ),
 				array(),
 				$informativo_js_version,
 				true
@@ -5568,7 +5734,7 @@ function gstore_enqueue_scripts() {
 
 			wp_enqueue_script(
 				'gstore-cart',
-				get_theme_file_uri( 'assets/js/cart.js' ),
+				gstore_theme_asset_uri( 'assets/js/cart.js' ),
 				array( 'jquery' ),
 				$cart_js_version,
 				true
@@ -5589,7 +5755,7 @@ function gstore_enqueue_scripts() {
 		if ( function_exists( 'is_account_page' ) && is_account_page() ) {
 			wp_enqueue_script(
 				'gstore-my-account',
-				get_theme_file_uri( 'assets/js/my-account.js' ),
+				gstore_theme_asset_uri( 'assets/js/my-account.js' ),
 				array(),
 				wp_get_theme()->get( 'Version' ),
 				true
@@ -5601,7 +5767,7 @@ function gstore_enqueue_scripts() {
 				if ( $view_order_id > 0 ) {
 					wp_enqueue_script(
 						'gstore-fulfillment-timeline',
-						get_theme_file_uri( 'assets/js/fulfillment-timeline.js' ),
+						gstore_theme_asset_uri( 'assets/js/fulfillment-timeline.js' ),
 						array(),
 						filemtime( get_theme_file_path( 'assets/js/fulfillment-timeline.js' ) ),
 						true
@@ -5647,7 +5813,7 @@ function gstore_enqueue_scripts() {
 		if ( $is_catalog_page ) {
 			wp_enqueue_script(
 				'gstore-catalog-filters',
-				get_theme_file_uri( 'assets/js/catalog-filters.js' ),
+				gstore_theme_asset_uri( 'assets/js/catalog-filters.js' ),
 				array(),
 				(string) @filemtime( get_theme_file_path( 'assets/js/catalog-filters.js' ) ),
 				true
@@ -5657,7 +5823,7 @@ function gstore_enqueue_scripts() {
 	/*
 	wp_enqueue_script(
 		'gstore-catalog-categories-tree',
-		get_theme_file_uri( 'assets/js/catalog-categories-tree.js' ),
+		gstore_theme_asset_uri( 'assets/js/catalog-categories-tree.js' ),
 		array(),
 		(string) @filemtime( get_theme_file_path( 'assets/js/catalog-categories-tree.js' ) ),
 		true
@@ -5671,7 +5837,7 @@ function gstore_enqueue_scripts() {
 		// Script para gerenciar avisos do WooCommerce (slide-in e auto-dismiss)
 		wp_enqueue_script(
 			'gstore-notices',
-			get_theme_file_uri( 'assets/js/notices.js' ),
+			gstore_theme_asset_uri( 'assets/js/notices.js' ),
 			array(),
 			wp_get_theme()->get( 'Version' ),
 			true
@@ -5680,7 +5846,7 @@ function gstore_enqueue_scripts() {
 		// Toast de Adicionar ao Carrinho (substitui link "Ver carrinho" por modal)
 		wp_enqueue_script(
 			'gstore-add-to-cart-toast',
-			get_theme_file_uri( 'assets/js/add-to-cart-toast.js' ),
+			gstore_theme_asset_uri( 'assets/js/add-to-cart-toast.js' ),
 			array( 'jquery' ),
 			wp_get_theme()->get( 'Version' ),
 			true
@@ -5690,7 +5856,7 @@ function gstore_enqueue_scripts() {
 		// Necessário quando otimizações/cache impedem o bridge nativo do bloco.
 		wp_enqueue_script(
 			'gstore-mini-cart-block-bridge',
-			get_theme_file_uri( 'assets/js/mini-cart-block-bridge.js' ),
+			gstore_theme_asset_uri( 'assets/js/mini-cart-block-bridge.js' ),
 			array( 'jquery' ),
 			(string) @filemtime( get_theme_file_path( 'assets/js/mini-cart-block-bridge.js' ) ),
 			true
@@ -5699,7 +5865,7 @@ function gstore_enqueue_scripts() {
 		// Interceptador de nonce expirado para a WC Store API (mini-cart drawer)
 		wp_enqueue_script(
 			'gstore-store-api-nonce-refresh',
-			get_theme_file_uri( 'assets/js/store-api-nonce-refresh.js' ),
+			gstore_theme_asset_uri( 'assets/js/store-api-nonce-refresh.js' ),
 			array(),
 			wp_get_theme()->get( 'Version' ),
 			false // No <head> para interceptar fetch antes do WC Blocks
@@ -8728,7 +8894,7 @@ function gstore_enqueue_checkout_assets() {
 		// CSS do checkout base
 		wp_enqueue_style(
 			'gstore-checkout',
-			get_theme_file_uri( 'assets/css/checkout.css' ),
+			gstore_theme_asset_uri( 'assets/css/checkout.css' ),
 			array( 'gstore-style', 'gstore-fontawesome' ),
 			$theme_version
 		);
@@ -8737,14 +8903,14 @@ function gstore_enqueue_checkout_assets() {
 		$checkout_steps_css_path = get_theme_file_path( 'assets/css/checkout-steps.css' );
 		wp_enqueue_style(
 			'gstore-checkout-steps',
-			get_theme_file_uri( 'assets/css/checkout-steps.css' ),
+			gstore_theme_asset_uri( 'assets/css/checkout-steps.css' ),
 			array( 'gstore-checkout' ),
 			file_exists( $checkout_steps_css_path ) ? filemtime( $checkout_steps_css_path ) : $theme_version
 		);
 
 		wp_enqueue_script(
 			'gstore-checkout-cleanup',
-			get_theme_file_uri( 'assets/js/checkout-cleanup.js' ),
+			gstore_theme_asset_uri( 'assets/js/checkout-cleanup.js' ),
 			array(),
 			$theme_version,
 			true
@@ -8753,7 +8919,7 @@ function gstore_enqueue_checkout_assets() {
 		// JavaScript do checkout em 3 etapas
 		wp_enqueue_script(
 			'gstore-checkout-steps',
-			get_theme_file_uri( 'assets/js/checkout-steps.js' ),
+			gstore_theme_asset_uri( 'assets/js/checkout-steps.js' ),
 			array( 'jquery' ),
 			filemtime( get_theme_file_path( 'assets/js/checkout-steps.js' ) ),
 			true
@@ -8769,7 +8935,7 @@ function gstore_enqueue_checkout_assets() {
 
 			wp_enqueue_script(
 				'gstore-freight-quote-notice',
-				get_theme_file_uri( 'assets/js/freight-quote-notice.js' ),
+				gstore_theme_asset_uri( 'assets/js/freight-quote-notice.js' ),
 				array( 'gstore-checkout-steps' ),
 				filemtime( $quote_notice_script_path ),
 				true
@@ -8890,7 +9056,7 @@ function gstore_enqueue_checkout_assets() {
 		// CSS do Pix
 		wp_enqueue_style(
 			'gstore-checkout-pix',
-			get_theme_file_uri( 'assets/css/checkout-pix.css' ),
+			gstore_theme_asset_uri( 'assets/css/checkout-pix.css' ),
 			array( 'gstore-checkout' ),
 			$theme_version
 		);
@@ -8898,7 +9064,7 @@ function gstore_enqueue_checkout_assets() {
 		// JavaScript do Pix
 		wp_enqueue_script(
 			'gstore-checkout-pix',
-			get_theme_file_uri( 'assets/js/checkout-pix.js' ),
+			gstore_theme_asset_uri( 'assets/js/checkout-pix.js' ),
 			array( 'jquery' ),
 			$theme_version,
 			true
@@ -8912,7 +9078,7 @@ function gstore_enqueue_checkout_assets() {
 
 		wp_enqueue_style(
 			'gstore-cart',
-			get_theme_file_uri( 'assets/css/cart.css' ),
+			gstore_theme_asset_uri( 'assets/css/cart.css' ),
 			array( 'gstore-style', 'gstore-fontawesome' ),
 			$cart_css_version
 		);
@@ -8922,7 +9088,7 @@ function gstore_enqueue_checkout_assets() {
 	if ( ( function_exists( 'is_order_received_page' ) && is_order_received_page() ) || ( function_exists( 'is_view_order_page' ) && is_view_order_page() ) ) {
 		wp_enqueue_style(
 			'gstore-checkout-pix',
-			get_theme_file_uri( 'assets/css/checkout-pix.css' ),
+			gstore_theme_asset_uri( 'assets/css/checkout-pix.css' ),
 			array( 'gstore-style' ),
 			$theme_version
 		);
@@ -8930,7 +9096,7 @@ function gstore_enqueue_checkout_assets() {
 		// JavaScript do Pix para página de obrigado e visualização do pedido
 		wp_enqueue_script(
 			'gstore-checkout-pix',
-			get_theme_file_uri( 'assets/js/checkout-pix.js' ),
+			gstore_theme_asset_uri( 'assets/js/checkout-pix.js' ),
 			array( 'jquery' ),
 			$theme_version,
 			true
@@ -8942,7 +9108,7 @@ function gstore_enqueue_checkout_assets() {
     if ( function_exists( 'is_checkout' ) && is_checkout() ) {
         wp_enqueue_script(
             'gstore-cep-autofill',
-            get_theme_file_uri( 'assets/js/cep-autofill.js' ),
+            gstore_theme_asset_uri( 'assets/js/cep-autofill.js' ),
             array( 'jquery' ),
             $theme_version,
             true
@@ -8959,7 +9125,7 @@ function gstore_enqueue_checkout_assets() {
 		$shipping_calculator_css_path = get_theme_file_path( 'assets/css/shipping-calculator.css' );
 		wp_enqueue_style(
 			'gstore-shipping-calculator',
-			get_theme_file_uri( 'assets/css/shipping-calculator.css' ),
+			gstore_theme_asset_uri( 'assets/css/shipping-calculator.css' ),
 			array( 'gstore-style' ),
 			file_exists( $shipping_calculator_css_path ) ? filemtime( $shipping_calculator_css_path ) : $theme_version
 		);
@@ -8967,7 +9133,7 @@ function gstore_enqueue_checkout_assets() {
 		// JavaScript do calculador
 		wp_enqueue_script(
 			'gstore-shipping-calculator',
-			get_theme_file_uri( 'assets/js/shipping-calculator.js' ),
+			gstore_theme_asset_uri( 'assets/js/shipping-calculator.js' ),
 			array( 'jquery' ),
 			filemtime( get_theme_file_path( 'assets/js/shipping-calculator.js' ) ),
 			true

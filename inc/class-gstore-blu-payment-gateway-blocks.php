@@ -76,7 +76,7 @@ final class Gstore_Blu_Payment_Gateway_Blocks extends AbstractPaymentMethodType 
 
 		wp_register_script(
 			'gstore-blu-checkout-block',
-			get_theme_file_uri( 'assets/js/blu-checkout-block.js' ),
+			gstore_theme_asset_uri( 'assets/js/blu-checkout-block.js' ),
 			$dependencies,
 			$version,
 			true

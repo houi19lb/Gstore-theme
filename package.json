@@ -1,0 +1,15 @@
+{
+  "name": "gstore-theme-tests",
+  "private": true,
+  "scripts": {
+    "build:assets": "node scripts/build-assets.mjs",
+    "check:assets": "node scripts/check-minified-assets.mjs",
+    "test": "jest"
+  },
+  "devDependencies": {
+    "clean-css": "^5.3.3",
+    "jest": "^29.7.0",
+    "jest-environment-jsdom": "^29.7.0",
+    "terser": "^5.43.1"
+  }
+}
