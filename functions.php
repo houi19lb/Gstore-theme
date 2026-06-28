@@ -612,7 +612,7 @@ function gstore_replace_empty_minicart_checkout_link( $block_content ) {
 
 	$cart_url = gstore_get_public_canonical_url( 'cart' );
 
-	return (string) preg_replace_callback(
+	$block_content = (string) preg_replace_callback(
 		'/(href\s*=\s*)(["\'])(.*?)\2/i',
 		static function ( $matches ) use ( $cart_url ) {
 			$href = html_entity_decode( (string) $matches[3], ENT_QUOTES, 'UTF-8' );
@@ -624,6 +624,14 @@ function gstore_replace_empty_minicart_checkout_link( $block_content ) {
 			}
 
 			return $matches[1] . $matches[2] . esc_url( $cart_url ) . $matches[2];
+		},
+		$block_content
+	);
+
+	return (string) preg_replace_callback(
+		'/("checkoutUrl"\s*:\s*)(["\'])([^"\']*\/finalizar-compra\/?)\2/i',
+		static function ( $matches ) use ( $cart_url ) {
+			return $matches[1] . $matches[2] . esc_url_raw( $cart_url ) . $matches[2];
 		},
 		$block_content
 	);
@@ -16988,6 +16996,8 @@ function gstore_process_final_output( $buffer ) {
 	$buffer = gstore_replace_catalog_archive_header_html( $buffer );
 
 	$buffer = gstore_normalize_catalog_archive_description_output( $buffer );
+
+	$buffer = gstore_replace_empty_minicart_checkout_link( $buffer );
 
 	$buffer = gstore_normalize_internal_public_links( $buffer );
 
