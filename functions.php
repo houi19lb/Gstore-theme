@@ -3893,6 +3893,7 @@ function gstore_optimize_script_loading( $tag, $handle, $src ) {
 		'gstore-home-products-carousel', // Carrossel pode carregar depois
 		'gstore-product-card',          // Não crítico acima da dobra
 		'gstore-my-account',            // Página específica
+		'gstore-support-loader',
 	);
 
 	// Scripts que podem usar async (não dependem de outros)
@@ -3916,6 +3917,41 @@ function gstore_optimize_script_loading( $tag, $handle, $src ) {
 	return $tag;
 }
 add_filter( 'script_loader_tag', 'gstore_optimize_script_loading', 10, 3 );
+
+/**
+ * Converte scripts completos de atendimento em metadados para o loader leve.
+ *
+ * Mantemos os blocos inline -js-extra emitidos pelo WordPress para que as
+ * configuracoes continuem disponiveis, mas evitamos baixar/executar os
+ * arquivos completos no caminho inicial de renderizacao.
+ *
+ * @param string $tag    Tag <script> gerada.
+ * @param string $handle Handle do script.
+ * @param string $src    URL final do script.
+ * @return string
+ */
+function gstore_defer_support_scripts_to_loader( $tag, $handle, $src ) {
+	if ( is_admin() || '' === $src ) {
+		return $tag;
+	}
+
+	$support_scripts = array(
+		'gstore-chatwoot-support-bridge' => 10,
+		'gstore-telegram-floating'       => 20,
+	);
+
+	if ( ! isset( $support_scripts[ $handle ] ) ) {
+		return $tag;
+	}
+
+	return sprintf(
+		'<script type="application/json" id="%1$s-js-deferred" data-gstore-support-script="%1$s" data-gstore-support-order="%2$d" data-gstore-url="%3$s"></script>' . "\n",
+		esc_attr( $handle ),
+		(int) $support_scripts[ $handle ],
+		esc_url( $src )
+	);
+}
+add_filter( 'script_loader_tag', 'gstore_defer_support_scripts_to_loader', 30, 3 );
 
 /**
  * Otimiza back/forward cache (bfcache) removendo barreiras.
@@ -5645,6 +5681,26 @@ function gstore_enqueue_scripts() {
 		'gstore-header',
 		'gstoreAccountUrls',
 		$gstore_account_urls
+	);
+
+	// Loader leve de atendimento: carrega Chatwoot bridge + quick action apos idle/intencao.
+	wp_enqueue_script(
+		'gstore-support-loader',
+		gstore_theme_asset_uri( 'assets/js/support-loader.js' ),
+		array(),
+		gstore_theme_asset_version( 'assets/js/support-loader.js', $theme_version ),
+		true
+	);
+	wp_localize_script(
+		'gstore-support-loader',
+		'gstoreSupportLoaderConfig',
+		array(
+			'idleDelay'      => 2400,
+			'idleTimeout'    => 1200,
+			'chatPreference' => 'chat_site',
+			'loadingText'    => __( 'Carregando atendimento...', 'gstore' ),
+			'failedText'     => __( 'Nao foi possivel carregar o chat agora. Abrindo Telegram.', 'gstore' ),
+		)
 	);
 
 		if ( is_front_page() ) {
