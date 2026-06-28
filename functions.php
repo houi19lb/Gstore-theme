@@ -368,6 +368,23 @@ function gstore_get_design_token_overrides_css() {
 }
 
 /**
+ * Verifica se uma URL aponta para a pagina legada /loja.
+ *
+ * @param string $url URL a verificar.
+ * @return bool
+ */
+function gstore_is_legacy_shop_url( $url ) {
+	if ( ! is_string( $url ) || '' === trim( $url ) ) {
+		return false;
+	}
+
+	$path = (string) wp_parse_url( $url, PHP_URL_PATH );
+	$path = '/' . trim( rawurldecode( $path ), '/' ) . '/';
+
+	return '/loja/' === $path;
+}
+
+/**
  * Retorna a URL publica do catalogo usada pelo tema.
  *
  * @return string URL do catalogo.
@@ -382,17 +399,238 @@ function gstore_get_catalog_url() {
 
 	if ( ! $catalog_url && function_exists( 'wc_get_page_permalink' ) ) {
 		$shop_url = wc_get_page_permalink( 'shop' );
-		if ( is_string( $shop_url ) && '' !== $shop_url && ! is_wp_error( $shop_url ) ) {
+		if ( is_string( $shop_url ) && '' !== $shop_url && ! is_wp_error( $shop_url ) && ! gstore_is_legacy_shop_url( $shop_url ) ) {
 			$catalog_url = $shop_url;
 		}
 	}
 
-	if ( ! $catalog_url ) {
+	if ( ! $catalog_url || gstore_is_legacy_shop_url( $catalog_url ) ) {
 		$catalog_url = home_url( '/catalogo/' );
 	}
 
 	return apply_filters( 'gstore_catalog_url', user_trailingslashit( $catalog_url ) );
 }
+
+/**
+ * Retorna URLs canonicas para links publicos globais do tema.
+ *
+ * @param string $key Identificador do destino.
+ * @return string
+ */
+function gstore_get_public_canonical_url( $key ) {
+	$key = sanitize_key( (string) $key );
+
+	if ( 'catalog' === $key ) {
+		return gstore_get_catalog_url();
+	}
+
+	if ( 'cart' === $key ) {
+		return function_exists( 'wc_get_cart_url' ) ? wc_get_cart_url() : home_url( '/carrinho/' );
+	}
+
+	if ( 'my_account' === $key ) {
+		$url = home_url( '/minha-conta/' );
+		if ( class_exists( 'WooCommerce' ) && function_exists( 'wc_get_page_permalink' ) ) {
+			$myaccount_url = wc_get_page_permalink( 'myaccount' );
+			if ( is_string( $myaccount_url ) && '' !== $myaccount_url && ! is_wp_error( $myaccount_url ) ) {
+				$url = $myaccount_url;
+			}
+		}
+
+		return user_trailingslashit( $url );
+	}
+
+	if ( 'support' === $key ) {
+		return home_url( '/atendimento/' );
+	}
+
+	$category_slugs = array(
+		'programs'      => 'programas',
+		'pro_training'  => 'pro-training',
+		'shooting_club' => 'clube-de-tiro',
+	);
+
+	if ( isset( $category_slugs[ $key ] ) ) {
+		$slug = $category_slugs[ $key ];
+		$url  = function_exists( 'gstore_get_product_category_native_link_by_slug' ) ? gstore_get_product_category_native_link_by_slug( $slug ) : '';
+
+		return '' !== $url ? $url : home_url( '/categoria-produto/' . $slug . '/' );
+	}
+
+	return home_url( '/' );
+}
+
+/**
+ * Mapa fechado de aliases internos que nao devem aparecer no HTML publico.
+ *
+ * @return array
+ */
+function gstore_get_internal_link_alias_map() {
+	$catalog_url       = gstore_get_public_canonical_url( 'catalog' );
+	$my_account_url    = gstore_get_public_canonical_url( 'my_account' );
+	$support_url       = gstore_get_public_canonical_url( 'support' );
+	$programs_url      = gstore_get_public_canonical_url( 'programs' );
+	$pro_training_url  = gstore_get_public_canonical_url( 'pro_training' );
+	$shooting_club_url = gstore_get_public_canonical_url( 'shooting_club' );
+
+	$map = array(
+		'/minha-conta'    => $my_account_url,
+		'/minha-conta/'   => $my_account_url,
+		'/atendimento'    => $support_url,
+		'/atendimento/'   => $support_url,
+		'/loja'           => $catalog_url,
+		'/loja/'          => $catalog_url,
+		'/programas'      => $programs_url,
+		'/programas/'     => $programs_url,
+		'/pro-training'   => $pro_training_url,
+		'/pro-training/'  => $pro_training_url,
+		'/clube-de-tiro'  => $shooting_club_url,
+		'/clube-de-tiro/' => $shooting_club_url,
+	);
+
+	return apply_filters( 'gstore_internal_link_alias_map', $map );
+}
+
+/**
+ * Normaliza uma URL interna quando ela estiver na allowlist de aliases 3xx.
+ *
+ * @param string $url URL original.
+ * @return string
+ */
+function gstore_normalize_internal_public_url( $url ) {
+	$original = is_string( $url ) ? trim( html_entity_decode( $url, ENT_QUOTES, 'UTF-8' ) ) : '';
+	if ( '' === $original || false !== strpos( $original, '{{' ) || preg_match( '~^(?:#|mailto:|tel:|sms:|javascript:|data:)~i', $original ) ) {
+		return (string) $url;
+	}
+
+	$parts = wp_parse_url( $original );
+	if ( false === $parts || ! is_array( $parts ) ) {
+		return (string) $url;
+	}
+
+	$home_host = (string) wp_parse_url( home_url( '/' ), PHP_URL_HOST );
+	$link_host = isset( $parts['host'] ) ? (string) $parts['host'] : '';
+	if ( '' !== $link_host ) {
+		$normalized_home_host = preg_replace( '#^www\.#i', '', strtolower( $home_host ) );
+		$normalized_link_host = preg_replace( '#^www\.#i', '', strtolower( $link_host ) );
+		if ( $normalized_home_host !== $normalized_link_host ) {
+			return (string) $url;
+		}
+	}
+
+	$path = isset( $parts['path'] ) ? (string) $parts['path'] : '';
+	$path = '/' . trim( rawurldecode( $path ), '/' );
+	if ( '/' !== $path ) {
+		$path_without_slash = untrailingslashit( $path );
+		$path_with_slash    = trailingslashit( $path_without_slash );
+	} else {
+		$path_without_slash = '/';
+		$path_with_slash    = '/';
+	}
+
+	$map    = gstore_get_internal_link_alias_map();
+	$target = '';
+	if ( isset( $map[ $path ] ) ) {
+		$target = (string) $map[ $path ];
+	} elseif ( isset( $map[ $path_without_slash ] ) ) {
+		$target = (string) $map[ $path_without_slash ];
+	} elseif ( isset( $map[ $path_with_slash ] ) ) {
+		$target = (string) $map[ $path_with_slash ];
+	}
+
+	if ( '' === $target ) {
+		return (string) $url;
+	}
+
+	if ( isset( $parts['query'] ) && '' !== (string) $parts['query'] ) {
+		$target .= ( false === strpos( $target, '?' ) ? '?' : '&' ) . (string) $parts['query'];
+	}
+
+	if ( isset( $parts['fragment'] ) && '' !== (string) $parts['fragment'] ) {
+		$target .= '#' . (string) $parts['fragment'];
+	}
+
+	return $target;
+}
+
+/**
+ * Normaliza hrefs internos conhecidos dentro de um trecho HTML.
+ *
+ * @param string $content HTML renderizado.
+ * @return string
+ */
+function gstore_normalize_internal_public_links( $content ) {
+	if ( ! is_string( $content ) || '' === $content || false === stripos( $content, 'href=' ) ) {
+		return $content;
+	}
+
+	return (string) preg_replace_callback(
+		'/(href\s*=\s*)(["\'])(.*?)\2/i',
+		static function ( $matches ) {
+			$original   = (string) $matches[3];
+			$normalized = gstore_normalize_internal_public_url( $original );
+
+			if ( $normalized === $original ) {
+				return $matches[0];
+			}
+
+			return $matches[1] . $matches[2] . esc_url( $normalized ) . $matches[2];
+		},
+		$content
+	);
+}
+
+/**
+ * Normaliza links de menus do admin antes do walker imprimir o href.
+ *
+ * @param array $atts Atributos do link.
+ * @return array
+ */
+function gstore_normalize_nav_menu_link_attributes( $atts ) {
+	if ( isset( $atts['href'] ) ) {
+		$atts['href'] = gstore_normalize_internal_public_url( (string) $atts['href'] );
+	}
+
+	return $atts;
+}
+add_filter( 'nav_menu_link_attributes', 'gstore_normalize_nav_menu_link_attributes', 35 );
+
+/**
+ * Evita que o mini-cart vazio exponha checkout que redireciona para carrinho.
+ *
+ * @param string $block_content HTML do bloco.
+ * @return string
+ */
+function gstore_replace_empty_minicart_checkout_link( $block_content ) {
+	if ( ! is_string( $block_content ) || false === strpos( $block_content, 'finalizar-compra' ) ) {
+		return $block_content;
+	}
+
+	if ( function_exists( 'WC' ) && WC() && WC()->cart && WC()->cart->get_cart_contents_count() > 0 ) {
+		return $block_content;
+	}
+
+	$cart_url = gstore_get_public_canonical_url( 'cart' );
+
+	return (string) preg_replace_callback(
+		'/(href\s*=\s*)(["\'])(.*?)\2/i',
+		static function ( $matches ) use ( $cart_url ) {
+			$href = html_entity_decode( (string) $matches[3], ENT_QUOTES, 'UTF-8' );
+			$path = (string) wp_parse_url( $href, PHP_URL_PATH );
+			$path = '/' . trim( rawurldecode( $path ), '/' ) . '/';
+
+			if ( '/finalizar-compra/' !== $path ) {
+				return $matches[0];
+			}
+
+			return $matches[1] . $matches[2] . esc_url( $cart_url ) . $matches[2];
+		},
+		$block_content
+	);
+}
+add_filter( 'render_block_woocommerce/mini-cart', 'gstore_replace_empty_minicart_checkout_link', 20 );
+add_filter( 'render_block', 'gstore_normalize_internal_public_links', 35 );
+add_filter( 'the_content', 'gstore_normalize_internal_public_links', 35 );
 
 /**
  * Retorna o nome publico da loja para textos de SEO sem fixar uma marca no tema.
@@ -934,9 +1172,9 @@ function gstore_resolve_legacy_category_public_url( $legacy_url ) {
 	$clean_pages = array(
 		'promocoes'     => '/ofertas/',
 		'ofertas'       => '/ofertas/',
-		'programas'     => '/programas/',
-		'pro-training'  => '/pro-training/',
-		'clube-de-tiro' => '/clube-de-tiro/',
+		'programas'     => '/categoria-produto/programas/',
+		'pro-training'  => '/categoria-produto/pro-training/',
+		'clube-de-tiro' => '/categoria-produto/clube-de-tiro/',
 	);
 	if ( isset( $clean_pages[ $legacy_path ] ) ) {
 		return home_url( $clean_pages[ $legacy_path ] );
@@ -1946,8 +2184,10 @@ function gstore_get_catalog_pagination_base_url() {
 
 	if ( '' === $base_url && function_exists( 'is_shop' ) && is_shop() && function_exists( 'wc_get_page_permalink' ) ) {
 		$shop_url = wc_get_page_permalink( 'shop' );
-		if ( is_string( $shop_url ) && '' !== $shop_url && ! is_wp_error( $shop_url ) ) {
+		if ( is_string( $shop_url ) && '' !== $shop_url && ! is_wp_error( $shop_url ) && ! gstore_is_legacy_shop_url( $shop_url ) ) {
 			$base_url = $shop_url;
+		} elseif ( is_string( $shop_url ) && gstore_is_legacy_shop_url( $shop_url ) ) {
+			$base_url = gstore_get_catalog_url();
 		}
 	}
 
@@ -5097,7 +5337,7 @@ function gstore_enqueue_scripts() {
 	// Passa URLs do tema para o JavaScript (respeitam subdiretório quando WP está em /subdir/)
 	$gstore_account_urls = array(
 		'homeUrl'        => home_url( '/' ),
-		'atendimentoUrl' => home_url( '/atendimento' ),
+		'atendimentoUrl' => home_url( '/atendimento/' ),
 		'favoritosUrl'   => home_url( '/favoritos/' ),
 	);
 	if ( class_exists( 'WooCommerce' ) ) {
@@ -16748,6 +16988,8 @@ function gstore_process_final_output( $buffer ) {
 	$buffer = gstore_replace_catalog_archive_header_html( $buffer );
 
 	$buffer = gstore_normalize_catalog_archive_description_output( $buffer );
+
+	$buffer = gstore_normalize_internal_public_links( $buffer );
 
 	return $buffer;
 }

@@ -19,16 +19,16 @@
 	function getAccountUrl(type) {
 		if (type === 'my-account') {
 			if (typeof gstoreAccountUrls !== 'undefined') {
-				return gstoreAccountUrls.myAccount || gstoreAccountUrls.minhaContaUrl || '/minha-conta';
+				return gstoreAccountUrls.myAccount || gstoreAccountUrls.minhaContaUrl || '/minha-conta/';
 			}
-			return '/minha-conta';
+			return '/minha-conta/';
 		}
 
 		if (type === 'atendimento') {
 			if (typeof gstoreAccountUrls !== 'undefined') {
-				return gstoreAccountUrls.atendimentoUrl || '/atendimento';
+				return gstoreAccountUrls.atendimentoUrl || '/atendimento/';
 			}
-			return '/atendimento';
+			return '/atendimento/';
 		}
 
 		return '/';
