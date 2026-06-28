@@ -3,6 +3,7 @@
 ## Contexto rápido (LLMs/novos devs)
 - Documento de refatoração de CSS do tema.
 - Útil para entender estrutura modular de estilos.
+- Para novas regras e decisões de escopo, use também `docs/css-scope-runbook.md`.
 
 ## 📋 Visão Geral
 
@@ -165,6 +166,24 @@ A refatoração foi feita de forma **não destrutiva**:
 2. Migrar estilos de páginas específicas
 3. Consolidar estilos duplicados
 4. Remover código legado após migração completa
+
+### Status 2026-06-28 - escopo por página
+
+O primeiro corte de performance separou o antigo `style.css` gigante em arquivos por escopo. `style.css` deve ficar pequeno e `gstore-main.css` deve continuar restrito a tokens, base, utilities e componentes globais.
+
+Arquivos legados criados para preservar comportamento sem redesenho:
+
+- `assets/css/single-product.css`
+- `assets/css/catalog.css`
+- `assets/css/order-received.css`
+- `assets/css/layouts/home-legacy.css`
+- `assets/css/layouts/header-legacy.css`
+- `assets/css/layouts/support-blog.css`
+- `assets/css/layouts/blog-single-legacy.css`
+- `assets/css/layouts/institutional-polish.css`
+- `assets/css/components/product-card-legacy.css`
+
+Esses arquivos são buckets de transição. CSS novo deve entrar no arquivo canônico do componente/layout quando existir, e o legado deve ser consolidado com cuidado depois de validação visual.
 
 ### Melhorias Futuras / TODOs
 

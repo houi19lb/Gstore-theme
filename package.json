@@ -4,6 +4,7 @@
   "scripts": {
     "build:assets": "node scripts/build-assets.mjs",
     "check:assets": "node scripts/check-minified-assets.mjs",
+    "check:css-scope": "node scripts/check-css-scope.mjs",
     "test": "jest"
   },
   "devDependencies": {

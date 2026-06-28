@@ -2471,7 +2471,10 @@ function gstore_ensure_persisted_accent_color() {
 }
 
 /**
- * Reaplica a cor de accent salva quando a atualização do tema sobrescreve os tokens.
+ * Garante que a cor de accent salva exista como override em banco.
+ *
+ * O admin nao deve editar arquivos CSS versionados em producao. Os valores
+ * dinamicos entram por wp_options + wp_add_inline_style em gstore-main.
  */
 function gstore_maybe_restore_saved_accent_tokens() {
 	$saved_color = gstore_ensure_persisted_accent_color();
@@ -2479,22 +2482,7 @@ function gstore_maybe_restore_saved_accent_tokens() {
 		return;
 	}
 
-	$tokens_file = get_theme_file_path( 'assets/css/tokens.css' );
-	if ( ! file_exists( $tokens_file ) || ! is_writable( $tokens_file ) ) {
-		return;
-	}
-
-	$current_file_color = gstore_get_accent_color_from_tokens_file();
-	if ( $current_file_color && strtolower( $current_file_color ) === strtolower( $saved_color ) ) {
-		return;
-	}
-
-	gstore_update_accent_tokens_in_file( $saved_color );
-
-	$updated_file_color = gstore_get_accent_color_from_tokens_file();
-	if ( $updated_file_color && strtolower( $updated_file_color ) === strtolower( $saved_color ) ) {
-		update_option( 'gstore_tokens_last_updated', time() );
-	}
+	gstore_persist_accent_design_token_overrides( $saved_color );
 }
 add_action( 'after_setup_theme', 'gstore_maybe_restore_saved_accent_tokens', 99 );
 add_action( 'after_switch_theme', 'gstore_maybe_restore_saved_accent_tokens', 20 );
@@ -3769,13 +3757,22 @@ function gstore_defer_non_critical_css( $tag, $handle, $href, $media ) {
 		'gstore-como-comprar-arma-css',
 		'gstore-informativo-css',
 		'gstore-sobre-nos-css',
+		'gstore-catalog-css',
+		'gstore-category-filter',
+		'gstore-support-blog-css',
+		'gstore-blog-single-css',
+		'gstore-blog-single-legacy-css',
+		'gstore-institutional-polish-css',
+		'gstore-order-received-css',
 		'gstore-notices-css',
 
 		// CSS de layouts que não estão acima da dobra
 		'gstore-header-css',      // Já inlinado como crítico, pode defer o resto
+		'gstore-header-legacy-css',
 
 		// CSS de componentes não críticos
 		'gstore-product-card-css', // Não está acima da dobra na home
+		'gstore-product-card-legacy-css',
 
 		// CSS do WooCommerce que não é crítico
 		'woocommerce-layout',
@@ -3792,10 +3789,11 @@ function gstore_defer_non_critical_css( $tag, $handle, $href, $media ) {
 
 		// CSS de layouts específicos
 		'gstore-home-css',         // Pode defer se não for home ou se hero já foi renderizado
+		'gstore-home-legacy-css',
 	);
 
 	// CSS de home que só deve ser deferido se não for a home page
-	if ( 'gstore-home-css' === $handle && is_front_page() ) {
+	if ( in_array( $handle, array( 'gstore-home-css', 'gstore-home-legacy-css' ), true ) && is_front_page() ) {
 		// Não defer na home, mas pode ser otimizado de outra forma
 		return $tag;
 	}
@@ -4066,6 +4064,180 @@ function gstore_theme_asset_uri( $relative_path ) {
 }
 
 /**
+ * Retorna versao baseada no arquivo realmente carregado pelo helper de assets.
+ *
+ * @param string      $relative_path Caminho relativo ao tema.
+ * @param string|null $fallback      Versao fallback.
+ * @return string
+ */
+function gstore_theme_asset_version( $relative_path, $fallback = null ) {
+	$asset_relative_path = gstore_get_minified_theme_asset_path( $relative_path );
+	$asset_file          = get_theme_file_path( $asset_relative_path );
+
+	if ( file_exists( $asset_file ) ) {
+		return (string) filemtime( $asset_file );
+	}
+
+	return null !== $fallback ? (string) $fallback : (string) wp_get_theme()->get( 'Version' );
+}
+
+/**
+ * Enfileira CSS do tema usando o helper que prefere .min em producao.
+ *
+ * @param string        $handle       Handle WordPress.
+ * @param string        $relative_path Caminho relativo ao tema.
+ * @param array<string> $deps         Dependencias.
+ * @param string|null   $fallback     Versao fallback.
+ * @return void
+ */
+function gstore_enqueue_theme_style( $handle, $relative_path, $deps = array(), $fallback = null ) {
+	if ( ! file_exists( get_theme_file_path( $relative_path ) ) ) {
+		return;
+	}
+
+	wp_enqueue_style(
+		$handle,
+		gstore_theme_asset_uri( $relative_path ),
+		$deps,
+		gstore_theme_asset_version( $relative_path, $fallback )
+	);
+}
+
+/**
+ * Detecta paginas que usam o layout de home.
+ *
+ * @return bool
+ */
+function gstore_is_home_layout_context() {
+	if ( function_exists( 'is_front_page' ) && is_front_page() ) {
+		return true;
+	}
+
+	if ( function_exists( 'is_page' ) && is_page( array( 'home', 'inicio', 'pagina-inicial' ) ) ) {
+		return true;
+	}
+
+	if ( function_exists( 'is_page' ) && is_page() && function_exists( 'get_page_template_slug' ) ) {
+		$template = (string) get_page_template_slug();
+		return in_array( $template, array( 'page-home', 'page-home.html', 'templates/page-home.html' ), true );
+	}
+
+	return false;
+}
+
+/**
+ * Detecta catalogos, taxonomias e paginas que usam grid/filtro de produtos.
+ *
+ * @return bool
+ */
+function gstore_is_catalog_layout_context() {
+	if ( function_exists( 'is_page' ) ) {
+		$catalog_pages = array( 'catalogo', 'ofertas', 'favoritos', 'loja' );
+		if ( is_page( $catalog_pages ) ) {
+			return true;
+		}
+
+		if ( is_page() && function_exists( 'get_page_template_slug' ) ) {
+			$template = (string) get_page_template_slug();
+			if ( in_array( $template, array( 'page-catalogo', 'page-catalogo.html', 'page-ofertas', 'page-ofertas.html', 'page-favoritos', 'page-favoritos.html', 'page-loja', 'page-loja.html', 'templates/page-catalogo.html', 'templates/page-ofertas.html', 'templates/page-favoritos.html', 'templates/page-loja.html' ), true ) ) {
+				return true;
+			}
+		}
+	}
+
+	if ( function_exists( 'is_shop' ) && is_shop() ) {
+		return true;
+	}
+
+	if ( function_exists( 'is_product_category' ) && is_product_category() ) {
+		return true;
+	}
+
+	if ( function_exists( 'is_product_tag' ) && is_product_tag() ) {
+		return true;
+	}
+
+	return false;
+}
+
+/**
+ * Detecta paginas institucionais/blog que usam Gstore-support/Gstore-blog.
+ *
+ * @return bool
+ */
+function gstore_is_support_blog_layout_context() {
+	if ( function_exists( 'is_singular' ) && is_singular( 'post' ) ) {
+		return true;
+	}
+
+	if (
+		( function_exists( 'is_home' ) && is_home() )
+		|| ( function_exists( 'is_category' ) && is_category() )
+		|| ( function_exists( 'is_tag' ) && is_tag() )
+		|| ( function_exists( 'is_author' ) && is_author() )
+		|| ( function_exists( 'is_date' ) && is_date() )
+	) {
+		return true;
+	}
+
+	if ( function_exists( 'is_page' ) ) {
+		if ( is_page( array( 'blog', 'atendimento', 'suporte' ) ) ) {
+			return true;
+		}
+
+		if ( is_page() && function_exists( 'get_page_template_slug' ) ) {
+			$template = (string) get_page_template_slug();
+			if ( in_array( $template, array( 'page-blog', 'page-blog.html', 'page-atendimento', 'page-atendimento.html', 'templates/page-blog.html', 'templates/page-atendimento.html' ), true ) ) {
+				return true;
+			}
+		}
+	}
+
+	return false;
+}
+
+/**
+ * Detecta contextos que podem renderizar cards de produto.
+ *
+ * @return bool
+ */
+function gstore_is_product_card_style_context() {
+	if ( ! class_exists( 'WooCommerce' ) ) {
+		return false;
+	}
+
+	if ( gstore_is_home_layout_context() || gstore_is_catalog_layout_context() ) {
+		return true;
+	}
+
+	if ( function_exists( 'is_product' ) && is_product() ) {
+		return true;
+	}
+
+	if ( function_exists( 'is_cart' ) && is_cart() ) {
+		return true;
+	}
+
+	if ( function_exists( 'is_search' ) && is_search() ) {
+		return true;
+	}
+
+	return false;
+}
+
+/**
+ * Detecta carrinho/checkout/pedido para CSS pequeno de ajustes WooCommerce.
+ *
+ * @return bool
+ */
+function gstore_is_checkout_shell_style_context() {
+	return ( function_exists( 'is_cart' ) && is_cart() )
+		|| ( function_exists( 'is_checkout' ) && is_checkout() )
+		|| ( function_exists( 'is_order_received_page' ) && is_order_received_page() )
+		|| ( function_exists( 'is_wc_endpoint_url' ) && is_wc_endpoint_url( 'order-received' ) );
+}
+
+/**
  * Verifica se algum @import local de um CSS esta mais novo que o .min gerado.
  *
  * @param string $relative_path Caminho relativo ao tema.
@@ -4328,15 +4500,11 @@ add_action( 'wp_head', 'gstore_prevent_react_conflicts', 999 );
  * 3. Estilos específicos de página (cart, checkout, etc.)
  */
 function gstore_enqueue_styles() {
-	$parent_handle = 'twentytwentyfive-style';
-	$parent_theme  = wp_get_theme( 'twentytwentyfive' );
-	$theme_version = wp_get_theme()->get( 'Version' );
-	$stylesheet_file = get_stylesheet_directory() . '/style.css';
-	$stylesheet_version = ( file_exists( $stylesheet_file ) ) ? (string) filemtime( $stylesheet_file ) : $theme_version;
-	$footer_css_file = get_theme_file_path( 'assets/css/layouts/footer.css' );
-	$footer_css_version = file_exists( $footer_css_file ) ? (string) filemtime( $footer_css_file ) : $theme_version;
-	$header_css_file = get_theme_file_path( 'assets/css/layouts/header.css' );
-	$header_css_version = file_exists( $header_css_file ) ? (string) filemtime( $header_css_file ) : $theme_version;
+	$parent_handle      = 'twentytwentyfive-style';
+	$parent_theme       = wp_get_theme( 'twentytwentyfive' );
+	$theme_version      = wp_get_theme()->get( 'Version' );
+	$stylesheet_file    = get_stylesheet_directory() . '/style.css';
+	$stylesheet_version = ( file_exists( $stylesheet_file ) ) ? gstore_theme_asset_version( 'style.css', $theme_version ) : $theme_version;
 
 	// Obtém timestamp da última atualização dos tokens para forçar recarregamento
 	$tokens_version = get_option( 'gstore_tokens_last_updated', time() );
@@ -4386,52 +4554,63 @@ function gstore_enqueue_styles() {
 		$stylesheet_version
 	);
 
-	// Footer Gstore (migrado do style.css para módulo dedicado)
-	wp_enqueue_style(
-		'gstore-footer-css',
-		gstore_theme_asset_uri( 'assets/css/layouts/footer.css' ),
-		array( 'gstore-style' ),
-		$footer_css_version
-	);
-
-	// Header CSS - carregado por último para ter prioridade sobre estilos legados
-	wp_enqueue_style(
-		'gstore-header-css',
-		gstore_theme_asset_uri( 'assets/css/layouts/header.css' ),
-		array( 'gstore-style' ),
-		$header_css_version
-	);
+	gstore_enqueue_theme_style( 'gstore-footer-css', 'assets/css/layouts/footer.css', array( 'gstore-style' ), $theme_version );
+	gstore_enqueue_theme_style( 'gstore-header-legacy-css', 'assets/css/layouts/header-legacy.css', array( 'gstore-style' ), $theme_version );
+	gstore_enqueue_theme_style( 'gstore-header-css', 'assets/css/layouts/header.css', array( 'gstore-header-legacy-css' ), $theme_version );
 
 	if ( function_exists( 'gstore_catalog_menu_is_cascade_enabled' ) && gstore_catalog_menu_is_cascade_enabled() ) {
-		$catalog_mega_css_file = get_theme_file_path( 'assets/css/layouts/catalog-mega-menu.css' );
-		if ( file_exists( $catalog_mega_css_file ) ) {
-			wp_enqueue_style(
-				'gstore-catalog-mega-menu-css',
-				gstore_theme_asset_uri( 'assets/css/layouts/catalog-mega-menu.css' ),
-				array( 'gstore-header-css' ),
-				filemtime( $catalog_mega_css_file )
-			);
-		}
+		gstore_enqueue_theme_style( 'gstore-catalog-mega-menu-css', 'assets/css/layouts/catalog-mega-menu.css', array( 'gstore-header-css' ), $theme_version );
 	}
 
-	// Mini-cart CSS dedicado.
-	// Carrega separadamente com filemtime para evitar stale cache do @import em gstore-main.css.
-	$mini_cart_css_file = get_theme_file_path( 'assets/css/components/mini-cart.css' );
-	$mini_cart_css_version = file_exists( $mini_cart_css_file ) ? (string) filemtime( $mini_cart_css_file ) : $theme_version;
-	wp_enqueue_style(
-		'gstore-mini-cart-css',
-		gstore_theme_asset_uri( 'assets/css/components/mini-cart.css' ),
-		array( 'gstore-header-css' ),
-		$mini_cart_css_version
-	);
+	gstore_enqueue_theme_style( 'gstore-mini-cart-css', 'assets/css/components/mini-cart.css', array( 'gstore-header-css' ), $theme_version );
+	gstore_enqueue_theme_style( 'gstore-telegram-floating-css', 'assets/css/components/telegram-floating.css', array( 'gstore-header-css' ), $theme_version );
 
-	// Botão flutuante do Telegram (usa href dinâmico da top bar; sem hardcode)
-	wp_enqueue_style(
-		'gstore-telegram-floating-css',
-		gstore_theme_asset_uri( 'assets/css/components/telegram-floating.css' ),
-		array( 'gstore-header-css' ),
-		$theme_version
-	);
+	if ( function_exists( 'is_product' ) && is_product() ) {
+		gstore_enqueue_theme_style( 'gstore-single-product-css', 'assets/css/single-product.css', array( 'gstore-style' ), $theme_version );
+	}
+
+	if ( gstore_is_product_card_style_context() ) {
+		gstore_enqueue_theme_style( 'gstore-product-card-css', 'assets/css/components/product-card.css', array( 'gstore-style' ), $theme_version );
+		gstore_enqueue_theme_style( 'gstore-product-card-legacy-css', 'assets/css/components/product-card-legacy.css', array( 'gstore-product-card-css' ), $theme_version );
+	}
+
+	if ( gstore_is_home_layout_context() ) {
+		$home_deps = wp_style_is( 'gstore-product-card-legacy-css', 'enqueued' )
+			? array( 'gstore-product-card-legacy-css' )
+			: array( 'gstore-style' );
+
+		gstore_enqueue_theme_style( 'gstore-home-css', 'assets/css/layouts/home.css', $home_deps, $theme_version );
+		gstore_enqueue_theme_style( 'gstore-home-legacy-css', 'assets/css/layouts/home-legacy.css', array( 'gstore-home-css' ), $theme_version );
+	}
+
+	if ( gstore_is_support_blog_layout_context() ) {
+		$institutional_deps = array( 'gstore-style' );
+
+		if ( function_exists( 'is_singular' ) && is_singular( 'post' ) ) {
+			gstore_enqueue_theme_style( 'gstore-blog-single-css', 'assets/css/layouts/blog-single.css', array( 'gstore-style' ), $theme_version );
+			gstore_enqueue_theme_style( 'gstore-support-blog-css', 'assets/css/layouts/support-blog.css', array( 'gstore-blog-single-css' ), $theme_version );
+			gstore_enqueue_theme_style( 'gstore-blog-single-legacy-css', 'assets/css/layouts/blog-single-legacy.css', array( 'gstore-support-blog-css' ), $theme_version );
+			$institutional_deps = array( 'gstore-blog-single-legacy-css' );
+		} else {
+			gstore_enqueue_theme_style( 'gstore-support-blog-css', 'assets/css/layouts/support-blog.css', array( 'gstore-style' ), $theme_version );
+			$institutional_deps = array( 'gstore-support-blog-css' );
+		}
+
+		gstore_enqueue_theme_style( 'gstore-institutional-polish-css', 'assets/css/layouts/institutional-polish.css', $institutional_deps, $theme_version );
+	}
+
+	$is_catalog_page = gstore_is_catalog_layout_context();
+	if ( $is_catalog_page ) {
+		$catalog_deps = wp_style_is( 'gstore-product-card-legacy-css', 'enqueued' )
+			? array( 'gstore-product-card-legacy-css' )
+			: array( 'gstore-style' );
+
+		gstore_enqueue_theme_style( 'gstore-catalog-css', 'assets/css/catalog.css', $catalog_deps, $theme_version );
+	}
+
+	if ( gstore_is_checkout_shell_style_context() ) {
+		gstore_enqueue_theme_style( 'gstore-order-received-css', 'assets/css/order-received.css', array( 'gstore-style' ), $theme_version );
+	}
 
 	// CSS da Minha Conta e da pagina publica do programa de parceiros.
 	$gstore_is_partner_program_page = (bool) get_query_var( 'gstore_partner_application_page' );
@@ -4439,114 +4618,55 @@ function gstore_enqueue_styles() {
 		( class_exists( 'WooCommerce' ) && function_exists( 'is_account_page' ) && is_account_page() )
 		|| $gstore_is_partner_program_page
 	) {
-		$my_account_css_file    = get_theme_file_path( 'assets/css/my-account.css' );
-		$my_account_css_version = $theme_version;
-		if ( file_exists( $my_account_css_file ) ) {
-			$my_account_css_hash    = md5_file( $my_account_css_file );
-			$my_account_css_version = (string) filemtime( $my_account_css_file );
-			if ( is_string( $my_account_css_hash ) && '' !== $my_account_css_hash ) {
-				$my_account_css_version .= '-' . substr( $my_account_css_hash, 0, 8 );
-			}
-		}
-		wp_enqueue_style(
-			'gstore-my-account-css',
-			gstore_theme_asset_uri( 'assets/css/my-account.css' ),
-			array( 'gstore-style' ),
-			$my_account_css_version
-		);
+		gstore_enqueue_theme_style( 'gstore-my-account-css', 'assets/css/my-account.css', array( 'gstore-style' ), $theme_version );
 
 		// Fulfillment timeline (apenas na página de detalhes do pedido).
 		if ( function_exists( 'is_wc_endpoint_url' ) && is_wc_endpoint_url( 'view-order' ) ) {
-			wp_enqueue_style(
-				'gstore-fulfillment-timeline-css',
-				gstore_theme_asset_uri( 'assets/css/fulfillment-timeline.css' ),
-				array( 'gstore-my-account-css' ),
-				filemtime( get_theme_file_path( 'assets/css/fulfillment-timeline.css' ) )
-			);
+			gstore_enqueue_theme_style( 'gstore-fulfillment-timeline-css', 'assets/css/fulfillment-timeline.css', array( 'gstore-my-account-css' ), $theme_version );
 		}
 	}
 
 	// CSS da página de como comprar arma
 	if ( is_page( 'como-comprar-arma' ) ) {
-		wp_enqueue_style(
-			'gstore-como-comprar-arma-css',
-			gstore_theme_asset_uri( 'assets/css/como-comprar-arma.css' ),
-			array( 'gstore-style' ),
-			$theme_version
-		);
+		gstore_enqueue_theme_style( 'gstore-como-comprar-arma-css', 'assets/css/como-comprar-arma.css', array( 'gstore-style' ), $theme_version );
 	}
 
 	// CSS da página informativo (pós-venda)
 	if ( is_page( 'informativo' ) ) {
-		wp_enqueue_style(
-			'gstore-informativo-css',
-			gstore_theme_asset_uri( 'assets/css/informativo.css' ),
-			array( 'gstore-style' ),
-			$theme_version
-		);
+		gstore_enqueue_theme_style( 'gstore-informativo-css', 'assets/css/informativo.css', array( 'gstore-style' ), $theme_version );
 	}
 
 	// CSS da página Sobre nós
 	if ( is_page( 'sobre-nos' ) ) {
-		$sobre_nos_css_file = get_theme_file_path( 'assets/css/sobre-nos.css' );
-		$sobre_nos_css_version = file_exists( $sobre_nos_css_file ) ? (string) filemtime( $sobre_nos_css_file ) : $theme_version;
-		wp_enqueue_style(
-			'gstore-sobre-nos-css',
-			gstore_theme_asset_uri( 'assets/css/sobre-nos.css' ),
-			array( 'gstore-style' ),
-			$sobre_nos_css_version
-		);
+		gstore_enqueue_theme_style( 'gstore-sobre-nos-css', 'assets/css/sobre-nos.css', array( 'gstore-style' ), $theme_version );
 	}
 
 	if ( ( function_exists( 'is_privacy_policy' ) && is_privacy_policy() ) || is_page( 'politica-de-privacidade' ) ) {
-		wp_enqueue_style(
-			'gstore-privacy-policy-css',
-			gstore_theme_asset_uri( 'assets/css/privacy-policy.css' ),
-			array( 'gstore-style' ),
-			$theme_version
-		);
+		gstore_enqueue_theme_style( 'gstore-privacy-policy-css', 'assets/css/privacy-policy.css', array( 'gstore-style' ), $theme_version );
 	}
 
-	// CSS de Notificações e Modais
-	wp_enqueue_style(
-		'gstore-notices-css',
-		gstore_theme_asset_uri( 'assets/css/components/notices.css' ),
-		array( 'gstore-main' ),
-		$theme_version
-	);
-
-	// CSS do Toast de Adicionar ao Carrinho
-	wp_enqueue_style(
-		'gstore-add-to-cart-toast-css',
-		gstore_theme_asset_uri( 'assets/css/components/add-to-cart-toast.css' ),
-		array( 'gstore-main' ),
-		$theme_version
-	);
+	gstore_enqueue_theme_style( 'gstore-notices-css', 'assets/css/components/notices.css', array( 'gstore-main' ), $theme_version );
+	gstore_enqueue_theme_style( 'gstore-add-to-cart-toast-css', 'assets/css/components/add-to-cart-toast.css', array( 'gstore-main' ), $theme_version );
 
 	// Filtro de Categorias Marketplace
-	$category_filter_css_file = get_theme_file_path( 'assets/css/category-filter.css' );
-	$category_filter_css_version = file_exists( $category_filter_css_file ) ? (string) filemtime( $category_filter_css_file ) : $theme_version;
-	wp_enqueue_style(
-		'gstore-category-filter',
-		gstore_theme_asset_uri( 'assets/css/category-filter.css' ),
-		array( 'gstore-style' ),
-		$category_filter_css_version
-	);
+	if ( $is_catalog_page ) {
+		gstore_enqueue_theme_style( 'gstore-category-filter', 'assets/css/category-filter.css', array( 'gstore-catalog-css' ), $theme_version );
 
-	// Filtro de Categorias Marketplace - JS
-	$category_filter_js_file = get_theme_file_path( 'assets/js/category-filter.js' );
-	$category_filter_js_version = file_exists( $category_filter_js_file ) ? (string) filemtime( $category_filter_js_file ) : $theme_version;
-	wp_enqueue_script(
-		'gstore-category-filter-js',
-		gstore_theme_asset_uri( 'assets/js/category-filter.js' ),
-		array(),
-		$category_filter_js_version,
-		true
-	);
+		$category_filter_js_file = get_theme_file_path( 'assets/js/category-filter.js' );
+		if ( file_exists( $category_filter_js_file ) ) {
+			wp_enqueue_script(
+				'gstore-category-filter-js',
+				gstore_theme_asset_uri( 'assets/js/category-filter.js' ),
+				array(),
+				gstore_theme_asset_version( 'assets/js/category-filter.js', $theme_version ),
+				true
+			);
+		}
+	}
 
 	$design_token_overrides_css = gstore_get_design_token_overrides_css();
 	if ( '' !== $design_token_overrides_css ) {
-		wp_add_inline_style( 'gstore-header-css', $design_token_overrides_css );
+		wp_add_inline_style( 'gstore-main', $design_token_overrides_css );
 	}
 }
 add_action( 'wp_enqueue_scripts', 'gstore_enqueue_styles' );
@@ -5688,15 +5808,10 @@ function gstore_enqueue_scripts() {
 				true
 			);
 
-			$product_notice_css_path = get_theme_file_path( 'assets/css/components/product-notice.css' );
-			$product_notice_css_version = file_exists( $product_notice_css_path ) ? (string) filemtime( $product_notice_css_path ) : wp_get_theme()->get( 'Version' );
-
-			wp_enqueue_style(
-				'gstore-product-notice-css',
-				gstore_theme_asset_uri( 'assets/css/components/product-notice.css' ),
-				array( 'gstore-main' ),
-				$product_notice_css_version
-			);
+			$product_notice_css_deps = wp_style_is( 'gstore-single-product-css', 'enqueued' )
+				? array( 'gstore-single-product-css' )
+				: array( 'gstore-style' );
+			gstore_enqueue_theme_style( 'gstore-product-notice-css', 'assets/css/components/product-notice.css', $product_notice_css_deps, wp_get_theme()->get( 'Version' ) );
 
 			wp_localize_script(
 				'gstore-product-notice',
@@ -8905,21 +9020,10 @@ function gstore_enqueue_checkout_assets() {
 
 	if ( function_exists( 'is_checkout' ) && is_checkout() ) {
 		// CSS do checkout base
-		wp_enqueue_style(
-			'gstore-checkout',
-			gstore_theme_asset_uri( 'assets/css/checkout.css' ),
-			array( 'gstore-style', 'gstore-fontawesome' ),
-			$theme_version
-		);
+		gstore_enqueue_theme_style( 'gstore-checkout', 'assets/css/checkout.css', array( 'gstore-style', 'gstore-fontawesome' ), $theme_version );
 
 		// CSS do checkout em 3 etapas
-		$checkout_steps_css_path = get_theme_file_path( 'assets/css/checkout-steps.css' );
-		wp_enqueue_style(
-			'gstore-checkout-steps',
-			gstore_theme_asset_uri( 'assets/css/checkout-steps.css' ),
-			array( 'gstore-checkout' ),
-			file_exists( $checkout_steps_css_path ) ? filemtime( $checkout_steps_css_path ) : $theme_version
-		);
+		gstore_enqueue_theme_style( 'gstore-checkout-steps', 'assets/css/checkout-steps.css', array( 'gstore-checkout' ), $theme_version );
 
 		wp_enqueue_script(
 			'gstore-checkout-cleanup',
@@ -9067,12 +9171,7 @@ function gstore_enqueue_checkout_assets() {
 		wp_add_inline_script( 'gstore-checkout-steps', $checkout_inline, 'before' );
 
 		// CSS do Pix
-		wp_enqueue_style(
-			'gstore-checkout-pix',
-			gstore_theme_asset_uri( 'assets/css/checkout-pix.css' ),
-			array( 'gstore-checkout' ),
-			$theme_version
-		);
+		gstore_enqueue_theme_style( 'gstore-checkout-pix', 'assets/css/checkout-pix.css', array( 'gstore-checkout' ), $theme_version );
 
 		// JavaScript do Pix
 		wp_enqueue_script(
@@ -9086,25 +9185,12 @@ function gstore_enqueue_checkout_assets() {
 	}
 
 	if ( function_exists( 'is_cart' ) && is_cart() ) {
-		$cart_css_path    = get_theme_file_path( 'assets/css/cart.css' );
-		$cart_css_version = file_exists( $cart_css_path ) ? (string) filemtime( $cart_css_path ) : $theme_version;
-
-		wp_enqueue_style(
-			'gstore-cart',
-			gstore_theme_asset_uri( 'assets/css/cart.css' ),
-			array( 'gstore-style', 'gstore-fontawesome' ),
-			$cart_css_version
-		);
+		gstore_enqueue_theme_style( 'gstore-cart', 'assets/css/cart.css', array( 'gstore-style', 'gstore-fontawesome' ), $theme_version );
 	}
 
 	// CSS do Pix também na página de obrigado e visualização do pedido
 	if ( ( function_exists( 'is_order_received_page' ) && is_order_received_page() ) || ( function_exists( 'is_view_order_page' ) && is_view_order_page() ) ) {
-		wp_enqueue_style(
-			'gstore-checkout-pix',
-			gstore_theme_asset_uri( 'assets/css/checkout-pix.css' ),
-			array( 'gstore-style' ),
-			$theme_version
-		);
+		gstore_enqueue_theme_style( 'gstore-checkout-pix', 'assets/css/checkout-pix.css', array( 'gstore-style' ), $theme_version );
 
 		// JavaScript do Pix para página de obrigado e visualização do pedido
 		wp_enqueue_script(
@@ -9135,13 +9221,7 @@ function gstore_enqueue_checkout_assets() {
 		|| ( function_exists( 'is_checkout' ) && is_checkout() )
 	) {
 		// CSS do calculador
-		$shipping_calculator_css_path = get_theme_file_path( 'assets/css/shipping-calculator.css' );
-		wp_enqueue_style(
-			'gstore-shipping-calculator',
-			gstore_theme_asset_uri( 'assets/css/shipping-calculator.css' ),
-			array( 'gstore-style' ),
-			file_exists( $shipping_calculator_css_path ) ? filemtime( $shipping_calculator_css_path ) : $theme_version
-		);
+		gstore_enqueue_theme_style( 'gstore-shipping-calculator', 'assets/css/shipping-calculator.css', array( 'gstore-style' ), $theme_version );
 
 		// JavaScript do calculador
 		wp_enqueue_script(
@@ -17714,7 +17794,7 @@ function gstore_render_design_tokens_page() {
 				echo esc_html(
 					sprintf(
 						/* translators: 1: saved color, 2: tokens file color. */
-						__( 'A cor salva no banco é %1$s. Cor atual em tokens.css: %2$s. Se uma atualização sobrescrever o arquivo, o tema reaplica a cor salva automaticamente.', 'gstore' ),
+						__( 'A cor salva no banco é %1$s. Cor base versionada em tokens.css: %2$s. O frontend usa a cor salva via CSS inline, sem editar arquivos do tema.', 'gstore' ),
 						strtoupper( $accent_color ),
 						$tokens_file_color ? strtoupper( $tokens_file_color ) : __( 'não encontrada', 'gstore' )
 					)
@@ -18120,7 +18200,10 @@ function gstore_ajax_get_derived_tokens() {
 add_action( 'wp_ajax_gstore_get_derived_tokens', 'gstore_ajax_get_derived_tokens' );
 
 /**
- * Endpoint AJAX para salvar a cor de accent e atualizar tokens.
+ * Endpoint AJAX para salvar a cor de accent.
+ *
+ * Persistimos em wp_options e entregamos via CSS inline; arquivos CSS do tema
+ * continuam como artefatos versionados/deployaveis.
  */
 function gstore_ajax_save_accent_color() {
 	check_ajax_referer( 'gstore_save_accent_color', 'gstore_accent_color_nonce' );
@@ -18142,18 +18225,10 @@ function gstore_ajax_save_accent_color() {
 		wp_send_json_error( array( 'message' => __( 'Confirme a troca para substituir a cor salva do site.', 'gstore' ) ) );
 	}
 
-	// Salva a opção
 	gstore_persist_accent_design_token_overrides( $accent_color );
 	gstore_sync_store_info_accent_color( $accent_color );
 
-	// Atualiza o arquivo tokens.css
-	$result = gstore_update_accent_tokens_in_file( $accent_color );
-
-	if ( is_wp_error( $result ) ) {
-		wp_send_json_error( array( 'message' => $result->get_error_message() ) );
-	}
-
-	// Atualiza o timestamp para forçar recarregamento do CSS
+	// Atualiza o timestamp para forcar recarregamento do CSS inline/cacheado.
 	update_option( 'gstore_tokens_last_updated', time() );
 
 	// Limpa cache do WordPress se disponível
@@ -18162,9 +18237,9 @@ function gstore_ajax_save_accent_color() {
 	}
 
 	wp_send_json_success( array(
-		'message' => __( 'Cor de accent salva e tokens atualizados com sucesso!', 'gstore' ),
-		'tokens' => gstore_generate_accent_tokens( $accent_color ),
-		'file_updated' => true
+		'message'      => __( 'Cor de accent salva com sucesso.', 'gstore' ),
+		'tokens'       => gstore_generate_accent_tokens( $accent_color ),
+		'file_updated' => false,
 	) );
 }
 add_action( 'wp_ajax_gstore_save_accent_color', 'gstore_ajax_save_accent_color' );
@@ -18516,150 +18591,22 @@ function gstore_generate_accent_tokens( $accent_color ) {
 }
 
 /**
- * Atualiza o arquivo tokens.css com a nova cor de accent e tokens derivados.
- * Também atualiza valores de fallback em outros arquivos CSS.
+ * @deprecated Use gstore_persist_accent_design_token_overrides().
+ *
+ * Mantido para compatibilidade com chamadas antigas. Nao grava arquivos CSS:
+ * tokens dinamicos sao persistidos em banco e emitidos como CSS inline.
  *
  * @param string $accent_color Cor de accent em hex.
  * @return bool|WP_Error True em sucesso, WP_Error em erro.
  */
 function gstore_update_accent_tokens_in_file( $accent_color ) {
-	$tokens = gstore_generate_accent_tokens( $accent_color );
-
-	// Mapeia os nomes dos tokens para os padrões no arquivo
-	$token_map = gstore_get_accent_token_css_var_map();
-
-	// 1. Atualiza tokens.css
-	$tokens_file = get_theme_file_path( 'assets/css/tokens.css' );
-	if ( file_exists( $tokens_file ) && is_writable( $tokens_file ) ) {
-		$content = file_get_contents( $tokens_file );
-
-		foreach ( $token_map as $token_key => $token_var ) {
-			$token_value = $tokens[ $token_key ];
-			$pattern = '/([\t\s]*)(' . preg_quote( $token_var, '/' ) . '):\s*[^;]+;/';
-
-			if ( preg_match( $pattern, $content ) ) {
-				$content = preg_replace(
-					$pattern,
-					'$1$2: ' . $token_value . ';',
-					$content
-				);
-			} else {
-				$pattern_flex = '/' . preg_quote( $token_var, '/' ) . ':\s*[^;]+;/';
-				if ( preg_match( $pattern_flex, $content ) ) {
-					$content = preg_replace(
-						$pattern_flex,
-						$token_var . ': ' . $token_value . ';',
-						$content
-					);
-				}
-			}
-		}
-
-		file_put_contents( $tokens_file, $content );
+	$accent_color = sanitize_hex_color( $accent_color );
+	if ( ! $accent_color ) {
+		return new WP_Error( 'gstore_invalid_accent_color', __( 'Cor invalida.', 'gstore' ) );
 	}
 
-	// 2. Atualiza valores de fallback em checkout-steps.css
-	$checkout_steps_file = get_theme_file_path( 'assets/css/checkout-steps.css' );
-	if ( file_exists( $checkout_steps_file ) && is_writable( $checkout_steps_file ) ) {
-		$content = file_get_contents( $checkout_steps_file );
-
-		// Atualiza --gstore-brass com novo fallback
-		$content = preg_replace(
-			'/(--gstore-brass):\s*var\(--gstore-color-accent,\s*[^)]+\);/',
-			'$1: var(--gstore-color-accent, ' . $tokens['accent'] . ');',
-			$content
-		);
-
-		// Atualiza --gstore-brass-dark com novo fallback
-		$content = preg_replace(
-			'/(--gstore-brass-dark):\s*var\(--gstore-color-accent-dark,\s*[^)]+\);/',
-			'$1: var(--gstore-color-accent-dark, ' . $tokens['accent-dark'] . ');',
-			$content
-		);
-
-		file_put_contents( $checkout_steps_file, $content );
-	}
-
-	// 3. Atualiza valores hardcoded em style.css
-	$style_file = get_theme_file_path( 'style.css' );
-	if ( file_exists( $style_file ) && is_writable( $style_file ) ) {
-		$content = file_get_contents( $style_file );
-
-		// Atualiza valores hardcoded de accent (em qualquer lugar do arquivo)
-		$content = preg_replace(
-			'/(--gstore-color-accent):\s*#[0-9a-fA-F]{6};/',
-			'$1: ' . $tokens['accent'] . ';',
-			$content
-		);
-
-		$content = preg_replace(
-			'/(--gstore-color-accent-hover):\s*#[0-9a-fA-F]{6};/',
-			'$1: ' . $tokens['accent-hover'] . ';',
-			$content
-		);
-
-		// Atualiza todos os fallbacks de accent no arquivo
-		$content = preg_replace(
-			'/var\(--gstore-color-accent,\s*#[0-9a-fA-F]{6}\)/',
-			'var(--gstore-color-accent, ' . $tokens['accent'] . ')',
-			$content
-		);
-
-		$content = preg_replace(
-			'/var\(--gstore-color-accent-hover,\s*#[0-9a-fA-F]{6}\)/',
-			'var(--gstore-color-accent-hover, ' . $tokens['accent-hover'] . ')',
-			$content
-		);
-
-		$content = preg_replace(
-			'/var\(--gstore-color-accent-light,\s*#[0-9a-fA-F]{6}\)/',
-			'var(--gstore-color-accent-light, ' . $tokens['accent-light'] . ')',
-			$content
-		);
-
-		file_put_contents( $style_file, $content );
-	}
-
-	// 4. Atualiza valores de fallback em my-account.css
-	$my_account_file = get_theme_file_path( 'assets/css/my-account.css' );
-	if ( file_exists( $my_account_file ) && is_writable( $my_account_file ) ) {
-		$content = file_get_contents( $my_account_file );
-
-		// Atualiza todos os fallbacks de accent
-		$content = preg_replace(
-			'/var\(--gstore-color-accent,\s*#[0-9a-fA-F]{6}\)/',
-			'var(--gstore-color-accent, ' . $tokens['accent'] . ')',
-			$content
-		);
-
-		$content = preg_replace(
-			'/var\(--gstore-color-accent-hover,\s*#[0-9a-fA-F]{6}\)/',
-			'var(--gstore-color-accent-hover, ' . $tokens['accent-hover'] . ')',
-			$content
-		);
-
-		$content = preg_replace(
-			'/var\(--gstore-color-accent-dark,\s*#[0-9a-fA-F]{6}\)/',
-			'var(--gstore-color-accent-dark, ' . $tokens['accent-dark'] . ')',
-			$content
-		);
-
-		file_put_contents( $my_account_file, $content );
-	}
-
-	// 5. Atualiza valores de fallback em header.css
-	$header_file = get_theme_file_path( 'assets/css/layouts/header.css' );
-	if ( file_exists( $header_file ) && is_writable( $header_file ) ) {
-		$content = file_get_contents( $header_file );
-
-		// Atualiza todos os fallbacks de accent
-		$content = preg_replace(
-			'/var\(--gstore-color-accent,\s*#[0-9a-fA-F]{6}\)/',
-			'var(--gstore-color-accent, ' . $tokens['accent'] . ')',
-			$content
-		);
-
-		file_put_contents( $header_file, $content );
+	if ( ! gstore_persist_accent_design_token_overrides( $accent_color ) ) {
+		return new WP_Error( 'gstore_accent_tokens_not_saved', __( 'Nao foi possivel salvar os tokens de accent.', 'gstore' ) );
 	}
 
 	return true;
@@ -19006,8 +18953,8 @@ function gstore_get_css_diagnostic_rules() {
 			'expected'    => 'none',
 			'viewport'    => 'mobile',
 			'description' => 'As setas de navegação devem estar ocultas no mobile (@media max-width: 900px)',
-			'css_file'    => 'style.css',
-			'css_line'    => '~2320',
+			'css_file'    => 'assets/css/layouts/home-legacy.css',
+			'css_line'    => 'legacy home scope',
 		),
 		'benefits_slider_controls_next_hidden' => array(
 			'name'        => 'Seta próximo do carrossel (mobile)',
@@ -19016,8 +18963,8 @@ function gstore_get_css_diagnostic_rules() {
 			'expected'    => 'none',
 			'viewport'    => 'mobile',
 			'description' => 'A seta próximo deve estar oculta no mobile',
-			'css_file'    => 'style.css',
-			'css_line'    => '~2320',
+			'css_file'    => 'assets/css/layouts/home-legacy.css',
+			'css_line'    => 'legacy home scope',
 		),
 		'benefits_slider_dots_hidden' => array(
 			'name'        => 'Dots do carrossel de benefícios (mobile)',
@@ -19026,8 +18973,8 @@ function gstore_get_css_diagnostic_rules() {
 			'expected'    => 'none',
 			'viewport'    => 'mobile',
 			'description' => 'Os dots de navegação devem estar ocultos no mobile',
-			'css_file'    => 'style.css',
-			'css_line'    => '~2324',
+			'css_file'    => 'assets/css/layouts/home-legacy.css',
+			'css_line'    => 'legacy home scope',
 		),
 		'benefits_slider_visible' => array(
 			'name'        => 'Slider de benefícios visível (mobile)',
@@ -19036,8 +18983,8 @@ function gstore_get_css_diagnostic_rules() {
 			'expected'    => 'block',
 			'viewport'    => 'mobile',
 			'description' => 'O slider deve estar visível no mobile',
-			'css_file'    => 'style.css',
-			'css_line'    => '~2307',
+			'css_file'    => 'assets/css/layouts/home-legacy.css',
+			'css_line'    => 'legacy home scope',
 		),
 		'benefits_inner_hidden' => array(
 			'name'        => 'Grid de benefícios oculto (mobile)',
@@ -19046,8 +18993,8 @@ function gstore_get_css_diagnostic_rules() {
 			'expected'    => 'none',
 			'viewport'    => 'mobile',
 			'description' => 'O grid desktop de benefícios deve estar oculto no mobile',
-			'css_file'    => 'style.css',
-			'css_line'    => '~2303',
+			'css_file'    => 'assets/css/layouts/home-legacy.css',
+			'css_line'    => 'legacy home scope',
 		),
 		'header_mobile_menu_hidden' => array(
 			'name'        => 'Menu mobile oculto (desktop)',
