@@ -121,6 +121,27 @@
 	z-index: var(--gstore-z-dropdown);
 }
 
+.Gstore-product-card__top > p:has(.Gstore-product-card__favorite) {
+	display: contents;
+}
+
+.Gstore-product-card__favorite br {
+	display: none !important;
+}
+
+.Gstore-product-card__favorite .Gstore-sr-only {
+	position: absolute !important;
+	width: 1px !important;
+	height: 1px !important;
+	padding: 0 !important;
+	margin: -1px !important;
+	overflow: hidden !important;
+	clip: rect(0, 0, 0, 0) !important;
+	clip-path: inset(50%) !important;
+	white-space: nowrap !important;
+	border: 0 !important;
+}
+
 .Gstore-product-card__favorite:hover {
 	border-color: var(--gstore-color-error);
 	color: var(--gstore-color-error);

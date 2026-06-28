@@ -4026,10 +4026,14 @@ function gstore_lazy_minicart_defer_styles_to_loader( $tag, $handle, $href, $med
 	}
 
 	$lazy_styles = array(
-		'blocks-mini-cart-css'          => 20,
-		'blocks-mini-cart-contents-css' => 30,
-		'blocks-packages-style-css'     => 40,
-		'blocks-customer-account-css'   => 50,
+		'blocks-mini-cart-css'                 => 20,
+		'blocks-mini-cart-contents-css'        => 30,
+		'blocks-packages-style-css'            => 40,
+		'blocks-customer-account-css'          => 50,
+		'wc-blocks-style-mini-cart'            => 20,
+		'wc-blocks-style-mini-cart-contents'   => 30,
+		'wc-blocks-packages-style'             => 40,
+		'wc-blocks-style-customer-account'     => 50,
 	);
 
 	if ( ! isset( $lazy_styles[ $handle ] ) ) {
