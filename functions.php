@@ -3715,9 +3715,22 @@ function gstore_add_preload_resources() {
 	// Preload do CSS crítico do tema pai (se necessário)
 	if ( is_front_page() ) {
 		$parent_theme = wp_get_theme( 'twentytwentyfive' );
-		if ( $parent_theme->exists() ) {
-			$parent_css = get_template_directory_uri() . '/style.css';
-			echo '<link rel="preload" as="style" href="' . esc_url( $parent_css ) . '">' . "\n";
+		$preload_css  = '';
+
+		if ( is_child_theme() && $parent_theme->exists() ) {
+			$preload_css = get_template_directory_uri() . '/style.css';
+		} else {
+			$stylesheet_preload_path = gstore_get_minified_theme_asset_path( 'style.css' );
+			$stylesheet_preload_file = get_theme_file_path( $stylesheet_preload_path );
+			$preload_css             = gstore_theme_asset_uri( 'style.css' );
+
+			if ( file_exists( $stylesheet_preload_file ) ) {
+				$preload_css = add_query_arg( 'ver', (string) filemtime( $stylesheet_preload_file ), $preload_css );
+			}
+		}
+
+		if ( '' !== $preload_css ) {
+			echo '<link rel="preload" as="style" href="' . esc_url( $preload_css ) . '">' . "\n";
 		}
 	}
 }
