@@ -10,7 +10,33 @@
 	background-color: var(--gstore-color-accent, #b5a642) !important;
 }
 
+.Gstore-header__mini-cart .wc-block-mini-cart__button {
+	box-sizing: border-box !important;
+	min-width: 44px !important;
+	min-height: 44px !important;
+	overflow: visible !important;
+	line-height: 1 !important;
+}
+
+.Gstore-header__mini-cart .wc-block-mini-cart__quantity-badge {
+	position: relative !important;
+	display: inline-flex !important;
+	align-items: center !important;
+	justify-content: center !important;
+	width: 18px !important;
+	height: 18px !important;
+	line-height: 1 !important;
+}
+
+.Gstore-header__mini-cart .wc-block-mini-cart__icon {
+	display: block !important;
+	width: 18px !important;
+	height: 18px !important;
+	flex: 0 0 auto !important;
+}
+
 .Gstore-header__mini-cart .wc-block-mini-cart__badge {
+	position: absolute !important;
 	background: var(--gstore-color-black, #0a0a0a) !important;
 	background-color: var(--gstore-color-black, #0a0a0a) !important;
 	color: var(--gstore-color-accent, #b5a642) !important;
