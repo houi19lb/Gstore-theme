@@ -1,0 +1,398 @@
+/**
+ * Gstore - Lazy WooCommerce mini-cart loader.
+ *
+ * Keeps the header button available while moving the heavy drawer assets out
+ * of the initial render path. If anything fails, the cart page remains the
+ * safe commercial fallback.
+ */
+(function () {
+	'use strict';
+
+	if (window.__gstoreMiniCartLoaderBooted) return;
+	window.__gstoreMiniCartLoaderBooted = true;
+
+	var config = window.gstoreMiniCartLoaderConfig || {};
+	var CART_URL = config.cartUrl || '/carrinho/';
+	var LOAD_TIMEOUT = parseInt(config.timeout, 10);
+	var loadingPromise = null;
+	var loaded = false;
+	var loadStarted = false;
+	var statusTimer = null;
+
+	if (!Number.isFinite(LOAD_TIMEOUT) || LOAD_TIMEOUT < 1000) {
+		LOAD_TIMEOUT = 6500;
+	}
+
+	var INTENT_SELECTOR = [
+		'.Gstore-header__mini-cart',
+		'.wc-block-mini-cart',
+		'.wp-block-woocommerce-mini-cart',
+		'.wc-block-mini-cart__button',
+		'[data-gstore-mini-cart-trigger]',
+		'a[href*="/carrinho"]'
+	].join(',');
+
+	function emit(name, detail) {
+		try {
+			window.dispatchEvent(new CustomEvent(name, { detail: detail || {} }));
+			return;
+		} catch (e) {}
+
+		try {
+			var event = document.createEvent('CustomEvent');
+			event.initCustomEvent(name, false, false, detail || {});
+			window.dispatchEvent(event);
+		} catch (e2) {}
+	}
+
+	function findIntentTarget(target) {
+		if (!target || !target.closest) return null;
+		try {
+			return target.closest(INTENT_SELECTOR);
+		} catch (e) {
+			return null;
+		}
+	}
+
+	function getButton() {
+		return document.querySelector('.Gstore-header__mini-cart .wc-block-mini-cart__button, .wc-block-mini-cart__button');
+	}
+
+	function hasNativeMiniCartRuntime() {
+		var scripts = document.scripts || document.querySelectorAll('script');
+
+		for (var i = 0; i < scripts.length; i++) {
+			var src = scripts[i].getAttribute('src') || '';
+			if (src.indexOf('woocommerce/mini-cart') !== -1 || src.indexOf('/mini-cart.js') !== -1) {
+				return true;
+			}
+
+			if (scripts[i].getAttribute('data-gstore-mini-cart-runtime') === 'woocommerce/mini-cart') {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	function setButtonLoading(isLoading) {
+		var button = getButton();
+		if (!button) return;
+
+		button.classList.toggle('is-gstore-loading', !!isLoading);
+		if (isLoading) {
+			button.setAttribute('aria-busy', 'true');
+		} else {
+			button.removeAttribute('aria-busy');
+		}
+	}
+
+	function showStatus(message) {
+		var text = message || config.loadingText || 'Carregando carrinho...';
+		var el = document.getElementById('gstore-mini-cart-loader-status');
+		if (!el) {
+			el = document.createElement('div');
+			el.id = 'gstore-mini-cart-loader-status';
+			el.setAttribute('role', 'status');
+			el.setAttribute('aria-live', 'polite');
+			el.style.cssText = [
+				'position:fixed',
+				'right:16px',
+				'bottom:16px',
+				'z-index:2147483647',
+				'max-width:min(320px,calc(100vw - 32px))',
+				'padding:12px 14px',
+				'border-radius:999px',
+				'background:#111827',
+				'color:#fff',
+				'font:600 13px/1.3 system-ui,-apple-system,Segoe UI,sans-serif',
+				'box-shadow:0 12px 32px rgba(15,23,42,.22)'
+			].join(';');
+			document.body.appendChild(el);
+		}
+
+		el.textContent = text;
+		el.hidden = false;
+		if (statusTimer) {
+			window.clearTimeout(statusTimer);
+			statusTimer = null;
+		}
+	}
+
+	function hideStatus(delay) {
+		var el = document.getElementById('gstore-mini-cart-loader-status');
+		if (!el) return;
+		if (statusTimer) window.clearTimeout(statusTimer);
+		statusTimer = window.setTimeout(function () {
+			el.hidden = true;
+		}, delay || 0);
+	}
+
+	function parseIntSafe(value, fallback) {
+		var parsed = parseInt(value, 10);
+		return Number.isFinite(parsed) ? parsed : fallback;
+	}
+
+	function getMetadata(selector, attrName, fallbackOrder) {
+		var nodes = document.querySelectorAll(selector);
+		var definitions = [];
+
+		for (var i = 0; i < nodes.length; i++) {
+			var node = nodes[i];
+			var url = node.getAttribute('data-gstore-url');
+			if (!url) continue;
+
+			definitions.push({
+				handle: node.getAttribute(attrName) || ('asset-' + i),
+				url: url,
+				media: node.getAttribute('data-gstore-media') || 'all',
+				type: node.getAttribute('data-gstore-type') || '',
+				order: parseIntSafe(node.getAttribute('data-gstore-order'), fallbackOrder + i),
+				node: node
+			});
+		}
+
+		definitions.sort(function (a, b) {
+			return a.order - b.order;
+		});
+
+		return definitions;
+	}
+
+	function getConfiguredDrawerStyles() {
+		var styles = Array.isArray(config.drawerStyles) ? config.drawerStyles : [];
+		return styles
+			.filter(function (style) {
+				return style && style.url;
+			})
+			.map(function (style, index) {
+				return {
+					handle: style.handle || ('configured-style-' + index),
+					url: style.url,
+					media: style.media || 'all',
+					order: parseIntSafe(style.order, 80 + index)
+				};
+			});
+	}
+
+	function dedupe(definitions) {
+		var seen = {};
+		var result = [];
+
+		definitions.forEach(function (definition) {
+			var key = definition.url;
+			if (!key || seen[key]) return;
+			seen[key] = true;
+			result.push(definition);
+		});
+
+		return result;
+	}
+
+	function loadStyle(definition) {
+		if (!definition || !definition.url) return Promise.resolve();
+
+		var existing = document.querySelector('link[data-gstore-mini-cart-runtime="' + definition.handle + '"], link[href="' + definition.url + '"]');
+		if (existing) {
+			if (definition.node) definition.node.setAttribute('data-gstore-loaded', '1');
+			return Promise.resolve();
+		}
+
+		return new Promise(function (resolve, reject) {
+			var link = document.createElement('link');
+			link.rel = 'stylesheet';
+			link.href = definition.url;
+			link.media = definition.media || 'all';
+			link.setAttribute('data-gstore-mini-cart-runtime', definition.handle || 'style');
+			link.onload = function () {
+				if (definition.node) definition.node.setAttribute('data-gstore-loaded', '1');
+				resolve();
+			};
+			link.onerror = function () {
+				reject(new Error('Failed to load mini-cart style: ' + (definition.handle || definition.url)));
+			};
+			document.head.appendChild(link);
+		});
+	}
+
+	function loadModulePreload(definition) {
+		if (!definition || !definition.url) return;
+		if (document.querySelector('link[rel="modulepreload"][href="' + definition.url + '"]')) return;
+
+		var link = document.createElement('link');
+		link.rel = 'modulepreload';
+		link.href = definition.url;
+		link.setAttribute('data-gstore-mini-cart-runtime', definition.handle || 'modulepreload');
+		document.head.appendChild(link);
+		if (definition.node) definition.node.setAttribute('data-gstore-loaded', '1');
+	}
+
+	function loadScript(definition) {
+		if (!definition || !definition.url) return Promise.resolve();
+
+		var existing = document.querySelector('script[data-gstore-mini-cart-runtime="' + definition.handle + '"], script[src="' + definition.url + '"]');
+		if (existing) {
+			if (definition.node) definition.node.setAttribute('data-gstore-loaded', '1');
+			return Promise.resolve();
+		}
+
+		return new Promise(function (resolve, reject) {
+			var script = document.createElement('script');
+			script.src = definition.url;
+			script.type = definition.type === 'module' ? 'module' : 'text/javascript';
+			script.async = false;
+			script.setAttribute('data-gstore-mini-cart-runtime', definition.handle || 'script');
+			script.onload = function () {
+				if (definition.node) definition.node.setAttribute('data-gstore-loaded', '1');
+				resolve();
+			};
+			script.onerror = function () {
+				reject(new Error('Failed to load mini-cart script: ' + (definition.handle || definition.url)));
+			};
+			(document.body || document.head || document.documentElement).appendChild(script);
+		});
+	}
+
+	function timeoutPromise() {
+		return new Promise(function (_, reject) {
+			window.setTimeout(function () {
+				reject(new Error('Mini-cart lazy load timed out'));
+			}, LOAD_TIMEOUT);
+		});
+	}
+
+	function loadMiniCart(reason) {
+		if (loaded || hasNativeMiniCartRuntime()) {
+			loaded = true;
+			return Promise.resolve();
+		}
+
+		if (loadingPromise) return loadingPromise;
+
+		loadStarted = true;
+		setButtonLoading(true);
+		emit('gstore:mini-cart-loader:start', { reason: reason || 'unknown' });
+
+		var styles = dedupe(getConfiguredDrawerStyles().concat(getMetadata('script[data-gstore-mini-cart-style][data-gstore-url]', 'data-gstore-mini-cart-style', 20)));
+		var preloads = dedupe(getMetadata('script[data-gstore-mini-cart-modulepreload][data-gstore-url]', 'data-gstore-mini-cart-modulepreload', 40));
+		var scripts = dedupe(getMetadata('script[data-gstore-mini-cart-script][data-gstore-url]', 'data-gstore-mini-cart-script', 60));
+
+		if (!scripts.length) {
+			loadStarted = false;
+			setButtonLoading(false);
+			return Promise.reject(new Error('Mini-cart runtime metadata not found'));
+		}
+
+		preloads.forEach(loadModulePreload);
+
+		var chain = Promise.resolve();
+		styles.forEach(function (style) {
+			chain = chain.then(function () {
+				return loadStyle(style);
+			});
+		});
+		scripts.forEach(function (script) {
+			chain = chain.then(function () {
+				return loadScript(script);
+			});
+		});
+
+		loadingPromise = Promise.race([chain, timeoutPromise()])
+			.then(function () {
+				loaded = true;
+				setButtonLoading(false);
+				emit('gstore:mini-cart-loader:ready', { reason: reason || 'unknown' });
+			})
+			.catch(function (error) {
+				loaded = false;
+				loadStarted = false;
+				loadingPromise = null;
+				setButtonLoading(false);
+				emit('gstore:mini-cart-loader:error', {
+					reason: reason || 'unknown',
+					message: error && error.message ? error.message : String(error)
+				});
+				throw error;
+			});
+
+		return loadingPromise;
+	}
+
+	function isDrawerOpen() {
+		var drawer = document.querySelector('.wc-block-mini-cart__drawer');
+		return !!(drawer && (drawer.classList.contains('is-open') || drawer.getAttribute('aria-hidden') === 'false'));
+	}
+
+	function openMiniCart() {
+		var button = getButton();
+		if (!button) {
+			window.location.href = CART_URL;
+			return;
+		}
+
+		if (isDrawerOpen()) return;
+
+		window.setTimeout(function () {
+			try {
+				button.click();
+			} catch (e) {
+				window.location.href = CART_URL;
+			}
+		}, 80);
+	}
+
+	function failToCart() {
+		showStatus(config.failedText || 'Abrindo carrinho...');
+		window.setTimeout(function () {
+			window.location.href = CART_URL;
+		}, 150);
+	}
+
+	function bindIntentTriggers() {
+		function warm(event) {
+			if (loadStarted) return;
+			if (!findIntentTarget(event.target)) return;
+			loadMiniCart('intent-' + event.type).catch(function () {});
+		}
+
+		function click(event) {
+			var target = findIntentTarget(event.target);
+			if (!target || loaded) return;
+
+			if (!target.closest || !target.closest('.Gstore-header__mini-cart, .wc-block-mini-cart, .wp-block-woocommerce-mini-cart, .wc-block-mini-cart__button, [data-gstore-mini-cart-trigger]')) {
+				return;
+			}
+
+			event.preventDefault();
+			event.stopPropagation();
+			showStatus(config.loadingText);
+
+			loadMiniCart('cart-click')
+				.then(function () {
+					hideStatus(300);
+					openMiniCart();
+				})
+				.catch(failToCart);
+		}
+
+		document.addEventListener('pointerover', warm, { capture: true, passive: true });
+		document.addEventListener('focusin', warm, true);
+		document.addEventListener('touchstart', warm, { capture: true, passive: true });
+		document.addEventListener('click', click, true);
+	}
+
+	window.gstoreMiniCartLoader = {
+		load: loadMiniCart,
+		open: function () {
+			return loadMiniCart('api-open').then(openMiniCart);
+		},
+		isLoaded: function () {
+			return loaded;
+		},
+		isLoading: function () {
+			return !!loadingPromise && !loaded;
+		}
+	};
+
+	bindIntentTriggers();
+})();

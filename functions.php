@@ -3894,6 +3894,7 @@ function gstore_optimize_script_loading( $tag, $handle, $src ) {
 		'gstore-product-card',          // Não crítico acima da dobra
 		'gstore-my-account',            // Página específica
 		'gstore-support-loader',
+		'gstore-mini-cart-loader',
 	);
 
 	// Scripts que podem usar async (não dependem de outros)
@@ -3952,6 +3953,233 @@ function gstore_defer_support_scripts_to_loader( $tag, $handle, $src ) {
 	);
 }
 add_filter( 'script_loader_tag', 'gstore_defer_support_scripts_to_loader', 30, 3 );
+
+/**
+ * Indica se o mini-cart do WooCommerce pode carregar o drawer de forma tardia.
+ *
+ * Mantemos o comportamento nativo nas paginas criticas de compra/conta para
+ * reduzir risco. Em paginas publicas comuns, o botao continua visivel e os
+ * assets pesados do drawer sao carregados pelo loader leve.
+ *
+ * @return bool
+ */
+function gstore_lazy_minicart_enabled() {
+	if ( is_admin() || ( function_exists( 'wp_doing_ajax' ) && wp_doing_ajax() ) ) {
+		return false;
+	}
+
+	if ( defined( 'REST_REQUEST' ) && REST_REQUEST ) {
+		return false;
+	}
+
+	$enabled = class_exists( 'WooCommerce' ) && ! gstore_lazy_minicart_is_critical_context();
+
+	/**
+	 * Permite rollback rapido do lazy mini-cart sem reverter deploy.
+	 *
+	 * @param bool $enabled Se o lazy mini-cart deve atuar na pagina atual.
+	 */
+	return (bool) apply_filters( 'gstore_lazy_minicart_enabled', $enabled );
+}
+
+/**
+ * Contextos onde o WooCommerce deve carregar o mini-cart nativamente.
+ *
+ * @return bool
+ */
+function gstore_lazy_minicart_is_critical_context() {
+	if ( function_exists( 'is_cart' ) && is_cart() ) {
+		return true;
+	}
+
+	if ( function_exists( 'is_checkout' ) && is_checkout() ) {
+		return true;
+	}
+
+	if ( function_exists( 'is_account_page' ) && is_account_page() ) {
+		return true;
+	}
+
+	if ( function_exists( 'is_order_received_page' ) && is_order_received_page() ) {
+		return true;
+	}
+
+	if ( function_exists( 'is_wc_endpoint_url' ) && is_wc_endpoint_url() ) {
+		return true;
+	}
+
+	return false;
+}
+
+/**
+ * Converte CSS pesado do Woo mini-cart em metadados para o loader.
+ *
+ * @param string $tag    Tag original.
+ * @param string $handle Handle do estilo.
+ * @param string $href   URL do CSS.
+ * @param string $media  Media original.
+ * @return string
+ */
+function gstore_lazy_minicart_defer_styles_to_loader( $tag, $handle, $href, $media = 'all' ) {
+	if ( ! gstore_lazy_minicart_enabled() || '' === (string) $href ) {
+		return $tag;
+	}
+
+	$lazy_styles = array(
+		'blocks-mini-cart-css'          => 20,
+		'blocks-mini-cart-contents-css' => 30,
+		'blocks-packages-style-css'     => 40,
+		'blocks-customer-account-css'   => 50,
+	);
+
+	if ( ! isset( $lazy_styles[ $handle ] ) ) {
+		return $tag;
+	}
+
+	return gstore_lazy_minicart_metadata_tag(
+		'style',
+		$handle,
+		$href,
+		$lazy_styles[ $handle ],
+		array(
+			'data-gstore-media' => $media ?: 'all',
+		)
+	);
+}
+add_filter( 'style_loader_tag', 'gstore_lazy_minicart_defer_styles_to_loader', 40, 4 );
+
+/**
+ * Cria uma tag inerte usada pelo loader do mini-cart.
+ *
+ * @param string               $kind        Tipo do asset.
+ * @param string               $handle      Identificador legivel.
+ * @param string               $url         URL do asset.
+ * @param int                  $order       Ordem de carregamento.
+ * @param array<string,string> $extra_attrs Atributos extras.
+ * @return string
+ */
+function gstore_lazy_minicart_metadata_tag( $kind, $handle, $url, $order, $extra_attrs = array() ) {
+	$attr_name = 'data-gstore-mini-cart-' . sanitize_key( $kind );
+	$attrs     = array(
+		'type'              => 'application/json',
+		$attr_name          => $handle,
+		'data-gstore-url'   => $url,
+		'data-gstore-order' => (string) (int) $order,
+	);
+
+	foreach ( $extra_attrs as $attr => $value ) {
+		$attrs[ $attr ] = $value;
+	}
+
+	$html_attrs = '';
+	foreach ( $attrs as $attr => $value ) {
+		$html_attrs .= ' ' . esc_attr( $attr ) . '="' . esc_attr( (string) $value ) . '"';
+	}
+
+	return '<script' . $html_attrs . '></script>' . "\n";
+}
+
+/**
+ * Extrai atributo de uma tag HTML simples sem parsear o documento inteiro.
+ *
+ * @param string $tag  Tag HTML.
+ * @param string $attr Atributo.
+ * @return string
+ */
+function gstore_lazy_minicart_extract_tag_attr( $tag, $attr ) {
+	if ( preg_match( '/\s' . preg_quote( $attr, '/' ) . '\s*=\s*(["\'])(.*?)\1/i', $tag, $matches ) ) {
+		return html_entity_decode( (string) $matches[2], ENT_QUOTES, 'UTF-8' );
+	}
+
+	return '';
+}
+
+/**
+ * Verifica se a URL pertence aos assets do mini-cart que serao carregados tarde.
+ *
+ * @param string        $url     URL do asset.
+ * @param array<string> $needles Trechos aceitos.
+ * @return bool
+ */
+function gstore_lazy_minicart_url_matches( $url, $needles ) {
+	$url = (string) $url;
+	foreach ( $needles as $needle ) {
+		if ( false !== stripos( $url, $needle ) ) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
+/**
+ * Reescreve scripts type=module e modulepreloads do mini-cart no HTML final.
+ *
+ * @param string $buffer HTML final.
+ * @return string
+ */
+function gstore_lazy_minicart_process_final_output( $buffer ) {
+	if ( ! gstore_lazy_minicart_enabled() || ! is_string( $buffer ) || '' === $buffer ) {
+		return $buffer;
+	}
+
+	if (
+		false === stripos( $buffer, 'mini-cart' ) &&
+		false === stripos( $buffer, 'customer-account' ) &&
+		false === stripos( $buffer, '@woocommerce/stores' )
+	) {
+		return $buffer;
+	}
+
+	$script_order = 60;
+	$buffer       = (string) preg_replace_callback(
+		'#<script\b(?=[^>]*\bsrc\s*=\s*(["\'])([^"\']+)\1)(?=[^>]*\btype\s*=\s*(["\'])module\3)[^>]*>\s*</script>#i',
+		static function ( $matches ) use ( &$script_order ) {
+			$tag = (string) $matches[0];
+			$src = html_entity_decode( (string) $matches[2], ENT_QUOTES, 'UTF-8' );
+
+			if ( ! gstore_lazy_minicart_url_matches( $src, array( 'woocommerce/mini-cart', '/mini-cart.js', 'woocommerce/customer-account', '/customer-account.js' ) ) ) {
+				return $tag;
+			}
+
+			$handle = false !== stripos( $src, 'customer-account' ) ? 'woocommerce/customer-account' : 'woocommerce/mini-cart';
+			$order  = $script_order;
+			$script_order += 10;
+
+			return gstore_lazy_minicart_metadata_tag(
+				'script',
+				$handle,
+				$src,
+				$order,
+				array(
+					'data-gstore-type' => 'module',
+				)
+			);
+		},
+		$buffer
+	);
+
+	$preload_order = 40;
+	$buffer        = (string) preg_replace_callback(
+		'#<link\b(?=[^>]*\brel\s*=\s*(["\'])modulepreload\1)[^>]*>#i',
+		static function ( $matches ) use ( &$preload_order ) {
+			$tag  = (string) $matches[0];
+			$href = gstore_lazy_minicart_extract_tag_attr( $tag, 'href' );
+
+			if ( ! gstore_lazy_minicart_url_matches( $href, array( '@woocommerce/stores/woocommerce/cart', '@woocommerce/stores/store-notices', '@woocommerce/stores/woocommerce/products' ) ) ) {
+				return $tag;
+			}
+
+			$order = $preload_order;
+			$preload_order += 5;
+
+			return gstore_lazy_minicart_metadata_tag( 'modulepreload', 'woocommerce-store-module', $href, $order );
+		},
+		$buffer
+	);
+
+	return $buffer;
+}
 
 /**
  * Otimiza back/forward cache (bfcache) removendo barreiras.
@@ -4587,7 +4815,11 @@ function gstore_enqueue_styles() {
 		gstore_enqueue_theme_style( 'gstore-catalog-mega-menu-css', 'assets/css/layouts/catalog-mega-menu.css', array( 'gstore-header-css' ), $theme_version );
 	}
 
-	gstore_enqueue_theme_style( 'gstore-mini-cart-css', 'assets/css/components/mini-cart.css', array( 'gstore-header-css' ), $theme_version );
+	if ( gstore_lazy_minicart_enabled() ) {
+		gstore_enqueue_theme_style( 'gstore-mini-cart-button-css', 'assets/css/components/mini-cart-button.css', array( 'gstore-header-css' ), $theme_version );
+	} else {
+		gstore_enqueue_theme_style( 'gstore-mini-cart-css', 'assets/css/components/mini-cart.css', array( 'gstore-header-css' ), $theme_version );
+	}
 	gstore_enqueue_theme_style( 'gstore-telegram-floating-css', 'assets/css/components/telegram-floating.css', array( 'gstore-header-css' ), $theme_version );
 
 	if ( function_exists( 'is_product' ) && is_product() ) {
@@ -6051,6 +6283,35 @@ function gstore_enqueue_scripts() {
 				'ajaxUrl' => admin_url( 'admin-ajax.php' ),
 			)
 		);
+
+		if ( gstore_lazy_minicart_enabled() ) {
+			wp_enqueue_script(
+				'gstore-mini-cart-loader',
+				gstore_theme_asset_uri( 'assets/js/mini-cart-loader.js' ),
+				array(),
+				gstore_theme_asset_version( 'assets/js/mini-cart-loader.js', wp_get_theme()->get( 'Version' ) ),
+				true
+			);
+
+			wp_localize_script(
+				'gstore-mini-cart-loader',
+				'gstoreMiniCartLoaderConfig',
+				array(
+					'cartUrl'      => function_exists( 'wc_get_cart_url' ) ? wc_get_cart_url() : gstore_get_public_canonical_url( 'cart' ),
+					'loadingText'  => __( 'Carregando carrinho...', 'gstore' ),
+					'failedText'   => __( 'Abrindo carrinho...', 'gstore' ),
+					'timeout'      => 6500,
+					'drawerStyles' => array(
+						array(
+							'handle' => 'gstore-mini-cart-drawer-css',
+							'url'    => gstore_theme_asset_uri( 'assets/css/components/mini-cart-drawer.css' ),
+							'media'  => 'all',
+							'order'  => 80,
+						),
+					),
+				)
+			);
+		}
 	}
 
 	// Localizar script para AJAX do WooCommerce
@@ -17304,6 +17565,8 @@ function gstore_process_final_output( $buffer ) {
 	$buffer = gstore_replace_empty_minicart_checkout_link( $buffer );
 
 	$buffer = gstore_normalize_internal_public_links( $buffer );
+
+	$buffer = gstore_lazy_minicart_process_final_output( $buffer );
 
 	return $buffer;
 }

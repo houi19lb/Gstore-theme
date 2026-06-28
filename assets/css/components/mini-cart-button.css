@@ -1,0 +1,45 @@
+/**
+ * Mini-cart header button.
+ *
+ * Keep this file tiny: it is the global/critical layer for the cart trigger.
+ * Drawer-only rules belong in mini-cart-drawer.css.
+ */
+
+.wc-block-mini-cart__badge,
+.wp-block-woocommerce-mini-cart .wc-block-mini-cart__badge {
+	background-color: var(--gstore-color-accent, #b5a642) !important;
+}
+
+.Gstore-header__mini-cart .wc-block-mini-cart__badge {
+	background: var(--gstore-color-black, #0a0a0a) !important;
+	background-color: var(--gstore-color-black, #0a0a0a) !important;
+	color: var(--gstore-color-accent, #b5a642) !important;
+	line-height: 1 !important;
+	border-radius: 4px !important;
+	left: auto !important;
+	right: -18px !important;
+	top: -10px !important;
+	bottom: auto !important;
+	margin-left: 0 !important;
+	transform: none !important;
+	min-width: 18px !important;
+	height: 18px !important;
+	padding: 0 4px !important;
+	display: inline-flex !important;
+	align-items: center !important;
+	justify-content: center !important;
+	font-size: 11px !important;
+	font-weight: 700 !important;
+	z-index: 2 !important;
+	box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08) !important;
+}
+
+.Gstore-header__mini-cart .wc-block-mini-cart__badge[hidden] {
+	display: none !important;
+}
+
+.Gstore-header__mini-cart .wc-block-mini-cart__button.is-gstore-loading,
+.Gstore-header__mini-cart .wc-block-mini-cart__button[aria-busy="true"] {
+	cursor: progress !important;
+	opacity: 0.78;
+}
