@@ -80,6 +80,30 @@ h2.wp-block-heading.has-text-align-center.has-x-large-font-size {
 	font-weight: var(--gstore-font-weight-bold, 700);
 }
 
+.Gstore-breadcrumb__separator {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	flex: 0 0 auto;
+	width: 0.95rem;
+	height: 1.1em;
+	color: var(--gstore-color-accent, #b5a642);
+	font-size: 0;
+	line-height: 1;
+	opacity: 0.72;
+}
+
+.Gstore-breadcrumb__separator::before {
+	content: "";
+	display: block;
+	width: 0.42rem;
+	height: 0.42rem;
+	border-top: 2px solid currentColor;
+	border-right: 2px solid currentColor;
+	box-sizing: border-box;
+	transform: rotate(45deg);
+}
+
 .Gstore-single-product__entry {
 	display: flex;
 	flex-direction: column;
