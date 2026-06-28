@@ -3747,32 +3747,36 @@ function gstore_defer_non_critical_css( $tag, $handle, $href, $media ) {
 		return $tag;
 	}
 
+	// These handles are page-scoped, but still layout-critical on the pages
+	// where they appear. Deferring them creates a visible FOUC in production.
+	$layout_critical_css = array(
+		'gstore-header-css',
+		'gstore-header-legacy-css',
+		'gstore-product-card-css',
+		'gstore-product-card-legacy-css',
+		'gstore-catalog-css',
+		'gstore-category-filter',
+		'gstore-home-css',
+		'gstore-home-legacy-css',
+	);
+
+	if ( in_array( $handle, $layout_critical_css, true ) ) {
+		return $tag;
+	}
+
 	// Lista expandida de CSS não crítico que pode ser deferido
 	$non_critical_css = array(
-		// Font Awesome - não crítico para renderização inicial (ícones podem carregar depois)
-		'gstore-fontawesome',
-
 		// CSS de páginas específicas
 		'gstore-my-account-css',
 		'gstore-como-comprar-arma-css',
 		'gstore-informativo-css',
 		'gstore-sobre-nos-css',
-		'gstore-catalog-css',
-		'gstore-category-filter',
 		'gstore-support-blog-css',
 		'gstore-blog-single-css',
 		'gstore-blog-single-legacy-css',
 		'gstore-institutional-polish-css',
 		'gstore-order-received-css',
 		'gstore-notices-css',
-
-		// CSS de layouts que não estão acima da dobra
-		'gstore-header-css',      // Já inlinado como crítico, pode defer o resto
-		'gstore-header-legacy-css',
-
-		// CSS de componentes não críticos
-		'gstore-product-card-css', // Não está acima da dobra na home
-		'gstore-product-card-legacy-css',
 
 		// CSS do WooCommerce que não é crítico
 		'woocommerce-layout',
@@ -3787,22 +3791,7 @@ function gstore_defer_non_critical_css( $tag, $handle, $href, $media ) {
 		'woocommerce-general',    // CSS geral do WooCommerce
 		'woocommerce-inline',     // CSS inline do WooCommerce
 
-		// CSS de layouts específicos
-		'gstore-home-css',         // Pode defer se não for home ou se hero já foi renderizado
-		'gstore-home-legacy-css',
 	);
-
-	// CSS de home que só deve ser deferido se não for a home page
-	if ( in_array( $handle, array( 'gstore-home-css', 'gstore-home-legacy-css' ), true ) && is_front_page() ) {
-		// Não defer na home, mas pode ser otimizado de outra forma
-		return $tag;
-	}
-
-	// CSS de header - defer apenas partes não críticas (já tem inline crítico)
-	if ( 'gstore-header-css' === $handle ) {
-		// Defer apenas se não for a primeira carga (já tem inline)
-		// Na prática, pode defer pois já temos CSS crítico inline
-	}
 
 	// Verifica se é CSS não crítico
 	if ( ! in_array( $handle, $non_critical_css, true ) ) {
