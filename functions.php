@@ -3566,6 +3566,91 @@ function gstore_preload_fontawesome() {
 add_action( 'wp_head', 'gstore_preload_fontawesome', 1 );
 
 /**
+ * Retorna a versao de cache usada nos banners/hero do tema.
+ *
+ * @return int
+ */
+function gstore_get_hero_image_cache_version() {
+	return absint( get_option( 'gstore_banner_cache_version', 0 ) );
+}
+
+/**
+ * Retorna a URL de uma imagem do hero com a mesma versao usada no markup.
+ *
+ * @param int    $attachment_id ID da imagem.
+ * @param string $size          Tamanho solicitado.
+ * @param int    $cache_version Versao de cache.
+ * @return string
+ */
+function gstore_get_hero_image_url_with_version( $attachment_id, $size = 'full', $cache_version = 0 ) {
+	$image_url = gstore_get_image_url( $attachment_id, $size );
+
+	if ( '' === $image_url ) {
+		return '';
+	}
+
+	return add_query_arg( 'v', absint( $cache_version ), $image_url );
+}
+
+/**
+ * Monta o srcset do hero preservando cache-busting e os tamanhos responsivos.
+ *
+ * @param int $attachment_id ID da imagem.
+ * @param int $cache_version Versao de cache.
+ * @return string
+ */
+function gstore_get_hero_image_srcset_with_version( $attachment_id, $cache_version = 0 ) {
+	$srcset_sizes = array( 'medium_large', 'large', 'full' );
+	$srcset_array = array();
+
+	foreach ( $srcset_sizes as $size ) {
+		$size_url = gstore_get_hero_image_url_with_version( $attachment_id, $size, $cache_version );
+		$size_src = wp_get_attachment_image_src( $attachment_id, $size );
+
+		if ( $size_url && $size_src && isset( $size_src[1] ) ) {
+			$srcset_array[] = esc_url( $size_url ) . ' ' . absint( $size_src[1] ) . 'w';
+		}
+	}
+
+	return implode( ', ', array_unique( $srcset_array ) );
+}
+
+/**
+ * Imprime preload de hero com escopo por media query quando aplicavel.
+ *
+ * @param int    $attachment_id ID da imagem.
+ * @param string $media         Media query do preload.
+ * @return void
+ */
+function gstore_print_hero_image_preload( $attachment_id, $media = '' ) {
+	$attachment_id = absint( $attachment_id );
+	if ( $attachment_id <= 0 ) {
+		return;
+	}
+
+	$cache_version = gstore_get_hero_image_cache_version();
+	$hero_url      = gstore_get_hero_image_url_with_version( $attachment_id, 'full', $cache_version );
+	if ( '' === $hero_url ) {
+		return;
+	}
+
+	$hero_srcset = gstore_get_hero_image_srcset_with_version( $attachment_id, $cache_version );
+	$preload_tag = '<link rel="preload" as="image" href="' . esc_url( $hero_url ) . '"';
+
+	if ( '' !== $media ) {
+		$preload_tag .= ' media="' . esc_attr( $media ) . '"';
+	}
+
+	if ( '' !== $hero_srcset ) {
+		$preload_tag .= ' imagesrcset="' . esc_attr( $hero_srcset ) . '" imagesizes="100vw"';
+	}
+
+	$preload_tag .= ' fetchpriority="high">';
+
+	echo $preload_tag . "\n"; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+}
+
+/**
  * Inline CSS crítico acima da dobra (header e hero básico).
  *
  * Isso reduz render blocking ao colocar estilos essenciais diretamente no HTML,
@@ -3676,21 +3761,18 @@ add_action( 'wp_head', 'gstore_inline_critical_css', 3 );
  * melhorando LCP e FCP.
  */
 function gstore_add_preload_resources() {
-	// Preload da primeira imagem do hero (se disponível)
-	if ( function_exists( 'gstore_get_hero_slide_1_id' ) ) {
-		$hero_slide_1_id = gstore_get_hero_slide_1_id();
-		if ( $hero_slide_1_id > 0 ) {
-			$hero_src = wp_get_attachment_image_src( $hero_slide_1_id, 'full' );
-			if ( $hero_src && ! empty( $hero_src[0] ) ) {
-				$hero_url    = $hero_src[0];
-				$hero_srcset = wp_get_attachment_image_srcset( $hero_slide_1_id, 'full' );
-				$preload_tag = '<link rel="preload" as="image" href="' . esc_url( $hero_url ) . '"';
-				if ( ! empty( $hero_srcset ) ) {
-					$preload_tag .= ' imagesrcset="' . esc_attr( $hero_srcset ) . '" imagesizes="100vw"';
-				}
-				$preload_tag .= ' fetchpriority="high">';
-				echo $preload_tag . "\n";
-			}
+	// Hero existe apenas na home. Evita preload de banner em produto/catalogo.
+	if ( is_front_page() || is_home() ) {
+		$desktop_slide = function_exists( 'gstore_get_hero_slide' ) ? gstore_get_hero_slide( 'desktop', 1 ) : array();
+		$mobile_slide  = function_exists( 'gstore_get_hero_slide' ) ? gstore_get_hero_slide( 'mobile', 1 ) : array();
+		$desktop_id    = isset( $desktop_slide['id'] ) ? absint( $desktop_slide['id'] ) : 0;
+		$mobile_id     = isset( $mobile_slide['id'] ) ? absint( $mobile_slide['id'] ) : 0;
+
+		if ( $desktop_id > 0 && $mobile_id > 0 && $desktop_id !== $mobile_id ) {
+			gstore_print_hero_image_preload( $desktop_id, '(min-width: 782px)' );
+			gstore_print_hero_image_preload( $mobile_id, '(max-width: 781px)' );
+		} elseif ( $desktop_id > 0 || $mobile_id > 0 ) {
+			gstore_print_hero_image_preload( $desktop_id > 0 ? $desktop_id : $mobile_id );
 		}
 	}
 
@@ -13461,21 +13543,28 @@ function gstore_get_logo_id() {
  * @param int    $logo_id  Attachment ID do logo.
  * @param string $logo_url URL do logo.
  * @param string $logo_alt Texto alternativo.
+ * @param string $style    Estilo inline opcional.
  * @return string
  */
-function gstore_get_logo_img_tag( $logo_id, $logo_url, $logo_alt ) {
-	$dims = '';
-	$src  = wp_get_attachment_image_src( absint( $logo_id ), 'full' );
+function gstore_get_logo_img_tag( $logo_id, $logo_url, $logo_alt, $style = 'max-height: 36px; max-width: 180px; width: auto; height: auto;' ) {
+	$dims       = '';
+	$style_attr = '';
+	$src        = wp_get_attachment_image_src( absint( $logo_id ), 'full' );
 
 	if ( $src && ! empty( $src[1] ) && ! empty( $src[2] ) ) {
 		$dims = sprintf( ' width="%d" height="%d"', (int) $src[1], (int) $src[2] );
 	}
 
+	if ( '' !== $style ) {
+		$style_attr = ' style="' . esc_attr( $style ) . '"';
+	}
+
 	return sprintf(
-		'<img src="%s" alt="%s"%s style="max-height: 36px; max-width: 180px; width: auto; height: auto;" loading="eager" />',
+		'<img src="%s" alt="%s"%s%s loading="eager" decoding="async" />',
 		esc_url( $logo_url ),
 		esc_attr( $logo_alt ),
-		$dims
+		$dims,
+		$style_attr
 	);
 }
 
@@ -13795,11 +13884,7 @@ function gstore_replace_mobile_drawer_logo_html( $content ) {
 	$home_url  = esc_url( home_url( '/' ) );
 	$site_name = esc_attr( get_bloginfo( 'name' ) );
 	$logo_img  = gstore_maybe_wrap_webp_picture(
-		sprintf(
-			'<img src="%s" alt="%s" loading="eager" />',
-			esc_url( $logo_url ),
-			esc_attr( $logo_alt )
-		),
+		gstore_get_logo_img_tag( $logo_id, $logo_url, $logo_alt, '' ),
 		$logo_id,
 		'full'
 	);
@@ -13900,7 +13985,7 @@ add_filter( 'the_content', 'gstore_replace_footer_logo_html', 5 );
  *
  * @param int    $attachment_id ID da imagem.
  * @param string $alt           Texto alternativo.
- * @param bool   $is_first_slide Se true, adiciona fetchpriority="high" e remove lazy loading.
+ * @param bool   $is_first_slide Se true, remove lazy loading; preload media-aware cuida da prioridade.
  * @return string Tag img otimizada.
  */
 function gstore_get_hero_image_tag( $attachment_id, $alt = '', $is_first_slide = false ) {
@@ -13914,29 +13999,14 @@ function gstore_get_hero_image_tag( $attachment_id, $alt = '', $is_first_slide =
 	}
 
 	// Versão para cache-busting (muda a cada atualização de banner)
-	$cache_version = absint( get_option( 'gstore_banner_cache_version', 0 ) );
-
-	// Gera srcset com múltiplos tamanhos
-	$srcset_sizes = array( 'medium_large', 'large', 'full' );
-	$srcset_array = array();
-
-	// Para hero, queremos tamanhos maiores
-	foreach ( $srcset_sizes as $size ) {
-		$size_url = gstore_get_image_url( $attachment_id, $size );
-		$size_src = wp_get_attachment_image_src( $attachment_id, $size );
-
-		if ( $size_url && $size_src && isset( $size_src[1] ) ) {
-			$busted_url = add_query_arg( 'v', $cache_version, $size_url );
-			$srcset_array[] = esc_url( $busted_url ) . ' ' . $size_src[1] . 'w';
-		}
-	}
+	$cache_version = gstore_get_hero_image_cache_version();
+	$srcset        = gstore_get_hero_image_srcset_with_version( $attachment_id, $cache_version );
 
 	// URL principal (usa full como padrão)
-	$src_url = gstore_get_image_url( $attachment_id, 'full' );
+	$src_url = gstore_get_hero_image_url_with_version( $attachment_id, 'full', $cache_version );
 	if ( empty( $src_url ) ) {
 		return '';
 	}
-	$src_url = add_query_arg( 'v', $cache_version, $src_url );
 
 	// Atributos base
 	$attr = array(
@@ -13950,13 +14020,13 @@ function gstore_get_hero_image_tag( $attachment_id, $alt = '', $is_first_slide =
 	// full, fazendo o mobile baixar ~1450px para exibir num espaco bem menor —
 	// principal peso do LCP no celular.
 	$attr['sizes'] = '100vw';
-	if ( ! empty( $srcset_array ) ) {
-		$attr['srcset'] = implode( ', ', $srcset_array );
+	if ( '' !== $srcset ) {
+		$attr['srcset'] = $srcset;
 	}
 
-	// Primeira imagem do hero: alta prioridade, sem lazy loading
+	// Primeira imagem do hero: sem lazy loading. A prioridade alta fica nos
+	// preloads com media query, evitando high em desktop e mobile ao mesmo tempo.
 	if ( $is_first_slide ) {
-		$attr['fetchpriority'] = 'high';
 		$attr['loading'] = 'eager';
 		$attr['decoding'] = 'async';
 		$attr['class'] = 'skip-lazy';
@@ -24188,6 +24258,105 @@ function gstore_product_thumbnail_sizes_attr( $attr, $attachment, $size ) {
 	return $attr;
 }
 add_filter( 'wp_get_attachment_image_attributes', 'gstore_product_thumbnail_sizes_attr', 20, 3 );
+
+/**
+ * Retorna true quando a pagina pode priorizar a primeira thumb do catalogo.
+ *
+ * @return bool
+ */
+function gstore_is_product_archive_image_priority_context() {
+	if ( is_admin() || wp_doing_ajax() ) {
+		return false;
+	}
+
+	if ( function_exists( 'is_shop' ) && is_shop() ) {
+		return true;
+	}
+
+	if ( function_exists( 'is_product_category' ) && is_product_category() ) {
+		return true;
+	}
+
+	if ( function_exists( 'is_product_tag' ) && is_product_tag() ) {
+		return true;
+	}
+
+	if ( function_exists( 'is_product_taxonomy' ) && is_product_taxonomy() ) {
+		return true;
+	}
+
+	return is_post_type_archive( 'product' );
+}
+
+/**
+ * Adiciona uma classe a uma lista de classes sem duplicar.
+ *
+ * @param string $classes Classes atuais.
+ * @param string $new     Classe a adicionar.
+ * @return string
+ */
+function gstore_add_image_attr_class( $classes, $new ) {
+	$class_list = preg_split( '/\s+/', trim( (string) $classes ) );
+	$class_list = array_filter( $class_list );
+	$class_list[] = $new;
+
+	return trim( implode( ' ', array_unique( $class_list ) ) );
+}
+
+/**
+ * Mantem apenas a imagem principal acima da dobra com prioridade alta.
+ *
+ * @param array        $attr       Atributos da tag img.
+ * @param WP_Post      $attachment Attachment.
+ * @param string|array $size       Tamanho solicitado.
+ * @return array
+ */
+function gstore_above_fold_image_priority_attr( $attr, $attachment, $size ) {
+	if ( is_admin() || wp_doing_ajax() ) {
+		return $attr;
+	}
+
+	$size_name = is_array( $size ) ? '' : (string) $size;
+	$classes   = isset( $attr['class'] ) ? (string) $attr['class'] : '';
+
+	if ( function_exists( 'is_product' ) && is_product() && false !== strpos( $classes, 'wp-post-image' ) ) {
+		static $product_main_prioritized = false;
+
+		if ( ! $product_main_prioritized ) {
+			$attr['loading']       = 'eager';
+			$attr['fetchpriority'] = 'high';
+			$attr['decoding']      = 'async';
+			$attr['sizes']         = '(max-width: 767px) 100vw, (max-width: 1200px) 52vw, 600px';
+			$attr['class']         = gstore_add_image_attr_class( $classes, 'skip-lazy' );
+			$attr['data-no-lazy']  = '1';
+			$attr['data-skip-lazy'] = '1';
+			$product_main_prioritized = true;
+		}
+
+		return $attr;
+	}
+
+	if ( 'woocommerce_thumbnail' === $size_name && gstore_is_product_archive_image_priority_context() ) {
+		static $archive_thumb_prioritized = false;
+
+		if ( ! $archive_thumb_prioritized ) {
+			$attr['loading']       = 'eager';
+			$attr['fetchpriority'] = 'high';
+			$attr['decoding']      = 'async';
+			$attr['sizes']         = '(max-width: 640px) 45vw, (max-width: 1024px) 30vw, 220px';
+			$attr['class']         = gstore_add_image_attr_class( $classes, 'skip-lazy' );
+			$attr['data-no-lazy']  = '1';
+			$attr['data-skip-lazy'] = '1';
+			$archive_thumb_prioritized = true;
+		} else {
+			$attr['loading'] = 'lazy';
+			unset( $attr['fetchpriority'] );
+		}
+	}
+
+	return $attr;
+}
+add_filter( 'wp_get_attachment_image_attributes', 'gstore_above_fold_image_priority_attr', 30, 3 );
 
 /**
  * Carrega de forma assincrona (sem bloquear a renderizacao) os CSS que NAO

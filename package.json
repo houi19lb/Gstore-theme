@@ -4,6 +4,7 @@
   "scripts": {
     "build:assets": "node scripts/build-assets.mjs",
     "check:assets": "node scripts/check-minified-assets.mjs",
+    "check:image-priority": "node scripts/check-image-priority.mjs",
     "check:css-scope": "node scripts/check-css-scope.mjs",
     "test": "jest"
   },
