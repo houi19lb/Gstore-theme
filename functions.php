@@ -12096,6 +12096,53 @@ function gstore_add_dimensions_to_content_images( $content ) {
 add_filter( 'the_content', 'gstore_add_dimensions_to_content_images', 20 );
 
 /**
+ * Preenche alt vazio em imagens estaticas inseridas diretamente no conteudo.
+ *
+ * @param string $content Conteudo do post.
+ * @return string
+ */
+function gstore_add_contextual_alt_to_content_images( $content ) {
+	if ( is_admin() ) {
+		return $content;
+	}
+
+	return (string) preg_replace_callback(
+		'/<img\b[^>]*>/i',
+		static function( $matches ) {
+			$img_tag = $matches[0];
+			$current_alt = '';
+
+			if ( preg_match( '/\salt\s*=\s*(["\'])(.*?)\1/i', $img_tag, $alt_matches ) ) {
+				$current_alt = gstore_normalize_image_alt_text( $alt_matches[2] );
+			}
+
+			if ( '' !== $current_alt ) {
+				return $img_tag;
+			}
+
+			if ( ! preg_match( '/src\s*=\s*(["\'])([^"\']+)\1/i', $img_tag, $src_matches ) ) {
+				return $img_tag;
+			}
+
+			$image_url = html_entity_decode( (string) $src_matches[2], ENT_QUOTES, 'UTF-8' );
+			$attachment_id = attachment_url_to_postid( $image_url );
+			if ( ! $attachment_id ) {
+				return $img_tag;
+			}
+
+			$fallback_alt = gstore_get_contextual_attachment_alt( $attachment_id, array(), 'full' );
+			if ( '' === $fallback_alt ) {
+				return $img_tag;
+			}
+
+			return gstore_ensure_html_attr( $img_tag, 'alt', $fallback_alt, true );
+		},
+		$content
+	);
+}
+add_filter( 'the_content', 'gstore_add_contextual_alt_to_content_images', 21 );
+
+/**
  * Shortcode para retornar URL de imagem da biblioteca.
  *
  * Uso: [gstore_image_url id="123" size="full"]
