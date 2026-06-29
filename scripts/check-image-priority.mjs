@@ -56,6 +56,10 @@ function hasDimensions(attrs) {
   return Boolean(attrs.width && attrs.height);
 }
 
+function hasAlt(attrs) {
+  return Object.prototype.hasOwnProperty.call(attrs, 'alt') && String(attrs.alt || '').trim() !== '';
+}
+
 function isWooTemplateThumbnail(attrs) {
   return attrs['data-wp-bind--src'] === 'state.itemThumbnail';
 }
@@ -96,6 +100,10 @@ function validateCommon(kind, url, images, failures) {
     const isUploadedRaster = /\/wp-content\/uploads\/.*\.(?:png|jpe?g|webp|gif|avif)(?:[?#].*)?$/i.test(src);
     if ((isUploadedRaster || isWooTemplateThumbnail(image)) && !hasDimensions(image)) {
       failures.push(`${url}: image/template is missing width/height: ${shortSrc(image) || image['data-wp-bind--src'] || 'dynamic thumbnail'}`);
+    }
+
+    if ((isUploadedRaster || isWooTemplateThumbnail(image)) && !hasAlt(image)) {
+      failures.push(`${url}: image/template is missing literal alt text: ${shortSrc(image) || image['data-wp-bind--src'] || 'dynamic thumbnail'}`);
     }
   }
 

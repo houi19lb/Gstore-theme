@@ -426,6 +426,7 @@ if ( ! function_exists( 'gstore_get_product_category_preview_image_data' ) ) :
 				array(
 					'class'   => 'Gstore-product-category-links__thumb-img',
 					'loading' => 'lazy',
+					'alt'     => function_exists( 'gstore_normalize_image_alt_text' ) ? gstore_normalize_image_alt_text( $title ) : wp_strip_all_tags( $title ),
 				)
 			);
 
@@ -449,6 +450,11 @@ if ( ! function_exists( 'gstore_get_product_category_preview_image_data' ) ) :
 					array(
 						'class'   => 'Gstore-product-category-links__thumb-img',
 						'loading' => 'lazy',
+						'alt'     => sprintf(
+							/* translators: %s: product category name. */
+							__( 'Categoria %s', 'gstore' ),
+							$term->name
+						),
 					)
 				);
 

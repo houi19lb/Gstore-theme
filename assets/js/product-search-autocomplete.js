@@ -125,7 +125,7 @@
 					var img = document.createElement('img');
 					img.className = 'Gstore-search-suggest__img';
 					img.src = p.image;
-					img.alt = '';
+					img.alt = p.name || 'Produto sugerido';
 					img.loading = 'lazy';
 					left.appendChild(img);
 				} else {

@@ -715,6 +715,38 @@ function gstore_replace_empty_minicart_checkout_link( $block_content ) {
 add_filter( 'render_block_woocommerce/mini-cart', 'gstore_replace_empty_minicart_checkout_link', 20 );
 
 /**
+ * Garante um atributo em uma tag HTML simples.
+ *
+ * @param string $tag           Tag HTML.
+ * @param string $name          Nome do atributo.
+ * @param string $value         Valor do atributo.
+ * @param bool   $replace_empty Se true, troca atributo existente quando vazio.
+ * @return string
+ */
+function gstore_ensure_html_attr( $tag, $name, $value, $replace_empty = false ) {
+	$pattern = '/\s' . preg_quote( $name, '/' ) . '\s*=\s*(["\'])(.*?)\1/i';
+	if ( preg_match( $pattern, $tag, $matches ) ) {
+		$current = trim( html_entity_decode( (string) $matches[2], ENT_QUOTES, 'UTF-8' ) );
+		if ( ! $replace_empty || '' !== $current ) {
+			return $tag;
+		}
+
+		return (string) preg_replace(
+			$pattern,
+			' ' . esc_attr( $name ) . '="' . esc_attr( $value ) . '"',
+			$tag,
+			1
+		);
+	}
+
+	$self_closing = (bool) preg_match( '/\/\s*>$/', $tag );
+	$tag          = preg_replace( '/\s*\/?>$/', '', $tag );
+	$tag         .= ' ' . esc_attr( $name ) . '="' . esc_attr( $value ) . '"' . ( $self_closing ? ' />' : '>' );
+
+	return $tag;
+}
+
+/**
  * Adiciona dimensoes seguras aos templates dinamicos de thumbnail do Woo Blocks.
  *
  * A Store API continua dona do src real. Aqui ajustamos apenas o HTML do
@@ -738,16 +770,11 @@ function gstore_add_woocommerce_block_thumbnail_dimensions( $block_content ) {
 				'loading'  => 'lazy',
 				'decoding' => 'async',
 				'sizes'    => '96px',
+				'alt'      => __( 'Produto no carrinho', 'gstore' ),
 			);
 
 			foreach ( $attrs as $name => $value ) {
-				if ( preg_match( '/\s' . preg_quote( $name, '/' ) . '\s*=/i', $tag ) ) {
-					continue;
-				}
-
-				$self_closing = (bool) preg_match( '/\/\s*>$/', $tag );
-				$tag = preg_replace( '/\s*\/?>$/', '', $tag );
-				$tag .= ' ' . esc_attr( $name ) . '="' . esc_attr( $value ) . '"' . ( $self_closing ? ' />' : '>' );
+				$tag = gstore_ensure_html_attr( $tag, $name, $value, 'alt' === $name );
 			}
 
 			return $tag;
@@ -11698,6 +11725,149 @@ function gstore_maybe_wrap_webp_picture( $img_tag, $attachment_id, $size = 'full
 }
 
 /**
+ * Normaliza texto para uso em atributo alt.
+ *
+ * @param string $text Texto bruto.
+ * @return string
+ */
+function gstore_normalize_image_alt_text( $text ) {
+	$text = html_entity_decode( wp_strip_all_tags( (string) $text ), ENT_QUOTES, 'UTF-8' );
+	$text = preg_replace( '/\s+/u', ' ', $text );
+
+	return trim( (string) $text );
+}
+
+/**
+ * Nome publico da loja para fallbacks de imagens.
+ *
+ * @return string
+ */
+function gstore_get_image_alt_store_name() {
+	$store_name = function_exists( 'gstore_get_store_display_name_for_seo' )
+		? gstore_get_store_display_name_for_seo()
+		: get_bloginfo( 'name' );
+
+	$store_name = gstore_normalize_image_alt_text( $store_name );
+
+	return '' !== $store_name ? $store_name : 'Arma Store';
+}
+
+/**
+ * Decide se o titulo do anexo parece ser apenas nome tecnico de arquivo.
+ *
+ * @param string $title         Titulo do anexo.
+ * @param int    $attachment_id Attachment ID.
+ * @return bool
+ */
+function gstore_attachment_title_looks_technical( $title, $attachment_id ) {
+	$title = gstore_normalize_image_alt_text( $title );
+	if ( '' === $title ) {
+		return true;
+	}
+
+	$file = get_attached_file( $attachment_id );
+	if ( ! is_string( $file ) || '' === $file ) {
+		return false;
+	}
+
+	$file_name  = pathinfo( $file, PATHINFO_FILENAME );
+	$title_slug = sanitize_title( $title );
+	$file_slug  = sanitize_title( $file_name );
+
+	if ( $title_slug !== $file_slug ) {
+		return false;
+	}
+
+	return (bool) preg_match(
+		'/(?:^img[-_ ]?\d+|^dsc[-_ ]?\d+|whatsapp|screenshot|captura|scaled|copy|copia|\d+x\d+|[a-f0-9]{12,})/i',
+		$file_name
+	);
+}
+
+/**
+ * Retorna o titulo do produto em contexto atual, quando houver.
+ *
+ * @return string
+ */
+function gstore_get_current_product_image_alt() {
+	$current_product = null;
+
+	if ( function_exists( 'wc_get_product' ) ) {
+		global $product;
+
+		if ( $product instanceof WC_Product ) {
+			$current_product = $product;
+		} elseif ( function_exists( 'is_product' ) && is_product() ) {
+			$current_product = wc_get_product( get_queried_object_id() );
+		}
+	}
+
+	if ( ! ( $current_product instanceof WC_Product ) ) {
+		return '';
+	}
+
+	return gstore_normalize_image_alt_text( $current_product->get_name() );
+}
+
+/**
+ * Cria fallback contextual para imagens sem texto alternativo.
+ *
+ * @param int          $attachment_id Attachment ID.
+ * @param array        $attr          Atributos atuais da imagem.
+ * @param string|array $size          Tamanho solicitado.
+ * @return string
+ */
+function gstore_get_contextual_attachment_alt( $attachment_id, $attr = array(), $size = 'full' ) {
+	$attachment_id = absint( $attachment_id );
+	if ( $attachment_id <= 0 ) {
+		return '';
+	}
+
+	$store_name = gstore_get_image_alt_store_name();
+	$class_name = isset( $attr['class'] ) ? (string) $attr['class'] : '';
+	$size_name  = is_array( $size ) ? '' : (string) $size;
+
+	if ( false !== stripos( $class_name, 'logo' ) ) {
+		return sprintf( 'Logo %s', $store_name );
+	}
+
+	if ( false !== stripos( $class_name, 'Gstore-hero-slider' ) || false !== stripos( $class_name, 'banner' ) ) {
+		return sprintf( 'Banner da %s', $store_name );
+	}
+
+	$is_product_image = 'woocommerce_thumbnail' === $size_name
+		|| false !== stripos( $class_name, 'woocommerce_thumbnail' )
+		|| false !== stripos( $class_name, 'wp-post-image' )
+		|| false !== stripos( $class_name, 'woocommerce-product-gallery' )
+		|| false !== stripos( $class_name, 'Gstore-product-card' );
+
+	if ( $is_product_image || ( function_exists( 'is_product' ) && is_product() ) ) {
+		$product_alt = gstore_get_current_product_image_alt();
+		if ( '' !== $product_alt ) {
+			return $product_alt;
+		}
+	}
+
+	if (
+		( function_exists( 'is_product_category' ) && is_product_category() )
+		|| ( function_exists( 'is_product_tag' ) && is_product_tag() )
+		|| ( function_exists( 'is_product_taxonomy' ) && is_product_taxonomy() )
+	) {
+		$term = get_queried_object();
+		if ( $term instanceof WP_Term && '' !== trim( (string) $term->name ) ) {
+			return sprintf( 'Categoria %s', gstore_normalize_image_alt_text( $term->name ) );
+		}
+	}
+
+	$attachment_title = gstore_normalize_image_alt_text( get_the_title( $attachment_id ) );
+	if ( '' !== $attachment_title && ! gstore_attachment_title_looks_technical( $attachment_title, $attachment_id ) ) {
+		return $attachment_title;
+	}
+
+	return sprintf( 'Imagem da %s', $store_name );
+}
+
+/**
  * Retorna a tag <img> completa de uma imagem da biblioteca.
  *
  * @param int    $attachment_id ID da imagem na biblioteca.
@@ -11715,6 +11885,10 @@ function gstore_get_image_tag( $attachment_id, $size = 'full', $alt = '', $attr 
 	// Se alt não foi fornecido, tenta pegar da mídia
 	if ( empty( $alt ) ) {
 		$alt = get_post_meta( $attachment_id, '_wp_attachment_image_alt', true );
+	}
+
+	if ( '' === gstore_normalize_image_alt_text( $alt ) ) {
+		$alt = gstore_get_contextual_attachment_alt( $attachment_id, $attr, $size );
 	}
 
 	// URL principal
@@ -11849,6 +12023,29 @@ function gstore_add_image_dimensions( $attr, $attachment, $size ) {
 add_filter( 'wp_get_attachment_image_attributes', 'gstore_add_image_dimensions', 10, 3 );
 
 /**
+ * Preenche alt vazio em imagens renderizadas pelo WordPress sem alterar a midia.
+ *
+ * @param array        $attr       Atributos da imagem.
+ * @param WP_Post      $attachment Objeto do attachment.
+ * @param string|array $size       Tamanho solicitado.
+ * @return array
+ */
+function gstore_add_contextual_image_alt( $attr, $attachment, $size ) {
+	$current_alt = isset( $attr['alt'] ) ? gstore_normalize_image_alt_text( $attr['alt'] ) : '';
+	if ( '' !== $current_alt || ! ( $attachment instanceof WP_Post ) ) {
+		return $attr;
+	}
+
+	$fallback_alt = gstore_get_contextual_attachment_alt( $attachment->ID, $attr, $size );
+	if ( '' !== $fallback_alt ) {
+		$attr['alt'] = $fallback_alt;
+	}
+
+	return $attr;
+}
+add_filter( 'wp_get_attachment_image_attributes', 'gstore_add_contextual_image_alt', 11, 3 );
+
+/**
  * Adiciona dimensões a imagens no conteúdo (the_content).
  *
  * Processa imagens que podem não ter sido renderizadas via wp_get_attachment_image.
@@ -11964,6 +12161,11 @@ function gstore_get_banner_youtube_image_tag( $banner_id, $banner_alt = '' ) {
 	$banner_id = absint( $banner_id );
 	if ( $banner_id <= 0 ) {
 		return '';
+	}
+
+	$banner_alt = gstore_normalize_image_alt_text( $banner_alt );
+	if ( '' === $banner_alt ) {
+		$banner_alt = sprintf( 'Capa do banner do YouTube da %s', gstore_get_image_alt_store_name() );
 	}
 
 	$cache_version = absint( get_option( 'gstore_banner_cache_version', 0 ) );
@@ -14270,6 +14472,14 @@ function gstore_get_hero_image_tag( $attachment_id, $alt = '', $is_first_slide =
 		return '';
 	}
 
+	$alt = gstore_normalize_image_alt_text( $alt );
+	if ( '' === $alt ) {
+		$alt = sprintf(
+			$is_first_slide ? 'Banner principal da %s' : 'Banner promocional da %s',
+			gstore_get_image_alt_store_name()
+		);
+	}
+
 	$image_meta = wp_get_attachment_metadata( $attachment_id );
 	if ( ! $image_meta ) {
 		return '';
@@ -14288,7 +14498,7 @@ function gstore_get_hero_image_tag( $attachment_id, $alt = '', $is_first_slide =
 	// Atributos base
 	$attr = array(
 		'src' => $src_url,
-		'alt' => $alt ? $alt : '',
+		'alt' => $alt,
 	);
 
 	// Todos os slides (inclusive o primeiro/LCP) usam srcset + sizes: com sizes
