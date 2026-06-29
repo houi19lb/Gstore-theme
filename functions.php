@@ -4010,6 +4010,13 @@ function gstore_inline_critical_css() {
 			height: auto;
 			display: block;
 		}
+
+		/* Mini-cart escondido: evita FOUC no footer antes do CSS lazy do WooCommerce */
+		.wc-block-components-drawer__screen-overlay--is-hidden,
+		.wc-block-mini-cart__drawer[aria-hidden="true"] {
+			display: none !important;
+			visibility: hidden !important;
+		}
 	';
 
 	// Minifica o CSS crítico (remove espaços extras)
