@@ -466,6 +466,12 @@ function gstore_get_public_canonical_url( $key ) {
  * @return array
  */
 function gstore_get_internal_link_alias_map() {
+	static $map = null;
+
+	if ( null !== $map ) {
+		return $map;
+	}
+
 	$catalog_url       = gstore_get_public_canonical_url( 'catalog' );
 	$my_account_url    = gstore_get_public_canonical_url( 'my_account' );
 	$support_url       = gstore_get_public_canonical_url( 'support' );
@@ -530,7 +536,9 @@ function gstore_get_internal_link_alias_map() {
 		$map[ $alias ] = home_url( $target_path );
 	}
 
-	return apply_filters( 'gstore_internal_link_alias_map', $map );
+	$map = apply_filters( 'gstore_internal_link_alias_map', $map );
+
+	return $map;
 }
 
 /**
@@ -603,6 +611,33 @@ function gstore_normalize_internal_public_url( $url ) {
  */
 function gstore_normalize_internal_public_links( $content ) {
 	if ( ! is_string( $content ) || '' === $content || false === stripos( $content, 'href=' ) ) {
+		return $content;
+	}
+
+	$alias_needles = array(
+		'/minha-conta',
+		'/atendimento',
+		'/loja',
+		'/programas',
+		'/pro-training',
+		'/clube-de-tiro',
+		'/informativo',
+		'/category/',
+		'/delta-force-brazil',
+		'/blog/como-comprar-arma-de-fogo-legalmente-no-brasil-guia-completo',
+		'/produto/pistola-taurus-g3-toro-calibre-38-tpc-tenox',
+		'/produto/pistola-taurus-gx2-toro-calibre-38-tpc-graphene',
+		'/produto/pistola-taurus-gx4-carry-torocalibre-38-tpc-graphene',
+	);
+	$has_alias_hint = false;
+	foreach ( $alias_needles as $needle ) {
+		if ( false !== stripos( $content, $needle ) ) {
+			$has_alias_hint = true;
+			break;
+		}
+	}
+
+	if ( ! $has_alias_hint ) {
 		return $content;
 	}
 
@@ -1282,17 +1317,26 @@ function gstore_get_product_category_native_link_by_slug( $slug ) {
 		return '';
 	}
 
+	static $link_cache = array();
+	if ( array_key_exists( $slug, $link_cache ) ) {
+		return $link_cache[ $slug ];
+	}
+
 	$term = get_term_by( 'slug', $slug, 'product_cat' );
 	if ( ! $term || is_wp_error( $term ) ) {
+		$link_cache[ $slug ] = '';
 		return '';
 	}
 
 	$link = get_term_link( $term, 'product_cat' );
 	if ( is_wp_error( $link ) || ! is_string( $link ) || '' === $link ) {
+		$link_cache[ $slug ] = '';
 		return '';
 	}
 
-	return $link;
+	$link_cache[ $slug ] = $link;
+
+	return $link_cache[ $slug ];
 }
 
 /**
@@ -1307,8 +1351,15 @@ function gstore_resolve_legacy_category_public_url( $legacy_url ) {
 		return '';
 	}
 
+	$cache_key = strtolower( '/' . trim( rawurldecode( $path ), '/' ) . '/' );
+	static $resolved_cache = array();
+	if ( array_key_exists( $cache_key, $resolved_cache ) ) {
+		return $resolved_cache[ $cache_key ];
+	}
+
 	$legacy_path = trim( (string) preg_replace( '#^.*?/categoria-produto/#', '', $path ), '/' );
 	if ( '' === $legacy_path ) {
+		$resolved_cache[ $cache_key ] = '';
 		return '';
 	}
 
@@ -1322,7 +1373,8 @@ function gstore_resolve_legacy_category_public_url( $legacy_url ) {
 	if ( '' !== $leaf ) {
 		$native_category_link = gstore_get_product_category_native_link_by_slug( $leaf );
 		if ( '' !== $native_category_link ) {
-			return $native_category_link;
+			$resolved_cache[ $cache_key ] = $native_category_link;
+			return $resolved_cache[ $cache_key ];
 		}
 	}
 
@@ -1334,23 +1386,29 @@ function gstore_resolve_legacy_category_public_url( $legacy_url ) {
 		'clube-de-tiro' => '/categoria-produto/clube-de-tiro/',
 	);
 	if ( isset( $clean_pages[ $legacy_path ] ) ) {
-		return home_url( $clean_pages[ $legacy_path ] );
+		$resolved_cache[ $cache_key ] = home_url( $clean_pages[ $legacy_path ] );
+		return $resolved_cache[ $cache_key ];
 	}
 	if ( isset( $clean_pages[ $leaf ] ) ) {
-		return home_url( $clean_pages[ $leaf ] );
+		$resolved_cache[ $cache_key ] = home_url( $clean_pages[ $leaf ] );
+		return $resolved_cache[ $cache_key ];
 	}
 
 	$catalog_filters = array(
 		'lancamento' => 'lancamento',
 	);
 	if ( isset( $catalog_filters[ $legacy_path ] ) ) {
-		return add_query_arg( 'filter_cat[]', $catalog_filters[ $legacy_path ], gstore_get_catalog_url() );
+		$resolved_cache[ $cache_key ] = add_query_arg( 'filter_cat[]', $catalog_filters[ $legacy_path ], gstore_get_catalog_url() );
+		return $resolved_cache[ $cache_key ];
 	}
 	if ( isset( $catalog_filters[ $leaf ] ) ) {
-		return add_query_arg( 'filter_cat[]', $catalog_filters[ $leaf ], gstore_get_catalog_url() );
+		$resolved_cache[ $cache_key ] = add_query_arg( 'filter_cat[]', $catalog_filters[ $leaf ], gstore_get_catalog_url() );
+		return $resolved_cache[ $cache_key ];
 	}
 
-	return '';
+	$resolved_cache[ $cache_key ] = '';
+
+	return $resolved_cache[ $cache_key ];
 }
 
 /**
