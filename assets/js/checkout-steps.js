@@ -4943,6 +4943,7 @@ function getInstallmentDisplayTotals(summaryData) {
 		renderItemShippingOptions(data);
 		renderShippingSummary(data);
 		updateCheckoutShippingHiddenFields();
+		setTimeout(ensureShippingAutofilled, 0);
 
 		// Renderiza totais
 		let totalsHtml = '';
