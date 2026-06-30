@@ -19,7 +19,7 @@
 	const CART_CALCULATED_SESSION_KEY = 'gstore_cart_shipping_calculated_session';
 	const CART_RATES_STORAGE_KEY = 'gstore_cart_shipping_rates';
 	const CART_RATES_STORAGE_VERSION_KEY = 'gstore_cart_shipping_rates_version';
-	const CART_RATES_STORAGE_VERSION = '20260630-product-shipping-other-note-v1';
+	const CART_RATES_STORAGE_VERSION = '20260630-product-shipping-other-note-v2';
 
 	function escapeHtml(value) {
 		return String(value || '')

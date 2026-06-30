@@ -61,7 +61,7 @@
 	const CART_DESTINATION_STORAGE_KEY = 'gstore_cart_shipping_destination';
 	const CART_RATES_STORAGE_KEY = 'gstore_cart_shipping_rates';
 	const CART_RATES_STORAGE_VERSION_KEY = 'gstore_cart_shipping_rates_version';
-	const CART_RATES_STORAGE_VERSION = '20260630-product-shipping-other-note-v1';
+	const CART_RATES_STORAGE_VERSION = '20260630-product-shipping-other-note-v2';
 	let checkoutSelectedShippingMode = 'land';
 	let checkoutShippingRates = [];
 	let checkoutShippingStatus = 'idle';
@@ -2597,7 +2597,7 @@ const subtotal = decodeHtmlEntities(stripHtmlText(it.subtotal || ''));
 			return false;
 		}
 		if (normalizeRateMode(rate.mode) === 'other') {
-			return Boolean(rate.other_note);
+			return Boolean(getOtherRateNotice(rate));
 		}
 		if (rate.quote_value_enabled === false) {
 			return true;
@@ -2610,8 +2610,9 @@ const subtotal = decodeHtmlEntities(stripHtmlText(it.subtotal || ''));
 			return '-';
 		}
 		if (normalizeRateMode(rate.mode) === 'other') {
-			return rate.other_note
-				? `<span class="gstore-shipping-quote-notice" style="display:block;max-width:100%;white-space:normal;overflow-wrap:anywhere;line-height:1.35;">${escapeHtml(rate.other_note)}</span>`
+			const otherNotice = getOtherRateNotice(rate);
+			return otherNotice
+				? `<span class="gstore-shipping-quote-notice" style="display:block;max-width:100%;white-space:normal;overflow-wrap:anywhere;line-height:1.35;">${escapeHtml(otherNotice)}</span>`
 				: '-';
 		}
 		if (isRateQuoteNoticeActive(rate)) {
@@ -2649,9 +2650,38 @@ const subtotal = decodeHtmlEntities(stripHtmlText(it.subtotal || ''));
 			return '';
 		}
 		if (normalizeRateMode(rate.mode) === 'other') {
-			return String(rate.other_note || '').trim();
+			return getOtherRateNotice(rate);
 		}
 		return String(rate.other_note || rate.quote_notice_message || '').trim();
+	}
+
+	function normalizeNoticeText(value) {
+		return String(value || '').replace(/\s+/g, ' ').trim().toLowerCase();
+	}
+
+	function getConfiguredQuoteNoticeMessage() {
+		return window.gstoreFreightQuoteNotice && window.gstoreFreightQuoteNotice.message
+			? String(window.gstoreFreightQuoteNotice.message)
+			: '';
+	}
+
+	function getOtherRateNotice(rate) {
+		if (!rate) {
+			return '';
+		}
+
+		const note = String(rate.other_note || '').trim();
+		if (note) {
+			return note;
+		}
+
+		const message = String(rate.quote_notice_message || '').trim();
+		const globalMessage = getConfiguredQuoteNoticeMessage();
+		if (message && (!globalMessage || normalizeNoticeText(message) !== normalizeNoticeText(globalMessage))) {
+			return message;
+		}
+
+		return '';
 	}
 
 	function getNumericRateCost(rate) {
@@ -2675,7 +2705,7 @@ const subtotal = decodeHtmlEntities(stripHtmlText(it.subtotal || ''));
 
 	function getShippingTotalValueHtml(mode, value, notice) {
 		if (normalizeRateMode(mode) === 'other') {
-			return notice ? escapeHtml(notice) : '-';
+			return '-';
 		}
 		return formatCurrency(value || 0);
 	}

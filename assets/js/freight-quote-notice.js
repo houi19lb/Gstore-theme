@@ -224,13 +224,7 @@
 	}
 
 	function enhanceRows() {
-		if (!selectedFreightHasNotice()) {
-			removeButtons();
-			return;
-		}
-
-		removeInlineNoticeButtons();
-		enhanceValueCells();
+		removeButtons();
 	}
 
 	function scheduleEnhance() {
