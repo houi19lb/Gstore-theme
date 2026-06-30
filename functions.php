@@ -10455,6 +10455,9 @@ if ( ! function_exists( 'gstore_get_cart_item_shipping_label' ) ) {
 		if ( 'pickup' === $mode ) {
 			return __( 'Retirada na loja', 'gstore' );
 		}
+		if ( 'other' === $mode ) {
+			return __( 'Outros', 'gstore' );
+		}
 		return __( 'Terrestre', 'gstore' );
 	}
 }
@@ -10470,6 +10473,9 @@ if ( ! function_exists( 'gstore_normalize_shipping_mode' ) ) {
 		}
 		if ( in_array( $mode, array( 'pickup', 'retirada', 'retirada na loja', 'retirada-na-loja', 'store_pickup' ), true ) ) {
 			return 'pickup';
+		}
+		if ( in_array( $mode, array( 'other', 'outro', 'outros' ), true ) ) {
+			return 'other';
 		}
 
 		return '';
@@ -10554,6 +10560,9 @@ if ( ! function_exists( 'gstore_normalize_cart_rates' ) ) {
 			}
 			if ( ! $quote_value_enabled && '' !== $quote_notice_html ) {
 				$cost_formatted = $quote_notice_html;
+			}
+			if ( 'other' === $mode ) {
+				$cost_formatted = '-';
 			}
 
 			$normalized_rate = array(

@@ -19,7 +19,7 @@
 	const CART_CALCULATED_SESSION_KEY = 'gstore_cart_shipping_calculated_session';
 	const CART_RATES_STORAGE_KEY = 'gstore_cart_shipping_rates';
 	const CART_RATES_STORAGE_VERSION_KEY = 'gstore_cart_shipping_rates_version';
-	const CART_RATES_STORAGE_VERSION = '20260523-product-shipping-modes-v1';
+	const CART_RATES_STORAGE_VERSION = '20260630-product-shipping-other-v1';
 
 	function escapeHtml(value) {
 		return String(value || '')
@@ -948,6 +948,9 @@
 		if (value === 'pickup' || value === 'retirada' || value === 'retirada na loja' || value === 'retirada-na-loja' || value === 'store_pickup') {
 			return 'pickup';
 		}
+		if (value === 'other' || value === 'outro' || value === 'outros') {
+			return 'other';
+		}
 		return '';
 	}
 
@@ -958,6 +961,9 @@
 		}
 		if (normalized === 'pickup') {
 			return 'Retirada na loja';
+		}
+		if (normalized === 'other') {
+			return 'Outros';
 		}
 		return 'Terrestre';
 	}
@@ -976,20 +982,30 @@
 		if (kind === 'pickup' || mode === 'pickup') {
 			return label || 'Retirada na loja';
 		}
+		if (kind === 'other' || mode === 'other') {
+			return label || 'Outros';
+		}
 		return label || getRateModeLabel(mode);
 	}
 
 	function getRateGroupLabel(mode, rates) {
 		const normalized = normalizeRateMode(mode);
-		if (normalized === 'pickup') {
+		if (normalized === 'pickup' || normalized === 'other') {
 			const labels = (rates || [])
 				.map((rate) => getRateDisplayLabel(rate))
 				.map((label) => String(label || '').trim())
 				.filter(Boolean);
 			const uniqueLabels = Array.from(new Set(labels));
-			return uniqueLabels.length === 1 ? uniqueLabels[0] : 'Retirada na loja';
+			return uniqueLabels.length === 1 ? uniqueLabels[0] : getRateModeLabel(normalized);
 		}
 		return getRateModeLabel(mode);
+	}
+
+	function getRateCostDisplay(rate) {
+		if (normalizeRateMode(rate && rate.mode) === 'other') {
+			return '-';
+		}
+		return (rate && rate.cost_formatted) || '-';
 	}
 
 	function groupRatesByMode(rates) {
@@ -1005,7 +1021,7 @@
 			groups.get(mode).push(rate);
 		});
 
-		return ['land', 'air', 'pickup']
+		return ['land', 'air', 'pickup', 'other']
 			.filter((mode) => groups.has(mode))
 			.map((mode) => ({
 				mode,
@@ -1123,7 +1139,7 @@
 		const optionsHtml = hasMultiple
 			? groupRatesByMode(normalizedRates).map((group) => {
 				const groupOptionsHtml = group.rates.map((rate) => {
-					const cost = rate.cost_formatted || '-';
+					const cost = getRateCostDisplay(rate);
 					const checked = resolvedRate && resolvedRate.rate_id === rate.rate_id ? 'checked' : '';
 					const label = getRateDisplayLabel(rate);
 					return `
@@ -1151,7 +1167,7 @@
 				const onlyRate = normalizedRates[0];
 				const modeLabel = getRateGroupLabel(onlyRate.mode, [onlyRate]);
 				const label = getRateDisplayLabel(onlyRate);
-				const cost = onlyRate.cost_formatted || '-';
+				const cost = getRateCostDisplay(onlyRate);
 				storeShippingMode(cartItemKey, onlyRate.mode);
 				storeSelectedRateId(cartItemKey, onlyRate.rate_id);
 				return `

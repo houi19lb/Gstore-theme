@@ -232,14 +232,18 @@
 
 			const ratesHtml = rates.map((rate) => {
 				const label = rate.label || '';
-				const labelText = label
+				const mode = (rate.mode || '').toLowerCase();
+				let labelText = label
 					? label
 					: ((rate.mode || '').toLowerCase() === 'air' ? 'Frete Aéreo' : (rate.mode || '').toLowerCase() === 'pickup' ? 'Retirada na loja' : 'Frete Terrestre');
+				if (!label && mode === 'other') {
+					labelText = 'Outros';
+				}
 				const hasQuoteNotice = rate.quote_value_enabled === false
 					|| String(rate.quote_notice_html || rate.cost_formatted || '').indexOf('gstore-shipping-quote-notice') !== -1;
 				const costHtml = hasQuoteNotice
 					? (rate.quote_notice_html || rate.cost_formatted || `<span class="gstore-shipping-quote-notice">${this.escapeHtml(rate.quote_notice_message || '')}</span>`)
-					: (rate.cost_formatted || '-');
+					: (mode === 'other' ? '-' : (rate.cost_formatted || '-'));
 				return `
 					<div class="gstore-shipping-calculator__result-row${hasQuoteNotice ? ' gstore-shipping-calculator__result-row--quote-notice' : ''}">
 						<span class="gstore-shipping-calculator__result-label">
