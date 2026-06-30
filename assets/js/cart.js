@@ -19,7 +19,7 @@
 	const CART_CALCULATED_SESSION_KEY = 'gstore_cart_shipping_calculated_session';
 	const CART_RATES_STORAGE_KEY = 'gstore_cart_shipping_rates';
 	const CART_RATES_STORAGE_VERSION_KEY = 'gstore_cart_shipping_rates_version';
-	const CART_RATES_STORAGE_VERSION = '20260630-product-shipping-other-v1';
+	const CART_RATES_STORAGE_VERSION = '20260630-product-shipping-other-note-v1';
 
 	function escapeHtml(value) {
 		return String(value || '')
@@ -244,6 +244,7 @@
 						: !(quoteValueEnabled === false || quoteValueEnabled === 'false' || quoteValueEnabled === 0 || quoteValueEnabled === '0'),
 					quote_notice_message: raw.quote_notice_message || '',
 					quote_notice_html: raw.quote_notice_html || '',
+					other_note: raw.other_note || '',
 					rate_kind: raw.rate_kind || '',
 					pricing_type: raw.pricing_type || '',
 				};
@@ -1003,6 +1004,9 @@
 
 	function getRateCostDisplay(rate) {
 		if (normalizeRateMode(rate && rate.mode) === 'other') {
+			if (rate && rate.other_note) {
+				return escapeHtml(rate.other_note);
+			}
 			return '-';
 		}
 		return (rate && rate.cost_formatted) || '-';
@@ -1105,6 +1109,7 @@
 					: !(rate.quote_value_enabled === false || rate.quote_value_enabled === 'false' || rate.quote_value_enabled === 0 || rate.quote_value_enabled === '0'),
 				quote_notice_message: rate.quote_notice_message || '',
 				quote_notice_html: rate.quote_notice_html || '',
+				other_note: rate.other_note || '',
 				rate_kind: rate.rate_kind || '',
 				pricing_type: rate.pricing_type || '',
 			}))

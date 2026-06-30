@@ -61,7 +61,7 @@
 	const CART_DESTINATION_STORAGE_KEY = 'gstore_cart_shipping_destination';
 	const CART_RATES_STORAGE_KEY = 'gstore_cart_shipping_rates';
 	const CART_RATES_STORAGE_VERSION_KEY = 'gstore_cart_shipping_rates_version';
-	const CART_RATES_STORAGE_VERSION = '20260630-product-shipping-other-v1';
+	const CART_RATES_STORAGE_VERSION = '20260630-product-shipping-other-note-v1';
 	let checkoutSelectedShippingMode = 'land';
 	let checkoutShippingRates = [];
 	let checkoutShippingStatus = 'idle';
@@ -2586,6 +2586,7 @@ const subtotal = decodeHtmlEntities(stripHtmlText(it.subtotal || ''));
 				: !(quoteValueEnabled === false || quoteValueEnabled === 'false' || quoteValueEnabled === 0 || quoteValueEnabled === '0'),
 			quote_notice_message: raw.quote_notice_message || '',
 			quote_notice_html: raw.quote_notice_html || '',
+			other_note: raw.other_note || '',
 			rate_kind: raw.rate_kind || '',
 			pricing_type: raw.pricing_type || '',
 		};
@@ -2594,6 +2595,9 @@ const subtotal = decodeHtmlEntities(stripHtmlText(it.subtotal || ''));
 	function isRateQuoteNoticeActive(rate) {
 		if (!rate) {
 			return false;
+		}
+		if (normalizeRateMode(rate.mode) === 'other') {
+			return Boolean(rate.other_note);
 		}
 		if (rate.quote_value_enabled === false) {
 			return true;
@@ -2605,9 +2609,15 @@ const subtotal = decodeHtmlEntities(stripHtmlText(it.subtotal || ''));
 		if (!rate) {
 			return '-';
 		}
+		if (normalizeRateMode(rate.mode) === 'other') {
+			return rate.other_note
+				? `<span class="gstore-shipping-quote-notice" style="display:block;max-width:100%;white-space:normal;overflow-wrap:anywhere;line-height:1.35;">${escapeHtml(rate.other_note)}</span>`
+				: '-';
+		}
 		if (isRateQuoteNoticeActive(rate)) {
-			if (rate.quote_notice_message) {
-				return `<span class="gstore-shipping-quote-notice" style="display:block;max-width:100%;white-space:normal;overflow-wrap:anywhere;line-height:1.35;">${escapeHtml(rate.quote_notice_message)}</span>`;
+			const noticeMessage = rate.quote_notice_message || rate.other_note || '';
+			if (noticeMessage) {
+				return `<span class="gstore-shipping-quote-notice" style="display:block;max-width:100%;white-space:normal;overflow-wrap:anywhere;line-height:1.35;">${escapeHtml(noticeMessage)}</span>`;
 			}
 			if (rate.quote_notice_html) {
 				return String(rate.quote_notice_html).replace(
@@ -2634,6 +2644,16 @@ const subtotal = decodeHtmlEntities(stripHtmlText(it.subtotal || ''));
 		return '-';
 	}
 
+	function getRateNoticeText(rate) {
+		if (!rate) {
+			return '';
+		}
+		if (normalizeRateMode(rate.mode) === 'other') {
+			return String(rate.other_note || '').trim();
+		}
+		return String(rate.other_note || rate.quote_notice_message || '').trim();
+	}
+
 	function getNumericRateCost(rate) {
 		if (!rate) {
 			return 0;
@@ -2645,8 +2665,19 @@ const subtotal = decodeHtmlEntities(stripHtmlText(it.subtotal || ''));
 		return parsePriceValue(rate.cost_formatted || '');
 	}
 
-	function getShippingTotalValueHtml(mode, value) {
-		return normalizeRateMode(mode) === 'other' ? '-' : formatCurrency(value || 0);
+	function getSelectedModeNotice(mode, noticesByMode) {
+		const normalized = normalizeRateMode(mode);
+		const notices = noticesByMode && noticesByMode[normalized]
+			? Array.from(noticesByMode[normalized]).filter(Boolean)
+			: [];
+		return notices.length === 1 ? notices[0] : '';
+	}
+
+	function getShippingTotalValueHtml(mode, value, notice) {
+		if (normalizeRateMode(mode) === 'other') {
+			return notice ? escapeHtml(notice) : '-';
+		}
+		return formatCurrency(value || 0);
 	}
 
 	function getCurrentCheckoutCep() {
@@ -3426,6 +3457,7 @@ function getInstallmentDisplayTotals(summaryData) {
 						: !(rate.quote_value_enabled === false || rate.quote_value_enabled === 'false' || rate.quote_value_enabled === 0 || rate.quote_value_enabled === '0'),
 					quote_notice_message: rate.quote_notice_message || '',
 					quote_notice_html: rate.quote_notice_html || '',
+					other_note: rate.other_note || '',
 					rate_kind: rate.rate_kind || '',
 					pricing_type: rate.pricing_type || '',
 				};
@@ -3864,6 +3896,7 @@ function getInstallmentDisplayTotals(summaryData) {
 		let selectedOtherTotal = 0;
 		const selectedModes = new Set();
 		const selectedLabelsByMode = { land: new Set(), air: new Set(), pickup: new Set(), other: new Set() };
+		const selectedNoticesByMode = { land: new Set(), air: new Set(), pickup: new Set(), other: new Set() };
 
 		if (hasItemRates && items.length) {
 			const selectedRateGroups = buildSelectedRateGroups(items, ratesByItem);
@@ -3877,6 +3910,10 @@ function getInstallmentDisplayTotals(summaryData) {
 				addSelectedModeLabel(selectedLabelsByMode, selectedModeForGroup, group.rate);
 
 				const groupedRate = getStoredSelectedRateGroupRate(group);
+				const selectedNotice = getRateNoticeText(groupedRate || group.rate);
+				if (selectedNotice && selectedNoticesByMode[selectedModeForGroup]) {
+					selectedNoticesByMode[selectedModeForGroup].add(selectedNotice);
+				}
 				const selectedCost = groupedRate ? getNumericRateCost(groupedRate) : group.fallbackCost;
 				if (Number.isFinite(selectedCost)) {
 					selectedTotal += selectedCost;
@@ -3897,6 +3934,10 @@ function getInstallmentDisplayTotals(summaryData) {
 			const selectedRate = resolveCheckoutSelectedRate(rates, '', selectedMode);
 			if (selectedRate) {
 				addSelectedModeLabel(selectedLabelsByMode, selectedMode, selectedRate);
+				const selectedNotice = getRateNoticeText(selectedRate);
+				if (selectedNotice && selectedNoticesByMode[selectedMode]) {
+					selectedNoticesByMode[selectedMode].add(selectedNotice);
+				}
 			}
 			selectedTotal = getSelectedShippingCost(rates, selectedMode);
 			if (selectedMode === 'air') {
@@ -3983,6 +4024,12 @@ function getInstallmentDisplayTotals(summaryData) {
 					pickup: Array.from(selectedLabelsByMode.pickup),
 					other: Array.from(selectedLabelsByMode.other),
 				},
+				selectedNoticesByMode: {
+					land: Array.from(selectedNoticesByMode.land),
+					air: Array.from(selectedNoticesByMode.air),
+					pickup: Array.from(selectedNoticesByMode.pickup),
+					other: Array.from(selectedNoticesByMode.other),
+				},
 				selectedLandTotal,
 				selectedAirTotal,
 				selectedPickupTotal,
@@ -3998,10 +4045,10 @@ function getInstallmentDisplayTotals(summaryData) {
 
 			if (selectedModes.size > 1) {
 				const modeRows = [
-					{ key: 'land', label: getSelectedModeLabel('land', selectedLabelsByMode), value: selectedLandTotal },
-					{ key: 'air', label: getSelectedModeLabel('air', selectedLabelsByMode), value: selectedAirTotal },
-					{ key: 'pickup', label: getSelectedModeLabel('pickup', selectedLabelsByMode), value: selectedPickupTotal },
-					{ key: 'other', label: getSelectedModeLabel('other', selectedLabelsByMode), value: selectedOtherTotal },
+					{ key: 'land', label: getSelectedModeLabel('land', selectedLabelsByMode), value: selectedLandTotal, notice: getSelectedModeNotice('land', selectedNoticesByMode) },
+					{ key: 'air', label: getSelectedModeLabel('air', selectedLabelsByMode), value: selectedAirTotal, notice: getSelectedModeNotice('air', selectedNoticesByMode) },
+					{ key: 'pickup', label: getSelectedModeLabel('pickup', selectedLabelsByMode), value: selectedPickupTotal, notice: getSelectedModeNotice('pickup', selectedNoticesByMode) },
+					{ key: 'other', label: getSelectedModeLabel('other', selectedLabelsByMode), value: selectedOtherTotal, notice: getSelectedModeNotice('other', selectedNoticesByMode) },
 				];
 				modeRows.forEach((row) => {
 					if (!selectedModes.has(row.key)) {
@@ -4010,7 +4057,7 @@ function getInstallmentDisplayTotals(summaryData) {
 					totalsHtml += `
 						<div class="Gstore-checkout-shipping-totals__row Gstore-checkout-shipping-totals__row--shipping">
 							${getShippingTotalsLabelHtml(row.label)}
-							<span>${getShippingTotalValueHtml(row.key, row.value)}</span>
+							<span>${getShippingTotalValueHtml(row.key, row.value, row.notice)}</span>
 						</div>
 					`;
 				});
@@ -4024,10 +4071,11 @@ function getInstallmentDisplayTotals(summaryData) {
 							? selectedOtherTotal
 							: selectedLandTotal;
 				const onlyModeLabel = getSelectedModeLabel(onlyMode, selectedLabelsByMode);
+				const onlyModeNotice = getSelectedModeNotice(onlyMode, selectedNoticesByMode);
 				totalsHtml += `
 					<div class="Gstore-checkout-shipping-totals__row Gstore-checkout-shipping-totals__row--shipping">
 						${getShippingTotalsLabelHtml(onlyModeLabel)}
-						<span>${getShippingTotalValueHtml(onlyMode, singleValue)}</span>
+						<span>${getShippingTotalValueHtml(onlyMode, singleValue, onlyModeNotice)}</span>
 					</div>
 				`;
 			}
@@ -4092,13 +4140,14 @@ function getInstallmentDisplayTotals(summaryData) {
 
 			const modes = lastSummaryTotals.selectedModes || [];
 			const labelsByMode = lastSummaryTotals.selectedLabelsByMode || {};
+			const noticesByMode = lastSummaryTotals.selectedNoticesByMode || {};
 			let rowsHtml = '';
 			if (modes.length > 1) {
 				const modeRows = [
-					{ key: 'land', label: getSelectedModeLabel('land', labelsByMode), value: lastSummaryTotals.selectedLandTotal || 0 },
-					{ key: 'air', label: getSelectedModeLabel('air', labelsByMode), value: lastSummaryTotals.selectedAirTotal || 0 },
-					{ key: 'pickup', label: getSelectedModeLabel('pickup', labelsByMode), value: lastSummaryTotals.selectedPickupTotal || 0 },
-					{ key: 'other', label: getSelectedModeLabel('other', labelsByMode), value: lastSummaryTotals.selectedOtherTotal || 0 },
+					{ key: 'land', label: getSelectedModeLabel('land', labelsByMode), value: lastSummaryTotals.selectedLandTotal || 0, notice: getSelectedModeNotice('land', noticesByMode) },
+					{ key: 'air', label: getSelectedModeLabel('air', labelsByMode), value: lastSummaryTotals.selectedAirTotal || 0, notice: getSelectedModeNotice('air', noticesByMode) },
+					{ key: 'pickup', label: getSelectedModeLabel('pickup', labelsByMode), value: lastSummaryTotals.selectedPickupTotal || 0, notice: getSelectedModeNotice('pickup', noticesByMode) },
+					{ key: 'other', label: getSelectedModeLabel('other', labelsByMode), value: lastSummaryTotals.selectedOtherTotal || 0, notice: getSelectedModeNotice('other', noticesByMode) },
 				];
 				modeRows.forEach((row) => {
 					if (!modes.includes(row.key)) {
@@ -4107,7 +4156,7 @@ function getInstallmentDisplayTotals(summaryData) {
 					rowsHtml += `
 						<tr class="gstore-shipping-${row.key}">
 							<th>${getOrderReviewShippingLabelHtml(row.label)}</th>
-							<td>${getShippingTotalValueHtml(row.key, row.value)}</td>
+							<td>${getShippingTotalValueHtml(row.key, row.value, row.notice)}</td>
 						</tr>
 					`;
 				});
@@ -4124,7 +4173,7 @@ function getInstallmentDisplayTotals(summaryData) {
 				rowsHtml += `
 					<tr class="gstore-shipping-${modeKey}">
 						<th>${getOrderReviewShippingLabelHtml(onlyLabel)}</th>
-						<td>${getShippingTotalValueHtml(modeKey, onlyValue)}</td>
+						<td>${getShippingTotalValueHtml(modeKey, onlyValue, getSelectedModeNotice(modeKey, noticesByMode))}</td>
 					</tr>
 				`;
 			}

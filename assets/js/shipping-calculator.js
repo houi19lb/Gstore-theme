@@ -240,9 +240,13 @@
 					labelText = 'Outros';
 				}
 				const hasQuoteNotice = rate.quote_value_enabled === false
+					|| (mode === 'other' && rate.other_note)
 					|| String(rate.quote_notice_html || rate.cost_formatted || '').indexOf('gstore-shipping-quote-notice') !== -1;
-				const costHtml = hasQuoteNotice
-					? (rate.quote_notice_html || rate.cost_formatted || `<span class="gstore-shipping-quote-notice">${this.escapeHtml(rate.quote_notice_message || '')}</span>`)
+				const noticeMessage = mode === 'other' ? (rate.other_note || '') : (rate.quote_notice_message || '');
+				const costHtml = mode === 'other' && !rate.other_note
+					? '-'
+					: hasQuoteNotice
+					? (mode === 'other' && noticeMessage ? `<span class="gstore-shipping-quote-notice">${this.escapeHtml(noticeMessage)}</span>` : (rate.quote_notice_html || (noticeMessage ? `<span class="gstore-shipping-quote-notice">${this.escapeHtml(noticeMessage)}</span>` : (rate.cost_formatted || '-'))))
 					: (mode === 'other' ? '-' : (rate.cost_formatted || '-'));
 				return `
 					<div class="gstore-shipping-calculator__result-row${hasQuoteNotice ? ' gstore-shipping-calculator__result-row--quote-notice' : ''}">

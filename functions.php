@@ -10552,6 +10552,23 @@ if ( ! function_exists( 'gstore_normalize_cart_rates' ) ) {
 			if ( '' === $quote_notice_message && '' !== $quote_notice_html ) {
 				$quote_notice_message = sanitize_textarea_field( wp_strip_all_tags( $quote_notice_html ) );
 			}
+			$other_notice_message = '';
+			if ( 'other' === $mode ) {
+				$other_notice_message = isset( $rate['other_note'] )
+					? sanitize_textarea_field( (string) $rate['other_note'] )
+					: ( isset( $meta['other_note'] ) ? sanitize_textarea_field( (string) $meta['other_note'] ) : '' );
+			}
+			if ( 'other' === $mode ) {
+				if ( '' !== $other_notice_message ) {
+					$quote_value_enabled = false;
+					$quote_notice_message = $other_notice_message;
+					$quote_notice_html = '<span class="gstore-shipping-quote-notice">' . esc_html( $other_notice_message ) . '</span>';
+				} else {
+					$quote_value_enabled = true;
+					$quote_notice_message = '';
+					$quote_notice_html = '';
+				}
+			}
 			if ( '' !== $quote_notice_message || '' !== $quote_notice_html ) {
 				$quote_value_enabled = false;
 			}
@@ -10561,7 +10578,7 @@ if ( ! function_exists( 'gstore_normalize_cart_rates' ) ) {
 			if ( ! $quote_value_enabled && '' !== $quote_notice_html ) {
 				$cost_formatted = $quote_notice_html;
 			}
-			if ( 'other' === $mode ) {
+			if ( 'other' === $mode && '' === $quote_notice_message && '' === $quote_notice_html ) {
 				$cost_formatted = '-';
 			}
 
@@ -10578,6 +10595,9 @@ if ( ! function_exists( 'gstore_normalize_cart_rates' ) ) {
 				$normalized_rate['quote_value_enabled'] = $quote_value_enabled;
 				$normalized_rate['quote_notice_message'] = $quote_notice_message;
 				$normalized_rate['quote_notice_html'] = $quote_notice_html;
+			}
+			if ( '' !== $other_notice_message ) {
+				$normalized_rate['other_note'] = $other_notice_message;
 			}
 
 			$normalized[] = $normalized_rate;
