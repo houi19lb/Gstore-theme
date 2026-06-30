@@ -4824,6 +4824,17 @@ function gstore_is_catalog_layout_context() {
 		return true;
 	}
 
+	if ( function_exists( 'is_product_taxonomy' ) && is_product_taxonomy() ) {
+		return true;
+	}
+
+	if ( function_exists( 'is_tax' ) && function_exists( 'gstore_get_public_product_taxonomies' ) ) {
+		$product_taxonomies = gstore_get_public_product_taxonomies();
+		if ( ! empty( $product_taxonomies ) && is_tax( $product_taxonomies ) ) {
+			return true;
+		}
+	}
+
 	if ( function_exists( 'is_product_category' ) && is_product_category() ) {
 		return true;
 	}
