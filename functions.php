@@ -4311,6 +4311,10 @@ function gstore_optimize_script_loading( $tag, $handle, $src ) {
 		'gstore-home-products-carousel', // Carrossel pode carregar depois
 		'gstore-product-card',          // Não crítico acima da dobra
 		'gstore-my-account',            // Página específica
+		'gstore-blog-image-fit',
+		'gstore-blog-image-fit-loader',
+		'gstore-product-search-autocomplete',
+		'gstore-product-search-autocomplete-loader',
 		'gstore-support-loader',
 		'gstore-mini-cart-loader',
 	);
@@ -4716,8 +4720,9 @@ function gstore_get_minified_theme_asset_path( $relative_path ) {
 
 	$min_mtime    = filemtime( $min_file );
 	$source_mtime = filemtime( $source_file );
+	$mtime_tolerance = gstore_get_minified_asset_mtime_tolerance( $relative_path );
 
-	if ( false === $min_mtime || false === $source_mtime || $min_mtime < $source_mtime ) {
+	if ( false === $min_mtime || false === $source_mtime || ( $min_mtime + $mtime_tolerance ) < $source_mtime ) {
 		return $relative_path;
 	}
 
@@ -4726,6 +4731,21 @@ function gstore_get_minified_theme_asset_path( $relative_path ) {
 	}
 
 	return $min_relative_path;
+}
+
+/**
+ * Retorna tolerancia para pequenas diferencas de mtime entre fonte e .min.
+ *
+ * Alguns deploys preservam/reescrevem mtimes com granularidade de segundos e
+ * podem deixar o fonte 1s mais novo que o .min mesmo quando ambos vieram do
+ * mesmo build. A tolerancia evita fallback desnecessario para CSS/JS fonte sem
+ * esconder minificados realmente desatualizados.
+ *
+ * @param string $relative_path Caminho relativo ao tema.
+ * @return int
+ */
+function gstore_get_minified_asset_mtime_tolerance( $relative_path ) {
+	return max( 0, (int) apply_filters( 'gstore_minified_asset_mtime_tolerance', 2, $relative_path ) );
 }
 
 /**
@@ -4931,7 +4951,8 @@ function gstore_is_checkout_shell_style_context() {
  * @return bool
  */
 function gstore_theme_css_imports_are_newer_than_min( $relative_path, $min_mtime ) {
-	$imports = gstore_collect_local_css_imports( $relative_path );
+	$imports         = gstore_collect_local_css_imports( $relative_path );
+	$mtime_tolerance = gstore_get_minified_asset_mtime_tolerance( $relative_path );
 
 	foreach ( $imports as $import_relative_path ) {
 		$import_file = get_theme_file_path( $import_relative_path );
@@ -4940,7 +4961,7 @@ function gstore_theme_css_imports_are_newer_than_min( $relative_path, $min_mtime
 		}
 
 		$import_mtime = filemtime( $import_file );
-		if ( false !== $import_mtime && $import_mtime > $min_mtime ) {
+		if ( false !== $import_mtime && ( $min_mtime + $mtime_tolerance ) < $import_mtime ) {
 			return true;
 		}
 	}
@@ -6210,44 +6231,68 @@ function gstore_enqueue_scripts() {
 		}
 	}
 
-	$pwa_install_js_path    = get_theme_file_path( 'assets/js/pwa-install.js' );
-	$pwa_install_js_version = file_exists( $pwa_install_js_path ) ? (string) filemtime( $pwa_install_js_path ) : wp_get_theme()->get( 'Version' );
-	wp_enqueue_script(
-		'gstore-pwa-install',
-		gstore_theme_asset_uri( 'assets/js/pwa-install.js' ),
-		array(),
-		$pwa_install_js_version,
-		true
-	);
+	$pwa_install_cta_enabled = (bool) apply_filters( 'gstore_pwa_install_cta_enabled', is_page( 'atendimento' ) );
+	if ( $pwa_install_cta_enabled ) {
+		$pwa_install_js_path    = get_theme_file_path( 'assets/js/pwa-install.js' );
+		$pwa_install_js_version = file_exists( $pwa_install_js_path ) ? (string) filemtime( $pwa_install_js_path ) : wp_get_theme()->get( 'Version' );
+		wp_enqueue_script(
+			'gstore-pwa-install',
+			gstore_theme_asset_uri( 'assets/js/pwa-install.js' ),
+			array(),
+			$pwa_install_js_version,
+			true
+		);
+	}
 
-	$blog_image_fit_js_path    = get_theme_file_path( 'assets/js/blog-image-fit.js' );
-	$blog_image_fit_js_version = file_exists( $blog_image_fit_js_path ) ? (string) filemtime( $blog_image_fit_js_path ) : wp_get_theme()->get( 'Version' );
-	wp_enqueue_script(
+	$blog_image_fit_js_path    = 'assets/js/blog-image-fit.js';
+	$blog_image_fit_js_version = gstore_theme_asset_version( $blog_image_fit_js_path, wp_get_theme()->get( 'Version' ) );
+	wp_register_script(
 		'gstore-blog-image-fit',
-		gstore_theme_asset_uri( 'assets/js/blog-image-fit.js' ),
+		gstore_theme_asset_uri( $blog_image_fit_js_path ),
 		array(),
 		$blog_image_fit_js_version,
 		true
 	);
-
-	$pwa_myaccount_url = home_url( '/minha-conta/' );
-	if ( class_exists( 'WooCommerce' ) && function_exists( 'wc_get_page_permalink' ) ) {
-		$myaccount_permalink = wc_get_page_permalink( 'myaccount' );
-		if ( $myaccount_permalink ) {
-			$pwa_myaccount_url = $myaccount_permalink;
-		}
+	$blog_image_fit_loader_path = 'assets/js/blog-image-fit-loader.js';
+	if ( file_exists( get_theme_file_path( $blog_image_fit_loader_path ) ) ) {
+		wp_enqueue_script(
+			'gstore-blog-image-fit-loader',
+			gstore_theme_asset_uri( $blog_image_fit_loader_path ),
+			array(),
+			gstore_theme_asset_version( $blog_image_fit_loader_path, wp_get_theme()->get( 'Version' ) ),
+			true
+		);
+		wp_localize_script(
+			'gstore-blog-image-fit-loader',
+			'gstoreBlogImageFitLoader',
+			array(
+				'scriptUrl' => esc_url_raw( add_query_arg( 'ver', $blog_image_fit_js_version, gstore_theme_asset_uri( $blog_image_fit_js_path ) ) ),
+				'observeMs' => 3500,
+			)
+		);
+	} else {
+		wp_enqueue_script( 'gstore-blog-image-fit' );
 	}
 
-	wp_localize_script(
-		'gstore-pwa-install',
-		'gstorePwaConfig',
-		array(
+	if ( $pwa_install_cta_enabled ) {
+		$pwa_myaccount_url = home_url( '/minha-conta/' );
+		if ( class_exists( 'WooCommerce' ) && function_exists( 'wc_get_page_permalink' ) ) {
+			$myaccount_permalink = wc_get_page_permalink( 'myaccount' );
+			if ( $myaccount_permalink ) {
+				$pwa_myaccount_url = $myaccount_permalink;
+			}
+		}
+
+		wp_localize_script(
+			'gstore-pwa-install',
+			'gstorePwaConfig',
+			array(
 			'manifestUrl'       => gstore_get_pwa_manifest_url(),
 			'serviceWorkerUrl'  => gstore_get_pwa_service_worker_url(),
 			'startUrl'          => gstore_get_pwa_start_url(),
 			'scopeUrl'          => gstore_get_pwa_scope_url(),
 			'scopePath'         => gstore_get_pwa_scope_path(),
-			'canShowInstallCta' => (bool) apply_filters( 'gstore_pwa_install_cta_enabled', is_page( 'atendimento' ) ),
+			'canShowInstallCta' => $pwa_install_cta_enabled,
 			'isAtendimentoPage' => is_page( 'atendimento' ),
 			'atendimentoUrl'    => home_url( '/atendimento/' ),
 			'myAccountUrl'      => $pwa_myaccount_url,
@@ -6266,30 +6311,47 @@ function gstore_enqueue_scripts() {
 				'iosTitle' => __( 'Adicionar a Tela de Inicio', 'gstore' ),
 				'iosDescription' => __( 'No iPhone, o Safari exige que voce adicione manualmente pela opcao Compartilhar.', 'gstore' ),
 				'iosOtherBrowserDescription' => __( 'No iPhone, abra este site no Safari para adicionar como app na tela inicial.', 'gstore' ),
-			),
-		)
-	);
+				),
+			)
+		);
+	}
 
 	// Autocomplete / Busca inteligente (produtos + categorias)
-	$product_search_js_path    = get_theme_file_path( 'assets/js/product-search-autocomplete.js' );
-	$product_search_js_version = file_exists( $product_search_js_path ) ? (string) filemtime( $product_search_js_path ) : wp_get_theme()->get( 'Version' );
-	wp_enqueue_script(
+	$product_search_js_path    = 'assets/js/product-search-autocomplete.js';
+	$product_search_js_version = gstore_theme_asset_version( $product_search_js_path, wp_get_theme()->get( 'Version' ) );
+	wp_register_script(
 		'gstore-product-search-autocomplete',
-		gstore_theme_asset_uri( 'assets/js/product-search-autocomplete.js' ),
+		gstore_theme_asset_uri( $product_search_js_path ),
 		array(),
 		$product_search_js_version,
 		true
 	);
+	$product_search_loader_path = 'assets/js/product-search-autocomplete-loader.js';
+	$product_search_handle      = 'gstore-product-search-autocomplete';
+	if ( file_exists( get_theme_file_path( $product_search_loader_path ) ) ) {
+		$product_search_handle = 'gstore-product-search-autocomplete-loader';
+		wp_enqueue_script(
+			$product_search_handle,
+			gstore_theme_asset_uri( $product_search_loader_path ),
+			array(),
+			gstore_theme_asset_version( $product_search_loader_path, wp_get_theme()->get( 'Version' ) ),
+			true
+		);
+	} else {
+		wp_enqueue_script( 'gstore-product-search-autocomplete' );
+	}
 	wp_localize_script(
-		'gstore-product-search-autocomplete',
+		$product_search_handle,
 		'gstoreProductSearch',
-		array(
-			'endpoint'   => rest_url( 'gstore/v1/search-suggest' ),
-			'catalogUrl' => gstore_get_catalog_url(),
-			'minChars'   => 2,
-			'limit'      => 8,
+			array(
+			'endpoint'      => rest_url( 'gstore/v1/search-suggest' ),
+			'catalogUrl'    => gstore_get_catalog_url(),
+			'minChars'      => 2,
+			'limit'         => 8,
+			'scriptUrl'     => esc_url_raw( add_query_arg( 'ver', $product_search_js_version, gstore_theme_asset_uri( $product_search_js_path ) ) ),
+			'scriptVersion' => $product_search_js_version,
 		)
-	);
+		);
 
 	// Botão flutuante do Telegram (espelha o href do link existente na top bar)
 	$telegram_floating_js_path    = get_theme_file_path( 'assets/js/telegram-floating.js' );
