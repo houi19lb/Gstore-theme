@@ -3011,9 +3011,9 @@ body.single-product .onsale {
 
 .Gstore-single-product__brand-logo {
 	display: block;
-	width: 46px;
+	width: 136px;
 	height: 46px;
-	aspect-ratio: 1 / 1;
+	aspect-ratio: 68 / 23;
 	object-fit: contain;
 }
 
@@ -3095,7 +3095,7 @@ body.single-product .onsale {
 	}
 
 	.buybox-header.has-brand .Gstore-single-product__brand-logo {
-		width: 34px;
+		width: 92px;
 		height: 34px;
 	}
 
