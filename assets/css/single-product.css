@@ -3465,6 +3465,11 @@ body.single-product .onsale {
 /* Preço em produtos indisponíveis (quando toggle ativo) */
 .buybox-header.is-unavailable {
 	opacity: 0.75;
+	flex-wrap: wrap;
+}
+
+.buybox-header.is-unavailable .price-unavailable-notice {
+	flex-basis: 100%;
 }
 
 .price-unavailable-notice {
