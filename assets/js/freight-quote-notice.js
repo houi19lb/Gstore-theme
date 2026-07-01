@@ -108,7 +108,6 @@
 		button.className = 'gstore-shipping-quote-jump';
 		button.setAttribute('data-gstore-quote-notice-jump', '1');
 		button.textContent = config.buttonLabel || 'Ver aviso';
-		button.addEventListener('click', jumpToNotice);
 		return button;
 	}
 
@@ -132,6 +131,10 @@
 		var target;
 		var expandButton;
 		var changeButton;
+
+		if (event.defaultPrevented) {
+			return;
+		}
 
 		event.preventDefault();
 
@@ -185,6 +188,11 @@
 		}
 
 		if (container.getAttribute('data-gstore-quote-notice-value-cell') === '1') {
+			return;
+		}
+
+		if (container.querySelector(buttonSelector)) {
+			container.classList.add('gstore-shipping-quote-value-cell');
 			return;
 		}
 
@@ -242,6 +250,11 @@
 	window.addEventListener('load', scheduleEnhance);
 	document.addEventListener('change', scheduleEnhance, true);
 	document.addEventListener('click', function (event) {
+		if (event.target && event.target.closest(buttonSelector)) {
+			jumpToNotice(event);
+			return;
+		}
+
 		if (event.target && event.target.closest('[data-gstore-shipping-change], .Gstore-checkout-item-shipping-option')) {
 			scheduleEnhance();
 		}

@@ -2703,7 +2703,20 @@ const subtotal = decodeHtmlEntities(stripHtmlText(it.subtotal || ''));
 		return notices.length === 1 ? notices[0] : '';
 	}
 
+	function getQuoteNoticeButtonLabel() {
+		return window.gstoreFreightQuoteNotice && window.gstoreFreightQuoteNotice.buttonLabel
+			? String(window.gstoreFreightQuoteNotice.buttonLabel)
+			: 'Ver aviso';
+	}
+
+	function getQuoteNoticeJumpButtonHtml() {
+		return `<button type="button" class="gstore-shipping-quote-jump gstore-shipping-quote-jump--value" data-gstore-quote-notice-jump="1">${escapeHtml(getQuoteNoticeButtonLabel())}</button>`;
+	}
+
 	function getShippingTotalValueHtml(mode, value, notice) {
+		if (notice) {
+			return getQuoteNoticeJumpButtonHtml();
+		}
 		if (normalizeRateMode(mode) === 'other') {
 			return '-';
 		}
