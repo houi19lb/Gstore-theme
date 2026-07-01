@@ -113,7 +113,7 @@ if ( ! function_exists( 'gstore_get_single_product_brand_buybox_data' ) ) :
 
 			$image_html = wp_get_attachment_image(
 				$image_id,
-				'medium',
+				'thumbnail',
 				false,
 				array(
 					'class'    => 'Gstore-single-product__brand-logo',

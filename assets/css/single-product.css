@@ -3002,7 +3002,7 @@ body.single-product .onsale {
 
 .Gstore-single-product__brand-logo-link {
 	width: 100%;
-	min-height: 48px;
+	height: 48px;
 	display: flex;
 	align-items: center;
 	justify-content: center;
@@ -3011,10 +3011,9 @@ body.single-product .onsale {
 
 .Gstore-single-product__brand-logo {
 	display: block;
-	width: auto;
-	height: auto;
-	max-width: 136px;
-	max-height: 46px;
+	width: 46px;
+	height: 46px;
+	aspect-ratio: 1 / 1;
 	object-fit: contain;
 }
 
@@ -3092,12 +3091,12 @@ body.single-product .onsale {
 	}
 
 	.Gstore-single-product__brand-logo-link {
-		min-height: 38px;
+		height: 38px;
 	}
 
 	.buybox-header.has-brand .Gstore-single-product__brand-logo {
-		max-width: 92px;
-		max-height: 34px;
+		width: 34px;
+		height: 34px;
 	}
 
 	.Gstore-single-product__brand-badge {
