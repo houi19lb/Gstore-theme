@@ -5397,8 +5397,12 @@ function gstore_gone_product_build_context( $context ) {
 	$tokens       = gstore_gone_product_url_tokens( $slug );
 	$catalog_url  = function_exists( 'gstore_get_catalog_url' ) ? gstore_get_catalog_url() : home_url( '/catalogo/' );
 	$support_url  = home_url( '/atendimento/' );
-	$brand        = gstore_gone_product_find_public_term( $slug, gstore_gone_product_brand_taxonomies() );
-	$category     = gstore_gone_product_find_public_term( $slug, array( 'product_cat' ) );
+	$brand          = gstore_gone_product_find_public_term( $slug, gstore_gone_product_brand_taxonomies() );
+	$category       = gstore_gone_product_find_public_term( $slug, array( 'product_cat' ) );
+	$broad_category = gstore_gone_product_find_broad_product_category( $slug );
+	if ( ! empty( $broad_category ) ) {
+		$category = $broad_category;
+	}
 	$search       = gstore_gone_product_search_query( $tokens, $brand, $category );
 	$fallback_url = '' !== $search ? add_query_arg( array( 's' => $search ), $catalog_url ) : $catalog_url;
 
@@ -5573,6 +5577,85 @@ function gstore_gone_product_find_public_term( $slug, array $taxonomies ) {
 	return $best;
 }
 
+function gstore_gone_product_find_broad_product_category( $slug ) {
+	if ( ! taxonomy_exists( 'product_cat' ) ) {
+		return array();
+	}
+
+	$haystack = gstore_gone_product_normalize_string( $slug );
+	// ponytail: obvious product-type nouns only; extend this map when another category pattern appears.
+	$groups = array(
+		array( array( 'fuzil', 'fuzis', 'rifle', 'rifles' ), array( 'fuzis', 'fuzil', 'fuzis e rifles', 'fuzis rifles', 'rifles' ) ),
+		array( array( 'pistola', 'pistolas' ), array( 'pistolas', 'pistola' ) ),
+		array( array( 'revolver', 'revolveres' ), array( 'revolveres', 'revólveres', 'revolver', 'revólver' ) ),
+		array( array( 'carabina', 'carabinas' ), array( 'carabinas', 'carabina' ) ),
+	);
+
+	foreach ( $groups as $group ) {
+		foreach ( $group[0] as $needle ) {
+			if ( false !== strpos( $haystack, $needle ) ) {
+				return gstore_gone_product_find_product_category_by_aliases( $group[1] );
+			}
+		}
+	}
+
+	return array();
+}
+
+function gstore_gone_product_find_product_category_by_aliases( array $aliases ) {
+	$wanted = array_values( array_unique( array_filter( array_map( 'gstore_gone_product_normalize_string', $aliases ) ) ) );
+	if ( empty( $wanted ) ) {
+		return array();
+	}
+
+	foreach ( $aliases as $alias ) {
+		$term = get_term_by( 'slug', sanitize_title( $alias ), 'product_cat' );
+		if ( $term instanceof WP_Term ) {
+			return gstore_gone_product_term_context( $term );
+		}
+	}
+
+	$terms = get_terms(
+		array(
+			'taxonomy'   => 'product_cat',
+			'hide_empty' => false,
+			'number'     => 250,
+		)
+	);
+	if ( is_wp_error( $terms ) ) {
+		return array();
+	}
+
+	foreach ( $terms as $term ) {
+		if (
+			$term instanceof WP_Term
+			&& (
+				in_array( gstore_gone_product_normalize_string( $term->name ), $wanted, true )
+				|| in_array( gstore_gone_product_normalize_string( $term->slug ), $wanted, true )
+			)
+		) {
+			return gstore_gone_product_term_context( $term );
+		}
+	}
+
+	return array();
+}
+
+function gstore_gone_product_term_context( WP_Term $term ) {
+	$url = get_term_link( $term );
+	if ( is_wp_error( $url ) ) {
+		$url = '';
+	}
+
+	return array(
+		'term_id'  => (int) $term->term_id,
+		'taxonomy' => $term->taxonomy,
+		'slug'     => $term->slug,
+		'name'     => $term->name,
+		'url'      => $url,
+	);
+}
+
 function gstore_gone_product_suggestions( $slug, $catalog_url, array $brand, array $category ) {
 	$suggestions = array();
 
@@ -5639,20 +5722,26 @@ function gstore_gone_product_related_product_ids( array $tokens, array $brand, a
 	$limit        = 4;
 	$query_limit  = 16;
 	$search_query = gstore_gone_product_search_query( $tokens, $brand, $category );
-	$tax_query    = array( 'relation' => 'OR' );
-
-	foreach ( array( $brand, $category ) as $term ) {
-		if ( empty( $term['term_id'] ) || empty( $term['taxonomy'] ) ) {
-			continue;
-		}
-		$tax_query[] = array(
-			'taxonomy' => $term['taxonomy'],
-			'field'    => 'term_id',
-			'terms'    => array( (int) $term['term_id'] ),
-		);
+	$brand_filter = empty( $brand['term_id'] ) || empty( $brand['taxonomy'] ) ? array() : array(
+		'taxonomy' => $brand['taxonomy'],
+		'field'    => 'term_id',
+		'terms'    => array( (int) $brand['term_id'] ),
+	);
+	$category_filter = empty( $category['term_id'] ) || empty( $category['taxonomy'] ) ? array() : array(
+		'taxonomy' => $category['taxonomy'],
+		'field'    => 'term_id',
+		'terms'    => array( (int) $category['term_id'] ),
+	);
+	$tax_query = array();
+	if ( ! empty( $category_filter ) && ! empty( $brand_filter ) ) {
+		$tax_query = array( 'relation' => 'AND', $category_filter, $brand_filter );
+	} elseif ( ! empty( $category_filter ) ) {
+		$tax_query = array( $category_filter );
+	} elseif ( ! empty( $brand_filter ) ) {
+		$tax_query = array( $brand_filter );
 	}
 
-	if ( '' === $search_query && 1 === count( $tax_query ) ) {
+	if ( '' === $search_query && empty( $tax_query ) ) {
 		return array();
 	}
 
@@ -5667,15 +5756,16 @@ function gstore_gone_product_related_product_ids( array $tokens, array $brand, a
 	if ( '' !== $search_query ) {
 		$args['s'] = $search_query;
 	}
-	if ( count( $tax_query ) > 1 ) {
+	if ( ! empty( $tax_query ) ) {
 		$args['tax_query'] = $tax_query;
 	}
 
 	$primary_candidates = get_posts( $args );
 	$ids                = gstore_gone_product_append_public_card_product_ids( array(), $primary_candidates, $limit );
-	if ( count( $ids ) < $limit && count( $tax_query ) > 1 ) {
+	if ( count( $ids ) < $limit && ! empty( $category_filter ) ) {
 		$fallback_args = $args;
 		unset( $fallback_args['s'] );
+		$fallback_args['tax_query'] = array( $category_filter );
 		if ( ! empty( $primary_candidates ) ) {
 			$fallback_args['post__not_in'] = array_values( array_unique( array_filter( array_map( 'intval', $primary_candidates ) ) ) );
 		}
