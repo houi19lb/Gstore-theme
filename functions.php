@@ -5675,7 +5675,72 @@ function gstore_gone_product_related_product_ids( array $tokens, array $brand, a
 		$ids = get_posts( $args );
 	}
 
-	return array_values( array_map( 'intval', $ids ) );
+	$ids = array_values(
+		array_filter(
+			array_map( 'intval', $ids ),
+			'gstore_gone_product_is_public_card_product'
+		)
+	);
+
+	return array_slice( $ids, 0, 4 );
+}
+
+function gstore_gone_product_is_public_card_product( $product_id ) {
+	$product_id = absint( $product_id );
+	if ( $product_id <= 0 || 'publish' !== get_post_status( $product_id ) || ! function_exists( 'wc_get_product' ) ) {
+		return false;
+	}
+
+	$product = wc_get_product( $product_id );
+	if ( ! $product || 'publish' !== $product->get_status() || ! $product->is_visible() ) {
+		return false;
+	}
+
+	return ! gstore_gone_product_permalink_is_gone( get_permalink( $product_id ) );
+}
+
+function gstore_gone_product_permalink_is_gone( $permalink ) {
+	$service = '\\GStore\\Services\\Migration_Redirects_Service';
+	if (
+		! is_string( $permalink )
+		|| '' === $permalink
+		|| ! class_exists( $service )
+		|| ! method_exists( $service, 'get_gone_paths' )
+		|| ! method_exists( $service, 'normalize_path' )
+	) {
+		return false;
+	}
+
+	$path = wp_parse_url( $permalink, PHP_URL_PATH );
+	if ( ! is_string( $path ) || '' === $path ) {
+		return false;
+	}
+
+	$gone_paths      = $service::get_gone_paths();
+	$normalized_path = $service::normalize_path( $path );
+	$request_key     = method_exists( $service, 'normalize_request_key' ) ? $service::normalize_request_key( $permalink ) : $normalized_path;
+	if ( '' === $normalized_path || ! is_array( $gone_paths ) || empty( $gone_paths ) ) {
+		return false;
+	}
+
+	if (
+		isset( $gone_paths[ $normalized_path ] )
+		|| ( '' !== $request_key && isset( $gone_paths[ $request_key ] ) )
+	) {
+		return true;
+	}
+
+	foreach ( $gone_paths as $stored_key => $entry ) {
+		$entry = is_array( $entry ) ? $entry : array();
+		foreach ( array( $stored_key, $entry['path'] ?? '', $entry['base_path'] ?? '' ) as $candidate ) {
+			$candidate_path = $service::normalize_path( (string) $candidate );
+			if ( '' !== $candidate_path && $candidate_path === $normalized_path ) {
+				return true;
+			}
+		}
+	}
+
+	return false;
 }
 
 function gstore_gone_product_slug_matches_any( $slug, array $needles ) {

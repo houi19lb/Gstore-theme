@@ -20,8 +20,12 @@ if ( function_exists( 'wc_get_product' ) ) {
 		array_filter(
 			$related_products,
 			static function( $product_id ) {
+				if ( function_exists( 'gstore_gone_product_is_public_card_product' ) ) {
+					return gstore_gone_product_is_public_card_product( $product_id );
+				}
+
 				$product = wc_get_product( $product_id );
-				return $product && $product->is_visible();
+				return 'publish' === get_post_status( $product_id ) && $product && 'publish' === $product->get_status() && $product->is_visible();
 			}
 		)
 	);
