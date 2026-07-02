@@ -4,6 +4,10 @@
 	padding: clamp(28px, 5vw, 64px) 0;
 }
 
+.gstore-gone-product-page .wp-site-blocks > .gstore-gone-product {
+	margin-block-start: 0;
+}
+
 .gstore-gone-product *,
 .gstore-gone-product *::before,
 .gstore-gone-product *::after {

@@ -38,6 +38,24 @@ $icons = array(
 );
 ?>
 
+<!doctype html>
+<html <?php language_attributes(); ?>>
+<head>
+	<meta charset="<?php bloginfo( 'charset' ); ?>">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<?php wp_head(); ?>
+</head>
+
+<body <?php body_class( 'gstore-gone-product-page' ); ?>>
+<?php wp_body_open(); ?>
+
+<div class="wp-site-blocks">
+	<?php
+	if ( function_exists( 'do_blocks' ) ) {
+		echo do_blocks( '<!-- wp:template-part {"slug":"header"} /-->' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+	}
+	?>
+
 <main class="gstore-gone-product" id="conteudo">
 	<div class="gstore-gone-product__wrap">
 		<section class="gstore-gone-product__hero" aria-labelledby="gstore-gone-title">
@@ -161,3 +179,14 @@ $icons = array(
 		</section>
 	</div>
 </main>
+
+	<?php
+	if ( function_exists( 'do_blocks' ) ) {
+		echo do_blocks( '<!-- wp:template-part {"slug":"footer"} /-->' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+	}
+	?>
+</div>
+
+<?php wp_footer(); ?>
+</body>
+</html>
