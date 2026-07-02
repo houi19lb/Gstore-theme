@@ -13,7 +13,6 @@ $support_url      = ! empty( $context['support_url'] ) ? $context['support_url']
 $alternatives_url = ! empty( $context['alternatives_url'] ) ? $context['alternatives_url'] : $catalog_url;
 $product_label    = ! empty( $context['product_label'] ) ? $context['product_label'] : __( 'Produto consultado', 'gstore' );
 $suggestions      = ! empty( $context['suggestions'] ) && is_array( $context['suggestions'] ) ? $context['suggestions'] : array();
-$quick_links      = ! empty( $context['quick_links'] ) && is_array( $context['quick_links'] ) ? $context['quick_links'] : array();
 $related_products = ! empty( $context['related_products'] ) && is_array( $context['related_products'] ) ? array_filter( array_map( 'absint', $context['related_products'] ) ) : array();
 
 if ( function_exists( 'wc_get_product' ) ) {
@@ -119,7 +118,7 @@ $icons = array(
 						<?php esc_html_e( 'Ver alternativas compatíveis', 'gstore' ); ?>
 						<i class="fa-solid fa-chevron-right" aria-hidden="true"></i>
 					</a>
-					<a class="Gstore-btn Gstore-btn--outline" href="<?php echo esc_url( $support_url ); ?>">
+					<a class="Gstore-btn Gstore-btn--outline gstore-gone-product__support-btn" href="<?php echo esc_url( $support_url ); ?>">
 						<i class="fa-solid fa-headset" aria-hidden="true"></i>
 						<?php esc_html_e( 'Chamar consultor', 'gstore' ); ?>
 					</a>
@@ -127,27 +126,8 @@ $icons = array(
 			</aside>
 		</section>
 
-		<section class="gstore-gone-product__lower">
-			<?php if ( ! empty( $quick_links ) ) : ?>
-				<div class="gstore-gone-product__quick">
-					<h2><?php esc_html_e( 'Caminhos rápidos', 'gstore' ); ?></h2>
-					<div class="gstore-gone-product__quick-grid">
-						<?php foreach ( $quick_links as $link ) : ?>
-							<?php
-							$icon_key   = ! empty( $link['icon'] ) ? (string) $link['icon'] : 'grid';
-							$icon_class = ! empty( $icons[ $icon_key ] ) ? $icons[ $icon_key ] : $icons['grid'];
-							?>
-							<a class="gstore-gone-product__quick-card" href="<?php echo esc_url( $link['url'] ); ?>">
-								<i class="<?php echo esc_attr( $icon_class ); ?>" aria-hidden="true"></i>
-								<strong><?php echo esc_html( $link['label'] ); ?></strong>
-								<span><?php echo esc_html( $link['description'] ); ?></span>
-							</a>
-						<?php endforeach; ?>
-					</div>
-				</div>
-			<?php endif; ?>
-
-			<?php if ( ! empty( $related_products ) && function_exists( 'wc_get_template_part' ) && function_exists( 'wc_get_product' ) ) : ?>
+		<?php if ( ! empty( $related_products ) && function_exists( 'wc_get_template_part' ) && function_exists( 'wc_get_product' ) ) : ?>
+			<section class="gstore-gone-product__lower">
 				<div class="gstore-gone-product__products">
 					<div class="gstore-gone-product__section-head">
 						<h2><?php esc_html_e( 'Produtos próximos', 'gstore' ); ?></h2>
@@ -175,8 +155,8 @@ $icons = array(
 						</ul>
 					</div>
 				</div>
-			<?php endif; ?>
-		</section>
+			</section>
+		<?php endif; ?>
 	</div>
 </main>
 

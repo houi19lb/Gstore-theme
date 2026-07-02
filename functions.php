@@ -5399,8 +5399,7 @@ function gstore_gone_product_build_context( $context ) {
 	$support_url  = home_url( '/atendimento/' );
 	$brand        = gstore_gone_product_find_public_term( $slug, gstore_gone_product_brand_taxonomies() );
 	$category     = gstore_gone_product_find_public_term( $slug, array( 'product_cat' ) );
-	$caliber      = gstore_gone_product_detect_caliber( $slug, $catalog_url );
-	$search       = gstore_gone_product_search_query( $tokens, $brand, $category, $caliber );
+	$search       = gstore_gone_product_search_query( $tokens, $brand, $category );
 	$fallback_url = '' !== $search ? add_query_arg( array( 's' => $search ), $catalog_url ) : $catalog_url;
 
 	$context['slug']              = $slug;
@@ -5409,11 +5408,9 @@ function gstore_gone_product_build_context( $context ) {
 	$context['support_url']       = $support_url;
 	$context['brand']             = $brand;
 	$context['category']          = $category;
-	$context['caliber']           = $caliber;
 	$context['alternatives_url']  = ! empty( $category['url'] ) ? $category['url'] : ( ! empty( $brand['url'] ) ? $brand['url'] : $fallback_url );
-	$context['suggestions']       = gstore_gone_product_suggestions( $slug, $catalog_url, $brand, $category, $caliber );
-	$context['quick_links']       = gstore_gone_product_quick_links( $catalog_url, $brand, $category );
-	$context['related_products']  = gstore_gone_product_related_product_ids( $tokens, $brand, $category, $caliber );
+	$context['suggestions']       = gstore_gone_product_suggestions( $slug, $catalog_url, $brand, $category );
+	$context['related_products']  = gstore_gone_product_related_product_ids( $tokens, $brand, $category );
 
 	return $context;
 }
@@ -5576,42 +5573,7 @@ function gstore_gone_product_find_public_term( $slug, array $taxonomies ) {
 	return $best;
 }
 
-function gstore_gone_product_detect_caliber( $slug, $catalog_url ) {
-	$normalized = strtolower( remove_accents( (string) $slug ) );
-
-	if ( preg_match( '/(?:^|[-_])308(?:[-_]|$)|\.308/', $normalized ) ) {
-		return array(
-			'label'  => '.308 / 7,62',
-			'search' => '.308 7,62',
-			'url'    => add_query_arg( array( 's' => '.308 7,62' ), $catalog_url ),
-		);
-	}
-
-	if ( preg_match( '/7[-_.,]?62|762mm|762/', $normalized ) ) {
-		return array(
-			'label'  => '7,62',
-			'search' => '7,62',
-			'url'    => add_query_arg( array( 's' => '7,62' ), $catalog_url ),
-		);
-	}
-
-	if ( preg_match( '/(?:cal|calibre)[-_ ]*([0-9]{1,3}(?:[._,-][0-9]{1,2})?)(mm)?/i', $normalized, $match ) ) {
-		$label = str_replace( array( '_', '-' ), ',', $match[1] );
-		if ( ! empty( $match[2] ) ) {
-			$label .= 'mm';
-		}
-
-		return array(
-			'label'  => $label,
-			'search' => $label,
-			'url'    => add_query_arg( array( 's' => $label ), $catalog_url ),
-		);
-	}
-
-	return array();
-}
-
-function gstore_gone_product_suggestions( $slug, $catalog_url, array $brand, array $category, array $caliber ) {
+function gstore_gone_product_suggestions( $slug, $catalog_url, array $brand, array $category ) {
 	$suggestions = array();
 
 	if ( ! empty( $brand['name'] ) && ! empty( $brand['url'] ) ) {
@@ -5623,17 +5585,6 @@ function gstore_gone_product_suggestions( $slug, $catalog_url, array $brand, arr
 			),
 			'url'   => $brand['url'],
 			'icon'  => 'tag',
-		);
-	}
-	if ( ! empty( $caliber['label'] ) && ! empty( $caliber['url'] ) ) {
-		$suggestions[] = array(
-			'label' => sprintf(
-				/* translators: %s: caliber. */
-				__( 'Calibre %s', 'gstore' ),
-				$caliber['label']
-			),
-			'url'   => $caliber['url'],
-			'icon'  => 'target',
 		);
 	}
 	if ( ! empty( $category['name'] ) && ! empty( $category['url'] ) ) {
@@ -5649,40 +5600,16 @@ function gstore_gone_product_suggestions( $slug, $catalog_url, array $brand, arr
 			'icon'  => 'category',
 		);
 	}
+	$suggestions[] = array(
+		'label' => __( 'Catálogo completo', 'gstore' ),
+		'url'   => $catalog_url,
+		'icon'  => 'grid',
+	);
 
 	return $suggestions;
 }
 
-function gstore_gone_product_quick_links( $catalog_url, array $brand, array $category ) {
-	return array(
-		array(
-			'label'       => __( 'Catálogo completo', 'gstore' ),
-			'description' => __( 'Ver todos os produtos', 'gstore' ),
-			'url'         => $catalog_url,
-			'icon'        => 'grid',
-		),
-		array(
-			'label'       => ! empty( $brand['name'] ) ? $brand['name'] : __( 'Marcas', 'gstore' ),
-			'description' => ! empty( $brand['name'] ) ? __( 'Ver todos da marca', 'gstore' ) : __( 'Explorar marcas da loja', 'gstore' ),
-			'url'         => ! empty( $brand['url'] ) ? $brand['url'] : $catalog_url,
-			'icon'        => 'tag',
-		),
-		array(
-			'label'       => ! empty( $category['name'] ) ? $category['name'] : __( 'Armas de Fogo', 'gstore' ),
-			'description' => ! empty( $category['name'] ) ? __( 'Explorar categoria', 'gstore' ) : __( 'Explorar categorias', 'gstore' ),
-			'url'         => ! empty( $category['url'] ) ? $category['url'] : add_query_arg( array( 's' => 'armas de fogo' ), $catalog_url ),
-			'icon'        => 'category',
-		),
-		array(
-			'label'       => __( 'Minha Primeira Arma', 'gstore' ),
-			'description' => __( 'Guia e indicações para iniciantes', 'gstore' ),
-			'url'         => home_url( '/minha-primeira-arma/' ),
-			'icon'        => 'book',
-		),
-	);
-}
-
-function gstore_gone_product_search_query( array $tokens, array $brand, array $category, array $caliber ) {
+function gstore_gone_product_search_query( array $tokens, array $brand, array $category ) {
 	$ignored = array( 'produto', 'produtos', 'fuzil', 'rifle', 'rifles', 'cano', 'cal', 'calibre', 'win', 'arma', 'armas', 'longas' );
 	$terms   = array();
 
@@ -5692,10 +5619,6 @@ function gstore_gone_product_search_query( array $tokens, array $brand, array $c
 	if ( ! empty( $category['name'] ) ) {
 		$terms[] = $category['name'];
 	}
-	if ( ! empty( $caliber['search'] ) ) {
-		$terms[] = $caliber['search'];
-	}
-
 	foreach ( $tokens as $token ) {
 		if ( strlen( $token ) < 3 || in_array( $token, $ignored, true ) || ctype_digit( $token ) ) {
 			continue;
@@ -5708,12 +5631,12 @@ function gstore_gone_product_search_query( array $tokens, array $brand, array $c
 	return trim( implode( ' ', array_slice( $terms, 0, 5 ) ) );
 }
 
-function gstore_gone_product_related_product_ids( array $tokens, array $brand, array $category, array $caliber ) {
+function gstore_gone_product_related_product_ids( array $tokens, array $brand, array $category ) {
 	if ( ! post_type_exists( 'product' ) ) {
 		return array();
 	}
 
-	$search_query = gstore_gone_product_search_query( $tokens, $brand, $category, $caliber );
+	$search_query = gstore_gone_product_search_query( $tokens, $brand, $category );
 	$tax_query    = array( 'relation' => 'OR' );
 
 	foreach ( array( $brand, $category ) as $term ) {
