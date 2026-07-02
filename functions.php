@@ -5636,6 +5636,8 @@ function gstore_gone_product_related_product_ids( array $tokens, array $brand, a
 		return array();
 	}
 
+	$limit        = 4;
+	$query_limit  = 16;
 	$search_query = gstore_gone_product_search_query( $tokens, $brand, $category );
 	$tax_query    = array( 'relation' => 'OR' );
 
@@ -5657,7 +5659,7 @@ function gstore_gone_product_related_product_ids( array $tokens, array $brand, a
 	$args = array(
 		'post_type'           => 'product',
 		'post_status'         => 'publish',
-		'posts_per_page'      => 4,
+		'posts_per_page'      => $query_limit,
 		'fields'              => 'ids',
 		'no_found_rows'       => true,
 		'ignore_sticky_posts' => true,
@@ -5669,20 +5671,37 @@ function gstore_gone_product_related_product_ids( array $tokens, array $brand, a
 		$args['tax_query'] = $tax_query;
 	}
 
-	$ids = get_posts( $args );
-	if ( empty( $ids ) && count( $tax_query ) > 1 ) {
-		unset( $args['s'] );
-		$ids = get_posts( $args );
+	$primary_candidates = get_posts( $args );
+	$ids                = gstore_gone_product_append_public_card_product_ids( array(), $primary_candidates, $limit );
+	if ( count( $ids ) < $limit && count( $tax_query ) > 1 ) {
+		$fallback_args = $args;
+		unset( $fallback_args['s'] );
+		if ( ! empty( $primary_candidates ) ) {
+			$fallback_args['post__not_in'] = array_values( array_unique( array_filter( array_map( 'intval', $primary_candidates ) ) ) );
+		}
+
+		$ids = gstore_gone_product_append_public_card_product_ids( $ids, get_posts( $fallback_args ), $limit );
 	}
 
-	$ids = array_values(
-		array_filter(
-			array_map( 'intval', $ids ),
-			'gstore_gone_product_is_public_card_product'
-		)
-	);
+	return $ids;
+}
 
-	return array_slice( $ids, 0, 4 );
+function gstore_gone_product_append_public_card_product_ids( array $result, array $candidates, $limit ) {
+	$limit = max( 1, absint( $limit ) );
+
+	foreach ( $candidates as $candidate_id ) {
+		$candidate_id = absint( $candidate_id );
+		if ( $candidate_id <= 0 || in_array( $candidate_id, $result, true ) || ! gstore_gone_product_is_public_card_product( $candidate_id ) ) {
+			continue;
+		}
+
+		$result[] = $candidate_id;
+		if ( count( $result ) >= $limit ) {
+			break;
+		}
+	}
+
+	return $result;
 }
 
 function gstore_gone_product_is_public_card_product( $product_id ) {
