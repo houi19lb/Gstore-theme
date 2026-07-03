@@ -2832,7 +2832,8 @@ body.woocommerce-checkout .Gstore-checkout-steps-shell {
 	flex-wrap: wrap;
 }
 
-#gstore-blu-checkout-modal .Gstore-blu-checkout-modal__open {
+#gstore-blu-checkout-modal .Gstore-blu-checkout-modal__open,
+#gstore-blu-checkout-modal .Gstore-blu-checkout-modal__support {
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
@@ -2857,7 +2858,9 @@ body.woocommerce-checkout .Gstore-checkout-steps-shell {
 }
 
 #gstore-blu-checkout-modal .Gstore-blu-checkout-modal__open:hover,
-#gstore-blu-checkout-modal .Gstore-blu-checkout-modal__open:focus {
+#gstore-blu-checkout-modal .Gstore-blu-checkout-modal__open:focus,
+#gstore-blu-checkout-modal .Gstore-blu-checkout-modal__support:hover,
+#gstore-blu-checkout-modal .Gstore-blu-checkout-modal__support:focus {
 	background: #f9fafb;
 	color: var(--gstore-foreground);
 	border-color: var(--gstore-foreground);
@@ -2866,14 +2869,16 @@ body.woocommerce-checkout .Gstore-checkout-steps-shell {
 	transform: none;
 }
 
-#gstore-blu-checkout-modal .Gstore-blu-checkout-modal__open:active {
+#gstore-blu-checkout-modal .Gstore-blu-checkout-modal__open:active,
+#gstore-blu-checkout-modal .Gstore-blu-checkout-modal__support:active {
 	background: #f3f4f6;
 	color: var(--gstore-foreground);
 	border-color: var(--gstore-foreground);
 	transform: none;
 }
 
-#gstore-blu-checkout-modal .Gstore-blu-checkout-modal__open:focus-visible {
+#gstore-blu-checkout-modal .Gstore-blu-checkout-modal__open:focus-visible,
+#gstore-blu-checkout-modal .Gstore-blu-checkout-modal__support:focus-visible {
 	outline: 2px solid var(--gstore-foreground);
 	outline-offset: 2px;
 }
@@ -2883,6 +2888,20 @@ body.woocommerce-checkout .Gstore-checkout-steps-shell {
 	color: #6b7280;
 	font-size: var(--gstore-font-size-sm);
 	border-bottom: 1px solid #f3f4f6;
+}
+
+.Gstore-blu-checkout-modal__support-message {
+	padding: 8px 16px;
+	color: #374151;
+	font-size: var(--gstore-font-size-sm);
+	line-height: 1.35;
+	background: #f9fafb;
+	border-bottom: 1px solid #f3f4f6;
+	overflow-wrap: anywhere;
+}
+
+.Gstore-blu-checkout-modal__support-message strong {
+	color: #111827;
 }
 
 .Gstore-blu-checkout-modal__frame-wrap {
@@ -2919,9 +2938,11 @@ body.gstore-blu-checkout-modal-open {
 
 	.Gstore-blu-checkout-modal__actions {
 		width: 100%;
+		align-items: stretch;
 	}
 
-	#gstore-blu-checkout-modal .Gstore-blu-checkout-modal__open {
+	#gstore-blu-checkout-modal .Gstore-blu-checkout-modal__open,
+	#gstore-blu-checkout-modal .Gstore-blu-checkout-modal__support {
 		width: 100%;
 		min-height: 48px;
 		padding: 12px 14px;

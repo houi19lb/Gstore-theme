@@ -10368,6 +10368,11 @@ function gstore_enqueue_checkout_assets() {
 			'version'          => 1,
 			'action'           => 'gstore_blu_resume_payment_link',
 		) ) . ';';
+		$checkout_inline .= 'window.gstoreCheckout.bluSupport = ' . wp_json_encode( array(
+			'telegramUrl'            => function_exists( 'gstore_get_telegram_link' ) ? esc_url_raw( gstore_get_telegram_link() ) : '',
+			'whatsappUrl'            => function_exists( 'gstore_get_whatsapp_link' ) ? esc_url_raw( gstore_get_whatsapp_link() ) : '',
+			'supportMessageTemplate' => __( 'Pedido #{order_id} - Estou com problema com o pagamento.', 'gstore' ),
+		) ) . ';';
 		// Garante gstoreCartSummary (resumo do carrinho) com nonce válido para evitar 403 no admin-ajax.
 		$cart_summary_nonce = wp_create_nonce( 'gstore_cart_summary' );
 		$checkout_inline .= 'window.gstoreCartSummary = window.gstoreCartSummary || { ajaxUrl: ' . wp_json_encode( admin_url( 'admin-ajax.php' ) ) . ', nonce: ' . wp_json_encode( $cart_summary_nonce ) . ' };';

@@ -6142,6 +6142,91 @@ function getInstallmentDisplayTotals(summaryData) {
 		bluRedirectInProgress = false;
 	}
 
+	function getBluSupportConfig() {
+		return (window.gstoreCheckout && window.gstoreCheckout.bluSupport && typeof window.gstoreCheckout.bluSupport === 'object')
+			? window.gstoreCheckout.bluSupport
+			: {};
+	}
+
+	function getBluSupportOrderId() {
+		const state = getBluResumeState();
+		const orderId = state ? parseInt(state.order_id, 10) : 0;
+		return orderId > 0 ? String(orderId) : '';
+	}
+
+	function buildBluSupportMessage() {
+		const cfg = getBluSupportConfig();
+		const orderId = getBluSupportOrderId();
+		const fallback = 'Estou com problema com o pagamento.';
+		const template = String(cfg.supportMessageTemplate || 'Pedido #{order_id} - ' + fallback);
+
+		if (orderId) {
+			return template.replace(/\{order_id\}/g, orderId).trim();
+		}
+
+		return template
+			.replace(/Pedido\s+#?\{order_id\}\s*-\s*/i, '')
+			.replace(/#?\{order_id\}/g, '')
+			.trim() || fallback;
+	}
+
+	function addBluSupportMessageToWhatsappUrl(url, message) {
+		if (!url) return '';
+		if (/([?&])text=/.test(url)) return url;
+		return url + (url.indexOf('?') === -1 ? '?' : '&') + 'text=' + encodeURIComponent(message);
+	}
+
+	function resolveBluSupportChannel(message) {
+		const cfg = getBluSupportConfig();
+		const telegramUrl = String(cfg.telegramUrl || '').trim();
+		const whatsappUrl = String(cfg.whatsappUrl || '').trim();
+
+		if (telegramUrl) {
+			return { type: 'telegram', url: telegramUrl };
+		}
+
+		if (whatsappUrl) {
+			return { type: 'whatsapp', url: addBluSupportMessageToWhatsappUrl(whatsappUrl, message) };
+		}
+
+		return null;
+	}
+
+	function setBluSupportElementHidden($el, hidden) {
+		if (!$el || !$el.length) return;
+		if (hidden) {
+			$el.attr('hidden', 'hidden').attr('aria-hidden', 'true');
+		} else {
+			$el.removeAttr('hidden').attr('aria-hidden', 'false');
+		}
+	}
+
+	function updateBluSupportAction($modal) {
+		const $support = $modal.find('.Gstore-blu-checkout-modal__support');
+		const $message = $modal.find('.Gstore-blu-checkout-modal__support-message');
+		const supportMessage = buildBluSupportMessage();
+		const channel = resolveBluSupportChannel(supportMessage);
+
+		if (!channel) {
+			setBluSupportElementHidden($support, true);
+			setBluSupportElementHidden($message, true);
+			$support.attr('href', '#');
+			$message.empty();
+			return;
+		}
+
+		$support.attr('href', channel.url);
+		setBluSupportElementHidden($support, false);
+
+		if (channel.type === 'telegram') {
+			$message.html('<strong>Mensagem:</strong> ' + escapeHtml(supportMessage));
+			setBluSupportElementHidden($message, false);
+		} else {
+			$message.empty();
+			setBluSupportElementHidden($message, true);
+		}
+	}
+
 	function ensureBluCheckoutModal() {
 		if ($('#gstore-blu-checkout-modal').length) return;
 
@@ -6160,11 +6245,15 @@ function getInstallmentDisplayTotals(summaryData) {
 							<a class="Gstore-btn Gstore-btn--submit Gstore-blu-checkout-modal__open" href="#" target="_blank" rel="noopener noreferrer">
 								Abrir em nova aba
 							</a>
+							<a class="Gstore-btn Gstore-btn--submit Gstore-blu-checkout-modal__support" href="#" target="_blank" rel="noopener noreferrer" hidden>
+								Falar com atendente
+							</a>
 						</div>
 					</div>
 					<div class="Gstore-blu-checkout-modal__hint" aria-live="polite">
 						Se o checkout não carregar aqui, use “Abrir em nova aba”.
 					</div>
+					<div class="Gstore-blu-checkout-modal__support-message" aria-live="polite" hidden></div>
 					<div class="Gstore-blu-checkout-modal__frame-wrap">
 						<iframe class="Gstore-blu-checkout-modal__frame" title="Checkout Blu" loading="eager" referrerpolicy="no-referrer-when-downgrade" allow="payment; clipboard-write" allowpaymentrequest></iframe>
 					</div>
@@ -6205,6 +6294,7 @@ function getInstallmentDisplayTotals(summaryData) {
 		const $open = $modal.find('.Gstore-blu-checkout-modal__open');
 
 		$open.attr('href', url);
+		updateBluSupportAction($modal);
 
 		// Reset para evitar manter estado antigo
 		$iframe.attr('src', 'about:blank');
