@@ -124,7 +124,7 @@ $icons = array(
 					</a>
 					<a class="Gstore-btn Gstore-btn--outline gstore-gone-product__support-btn" href="<?php echo esc_url( $support_url ); ?>">
 						<i class="fa-solid fa-headset" aria-hidden="true"></i>
-						<?php esc_html_e( 'Chamar consultor', 'gstore' ); ?>
+						<?php esc_html_e( 'Falar com a atendente', 'gstore' ); ?>
 					</a>
 				</div>
 			</aside>
