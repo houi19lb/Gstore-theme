@@ -241,8 +241,8 @@
 
 	.Gstore-mobile-drawer__nav .Gstore-nav .gstore-catalog-mega__toggle,
 	.Gstore-mobile-drawer__nav .gstore-catalog-mega__toggle {
-		flex: 0 0 62px;
-		width: 62px;
+		flex: 0 0 78px;
+		width: 78px;
 		min-height: 48px;
 		border-left: 1px solid var(--gstore-color-white-10, rgba(255, 255, 255, 0.1));
 		color: var(--gstore-color-text-light, #fff);
