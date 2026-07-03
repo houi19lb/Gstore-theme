@@ -6203,28 +6203,17 @@ function getInstallmentDisplayTotals(summaryData) {
 
 	function updateBluSupportAction($modal) {
 		const $support = $modal.find('.Gstore-blu-checkout-modal__support');
-		const $message = $modal.find('.Gstore-blu-checkout-modal__support-message');
 		const supportMessage = buildBluSupportMessage();
 		const channel = resolveBluSupportChannel(supportMessage);
 
 		if (!channel) {
 			setBluSupportElementHidden($support, true);
-			setBluSupportElementHidden($message, true);
 			$support.attr('href', '#');
-			$message.empty();
 			return;
 		}
 
 		$support.attr('href', channel.url);
 		setBluSupportElementHidden($support, false);
-
-		if (channel.type === 'telegram') {
-			$message.html('<strong>Mensagem:</strong> ' + escapeHtml(supportMessage));
-			setBluSupportElementHidden($message, false);
-		} else {
-			$message.empty();
-			setBluSupportElementHidden($message, true);
-		}
 	}
 
 	function ensureBluCheckoutModal() {
@@ -6251,9 +6240,8 @@ function getInstallmentDisplayTotals(summaryData) {
 						</div>
 					</div>
 					<div class="Gstore-blu-checkout-modal__hint" aria-live="polite">
-						Se o checkout não carregar aqui, use “Abrir em nova aba”.
+						Se tiver problema no checkout, clique em "Abrir em nova aba" ou fale com o atendimento.
 					</div>
-					<div class="Gstore-blu-checkout-modal__support-message" aria-live="polite" hidden></div>
 					<div class="Gstore-blu-checkout-modal__frame-wrap">
 						<iframe class="Gstore-blu-checkout-modal__frame" title="Checkout Blu" loading="eager" referrerpolicy="no-referrer-when-downgrade" allow="payment; clipboard-write" allowpaymentrequest></iframe>
 					</div>

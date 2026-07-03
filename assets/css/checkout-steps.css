@@ -2890,20 +2890,6 @@ body.woocommerce-checkout .Gstore-checkout-steps-shell {
 	border-bottom: 1px solid #f3f4f6;
 }
 
-.Gstore-blu-checkout-modal__support-message {
-	padding: 8px 16px;
-	color: #374151;
-	font-size: var(--gstore-font-size-sm);
-	line-height: 1.35;
-	background: #f9fafb;
-	border-bottom: 1px solid #f3f4f6;
-	overflow-wrap: anywhere;
-}
-
-.Gstore-blu-checkout-modal__support-message strong {
-	color: #111827;
-}
-
 .Gstore-blu-checkout-modal__frame-wrap {
 	flex: 1;
 	background: #fff;
