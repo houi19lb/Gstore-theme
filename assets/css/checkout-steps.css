@@ -2919,22 +2919,33 @@ body.gstore-blu-checkout-modal-open {
 	.Gstore-blu-checkout-modal__header {
 		flex-direction: column;
 		align-items: flex-start;
-		padding: 12px 64px 10px 12px;
+		padding: 12px 12px 10px;
 		gap: 10px;
+	}
+
+	.Gstore-blu-checkout-modal__title {
+		padding-right: 56px;
 	}
 
 	.Gstore-blu-checkout-modal__actions {
 		width: 100%;
 		align-items: stretch;
+		gap: 8px;
+		flex-wrap: nowrap;
+		padding-right: 56px;
+		box-sizing: border-box;
 	}
 
 	#gstore-blu-checkout-modal .Gstore-blu-checkout-modal__open,
 	#gstore-blu-checkout-modal .Gstore-blu-checkout-modal__support {
-		width: 100%;
-		min-height: 48px;
-		padding: 12px 14px;
+		flex: 1 1 0;
+		width: auto;
+		min-width: 0;
+		min-height: 44px;
+		padding: 10px 8px;
 		white-space: normal;
-		font-size: var(--gstore-font-size-base);
+		text-align: center;
+		font-size: var(--gstore-font-size-sm);
 	}
 }
 
