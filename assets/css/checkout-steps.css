@@ -2885,8 +2885,9 @@ body.woocommerce-checkout .Gstore-checkout-steps-shell {
 
 .Gstore-blu-checkout-modal__hint {
 	padding: 8px 16px;
-	color: #6b7280;
+	color: #374151;
 	font-size: var(--gstore-font-size-sm);
+	line-height: 1.4;
 	border-bottom: 1px solid #f3f4f6;
 }
 

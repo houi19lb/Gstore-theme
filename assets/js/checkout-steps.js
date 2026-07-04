@@ -6235,12 +6235,12 @@ function getInstallmentDisplayTotals(summaryData) {
 								Abrir em nova aba
 							</a>
 							<a class="Gstore-btn Gstore-btn--submit Gstore-blu-checkout-modal__support" href="#" target="_blank" rel="noopener noreferrer" hidden>
-								Falar com atendente
+								Falar com suporte
 							</a>
 						</div>
 					</div>
 					<div class="Gstore-blu-checkout-modal__hint" aria-live="polite">
-						Se tiver problema no checkout, clique em "Abrir em nova aba" ou fale com o atendimento.
+						Travou, ficou em branco ou deu erro do banco? Use "Abrir em nova aba". Se precisar, fale com o suporte.
 					</div>
 					<div class="Gstore-blu-checkout-modal__frame-wrap">
 						<iframe class="Gstore-blu-checkout-modal__frame" title="Checkout Blu" loading="eager" referrerpolicy="no-referrer-when-downgrade" allow="payment; clipboard-write" allowpaymentrequest></iframe>
