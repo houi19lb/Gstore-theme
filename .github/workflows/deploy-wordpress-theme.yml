@@ -1,0 +1,184 @@
+name: Deploy GStore Theme
+
+on:
+  workflow_dispatch:
+    inputs:
+      target:
+        description: WordPress site to deploy
+        required: true
+        type: choice
+        default: big_boar
+        options:
+          - big_boar
+          - arma_store
+          - cac_armas
+          - all
+      dry_run:
+        description: Upload and validate package without replacing files
+        required: true
+        type: boolean
+        default: false
+      activate_after_deploy:
+        description: Activate the theme after deploy when WP-CLI exists
+        required: true
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: gstore-theme-deploy-${{ github.ref }}-${{ inputs.target }}
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy theme to ${{ matrix.target }}
+    runs-on: ubuntu-latest
+    environment: ${{ matrix.target }}
+    strategy:
+      fail-fast: false
+      matrix:
+        target: ${{ fromJSON(inputs.target == 'all' && '["arma_store","cac_armas","big_boar"]' || format('["{0}"]', inputs.target)) }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build package
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          package="$RUNNER_TEMP/Gstore-theme.tgz"
+          staging="$RUNNER_TEMP/gstore-theme-package"
+          rm -rf "$staging"
+          mkdir -p "$staging/Gstore-theme"
+
+          rsync -a ./ "$staging/Gstore-theme/" \
+            --exclude='.git/' \
+            --exclude='.github/' \
+            --exclude='.playwright-mcp/' \
+            --exclude='node_modules/' \
+            --exclude='docs/visual-snapshots/' \
+            --exclude='tests/' \
+            --exclude='AGENTS.md' \
+            --exclude='ORBIT.md' \
+            --exclude='*.zip' \
+            --exclude='*.psd'
+
+          php -l "$staging/Gstore-theme/functions.php"
+          test -f "$staging/Gstore-theme/style.css"
+          tar -C "$staging" -czf "$package" Gstore-theme
+          echo "PACKAGE=$package" >> "$GITHUB_ENV"
+
+      - name: Prepare SSH
+        shell: bash
+        env:
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_PORT: ${{ secrets.SSH_PORT }}
+          SSH_USER: ${{ secrets.SSH_USER }}
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          SSH_KNOWN_HOSTS: ${{ secrets.SSH_KNOWN_HOSTS }}
+          WP_ROOT: ${{ secrets.WP_ROOT }}
+        run: |
+          set -euo pipefail
+
+          : "${SSH_HOST:?Missing SSH_HOST environment secret}"
+          : "${SSH_USER:?Missing SSH_USER environment secret}"
+          : "${SSH_PRIVATE_KEY:?Missing SSH_PRIVATE_KEY environment secret}"
+          : "${WP_ROOT:?Missing WP_ROOT environment secret}"
+
+          mkdir -p "$HOME/.ssh"
+          chmod 700 "$HOME/.ssh"
+          printf '%s\n' "$SSH_PRIVATE_KEY" | tr -d '\r' > "$HOME/.ssh/deploy_key"
+          chmod 600 "$HOME/.ssh/deploy_key"
+
+          SSH_PORT="${SSH_PORT:-22}"
+          if [ -n "$SSH_KNOWN_HOSTS" ]; then
+            printf '%s\n' "$SSH_KNOWN_HOSTS" > "$HOME/.ssh/known_hosts"
+          else
+            ssh-keyscan -p "$SSH_PORT" -H "$SSH_HOST" >> "$HOME/.ssh/known_hosts"
+          fi
+
+          echo "SSH_PORT=$SSH_PORT" >> "$GITHUB_ENV"
+
+      - name: Deploy package
+        shell: bash
+        env:
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_USER: ${{ secrets.SSH_USER }}
+          WP_ROOT: ${{ secrets.WP_ROOT }}
+          DRY_RUN: ${{ inputs.dry_run }}
+          ACTIVATE_AFTER_DEPLOY: ${{ inputs.activate_after_deploy }}
+        run: |
+          set -euo pipefail
+
+          remote_package="/tmp/Gstore-theme-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}.tgz"
+          scp -i "$HOME/.ssh/deploy_key" -P "$SSH_PORT" "$PACKAGE" "$SSH_USER@$SSH_HOST:$remote_package"
+
+          ssh -i "$HOME/.ssh/deploy_key" -p "$SSH_PORT" "$SSH_USER@$SSH_HOST" \
+            "WP_ROOT='$WP_ROOT' REMOTE_PACKAGE='$remote_package' DRY_RUN='$DRY_RUN' ACTIVATE_AFTER_DEPLOY='$ACTIVATE_AFTER_DEPLOY' RUN_ID='$GITHUB_RUN_ID' RUN_ATTEMPT='$GITHUB_RUN_ATTEMPT' bash -s" <<'REMOTE'
+          set -euo pipefail
+
+          theme_slug="Gstore-theme"
+          WP_ROOT="${WP_ROOT%/}"
+          target="$WP_ROOT/wp-content/themes/$theme_slug"
+          deploy_base="$WP_ROOT/../.gstore-deploy"
+          backup_base="$WP_ROOT/../.gstore-backups"
+          work="$deploy_base/$theme_slug-$RUN_ID-$RUN_ATTEMPT"
+
+          if [ -z "$WP_ROOT" ] || [ ! -d "$WP_ROOT/wp-content" ]; then
+            echo "Invalid WP_ROOT: $WP_ROOT" >&2
+            exit 1
+          fi
+
+          case "$target" in
+            "$WP_ROOT"/wp-content/themes/"$theme_slug") ;;
+            *)
+              echo "Refusing unsafe target path: $target" >&2
+              exit 1
+              ;;
+          esac
+
+          rm -rf "$work"
+          mkdir -p "$work" "$backup_base"
+          tar -xzf "$REMOTE_PACKAGE" -C "$work"
+
+          if [ ! -f "$work/$theme_slug/style.css" ] || [ ! -f "$work/$theme_slug/functions.php" ]; then
+            echo "Package does not contain a valid $theme_slug theme" >&2
+            exit 1
+          fi
+
+          php -l "$work/$theme_slug/functions.php"
+
+          if [ "$DRY_RUN" = "true" ]; then
+            echo "Dry run complete. Files validated but not deployed."
+            rm -rf "$work"
+            rm -f "$REMOTE_PACKAGE"
+            exit 0
+          fi
+
+          if [ -d "$target" ]; then
+            backup="$backup_base/$theme_slug-$(date +%Y%m%d-%H%M%S)"
+            cp -a "$target" "$backup"
+            echo "Backup created: $backup"
+          fi
+
+          rm -rf "$target"
+          mv "$work/$theme_slug" "$target"
+          find "$target" -type d -exec chmod 755 {} +
+          find "$target" -type f -exec chmod 644 {} +
+
+          if [ "$ACTIVATE_AFTER_DEPLOY" = "true" ] && command -v wp >/dev/null 2>&1; then
+            wp --path="$WP_ROOT" theme activate "$theme_slug" || wp --allow-root --path="$WP_ROOT" theme activate "$theme_slug"
+          fi
+
+          if command -v wp >/dev/null 2>&1; then
+            wp --path="$WP_ROOT" cache flush || wp --allow-root --path="$WP_ROOT" cache flush || true
+          fi
+
+          rm -rf "$work"
+          rm -f "$REMOTE_PACKAGE"
+          echo "GStore theme deployed to $target"
+          REMOTE
