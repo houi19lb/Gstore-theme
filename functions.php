@@ -557,10 +557,11 @@ function gstore_get_design_token_overrides_css() {
 		return '';
 	}
 
-	$lines = array( ':root {' );
+	$lines = array( '@layer gstore-token-defaults {', "\t:root {" );
 	foreach ( $tokens as $css_var => $value ) {
-		$lines[] = sprintf( "\t%s: %s;", $css_var, $value );
+		$lines[] = sprintf( "\t\t%s: %s;", $css_var, $value );
 	}
+	$lines[] = "\t}";
 	$lines[] = '}';
 
 	return implode( "\n", $lines );

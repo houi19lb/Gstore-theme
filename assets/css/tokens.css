@@ -6,6 +6,7 @@
  * para garantir consistência visual e facilitar manutenção.
  */
 
+@layer gstore-token-defaults {
 :root {
 	/* ========================================
 	   CORES - Semânticas
@@ -386,4 +387,5 @@
 	
 	/* WooCommerce Compatibility */
 	--wc-content-bg: var(--gstore-color-bg-light);
+}
 }

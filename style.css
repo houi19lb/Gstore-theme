@@ -39,24 +39,9 @@ Text Domain: gstore
  */
 
 :root {
-	/* Cores */
-	--gstore-color-bg-dark: #0a0a0a;
-	--gstore-color-bg-darker: #1a1a1a;
-	--gstore-color-text-primary: #1a1a1a;
-	--gstore-color-text-secondary: #6b6b6b;
-	--gstore-color-border: #2a2a2a;
 	--gstore-radius-base: 4px;
 	--gstore-container-max-width: 1280px;
 	--gstore-container-padding-inline: 20px;
-	--gstore-color-accent: #b5a642;
-	--gstore-color-accent-hover: #9f923a;
-	--gstore-color-accent-contrast: #ffffff;
-	--gstore-color-action-bg: var(--gstore-color-accent);
-	--gstore-color-action-hover: var(--gstore-color-accent-hover);
-	--gstore-color-action-text: var(--gstore-color-accent-contrast);
-	--gstore-color-surface-header: var(--gstore-color-bg-dark);
-	--gstore-color-header-action-surface: var(--gstore-color-action-bg);
-	--gstore-color-header-action-text: var(--gstore-color-action-text);
 
 	/* Cores para Cards de Produtos */
 	--green: #2e9b3b;
