@@ -6921,8 +6921,9 @@ add_action( 'wp_head', 'gstore_add_pwa_meta_tags', 2 );
  * Enfileira scripts customizados.
  */
 function gstore_enqueue_scripts() {
+	$theme_version  = wp_get_theme()->get( 'Version' );
 	$header_js_file = get_theme_file_path( 'assets/js/header.js' );
-	$header_js_version = file_exists( $header_js_file ) ? (string) filemtime( $header_js_file ) : wp_get_theme()->get( 'Version' );
+	$header_js_version = file_exists( $header_js_file ) ? (string) filemtime( $header_js_file ) : $theme_version;
 
 	wp_enqueue_script(
 		'gstore-header',
