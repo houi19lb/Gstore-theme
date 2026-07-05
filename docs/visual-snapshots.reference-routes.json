@@ -1,0 +1,58 @@
+{
+  "updatedAt": "2026-06-09",
+  "sites": {
+    "armastore": {
+      "label": "Arma Store",
+      "baseUrl": "https://armastore.com.br/",
+      "routes": {
+        "home": "/",
+        "catalog": "/catalogo/",
+        "offers": "/categoria-produto/promocoes/",
+        "product-category": "/categoria-produto/promocoes/",
+        "product-tag": "/produto-tag/9mm/",
+        "single-product": "/produto/espoleta-cbc-small-pistol-1/?gstock=e3a0a64daa",
+        "cart": "/carrinho/",
+        "checkout": "/finalizar-compra/",
+        "favorites": "/favoritos/",
+        "my-account": "/minha-conta/",
+        "orders": "/minha-conta/orders/",
+        "single-post": "/delta-force-brazil-versao-2/",
+        "support": "/atendimento",
+        "about": "/sobre-nos/",
+        "how-to-buy-firearm": "/como-comprar-arma-registrada/",
+        "privacy-policy": "/politica-de-privacidade/",
+        "informativo": "/informativo/",
+        "generic-page": "/politica-de-privacidade/"
+      }
+    },
+    "cacarmas": {
+      "label": "CAC Armas",
+      "baseUrl": "https://cacarmas.com.br/",
+      "routes": {
+        "home": "/",
+        "catalog": "/catalogo/",
+        "offers": "/ofertas/",
+        "product-category": "/categoria-produto/minha-primeira-arma/",
+        "product-tag": "/produto-tag/9mm/",
+        "single-product": "/produto/pistola-glock-g43x-slimline-gen-4-calibre-9mm-dlc/",
+        "cart": "/carrinho/",
+        "checkout": "/finalizar-compra/",
+        "favorites": "/favoritos/",
+        "my-account": "/minha-conta/",
+        "orders": "/minha-conta/orders/",
+        "single-post": "/lancamento-oficial-tx9-full-size/",
+        "support": "/atendimento",
+        "about": "/sobre-nos/",
+        "how-to-buy-firearm": "/como-comprar-arma/",
+        "privacy-policy": "/politica-de-privacidade/",
+        "informativo": "/informativo/",
+        "generic-page": "/politica-de-privacidade/"
+      }
+    }
+  },
+  "notes": [
+    "Estas rotas sao exemplos reais usados para a biblioteca de evidencias visuais.",
+    "O conteudo de produto, preco, estoque, post e textos institucionais e variavel por loja.",
+    "generic-page usa politica de privacidade como pagina generica estavel enquanto nao houver outra pagina neutra escolhida."
+  ]
+}

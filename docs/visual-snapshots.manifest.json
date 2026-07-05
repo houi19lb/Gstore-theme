@@ -1,0 +1,817 @@
+{
+  "schemaVersion": 1,
+  "updatedAt": "2026-06-09",
+  "project": {
+    "name": "Gstore Theme",
+    "type": "wordpress-theme",
+    "versionSource": "style.css:Version"
+  },
+  "themeVersion": "1.6.15",
+  "paths": {
+    "snapshotRoot": "docs/visual-snapshots/latest",
+    "snapshotPattern": "{snapshotRoot}/{siteId}/{pageId}/{stateId}/{viewportId}.png",
+    "captureMetaPattern": "{snapshotRoot}/{siteId}/{pageId}/{stateId}/capture-meta.json",
+    "legacySnapshotPattern": "{snapshotRoot}/{pageId}/{stateId}/{viewportId}.png"
+  },
+  "referenceSites": [
+    {
+      "id": "armastore",
+      "label": "Arma Store",
+      "baseUrl": "https://armastore.com.br/",
+      "required": true,
+      "source": "Google Chrome real autenticado do usuario",
+      "notes": "Loja de referencia com conteudo, banners, categorias, produtos, carrinho e sessao reais."
+    },
+    {
+      "id": "cacarmas",
+      "label": "CAC Armas",
+      "baseUrl": "https://cacarmas.com.br/",
+      "required": true,
+      "source": "Google Chrome real autenticado do usuario",
+      "notes": "Loja de referencia com conta logada e estados reais de cliente/carrinho quando disponiveis sem mutacao critica."
+    }
+  ],
+  "viewports": {
+    "desktop-lg": {
+      "label": "Desktop grande",
+      "width": 1440,
+      "height": 1100
+    },
+    "desktop-sm": {
+      "label": "Desktop pequeno",
+      "width": 1024,
+      "height": 900
+    },
+    "mobile": {
+      "label": "Celular",
+      "width": 390,
+      "height": 844
+    }
+  },
+  "storeVariableSources": [
+    {
+      "id": "store-info",
+      "label": "Dados da loja",
+      "source": "store-info.json no tema ativo; exemplo em docs/store-info.json",
+      "fields": [
+        "store.*",
+        "contact.*",
+        "address.*",
+        "social.*",
+        "business_hours.*",
+        "footer.*",
+        "meta.*",
+        "branding.*"
+      ]
+    },
+    {
+      "id": "theme-options",
+      "label": "Opcoes visuais do tema",
+      "source": "options.php / gstore_settings / gstore_design_tokens",
+      "fields": [
+        "gstore_logo_id",
+        "gstore_logo_alt",
+        "gstore_accent_color",
+        "gstore_hero_slides_desktop_count",
+        "gstore_hero_slides_mobile_count",
+        "gstore_hero_desktop_slide_{1..10}_id",
+        "gstore_hero_desktop_slide_{1..10}_alt",
+        "gstore_hero_desktop_slide_{1..10}_link",
+        "gstore_hero_mobile_slide_{1..10}_id",
+        "gstore_hero_mobile_slide_{1..10}_alt",
+        "gstore_hero_mobile_slide_{1..10}_link",
+        "gstore_banner_youtube_id",
+        "gstore_banner_youtube_alt",
+        "gstore_banner_youtube_link"
+      ]
+    },
+    {
+      "id": "wordpress-content",
+      "label": "Conteudo WordPress",
+      "source": "banco de dados WordPress",
+      "fields": [
+        "paginas",
+        "posts",
+        "menus",
+        "navigation blocks",
+        "politica de privacidade",
+        "midias"
+      ]
+    },
+    {
+      "id": "woocommerce-data",
+      "label": "Dados WooCommerce",
+      "source": "WooCommerce e plugins conectados",
+      "fields": [
+        "produtos",
+        "categorias",
+        "tags",
+        "imagens de produto",
+        "precos",
+        "parcelamento",
+        "estoque",
+        "variacoes",
+        "cupons",
+        "frete",
+        "gateways",
+        "sessao do cliente"
+      ]
+    }
+  ],
+  "globalComponents": [
+    {
+      "id": "header",
+      "label": "Header, top bar, busca, navegacao e mini cart",
+      "sources": [
+        "parts/header.html",
+        "templates/parts/header.html",
+        "assets/css/layouts/header.css",
+        "assets/js/header.js",
+        "assets/js/product-search-autocomplete.js"
+      ],
+      "states": [
+        "default",
+        "mobile-drawer-open",
+        "search-with-results",
+        "mini-cart-open"
+      ],
+      "storeVariables": [
+        "store-info",
+        "theme-options",
+        "wordpress-content",
+        "woocommerce-data"
+      ]
+    },
+    {
+      "id": "footer",
+      "label": "Footer, newsletter, dados institucionais e links",
+      "sources": [
+        "parts/footer.html",
+        "assets/css/layouts/footer.css"
+      ],
+      "states": [
+        "default"
+      ],
+      "storeVariables": [
+        "store-info",
+        "wordpress-content"
+      ]
+    },
+    {
+      "id": "product-card",
+      "label": "Card de produto",
+      "sources": [
+        "woocommerce/content-product.php",
+        "assets/css/components/product-card.css",
+        "assets/js/product-card.js",
+        "assets/js/favorites-core.js"
+      ],
+      "states": [
+        "default",
+        "sale",
+        "hidden-price",
+        "out-of-stock",
+        "favorite-active"
+      ],
+      "storeVariables": [
+        "woocommerce-data"
+      ]
+    }
+  ],
+  "pages": [
+    {
+      "id": "home",
+      "label": "Home",
+      "url": "/",
+      "sources": [
+        "templates/page-home.html",
+        "templates/home.html",
+        "parts/home-hero.html",
+        "parts/home-products.html",
+        "parts/home-lancamentos.html",
+        "parts/home-promocoes.html",
+        "parts/home-blog.html",
+        "assets/css/layouts/home.css",
+        "assets/js/home-hero.js",
+        "assets/js/home-products-carousel.js",
+        "assets/js/home-benefits.js"
+      ],
+      "states": [
+        {
+          "id": "default",
+          "label": "Hero, beneficios e vitrines carregadas",
+          "required": true
+        },
+        {
+          "id": "mobile-drawer-open",
+          "label": "Menu mobile aberto sobre a home",
+          "required": true,
+          "viewports": [
+            "mobile"
+          ],
+          "capture": {
+            "actions": [
+              {
+                "type": "click",
+                "selector": ".Gstore-header__menu-toggle"
+              },
+              {
+                "type": "waitForSelector",
+                "selector": ".Gstore-mobile-drawer.is-open"
+              }
+            ]
+          }
+        },
+        {
+          "id": "hero-second-slide",
+          "label": "Hero com segundo slide ativo",
+          "required": false
+        }
+      ],
+      "storeVariables": [
+        "store-info",
+        "theme-options",
+        "wordpress-content",
+        "woocommerce-data"
+      ],
+      "notes": "Slides desktop e mobile sao configuraveis por loja; o layout deve permanecer consistente mesmo com imagens diferentes."
+    },
+    {
+      "id": "catalog",
+      "label": "Catalogo",
+      "url": "/catalogo/",
+      "sources": [
+        "templates/page-catalogo.html",
+        "templates/woocommerce.html",
+        "woocommerce/archive-product.php",
+        "assets/css/category-filter.css",
+        "assets/js/category-filter.js",
+        "assets/js/catalog-filters.js",
+        "assets/js/catalog-categories-tree.js"
+      ],
+      "states": [
+        {
+          "id": "default",
+          "label": "Lista de produtos com filtros fechados",
+          "required": true
+        },
+        {
+          "id": "filters-open",
+          "label": "Filtros abertos no mobile",
+          "required": true,
+          "viewports": [
+            "mobile"
+          ],
+          "capture": {
+            "actions": [
+              {
+                "type": "click",
+                "selector": ".Gstore-catalog-filters-toggle"
+              },
+              {
+                "type": "waitForSelector",
+                "selector": ".Gstore-catalog-sidebar__inner--collapsible.is-open"
+              }
+            ]
+          }
+        },
+        {
+          "id": "search-results",
+          "label": "Busca/filtro com resultados",
+          "required": false
+        },
+        {
+          "id": "empty-results",
+          "label": "Busca/filtro sem resultados",
+          "required": false
+        }
+      ],
+      "storeVariables": [
+        "store-info",
+        "wordpress-content",
+        "woocommerce-data"
+      ]
+    },
+    {
+      "id": "offers",
+      "label": "Ofertas",
+      "url": "/ofertas/",
+      "sources": [
+        "templates/page-ofertas.html",
+        "templates/woocommerce.html",
+        "woocommerce/archive-product.php"
+      ],
+      "states": [
+        {
+          "id": "default",
+          "label": "Produtos em oferta",
+          "required": true
+        }
+      ],
+      "storeVariables": [
+        "woocommerce-data"
+      ]
+    },
+    {
+      "id": "product-category",
+      "label": "Categoria de produto",
+      "url": "/categoria-produto/{categoria}/",
+      "sources": [
+        "templates/taxonomy-product_cat.html",
+        "woocommerce/archive-product.php",
+        "woocommerce/content-product.php"
+      ],
+      "states": [
+        {
+          "id": "default",
+          "label": "Categoria com produtos",
+          "required": true
+        },
+        {
+          "id": "subcategory-navigation",
+          "label": "Categoria com subcategorias",
+          "required": false
+        }
+      ],
+      "storeVariables": [
+        "woocommerce-data"
+      ]
+    },
+    {
+      "id": "product-tag",
+      "label": "Tag de produto",
+      "url": "/tag-produto/{tag}/",
+      "sources": [
+        "templates/taxonomy-product_tag.html",
+        "woocommerce/archive-product.php",
+        "woocommerce/content-product.php"
+      ],
+      "states": [
+        {
+          "id": "default",
+          "label": "Tag com produtos",
+          "required": true
+        }
+      ],
+      "storeVariables": [
+        "woocommerce-data"
+      ]
+    },
+    {
+      "id": "single-product",
+      "label": "Produto",
+      "url": "/produto/{produto}/",
+      "sources": [
+        "templates/single-product.html",
+        "woocommerce/content-single-product.php",
+        "woocommerce/single-product-reviews.php",
+        "assets/css/components/product-notice.css",
+        "assets/js/single-product.js",
+        "assets/js/gstore-product-notice.js",
+        "assets/js/shipping-calculator.js"
+      ],
+      "states": [
+        {
+          "id": "default",
+          "label": "Galeria, buybox, preco e CTA",
+          "required": true
+        },
+        {
+          "id": "shipping-quote",
+          "label": "Calculo de frete preenchido",
+          "required": true,
+          "capture": {
+            "actions": [
+              {
+                "type": "fill",
+                "selector": ".gstore-shipping-calculator__cep",
+                "value": "01001000"
+              },
+              {
+                "type": "click",
+                "selector": ".gstore-shipping-calculator__button"
+              },
+              {
+                "type": "waitForSelector",
+                "selector": ".gstore-shipping-calculator__result, .gstore-shipping-calculator__error"
+              }
+            ]
+          }
+        },
+        {
+          "id": "buybox-open",
+          "label": "Acordeoes/avisos do produto abertos no mobile",
+          "required": true,
+          "viewports": [
+            "mobile"
+          ],
+          "capture": {
+            "actions": [
+              {
+                "type": "click",
+                "selector": ".Gstore-single-product__accordion-header"
+              },
+              {
+                "type": "waitForSelector",
+                "selector": ".Gstore-single-product__tab-panel.is-open"
+              }
+            ]
+          }
+        },
+        {
+          "id": "variation-selected",
+          "label": "Produto variavel com variacao selecionada",
+          "required": false
+        },
+        {
+          "id": "out-of-stock",
+          "label": "Produto indisponivel",
+          "required": false
+        }
+      ],
+      "storeVariables": [
+        "store-info",
+        "woocommerce-data"
+      ]
+    },
+    {
+      "id": "cart",
+      "label": "Carrinho",
+      "url": "/carrinho/",
+      "sources": [
+        "templates/page-carrinho.html",
+        "page-cart.php",
+        "woocommerce/cart/cart.php",
+        "woocommerce/cart/cart-shipping.php",
+        "assets/css/cart.css",
+        "assets/js/cart.js",
+        "assets/js/shipping-calculator.js"
+      ],
+      "states": [
+        {
+          "id": "empty",
+          "label": "Carrinho vazio",
+          "required": true
+        },
+        {
+          "id": "with-item",
+          "label": "Carrinho com item",
+          "required": true
+        },
+        {
+          "id": "shipping-calculated",
+          "label": "Frete calculado",
+          "required": true,
+          "capture": {
+            "actions": [
+              {
+                "type": "fill",
+                "selector": ".gstore-shipping-calculator__cep",
+                "value": "01001000"
+              },
+              {
+                "type": "click",
+                "selector": ".gstore-shipping-calculator__button"
+              },
+              {
+                "type": "waitForSelector",
+                "selector": ".gstore-shipping-calculator__result, .gstore-shipping-calculator__error"
+              }
+            ]
+          }
+        },
+        {
+          "id": "coupon-error",
+          "label": "Cupom invalido ou bloqueado",
+          "required": false
+        }
+      ],
+      "storeVariables": [
+        "woocommerce-data"
+      ]
+    },
+    {
+      "id": "checkout",
+      "label": "Checkout",
+      "url": "/finalizar-compra/",
+      "sources": [
+        "templates/page-checkout.html",
+        "assets/css/checkout.css",
+        "assets/css/checkout-steps.css",
+        "assets/css/checkout-pix.css",
+        "assets/js/checkout-steps.js",
+        "assets/js/checkout-pix.js",
+        "assets/js/blu-checkout-block.js",
+        "inc/class-gstore-blu-payment-gateway.php",
+        "inc/class-gstore-blu-pix-gateway.php"
+      ],
+      "states": [
+        {
+          "id": "default",
+          "label": "Checkout com carrinho e dados vazios",
+          "required": true
+        },
+        {
+          "id": "address-filled",
+          "label": "Endereco preenchido e frete disponivel",
+          "required": true
+        },
+        {
+          "id": "pix-selected",
+          "label": "Pagamento Pix selecionado",
+          "required": true,
+          "capture": {
+            "actions": [
+              {
+                "type": "click",
+                "selector": "input[value=\"blu_pix\"], input[value=\"gstore_blu_pix\"], input[value=\"pix\"]"
+              },
+              {
+                "type": "wait",
+                "ms": 800
+              }
+            ]
+          }
+        },
+        {
+          "id": "blu-selected",
+          "label": "Pagamento Blu selecionado",
+          "required": false
+        },
+        {
+          "id": "validation-errors",
+          "label": "Erros de validacao visiveis",
+          "required": false
+        }
+      ],
+      "storeVariables": [
+        "store-info",
+        "woocommerce-data"
+      ]
+    },
+    {
+      "id": "favorites",
+      "label": "Favoritos",
+      "url": "/favoritos/",
+      "sources": [
+        "templates/page-favoritos.html",
+        "page-favoritos.php",
+        "assets/js/favorites-core.js",
+        "assets/js/favorites-page.js"
+      ],
+      "states": [
+        {
+          "id": "empty",
+          "label": "Sem favoritos",
+          "required": true
+        },
+        {
+          "id": "with-products",
+          "label": "Com produtos favoritos",
+          "required": true
+        }
+      ],
+      "storeVariables": [
+        "woocommerce-data"
+      ]
+    },
+    {
+      "id": "my-account",
+      "label": "Minha conta",
+      "url": "/minha-conta/",
+      "sources": [
+        "woocommerce/myaccount/my-account.php",
+        "woocommerce/myaccount/form-login.php",
+        "woocommerce/myaccount/dashboard.php",
+        "woocommerce/myaccount/navigation.php",
+        "assets/css/my-account.css",
+        "assets/js/my-account.js"
+      ],
+      "states": [
+        {
+          "id": "logged-out",
+          "label": "Login/cadastro",
+          "required": true
+        },
+        {
+          "id": "dashboard",
+          "label": "Dashboard logado",
+          "required": true
+        },
+        {
+          "id": "lost-password",
+          "label": "Recuperacao de senha",
+          "required": false
+        }
+      ],
+      "storeVariables": [
+        "woocommerce-data"
+      ]
+    },
+    {
+      "id": "orders",
+      "label": "Pedidos da conta",
+      "url": "/minha-conta/orders/",
+      "sources": [
+        "woocommerce/myaccount/orders.php",
+        "woocommerce/myaccount/view-order.php",
+        "woocommerce/myaccount/navigation.php",
+        "assets/css/my-account.css"
+      ],
+      "states": [
+        {
+          "id": "orders-list",
+          "label": "Lista de pedidos",
+          "required": true
+        },
+        {
+          "id": "order-detail",
+          "label": "Detalhe de pedido",
+          "required": true
+        }
+      ],
+      "storeVariables": [
+        "woocommerce-data"
+      ]
+    },
+    {
+      "id": "blog",
+      "label": "Blog",
+      "url": "/blog/",
+      "sources": [
+        "templates/page-blog.html",
+        "home-blog-v1.php",
+        "assets/js/home-blog-pagination.js"
+      ],
+      "states": [
+        {
+          "id": "default",
+          "label": "Listagem de posts",
+          "required": true
+        }
+      ],
+      "storeVariables": [
+        "wordpress-content"
+      ]
+    },
+    {
+      "id": "single-post",
+      "label": "Post",
+      "url": "/{post}/",
+      "sources": [
+        "templates/single.html",
+        "assets/css/layouts/blog-single.css",
+        "assets/js/blog-single.js",
+        "assets/js/blog-image-fit.js"
+      ],
+      "states": [
+        {
+          "id": "default",
+          "label": "Artigo completo",
+          "required": true
+        }
+      ],
+      "storeVariables": [
+        "wordpress-content"
+      ]
+    },
+    {
+      "id": "support",
+      "label": "Atendimento",
+      "url": "/atendimento/",
+      "sources": [
+        "templates/page-atendimento.html"
+      ],
+      "states": [
+        {
+          "id": "default",
+          "label": "Canais e secoes de atendimento",
+          "required": true
+        }
+      ],
+      "storeVariables": [
+        "store-info",
+        "wordpress-content"
+      ]
+    },
+    {
+      "id": "about",
+      "label": "Sobre nos",
+      "url": "/sobre-nos/",
+      "sources": [
+        "templates/page-sobre-nos.html",
+        "assets/css/sobre-nos.css"
+      ],
+      "states": [
+        {
+          "id": "default",
+          "label": "Institucional e FAQ",
+          "required": true
+        }
+      ],
+      "storeVariables": [
+        "store-info",
+        "wordpress-content"
+      ]
+    },
+    {
+      "id": "how-to-buy-firearm",
+      "label": "Como comprar arma",
+      "url": "/como-comprar-arma/",
+      "sources": [
+        "templates/page-como-comprar-arma.html",
+        "assets/css/como-comprar-arma.css"
+      ],
+      "states": [
+        {
+          "id": "default",
+          "label": "Fluxo de compra e documentacao",
+          "required": true
+        }
+      ],
+      "storeVariables": [
+        "store-info",
+        "wordpress-content"
+      ]
+    },
+    {
+      "id": "privacy-policy",
+      "label": "Politica de privacidade",
+      "url": "/politica-de-privacidade/",
+      "sources": [
+        "templates/page-politica-de-privacidade.html",
+        "assets/css/privacy-policy.css"
+      ],
+      "states": [
+        {
+          "id": "default",
+          "label": "Texto legal",
+          "required": true
+        }
+      ],
+      "storeVariables": [
+        "store-info",
+        "wordpress-content"
+      ]
+    },
+    {
+      "id": "informativo",
+      "label": "Informativo",
+      "url": "/informativo/",
+      "sources": [
+        "templates/page-informativo.html",
+        "inc/informativo-airports.php",
+        "assets/css/informativo.css",
+        "assets/js/informativo.js"
+      ],
+      "states": [
+        {
+          "id": "default",
+          "label": "Conteudo informativo",
+          "required": true
+        },
+        {
+          "id": "airports-modal",
+          "label": "Modal/lista de aeroportos aberta",
+          "required": true,
+          "capture": {
+            "actions": [
+              {
+                "type": "click",
+                "selector": "#Gstore-informativo-open-airports"
+              },
+              {
+                "type": "waitForSelector",
+                "selector": "#Gstore-informativo-airports-modal.is-open"
+              }
+            ]
+          }
+        }
+      ],
+      "storeVariables": [
+        "store-info",
+        "wordpress-content"
+      ]
+    },
+    {
+      "id": "generic-page",
+      "label": "Pagina generica",
+      "url": "/{pagina}/",
+      "sources": [
+        "templates/page.html",
+        "templates/index.html",
+        "templates/archive.html"
+      ],
+      "states": [
+        {
+          "id": "default",
+          "label": "Fallback de pagina/conteudo",
+          "required": true
+        }
+      ],
+      "storeVariables": [
+        "wordpress-content"
+      ]
+    }
+  ]
+}

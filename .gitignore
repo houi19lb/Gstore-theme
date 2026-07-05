@@ -22,6 +22,10 @@ vendor/
 .env
 .env.*
 
+# Local agent / ops context
+ORBIT.md
+.playwright-mcp/
+
 # Local backups / bundles
 GSTORE.zip
 GSTORE/
@@ -40,3 +44,11 @@ api-visualizer/node_modules/
 # Cursor temporary images
 assets/c__Users_*_AppData_Roaming_Cursor_User_workspaceStorage_*_images_*.png
 
+# Local visual snapshot route overrides
+docs/visual-snapshots.routes.local.json
+
+# Generated visual evidence (keep methodology and manifests in repo)
+docs/visual-snapshots/latest/
+docs/visual-snapshots/archive/
+docs/visual-snapshots/manual/
+loja-teste-revendedor-current.png

@@ -6,12 +6,17 @@
     "check:assets": "node scripts/check-minified-assets.mjs",
     "check:image-priority": "node scripts/check-image-priority.mjs",
     "check:css-scope": "node scripts/check-css-scope.mjs",
+    "visual:audit": "node scripts/audit-visual-snapshots.mjs",
+    "visual:audit:blocked": "node scripts/audit-visual-snapshots.mjs --allow-blocked",
+    "visual:capture": "node scripts/capture-visual-snapshots.mjs",
+    "visual:fixtures": "node scripts/generate-visual-fixture-snapshots.mjs",
     "test": "jest"
   },
   "devDependencies": {
     "clean-css": "^5.3.3",
     "jest": "^29.7.0",
     "jest-environment-jsdom": "^29.7.0",
+    "playwright": "^1.60.0",
     "terser": "^5.43.1"
   }
 }

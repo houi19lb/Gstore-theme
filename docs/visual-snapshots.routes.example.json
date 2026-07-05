@@ -1,0 +1,15 @@
+{
+  "siteId": "local",
+  "baseUrl": "http://armastore.local/",
+  "routes": {
+    "product-category": "/categoria-produto/categoria-exemplo/",
+    "product-tag": "/tag-produto/tag-exemplo/",
+    "single-product": "/produto/produto-exemplo/",
+    "single-post": "/post-exemplo/",
+    "generic-page": "/pagina-exemplo/"
+  },
+  "notes": [
+    "Copie este arquivo para docs/visual-snapshots.routes.local.json e ajuste siteId/baseUrl para a loja ativa.",
+    "Nao versione o arquivo local: ele depende dos slugs, produtos, posts e paginas de cada loja."
+  ]
+}
