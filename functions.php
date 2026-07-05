@@ -4190,7 +4190,7 @@ function gstore_inline_critical_css() {
 	$critical_css = '
 		/* Reset header */
 		:root {
-			--gstore-header-offset: 140px;
+			--gstore-header-offset: 139.56px;
 		}
 
 		header.Gstore-header-shell,
