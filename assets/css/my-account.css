@@ -2130,8 +2130,16 @@ form.woocommerce-form {
 
 .gstore-partner-program-button.is-ghost {
 	background: rgba(8, 9, 10, 0.62) !important;
-	border-color: rgba(255, 255, 255, 0.32) !important;
+	border-color: rgba(255, 255, 255, 0.46) !important;
+	color: #ffffff !important;
 	box-shadow: none;
+}
+
+.gstore-partner-program-button.is-ghost:hover,
+.gstore-partner-program-button.is-ghost:focus-visible {
+	background: rgba(255, 255, 255, 0.12) !important;
+	border-color: rgba(255, 255, 255, 0.72) !important;
+	color: #ffffff !important;
 }
 
 .gstore-partner-program-benefits {
