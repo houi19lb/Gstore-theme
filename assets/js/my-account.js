@@ -535,7 +535,6 @@
 	// Inicializa quando o DOM estiver pronto
 	function init() {
 		initRegisterInfoModal();
-		initDashboardAnimations();
 		initMobileNavigation();
 		initActionFeedback();
 		initCPFMask();
