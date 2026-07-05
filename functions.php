@@ -3989,11 +3989,30 @@ function gstore_inline_critical_css() {
 	// CSS crítico mínimo para renderização inicial do header e hero
 	$critical_css = '
 		/* Reset header */
+		:root {
+			--gstore-header-offset: 136px;
+		}
+
 		header.Gstore-header-shell,
 		.Gstore-header-shell {
+			position: fixed;
+			top: 0;
+			left: 0;
+			right: 0;
 			width: 100% !important;
 			max-width: none !important;
 			margin: 0 !important;
+			padding: 0 !important;
+			z-index: 1000;
+			transform: translateY(0);
+		}
+
+		body:has(.Gstore-header-shell) .wp-site-blocks {
+			padding-top: var(--gstore-header-offset);
+			transition: none;
+		}
+
+		.Gstore-header__search .wp-block-search__inside-wrapper {
 			padding: 0 !important;
 		}
 
@@ -4067,6 +4086,21 @@ function gstore_inline_critical_css() {
 			width: 100%;
 			height: auto;
 			display: block;
+		}
+
+		@media (max-width: 767px) {
+			:root {
+				--gstore-header-offset: 66px;
+			}
+
+			.Gstore-top-bar {
+				display: none;
+			}
+
+			.Gstore-nav-shell,
+			header.Gstore-header-shell .Gstore-nav-shell {
+				display: none !important;
+			}
 		}
 
 		/* Mini-cart escondido: evita FOUC no footer antes do CSS lazy do WooCommerce */

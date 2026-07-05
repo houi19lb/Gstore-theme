@@ -2320,6 +2320,7 @@ body.single-product .onsale {
 
 	.Gstore-single-product__product-card .gallery-thumbs {
 		flex-direction: row;
+		min-height: 68px;
 		overflow-x: auto;
 		padding: 0 0 4px !important;
 		-webkit-overflow-scrolling: touch;

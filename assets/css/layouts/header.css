@@ -85,6 +85,10 @@ header.Gstore-header-shell .wp-block-group,
    HEADER PRINCIPAL
    ======================================== */
 
+:root {
+	--gstore-header-offset: 136px;
+}
+
 .Gstore-header-shell {
 	position: fixed;
 	top: 0;
@@ -112,6 +116,11 @@ body:has(.Gstore-header-shell) {
 .wp-site-blocks {
 	/* Padding será aplicado dinamicamente via JavaScript */
 	transition: padding-top 0.3s ease-in-out;
+}
+
+body:has(.Gstore-header-shell) .wp-site-blocks {
+	padding-top: var(--gstore-header-offset);
+	transition: none;
 }
 
 .Gstore-header {
@@ -198,6 +207,7 @@ body:has(.Gstore-header-shell) {
 	border: 1px solid rgba(255, 255, 255, 0.2);
 	border-radius: 4px;
 	overflow: hidden;
+	padding: 0 !important;
 }
 
 .Gstore-header__search .wp-block-search__input {
@@ -440,6 +450,10 @@ body:has(.Gstore-header-shell) {
    ======================================== */
 
 @media (max-width: 767px) {
+	:root {
+		--gstore-header-offset: 66px;
+	}
+
 	/* Top bar escondida no mobile */
 	.Gstore-top-bar {
 		display: none;

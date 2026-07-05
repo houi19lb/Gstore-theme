@@ -156,6 +156,7 @@
 		}
 
 		headerHeight = calculateHeaderHeight();
+		document.documentElement.style.setProperty('--gstore-header-offset', headerHeight > 0 ? headerHeight + 'px' : '0px');
 		
 		// Aplica padding-top apenas no wp-site-blocks (não no body para evitar duplicação)
 		var siteBlocks = document.querySelector('.wp-site-blocks');
@@ -165,9 +166,13 @@
 				document.body.style.paddingTop = '';
 			}
 			// Aplica apenas se a altura for maior que 0
-			if (headerHeight > 0) {
-				siteBlocks.style.paddingTop = headerHeight + 'px';
-			} else {
+			if (!window.CSS || !window.CSS.supports || !window.CSS.supports('selector(body:has(.Gstore-header-shell))')) {
+				if (headerHeight > 0) {
+					siteBlocks.style.paddingTop = headerHeight + 'px';
+				} else {
+					siteBlocks.style.paddingTop = '';
+				}
+			} else if (siteBlocks.style.paddingTop) {
 				siteBlocks.style.paddingTop = '';
 			}
 		} else {
