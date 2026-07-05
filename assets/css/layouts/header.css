@@ -86,7 +86,7 @@ header.Gstore-header-shell .wp-block-group,
    ======================================== */
 
 :root {
-	--gstore-header-offset: 136px;
+	--gstore-header-offset: 140px;
 }
 
 .Gstore-header-shell {
@@ -119,6 +119,12 @@ body:has(.Gstore-header-shell) {
 }
 
 body:has(.Gstore-header-shell) .wp-site-blocks {
+	padding-top: var(--gstore-header-offset);
+	transition: none;
+}
+
+body.gstore-partner-program-body,
+body:has(.Gstore-header-shell):not(:has(.wp-site-blocks)) {
 	padding-top: var(--gstore-header-offset);
 	transition: none;
 }

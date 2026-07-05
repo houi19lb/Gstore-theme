@@ -4190,7 +4190,7 @@ function gstore_inline_critical_css() {
 	$critical_css = '
 		/* Reset header */
 		:root {
-			--gstore-header-offset: 136px;
+			--gstore-header-offset: 140px;
 		}
 
 		header.Gstore-header-shell,
@@ -4208,6 +4208,12 @@ function gstore_inline_critical_css() {
 		}
 
 		body:has(.Gstore-header-shell) .wp-site-blocks {
+			padding-top: var(--gstore-header-offset);
+			transition: none;
+		}
+
+		body.gstore-partner-program-body,
+		body:has(.Gstore-header-shell):not(:has(.wp-site-blocks)) {
 			padding-top: var(--gstore-header-offset);
 			transition: none;
 		}
@@ -13425,7 +13431,6 @@ function gstore_home_sections_shortcode() {
 		$out  = '';
 		$out .= $render_part( 'parts/home-lancamentos.html' );
 		$out .= $render_part( 'parts/home-promocoes.html' );
-		$out .= $render_part( 'parts/home-equipamentos.html' );
 		$out .= do_shortcode( '[gstore_banner_youtube]' );
 		$out .= $render_part( 'parts/home-blog.html' );
 		return $out;
@@ -13536,9 +13541,6 @@ function gstore_home_sections_shortcode() {
 					break;
 				case 'promocoes':
 					$out .= $normalize_output( $render_part( 'parts/home-promocoes.html' ) );
-					break;
-				case 'equipamentos_taticos':
-					$out .= $normalize_output( $render_part( 'parts/home-equipamentos.html' ) );
 					break;
 				case 'blog':
 					$out .= $normalize_output( $render_part( 'parts/home-blog.html' ) );
