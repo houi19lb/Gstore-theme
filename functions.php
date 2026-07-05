@@ -4416,6 +4416,7 @@ function gstore_defer_non_critical_css( $tag, $handle, $href, $media ) {
 		'gstore-category-filter',
 		'gstore-home-css',
 		'gstore-home-legacy-css',
+		'gstore-my-account-css',
 	);
 
 	if ( in_array( $handle, $layout_critical_css, true ) ) {
@@ -4425,7 +4426,6 @@ function gstore_defer_non_critical_css( $tag, $handle, $href, $media ) {
 	// Lista expandida de CSS não crítico que pode ser deferido
 	$non_critical_css = array(
 		// CSS de páginas específicas
-		'gstore-my-account-css',
 		'gstore-como-comprar-arma-css',
 		'gstore-informativo-css',
 		'gstore-sobre-nos-css',
