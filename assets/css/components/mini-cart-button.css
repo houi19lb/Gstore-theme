@@ -7,7 +7,8 @@
 
 .wc-block-mini-cart__badge,
 .wp-block-woocommerce-mini-cart .wc-block-mini-cart__badge {
-	background-color: var(--gstore-color-accent, #b5a642) !important;
+	background-color: var(--gstore-color-action-bg, var(--gstore-color-accent, #b5a642)) !important;
+	color: var(--gstore-color-action-text, #ffffff) !important;
 }
 
 .Gstore-header__mini-cart .wc-block-mini-cart__button {
@@ -37,13 +38,16 @@
 	width: 18px !important;
 	height: 18px !important;
 	flex: 0 0 auto !important;
+	color: inherit !important;
+	fill: currentColor !important;
+	stroke: currentColor !important;
 }
 
 .Gstore-header__mini-cart .wc-block-mini-cart__badge {
 	position: absolute !important;
-	background: var(--gstore-color-black, #0a0a0a) !important;
-	background-color: var(--gstore-color-black, #0a0a0a) !important;
-	color: var(--gstore-color-accent, #b5a642) !important;
+	background: var(--gstore-color-action-bg, var(--gstore-color-accent, #b5a642)) !important;
+	background-color: var(--gstore-color-action-bg, var(--gstore-color-accent, #b5a642)) !important;
+	color: var(--gstore-color-action-text, #ffffff) !important;
 	line-height: 1 !important;
 	border-radius: 4px !important;
 	left: auto !important;

@@ -37,10 +37,10 @@ header.Gstore-header-shell .wp-block-group,
    ======================================== */
 
 .Gstore-top-bar {
-	background-color: var(--gstore-color-bg-dark, #0a0a0a);
-	color: var(--gstore-color-text-light, #fff);
+	background-color: var(--gstore-color-surface-header, var(--gstore-color-bg-dark, #0a0a0a));
+	color: var(--gstore-color-text-header, var(--gstore-color-text-light, #fff));
 	font-size: var(--gstore-font-size-sm);
-	border-bottom: 0 !important;
+	border-bottom: 1px solid var(--gstore-color-surface-header-border, transparent) !important;
 }
 
 .Gstore-top-bar__inner {
@@ -66,7 +66,7 @@ header.Gstore-header-shell .wp-block-group,
 	display: inline-flex;
 	align-items: center;
 	gap: 6px;
-	color: var(--gstore-color-text-light, #fff);
+	color: var(--gstore-color-text-header, var(--gstore-color-text-light, #fff));
 	text-decoration: none;
 	transition: color 0.2s ease;
 }
@@ -124,10 +124,10 @@ body:has(.Gstore-header-shell) .wp-site-blocks {
 }
 
 .Gstore-header {
-	background-color: var(--gstore-color-bg-dark, #0a0a0a);
+	background-color: var(--gstore-color-surface-header, var(--gstore-color-bg-dark, #0a0a0a));
 	position: static;
 	top: auto;
-	border-bottom: 0 !important;
+	border-bottom: 1px solid var(--gstore-color-surface-header-border, transparent) !important;
 }
 
 .Gstore-header__inner {
@@ -144,7 +144,7 @@ body:has(.Gstore-header-shell) .wp-site-blocks {
 .Gstore-header__logo {
 	font-size: var(--gstore-font-size-3xl);
 	font-weight: var(--gstore-font-weight-bold);
-	color: var(--gstore-color-text-light, #fff) !important;
+	color: var(--gstore-color-text-header, var(--gstore-color-text-light, #fff)) !important;
 	text-decoration: none;
 	text-transform: uppercase;
 	letter-spacing: var(--gstore-letter-spacing-tight);
@@ -203,8 +203,8 @@ body:has(.Gstore-header-shell) .wp-site-blocks {
 }
 
 .Gstore-header__search .wp-block-search__inside-wrapper {
-	background: rgba(255, 255, 255, 0.1);
-	border: 1px solid rgba(255, 255, 255, 0.2);
+	background: var(--gstore-color-header-input-bg, rgba(255, 255, 255, 0.1));
+	border: 1px solid var(--gstore-color-header-input-border, rgba(255, 255, 255, 0.2));
 	border-radius: 4px;
 	overflow: hidden;
 	padding: 0 !important;
@@ -213,26 +213,42 @@ body:has(.Gstore-header-shell) .wp-site-blocks {
 .Gstore-header__search .wp-block-search__input {
 	background: transparent !important;
 	border: none !important;
-	color: var(--gstore-color-text-light, #fff) !important;
+	color: var(--gstore-color-header-input-text, var(--gstore-color-text-header, #fff)) !important;
 	padding: 10px 14px !important;
 	font-size: var(--gstore-font-size-xs) !important;
 }
 
 .Gstore-header__search .wp-block-search__input::placeholder {
-	color: var(--gstore-color-white-60) !important;
+	color: var(--gstore-color-header-input-placeholder, var(--gstore-color-white-60)) !important;
 }
 
 .Gstore-header__search .wp-block-search__button {
-	background: var(--gstore-color-accent, #b5a642) !important;
+	background: var(--gstore-color-action-bg, var(--gstore-color-accent, #b5a642)) !important;
 	border: none !important;
 	padding: 10px 14px !important;
-	color: var(--gstore-color-black) !important;
+	color: var(--gstore-color-action-text, #ffffff) !important;
+}
+
+.Gstore-header__search .wp-block-search__button .wp-block-search__button-label {
+	color: inherit !important;
+}
+
+.Gstore-header__search .wp-block-search__button:hover,
+.Gstore-header__search .wp-block-search__button:focus {
+	background: var(--gstore-color-action-hover, var(--gstore-color-accent-hover, #9f923a)) !important;
+	color: var(--gstore-color-action-text, #ffffff) !important;
 }
 
 .Gstore-header__search .wp-block-search__button svg {
-	fill: var(--gstore-color-black) !important;
+	color: inherit !important;
+	fill: currentColor !important;
+	stroke: currentColor !important;
 	width: 18px;
 	height: 18px;
+}
+
+.Gstore-header__search .wp-block-search__button svg [fill="none"] {
+	fill: none !important;
 }
 
 /* Actions (carrinho + atendimento) */
@@ -247,9 +263,9 @@ body:has(.Gstore-header-shell) .wp-site-blocks {
 	align-items: center;
 	gap: 6px;
 	padding: 8px 16px;
-	color: var(--gstore-color-text-light, #fff) !important;
+	color: var(--gstore-color-header-secondary-text, var(--gstore-color-text-header, #fff)) !important;
 	text-decoration: none;
-	border: 1px solid rgba(255, 255, 255, 0.2);
+	border: 1px solid var(--gstore-color-header-secondary-border, rgba(255, 255, 255, 0.2));
 	border-radius: 4px;
 	font-size: var(--gstore-font-size-sm);
 	transition: all 0.2s ease;
@@ -379,9 +395,10 @@ body:has(.Gstore-header-shell) .wp-site-blocks {
 }
 
 .Gstore-header__mini-cart .wc-block-mini-cart__button {
-	background-color: var(--gstore-color-accent, #b5a642) !important;
+	background-color: var(--gstore-color-header-action-surface, var(--gstore-color-action-bg, #b5a642)) !important;
 	border: none !important;
 	border-radius: 4px !important;
+	color: var(--gstore-color-header-action-text, var(--gstore-color-action-text, #ffffff)) !important;
 	padding: 8px 12px !important;
 	display: inline-flex !important;
 	align-items: center !important;
@@ -392,12 +409,28 @@ body:has(.Gstore-header-shell) .wp-site-blocks {
 	-webkit-tap-highlight-color: transparent;
 }
 
+.Gstore-header__mini-cart .wc-block-mini-cart__button svg {
+	color: inherit !important;
+	fill: currentColor !important;
+	stroke: currentColor !important;
+}
+
+.Gstore-header__mini-cart .wc-block-mini-cart__button svg [fill="none"] {
+	fill: none !important;
+}
+
+.Gstore-header__mini-cart .wc-block-mini-cart__button:hover,
+.Gstore-header__mini-cart .wc-block-mini-cart__button:focus {
+	background-color: var(--gstore-color-action-hover, var(--gstore-color-accent-hover, #9f923a)) !important;
+	color: var(--gstore-color-action-text, #ffffff) !important;
+}
+
 /* ========================================
    NAVEGAÇÃO
    ======================================== */
 
 .Gstore-nav-shell {
-	--gstore-nav-surface: var(--gstore-color-bg-darker, #1a1a1a);
+	--gstore-nav-surface: var(--gstore-color-nav-surface, var(--gstore-color-bg-darker, #1a1a1a));
 	background-color: var(--gstore-nav-surface);
 	border-bottom: 0 !important;
 	border-top: 0 !important;
@@ -419,7 +452,7 @@ body:has(.Gstore-header-shell) .wp-site-blocks {
 }
 
 .Gstore-nav .wp-block-navigation-item__content {
-	color: var(--gstore-color-text-light, #fff) !important;
+	color: var(--gstore-color-nav-text, var(--gstore-color-text-light, #fff)) !important;
 	padding: 12px 0;
 	font-size: var(--gstore-font-size-sm);
 	text-decoration: none;
@@ -433,7 +466,7 @@ body:has(.Gstore-header-shell) .wp-site-blocks {
 	left: 0;
 	width: 0;
 	height: 2px;
-	background-color: var(--gstore-color-accent, #b5a642);
+	background-color: var(--gstore-color-nav-active, var(--gstore-color-accent, #b5a642));
 	transition: width 0.2s ease;
 }
 
@@ -591,7 +624,7 @@ body:has(.Gstore-header-shell) .wp-site-blocks {
 
 	/* Drawer Content */
 	.Gstore-mobile-drawer__content {
-		--gstore-nav-surface: var(--gstore-color-bg-darker, #1a1a1a);
+		--gstore-nav-surface: var(--gstore-color-nav-surface, var(--gstore-color-bg-darker, #1a1a1a));
 		position: absolute;
 		top: 0;
 		left: 0;
@@ -599,7 +632,7 @@ body:has(.Gstore-header-shell) .wp-site-blocks {
 		max-width: 85vw;
 		height: 100%;
 		height: 100dvh;
-		background-color: var(--gstore-color-bg-darker, #1a1a1a);
+		background-color: var(--gstore-nav-surface);
 		box-shadow: 2px 0 10px rgba(0, 0, 0, 0.3);
 		transform: translateX(-100%);
 		transition: transform var(--gstore-transition-base, 250ms ease-in-out);
@@ -633,7 +666,7 @@ body:has(.Gstore-header-shell) .wp-site-blocks {
 		justify-content: space-between;
 		gap: 12px;
 		padding: 16px;
-		border-bottom: 1px solid var(--gstore-color-white-10, rgba(255, 255, 255, 0.1));
+		border-bottom: 1px solid var(--gstore-color-surface-header-border, rgba(255, 255, 255, 0.1));
 		flex-shrink: 0;
 	}
 
@@ -643,7 +676,7 @@ body:has(.Gstore-header-shell) .wp-site-blocks {
 		min-width: 0;
 		max-width: calc(100% - 64px);
 		height: 48px;
-		color: var(--gstore-color-text-light, #fff) !important;
+		color: var(--gstore-color-text-header, var(--gstore-color-text-light, #fff)) !important;
 		text-decoration: none;
 		text-transform: uppercase;
 		font-size: var(--gstore-font-size-lg, 1.125rem);
@@ -679,7 +712,7 @@ body:has(.Gstore-header-shell) .wp-site-blocks {
 		background: none;
 		border: none;
 		cursor: pointer;
-		color: var(--gstore-color-text-light, #fff);
+		color: var(--gstore-color-text-header, var(--gstore-color-text-light, #fff));
 		padding: 0;
 		border-radius: 10px;
 		touch-action: manipulation;
@@ -702,7 +735,7 @@ body:has(.Gstore-header-shell) .wp-site-blocks {
 	/* Drawer Search */
 	.Gstore-mobile-drawer__search {
 		padding: 16px;
-		border-bottom: 1px solid var(--gstore-color-white-10, rgba(255, 255, 255, 0.1));
+		border-bottom: 1px solid var(--gstore-color-surface-header-border, rgba(255, 255, 255, 0.1));
 		flex-shrink: 0;
 	}
 
@@ -726,11 +759,11 @@ body:has(.Gstore-header-shell) .wp-site-blocks {
 	.Gstore-mobile-drawer__search .wp-block-search__input {
 		flex: 1;
 		padding: 10px 14px !important;
-		background-color: var(--gstore-color-bg-dark, #0a0a0a) !important;
-		border: 1px solid var(--gstore-color-border, rgba(255, 255, 255, 0.2)) !important;
+		background-color: var(--gstore-color-header-input-bg, var(--gstore-color-bg-dark, #0a0a0a)) !important;
+		border: 1px solid var(--gstore-color-header-input-border, rgba(255, 255, 255, 0.2)) !important;
 		border-right: none !important;
 		border-radius: 4px 0 0 4px !important;
-		color: var(--gstore-color-text-light, #fff) !important;
+		color: var(--gstore-color-header-input-text, var(--gstore-color-text-header, #fff)) !important;
 		font-size: 0.875rem !important;
 		outline: none !important;
 		transition: border-color var(--gstore-transition-fast, 150ms ease);
@@ -738,7 +771,7 @@ body:has(.Gstore-header-shell) .wp-site-blocks {
 	}
 
 	.Gstore-mobile-drawer__search .wp-block-search__input::placeholder {
-		color: var(--gstore-color-text-secondary, rgba(255, 255, 255, 0.6));
+		color: var(--gstore-color-header-input-placeholder, rgba(255, 255, 255, 0.6));
 	}
 
 	.Gstore-mobile-drawer__search .wp-block-search__input:focus {
@@ -747,11 +780,11 @@ body:has(.Gstore-header-shell) .wp-site-blocks {
 
 	.Gstore-mobile-drawer__search .wp-block-search__button {
 		padding: 10px 14px !important;
-		background-color: var(--gstore-color-accent, #b5a642) !important;
-		border: 1px solid var(--gstore-color-accent, #b5a642) !important;
-		border-left: 1px solid var(--gstore-color-accent, #b5a642) !important;
+		background-color: var(--gstore-color-action-bg, var(--gstore-color-accent, #b5a642)) !important;
+		border: 1px solid var(--gstore-color-action-bg, var(--gstore-color-accent, #b5a642)) !important;
+		border-left: 1px solid var(--gstore-color-action-bg, var(--gstore-color-accent, #b5a642)) !important;
 		border-radius: 0 4px 4px 0 !important;
-		color: var(--gstore-color-bg-dark, #0a0a0a) !important;
+		color: var(--gstore-color-action-text, #ffffff) !important;
 		cursor: pointer;
 		transition: all var(--gstore-transition-fast, 150ms ease);
 		display: flex !important;
@@ -763,7 +796,7 @@ body:has(.Gstore-header-shell) .wp-site-blocks {
 
 	.Gstore-mobile-drawer__search .wp-block-search__button:hover,
 	.Gstore-mobile-drawer__search .wp-block-search__button:focus {
-		background-color: var(--gstore-color-accent-hover, #c7b648) !important;
+		background-color: var(--gstore-color-action-hover, var(--gstore-color-accent-hover, #c7b648)) !important;
 		outline: none;
 		transform: translateY(-1px);
 	}
@@ -771,7 +804,13 @@ body:has(.Gstore-header-shell) .wp-site-blocks {
 	.Gstore-mobile-drawer__search .wp-block-search__button svg {
 		width: 20px;
 		height: 20px;
-		fill: currentColor;
+		color: inherit !important;
+		fill: currentColor !important;
+		stroke: currentColor !important;
+	}
+
+	.Gstore-mobile-drawer__search .wp-block-search__button svg [fill="none"] {
+		fill: none !important;
 	}
 
 	/* Drawer Navigation */
@@ -804,8 +843,8 @@ body:has(.Gstore-header-shell) .wp-site-blocks {
 		display: block;
 		width: 100%;
 		padding: 14px 16px;
-		border-bottom: 1px solid var(--gstore-color-white-10, rgba(255, 255, 255, 0.1));
-		color: var(--gstore-color-text-light, #fff) !important;
+		border-bottom: 1px solid var(--gstore-color-surface-header-border, rgba(255, 255, 255, 0.1));
+		color: var(--gstore-color-nav-text, var(--gstore-color-text-light, #fff)) !important;
 		text-decoration: none;
 		font-size: var(--gstore-font-size-sm, 0.875rem);
 		transition: background-color var(--gstore-transition-fast, 150ms ease);
@@ -814,7 +853,7 @@ body:has(.Gstore-header-shell) .wp-site-blocks {
 	.Gstore-mobile-drawer__nav .wp-block-navigation-item__content:hover,
 	.Gstore-mobile-drawer__nav .wp-block-navigation-item__content:focus {
 		background-color: var(--gstore-color-bg-dark, #0a0a0a);
-		color: var(--gstore-color-accent, #b5a642) !important;
+		color: var(--gstore-color-nav-active, var(--gstore-color-accent, #b5a642)) !important;
 		outline: none;
 	}
 
@@ -847,7 +886,7 @@ body:has(.Gstore-header-shell) .wp-site-blocks {
 		bottom: 0;
 		left: var(--gstore-drawer-cascade-offset);
 		height: 1px;
-		background: var(--gstore-color-white-10, rgba(255, 255, 255, 0.1));
+		background: var(--gstore-color-surface-header-border, rgba(255, 255, 255, 0.1));
 	}
 
 	.Gstore-mobile-drawer__nav .wp-block-navigation__submenu-container .wp-block-navigation__submenu-container .wp-block-navigation-item__content {
@@ -862,7 +901,7 @@ body:has(.Gstore-header-shell) .wp-site-blocks {
 	.Gstore-mobile-drawer__footer {
 		flex-shrink: 0;
 		margin-top: auto;
-		border-top: 1px solid var(--gstore-color-white-10, rgba(255, 255, 255, 0.1));
+		border-top: 1px solid var(--gstore-color-surface-header-border, rgba(255, 255, 255, 0.1));
 		display: grid;
 		grid-template-columns: repeat(2, minmax(0, 1fr));
 		background: var(--gstore-color-accent-10, rgba(181, 166, 66, 0.1));
@@ -879,12 +918,12 @@ body:has(.Gstore-header-shell) .wp-site-blocks {
 		justify-content: center;
 		gap: 8px;
 		padding: 14px 8px;
-		color: var(--gstore-color-text-light, #fff) !important;
+		color: var(--gstore-color-nav-text, var(--gstore-color-text-light, #fff)) !important;
 		text-decoration: none;
 		font-size: var(--gstore-font-size-sm, 0.875rem);
 		font-weight: 600;
 		background: transparent;
-		border-right: 1px solid var(--gstore-color-white-10, rgba(255, 255, 255, 0.1));
+		border-right: 1px solid var(--gstore-color-surface-header-border, rgba(255, 255, 255, 0.1));
 		transition: background-color var(--gstore-transition-fast, 150ms ease);
 	}
 

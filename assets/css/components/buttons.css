@@ -29,7 +29,7 @@
 }
 
 .Gstore-btn:focus-visible {
-	outline: 2px solid var(--gstore-color-accent);
+	outline: 2px solid var(--gstore-color-action-bg, var(--gstore-color-accent));
 	outline-offset: 2px;
 }
 
@@ -50,16 +50,16 @@ a.Gstore-btn {
 
 /* Botão Primário */
 .Gstore-btn--primary {
-	background-color: var(--gstore-color-accent);
-	color: #ffffff;
-	border-color: var(--gstore-color-accent);
+	background-color: var(--gstore-color-action-bg, var(--gstore-color-accent));
+	color: var(--gstore-color-action-text, #ffffff);
+	border-color: var(--gstore-color-action-bg, var(--gstore-color-accent));
 }
 
 .Gstore-btn--primary:hover,
 .Gstore-btn--primary:focus {
-	background-color: var(--gstore-color-accent-hover);
-	border-color: var(--gstore-color-accent-hover);
-	color: #ffffff;
+	background-color: var(--gstore-color-action-hover, var(--gstore-color-accent-hover));
+	border-color: var(--gstore-color-action-hover, var(--gstore-color-accent-hover));
+	color: var(--gstore-color-action-text, #ffffff);
 	transform: translateY(-1px);
 	box-shadow: var(--gstore-shadow-md);
 }
@@ -102,8 +102,8 @@ a.Gstore-btn {
 
 .Gstore-btn--outline:hover,
 .Gstore-btn--outline:focus {
-	background-color: var(--gstore-color-accent);
-	color: #ffffff;
+	background-color: var(--gstore-color-action-bg, var(--gstore-color-accent));
+	color: var(--gstore-color-action-text, #ffffff);
 }
 
 /* Botão Ghost/Text */
@@ -138,10 +138,18 @@ a.Gstore-btn {
    ======================================== */
 
 .Gstore-btn .Gstore-icon,
-.Gstore-btn i {
+.Gstore-btn i,
+.Gstore-btn svg {
 	width: 1em;
 	height: 1em;
 	flex-shrink: 0;
+	color: inherit;
+	fill: currentColor;
+	stroke: currentColor;
+}
+
+.Gstore-btn svg [fill="none"] {
+	fill: none;
 }
 
 .Gstore-btn--icon-only {

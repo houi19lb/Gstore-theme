@@ -356,11 +356,11 @@
 
 .Gstore-header__search .wp-block-search__button {
 	padding: var(--gstore-spacing-sm) var(--gstore-spacing-md) !important;
-	background-color: var(--gstore-color-accent) !important;
-	border: 1px solid var(--gstore-color-accent) !important;
-	border-left: 1px solid var(--gstore-color-accent) !important;
+	background-color: var(--gstore-color-action-bg, var(--gstore-color-accent)) !important;
+	border: 1px solid var(--gstore-color-action-bg, var(--gstore-color-accent)) !important;
+	border-left: 1px solid var(--gstore-color-action-bg, var(--gstore-color-accent)) !important;
 	border-radius: 0 4px 4px 0 !important;
-	color: var(--gstore-color-bg-dark) !important;
+	color: var(--gstore-color-action-text, #ffffff) !important;
 	cursor: pointer;
 	transition: all var(--gstore-transition-fast);
 	display: flex !important;
@@ -372,7 +372,8 @@
 
 .Gstore-header__search .wp-block-search__button:hover,
 .Gstore-header__search .wp-block-search__button:focus {
-	background-color: var(--gstore-color-accent-hover) !important;
+	background-color: var(--gstore-color-action-hover, var(--gstore-color-accent-hover)) !important;
+	color: var(--gstore-color-action-text, #ffffff) !important;
 	outline: none;
 	transform: translateY(-1px);
 }
@@ -380,7 +381,8 @@
 .Gstore-header__search .wp-block-search__button svg {
 	width: 20px;
 	height: 20px;
-	fill: currentColor;
+	fill: currentColor !important;
+	stroke: currentColor !important;
 }
 
 @media (max-width: 1399px) {
@@ -452,14 +454,15 @@
 }
 
 .Gstore-btn--primary {
-	background-color: var(--gstore-color-accent);
-	color: var(--gstore-color-bg-dark);
+	background-color: var(--gstore-color-action-bg, var(--gstore-color-accent));
+	color: var(--gstore-color-action-text, #ffffff);
 	position: relative;
 }
 
 .Gstore-btn--primary:hover,
 .Gstore-btn--primary:focus {
-	background-color: var(--gstore-color-accent-hover);
+	background-color: var(--gstore-color-action-hover, var(--gstore-color-accent-hover));
+	color: var(--gstore-color-action-text, #ffffff);
 	transform: translateY(-2px);
 }
 
@@ -502,8 +505,8 @@
 	gap: var(--gstore-spacing-xs) !important;
 	padding: var(--gstore-spacing-sm) var(--gstore-spacing-md) !important;
 	border-radius: 4px !important;
-	background-color: var(--gstore-color-accent) !important;
-	color: var(--gstore-color-bg-dark) !important;
+	background-color: var(--gstore-color-header-action-surface, var(--gstore-color-action-bg, var(--gstore-color-accent))) !important;
+	color: var(--gstore-color-header-action-text, var(--gstore-color-action-text, #ffffff)) !important;
 	border: none !important;
 	font-size: var(--gstore-font-size-sm) !important;
 	font-weight: 500 !important;
@@ -576,14 +579,17 @@
 
 .Gstore-header__mini-cart .wc-block-mini-cart__button:hover,
 .Gstore-header__mini-cart .wc-block-mini-cart__button:focus {
-	background-color: var(--gstore-color-accent-hover) !important;
+	background-color: var(--gstore-color-action-hover, var(--gstore-color-accent-hover)) !important;
+	color: var(--gstore-color-action-text, #ffffff) !important;
 	transform: translateY(-2px);
 }
 
 .Gstore-header__mini-cart .wc-block-mini-cart__icon {
 	width: 18px !important;
 	height: 18px !important;
+	color: inherit !important;
 	fill: currentColor !important;
+	stroke: currentColor !important;
 }
 
 .Gstore-header__mini-cart .wc-block-mini-cart__badge {
@@ -593,8 +599,8 @@
 	min-width: 20px !important;
 	height: 20px !important;
 	padding: 0 6px !important;
-	background-color: var(--gstore-color-bg-dark) !important;
-	color: var(--gstore-color-accent) !important;
+	background-color: var(--gstore-color-action-bg, var(--gstore-color-accent)) !important;
+	color: var(--gstore-color-action-text, #ffffff) !important;
 	border-radius: var(--gstore-radius-base) !important;
 	font-size: 0.75rem !important;
 	font-weight: 700 !important;
@@ -688,7 +694,8 @@
 
 	/* Botão do carrinho com fundo accent (brass) no mobile */
 	.Gstore-header__mini-cart .wc-block-mini-cart__button {
-		background-color: var(--gstore-color-accent, #b5a642) !important;
+		background-color: var(--gstore-color-header-action-surface, var(--gstore-color-action-bg, var(--gstore-color-accent, #b5a642))) !important;
+		color: var(--gstore-color-header-action-text, var(--gstore-color-action-text, #ffffff)) !important;
 		border: none !important;
 		min-height: 34px !important;
 		padding: 0 10px !important;
@@ -698,12 +705,15 @@
 	.Gstore-header__mini-cart .wc-block-mini-cart__button:hover,
 	.Gstore-header__mini-cart .wc-block-mini-cart__button:focus,
 	.Gstore-header__mini-cart .wc-block-mini-cart__button:active {
-		background-color: var(--gstore-color-accent, #b5a642) !important;
+		background-color: var(--gstore-color-header-action-surface, var(--gstore-color-action-bg, var(--gstore-color-accent, #b5a642))) !important;
+		color: var(--gstore-color-header-action-text, var(--gstore-color-action-text, #ffffff)) !important;
 		transform: none !important;
 	}
 
 	.Gstore-header__mini-cart .wc-block-mini-cart__icon {
-		fill: var(--gstore-color-bg-dark, #1a1a1a) !important;
+		color: inherit !important;
+		fill: currentColor !important;
+		stroke: currentColor !important;
 	}
 }
 

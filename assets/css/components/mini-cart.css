@@ -6,16 +6,17 @@
 /* Override do badge/contador do mini-cart (sobrescreve cor hardcoded do bloco WooCommerce) */
 .wc-block-mini-cart__badge,
 .wp-block-woocommerce-mini-cart .wc-block-mini-cart__badge {
-	background-color: var(--gstore-color-accent, #b5a642) !important;
+	background-color: var(--gstore-color-action-bg, var(--gstore-color-accent, #b5a642)) !important;
+	color: var(--gstore-color-action-text, #ffffff) !important;
 }
 
 /* O style.css legado força o badge do header a ficar visível e com texto na cor do accent.
  * Aqui restauramos o comportamento correto do bloco: escondido quando [hidden] e legível quando visível.
  */
 .Gstore-header__mini-cart .wc-block-mini-cart__badge {
-	background: var(--gstore-color-black, #0a0a0a) !important;
-	background-color: var(--gstore-color-black, #0a0a0a) !important;
-	color: var(--gstore-color-accent, #b5a642) !important;
+	background: var(--gstore-color-action-bg, var(--gstore-color-accent, #b5a642)) !important;
+	background-color: var(--gstore-color-action-bg, var(--gstore-color-accent, #b5a642)) !important;
+	color: var(--gstore-color-action-text, #ffffff) !important;
 	line-height: 1 !important;
 	border-radius: 4px !important;
 	left: auto !important;
@@ -100,8 +101,8 @@ body .wc-block-mini-cart__drawer .wp-element-button {
 /* Botão de checkout do mini-cart */
 body .wc-block-mini-cart__drawer .wc-block-mini-cart-checkout-button-block,
 body .wc-block-mini-cart__drawer .wp-block-woocommerce-mini-cart-checkout-button-block {
-	background-color: var(--gstore-color-accent, #b5a642) !important;
-	color: #ffffff !important;
+	background-color: var(--gstore-color-action-bg, var(--gstore-color-accent, #b5a642)) !important;
+	color: var(--gstore-color-action-text, #ffffff) !important;
 	border: none !important;
 	padding: var(--gstore-spacing-sm, 0.75rem) var(--gstore-spacing-md, 1rem) !important;
 	border-radius: var(--gstore-radius-base, 4px) !important;
@@ -114,8 +115,8 @@ body .wc-block-mini-cart__drawer .wc-block-mini-cart-checkout-button-block:hover
 body .wc-block-mini-cart__drawer .wp-block-woocommerce-mini-cart-checkout-button-block:hover,
 body .wc-block-mini-cart__drawer .wc-block-mini-cart-checkout-button-block:focus,
 body .wc-block-mini-cart__drawer .wp-block-woocommerce-mini-cart-checkout-button-block:focus {
-	background-color: var(--gstore-color-accent-hover, #9f923a) !important;
-	color: #ffffff !important;
+	background-color: var(--gstore-color-action-hover, var(--gstore-color-accent-hover, #9f923a)) !important;
+	color: var(--gstore-color-action-text, #ffffff) !important;
 }
 
 body .wc-block-mini-cart__drawer .wc-block-mini-cart-checkout-button-block .wc-block-components-button__text,

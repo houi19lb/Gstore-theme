@@ -19,6 +19,11 @@
 	--gstore-color-bg-darker: #1a1a1a;
 	--gstore-color-bg-card-meta: #f6f6f6;
 	--gstore-benefits-bar-background: linear-gradient(90deg, var(--gstore-color-accent), var(--gstore-color-accent-light));
+	--gstore-color-brand-primary: var(--gstore-color-bg-dark);
+	--gstore-color-surface-page: var(--gstore-color-bg-base);
+	--gstore-color-surface-card: var(--gstore-color-bg-light);
+	--gstore-color-surface-header: var(--gstore-color-bg-dark);
+	--gstore-color-surface-header-border: var(--gstore-color-white-10);
 	
 	/* Textos */
 	--gstore-color-text-primary: #1a1a1a;
@@ -26,6 +31,10 @@
 	--gstore-color-text-muted: #7a7a7a;
 	--gstore-color-text-light: #f5f5f5;
 	--gstore-color-text-accent: #5c6b5a;
+	--gstore-color-text-header: var(--gstore-color-text-light);
+	--gstore-color-nav-surface: var(--gstore-color-bg-darker);
+	--gstore-color-nav-text: var(--gstore-color-text-light);
+	--gstore-color-nav-active: var(--gstore-color-accent);
 	
 	/* Acentos e Estados */
 	--gstore-color-accent: #b5a642;
@@ -84,6 +93,23 @@
 	--gstore-color-accent-secondary-20: rgba(90, 137, 0, 0.2);
 	--gstore-color-error-08: rgba(255, 71, 87, 0.08);
 	--gstore-color-error-10: rgba(255, 71, 87, 0.1);
+	--gstore-color-header-input-bg: var(--gstore-color-white-10);
+	--gstore-color-header-input-border: var(--gstore-color-white-20);
+	--gstore-color-header-input-text: var(--gstore-color-text-header);
+	--gstore-color-header-input-placeholder: var(--gstore-color-white-60);
+	--gstore-color-header-secondary-text: var(--gstore-color-text-header);
+	--gstore-color-header-secondary-border: var(--gstore-color-white-20);
+	--gstore-color-header-action-surface: var(--gstore-color-action-bg);
+	--gstore-color-header-action-text: var(--gstore-color-action-text);
+	--gstore-color-benefits-surface: var(--gstore-benefits-bar-background);
+	--gstore-color-benefits-text: var(--gstore-color-text-light);
+	--gstore-color-benefits-muted: var(--gstore-color-white-80);
+	--gstore-color-benefits-icon: var(--gstore-color-accent-light);
+	--gstore-color-benefits-divider: var(--gstore-color-accent-light);
+	--gstore-color-action-bg: var(--gstore-color-accent);
+	--gstore-color-action-hover: var(--gstore-color-accent-hover);
+	--gstore-color-action-text: var(--gstore-color-accent-contrast);
+	--gstore-visual-preset: default;
 	
 	/* Cores de Estados Específicos */
 	--gstore-color-info-bg: #eef2ff;

@@ -119,15 +119,53 @@ function gstore_is_default_accent_color( $color ) {
  */
 function gstore_get_accent_token_css_var_map() {
 	return array(
-		'accent'       => '--gstore-color-accent',
-		'accent-hover' => '--gstore-color-accent-hover',
-		'accent-dark'  => '--gstore-color-accent-dark',
-		'accent-light' => '--gstore-color-accent-light',
-		'accent-08'    => '--gstore-color-accent-08',
-		'accent-10'    => '--gstore-color-accent-10',
-		'accent-12'    => '--gstore-color-accent-12',
-		'accent-15'    => '--gstore-color-accent-15',
-		'accent-20'    => '--gstore-color-accent-20',
+		'accent'          => '--gstore-color-accent',
+		'accent-hover'    => '--gstore-color-accent-hover',
+		'accent-readable' => '--gstore-color-accent-readable',
+		'accent-fill'     => '--gstore-color-accent-fill',
+		'accent-contrast' => '--gstore-color-accent-contrast',
+		'accent-dark'     => '--gstore-color-accent-dark',
+		'accent-light'    => '--gstore-color-accent-light',
+		'accent-08'       => '--gstore-color-accent-08',
+		'accent-10'       => '--gstore-color-accent-10',
+		'accent-12'       => '--gstore-color-accent-12',
+		'accent-15'       => '--gstore-color-accent-15',
+		'accent-20'       => '--gstore-color-accent-20',
+	);
+}
+
+/**
+ * Mapeia tokens semanticos oficiais usados pelo tema e plugin por loja.
+ *
+ * @return array<string,string>
+ */
+function gstore_get_semantic_token_css_var_map() {
+	return array(
+		'brand-primary'                 => '--gstore-color-brand-primary',
+		'surface-page'                  => '--gstore-color-surface-page',
+		'surface-card'                  => '--gstore-color-surface-card',
+		'surface-header'                => '--gstore-color-surface-header',
+		'surface-header-border'         => '--gstore-color-surface-header-border',
+		'text-header'                   => '--gstore-color-text-header',
+		'nav-surface'                   => '--gstore-color-nav-surface',
+		'nav-text'                      => '--gstore-color-nav-text',
+		'nav-active'                    => '--gstore-color-nav-active',
+		'header-input-bg'               => '--gstore-color-header-input-bg',
+		'header-input-border'           => '--gstore-color-header-input-border',
+		'header-input-text'             => '--gstore-color-header-input-text',
+		'header-input-placeholder'      => '--gstore-color-header-input-placeholder',
+		'header-secondary-text'         => '--gstore-color-header-secondary-text',
+		'header-secondary-border'       => '--gstore-color-header-secondary-border',
+		'header-action-surface'         => '--gstore-color-header-action-surface',
+		'header-action-text'            => '--gstore-color-header-action-text',
+		'benefits-surface'              => '--gstore-color-benefits-surface',
+		'benefits-text'                 => '--gstore-color-benefits-text',
+		'benefits-muted'                => '--gstore-color-benefits-muted',
+		'benefits-icon'                 => '--gstore-color-benefits-icon',
+		'benefits-divider'              => '--gstore-color-benefits-divider',
+		'action-bg'                     => '--gstore-color-action-bg',
+		'action-hover'                  => '--gstore-color-action-hover',
+		'action-text'                   => '--gstore-color-action-text',
 	);
 }
 
@@ -164,6 +202,25 @@ function gstore_sanitize_design_token_value( $value ) {
 		);
 	}
 
+	if ( preg_match( '/^var\(--gstore-[a-z0-9-]+\)$/i', $value ) ) {
+		return $value;
+	}
+
+	if ( 'transparent' === strtolower( $value ) ) {
+		return 'transparent';
+	}
+
+	if (
+		preg_match( '/^linear-gradient\([#a-z0-9.,%() -]+\)$/i', $value )
+		&& false === stripos( $value, 'url' )
+		&& false === stripos( $value, 'expression' )
+		&& false === strpos( $value, ';' )
+		&& false === strpos( $value, '{' )
+		&& false === strpos( $value, '}' )
+	) {
+		return $value;
+	}
+
 	return '';
 }
 
@@ -178,7 +235,12 @@ function gstore_get_saved_design_token_overrides() {
 		return array();
 	}
 
-	$allowed_vars = array_values( gstore_get_accent_token_css_var_map() );
+	$allowed_vars = array_values(
+		array_merge(
+			gstore_get_accent_token_css_var_map(),
+			gstore_get_semantic_token_css_var_map()
+		)
+	);
 	$tokens       = array();
 
 	foreach ( $allowed_vars as $css_var ) {
@@ -212,6 +274,46 @@ function gstore_get_store_info_accent_color() {
 
 	$color = sanitize_hex_color( (string) $store_info->get_value( 'branding.accent_color', '' ) );
 	return $color ? $color : '';
+}
+
+/**
+ * Le a cor primaria do Store Info do plugin quando ela existir.
+ *
+ * @return string
+ */
+function gstore_get_store_info_primary_color() {
+	if ( ! function_exists( 'gstore_store_info' ) ) {
+		return '';
+	}
+
+	$store_info = gstore_store_info();
+	if ( ! is_object( $store_info ) || ! method_exists( $store_info, 'get_value' ) ) {
+		return '';
+	}
+
+	$color = sanitize_hex_color( (string) $store_info->get_value( 'branding.primary_color', '' ) );
+	return $color ? $color : '';
+}
+
+/**
+ * Le o preset visual do Store Info.
+ *
+ * @return string
+ */
+function gstore_get_store_info_visual_preset() {
+	if ( ! function_exists( 'gstore_store_info' ) ) {
+		return 'default';
+	}
+
+	$store_info = gstore_store_info();
+	if ( ! is_object( $store_info ) || ! method_exists( $store_info, 'get_value' ) ) {
+		return 'default';
+	}
+
+	$preset  = sanitize_key( (string) $store_info->get_value( 'branding.visual_preset', 'default' ) );
+	$allowed = array( 'default', 'light-technical' );
+
+	return in_array( $preset, $allowed, true ) ? $preset : 'default';
 }
 
 /**
@@ -296,6 +398,92 @@ function gstore_build_accent_design_token_overrides( $accent_color ) {
 }
 
 /**
+ * Gera overrides de design tokens semanticos a partir da loja.
+ *
+ * @param string $accent_color Cor de accent.
+ * @param string $primary_color Cor primaria do header/marca.
+ * @param string $visual_preset Preset visual.
+ * @return array<string,string>
+ */
+function gstore_build_store_design_token_overrides( $accent_color, $primary_color = '', $visual_preset = 'default' ) {
+	$accent_color  = sanitize_hex_color( $accent_color );
+	$primary_color = sanitize_hex_color( $primary_color );
+
+	if ( ! $accent_color ) {
+		return array();
+	}
+
+	$primary_color = $primary_color ? $primary_color : '#0a0a0a';
+	$visual_preset = sanitize_key( $visual_preset );
+	$visual_preset = in_array( $visual_preset, array( 'default', 'light-technical' ), true ) ? $visual_preset : 'default';
+
+	$accent_tokens = gstore_build_accent_design_token_overrides( $accent_color );
+	$accent_hover  = isset( $accent_tokens['--gstore-color-accent-hover'] ) ? $accent_tokens['--gstore-color-accent-hover'] : $accent_color;
+	$accent_light  = isset( $accent_tokens['--gstore-color-accent-light'] ) ? $accent_tokens['--gstore-color-accent-light'] : $accent_color;
+	$action_text   = isset( $accent_tokens['--gstore-color-accent-contrast'] ) ? $accent_tokens['--gstore-color-accent-contrast'] : gstore_get_contrast_color( $accent_color );
+
+	if ( 'light-technical' === $visual_preset ) {
+		$semantic_tokens = array(
+			'--gstore-color-brand-primary'            => $primary_color,
+			'--gstore-color-surface-page'             => '#f7f3ea',
+			'--gstore-color-surface-card'             => '#ffffff',
+			'--gstore-color-surface-header'           => '#fffdfa',
+			'--gstore-color-surface-header-border'    => '#d8d5cc',
+			'--gstore-color-text-header'              => '#111214',
+			'--gstore-color-nav-surface'              => '#fffdfa',
+			'--gstore-color-nav-text'                 => '#111214',
+			'--gstore-color-nav-active'               => $accent_color,
+			'--gstore-color-header-input-bg'          => '#fffdfa',
+			'--gstore-color-header-input-border'      => '#d8d5cc',
+			'--gstore-color-header-input-text'        => '#111214',
+			'--gstore-color-header-input-placeholder' => 'rgba(17, 18, 20, 0.52)',
+			'--gstore-color-header-secondary-text'    => '#26282b',
+			'--gstore-color-header-secondary-border'  => '#d8d5cc',
+			'--gstore-color-header-action-surface'    => $accent_color,
+			'--gstore-color-header-action-text'       => $action_text,
+			'--gstore-color-benefits-surface'         => 'linear-gradient(180deg, #fffdfa, #f7f3ea)',
+			'--gstore-color-benefits-text'            => '#111214',
+			'--gstore-color-benefits-muted'           => 'rgba(17, 18, 20, 0.70)',
+			'--gstore-color-benefits-icon'            => $accent_color,
+			'--gstore-color-benefits-divider'         => '#d8d5cc',
+			'--gstore-color-action-bg'                => $accent_color,
+			'--gstore-color-action-hover'             => $accent_hover,
+			'--gstore-color-action-text'              => $action_text,
+		);
+	} else {
+		$semantic_tokens = array(
+			'--gstore-color-brand-primary'            => $primary_color,
+			'--gstore-color-surface-page'             => '#f5f5f2',
+			'--gstore-color-surface-card'             => '#ffffff',
+			'--gstore-color-surface-header'           => $primary_color,
+			'--gstore-color-surface-header-border'    => 'rgba(255, 255, 255, 0.10)',
+			'--gstore-color-text-header'              => '#f5f5f5',
+			'--gstore-color-nav-surface'              => '#1a1a1a',
+			'--gstore-color-nav-text'                 => '#f5f5f5',
+			'--gstore-color-nav-active'               => $accent_color,
+			'--gstore-color-header-input-bg'          => 'rgba(255, 255, 255, 0.10)',
+			'--gstore-color-header-input-border'      => 'rgba(255, 255, 255, 0.20)',
+			'--gstore-color-header-input-text'        => '#f5f5f5',
+			'--gstore-color-header-input-placeholder' => 'rgba(255, 255, 255, 0.60)',
+			'--gstore-color-header-secondary-text'    => '#f5f5f5',
+			'--gstore-color-header-secondary-border'  => 'rgba(255, 255, 255, 0.20)',
+			'--gstore-color-header-action-surface'    => $accent_color,
+			'--gstore-color-header-action-text'       => $action_text,
+			'--gstore-color-benefits-surface'         => sprintf( 'linear-gradient(90deg, %s, %s)', $accent_color, $accent_light ),
+			'--gstore-color-benefits-text'            => '#f5f5f5',
+			'--gstore-color-benefits-muted'           => 'rgba(255, 255, 255, 0.85)',
+			'--gstore-color-benefits-icon'            => $accent_light,
+			'--gstore-color-benefits-divider'         => $accent_light,
+			'--gstore-color-action-bg'                => $accent_color,
+			'--gstore-color-action-hover'             => $accent_hover,
+			'--gstore-color-action-text'              => $action_text,
+		);
+	}
+
+	return array_merge( $accent_tokens, $semantic_tokens );
+}
+
+/**
  * Persiste tokens derivados em wp_options, fora da pasta do tema.
  *
  * @param string $accent_color Cor base.
@@ -307,8 +495,10 @@ function gstore_persist_accent_design_token_overrides( $accent_color ) {
 		return false;
 	}
 
-	$current   = gstore_get_saved_design_token_overrides();
-	$generated = gstore_build_accent_design_token_overrides( $accent_color );
+	$current       = gstore_get_saved_design_token_overrides();
+	$primary_color = gstore_get_store_info_primary_color();
+	$visual_preset = gstore_get_store_info_visual_preset();
+	$generated     = gstore_build_store_design_token_overrides( $accent_color, $primary_color, $visual_preset );
 	if ( empty( $generated ) ) {
 		return false;
 	}
@@ -340,11 +530,20 @@ function gstore_persist_accent_design_token_overrides( $accent_color ) {
 function gstore_get_design_token_overrides_css() {
 	$tokens          = gstore_get_saved_design_token_overrides();
 	$accent_color    = gstore_get_effective_accent_color();
+	$primary_color   = gstore_get_store_info_primary_color();
+	$visual_preset   = gstore_get_store_info_visual_preset();
 	$current_accent  = isset( $tokens['--gstore-color-accent'] ) ? sanitize_hex_color( $tokens['--gstore-color-accent'] ) : '';
 	$accent_mismatch = $accent_color && ( ! $current_accent || strtolower( $current_accent ) !== strtolower( $accent_color ) );
+	$missing_semantic_tokens = (bool) array_diff(
+		array_values( gstore_get_semantic_token_css_var_map() ),
+		array_keys( $tokens )
+	);
 
-	if ( empty( $tokens ) || $accent_mismatch ) {
-		$tokens = array_merge( $tokens, gstore_build_accent_design_token_overrides( $accent_color ) );
+	if ( empty( $tokens ) || $accent_mismatch || $missing_semantic_tokens ) {
+		$generated = gstore_build_store_design_token_overrides( $accent_color, $primary_color, $visual_preset );
+		$tokens    = ( $accent_mismatch || 'light-technical' === $visual_preset )
+			? array_merge( $tokens, $generated )
+			: array_merge( $generated, $tokens );
 	}
 
 	$benefits_bar_background = function_exists( 'gstore_get_benefits_bar_background_color' )
@@ -20169,15 +20368,18 @@ function gstore_generate_accent_tokens( $accent_color ) {
 	}
 
 	return array(
-		'accent' => $accent_color,
-		'accent-hover' => gstore_darken_color( $accent_color, 12 ),
-		'accent-dark' => gstore_darken_color( $accent_color, 25 ),
-		'accent-light' => gstore_lighten_color( $accent_color, 10 ),
-		'accent-08' => gstore_hex_to_rgba( $accent_color, 0.08 ),
-		'accent-10' => gstore_hex_to_rgba( $accent_color, 0.1 ),
-		'accent-12' => gstore_hex_to_rgba( $accent_color, 0.12 ),
-		'accent-15' => gstore_hex_to_rgba( $accent_color, 0.15 ),
-		'accent-20' => gstore_hex_to_rgba( $accent_color, 0.2 ),
+		'accent'          => $accent_color,
+		'accent-hover'    => gstore_darken_color( $accent_color, 12 ),
+		'accent-readable' => gstore_darken_color( $accent_color, 25 ),
+		'accent-fill'     => $accent_color,
+		'accent-contrast' => gstore_get_contrast_color( $accent_color ),
+		'accent-dark'     => gstore_darken_color( $accent_color, 25 ),
+		'accent-light'    => gstore_lighten_color( $accent_color, 10 ),
+		'accent-08'       => gstore_hex_to_rgba( $accent_color, 0.08 ),
+		'accent-10'       => gstore_hex_to_rgba( $accent_color, 0.1 ),
+		'accent-12'       => gstore_hex_to_rgba( $accent_color, 0.12 ),
+		'accent-15'       => gstore_hex_to_rgba( $accent_color, 0.15 ),
+		'accent-20'       => gstore_hex_to_rgba( $accent_color, 0.2 ),
 	);
 }
 

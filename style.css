@@ -48,6 +48,15 @@ Text Domain: gstore
 	--gstore-radius-base: 4px;
 	--gstore-container-max-width: 1280px;
 	--gstore-container-padding-inline: 20px;
+	--gstore-color-accent: #b5a642;
+	--gstore-color-accent-hover: #9f923a;
+	--gstore-color-accent-contrast: #ffffff;
+	--gstore-color-action-bg: var(--gstore-color-accent);
+	--gstore-color-action-hover: var(--gstore-color-accent-hover);
+	--gstore-color-action-text: var(--gstore-color-accent-contrast);
+	--gstore-color-surface-header: var(--gstore-color-bg-dark);
+	--gstore-color-header-action-surface: var(--gstore-color-action-bg);
+	--gstore-color-header-action-text: var(--gstore-color-action-text);
 
 	/* Cores para Cards de Produtos */
 	--green: #2e9b3b;
@@ -104,4 +113,43 @@ main:not(.Gstore-blog-shell):not(.Gstore-blog-single-shell) {
 .Gstore-header,
 .Gstore-nav-shell {
 	color: var(--gstore-color-text-primary);
+}
+
+.Gstore-header__search .wp-block-search__button {
+	background-color: var(--gstore-color-action-bg, var(--gstore-color-accent)) !important;
+	border-color: var(--gstore-color-action-bg, var(--gstore-color-accent)) !important;
+	color: var(--gstore-color-action-text, #ffffff) !important;
+}
+
+.Gstore-header__search .wp-block-search__button:hover,
+.Gstore-header__search .wp-block-search__button:focus {
+	background-color: var(--gstore-color-action-hover, var(--gstore-color-accent-hover)) !important;
+	color: var(--gstore-color-action-text, #ffffff) !important;
+}
+
+.Gstore-header__search .wp-block-search__button svg,
+.Gstore-header__mini-cart .wc-block-mini-cart__icon,
+.Gstore-header__mini-cart .wc-block-mini-cart__button svg,
+.Gstore-btn svg {
+	color: inherit !important;
+	fill: currentColor !important;
+	stroke: currentColor !important;
+}
+
+.Gstore-header__mini-cart .wc-block-mini-cart__button {
+	background-color: var(--gstore-color-header-action-surface, var(--gstore-color-action-bg, var(--gstore-color-accent))) !important;
+	color: var(--gstore-color-header-action-text, var(--gstore-color-action-text, #ffffff)) !important;
+}
+
+.Gstore-btn--primary {
+	background-color: var(--gstore-color-action-bg, var(--gstore-color-accent));
+	border-color: var(--gstore-color-action-bg, var(--gstore-color-accent));
+	color: var(--gstore-color-action-text, #ffffff);
+}
+
+.Gstore-btn--primary:hover,
+.Gstore-btn--primary:focus {
+	background-color: var(--gstore-color-action-hover, var(--gstore-color-accent-hover));
+	border-color: var(--gstore-color-action-hover, var(--gstore-color-accent-hover));
+	color: var(--gstore-color-action-text, #ffffff);
 }
