@@ -488,7 +488,7 @@ if ( ! function_exists( 'gstore_partner_account_render_application_cta' ) ) {
 				<strong><?php esc_html_e( 'Seja um revendedor', 'gstore' ); ?></strong>
 				<p><?php esc_html_e( 'Conheça o programa, envie seus dados e acompanhe a análise da equipe comercial.', 'gstore' ); ?></p>
 			</div>
-			<?php if ( $was_sent || ( ! empty( $latest ) && 'pending' === $latest['status'] ) ) : ?>
+			<?php if ( ! empty( $latest ) && 'pending' === $latest['status'] ) : ?>
 				<span class="gstore-partner-application__badge"><?php echo esc_html( gstore_partner_account_application_status_label( $latest['status'] ) ); ?></span>
 			<?php else : ?>
 				<a class="button gstore-partner-application__toggle" href="<?php echo esc_url( gstore_partner_account_application_page_url() ); ?>">
@@ -561,7 +561,6 @@ if ( ! function_exists( 'gstore_partner_account_render_application_form' ) ) {
 		$user_name    = $user_id > 0 ? (string) $current_user->display_name : '';
 		$user_email   = $user_id > 0 ? (string) $current_user->user_email : '';
 		$latest       = gstore_partner_account_latest_application();
-		$was_sent     = 'sent' === gstore_partner_account_application_feedback_status();
 
 		$panel_id      = function_exists( 'wp_unique_id' ) ? wp_unique_id( 'gstore-partner-application-panel-' ) : 'gstore-partner-application-panel-' . wp_rand( 1000, 9999 );
 		$section_class = 'gstore-partner-application gstore-partner-application--page';
