@@ -1009,7 +1009,7 @@ body:has(.Gstore-catalog-shell--light) main {
 	}
 }
 
-@media (max-width: 1024px) {
+@media (max-width: 768px) {
 	.Gstore-catalog-shell--light .Gstore-catalog-layout {
 		flex-direction: column;
 	}
