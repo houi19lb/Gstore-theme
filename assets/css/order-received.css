@@ -95,15 +95,19 @@ body.gstore-blu-waiting-page main {
 }
 
 .gstore-blu-thankyou__back::before {
-	content: "";
-	width: 14px;
-	height: 10px;
-	flex: 0 0 14px;
-	background:
-		linear-gradient(currentColor, currentColor) 2px 4px / 12px 1.5px no-repeat,
-		linear-gradient(135deg, transparent 0 5px, currentColor 5px 6.5px, transparent 6.5px) 0 0 / 8px 8px no-repeat,
-		linear-gradient(45deg, transparent 0 5px, currentColor 5px 6.5px, transparent 6.5px) 0 2px / 8px 8px no-repeat;
-	opacity: 0.9;
+	content: none;
+}
+
+.gstore-blu-thankyou__icon-svg {
+	display: block;
+	width: 20px;
+	height: 20px;
+	flex-shrink: 0;
+}
+
+.gstore-blu-thankyou__back-icon {
+	width: 15px;
+	height: 15px;
 }
 
 .gstore-blu-thankyou__order {
@@ -273,39 +277,43 @@ body.gstore-blu-waiting-page main {
 	text-decoration: none;
 }
 
-.gstore-blu-thankyou__support::before {
-	content: "";
+.gstore-blu-thankyou__support-icon {
+	display: flex;
+	align-items: center;
+	justify-content: center;
 	grid-row: 1 / span 2;
 	width: 44px;
 	height: 44px;
 	border: 1px solid var(--gstore-color-border-divider);
 	border-radius: var(--gstore-radius-md);
-	background:
-		radial-gradient(ellipse at 50% 47%, transparent 0 13px, currentColor 13.5px 14.7px, transparent 15.2px),
-		radial-gradient(circle at 50% 34%, currentColor 0 5px, transparent 5.6px),
-		radial-gradient(ellipse at 50% 73%, transparent 0 10px, currentColor 10.5px 11.5px, transparent 12px),
-		radial-gradient(circle at 30% 48%, currentColor 0 2px, transparent 2.6px),
-		radial-gradient(circle at 70% 48%, currentColor 0 2px, transparent 2.6px),
-		linear-gradient(currentColor, currentColor) 67% 58% / 10px 2px no-repeat,
-		linear-gradient(currentColor, currentColor) 78% 51% / 2px 9px no-repeat,
-		var(--gstore-color-bg-light);
+	background: var(--gstore-color-bg-light);
 	box-shadow: var(--gstore-shadow-sm);
 	transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
-.gstore-blu-thankyou__support:hover::before,
-.gstore-blu-thankyou__support:focus-visible::before {
+.gstore-blu-thankyou__support-icon .gstore-blu-thankyou__icon-svg {
+	width: 22px;
+	height: 22px;
+}
+
+.gstore-blu-thankyou__support:hover .gstore-blu-thankyou__support-icon,
+.gstore-blu-thankyou__support:focus-visible .gstore-blu-thankyou__support-icon {
 	border-color: var(--gstore-color-border-card);
 	box-shadow: var(--gstore-shadow-md);
 }
 
-.gstore-blu-thankyou__support strong,
-.gstore-blu-thankyou__support span {
+.gstore-blu-thankyou__support-copy {
 	display: block;
 	grid-column: 2;
+	min-width: 0;
 }
 
-.gstore-blu-thankyou__support span {
+.gstore-blu-thankyou__support-copy > strong,
+.gstore-blu-thankyou__support-copy > span {
+	display: block;
+}
+
+.gstore-blu-thankyou__support-copy > span {
 	margin-top: 4px;
 	color: var(--gstore-color-text-gray-500);
 }
