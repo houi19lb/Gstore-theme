@@ -95,10 +95,15 @@ body.gstore-blu-waiting-page main {
 }
 
 .gstore-blu-thankyou__back::before {
-	content: "\2190";
-	font-size: 14px;
-	font-weight: 700;
-	line-height: 1;
+	content: "";
+	width: 14px;
+	height: 10px;
+	flex: 0 0 14px;
+	background:
+		linear-gradient(currentColor, currentColor) 2px 4px / 12px 1.5px no-repeat,
+		linear-gradient(135deg, transparent 0 5px, currentColor 5px 6.5px, transparent 6.5px) 0 0 / 8px 8px no-repeat,
+		linear-gradient(45deg, transparent 0 5px, currentColor 5px 6.5px, transparent 6.5px) 0 2px / 8px 8px no-repeat;
+	opacity: 0.9;
 }
 
 .gstore-blu-thankyou__order {
