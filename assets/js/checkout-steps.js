@@ -82,6 +82,9 @@
 	let lastBluOrderPaymentUrl = null; // URL do pagamento Blu do último pedido criado (para exibir aviso quando modal fecha)
 	let bluRedirectInProgress = false; // Evita abrir modal/redirect da Blu em duplicidade (ex.: submit + ajaxComplete)
 	let bluResumeState = null; // Estado persistente do link Blu para retomada no mobile/checkout
+	let bluResumePollTimer = null;
+	let bluResumePollInFlight = false;
+	let reservedBluPaymentWindow = null;
 	let checkoutDraftRestoreDone = false;
 	let cpfPurchaseLimitDebounceTimer = null;
 	let cpfPurchaseLimitState = {
@@ -701,6 +704,7 @@
 			installments: String(resume.selected_installments || currentCtx.requestedInstallments || 1),
 			expires_at: String(resume.expires_at || ''),
 			status: String(resume.status || 'pending'),
+			order_received_url: String(resume.order_received_url || ''),
 			generation: parseInt(resume.generation, 10) || 1
 		};
 		if (!next.payment_url) return;
@@ -732,8 +736,190 @@
 	}
 
 	function renderBluResumeCard(messageHtml) {
-		$('#gstore-blu-resume-card').remove();
-		return;
+		if (!shouldShowBluResumeCard()) {
+			stopBluResumePolling();
+			$('#gstore-blu-resume-card').remove();
+			$('[data-step="payment"]').removeClass('has-blu-waiting-panel');
+			return;
+		}
+
+		const state = getBluResumeState();
+		const $card = ensureBluResumeCardMount();
+		if (!$card || !$card.length || !state) return;
+
+		const orderId = parseInt(state.order_id, 10) || 0;
+		const installments = parseInt(state.installments, 10) || 1;
+		const totalText = getBluResumeTotalText();
+		const status = normalizeBluOrderStatus(state.status || 'pending');
+		const statusLabel = getBluResumeStatusLabel(status);
+		const message = messageHtml || 'Conclua o pagamento na aba da Blu. Esta tela fica aberta para acompanhar a confirmacao.';
+
+		$('[data-step="payment"]').addClass('has-blu-waiting-panel');
+		$card
+			.removeAttr('style')
+			.attr('role', 'status')
+			.attr('aria-live', 'polite')
+			.html(`
+				<div class="gstore-blu-waiting__header">
+					<div>
+						<div class="gstore-blu-waiting__eyebrow">${orderId ? `Pedido #${orderId}` : 'Pagamento Blu'}</div>
+						<h3 class="gstore-blu-waiting__title">Aguardando confirmacao da Blu</h3>
+					</div>
+					<span class="gstore-blu-waiting__status" data-status="${escapeHtml(status)}">${escapeHtml(statusLabel)}</span>
+				</div>
+				<p class="gstore-blu-waiting__message">${message}</p>
+				<div class="gstore-blu-waiting__summary">
+					<div>
+						<span>Total</span>
+						<strong>${escapeHtml(totalText || '-')}</strong>
+					</div>
+					<div>
+						<span>Parcelamento</span>
+						<strong>${installments}x</strong>
+					</div>
+				</div>
+				<div class="gstore-blu-waiting__actions">
+					<a class="Gstore-btn Gstore-btn--submit gstore-blu-resume-card__continue" href="${escapeHtml(state.payment_url || '#')}" target="_blank" rel="noopener noreferrer">
+						Abrir pagamento na Blu
+					</a>
+					<button type="button" class="Gstore-btn Gstore-btn--back gstore-blu-resume-card__change-installments">
+						Trocar quantidade de parcelas
+					</button>
+					<a class="Gstore-btn Gstore-btn--back gstore-blu-resume-card__support" href="#" target="_blank" rel="noopener noreferrer" hidden>
+						Falar com suporte
+					</a>
+				</div>
+				<p class="gstore-blu-waiting__hint">Se a aba da Blu travar, volte aqui e abra o pagamento novamente. Nao feche esta tela ate confirmarmos o pedido.</p>
+			`)
+			.show();
+
+		updateBluSupportAction($card);
+		startBluResumePolling();
+	}
+
+	function normalizeBluOrderStatus(status) {
+		return String(status || '').toLowerCase().trim();
+	}
+
+	function isBluPaidStatus(status) {
+		return ['paid', 'success', 'confirmed', 'processing', 'completed'].indexOf(normalizeBluOrderStatus(status)) !== -1;
+	}
+
+	function isBluClosedStatus(status) {
+		return ['expired', 'canceled', 'cancelled', 'failed', 'refunded'].indexOf(normalizeBluOrderStatus(status)) !== -1;
+	}
+
+	function getBluResumeStatusLabel(status) {
+		const normalized = normalizeBluOrderStatus(status);
+		if (isBluPaidStatus(normalized)) return 'Pagamento confirmado';
+		if (isBluClosedStatus(normalized)) return 'Link encerrado';
+		return 'Consultando status...';
+	}
+
+	function getBluResumeTotalText() {
+		if (lastSummaryTotals && Number.isFinite(lastSummaryTotals.totalValue) && lastSummaryTotals.totalValue > 0) {
+			return formatCurrency(lastSummaryTotals.totalValue);
+		}
+		const summary = lastCartSummaryData || lastNonEmptyCartSummaryData || {};
+		return String(summary.total || summary.base_total || '');
+	}
+
+	function stopBluResumePolling() {
+		if (bluResumePollTimer) {
+			clearTimeout(bluResumePollTimer);
+			bluResumePollTimer = null;
+		}
+	}
+
+	function startBluResumePolling() {
+		stopBluResumePolling();
+		const state = getBluResumeState();
+		if (!isBluResumeStateUsable(state) || isBluPaidStatus(state.status) || isBluClosedStatus(state.status)) return;
+		bluResumePollTimer = setTimeout(function() {
+			requestBluResumeStatus({ silent: true }).always(startBluResumePolling);
+		}, 7000);
+	}
+
+	function updateBluResumeStateFromStatus(data) {
+		if (!data || typeof data !== 'object') return;
+		const current = getBluResumeState() || {};
+		setBluResumeState(Object.assign({}, current, {
+			link_id: String(data.link_id || current.link_id || ''),
+			payment_url: String(data.payment_url || current.payment_url || ''),
+			installments: String(data.selected_installments || current.installments || getCurrentBluInstallmentsValue()),
+			expires_at: String(data.expires_at || current.expires_at || ''),
+			status: String(data.order_status || data.status || current.status || 'pending'),
+			order_received_url: String(data.order_received_url || current.order_received_url || '')
+		}));
+	}
+
+	function redirectToBluOrderReceived(state) {
+		const target = state && state.order_received_url ? String(state.order_received_url) : '';
+		clearBluResumeState();
+		clearCheckoutDraftState();
+		if (target) {
+			window.location.href = target;
+		}
+	}
+
+	function requestBluResumeStatus(options) {
+		const opts = options || {};
+		const state = getBluResumeState();
+		const deferred = $.Deferred();
+
+		if (!isBluResumeStateUsable(state)) {
+			deferred.reject();
+			return deferred.promise();
+		}
+
+		if (bluResumePollInFlight) {
+			deferred.reject();
+			return deferred.promise();
+		}
+
+		bluResumePollInFlight = true;
+		callBluResumeEndpoint('status', { force_check: 1 })
+			.done(function(resp) {
+				if (!(resp && resp.success && resp.data)) {
+					if (!opts.silent) {
+						showNotice('Nao foi possivel consultar o status do pagamento agora.', 'error');
+					}
+					deferred.reject();
+					return;
+				}
+
+				const data = resp.data || {};
+				updateBluResumeStateFromStatus(data);
+				const nextState = getBluResumeState();
+				const nextStatus = normalizeBluOrderStatus(data.order_status || data.status || (nextState && nextState.status));
+
+				if (data.status_check_failed) {
+					if (!opts.silent) {
+						showNotice('Nao foi possivel confirmar o status na Blu agora. Reabra o pagamento ou fale com o suporte.', 'error');
+					}
+					deferred.reject(data);
+					return;
+				}
+
+				if (data.is_paid || isBluPaidStatus(nextStatus)) {
+					redirectToBluOrderReceived(nextState);
+					deferred.resolve(data);
+					return;
+				}
+
+				deferred.resolve(data);
+			})
+			.fail(function() {
+				if (!opts.silent) {
+					showNotice('Falha ao comunicar com a Blu agora. Tente novamente em instantes.', 'error');
+				}
+				deferred.reject();
+			})
+			.always(function() {
+				bluResumePollInFlight = false;
+			});
+
+		return deferred.promise();
 	}
 
 	function callBluResumeEndpoint(mode, overrides) {
@@ -5544,6 +5730,9 @@ function getInstallmentDisplayTotals(summaryData) {
 		}
 
 		function maybeHandleBluResumeBeforeSubmit() {
+			// ponytail: status/troca de parcelas agora vivem no painel; submit normal cria novo link.
+			return false;
+
 			if (!isBluCheckoutSelected()) return false;
 			const state = getBluResumeState();
 			if (!isBluResumeStateUsable(state)) return false;
@@ -5621,6 +5810,9 @@ function getInstallmentDisplayTotals(summaryData) {
 			}
 			
 			e.preventDefault();
+			if (isBluCheckoutSelected()) {
+				reserveBluPaymentWindow();
+			}
 			
 			if (typeof showProcessingModal === 'function') {
 				showProcessingModal();
@@ -5989,8 +6181,12 @@ function getInstallmentDisplayTotals(summaryData) {
 					updateProcessingStep(3);
 					
 						if (response && response.result === 'success') {
-							// Pedido criado com sucesso: limpa rascunho local para evitar restaurar dados antigos.
-							clearCheckoutDraftState();
+							if (isBluCheckoutSelected()) {
+								saveCheckoutDraftState('blu_payment_waiting');
+							} else {
+								// Pedido criado com sucesso: limpa rascunho local para evitar restaurar dados antigos.
+								clearCheckoutDraftState();
+							}
 							if (response.gstore_blu_resume) {
 								storeBluResumeStateFromResponse(response.gstore_blu_resume);
 							}
@@ -6004,6 +6200,7 @@ function getInstallmentDisplayTotals(summaryData) {
 								setTimeout(function() { handleBluCheckoutRedirect(response.redirect); }, 1500);
 							}
 					} else if (response && response.result === 'failure') {
+						closeReservedBluPaymentWindow();
 						hideProcessingModal();
 						$form.removeClass('processing').unblock();
 						
@@ -6033,12 +6230,14 @@ function getInstallmentDisplayTotals(summaryData) {
 							showCheckoutSubmitError();
 						}
 					} else {
+						closeReservedBluPaymentWindow();
 						hideProcessingModal();
 						$form.removeClass('processing').unblock();
 						showCheckoutSubmitError('O checkout não retornou uma resposta válida. Tente novamente em instantes.');
 					}
 				},
 				error: function(xhr, statusText, errorThrown) {
+					closeReservedBluPaymentWindow();
 					debugCheckout('checkout_error', {
 						status: xhr && xhr.status,
 						statusText: statusText,
@@ -6110,9 +6309,7 @@ function getInstallmentDisplayTotals(summaryData) {
 	}
 
 	function shouldUseExternalBluCheckoutFlow() {
-		// Mantem o cliente no checkout para poder fechar o modal e trocar parcelas
-		// sem perder o carrinho. O proprio modal oferece link externo como fallback.
-		return false;
+		return true;
 	}
 
 	function handleBluCheckoutRedirect(url) {
@@ -6130,16 +6327,102 @@ function getInstallmentDisplayTotals(summaryData) {
 
 		bluRedirectInProgress = true;
 
-		if (shouldUseExternalBluCheckoutFlow()) {
-			window.location.assign(url);
-			return;
-		}
-
-		openBluCheckoutModal(url);
+		showBluPaymentWaitingPanel(url, shouldUseExternalBluCheckoutFlow());
 	}
 
 	function resetBluRedirectGuard() {
 		bluRedirectInProgress = false;
+	}
+
+	function reserveBluPaymentWindow() {
+		if (!isBluCheckoutSelected()) return null;
+		if (reservedBluPaymentWindow && !reservedBluPaymentWindow.closed) {
+			return reservedBluPaymentWindow;
+		}
+
+		try {
+			reservedBluPaymentWindow = window.open('about:blank', '_blank');
+			if (reservedBluPaymentWindow) {
+				reservedBluPaymentWindow.opener = null;
+				try {
+					reservedBluPaymentWindow.document.title = 'Pagamento Blu';
+					reservedBluPaymentWindow.document.body.innerHTML = '<p style="font-family:Arial,sans-serif;padding:24px;color:#111827;">Preparando pagamento seguro...</p>';
+				} catch (e) {}
+			}
+		} catch (e) {
+			reservedBluPaymentWindow = null;
+		}
+
+		return reservedBluPaymentWindow;
+	}
+
+	function closeReservedBluPaymentWindow() {
+		if (!reservedBluPaymentWindow) return;
+		try {
+			if (!reservedBluPaymentWindow.closed) {
+				reservedBluPaymentWindow.close();
+			}
+		} catch (e) {}
+		reservedBluPaymentWindow = null;
+	}
+
+	function openBluPaymentWindow(url) {
+		if (!url) return false;
+		let opened = null;
+		if (reservedBluPaymentWindow && !reservedBluPaymentWindow.closed) {
+			opened = reservedBluPaymentWindow;
+			reservedBluPaymentWindow = null;
+			try {
+				opened.location.href = url;
+				return true;
+			} catch (e) {
+				opened = null;
+			}
+		}
+		try {
+			opened = window.open(url, '_blank');
+			if (opened) {
+				opened.opener = null;
+			}
+		} catch (e) {
+			opened = null;
+		}
+		return !!opened;
+	}
+
+	function showBluPaymentWaitingPanel(url, autoOpen) {
+		if (!url) return;
+		lastBluOrderPaymentUrl = url;
+
+		const state = getBluResumeState();
+		if (!state || !state.payment_url) {
+			setBluResumeState({
+				order_id: 0,
+				order_key: '',
+				link_id: '',
+				payment_url: url,
+				signature: '',
+				installments: getCurrentBluInstallmentsValue(),
+				status: 'pending',
+				generation: 1
+			});
+		} else {
+			renderBluResumeCard();
+		}
+
+		const opened = autoOpen ? openBluPaymentWindow(url) : false;
+		renderBluResumeCard(
+			opened
+				? 'Abrimos a Blu em uma nova aba. Conclua o pagamento por la; esta tela acompanha a confirmacao.'
+				: 'Se a aba da Blu nao abriu automaticamente, toque em "Abrir pagamento na Blu".'
+		);
+
+		const $card = $('#gstore-blu-resume-card');
+		if ($card.length) {
+			$('html, body').animate({
+				scrollTop: ($card.offset() || { top: 0 }).top - 100
+			}, 300);
+		}
 	}
 
 	function getBluSupportConfig() {
@@ -6202,7 +6485,7 @@ function getInstallmentDisplayTotals(summaryData) {
 	}
 
 	function updateBluSupportAction($modal) {
-		const $support = $modal.find('.Gstore-blu-checkout-modal__support');
+		const $support = $modal.find('.Gstore-blu-checkout-modal__support, .gstore-blu-resume-card__support');
 		const supportMessage = buildBluSupportMessage();
 		const channel = resolveBluSupportChannel(supportMessage);
 
@@ -6271,6 +6554,8 @@ function getInstallmentDisplayTotals(summaryData) {
 
 	function openBluCheckoutModal(url) {
 		if (!url) return;
+		showBluPaymentWaitingPanel(url, false);
+		return;
 
 		// Armazena a URL do pagamento para exibir aviso se o modal for fechado sem pagar
 		lastBluOrderPaymentUrl = url;
@@ -6349,6 +6634,12 @@ function getInstallmentDisplayTotals(summaryData) {
 	$(document).on('click', '.gstore-blu-resume-card__continue', function(e) {
 		e.preventDefault();
 		const state = getBluResumeState();
+		if (state && state.payment_url) {
+			openBluPaymentWindow(String(state.payment_url));
+			renderBluResumeCard('Pagamento aberto na Blu. Conclua por la; esta tela acompanha a confirmacao.');
+			e.stopImmediatePropagation();
+			return false;
+		}
 		if (state && state.payment_url && !state.order_id) {
 			handleBluCheckoutRedirect(String(state.payment_url));
 			return false;
@@ -6363,6 +6654,43 @@ function getInstallmentDisplayTotals(summaryData) {
 			requested_installments: ctx.requestedInstallments || (parseInt(state.installments, 10) || 1),
 			requested_total: ctx.requestedTotal || 0
 		});
+		return false;
+	});
+
+	$(document).on('click', '.gstore-blu-resume-card__change-installments', function(e) {
+		e.preventDefault();
+		const state = getBluResumeState();
+		if (!isBluResumeStateUsable(state)) {
+			showNotice('Nao foi possivel conferir o pedido pendente. Reabra o pagamento ou fale com o suporte.', 'error');
+			return false;
+		}
+
+		setBluResumeCardBusy(true);
+		requestBluResumeStatus({ silent: false })
+			.done(function(data) {
+				if (data && (data.is_paid || isBluPaidStatus(data.order_status || data.status))) {
+					return;
+				}
+
+				stopBluResumePolling();
+				clearBluResumeState();
+				resetBluRedirectGuard();
+
+				const $form = $('form.checkout');
+				if ($form.length) {
+					$form.removeClass('processing').unblock();
+				}
+
+				setActiveStep(STEPS.length - 1);
+				$(document.body).trigger('update_checkout');
+				showNotice('Escolha a nova quantidade de parcelas e finalize o pedido novamente.', 'notice', 9000);
+				setTimeout(function() {
+					$('#gstore_blu_installments_select, #gstore_blu_installments').filter(':visible').first().trigger('focus');
+				}, 250);
+			})
+			.always(function() {
+				setBluResumeCardBusy(false);
+			});
 		return false;
 	});
 
