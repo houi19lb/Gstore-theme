@@ -7,8 +7,6 @@
 (function () {
 	'use strict';
 
-	const FILTER_DRAWER_MAX_WIDTH = 768;
-
 	if (document.readyState === 'loading') {
 		document.addEventListener('DOMContentLoaded', initCatalogFilters);
 	} else {
@@ -35,7 +33,7 @@
 		resetGlobalState();
 
 		function isMobileViewport() {
-			return window.innerWidth <= FILTER_DRAWER_MAX_WIDTH;
+			return window.innerWidth <= 1024;
 		}
 
 		function resetGlobalState() {
@@ -126,13 +124,13 @@
 		window.addEventListener('resize', function () {
 			clearTimeout(resizeTimer);
 			resizeTimer = setTimeout(function () {
-				if (window.innerWidth > FILTER_DRAWER_MAX_WIDTH && sidebar.classList.contains('is-open')) {
+				if (window.innerWidth > 1024 && sidebar.classList.contains('is-open')) {
 					closeFilters();
 					return;
 				}
 
 				// If the viewport changes while detached and closed, restore original DOM position.
-				if (window.innerWidth > FILTER_DRAWER_MAX_WIDTH) {
+				if (window.innerWidth > 1024) {
 					restoreSidebarIfNeeded();
 					resetGlobalState();
 				}
