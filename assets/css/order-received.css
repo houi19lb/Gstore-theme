@@ -80,7 +80,7 @@ body.woocommerce-order-received main:has(.gstore-blu-thankyou) > .wp-block-wooco
 	align-items: center;
 	gap: 8px;
 	width: fit-content;
-	margin-bottom: 18px;
+	margin-bottom: var(--gstore-spacing-6);
 	padding: 7px 12px;
 	border: 1px solid var(--gstore-color-border-divider);
 	border-radius: 6px;
