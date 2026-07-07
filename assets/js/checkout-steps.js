@@ -717,9 +717,8 @@
 	}
 
 	function shouldShowBluResumeCard() {
-		const state = getBluResumeState();
-		if (!state || !state.payment_url) return false;
-		return isBluCheckoutSelected();
+		// ponytail: a espera da Blu fica na pagina de pedido recebido, nunca dentro da etapa 3.
+		return false;
 	}
 
 	function ensureBluResumeCardMount() {
@@ -6327,7 +6326,16 @@ function getInstallmentDisplayTotals(summaryData) {
 
 		bluRedirectInProgress = true;
 
-		showBluPaymentWaitingPanel(url, shouldUseExternalBluCheckoutFlow());
+		const state = getBluResumeState();
+		const paymentUrl = state && state.payment_url ? String(state.payment_url) : '';
+		const receivedUrl = state && state.order_received_url ? String(state.order_received_url) : url;
+
+		if (paymentUrl) {
+			openBluPaymentWindow(paymentUrl);
+		} else {
+			closeReservedBluPaymentWindow();
+		}
+		window.location.href = receivedUrl;
 	}
 
 	function resetBluRedirectGuard() {
