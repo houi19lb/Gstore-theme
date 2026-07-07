@@ -127,7 +127,13 @@ body.gstore-blu-waiting-page main {
 	border: 1px solid var(--gstore-color-border-divider);
 	border-radius: 8px;
 	background: var(--gstore-color-bg-light);
-	font-size: 24px;
+	color: var(--gstore-color-text-gray-700);
+	box-shadow: var(--gstore-shadow-sm);
+}
+
+.gstore-blu-thankyou__order-icon {
+	width: 24px;
+	height: 24px;
 }
 
 .gstore-blu-thankyou__order h2,
@@ -326,7 +332,6 @@ body.gstore-blu-waiting-page main {
 	.gstore-blu-thankyou__icon {
 		width: 58px;
 		height: 58px;
-		font-size: 24px;
 	}
 
 	.gstore-blu-thankyou__status,
