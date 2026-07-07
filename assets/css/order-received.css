@@ -7,7 +7,7 @@
  * Order Received Page Fixes
  * ========================================= */
 .woocommerce-order-received {
-	background-color: #ffffff;
+	background-color: var(--gstore-color-bg-light);
 }
 
 .woocommerce-order-received main {
@@ -18,7 +18,7 @@
 }
 
 .woocommerce-order-received .wp-site-blocks {
-	background-color: #ffffff !important;
+	background-color: var(--gstore-color-bg-light) !important;
 }
 
 /* =========================================
@@ -60,12 +60,12 @@ body.gstore-blu-waiting-page main {
 .gstore-blu-thankyou {
 	max-width: 680px;
 	margin: 0 auto;
-	color: #111827;
+	color: var(--gstore-color-text-gray-700);
 	font-size: 15px;
 }
 
 .gstore-blu-thankyou a {
-	color: #f13516;
+	color: var(--gstore-color-action-bg);
 }
 
 .gstore-blu-thankyou__back {
@@ -75,23 +75,23 @@ body.gstore-blu-waiting-page main {
 	width: fit-content;
 	margin-bottom: 18px;
 	padding: 7px 12px;
-	border: 1px solid #e5e7eb;
+	border: 1px solid var(--gstore-color-border-divider);
 	border-radius: 6px;
-	background: #fff;
-	color: #374151 !important;
+	background: var(--gstore-color-bg-light);
+	color: var(--gstore-color-text-gray-600) !important;
 	font-size: 13px;
 	font-weight: 600;
 	line-height: 1.2;
 	text-decoration: none;
-	box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+	box-shadow: var(--gstore-shadow-sm);
 	transition: border-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .gstore-blu-thankyou__back:hover,
 .gstore-blu-thankyou__back:focus-visible {
-	border-color: #d1d5db;
-	color: #111827 !important;
-	box-shadow: 0 2px 6px rgba(15, 23, 42, 0.08);
+	border-color: var(--gstore-color-border-card);
+	color: var(--gstore-color-text-gray-700) !important;
+	box-shadow: var(--gstore-shadow-md);
 }
 
 .gstore-blu-thankyou__back::before {
@@ -106,7 +106,7 @@ body.gstore-blu-waiting-page main {
 	align-items: center;
 	gap: 16px;
 	padding-bottom: 18px;
-	border-bottom: 1px solid #e5e7eb;
+	border-bottom: 1px solid var(--gstore-color-border-divider);
 }
 
 .gstore-blu-thankyou__icon {
@@ -115,9 +115,9 @@ body.gstore-blu-waiting-page main {
 	justify-content: center;
 	width: 58px;
 	height: 58px;
-	border: 1px solid #e5e7eb;
+	border: 1px solid var(--gstore-color-border-divider);
 	border-radius: 8px;
-	background: #fff;
+	background: var(--gstore-color-bg-light);
 	font-size: 24px;
 }
 
@@ -125,7 +125,7 @@ body.gstore-blu-waiting-page main {
 .gstore-blu-thankyou__main h1,
 .gstore-blu-thankyou__summary h3 {
 	margin: 0;
-	color: #050505;
+	color: var(--gstore-color-text-primary);
 	line-height: 1.2;
 	letter-spacing: 0;
 }
@@ -136,12 +136,12 @@ body.gstore-blu-waiting-page main {
 
 .gstore-blu-thankyou__order p {
 	margin: 6px 0;
-	color: #f13516;
+	color: var(--gstore-color-action-bg);
 	font-size: 17px;
 }
 
 .gstore-blu-thankyou__order span {
-	color: #6b7280;
+	color: var(--gstore-color-text-gray-500);
 }
 
 .gstore-blu-thankyou__main {
@@ -157,7 +157,7 @@ body.gstore-blu-waiting-page main {
 .gstore-blu-thankyou__main p {
 	max-width: 560px;
 	margin: 0 auto 22px;
-	color: #5f6673;
+	color: var(--gstore-color-text-secondary);
 	font-size: clamp(16px, 3.5vw, 18px);
 	line-height: 1.45;
 }
@@ -177,14 +177,14 @@ body.gstore-blu-waiting-page main {
 
 .gstore-blu-thankyou__button--primary {
 	border: 0;
-	background: #f13516;
-	color: #fff !important;
+	background: var(--gstore-color-action-bg);
+	color: var(--gstore-color-action-text) !important;
 }
 
 .gstore-blu-thankyou__button--secondary {
-	border: 1px solid #4b5563;
-	background: #fff;
-	color: #111827;
+	border: 1px solid var(--gstore-color-border-card);
+	background: var(--gstore-color-bg-light);
+	color: var(--gstore-color-text-gray-700);
 }
 
 .gstore-blu-thankyou__change {
@@ -201,37 +201,37 @@ body.gstore-blu-waiting-page main {
 	gap: 14px;
 	margin-top: 22px;
 	padding: 14px;
-	border: 1px solid #e5e7eb;
+	border: 1px solid var(--gstore-color-border-divider);
 	border-radius: 8px;
-	background: #fff;
+	background: var(--gstore-color-bg-light);
 }
 
 .gstore-blu-thankyou__status strong {
-	color: #111827;
+	color: var(--gstore-color-text-gray-700);
 }
 
 .gstore-blu-thankyou__status span {
-	color: #6b7280;
+	color: var(--gstore-color-text-gray-500);
 }
 
 .gstore-blu-thankyou__status.is-error {
-	border-color: #fecaca;
-	background: #fef2f2;
+	border-color: var(--gstore-color-error-border);
+	background: var(--gstore-color-error-bg);
 }
 
 .gstore-blu-thankyou__warning {
 	margin-top: 18px;
 	padding: 16px;
 	border-radius: 8px;
-	background: #fff8df;
-	color: #111827;
+	background: var(--gstore-color-bg-accent-light);
+	color: var(--gstore-color-text-gray-700);
 	line-height: 1.45;
 	text-align: left;
 }
 
 .gstore-blu-thankyou__summary {
 	padding-top: 22px;
-	border-top: 1px solid #e5e7eb;
+	border-top: 1px solid var(--gstore-color-border-divider);
 }
 
 .gstore-blu-thankyou__summary h3 {
@@ -244,11 +244,11 @@ body.gstore-blu-waiting-page main {
 	justify-content: space-between;
 	gap: 20px;
 	padding: 10px 0;
-	border-bottom: 1px solid #e5e7eb;
+	border-bottom: 1px solid var(--gstore-color-border-divider);
 }
 
 .gstore-blu-thankyou__summary span {
-	color: #374151;
+	color: var(--gstore-color-text-gray-600);
 }
 
 .gstore-blu-thankyou__summary strong {
@@ -259,8 +259,8 @@ body.gstore-blu-waiting-page main {
 	display: block;
 	margin-top: 22px;
 	padding: 16px 0;
-	border-top: 1px solid #e5e7eb;
-	color: #111827 !important;
+	border-top: 1px solid var(--gstore-color-border-divider);
+	color: var(--gstore-color-text-gray-700) !important;
 	text-decoration: none;
 }
 
@@ -271,7 +271,7 @@ body.gstore-blu-waiting-page main {
 
 .gstore-blu-thankyou__support span {
 	margin-top: 4px;
-	color: #6b7280;
+	color: var(--gstore-color-text-gray-500);
 }
 
 @media (max-width: 640px) {
