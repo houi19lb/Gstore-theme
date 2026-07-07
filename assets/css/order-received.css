@@ -44,6 +44,8 @@ body.gstore-blu-waiting-page .woocommerce-order > .woocommerce-customer-details 
 	display: none !important;
 }
 
+body.gstore-blu-waiting-page main > :not(.wp-block-woocommerce-order-confirmation-additional-information):not(script):not(style),
+body.woocommerce-order-received main:has(.gstore-blu-thankyou) > :not(.wp-block-woocommerce-order-confirmation-additional-information):not(script):not(style),
 .woocommerce-order:has(.gstore-blu-thankyou) > .woocommerce-notice,
 .woocommerce-order:has(.gstore-blu-thankyou) > .woocommerce-order-overview,
 .woocommerce-order:has(.gstore-blu-thankyou) > .woocommerce-order-details,
