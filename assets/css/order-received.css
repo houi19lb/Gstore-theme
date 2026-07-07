@@ -58,6 +58,12 @@ body.gstore-blu-waiting-page main {
 	padding-block: clamp(24px, 4vw, 64px);
 }
 
+body.gstore-blu-waiting-page .wp-block-woocommerce-order-confirmation-additional-information,
+body.woocommerce-order-received main:has(.gstore-blu-thankyou) > .wp-block-woocommerce-order-confirmation-additional-information {
+	margin-block-start: 0;
+	margin-top: 0;
+}
+
 .gstore-blu-thankyou {
 	max-width: 680px;
 	margin: 0 auto;
