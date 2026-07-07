@@ -177,6 +177,59 @@ body.gstore-blu-waiting-page main {
 	text-decoration: underline;
 }
 
+.gstore-blu-thankyou__installments {
+	margin-top: 20px;
+	padding: 16px;
+	border: 1px solid #e5e7eb;
+	border-radius: 8px;
+	background: #fff;
+	text-align: left;
+}
+
+.gstore-blu-thankyou__installments label {
+	display: block;
+	margin-bottom: 10px;
+	color: #111827;
+	font-weight: 700;
+}
+
+.gstore-blu-thankyou__installments div {
+	display: flex;
+	gap: 10px;
+}
+
+.gstore-blu-thankyou__installments select,
+.gstore-blu-thankyou__installments-button {
+	min-height: 46px;
+	border-radius: 6px;
+	font: inherit;
+}
+
+.gstore-blu-thankyou__installments select {
+	flex: 1;
+	min-width: 0;
+	border: 1px solid #d1d5db;
+	padding: 0 12px;
+	background: #fff;
+	color: #111827;
+}
+
+.gstore-blu-thankyou__installments-button {
+	border: 0;
+	padding: 0 16px;
+	background: #111827;
+	color: #fff;
+	font-weight: 700;
+	cursor: pointer;
+}
+
+.gstore-blu-thankyou__installments small {
+	display: block;
+	margin-top: 8px;
+	color: #6b7280;
+	line-height: 1.35;
+}
+
 .gstore-blu-thankyou__status {
 	display: flex;
 	align-items: center;
@@ -273,6 +326,10 @@ body.gstore-blu-waiting-page main {
 		align-items: flex-start;
 		flex-direction: column;
 		gap: 6px;
+	}
+
+	.gstore-blu-thankyou__installments div {
+		flex-direction: column;
 	}
 
 	.gstore-blu-thankyou__summary strong {
