@@ -490,10 +490,17 @@
 		applyCheckoutDraftFields(draft.fields || {});
 		checkoutDraftRestoreDone = true;
 		setTimeout(function() {
-			// Restauramos os campos do cliente, mas a entrada no checkout deve
-			// sempre começar na primeira etapa.
-			setActiveStep(0, false);
+			const params = new URLSearchParams((window.location && window.location.search) || '');
+			const shouldResumeBluCheckout = params.has('gstore_blu_resume_order') || draft.reason === 'blu_payment_waiting';
+			const targetStep = shouldResumeBluCheckout ? STEPS.length - 1 : 0;
+			setActiveStep(targetStep, false);
 			setTimeout(ensureShippingAutofilled, 0);
+			if (targetStep === STEPS.length - 1) {
+				setTimeout(function() {
+					$(document.body).trigger('update_checkout');
+					$('#gstore_blu_installments, #gstore_blu_installments_select').first().trigger('focus');
+				}, 120);
+			}
 			renderBluResumeCard();
 		}, 100);
 		return true;
