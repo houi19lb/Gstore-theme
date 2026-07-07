@@ -491,7 +491,7 @@
 		checkoutDraftRestoreDone = true;
 		setTimeout(function() {
 			const params = new URLSearchParams((window.location && window.location.search) || '');
-			const shouldResumeBluCheckout = params.has('gstore_blu_resume_order') || draft.reason === 'blu_payment_waiting';
+			const shouldResumeBluCheckout = params.has('gstore_blu_resume_order') || params.has('gstore_blu_resumed') || draft.reason === 'blu_payment_waiting';
 			const targetStep = shouldResumeBluCheckout ? STEPS.length - 1 : 0;
 			setActiveStep(targetStep, false);
 			setTimeout(ensureShippingAutofilled, 0);
