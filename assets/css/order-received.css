@@ -55,6 +55,7 @@ body.woocommerce-order-received main:has(.gstore-blu-thankyou) > :not(.wp-block-
 
 body.gstore-blu-waiting-page main {
 	max-width: 780px;
+	padding-block: clamp(24px, 4vw, 64px);
 }
 
 .gstore-blu-thankyou {
