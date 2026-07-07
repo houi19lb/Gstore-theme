@@ -5561,6 +5561,10 @@ function gstore_enqueue_styles() {
 
 	if ( gstore_is_checkout_shell_style_context() ) {
 		gstore_enqueue_theme_style( 'gstore-order-received-css', 'assets/css/order-received.css', array( 'gstore-style' ), $theme_version );
+		wp_add_inline_style(
+			'gstore-order-received-css',
+			'body.gstore-blu-waiting-page main > :not(.wp-block-woocommerce-order-confirmation-additional-information):not(script):not(style),body.woocommerce-order-received main:has(.gstore-blu-thankyou) > :not(.wp-block-woocommerce-order-confirmation-additional-information):not(script):not(style){display:none!important;}'
+		);
 	}
 
 	// CSS da Minha Conta e da pagina publica do programa de parceiros.
