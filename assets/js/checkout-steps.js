@@ -6399,7 +6399,7 @@ function getInstallmentDisplayTotals(summaryData) {
 
 	function confirmBluPaymentWindowNavigation(opened, url, callback) {
 		if (!opened || typeof callback !== 'function') return;
-		const firstNavigationCheckMs = 700;
+		const firstNavigationCheckMs = 2000;
 		const maxBlankWaitMs = 5000;
 		let finished = false;
 		const finish = function(result) {
