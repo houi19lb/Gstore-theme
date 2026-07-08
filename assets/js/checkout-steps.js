@@ -6399,6 +6399,8 @@ function getInstallmentDisplayTotals(summaryData) {
 
 	function confirmBluPaymentWindowNavigation(opened, url, callback) {
 		if (!opened || typeof callback !== 'function') return;
+		const firstNavigationCheckMs = 700;
+		const maxBlankWaitMs = 5000;
 		let finished = false;
 		const finish = function(result) {
 			if (finished) return;
@@ -6442,15 +6444,15 @@ function getInstallmentDisplayTotals(summaryData) {
 					return;
 				}
 				finish(true);
-			}, 900);
-		}, 700);
+			}, Math.max(0, maxBlankWaitMs - firstNavigationCheckMs));
+		}, firstNavigationCheckMs);
 		setTimeout(function() {
 			try {
 				finish(Boolean(opened && !opened.closed));
 			} catch (e) {
 				finish(false);
 			}
-		}, 2600);
+		}, maxBlankWaitMs + 600);
 	}
 
 	function openBluPaymentWindow(url, callback) {
