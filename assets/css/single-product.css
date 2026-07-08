@@ -2387,6 +2387,27 @@ body.single-product .onsale {
 	max-height: 100%;
 }
 
+/* ponytail: keep every product gallery image fully visible inside the existing frame. */
+.Gstore-single-product__product-card .gallery-main .flex-slides,
+.Gstore-single-product__product-card .gallery-main .woocommerce-product-gallery__image {
+	height: 100% !important;
+	align-items: stretch !important;
+}
+
+.Gstore-single-product__product-card .gallery-main .woocommerce-product-gallery__image,
+.Gstore-single-product__product-card .gallery-main .woocommerce-product-gallery__image a {
+	display: flex !important;
+	align-items: center;
+	justify-content: center;
+}
+
+.Gstore-single-product__product-card .gallery-main .woocommerce-product-gallery__image img:not(.zoomImg) {
+	width: 100% !important;
+	height: 100% !important;
+	object-fit: contain !important;
+	object-position: center center;
+}
+
 .Gstore-single-product__product-card .gallery-preview {
 	position: absolute;
 	left: 12px;
