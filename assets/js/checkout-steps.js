@@ -6338,9 +6338,14 @@ function getInstallmentDisplayTotals(summaryData) {
 		let opened = false;
 
 		if (paymentUrl) {
-			opened = openBluPaymentWindow(paymentUrl);
+			opened = openBluPaymentWindow(paymentUrl, function(finalOpened) {
+				window.location.href = addBluRedirectFlag(receivedUrl, finalOpened);
+			});
 		} else {
 			closeReservedBluPaymentWindow();
+		}
+		if (paymentUrl && opened) {
+			return;
 		}
 		window.location.href = addBluRedirectFlag(receivedUrl, opened);
 	}
@@ -6392,7 +6397,63 @@ function getInstallmentDisplayTotals(summaryData) {
 		reservedBluPaymentWindow = null;
 	}
 
-	function openBluPaymentWindow(url) {
+	function confirmBluPaymentWindowNavigation(opened, url, callback) {
+		if (!opened || typeof callback !== 'function') return;
+		let finished = false;
+		const finish = function(result) {
+			if (finished) return;
+			finished = true;
+			callback(Boolean(result));
+		};
+		setTimeout(function() {
+			try {
+				if (opened.closed) {
+					finish(false);
+					return;
+				}
+				const href = String(opened.location && opened.location.href || '');
+				if (href && href !== 'about:blank') {
+					finish(true);
+					return;
+				}
+				try {
+					opened.location.replace(url);
+				} catch (e) {}
+			} catch (e) {
+				finish(true);
+				return;
+			}
+			setTimeout(function() {
+				try {
+					if (opened.closed) {
+						finish(false);
+						return;
+					}
+					const href = String(opened.location && opened.location.href || '');
+					if (href === 'about:blank') {
+						try {
+							opened.close();
+						} catch (e) {}
+						finish(false);
+						return;
+					}
+				} catch (e) {
+					finish(true);
+					return;
+				}
+				finish(true);
+			}, 900);
+		}, 700);
+		setTimeout(function() {
+			try {
+				finish(Boolean(opened && !opened.closed));
+			} catch (e) {
+				finish(false);
+			}
+		}, 2600);
+	}
+
+	function openBluPaymentWindow(url, callback) {
 		if (!url) return false;
 		let opened = null;
 		if (reservedBluPaymentWindow && !reservedBluPaymentWindow.closed) {
@@ -6400,6 +6461,7 @@ function getInstallmentDisplayTotals(summaryData) {
 			reservedBluPaymentWindow = null;
 			try {
 				opened.location.href = url;
+				confirmBluPaymentWindowNavigation(opened, url, callback);
 				return true;
 			} catch (e) {
 				opened = null;
@@ -6413,6 +6475,7 @@ function getInstallmentDisplayTotals(summaryData) {
 		} catch (e) {
 			opened = null;
 		}
+		confirmBluPaymentWindowNavigation(opened, url, callback);
 		return !!opened;
 	}
 
