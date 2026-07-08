@@ -759,8 +759,12 @@ if ( ! function_exists( 'gstore_get_details_info_rows' ) ) :
 
 		$principais_atributos_raw       = $product_id ? (string) get_post_meta( $product_id, '_gstore_key_attributes', true ) : '';
 		$observacoes_importantes_raw    = $product_id ? (string) get_post_meta( $product_id, '_gstore_important_notes', true ) : '';
+		$principais_atributos_title     = $product_id ? trim( sanitize_text_field( (string) get_post_meta( $product_id, '_gstore_key_attributes_label', true ) ) ) : '';
+		$observacoes_importantes_title  = $product_id ? trim( sanitize_text_field( (string) get_post_meta( $product_id, '_gstore_important_notes_label', true ) ) ) : '';
 		$principais_atributos_has_value = '' !== trim( wp_strip_all_tags( $principais_atributos_raw ) );
 		$observacoes_importantes_has_value = '' !== trim( wp_strip_all_tags( $observacoes_importantes_raw ) );
+		$principais_atributos_title     = '' !== $principais_atributos_title ? $principais_atributos_title : __( 'Principais atributos', 'gstore' );
+		$observacoes_importantes_title  = '' !== $observacoes_importantes_title ? $observacoes_importantes_title : __( 'Observações importantes', 'gstore' );
 
 		$principais_atributos = $principais_atributos_has_value
 			? apply_filters( 'the_content', $principais_atributos_raw )
@@ -792,7 +796,7 @@ if ( ! function_exists( 'gstore_get_details_info_rows' ) ) :
 		if ( ! empty( $principais_atributos ) ) {
 			$rows[] = array(
 				'icon'       => 'fa-layer-group',
-				'title'      => __( 'Principais atributos', 'gstore' ),
+				'title'      => $principais_atributos_title,
 				'content'    => $principais_atributos,
 				'allow_html' => true,
 			);
@@ -801,7 +805,7 @@ if ( ! function_exists( 'gstore_get_details_info_rows' ) ) :
 		if ( ! empty( $observacoes_importantes ) ) {
 			$rows[] = array(
 				'icon'       => 'fa-circle-exclamation',
-				'title'      => __( 'Observações importantes', 'gstore' ),
+				'title'      => $observacoes_importantes_title,
 				'content'    => $observacoes_importantes,
 				'allow_html' => true,
 			);
@@ -1134,6 +1138,10 @@ $full_description_has_value  = $gstore_has_tab_content( $full_description );
 
 $key_attributes_raw   = $product_id ? (string) get_post_meta( $product_id, '_gstore_key_attributes', true ) : '';
 $important_notes_raw  = $product_id ? (string) get_post_meta( $product_id, '_gstore_important_notes', true ) : '';
+$key_attributes_custom_label  = $product_id ? trim( sanitize_text_field( (string) get_post_meta( $product_id, '_gstore_key_attributes_label', true ) ) ) : '';
+$important_notes_custom_label = $product_id ? trim( sanitize_text_field( (string) get_post_meta( $product_id, '_gstore_important_notes_label', true ) ) ) : '';
+$key_attributes_tab_label     = '' !== $key_attributes_custom_label ? $key_attributes_custom_label : __( 'Principais atributos', 'gstore' );
+$important_notes_tab_label    = '' !== $important_notes_custom_label ? $important_notes_custom_label : __( 'Observações importantes', 'gstore' );
 // Normaliza primeiro; usa o resultado para decidir se tem valor e para exibir (evita esconder aba quando o bruto está “sujo”).
 $key_attributes_html  = apply_filters( 'the_content', $key_attributes_raw );
 $important_notes_html = apply_filters( 'the_content', $important_notes_raw );
@@ -1165,7 +1173,7 @@ if ( $full_description_has_value ) {
 if ( $key_attributes_has_value ) {
 	$gstore_product_tabs[] = array(
 		'slug'    => 'key-attributes',
-		'label'   => __( 'Principais atributos', 'gstore' ),
+		'label'   => $key_attributes_tab_label,
 		'content' => $key_attributes_html,
 	);
 }
@@ -1173,7 +1181,7 @@ if ( $key_attributes_has_value ) {
 if ( $important_notes_has_value ) {
 	$gstore_product_tabs[] = array(
 		'slug'    => 'important-notes',
-		'label'   => __( 'Observações importantes', 'gstore' ),
+		'label'   => $important_notes_tab_label,
 		'content' => $important_notes_html,
 	);
 }
@@ -1188,8 +1196,8 @@ if ( $reviews_has_value ) {
 
 $gstore_tab_next_cta_labels = array(
 	'description'     => __( 'Continuar para descrição completa', 'gstore' ),
-	'key-attributes'  => __( 'Ver principais atributos', 'gstore' ),
-	'important-notes' => __( 'Ver observações importantes', 'gstore' ),
+	'key-attributes'  => '' !== $key_attributes_custom_label ? sprintf( __( 'Ver %s', 'gstore' ), $key_attributes_tab_label ) : __( 'Ver principais atributos', 'gstore' ),
+	'important-notes' => '' !== $important_notes_custom_label ? sprintf( __( 'Ver %s', 'gstore' ), $important_notes_tab_label ) : __( 'Ver observações importantes', 'gstore' ),
 	'reviews'         => __( 'Ver avaliações do produto', 'gstore' ),
 );
 
