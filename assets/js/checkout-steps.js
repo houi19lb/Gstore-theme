@@ -5816,9 +5816,6 @@ function getInstallmentDisplayTotals(summaryData) {
 			}
 			
 			e.preventDefault();
-			if (isBluCheckoutSelected()) {
-				reserveBluPaymentWindow();
-			}
 			
 			if (typeof showProcessingModal === 'function') {
 				showProcessingModal();
@@ -5835,6 +5832,7 @@ function getInstallmentDisplayTotals(summaryData) {
 		function showProcessingModal() {
 			// Remove modal existente se houver
 			$('.Gstore-processing-modal').remove();
+			const isBluPayment = typeof isBluCheckoutSelected === 'function' && isBluCheckoutSelected();
 			
 			const modalHtml = `
 				<div class="Gstore-processing-modal">
@@ -5849,8 +5847,8 @@ function getInstallmentDisplayTotals(summaryData) {
 							<div class="Gstore-spinner"></div>
 						</div>
 						<div class="Gstore-processing-modal__text">
-							<h3>Processando seu pedido...</h3>
-							<p>Aguarde enquanto preparamos seu pagamento seguro.</p>
+							<h3>${isBluPayment ? 'Gerando pagamento Blu...' : 'Processando seu pedido...'}</h3>
+							<p>${isBluPayment ? 'Aguarde enquanto criamos seu link seguro de pagamento.' : 'Aguarde enquanto preparamos seu pagamento seguro.'}</p>
 						</div>
 						<div class="Gstore-processing-modal__steps">
 							<div class="Gstore-processing-step is-active" data-step="1">
@@ -5863,7 +5861,7 @@ function getInstallmentDisplayTotals(summaryData) {
 							</div>
 							<div class="Gstore-processing-step" data-step="3">
 								<i class="fa-solid fa-circle"></i>
-								<span>Redirecionando para pagamento</span>
+								<span>${isBluPayment ? 'Abrindo pagamento' : 'Redirecionando para pagamento'}</span>
 							</div>
 						</div>
 					</div>
@@ -5911,9 +5909,10 @@ function getInstallmentDisplayTotals(summaryData) {
 		 */
 		function showProcessingSuccess() {
 			updateProcessingStep(4); // Marca todos como completos
+			const isBluPayment = typeof isBluCheckoutSelected === 'function' && isBluCheckoutSelected();
 			
-			$('.Gstore-processing-modal__text h3').text('Pedido criado com sucesso!');
-			$('.Gstore-processing-modal__text p').text('Redirecionando para o pagamento seguro...');
+			$('.Gstore-processing-modal__text h3').text(isBluPayment ? 'Link Blu gerado com sucesso!' : 'Pedido criado com sucesso!');
+			$('.Gstore-processing-modal__text p').text(isBluPayment ? 'Enviando você para a tela de pagamento...' : 'Redirecionando para o pagamento seguro...');
 			$('.Gstore-processing-modal__spinner .Gstore-spinner').replaceWith(
 				'<i class="fa-solid fa-circle-check Gstore-success-icon"></i>'
 			);
@@ -6336,13 +6335,25 @@ function getInstallmentDisplayTotals(summaryData) {
 		const state = getBluResumeState();
 		const paymentUrl = state && state.payment_url ? String(state.payment_url) : '';
 		const receivedUrl = state && state.order_received_url ? String(state.order_received_url) : url;
+		let opened = false;
 
 		if (paymentUrl) {
-			openBluPaymentWindow(paymentUrl);
+			opened = openBluPaymentWindow(paymentUrl);
 		} else {
 			closeReservedBluPaymentWindow();
 		}
-		window.location.href = receivedUrl;
+		window.location.href = addBluRedirectFlag(receivedUrl, opened);
+	}
+
+	function addBluRedirectFlag(url, opened) {
+		try {
+			const nextUrl = new URL(url, window.location.origin);
+			nextUrl.searchParams.set('gstore_blu_opened', opened ? '1' : '0');
+			return nextUrl.toString();
+		} catch (e) {
+			const separator = url.indexOf('?') === -1 ? '?' : '&';
+			return url + separator + 'gstore_blu_opened=' + (opened ? '1' : '0');
+		}
 	}
 
 	function resetBluRedirectGuard() {
