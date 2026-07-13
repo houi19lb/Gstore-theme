@@ -155,7 +155,7 @@ do_action( 'woocommerce_before_customer_login_form' ); ?>
 		<div class="gstore-modal__body">
 			<h2 id="gstore-modal-title" class="gstore-modal__title"><?php esc_html_e( 'Sobre o cadastro', 'gstore' ); ?></h2>
 			<p class="gstore-modal__text">
-				<?php esc_html_e( 'Os campos principais do formulário são suficientes para criar sua conta.', 'gstore' ); ?>
+				<?php esc_html_e( 'Depois de clicar em Cadastre-se, enviaremos para seu e-mail as instruções para criar sua senha e acessar a conta.', 'gstore' ); ?>
 			</p>
 		</div>
 	</div>
