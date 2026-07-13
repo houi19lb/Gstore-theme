@@ -228,6 +228,14 @@
 		return 'selector';
 	}
 
+	function getEffectiveQuickActionChannel() {
+		var qa = getEffectiveQuickActionConfig();
+		if (qa && typeof qa.effectiveChannel === 'string' && qa.effectiveChannel) {
+			return qa.effectiveChannel;
+		}
+		return getEffectiveQuickActionType();
+	}
+
 	function getQuickActionDisplayMode() {
 		var qa = getEffectiveQuickActionConfig();
 		if (qa && qa.display === 'icon_only') return 'icon_only';
@@ -247,7 +255,9 @@
 		if (qa && typeof qa.effectiveIcon === 'string' && qa.effectiveIcon) {
 			return qa.effectiveIcon;
 		}
-		return getEffectiveQuickActionType() === 'telegram' ? 'telegram' : 'chat';
+		var channel = getEffectiveQuickActionChannel();
+		if (channel === 'whatsapp') return 'whatsapp';
+		return channel === 'telegram' ? 'telegram' : 'chat';
 	}
 
 	function detectChatReady() {
@@ -576,13 +586,16 @@
 		var iconWrapEl = button.querySelector('.Gstore-support-float__icon-wrap');
 		var isDirectChat = state.preferredChannel === CHAT_PREF_VALUE;
 		var effectiveType = getEffectiveQuickActionType();
+		var effectiveChannel = getEffectiveQuickActionChannel();
 		var iconKind = getQuickActionIconKind();
 		var displayMode = getQuickActionDisplayMode();
 		var configuredLabel = getQuickActionLabel();
-		var isDirectTelegram = effectiveType === 'telegram';
+		var isDirectWhatsApp = effectiveChannel === 'whatsapp';
+		var isDirectTelegram = effectiveChannel === 'telegram' || (effectiveType === 'telegram' && !isDirectWhatsApp);
 
 		button.classList.toggle('is-direct-chat', !!isDirectChat);
 		button.classList.toggle('is-direct-telegram', !!isDirectTelegram);
+		button.classList.toggle('is-direct-whatsapp', !!isDirectWhatsApp);
 		button.classList.toggle('is-chat-ready', !!state.chatReady);
 		button.classList.toggle('is-icon-only', displayMode === 'icon_only');
 
@@ -591,7 +604,9 @@
 		}
 
 		var ariaLabel;
-		if (isDirectTelegram) {
+		if (isDirectWhatsApp) {
+			ariaLabel = configuredLabel || 'WhatsApp';
+		} else if (isDirectTelegram) {
 			ariaLabel = configuredLabel || text('telegramTitle', 'Telegram');
 		} else if (isDirectChat) {
 			ariaLabel = text('openChat', 'Abrir chat');
@@ -604,7 +619,9 @@
 
 		if (labelEl) {
 			labelEl.style.display = displayMode === 'icon_only' ? 'none' : '';
-			if (isDirectTelegram) {
+			if (isDirectWhatsApp) {
+				labelEl.textContent = configuredLabel || 'WhatsApp';
+			} else if (isDirectTelegram) {
 				labelEl.textContent = configuredLabel || text('telegramTitle', 'Telegram');
 			} else if (isDirectChat) {
 				labelEl.textContent = text('openChat', 'Abrir chat');
