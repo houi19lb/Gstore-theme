@@ -23576,6 +23576,8 @@ function gstore_process_store_info_placeholders( $content ) {
 
 	// Substitui os placeholders
 	$content = str_replace( array_keys( $placeholders ), array_values( $placeholders ), $content );
+	// Remove paragrafos opcionais de rodape que sobrarem sem valor configurado.
+	$content = preg_replace( '/<p\b[^>]*>\s*\{\{footer_paragraph_\d+\}\}\s*<\/p>\s*/is', '', $content );
 	$content = preg_replace( '/<div\s+class="Gstore-about-data__row">\s*<span>[^<]*<\/span>\s*<strong>\s*<\/strong>\s*<\/div>\s*/is', '', $content );
 	$content = preg_replace( '/<a\b(?=[^>]*class="[^"]*\bGstore-top-bar__link\b[^"]*")[^>]*href=""[^>]*>.*?<\/a>\s*/is', '', $content );
 	$content = preg_replace( '/<div\s+class="contact-item">\s*<i\b[^>]*><\/i>\s*<a\b[^>]*href=""[^>]*>.*?<\/a>\s*<\/div>\s*/is', '', $content );
