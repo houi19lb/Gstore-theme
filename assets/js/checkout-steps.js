@@ -3,7 +3,7 @@
  * 
  * Fluxo simplificado:
  * - Etapa 1: Escolha do método de pagamento (Cartão ou PIX)
- * - Etapa 2: Dados básicos (email e telefone)
+ * - Etapa 2: Dados básicos (nome, CEP, celular e email)
  * - Etapa 3: Finalizar pedido
  * 
  * O mesmo fluxo para Cartão e PIX - simplificado e consistente.
@@ -27,11 +27,12 @@
 			name: 'Dados Básicos',
 			icon: 'fa-envelope',
 			title: 'Seus Dados',
-			description: 'Informe seu email, telefone e CEP para calcular o frete.',
+			description: 'Informe seu nome, CEP, celular e email para calcular o frete.',
 			fields: [
-				'billing_email',
+				'billing_first_name',
+				'billing_postcode',
 				'billing_phone',
-				'billing_postcode'
+				'billing_email'
 			]
 		},
 		{
@@ -2471,13 +2472,13 @@ const subtotal = decodeHtmlEntities(stripHtmlText(it.subtotal || ''));
 			const $stepDescription = $('[data-step="contact"] .Gstore-checkout-step__description');
 			$stepDescription.text('Preencha seus dados completos para finalizar o pedido via Pix.');
 		} else {
-			// CARTÃO selecionado: Mostra apenas email, telefone e CEP
+			// CARTÃO selecionado: Mostra apenas nome, CEP, celular e email
 			const shouldShowCpfForLimit = hasCpfPurchaseLimitProducts();
 			PIX_BILLING_FIELDS.forEach(fieldId => {
 				const $field = $(`#${fieldId}_field`);
 				if ($field.length) {
-					// Mostra apenas CEP, esconde os demais
-					if (fieldId === 'billing_postcode' || (fieldId === 'billing_cpf' && shouldShowCpfForLimit)) {
+					// Mostra apenas nome e CEP, esconde os demais
+					if (fieldId === 'billing_first_name' || fieldId === 'billing_postcode' || (fieldId === 'billing_cpf' && shouldShowCpfForLimit)) {
 						$field.show();
 					} else {
 						$field.hide();
@@ -2498,7 +2499,7 @@ const subtotal = decodeHtmlEntities(stripHtmlText(it.subtotal || ''));
 			
 			// Atualiza descrição da etapa
 			const $stepDescription = $('[data-step="contact"] .Gstore-checkout-step__description');
-			$stepDescription.text('Informe seu email, telefone e CEP para calcular o frete.');
+			$stepDescription.text('Informe seu nome, CEP, celular e email para calcular o frete.');
 		}
 		ensureCpfPurchaseLimitFieldVisibility();
 	}
@@ -2521,7 +2522,7 @@ const subtotal = decodeHtmlEntities(stripHtmlText(it.subtotal || ''));
 			}
 		}
 
-		// Etapa 2: Move campos de contato (email e telefone)
+		// Etapa 2: Move campos de contato (nome, CEP, celular e email)
 		const $contactStep = $('[data-step="contact"] .Gstore-checkout-step__fields');
 		if ($contactStep.length) {
 			STEPS[1].fields.forEach(fieldId => {
