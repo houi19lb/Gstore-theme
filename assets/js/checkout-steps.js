@@ -27,7 +27,7 @@
 			name: 'Dados Básicos',
 			icon: 'fa-envelope',
 			title: 'Seus Dados',
-			description: 'Informe seu nome, CEP, celular e email para calcular o frete.',
+			description: 'Informe seu nome completo, CEP, celular e email para calcular o frete.',
 			fields: [
 				'billing_first_name',
 				'billing_postcode',
@@ -2444,6 +2444,8 @@ const subtotal = decodeHtmlEntities(stripHtmlText(it.subtotal || ''));
 	function toggleBillingFieldsForPaymentMethod(showForPix) {
 		const $contactStep = $('[data-step="contact"] .Gstore-checkout-step__fields');
 		if (!$contactStep.length) return;
+		const $firstNameLabelText = $('#billing_first_name_field label[for="billing_first_name"]').contents().filter(function() { return this.nodeType === 3; }).first();
+		if ($firstNameLabelText.length) $firstNameLabelText[0].nodeValue = showForPix ? 'Nome ' : 'Nome completo ';
 		
 		if (showForPix) {
 			// PIX selecionado: Move campos de billing para a etapa de contato e mostra
@@ -2499,7 +2501,7 @@ const subtotal = decodeHtmlEntities(stripHtmlText(it.subtotal || ''));
 			
 			// Atualiza descrição da etapa
 			const $stepDescription = $('[data-step="contact"] .Gstore-checkout-step__description');
-			$stepDescription.text('Informe seu nome, CEP, celular e email para calcular o frete.');
+			$stepDescription.text('Informe seu nome completo, CEP, celular e email para calcular o frete.');
 		}
 		ensureCpfPurchaseLimitFieldVisibility();
 	}
