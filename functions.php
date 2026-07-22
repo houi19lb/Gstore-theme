@@ -678,13 +678,6 @@ function gstore_get_internal_link_alias_map() {
 	$programs_url      = gstore_get_public_canonical_url( 'programs' );
 	$pro_training_url  = gstore_get_public_canonical_url( 'pro_training' );
 	$shooting_club_url = gstore_get_public_canonical_url( 'shooting_club' );
-	$product_cat_url   = static function ( $slug ) {
-		$slug = sanitize_title( (string) $slug );
-		$url  = function_exists( 'gstore_get_product_category_native_link_by_slug' ) ? gstore_get_product_category_native_link_by_slug( $slug ) : '';
-
-		return '' !== $url ? $url : home_url( '/categoria-produto/' . $slug . '/' );
-	};
-
 	$map = array(
 		'/minha-conta'    => $my_account_url,
 		'/minha-conta/'   => $my_account_url,
@@ -702,24 +695,8 @@ function gstore_get_internal_link_alias_map() {
 		'/informativo/'   => home_url( '/informativo/' ),
 	);
 
-	$legacy_product_category_aliases = array(
-		'/category/pistolas'          => 'pistolas',
-		'/category/pistolas/'         => 'pistolas',
-		'/category/programas'         => 'programas',
-		'/category/programas/'        => 'programas',
-		'/category/municoes'          => 'municao',
-		'/category/municoes/'         => 'municao',
-		'/category/espingardas'       => 'espingardas',
-		'/category/espingardas/'      => 'espingardas',
-		'/category/delta-force-brazil'  => 'delta-force-brazil',
-		'/category/delta-force-brazil/' => 'delta-force-brazil',
-		'/delta-force-brazil'         => 'delta-force-brazil',
-		'/delta-force-brazil/'        => 'delta-force-brazil',
-	);
-
-	foreach ( $legacy_product_category_aliases as $alias => $slug ) {
-		$map[ $alias ] = $product_cat_url( $slug );
-	}
+	// Arquivos editoriais do WordPress usam /category/{slug}/ e nunca devem
+	// ser normalizados como categorias de produto do WooCommerce.
 
 	$legacy_content_aliases = array(
 		'/blog/como-comprar-arma-de-fogo-legalmente-no-brasil-guia-completo'  => '/como-comprar-arma-registrada/',
@@ -822,7 +799,6 @@ function gstore_normalize_internal_public_links( $content ) {
 		'/pro-training',
 		'/clube-de-tiro',
 		'/informativo',
-		'/category/',
 		'/delta-force-brazil',
 		'/blog/como-comprar-arma-de-fogo-legalmente-no-brasil-guia-completo',
 		'/produto/pistola-taurus-g3-toro-calibre-38-tpc-tenox',
@@ -873,38 +849,6 @@ function gstore_normalize_nav_menu_link_attributes( $atts ) {
 add_filter( 'nav_menu_link_attributes', 'gstore_normalize_nav_menu_link_attributes', 35 );
 add_filter( 'widget_text', 'gstore_normalize_internal_public_links', 35 );
 add_filter( 'widget_text_content', 'gstore_normalize_internal_public_links', 35 );
-
-/**
- * Reaponta categorias antigas do blog que hoje redirecionam para categorias de produto.
- *
- * @param string  $termlink Link gerado pelo WordPress.
- * @param WP_Term $term     Termo de origem.
- * @param string  $taxonomy Taxonomia do termo.
- * @return string
- */
-function gstore_normalize_legacy_blog_category_term_link( $termlink, $term, $taxonomy ) {
-	if ( 'category' !== $taxonomy || ! $term instanceof WP_Term ) {
-		return $termlink;
-	}
-
-	$legacy_category_map = array(
-		'pistolas'           => 'pistolas',
-		'programas'          => 'programas',
-		'municoes'           => 'municao',
-		'espingardas'        => 'espingardas',
-		'delta-force-brazil' => 'delta-force-brazil',
-	);
-
-	$slug = sanitize_title( (string) $term->slug );
-	if ( ! isset( $legacy_category_map[ $slug ] ) ) {
-		return $termlink;
-	}
-
-	$target = function_exists( 'gstore_get_product_category_native_link_by_slug' ) ? gstore_get_product_category_native_link_by_slug( $legacy_category_map[ $slug ] ) : '';
-
-	return '' !== $target ? $target : home_url( '/categoria-produto/' . $legacy_category_map[ $slug ] . '/' );
-}
-add_filter( 'term_link', 'gstore_normalize_legacy_blog_category_term_link', 35, 3 );
 
 /**
  * Evita que o mini-cart vazio exponha checkout que redireciona para carrinho.
