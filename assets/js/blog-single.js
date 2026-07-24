@@ -20,10 +20,52 @@
 	function initBlogSingle() {
 		calculateReadingTime();
 		initSocialShare();
+		initBlogCommentFeedback();
 		initBlogAudio();
 		initBlogHelpfulVote();
 		updateBreadcrumb();
 		filterRelatedPosts();
+	}
+
+	function initBlogCommentFeedback() {
+		const form = document.querySelector('.Gstore-blog-single-comments #commentform');
+		if (!form) {
+			return;
+		}
+
+		const storageKey = `gstore-blog-comment-submitted:${window.location.pathname}`;
+		const showNotice = () => {
+			const notice = document.createElement('p');
+			notice.className = 'Gstore-blog-comment-notice';
+			notice.setAttribute('role', 'status');
+			notice.textContent = 'Seu comentário foi enviado para análise.';
+			form.parentNode.insertBefore(notice, form);
+		};
+
+		try {
+			// ponytail: only survives this submit-and-reload cycle in the same browser session.
+			if (window.sessionStorage.getItem(storageKey) === '1') {
+				window.sessionStorage.removeItem(storageKey);
+				showNotice();
+			}
+		} catch (error) {
+			// Sem armazenamento de sessao, o texto do botao ainda confirma o envio.
+		}
+
+		form.addEventListener('submit', () => {
+			try {
+				window.sessionStorage.setItem(storageKey, '1');
+			} catch (error) {
+				// Sem armazenamento de sessao, o texto do botao ainda confirma o envio.
+			}
+
+			const submitButton = form.querySelector('#submit');
+			if (submitButton) {
+				submitButton.disabled = true;
+				submitButton.value = 'Enviando comentário...';
+				submitButton.setAttribute('aria-busy', 'true');
+			}
+		});
 	}
 
 	function initBlogAudio() {

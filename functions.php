@@ -9962,22 +9962,6 @@ function gstore_hide_unapproved_blog_comments( $query ) {
 add_action( 'pre_get_comments', 'gstore_hide_unapproved_blog_comments', 20 );
 
 /**
- * Mantem uma confirmacao apos o envio sem deixar o comentario pendente visivel.
- *
- * @param string     $location URL de redirecionamento.
- * @param WP_Comment $comment  Comentario enviado.
- * @return string
- */
-function gstore_add_blog_comment_pending_notice_to_redirect( $location, $comment ) {
-	if ( $comment instanceof WP_Comment && 'post' === get_post_type( $comment->comment_post_ID ) && '0' === (string) $comment->comment_approved ) {
-		return add_query_arg( 'gstore_comment_pending', '1', $location );
-	}
-
-	return $location;
-}
-add_filter( 'comment_post_redirect', 'gstore_add_blog_comment_pending_notice_to_redirect', 10, 2 );
-
-/**
  * Simplifica o formulario de comentarios dos artigos e torna o login opcional.
  *
  * @param array $fields Campos padrao do formulario.
@@ -10013,13 +9997,8 @@ function gstore_customize_blog_comment_form( $defaults ) {
 		return $defaults;
 	}
 
-	$notice = '';
-	if ( isset( $_GET['gstore_comment_pending'] ) && '1' === sanitize_text_field( wp_unslash( $_GET['gstore_comment_pending'] ) ) ) {
-		$notice = '<p class="Gstore-blog-comment-notice" role="status">' . esc_html__( 'Recebemos seu comentario. Ele sera publicado depois da aprovacao.', 'gstore' ) . '</p>';
-	}
-
 	$login_url = wp_login_url( get_permalink() );
-	$defaults['comment_notes_before'] = $notice . sprintf(
+	$defaults['comment_notes_before'] = sprintf(
 		'<p class="comment-notes Gstore-blog-comment-login">%1$s <a href="%2$s">%3$s</a>. %4$s</p>',
 		esc_html__( 'Ja tem uma conta?', 'gstore' ),
 		esc_url( $login_url ),
