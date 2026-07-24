@@ -33,37 +33,52 @@
 			return;
 		}
 
-		const storageKey = `gstore-blog-comment-submitted:${window.location.pathname}`;
-		const showNotice = () => {
-			const notice = document.createElement('p');
-			notice.className = 'Gstore-blog-comment-notice';
-			notice.setAttribute('role', 'status');
-			notice.textContent = 'Seu comentário foi enviado para análise.';
-			form.parentNode.insertBefore(notice, form);
+		const showNotice = (message) => {
+			let notice = form.parentNode.querySelector('.Gstore-blog-comment-notice');
+			if (!notice) {
+				notice = document.createElement('p');
+				notice.className = 'Gstore-blog-comment-notice';
+				notice.setAttribute('role', 'status');
+				form.parentNode.insertBefore(notice, form);
+			}
+			notice.textContent = message;
 		};
 
-		try {
-			// ponytail: only survives this submit-and-reload cycle in the same browser session.
-			if (window.sessionStorage.getItem(storageKey) === '1') {
-				window.sessionStorage.removeItem(storageKey);
-				showNotice();
-			}
-		} catch (error) {
-			// Sem armazenamento de sessao, o texto do botao ainda confirma o envio.
-		}
-
-		form.addEventListener('submit', () => {
-			try {
-				window.sessionStorage.setItem(storageKey, '1');
-			} catch (error) {
-				// Sem armazenamento de sessao, o texto do botao ainda confirma o envio.
+		form.addEventListener('submit', async (event) => {
+			event.preventDefault();
+			if (form.dataset.gstoreSubmitting === '1') {
+				return;
 			}
 
 			const submitButton = form.querySelector('#submit');
+			const originalLabel = submitButton ? submitButton.value : '';
+			form.dataset.gstoreSubmitting = '1';
 			if (submitButton) {
-				submitButton.disabled = true;
 				submitButton.value = 'Enviando comentário...';
 				submitButton.setAttribute('aria-busy', 'true');
+			}
+
+			try {
+				// ponytail: send to the native WordPress endpoint without navigating away.
+				const response = await fetch(form.action, {
+					method: form.method || 'POST',
+					body: new FormData(form),
+					credentials: 'same-origin'
+				});
+				if (!response.ok || response.url.includes('/wp-comments-post.php')) {
+					throw new Error('Comment submission failed.');
+				}
+
+				form.reset();
+				showNotice('Seu comentário foi enviado para análise.');
+			} catch (error) {
+				showNotice('Não foi possível enviar agora. Tente novamente.');
+			} finally {
+				delete form.dataset.gstoreSubmitting;
+				if (submitButton) {
+					submitButton.value = originalLabel;
+					submitButton.removeAttribute('aria-busy');
+				}
 			}
 		});
 	}
