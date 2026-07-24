@@ -9935,6 +9935,103 @@ function gstore_hold_blog_comments_for_moderation( $approved, $commentdata ) {
 add_filter( 'pre_comment_approved', 'gstore_hold_blog_comments_for_moderation', 10, 2 );
 
 /**
+ * Oculta comentarios pendentes no front-end, inclusive para o proprio autor.
+ * A aprovacao e feita exclusivamente pela tela Comentarios do WordPress.
+ *
+ * @param WP_Comment_Query $query Consulta de comentarios.
+ * @return void
+ */
+function gstore_hide_unapproved_blog_comments( $query ) {
+	if ( is_admin() || ! is_singular( 'post' ) ) {
+		return;
+	}
+
+	$post_id = get_queried_object_id();
+	if ( ! $post_id || 'post' !== get_post_type( $post_id ) ) {
+		return;
+	}
+
+	$queried_post_id = isset( $query->query_vars['post_id'] ) ? absint( $query->query_vars['post_id'] ) : 0;
+	if ( $queried_post_id && $queried_post_id !== $post_id ) {
+		return;
+	}
+
+	$query->query_vars['status']             = 'approve';
+	$query->query_vars['include_unapproved'] = array();
+}
+add_action( 'pre_get_comments', 'gstore_hide_unapproved_blog_comments', 20 );
+
+/**
+ * Mantem uma confirmacao apos o envio sem deixar o comentario pendente visivel.
+ *
+ * @param string     $location URL de redirecionamento.
+ * @param WP_Comment $comment  Comentario enviado.
+ * @return string
+ */
+function gstore_add_blog_comment_pending_notice_to_redirect( $location, $comment ) {
+	if ( $comment instanceof WP_Comment && 'post' === get_post_type( $comment->comment_post_ID ) && '0' === (string) $comment->comment_approved ) {
+		return add_query_arg( 'gstore_comment_pending', '1', $location );
+	}
+
+	return $location;
+}
+add_filter( 'comment_post_redirect', 'gstore_add_blog_comment_pending_notice_to_redirect', 10, 2 );
+
+/**
+ * Simplifica o formulario de comentarios dos artigos e torna o login opcional.
+ *
+ * @param array $fields Campos padrao do formulario.
+ * @return array
+ */
+function gstore_customize_blog_comment_fields( $fields ) {
+	if ( is_admin() || ! is_singular( 'post' ) ) {
+		return $fields;
+	}
+
+	unset( $fields['url'], $fields['cookies'] );
+
+	return $fields;
+}
+add_filter( 'comment_form_default_fields', 'gstore_customize_blog_comment_fields', 20 );
+
+/**
+ * Ajusta os textos do formulario de comentarios dos artigos.
+ *
+ * @param array $defaults Configuracao padrao do formulario.
+ * @return array
+ */
+function gstore_customize_blog_comment_form( $defaults ) {
+	if ( is_admin() || ! is_singular( 'post' ) ) {
+		return $defaults;
+	}
+
+	$defaults['title_reply']         = __( 'Deixe um comentario', 'gstore' );
+	$defaults['comment_notes_after'] = '';
+
+	if ( is_user_logged_in() ) {
+		$defaults['comment_notes_before'] = '';
+		return $defaults;
+	}
+
+	$notice = '';
+	if ( isset( $_GET['gstore_comment_pending'] ) && '1' === sanitize_text_field( wp_unslash( $_GET['gstore_comment_pending'] ) ) ) {
+		$notice = '<p class="Gstore-blog-comment-notice" role="status">' . esc_html__( 'Recebemos seu comentario. Ele sera publicado depois da aprovacao.', 'gstore' ) . '</p>';
+	}
+
+	$login_url = wp_login_url( get_permalink() );
+	$defaults['comment_notes_before'] = $notice . sprintf(
+		'<p class="comment-notes Gstore-blog-comment-login">%1$s <a href="%2$s">%3$s</a>. %4$s</p>',
+		esc_html__( 'Ja tem uma conta?', 'gstore' ),
+		esc_url( $login_url ),
+		esc_html__( 'Entrar', 'gstore' ),
+		esc_html__( 'Ou continue sem login: informe seu nome e e-mail. Seu comentario so sera exibido depois da aprovacao.', 'gstore' )
+	);
+
+	return $defaults;
+}
+add_filter( 'comment_form_defaults', 'gstore_customize_blog_comment_form', 20 );
+
+/**
  * Carrega o comportamento nativo de resposta para comentarios de posts.
  */
 function gstore_enqueue_blog_comment_reply_script() {
