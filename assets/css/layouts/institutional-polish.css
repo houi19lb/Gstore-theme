@@ -65,6 +65,10 @@
 	letter-spacing: 0;
 }
 
+.Gstore-blog-single-title {
+	margin-inline: auto;
+}
+
 .Gstore-support-subtitle,
 .Gstore-blog-single-meta,
 .Gstore-blog-single-date {
