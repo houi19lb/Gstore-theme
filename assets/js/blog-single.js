@@ -290,13 +290,22 @@
 		if (navigator.share) {
 			navigator.share(shareData).catch((error) => {
 				if (!error || error.name !== 'AbortError') {
-					fallbackCopyText(url, button);
+					openInstagramAndCopyLink(url, button);
 				}
 			});
 			return;
 		}
 
-		fallbackCopyText(url, button);
+		openInstagramAndCopyLink(url, button);
+	}
+
+	/**
+	 * Abre o Instagram quando o navegador nao oferece compartilhamento nativo.
+	 * O link permanece na area de transferencia para ser colado na publicacao.
+	 */
+	function openInstagramAndCopyLink(url, button) {
+		window.open('https://www.instagram.com/', '_blank', 'noopener,noreferrer');
+		fallbackCopyText(url, button, 'Instagram aberto!');
 	}
 
 	/**
@@ -321,7 +330,7 @@
 	/**
 	 * Método fallback para copiar texto (navegadores antigos)
 	 */
-	function fallbackCopyText(text, button) {
+	function fallbackCopyText(text, button, feedbackText = 'Link copiado!') {
 		const textArea = document.createElement('textarea');
 		textArea.value = text;
 		textArea.style.position = 'fixed';
@@ -332,7 +341,7 @@
 
 		try {
 			document.execCommand('copy');
-			showCopyFeedback(button);
+			showCopyFeedback(button, feedbackText);
 		} catch (err) {
 			console.error('Erro ao copiar link:', err);
 		} finally {
@@ -343,7 +352,7 @@
 	/**
 	 * Mostra feedback visual ao copiar link
 	 */
-	function showCopyFeedback(button) {
+	function showCopyFeedback(button, feedbackText = 'Link copiado!') {
 		if (!button) {
 			return;
 		}
@@ -353,7 +362,7 @@
 
 		// Atualiza texto e ícone temporariamente
 		if (button.querySelector('span')) {
-			button.querySelector('span').textContent = 'Link copiado!';
+			button.querySelector('span').textContent = feedbackText;
 		}
 		if (icon) {
 			icon.className = 'fa-solid fa-check';
