@@ -7150,6 +7150,16 @@ function gstore_enqueue_scripts() {
 			$blog_single_js_version,
 			true
 		);
+		wp_localize_script(
+			'gstore-blog-single',
+			'gstoreBlogLike',
+			array(
+				'ajaxUrl' => admin_url( 'admin-ajax.php' ),
+				'nonce'   => wp_create_nonce( 'gstore_blog_like' ),
+				'postId'  => get_queried_object_id(),
+				'count'   => (int) get_post_meta( get_queried_object_id(), 'gstore_blog_like_count', true ),
+			)
+		);
 	}
 
 	// Script dos cards de produto
@@ -9903,6 +9913,55 @@ function gstore_restore_classic_blog_post_paragraphs( $content ) {
 	return $content;
 }
 add_filter( 'the_content', 'gstore_restore_classic_blog_post_paragraphs', 10 );
+
+/**
+ * Mantem comentarios enviados em posts do blog pendentes para moderacao.
+ * Moderadores podem responder sem passar pela fila de aprovacao.
+ *
+ * @param int|string $approved    Status definido pelo WordPress.
+ * @param array      $commentdata Dados do comentario recebido.
+ * @return int|string
+ */
+function gstore_hold_blog_comments_for_moderation( $approved, $commentdata ) {
+	$post_id      = isset( $commentdata['comment_post_ID'] ) ? absint( $commentdata['comment_post_ID'] ) : 0;
+	$comment_type = isset( $commentdata['comment_type'] ) ? (string) $commentdata['comment_type'] : '';
+
+	if ( ! $post_id || 'post' !== get_post_type( $post_id ) || ( '' !== $comment_type && 'comment' !== $comment_type ) || current_user_can( 'moderate_comments' ) ) {
+		return $approved;
+	}
+
+	return 0;
+}
+add_filter( 'pre_comment_approved', 'gstore_hold_blog_comments_for_moderation', 10, 2 );
+
+/**
+ * Carrega o comportamento nativo de resposta para comentarios de posts.
+ */
+function gstore_enqueue_blog_comment_reply_script() {
+	if ( is_singular( 'post' ) && comments_open() && get_option( 'thread_comments' ) ) {
+		wp_enqueue_script( 'comment-reply' );
+	}
+}
+add_action( 'wp_enqueue_scripts', 'gstore_enqueue_blog_comment_reply_script' );
+
+/**
+ * Registra um voto positivo para um artigo publicado do blog.
+ */
+function gstore_handle_blog_like() {
+	check_ajax_referer( 'gstore_blog_like', 'nonce' );
+
+	$post_id = isset( $_POST['post_id'] ) ? absint( $_POST['post_id'] ) : 0;
+	if ( ! $post_id || 'post' !== get_post_type( $post_id ) || 'publish' !== get_post_status( $post_id ) ) {
+		wp_send_json_error( array( 'message' => __( 'Artigo inválido.', 'gstore' ) ), 400 );
+	}
+
+	$count = (int) get_post_meta( $post_id, 'gstore_blog_like_count', true ) + 1;
+	update_post_meta( $post_id, 'gstore_blog_like_count', $count );
+
+	wp_send_json_success( array( 'count' => $count ) );
+}
+add_action( 'wp_ajax_gstore_blog_like', 'gstore_handle_blog_like' );
+add_action( 'wp_ajax_nopriv_gstore_blog_like', 'gstore_handle_blog_like' );
 
 /**
  * Remove as tags <p> adicionadas automaticamente dentro dos cards personalizados.

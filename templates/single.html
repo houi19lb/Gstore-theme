@@ -34,6 +34,18 @@
 					<!-- wp:post-terms {"term":"category","className":"Gstore-blog-single-categories"} /-->
 				</div>
 			</div>
+			<button type="button" class="Gstore-blog-single-audio" data-gstore-blog-audio aria-pressed="false">
+				<i class="fa-solid fa-volume-high" aria-hidden="true"></i>
+				<span>Ouvir artigo</span>
+			</button>
+			<div class="Gstore-blog-single-helpful">
+				<p class="Gstore-blog-single-helpful__question">Este artigo foi útil?</p>
+				<button type="button" class="Gstore-blog-single-helpful__button" data-gstore-blog-like aria-pressed="false">
+					<i class="fa-regular fa-thumbs-up" aria-hidden="true"></i>
+					<span>Sim, foi útil</span>
+				</button>
+				<span class="Gstore-blog-single-helpful__count" data-gstore-blog-like-count aria-live="polite" hidden></span>
+			</div>
 			<!-- /wp:html -->
 	<!-- wp:html -->
 		</header>
@@ -76,14 +88,12 @@
 					<i class="fa-brands fa-whatsapp" aria-hidden="true"></i>
 					<span>WhatsApp</span>
 				</a>
-				<a href="#" class="Gstore-blog-single-share__button Gstore-blog-single-share__button--linkedin" 
-				   aria-label="Compartilhar no LinkedIn" 
-				   data-share="linkedin"
-				   target="_blank" 
-				   rel="noopener noreferrer">
-					<i class="fa-brands fa-linkedin-in" aria-hidden="true"></i>
-					<span>LinkedIn</span>
-				</a>
+				<button type="button" class="Gstore-blog-single-share__button Gstore-blog-single-share__button--instagram"
+				   aria-label="Compartilhar no Instagram"
+				   data-share="instagram">
+					<i class="fa-brands fa-instagram" aria-hidden="true"></i>
+					<span>Instagram</span>
+				</button>
 				<button class="Gstore-blog-single-share__button Gstore-blog-single-share__button--copy" 
 				   aria-label="Copiar link do artigo" 
 				   data-share="copy">
@@ -92,6 +102,37 @@
 				</button>
 			</div>
 		</div>
+		<!-- /wp:html -->
+
+		<!-- wp:comments {"className":"Gstore-blog-single-comments"} -->
+		<div class="wp-block-comments Gstore-blog-single-comments">
+			<!-- wp:comments-title {"showPostTitle":false,"level":2} /-->
+			<!-- wp:comments-query-loop -->
+			<div class="wp-block-comments-query-loop">
+				<!-- wp:comment-template -->
+				<!-- wp:group {"className":"Gstore-blog-single-comment","layout":{"type":"constrained"}} -->
+				<div class="wp-block-group Gstore-blog-single-comment">
+					<!-- wp:comment-author-name /-->
+					<!-- wp:comment-date /-->
+					<!-- wp:comment-content /-->
+					<!-- wp:comment-reply-link /-->
+				</div>
+				<!-- /wp:group -->
+				<!-- /wp:comment-template -->
+				<!-- wp:comments-pagination -->
+				<div class="wp-block-comments-pagination">
+					<!-- wp:comments-pagination-previous /-->
+					<!-- wp:comments-pagination-numbers /-->
+					<!-- wp:comments-pagination-next /-->
+				</div>
+				<!-- /wp:comments-pagination -->
+			</div>
+			<!-- /wp:comments-query-loop -->
+			<!-- wp:post-comments-form /-->
+		</div>
+		<!-- /wp:comments -->
+
+		<!-- wp:html -->
 
 		<!-- Navegação entre posts -->
 		<nav class="Gstore-blog-single-navigation" aria-label="Navegação entre artigos">

@@ -8,6 +8,7 @@
 
 (function() {
 	'use strict';
+	let activeArticleSpeech = null;
 
 	// Aguarda o DOM estar pronto
 	if (document.readyState === 'loading') {
@@ -19,8 +20,145 @@
 	function initBlogSingle() {
 		calculateReadingTime();
 		initSocialShare();
+		initBlogAudio();
+		initBlogHelpfulVote();
 		updateBreadcrumb();
 		filterRelatedPosts();
+	}
+
+	function initBlogAudio() {
+		const button = document.querySelector('[data-gstore-blog-audio]');
+		if (!button) {
+			return;
+		}
+
+		if (!('speechSynthesis' in window) || !window.SpeechSynthesisUtterance) {
+			button.hidden = true;
+			return;
+		}
+
+		button.addEventListener('click', () => {
+			if (button.classList.contains('is-playing')) {
+				window.speechSynthesis.cancel();
+				updateBlogAudioButton(button, false);
+				return;
+			}
+
+			const title = document.querySelector('.Gstore-blog-single-title');
+			const content = document.querySelector('.Gstore-blog-single-content');
+			const text = [title, content]
+				.filter(Boolean)
+				.map((element) => element.textContent.replace(/\s+/g, ' ').trim())
+				.filter(Boolean)
+				.join('. ');
+
+			if (!text) {
+				button.hidden = true;
+				return;
+			}
+
+			window.speechSynthesis.cancel();
+			activeArticleSpeech = new window.SpeechSynthesisUtterance(text);
+			activeArticleSpeech.lang = document.documentElement.lang || 'pt-BR';
+			activeArticleSpeech.onend = () => updateBlogAudioButton(button, false);
+			activeArticleSpeech.onerror = () => updateBlogAudioButton(button, false);
+			updateBlogAudioButton(button, true);
+			window.speechSynthesis.speak(activeArticleSpeech);
+		});
+	}
+
+	function updateBlogAudioButton(button, isPlaying) {
+		const label = button.querySelector('span');
+		const icon = button.querySelector('i');
+		button.classList.toggle('is-playing', isPlaying);
+		button.setAttribute('aria-pressed', isPlaying ? 'true' : 'false');
+
+		if (label) {
+			label.textContent = isPlaying ? 'Parar áudio' : 'Ouvir artigo';
+		}
+		if (icon) {
+			icon.className = isPlaying ? 'fa-solid fa-stop' : 'fa-solid fa-volume-high';
+		}
+	}
+
+	function initBlogHelpfulVote() {
+		const button = document.querySelector('[data-gstore-blog-like]');
+		const config = window.gstoreBlogLike;
+		if (!button || !config) {
+			return;
+		}
+
+		const countElement = document.querySelector('[data-gstore-blog-like-count]');
+		const storageKey = `gstore-blog-like-${config.postId}`;
+		const wasLiked = getStoredLike(storageKey);
+
+		updateHelpfulVote(button, countElement, Number(config.count) || 0, wasLiked);
+
+		if (wasLiked) {
+			return;
+		}
+
+		button.addEventListener('click', async () => {
+			button.disabled = true;
+
+			try {
+				const response = await fetch(config.ajaxUrl, {
+					method: 'POST',
+					credentials: 'same-origin',
+					headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
+					body: new URLSearchParams({
+						action: 'gstore_blog_like',
+						nonce: config.nonce,
+						post_id: String(config.postId)
+					}).toString()
+				});
+				const data = await response.json();
+
+				if (!response.ok || !data.success) {
+					throw new Error('Não foi possível registrar o voto.');
+				}
+
+				storeLike(storageKey);
+				updateHelpfulVote(button, countElement, Number(data.data.count) || 0, true);
+			} catch (error) {
+				button.disabled = false;
+			}
+		});
+	}
+
+	function getStoredLike(key) {
+		try {
+			return window.localStorage.getItem(key) === '1';
+		} catch (error) {
+			return false;
+		}
+	}
+
+	function storeLike(key) {
+		try {
+			window.localStorage.setItem(key, '1');
+		} catch (error) {
+			// Sem armazenamento local, o voto continua registrado no servidor.
+		}
+	}
+
+	function updateHelpfulVote(button, countElement, count, liked) {
+		const label = button.querySelector('span');
+		const icon = button.querySelector('i');
+		button.classList.toggle('is-liked', liked);
+		button.disabled = liked;
+		button.setAttribute('aria-pressed', liked ? 'true' : 'false');
+
+		if (label) {
+			label.textContent = liked ? 'Obrigado!' : 'Sim, foi útil';
+		}
+		if (icon) {
+			icon.className = liked ? 'fa-solid fa-check' : 'fa-regular fa-thumbs-up';
+		}
+		if (countElement && count > 0) {
+			countElement.hidden = false;
+			countElement.textContent = `${count} ${count === 1 ? 'pessoa achou útil' : 'pessoas acharam útil'}`;
+		}
 	}
 
 	/**
@@ -76,6 +214,11 @@
 
 			if (shareType === 'copy') {
 				button.addEventListener('click', handleCopyLink);
+			} else if (shareType === 'instagram') {
+				button.addEventListener('click', (e) => {
+					e.preventDefault();
+					shareToInstagram(button);
+				});
 			} else {
 				button.addEventListener('click', (e) => {
 					e.preventDefault();
@@ -116,8 +259,7 @@
 		const urls = {
 			facebook: `https://www.facebook.com/sharer/sharer.php?u=${url}`,
 			twitter: `https://twitter.com/intent/tweet?url=${url}&text=${title}`,
-			whatsapp: `https://wa.me/?text=${title}%20${url}`,
-			linkedin: `https://www.linkedin.com/sharing/share-offsite/?url=${url}`
+			whatsapp: `https://wa.me/?text=${title}%20${url}`
 		};
 
 		return urls[platform] || null;
@@ -131,6 +273,30 @@
 		if (shareUrl) {
 			window.open(shareUrl, '_blank', 'width=600,height=400,menubar=no,toolbar=no,resizable=yes,scrollbars=yes');
 		}
+	}
+
+	/**
+	 * Compartilha pelo menu nativo para que o Instagram possa ser escolhido.
+	 * O Instagram não oferece uma URL pública de compartilhamento de links.
+	 */
+	function shareToInstagram(button) {
+		const url = window.location.href;
+		const shareData = {
+			title: document.title,
+			text: `Confira este artigo: ${document.title}`,
+			url
+		};
+
+		if (navigator.share) {
+			navigator.share(shareData).catch((error) => {
+				if (!error || error.name !== 'AbortError') {
+					fallbackCopyText(url, button);
+				}
+			});
+			return;
+		}
+
+		fallbackCopyText(url, button);
 	}
 
 	/**
