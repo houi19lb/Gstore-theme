@@ -9916,7 +9916,7 @@ add_filter( 'the_content', 'gstore_restore_classic_blog_post_paragraphs', 10 );
 
 /**
  * Mantem comentarios enviados em posts do blog pendentes para moderacao.
- * Moderadores podem responder sem passar pela fila de aprovacao.
+ * Inclusive comentarios enviados por administradores passam pela fila de aprovacao.
  *
  * @param int|string $approved    Status definido pelo WordPress.
  * @param array      $commentdata Dados do comentario recebido.
@@ -9926,7 +9926,7 @@ function gstore_hold_blog_comments_for_moderation( $approved, $commentdata ) {
 	$post_id      = isset( $commentdata['comment_post_ID'] ) ? absint( $commentdata['comment_post_ID'] ) : 0;
 	$comment_type = isset( $commentdata['comment_type'] ) ? (string) $commentdata['comment_type'] : '';
 
-	if ( ! $post_id || 'post' !== get_post_type( $post_id ) || ( '' !== $comment_type && 'comment' !== $comment_type ) || current_user_can( 'moderate_comments' ) ) {
+	if ( ! $post_id || 'post' !== get_post_type( $post_id ) || ( '' !== $comment_type && 'comment' !== $comment_type ) ) {
 		return $approved;
 	}
 
