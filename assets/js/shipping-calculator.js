@@ -234,7 +234,7 @@
 				const label = rate.label || '';
 				const mode = (rate.mode || '').toLowerCase();
 				const rateIcon = mode === 'air'
-					? '<svg class="gstore-shipping-calculator__result-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M10.18 9 2 3.5V2l10 3 10-3v1.5L13.82 9H22v2h-8.18L16 16.5V18l-4-1.5L8 18v-1.5L10.18 11H2V9h8.18Z" /></svg>'
+					? '<i class="fa-solid fa-plane" aria-hidden="true"></i>'
 					: '<i class="fa-solid fa-truck" aria-hidden="true"></i>';
 				let labelText = label
 					? label
