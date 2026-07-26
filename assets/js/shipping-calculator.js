@@ -233,6 +233,9 @@
 			const ratesHtml = rates.map((rate) => {
 				const label = rate.label || '';
 				const mode = (rate.mode || '').toLowerCase();
+				const rateIcon = mode === 'air'
+					? '<svg class="gstore-shipping-calculator__result-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M10.18 9 2 3.5V2l10 3 10-3v1.5L13.82 9H22v2h-8.18L16 16.5V18l-4-1.5L8 18v-1.5L10.18 11H2V9h8.18Z" /></svg>'
+					: '<i class="fa-solid fa-truck" aria-hidden="true"></i>';
 				let labelText = label
 					? label
 					: ((rate.mode || '').toLowerCase() === 'air' ? 'Frete Aéreo' : (rate.mode || '').toLowerCase() === 'pickup' ? 'Retirada na loja' : 'Frete Terrestre');
@@ -251,7 +254,7 @@
 				return `
 					<div class="gstore-shipping-calculator__result-row${hasQuoteNotice ? ' gstore-shipping-calculator__result-row--quote-notice' : ''}">
 						<span class="gstore-shipping-calculator__result-label">
-							<i class="fa-solid fa-truck" aria-hidden="true"></i>
+							${rateIcon}
 							${labelText}:
 						</span>
 						<strong class="gstore-shipping-calculator__result-value">${costHtml || '-'}</strong>
