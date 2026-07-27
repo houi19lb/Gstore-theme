@@ -18,6 +18,27 @@ $fulfillment_documents = gstore_get_order_fulfillment_documents( $order );
 $required_docs         = gstore_get_order_required_documents( $order );
 $doc_profile           = gstore_get_order_doc_profile( $order );
 
+// The plugin may keep internal vault fields in the order meta. Never render
+// attachment IDs, physical locations, or historical public URLs into My Account.
+$safe_fulfillment_documents = array();
+foreach ( is_array( $fulfillment_documents ) ? $fulfillment_documents : array() as $document ) {
+	if ( ! is_array( $document ) || 'withdrawn' === ( $document['status'] ?? '' ) ) {
+		continue;
+	}
+	$safe_fulfillment_documents[] = array(
+		'id'          => isset( $document['id'] ) ? (string) $document['id'] : '',
+		'doc_type'    => isset( $document['doc_type'] ) ? (string) $document['doc_type'] : '',
+		'label'       => isset( $document['label'] ) ? (string) $document['label'] : '',
+		'filename'    => isset( $document['filename'] ) ? (string) $document['filename'] : '',
+		'mime_type'   => isset( $document['mime_type'] ) ? (string) $document['mime_type'] : '',
+		'uploaded_at' => isset( $document['uploaded_at'] ) ? (string) $document['uploaded_at'] : '',
+		'status'      => isset( $document['status'] ) ? (string) $document['status'] : 'pending',
+		'reviewed_at' => isset( $document['reviewed_at'] ) ? (string) $document['reviewed_at'] : null,
+		'review_note' => isset( $document['review_note'] ) ? (string) $document['review_note'] : null,
+	);
+}
+$fulfillment_documents = $safe_fulfillment_documents;
+
 $has_fulfillment = ! empty( $fulfillment_stage );
 
 // Definição das etapas.

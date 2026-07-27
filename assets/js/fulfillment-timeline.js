@@ -139,7 +139,7 @@
 		html += '<div class="gstore-fulfillment-upload__file-actions">';
 
 		// View button.
-		if (doc.url) {
+		if (doc.id) {
 			html += '<button type="button" class="gstore-fulfillment-upload__btn gstore-fulfillment-upload__btn--view" ' +
 				'data-action="view" data-doc-id="' + escapeHtml(doc.id) + '" title="Visualizar">' +
 				icons.eye + '</button>';
