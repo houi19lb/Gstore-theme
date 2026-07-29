@@ -4178,6 +4178,14 @@ function gstore_defer_non_critical_css( $tag, $handle, $href, $media ) {
 		'gstore-home-legacy-css',
 	);
 
+	if (
+		'gstore-my-account-css' === $handle
+		&& function_exists( 'is_account_page' )
+		&& is_account_page()
+	) {
+		return $tag;
+	}
+
 	if ( in_array( $handle, $layout_critical_css, true ) ) {
 		return $tag;
 	}
@@ -5329,6 +5337,13 @@ function gstore_enqueue_styles() {
 		( class_exists( 'WooCommerce' ) && function_exists( 'is_account_page' ) && is_account_page() )
 		|| $gstore_is_partner_program_page
 	) {
+		if ( function_exists( 'is_account_page' ) && is_account_page() ) {
+			wp_add_inline_style(
+				'gstore-style',
+				'body.woocommerce-account{--gstore-account-canvas:#f8f7f2;--gstore-account-sidebar:#e4e4dc;--gstore-account-divider:#c9c8be;background:var(--gstore-account-canvas)}body.woocommerce-account main.wp-block-group.is-layout-constrained,body.woocommerce-account main#wp--skip-link--target.wp-block-group.is-layout-constrained,body.woocommerce-account main.wp-block-group.wp-block-group-is-layout-constrained,body.woocommerce-account main#wp--skip-link--target.wp-block-group.wp-block-group-is-layout-constrained{width:100%;max-width:none;min-height:calc(100svh - var(--gstore-sticky-offset,110px));margin:0;padding:0;background:var(--gstore-account-canvas)}body.woocommerce-account .entry-content,body.woocommerce-account .wp-block-post-content,body.woocommerce-account .entry-content>.woocommerce,body.woocommerce-account .wp-block-post-content>.woocommerce{width:100%;max-width:none!important;margin:0!important}.gstore-myaccount{--gstore-account-sidebar-width:292px;--gstore-account-gutter:var(--gstore-container-padding-inline,20px);--gstore-account-edge:max(0px,calc((100% - var(--gstore-container-max-width,1280px))/2));--gstore-account-split:calc(var(--gstore-account-edge) + var(--gstore-account-gutter) + var(--gstore-account-sidebar-width));box-sizing:border-box;width:100%;max-width:none;min-height:calc(100svh - var(--gstore-sticky-offset,110px));margin:0;padding:0;background:var(--gstore-account-canvas)}.gstore-myaccount--authenticated{background:linear-gradient(to right,var(--gstore-account-sidebar) 0 var(--gstore-account-split),var(--gstore-account-canvas) var(--gstore-account-split) 100%)}.gstore-myaccount__layout{display:grid;grid-template-columns:var(--gstore-account-sidebar-width) minmax(0,1fr);gap:0;box-sizing:border-box;width:100%;max-width:var(--gstore-container-max-width,1280px);min-height:inherit;margin:0 auto;padding-inline:var(--gstore-account-gutter);align-items:stretch;background:transparent}.gstore-myaccount__sidebar{min-width:0;padding:clamp(28px,3vw,42px) 22px;border-right:1px solid var(--gstore-account-divider);background:var(--gstore-account-sidebar)}.gstore-myaccount__content{min-width:0;padding:clamp(34px,4vw,54px) clamp(28px,4vw,54px) 64px;background:var(--gstore-account-canvas)!important}@media(max-width:1024px){.gstore-myaccount{--gstore-account-sidebar-width:220px}}@media(max-width:768px){.gstore-myaccount{--gstore-account-gutter:0px;background:var(--gstore-account-canvas)}.gstore-myaccount__layout{grid-template-columns:minmax(0,1fr)}.gstore-myaccount__sidebar{padding:18px 14px 0;border-right:0;background:transparent}.gstore-myaccount__content{padding:30px 14px 46px}}'
+			);
+		}
+
 		gstore_enqueue_theme_style( 'gstore-my-account-css', 'assets/css/my-account.css', array( 'gstore-style' ), $theme_version );
 
 		// Fulfillment timeline (apenas na página de detalhes do pedido).
