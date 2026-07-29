@@ -7556,13 +7556,26 @@ body.woocommerce-account main#wp--skip-link--target.wp-block-group.wp-block-grou
 	}
 
 	.gstore-myaccount__content .gstore-orders-list__table .woocommerce-orders-table__cell-order-number {
-		display: block;
+		display: grid !important;
+		grid-template-columns: minmax(78px, auto) minmax(0, 1fr);
+		gap: 4px 10px;
+		align-items: start;
 		padding-bottom: 12px;
 	}
 
-	.gstore-myaccount__content .gstore-orders-list__table .woocommerce-orders-table__cell-order-number::before,
 	.gstore-myaccount__content .gstore-orders-list__table .woocommerce-orders-table__cell-order-actions::before {
 		display: none;
+	}
+
+	.gstore-myaccount__content .gstore-orders-list__table .woocommerce-orders-table__cell-order-number::before {
+		display: block !important;
+		grid-row: 1 / span 2;
+		margin: 0;
+	}
+
+	.gstore-myaccount__content .gstore-orders-list__table .woocommerce-orders-table__cell-order-number .gstore-orders-list__item-count {
+		grid-column: 2;
+		margin-top: 0;
 	}
 
 	.gstore-myaccount__content .gstore-orders-list__table .woocommerce-orders-table__cell-order-actions {
