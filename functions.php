@@ -7137,7 +7137,7 @@ function gstore_enqueue_scripts() {
 				'gstore-my-account',
 				gstore_theme_asset_uri( 'assets/js/my-account.js' ),
 				array(),
-				wp_get_theme()->get( 'Version' ),
+				gstore_theme_asset_version( 'assets/js/my-account.js', wp_get_theme()->get( 'Version' ) ),
 				true
 			);
 

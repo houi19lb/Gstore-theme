@@ -140,28 +140,102 @@
 	 * Navegação mobile melhorada
 	 */
 	function initMobileNavigation() {
-		const nav = document.querySelector('.gstore-myaccount-nav');
-		if (!nav) return;
+		const shell = document.querySelector('.gstore-myaccount-nav-shell');
+		const nav = shell?.querySelector('.gstore-myaccount-nav');
+		const toggle = shell?.querySelector('.gstore-myaccount-nav-toggle');
+		const closeButton = shell?.querySelector('.gstore-myaccount-nav__close');
+		const backdrop = shell?.querySelector('.gstore-myaccount-nav-backdrop');
 
-		const navList = nav.querySelector('.gstore-myaccount-nav__list');
-		const activeItem = nav.querySelector('.gstore-myaccount-nav__item.is-active');
+		if (!shell || !nav || !toggle || !closeButton || !backdrop) return;
 
-		// No mobile, scroll para o item ativo
-		if (window.innerWidth <= 768 && activeItem && navList) {
-			// Aguarda o layout estar pronto
-			setTimeout(() => {
-				const navRect = navList.getBoundingClientRect();
-				const itemRect = activeItem.getBoundingClientRect();
-				
-				// Se o item ativo está fora da viewport horizontal
-				if (itemRect.left < navRect.left || itemRect.right > navRect.right) {
-					activeItem.scrollIntoView({
-						behavior: 'smooth',
-						block: 'nearest',
-						inline: 'center'
-					});
+		const mobileQuery = window.matchMedia('(max-width: 768px)');
+		let isOpen = false;
+
+		function getFocusableElements() {
+			return Array.from(nav.querySelectorAll(
+				'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])'
+			)).filter((element) => !element.hasAttribute('hidden'));
+		}
+
+		function setOpen(nextOpen, restoreFocus = true) {
+			isOpen = mobileQuery.matches && nextOpen;
+			shell.classList.toggle('is-open', isOpen);
+			toggle.setAttribute('aria-expanded', String(isOpen));
+			backdrop.hidden = !isOpen;
+			document.body.classList.toggle('gstore-account-nav-open', isOpen);
+
+			if (mobileQuery.matches) {
+				nav.setAttribute('aria-hidden', String(!isOpen));
+				if (isOpen) {
+					nav.removeAttribute('inert');
+					closeButton.focus();
+				} else {
+					nav.setAttribute('inert', '');
+					if (restoreFocus) toggle.focus();
 				}
-			}, 100);
+			} else {
+				nav.removeAttribute('aria-hidden');
+				nav.removeAttribute('inert');
+			}
+		}
+
+		function syncViewport() {
+			if (mobileQuery.matches) {
+				setOpen(false, false);
+			} else {
+				isOpen = false;
+				shell.classList.remove('is-open');
+				toggle.setAttribute('aria-expanded', 'false');
+				backdrop.hidden = true;
+				document.body.classList.remove('gstore-account-nav-open');
+				nav.removeAttribute('aria-hidden');
+				nav.removeAttribute('inert');
+			}
+		}
+
+		shell.classList.add('is-enhanced');
+		syncViewport();
+
+		toggle.addEventListener('click', () => setOpen(true, false));
+		closeButton.addEventListener('click', () => setOpen(false));
+		backdrop.addEventListener('click', () => setOpen(false));
+
+		nav.addEventListener('click', (event) => {
+			if (mobileQuery.matches && event.target.closest('a[href]')) {
+				setOpen(false, false);
+			}
+		});
+
+		document.addEventListener('keydown', (event) => {
+			if (!isOpen) return;
+
+			if (event.key === 'Escape') {
+				event.preventDefault();
+				setOpen(false);
+				return;
+			}
+
+			if (event.key !== 'Tab') return;
+
+			const focusableElements = getFocusableElements();
+			if (!focusableElements.length) return;
+
+			const firstElement = focusableElements[0];
+			const lastElement = focusableElements[focusableElements.length - 1];
+
+			if (event.shiftKey && document.activeElement === firstElement) {
+				event.preventDefault();
+				lastElement.focus();
+			} else if (!event.shiftKey && document.activeElement === lastElement) {
+				event.preventDefault();
+				firstElement.focus();
+			}
+		});
+
+		if (typeof mobileQuery.addEventListener === 'function') {
+			mobileQuery.addEventListener('change', syncViewport);
+		} else {
+			mobileQuery.addListener(syncViewport);
 		}
 	}
 
