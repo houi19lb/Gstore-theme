@@ -7555,7 +7555,7 @@ body.woocommerce-account main#wp--skip-link--target.wp-block-group.wp-block-grou
 		grid-column: 1 / -1;
 	}
 
-	.gstore-myaccount__content .gstore-orders-list__table .woocommerce-orders-table__cell-order-number {
+	.gstore-myaccount__content .woocommerce-orders-table.gstore-orders-list__table.shop_table_responsive .woocommerce-orders-table__cell-order-number {
 		display: grid !important;
 		grid-template-columns: minmax(78px, auto) minmax(0, 1fr);
 		gap: 4px 10px;
