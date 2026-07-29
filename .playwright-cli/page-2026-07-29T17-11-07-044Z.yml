@@ -1,5 +1,0 @@
-- generic [ref=e2]:
-  - img "logo" [ref=e3]
-  - img "illustration" [ref=e4]
-  - heading "Em breve" [level=3] [ref=e5]
-  - paragraph [ref=e6]: Um novo site WordPress está sendo criado e será publicado em breve
