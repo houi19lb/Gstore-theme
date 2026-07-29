@@ -11945,6 +11945,29 @@ function gstore_render_myaccount_orders_header() {
 add_action( 'woocommerce_account_orders_endpoint', 'gstore_render_myaccount_orders_header', 5 );
 
 /**
+ * Cabecalho da visao geral da conta.
+ */
+function gstore_render_myaccount_dashboard_header() {
+	$current_user = wp_get_current_user();
+	$display_name = $current_user instanceof WP_User ? $current_user->display_name : '';
+	$first_name   = $current_user instanceof WP_User ? $current_user->first_name : '';
+	$greeting     = $first_name ? $first_name : $display_name;
+
+	gstore_render_myaccount_page_header(
+		$greeting
+			? sprintf(
+				/* translators: %s: customer name. */
+				__( 'Olá, %s.', 'gstore' ),
+				$greeting
+			)
+			: __( 'Visão geral', 'gstore' ),
+		__( 'Acompanhe seus pedidos e acesse rapidamente as principais áreas da sua conta.', 'gstore' ),
+		'gstore-account-dashboard-title'
+	);
+}
+add_action( 'woocommerce_account_dashboard', 'gstore_render_myaccount_dashboard_header', 5 );
+
+/**
  * Cabecalho da lista de enderecos.
  *
  * O formulario de edicao mantem o titulo nativo do WooCommerce para preservar
@@ -11974,6 +11997,50 @@ function gstore_render_myaccount_details_header() {
 	);
 }
 add_action( 'woocommerce_account_edit-account_endpoint', 'gstore_render_myaccount_details_header', 5 );
+
+/**
+ * Exibe a identidade nativa do cliente antes dos campos de dados da conta.
+ *
+ * O formulario, os campos, os hooks e o nonce continuam sob responsabilidade
+ * do template do WooCommerce.
+ */
+function gstore_render_myaccount_identity_summary() {
+	$current_user = wp_get_current_user();
+
+	if ( ! $current_user instanceof WP_User || ! $current_user->exists() ) {
+		return;
+	}
+
+	$registered_timestamp = strtotime( $current_user->user_registered );
+	$member_since         = $registered_timestamp
+		? date_i18n( 'F \d\e Y', $registered_timestamp )
+		: '';
+	?>
+	<section class="gstore-account-identity" aria-labelledby="gstore-account-identity-name">
+		<div class="gstore-account-identity__avatar" aria-hidden="true">
+			<?php echo wp_kses_post( get_avatar( $current_user->ID, 72, '', '', array( 'class' => 'gstore-account-identity__image' ) ) ); ?>
+		</div>
+		<div class="gstore-account-identity__copy">
+			<span class="gstore-account-identity__eyebrow"><?php esc_html_e( 'Perfil da conta', 'gstore' ); ?></span>
+			<strong id="gstore-account-identity-name" class="gstore-account-identity__name">
+				<?php echo esc_html( $current_user->display_name ); ?>
+			</strong>
+			<?php if ( $member_since ) : ?>
+				<span class="gstore-account-identity__meta">
+					<?php
+					printf(
+						/* translators: %s: localized month and year. */
+						esc_html__( 'Cliente desde %s', 'gstore' ),
+						esc_html( $member_since )
+					);
+					?>
+				</span>
+			<?php endif; ?>
+		</div>
+	</section>
+	<?php
+}
+add_action( 'woocommerce_edit_account_form_start', 'gstore_render_myaccount_identity_summary', 5 );
 
 /**
  * Retorna o ícone SVG para cada endpoint do menu da conta.

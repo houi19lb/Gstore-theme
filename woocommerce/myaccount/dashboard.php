@@ -25,25 +25,8 @@ $customer_orders = wc_get_orders( array(
 ?>
 
 <div class="gstore-dashboard">
-	
-	<!-- Welcome Section -->
-	<div class="gstore-dashboard__welcome">
-		<h1 class="gstore-dashboard__title">
-			<?php 
-			/* translators: %s: customer first name */
-			printf( 
-				esc_html__( 'Olá, %s!', 'gstore' ), 
-				'<span class="gstore-dashboard__name">' . esc_html( $current_user->display_name ) . '</span>' 
-			); 
-			?>
-		</h1>
-		<p class="gstore-dashboard__subtitle">
-			<?php esc_html_e( 'Gerencie sua conta, acompanhe seus pedidos e atualize suas informações.', 'gstore' ); ?>
-		</p>
-	</div>
 
-	<!-- Stats Cards -->
-	<div class="gstore-dashboard__stats">
+	<section class="gstore-dashboard__stats" aria-label="<?php esc_attr_e( 'Resumo da conta', 'gstore' ); ?>">
 		<div class="gstore-dashboard__stat-card">
 			<div class="gstore-dashboard__stat-icon">
 				<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path><line x1="3" y1="6" x2="21" y2="6"></line><path d="M16 10a4 4 0 0 1-8 0"></path></svg>
@@ -63,11 +46,15 @@ $customer_orders = wc_get_orders( array(
 				<span class="gstore-dashboard__stat-label"><?php esc_html_e( 'Cliente desde', 'gstore' ); ?></span>
 			</div>
 		</div>
-	</div>
+	</section>
 
-	<!-- Quick Actions -->
-	<div class="gstore-dashboard__section">
-		<h2 class="gstore-dashboard__section-title"><?php esc_html_e( 'Ações rápidas', 'gstore' ); ?></h2>
+	<section class="gstore-dashboard__section">
+		<div class="gstore-dashboard__section-header">
+			<div>
+				<h2 class="gstore-dashboard__section-title"><?php esc_html_e( 'Acessos rápidos', 'gstore' ); ?></h2>
+				<p><?php esc_html_e( 'Encontre o que precisa sem sair da sua conta.', 'gstore' ); ?></p>
+			</div>
+		</div>
 		<div class="gstore-dashboard__actions">
 			<a href="<?php echo esc_url( wc_get_account_endpoint_url( 'orders' ) ); ?>" class="gstore-dashboard__action-card">
 				<div class="gstore-dashboard__action-icon">
@@ -126,13 +113,15 @@ $customer_orders = wc_get_orders( array(
 				</span>
 			</a>
 		</div>
-	</div>
+	</section>
 
-	<!-- Recent Orders -->
 	<?php if ( ! empty( $customer_orders ) ) : ?>
-	<div class="gstore-dashboard__section">
+	<section class="gstore-dashboard__section">
 		<div class="gstore-dashboard__section-header">
-			<h2 class="gstore-dashboard__section-title"><?php esc_html_e( 'Últimos pedidos', 'gstore' ); ?></h2>
+			<div>
+				<h2 class="gstore-dashboard__section-title"><?php esc_html_e( 'Pedidos recentes', 'gstore' ); ?></h2>
+				<p><?php esc_html_e( 'Suas compras e movimentações mais recentes.', 'gstore' ); ?></p>
+			</div>
 			<a href="<?php echo esc_url( wc_get_account_endpoint_url( 'orders' ) ); ?>" class="gstore-dashboard__view-all">
 				<?php esc_html_e( 'Ver todos', 'gstore' ); ?>
 				<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
@@ -172,7 +161,7 @@ $customer_orders = wc_get_orders( array(
 				</div>
 			<?php endforeach; ?>
 		</div>
-	</div>
+	</section>
 	<?php endif; ?>
 
 </div>
