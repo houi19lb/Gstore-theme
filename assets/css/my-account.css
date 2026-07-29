@@ -6466,3 +6466,37 @@ body.gstore-account-nav-open {
 		box-shadow: inset 3px 0 0 var(--gstore-color-accent, #b5a642);
 	}
 }
+
+/* ========================================
+   MY ACCOUNT CONTAINER ALIGNMENT
+   Reuses the same horizontal contract as the site header.
+   ======================================== */
+
+body.woocommerce-account main.wp-block-group.is-layout-constrained,
+body.woocommerce-account main#wp--skip-link--target.wp-block-group.is-layout-constrained,
+body.woocommerce-account main.wp-block-group.wp-block-group-is-layout-constrained,
+body.woocommerce-account main#wp--skip-link--target.wp-block-group.wp-block-group-is-layout-constrained {
+	padding-inline: 0;
+}
+
+body.woocommerce-account .entry-content,
+body.woocommerce-account .wp-block-post-content,
+body.woocommerce-account .entry-content > .woocommerce,
+body.woocommerce-account .wp-block-post-content > .woocommerce {
+	width: 100%;
+	max-width: none !important;
+	margin-inline: 0 !important;
+}
+
+.gstore-myaccount {
+	box-sizing: border-box;
+	width: 100%;
+	max-width: var(--gstore-container-max-width, 1280px);
+	padding-inline: 20px;
+}
+
+@media (max-width: 480px) {
+	.gstore-myaccount {
+		padding-inline: 12px;
+	}
+}
