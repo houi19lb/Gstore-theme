@@ -4178,13 +4178,11 @@ function gstore_defer_non_critical_css( $tag, $handle, $href, $media ) {
 		'gstore-home-legacy-css',
 	);
 
-	if (
+	$is_my_account_style = (
 		'gstore-my-account-css' === $handle
 		&& function_exists( 'is_account_page' )
 		&& is_account_page()
-	) {
-		return $tag;
-	}
+	);
 
 	if ( in_array( $handle, $layout_critical_css, true ) ) {
 		return $tag;
@@ -4261,6 +4259,13 @@ function gstore_defer_non_critical_css( $tag, $handle, $href, $media ) {
 
 	// Adiciona noscript fallback para browsers sem JS
 	$deferred_tag .= '<noscript>' . $noscript_tag . '</noscript>';
+
+	if ( $is_my_account_style ) {
+		$deferred_tag = sprintf(
+			'<link rel="preload" href="%s" as="style" fetchpriority="high" />',
+			esc_url( $href )
+		) . $deferred_tag;
+	}
 
 	return $deferred_tag;
 }
