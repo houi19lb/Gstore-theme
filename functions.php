@@ -11908,6 +11908,74 @@ function gstore_remove_myaccount_wrapper() {
 add_action( 'wp', 'gstore_remove_myaccount_wrapper' );
 
 /**
+ * Renderiza o cabecalho compartilhado das principais superficies da conta.
+ *
+ * O conteudo de cada endpoint continua sendo fornecido pelo WooCommerce. Este
+ * bloco apenas cria uma orientacao visual consistente antes do callback nativo.
+ *
+ * @param string $title       Titulo da superficie.
+ * @param string $description Descricao curta da superficie.
+ * @param string $heading_id  ID unico usado pelo rotulo acessivel.
+ * @return void
+ */
+function gstore_render_myaccount_page_header( $title, $description, $heading_id ) {
+	?>
+	<header class="gstore-account-page-header" aria-labelledby="<?php echo esc_attr( $heading_id ); ?>">
+		<div class="gstore-account-page-header__copy">
+			<span class="gstore-account-page-header__eyebrow"><?php esc_html_e( 'Minha conta', 'gstore' ); ?></span>
+			<h1 id="<?php echo esc_attr( $heading_id ); ?>" class="gstore-account-page-header__title">
+				<?php echo esc_html( $title ); ?>
+			</h1>
+			<p class="gstore-account-page-header__description"><?php echo esc_html( $description ); ?></p>
+		</div>
+	</header>
+	<?php
+}
+
+/**
+ * Cabecalho da lista de pedidos.
+ */
+function gstore_render_myaccount_orders_header() {
+	gstore_render_myaccount_page_header(
+		__( 'Meus pedidos', 'gstore' ),
+		__( 'Acompanhe o status, o rastreio e os detalhes das suas compras.', 'gstore' ),
+		'gstore-account-orders-title'
+	);
+}
+add_action( 'woocommerce_account_orders_endpoint', 'gstore_render_myaccount_orders_header', 5 );
+
+/**
+ * Cabecalho da lista de enderecos.
+ *
+ * O formulario de edicao mantem o titulo nativo do WooCommerce para preservar
+ * o contexto especifico de cobranca ou entrega.
+ */
+function gstore_render_myaccount_addresses_header() {
+	if ( '' !== (string) get_query_var( 'edit-address', '' ) ) {
+		return;
+	}
+
+	gstore_render_myaccount_page_header(
+		__( 'Endereços', 'gstore' ),
+		__( 'Revise os endereços usados para cobrança e entrega.', 'gstore' ),
+		'gstore-account-addresses-title'
+	);
+}
+add_action( 'woocommerce_account_edit-address_endpoint', 'gstore_render_myaccount_addresses_header', 5 );
+
+/**
+ * Cabecalho do formulario de dados da conta.
+ */
+function gstore_render_myaccount_details_header() {
+	gstore_render_myaccount_page_header(
+		__( 'Dados da conta', 'gstore' ),
+		__( 'Mantenha suas informações pessoais e sua senha atualizadas.', 'gstore' ),
+		'gstore-account-details-title'
+	);
+}
+add_action( 'woocommerce_account_edit-account_endpoint', 'gstore_render_myaccount_details_header', 5 );
+
+/**
  * Retorna o ícone SVG para cada endpoint do menu da conta.
  *
  * @param string $endpoint Endpoint do menu.

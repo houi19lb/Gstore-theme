@@ -5092,6 +5092,50 @@ main.gstore-myaccount__content,
 	box-shadow: none;
 }
 
+.gstore-account-page-header {
+	display: flex;
+	align-items: flex-end;
+	justify-content: space-between;
+	gap: var(--gstore-spacing-6, 1.5rem);
+	margin: 0 0 var(--gstore-spacing-8, 2rem);
+	padding: 0 0 var(--gstore-spacing-6, 1.5rem);
+	border-bottom: 1px solid var(--gstore-account-border);
+	color: var(--gstore-account-text);
+}
+
+.gstore-account-page-header__copy {
+	display: grid;
+	gap: var(--gstore-spacing-2, 0.5rem);
+	min-width: 0;
+}
+
+.gstore-account-page-header__eyebrow {
+	color: var(--gstore-color-accent-readable, var(--gstore-color-accent-dark, #877c31));
+	font-size: var(--gstore-font-size-xs, 0.75rem);
+	font-weight: var(--gstore-font-weight-semibold, 600);
+	letter-spacing: var(--gstore-letter-spacing-wider, 0.08em);
+	line-height: var(--gstore-line-height-tight, 1.25);
+	text-transform: uppercase;
+}
+
+.gstore-account-page-header__title {
+	margin: 0;
+	color: var(--gstore-account-text);
+	font-family: var(--gstore-font-family-base, sans-serif);
+	font-size: clamp(var(--gstore-font-size-2xl, 1.5rem), 2.4vw, var(--gstore-font-size-4xl, 2.25rem));
+	font-weight: var(--gstore-font-weight-bold, 700);
+	letter-spacing: var(--gstore-letter-spacing-tight, -0.025em);
+	line-height: var(--gstore-line-height-tight, 1.25);
+}
+
+.gstore-account-page-header__description {
+	max-width: 60ch;
+	margin: 0 !important;
+	color: var(--gstore-account-muted) !important;
+	font-size: var(--gstore-font-size-sm, 0.875rem);
+	line-height: var(--gstore-line-height-normal, 1.5);
+}
+
 .gstore-myaccount__content p,
 .gstore-myaccount__content .woocommerce-MyAccount-content p,
 .gstore-myaccount__content .woocommerce-MyAccount-downloads p,
@@ -6133,6 +6177,15 @@ a.gstore-orders-tracking:hover {
 
 	.gstore-myaccount-nav__item.is-active .gstore-myaccount-nav__link {
 		box-shadow: inset 0 -3px 0 var(--gstore-color-accent, #b5a642);
+	}
+
+	.gstore-account-page-header {
+		margin-bottom: var(--gstore-spacing-6, 1.5rem);
+		padding-bottom: var(--gstore-spacing-5, 1.25rem);
+	}
+
+	.gstore-account-page-header__title {
+		font-size: clamp(var(--gstore-font-size-2xl, 1.5rem), 8vw, var(--gstore-font-size-3xl, 1.875rem));
 	}
 
 	.gstore-myaccount__content .woocommerce-orders-table.shop_table_responsive tr {
