@@ -7232,6 +7232,11 @@ body.woocommerce-account .wp-site-blocks {
 	gap: 0;
 }
 
+body.woocommerce-account .entry-content > p:empty {
+	display: none;
+	margin: 0;
+}
+
 body.woocommerce-account main.wp-block-group.is-layout-constrained,
 body.woocommerce-account main#wp--skip-link--target.wp-block-group.is-layout-constrained,
 body.woocommerce-account main.wp-block-group.wp-block-group-is-layout-constrained,

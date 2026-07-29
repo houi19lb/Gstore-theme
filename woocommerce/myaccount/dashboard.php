@@ -24,6 +24,12 @@ $customer_orders = wc_get_orders( array(
 ) );
 ?>
 
+<?php
+if ( function_exists( 'gstore_render_myaccount_dashboard_header' ) ) {
+	gstore_render_myaccount_dashboard_header();
+}
+?>
+
 <div class="gstore-dashboard">
 
 	<section class="gstore-dashboard__stats" aria-label="<?php esc_attr_e( 'Resumo da conta', 'gstore' ); ?>">
