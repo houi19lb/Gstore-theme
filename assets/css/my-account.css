@@ -7203,6 +7203,7 @@ main.gstore-myaccount__content {
 @media (max-width: 768px) {
 	.gstore-myaccount {
 		--gstore-account-gutter: 0px;
+		min-height: calc(100svh - var(--gstore-account-mobile-header-height, 66px));
 		background: var(--gstore-account-canvas);
 	}
 

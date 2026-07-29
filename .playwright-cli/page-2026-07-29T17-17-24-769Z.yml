@@ -1,0 +1,165 @@
+- generic [ref=f4e1]:
+  - complementary "Notificação da loja" [ref=f4e2]:
+    - text: AMBIENTE DE DESENVOLVIMENTO — produtos, preços e estoques são fictícios. Nenhuma venda real é processada.
+    - button "Dispensar" [ref=f4e3] [cursor=pointer]
+  - generic [ref=f4e4]:
+    - banner:
+      - banner [ref=f4e5]:
+        - generic [ref=f4e8]:
+          - link "Minha conta" [ref=f4e9] [cursor=pointer]:
+            - /url: https://devgstore.kivodigital.com.br/minha-conta/
+          - link "Meus favoritos" [ref=f4e13] [cursor=pointer]:
+            - /url: https://devgstore.kivodigital.com.br/favoritos/
+        - generic [ref=f4e18]:
+          - link "Kivo Lab" [ref=f4e19] [cursor=pointer]:
+            - /url: https://devgstore.kivodigital.com.br/
+          - search [ref=f4e21]:
+            - generic [ref=f4e22]: Buscar produtos
+            - generic [ref=f4e23]:
+              - searchbox "Buscar produtos" [ref=f4e24]
+              - button [ref=f4e25] [cursor=pointer]
+          - generic [ref=f4e28]:
+            - link "Atendimento" [ref=f4e29] [cursor=pointer]:
+              - /url: https://devgstore.kivodigital.com.br/atendimento/
+            - 'button "Número de itens no carrinho: 0" [ref=f4e34] [cursor=pointer]'
+        - navigation "Menu principal" [ref=f4e43]:
+          - list [ref=f4e44]:
+            - listitem [ref=f4e45]:
+              - link "Início" [ref=f4e46] [cursor=pointer]:
+                - /url: https://devgstore.kivodigital.com.br/
+            - listitem [ref=f4e47]:
+              - link "Catálogo" [ref=f4e48] [cursor=pointer]:
+                - /url: https://devgstore.kivodigital.com.br/catalogo/
+            - listitem [ref=f4e49]:
+              - link "Vitrine demo" [ref=f4e50] [cursor=pointer]:
+                - /url: https://devgstore.kivodigital.com.br/ofertas/
+            - listitem [ref=f4e51]:
+              - link "Informativo" [ref=f4e52] [cursor=pointer]:
+                - /url: https://devgstore.kivodigital.com.br/informativo/
+            - listitem [ref=f4e53]:
+              - link "Sobre a demo" [ref=f4e54] [cursor=pointer]:
+                - /url: https://devgstore.kivodigital.com.br/sobre-nos/
+            - listitem [ref=f4e55]:
+              - link "Minha Primeira Arma — demo" [ref=f4e56] [cursor=pointer]:
+                - /url: https://devgstore.kivodigital.com.br/product-category/equipamentos-demo/minha-primeira-arma-demo/
+    - main [ref=f4e57]:
+      - generic [ref=f4e58]:
+        - paragraph
+        - generic [ref=f4e61]:
+          - complementary [ref=f4e62]:
+            - navigation "Navegação da conta" [ref=f4e64]:
+              - generic [ref=f4e65]:
+                - img "codexqa20260729170941" [ref=f4e67]
+                - generic [ref=f4e68]:
+                  - generic [ref=f4e69]: Bem-vindo de volta
+                  - generic [ref=f4e70]: codexqa20260729170941
+                  - generic [ref=f4e71]: codexqa20260729170941@example.invalid
+              - list [ref=f4e72]:
+                - listitem [ref=f4e73]:
+                  - link "Painel" [ref=f4e74] [cursor=pointer]:
+                    - /url: https://devgstore.kivodigital.com.br/minha-conta/
+                - listitem [ref=f4e82]:
+                  - link "Pedidos" [ref=f4e83] [cursor=pointer]:
+                    - /url: https://devgstore.kivodigital.com.br/minha-conta/orders/
+                - listitem [ref=f4e89]:
+                  - link "Downloads" [ref=f4e90] [cursor=pointer]:
+                    - /url: https://devgstore.kivodigital.com.br/minha-conta/downloads/
+                - listitem [ref=f4e96]:
+                  - link "Endereços" [ref=f4e97] [cursor=pointer]:
+                    - /url: https://devgstore.kivodigital.com.br/minha-conta/edit-address/
+                - listitem [ref=f4e103]:
+                  - link "Meus Dados" [ref=f4e104] [cursor=pointer]:
+                    - /url: https://devgstore.kivodigital.com.br/minha-conta/edit-account/
+                - listitem [ref=f4e110]:
+                  - link "Sair" [ref=f4e111] [cursor=pointer]:
+                    - /url: https://devgstore.kivodigital.com.br/minha-conta/customer-logout/?_wpnonce=017ee29a93
+          - main [ref=f4e117]:
+            - generic [ref=f4e118]:
+              - region "Resumo da conta" [ref=f4e119]:
+                - generic [ref=f4e125]:
+                  - generic [ref=f4e126]: "0"
+                  - generic [ref=f4e127]: Pedidos
+                - generic [ref=f4e133]:
+                  - generic [ref=f4e134]: jul/2026
+                  - generic [ref=f4e135]: Cliente desde
+              - generic [ref=f4e136]:
+                - generic [ref=f4e138]:
+                  - heading "Acessos rápidos" [level=2] [ref=f4e139]
+                  - paragraph [ref=f4e140]: Encontre o que precisa sem sair da sua conta.
+                - generic [ref=f4e141]:
+                  - link "Meus Pedidos Acompanhe seus pedidos" [ref=f4e142] [cursor=pointer]:
+                    - /url: https://devgstore.kivodigital.com.br/minha-conta/orders/
+                    - generic [ref=f4e147]:
+                      - generic [ref=f4e148]: Meus Pedidos
+                      - text: Acompanhe seus pedidos
+                  - link "Endereços Gerencie seus endereços" [ref=f4e152] [cursor=pointer]:
+                    - /url: https://devgstore.kivodigital.com.br/minha-conta/edit-address/
+                    - generic [ref=f4e157]:
+                      - generic [ref=f4e158]: Endereços
+                      - text: Gerencie seus endereços
+                  - link "Meus Dados Atualize suas informações" [ref=f4e162] [cursor=pointer]:
+                    - /url: https://devgstore.kivodigital.com.br/minha-conta/edit-account/
+                    - generic [ref=f4e167]:
+                      - generic [ref=f4e168]: Meus Dados
+                      - text: Atualize suas informações
+                  - link "Continuar comprando Explore nosso catálogo" [ref=f4e172] [cursor=pointer]:
+                    - /url: https://devgstore.kivodigital.com.br/catalogo/
+                    - generic [ref=f4e178]:
+                      - generic [ref=f4e179]: Continuar comprando
+                      - text: Explore nosso catálogo
+        - paragraph
+    - contentinfo [ref=f4e183]:
+      - contentinfo [ref=f4e184]:
+        - generic [ref=f4e185]:
+          - generic [ref=f4e186]:
+            - generic [ref=f4e187]:
+              - paragraph [ref=f4e188]: Instalação fictícia usada para explorar o tema e o plugin GSTORE.
+              - paragraph [ref=f4e189]: Não há vendas, atendimento, frete, pagamento ou identidade comercial real.
+              - paragraph [ref=f4e190]: Produtos, imagens, preços e estoques são exclusivamente demonstrativos.
+              - paragraph [ref=f4e191]: Não use dados pessoais reais em formulários ou contas deste ambiente.
+            - generic [ref=f4e192]:
+              - heading "ATENDIMENTO" [level=3] [ref=f4e193]
+              - generic [ref=f4e194]:
+                - generic [ref=f4e195]: 
+                - link "nao-responder@example.invalid" [ref=f4e196] [cursor=pointer]:
+                  - /url: mailto:nao-responder@example.invalid
+            - generic [ref=f4e199]:
+              - heading "REDES SOCIAIS" [level=3] [ref=f4e201]
+              - generic [ref=f4e202]:
+                - heading "MINHA CONTA" [level=3] [ref=f4e203]
+                - list [ref=f4e204]:
+                  - listitem [ref=f4e205]:
+                    - link "Minha conta" [ref=f4e206] [cursor=pointer]:
+                      - /url: https://devgstore.kivodigital.com.br/minha-conta/
+                  - listitem [ref=f4e207]:
+                    - link "Meus pedidos" [ref=f4e208] [cursor=pointer]:
+                      - /url: https://devgstore.kivodigital.com.br/minha-conta/orders/
+          - text:   
+          - generic [ref=f4e209]:
+            - paragraph [ref=f4e210]: Kivo Lab | Canal desativado
+            - paragraph [ref=f4e211]: "Horário de atendimento: Não há atendimento comercial neste ambiente."
+            - paragraph [ref=f4e212]: Kivo Lab
+            - paragraph [ref=f4e213]: Copyright © 2026 Kivo Lab. Todos os direitos reservados.
+  - dialog [ref=f4e215]:
+    - generic [ref=f4e217]:
+      - button "Fechar modal" [ref=f4e218] [cursor=pointer]
+      - heading "Verificação de Idade" [level=2] [ref=f4e224]
+      - paragraph [ref=f4e225]: Este site contém produtos destinados exclusivamente para maiores de 18 anos.
+      - paragraph [ref=f4e226]: Você tem 18 anos ou mais?
+      - generic [ref=f4e227]:
+        - button "Sim, tenho 18+" [ref=f4e228] [cursor=pointer]
+        - button "Não, sou menor" [ref=f4e231] [cursor=pointer]
+      - paragraph [ref=f4e235]: Ao confirmar, você declara estar ciente de que é proibida a venda de produtos para menores de 18 anos.
+  - alert [active]:
+    - generic:
+      - generic:
+        - heading "Adicionado ao carrinho" [level=3]
+      - button "Fechar notificação"
+    - generic:
+      - generic:
+        - heading [level=4]
+    - generic:
+      - button "Continuar comprando"
+      - link "Ver carrinho":
+        - /url: https://devgstore.kivodigital.com.br/carrinho/
+  - status [ref=f4e236]
