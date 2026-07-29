@@ -6820,3 +6820,300 @@ body.woocommerce-account .wp-block-post-content > .woocommerce {
 		padding: 18px;
 	}
 }
+
+/* ========================================
+   MY ACCOUNT INTEGRATED CANVAS
+   Keeps the account area visually continuous instead of card-based.
+   ======================================== */
+
+body.woocommerce-account,
+.gstore-myaccount {
+	--gstore-account-bg: #f1eee7;
+	--gstore-account-canvas: #f8f7f2;
+	--gstore-account-sidebar: #e4e4dc;
+	--gstore-account-divider: #c9c8be;
+}
+
+@supports (background: color-mix(in srgb, #000 50%, #fff)) {
+	body.woocommerce-account,
+	.gstore-myaccount {
+		--gstore-account-bg: color-mix(
+			in srgb,
+			var(--gstore-color-bg-base, #f5f5f2) 78%,
+			#e7dfd2
+		);
+		--gstore-account-canvas: color-mix(
+			in srgb,
+			var(--gstore-color-bg-light, #ffffff) 72%,
+			var(--gstore-account-bg, #f1eee7)
+		);
+		--gstore-account-sidebar: color-mix(
+			in srgb,
+			var(--gstore-account-bg, #f1eee7) 76%,
+			var(--gstore-account-text, #1a1a1a) 6%
+		);
+		--gstore-account-divider: color-mix(
+			in srgb,
+			var(--gstore-account-border, #e6e6e6) 76%,
+			var(--gstore-account-text, #1a1a1a) 24%
+		);
+	}
+}
+
+body.woocommerce-account main.wp-block-group.is-layout-constrained,
+body.woocommerce-account main#wp--skip-link--target.wp-block-group.is-layout-constrained,
+body.woocommerce-account main.wp-block-group.wp-block-group-is-layout-constrained,
+body.woocommerce-account main#wp--skip-link--target.wp-block-group.wp-block-group-is-layout-constrained {
+	padding-block: 0;
+}
+
+.gstore-myaccount {
+	padding-inline: 20px;
+}
+
+.gstore-myaccount__layout {
+	grid-template-columns: minmax(248px, 292px) minmax(0, 1fr);
+	gap: 0;
+	align-items: stretch;
+	min-height: clamp(620px, calc(100vh - 138px), 900px);
+	overflow: clip;
+	border-inline: 1px solid var(--gstore-account-divider);
+	background: var(--gstore-account-canvas);
+}
+
+.gstore-myaccount__sidebar {
+	position: relative;
+	top: auto;
+	padding: clamp(28px, 3vw, 42px) 22px;
+	border-right: 1px solid var(--gstore-account-divider);
+	background: var(--gstore-account-sidebar);
+}
+
+.gstore-myaccount-nav-shell {
+	position: sticky;
+	top: calc(var(--gstore-sticky-offset, 110px) + 16px);
+}
+
+.gstore-myaccount-nav {
+	border: 0;
+	border-radius: 0;
+	background: transparent;
+	box-shadow: none;
+}
+
+.gstore-myaccount-nav__user {
+	padding: 0 0 22px;
+	border-bottom-color: var(--gstore-account-divider);
+	background: transparent;
+}
+
+.gstore-myaccount-nav__list {
+	padding: 12px 0 0;
+}
+
+.gstore-myaccount-nav__link {
+	padding-inline: 13px;
+}
+
+.gstore-myaccount-nav__link:hover,
+.gstore-myaccount-nav__item.is-active .gstore-myaccount-nav__link {
+	background: color-mix(
+		in srgb,
+		var(--gstore-account-canvas) 72%,
+		var(--gstore-account-accent-soft) 28%
+	);
+}
+
+.gstore-myaccount-nav__item:last-child .gstore-myaccount-nav__link {
+	border-top-color: var(--gstore-account-divider);
+}
+
+.gstore-myaccount__content,
+main.gstore-myaccount__content {
+	padding: clamp(34px, 4vw, 54px) clamp(28px, 4vw, 54px) 64px;
+	background: var(--gstore-account-canvas) !important;
+	background-color: var(--gstore-account-canvas) !important;
+}
+
+.gstore-account-page-header {
+	margin-bottom: 0;
+	padding-bottom: clamp(24px, 3vw, 34px);
+	border-bottom-color: var(--gstore-account-divider);
+}
+
+.gstore-account-page-header__title {
+	font-size: clamp(2rem, 3.25vw, 3rem);
+	line-height: 1.08;
+}
+
+.gstore-dashboard {
+	gap: 0;
+}
+
+.gstore-dashboard__stats {
+	overflow: visible;
+	border: 0;
+	border-bottom: 1px solid var(--gstore-account-divider);
+	border-radius: 0;
+	background: transparent;
+	box-shadow: none;
+}
+
+.gstore-dashboard__stat-card {
+	min-height: 112px;
+	padding: 28px 22px;
+}
+
+.gstore-dashboard__stat-card:first-child {
+	padding-left: 0;
+}
+
+.gstore-dashboard__stat-card + .gstore-dashboard__stat-card {
+	border-left-color: var(--gstore-account-divider);
+}
+
+.gstore-dashboard__section {
+	gap: 18px;
+	padding-top: 32px;
+}
+
+.gstore-dashboard__section + .gstore-dashboard__section {
+	margin-top: 34px;
+	border-top: 1px solid var(--gstore-account-divider);
+}
+
+.gstore-dashboard__actions {
+	gap: 0;
+	border-color: var(--gstore-account-divider);
+	border-radius: 0;
+	background: transparent;
+}
+
+.gstore-dashboard__action-card,
+.gstore-dashboard__action-card--highlight {
+	min-height: 94px;
+	border-right: 1px solid var(--gstore-account-divider);
+	border-bottom: 1px solid var(--gstore-account-divider);
+	background: transparent;
+}
+
+.gstore-dashboard__action-card:nth-child(2n) {
+	border-right: 0;
+}
+
+.gstore-dashboard__action-card:nth-last-child(-n + 2) {
+	border-bottom: 0;
+}
+
+.gstore-dashboard__action-card--highlight {
+	background: color-mix(
+		in srgb,
+		var(--gstore-account-canvas) 78%,
+		var(--gstore-account-accent-soft) 22%
+	);
+}
+
+.gstore-dashboard__action-card:hover,
+.gstore-dashboard__action-card--highlight:hover {
+	background: var(--gstore-account-accent-soft);
+	box-shadow: inset 0 0 0 1px var(--gstore-account-accent-medium);
+}
+
+.gstore-dashboard__orders {
+	gap: 0;
+	overflow: hidden;
+	border-block: 1px solid var(--gstore-account-divider);
+}
+
+.gstore-dashboard__order-card {
+	border: 0;
+	border-radius: 0;
+	background: transparent;
+	box-shadow: none;
+}
+
+.gstore-dashboard__order-card + .gstore-dashboard__order-card {
+	border-top: 1px solid var(--gstore-account-divider);
+}
+
+@media (max-width: 768px) {
+	.gstore-myaccount {
+		padding-inline: 12px;
+	}
+
+	.gstore-myaccount__layout {
+		grid-template-columns: minmax(0, 1fr);
+		min-height: 0;
+		overflow: visible;
+		border-inline: 0;
+		background: transparent;
+	}
+
+	.gstore-myaccount__sidebar {
+		padding: 18px 0 0;
+		border-right: 0;
+		background: transparent;
+	}
+
+	.gstore-myaccount-nav-shell {
+		position: static;
+	}
+
+	.gstore-myaccount-nav-shell.is-enhanced .gstore-myaccount-nav-toggle {
+		border-color: var(--gstore-account-divider);
+		background: var(--gstore-account-sidebar);
+		box-shadow: none;
+	}
+
+	.gstore-myaccount-nav-shell.is-enhanced .gstore-myaccount-nav {
+		background: var(--gstore-account-sidebar);
+	}
+
+	.gstore-myaccount-nav-shell.is-enhanced .gstore-myaccount-nav__mobile-header {
+		border-bottom-color: var(--gstore-account-divider);
+		background: color-mix(
+			in srgb,
+			var(--gstore-account-sidebar) 94%,
+			transparent
+		);
+	}
+
+	.gstore-myaccount__content,
+	main.gstore-myaccount__content {
+		padding: 30px 22px 46px;
+	}
+
+	.gstore-dashboard__action-card,
+	.gstore-dashboard__action-card--highlight {
+		border-right: 0;
+	}
+
+	.gstore-dashboard__action-card:nth-last-child(2) {
+		border-bottom: 1px solid var(--gstore-account-divider);
+	}
+}
+
+@media (max-width: 480px) {
+	.gstore-myaccount__content,
+	main.gstore-myaccount__content {
+		padding-inline: 18px;
+	}
+
+	.gstore-account-page-header__title {
+		font-size: clamp(1.875rem, 10vw, 2.375rem);
+	}
+
+	.gstore-dashboard__stats {
+		grid-template-columns: minmax(0, 1fr);
+	}
+
+	.gstore-dashboard__stat-card {
+		min-height: 92px;
+		padding: 20px 0;
+	}
+
+	.gstore-dashboard__stat-card + .gstore-dashboard__stat-card {
+		border-top: 1px solid var(--gstore-account-divider);
+		border-left: 0;
+	}
+}
