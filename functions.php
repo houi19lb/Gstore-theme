@@ -11958,7 +11958,7 @@ function gstore_render_myaccount_page_header( $title, $description, $heading_id 
 function gstore_render_myaccount_orders_header() {
 	gstore_render_myaccount_page_header(
 		__( 'Meus pedidos', 'gstore' ),
-		__( 'Acompanhe o status, o rastreio e os detalhes das suas compras.', 'gstore' ),
+		__( 'Consulte detalhes, documentos e o caminho de cada entrega.', 'gstore' ),
 		'gstore-account-orders-title'
 	);
 }
@@ -11981,11 +11981,35 @@ function gstore_render_myaccount_dashboard_header() {
 				$greeting
 			)
 			: __( 'Visão geral', 'gstore' ),
-		__( 'Acompanhe seus pedidos e acesse rapidamente as principais áreas da sua conta.', 'gstore' ),
+		__( 'Aqui está o que está acontecendo na sua conta hoje.', 'gstore' ),
 		'gstore-account-dashboard-title'
 	);
 }
 add_action( 'woocommerce_account_dashboard', 'gstore_render_myaccount_dashboard_header', 5 );
+
+/**
+ * Hide only the customer-facing WooCommerce development notice on DevGstore.
+ *
+ * The saved option remains untouched so wp-admin safety controls keep their
+ * current state. Other hosts, including production stores, are unaffected.
+ *
+ * @param mixed $value Stored demo-store option value.
+ * @return mixed
+ */
+function gstore_hide_devgstore_customer_demo_notice( $value ) {
+	if ( is_admin() ) {
+		return $value;
+	}
+
+	$host = wp_parse_url( home_url( '/' ), PHP_URL_HOST );
+
+	if ( 'devgstore.kivodigital.com.br' === strtolower( (string) $host ) ) {
+		return 'no';
+	}
+
+	return $value;
+}
+add_filter( 'option_woocommerce_demo_store', 'gstore_hide_devgstore_customer_demo_notice' );
 
 /**
  * Cabecalho da lista de enderecos.

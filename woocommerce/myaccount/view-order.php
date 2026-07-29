@@ -43,10 +43,60 @@ foreach ( $fulfillment_documents as $doc ) {
 		$total_docs_count++;
 	}
 }
-$can_upload_more = $total_docs_count < $max_docs;
+$can_upload_more  = $total_docs_count < $max_docs;
+$order_date       = $order->get_date_created();
+$order_item_count = max( 0, $order->get_item_count() - $order->get_item_count_refunded() );
+$order_status     = function_exists( 'gstore_my_account_get_orders_tab_status_label' )
+	? gstore_my_account_get_orders_tab_status_label( $order )
+	: wc_get_order_status_name( $order->get_status() );
 ?>
 
 <div class="gstore-view-order">
+	<a class="gstore-view-order__back" href="<?php echo esc_url( wc_get_account_endpoint_url( 'orders' ) ); ?>">
+		<span aria-hidden="true">&larr;</span>
+		<?php esc_html_e( 'Voltar aos pedidos', 'gstore' ); ?>
+	</a>
+
+	<header class="gstore-view-order__hero" aria-labelledby="gstore-view-order-title">
+		<div class="gstore-view-order__hero-copy">
+			<span class="gstore-account-page-header__eyebrow"><?php esc_html_e( 'Pedido', 'gstore' ); ?></span>
+			<h1 id="gstore-view-order-title" class="gstore-view-order__title">
+				<?php
+				printf(
+					/* translators: %s: order number. */
+					esc_html__( '#%s', 'gstore' ),
+					esc_html( $order->get_order_number() )
+				);
+				?>
+			</h1>
+			<p class="gstore-view-order__meta">
+				<?php if ( $order_date ) : ?>
+					<?php
+					printf(
+						/* translators: 1: order date. 2: item count. */
+						esc_html( _n( 'Realizado em %1$s · %2$s item', 'Realizado em %1$s · %2$s itens', $order_item_count, 'gstore' ) ),
+						esc_html( wc_format_datetime( $order_date ) ),
+						esc_html( $order_item_count )
+					);
+					?>
+				<?php endif; ?>
+			</p>
+		</div>
+		<dl class="gstore-view-order__summary">
+			<div>
+				<dt><?php esc_html_e( 'Status', 'gstore' ); ?></dt>
+				<dd>
+					<span class="gstore-orders-status gstore-orders-status--<?php echo esc_attr( $order->get_status() ); ?>">
+						<?php echo esc_html( $order_status ); ?>
+					</span>
+				</dd>
+			</div>
+			<div>
+				<dt><?php esc_html_e( 'Total do pedido', 'gstore' ); ?></dt>
+				<dd><?php echo wp_kses_post( $order->get_formatted_order_total() ); ?></dd>
+			</div>
+		</dl>
+	</header>
 
 	<?php if ( $has_fulfillment ) : ?>
 	<!-- ════════════ Timeline ════════════ -->

@@ -217,7 +217,8 @@ if ( $has_orders ) :
 		);
 	}
 	?>
-	<table class="woocommerce-orders-table woocommerce-MyAccount-orders shop_table shop_table_responsive my_account_orders account-orders-table">
+	<div class="gstore-orders-list">
+	<table class="woocommerce-orders-table woocommerce-MyAccount-orders shop_table shop_table_responsive my_account_orders account-orders-table gstore-orders-list__table">
 		<thead>
 			<tr>
 				<?php foreach ( $account_orders_columns as $column_id => $column_name ) : ?>
@@ -268,6 +269,15 @@ if ( $has_orders ) :
 								<a href="<?php echo esc_url( $order->get_view_order_url() ); ?>">
 									<?php echo esc_html( _x( '#', 'hash before order number', 'woocommerce' ) . $order->get_order_number() ); ?>
 								</a>
+								<span class="gstore-orders-list__item-count">
+									<?php
+									printf(
+										/* translators: %s: total order items. */
+										esc_html( _n( '%s item', '%s itens', $item_count, 'woocommerce' ) ),
+										esc_html( $item_count )
+									);
+									?>
+								</span>
 							<?php elseif ( 'order-date' === $column_id ) : ?>
 								<time datetime="<?php echo esc_attr( $order->get_date_created()->date( 'c' ) ); ?>">
 									<?php echo esc_html( wc_format_datetime( $order->get_date_created() ) ); ?>
@@ -323,6 +333,7 @@ if ( $has_orders ) :
 			<?php endforeach; ?>
 		</tbody>
 	</table>
+	</div>
 
 	<?php if ( $customer_orders->max_num_pages > 1 ) : ?>
 		<?php
