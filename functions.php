@@ -11971,7 +11971,14 @@ function gstore_render_myaccount_dashboard_header() {
 	$current_user = wp_get_current_user();
 	$display_name = $current_user instanceof WP_User ? $current_user->display_name : '';
 	$first_name   = $current_user instanceof WP_User ? $current_user->first_name : '';
-	$greeting     = $first_name ? $first_name : $display_name;
+	$user_login   = $current_user instanceof WP_User ? $current_user->user_login : '';
+	$greeting     = $first_name ? $first_name : ( $display_name ? $display_name : $user_login );
+
+	if ( is_email( $greeting ) ) {
+		$greeting = strstr( $greeting, '@', true );
+	}
+
+	$greeting = ucwords( str_replace( array( '.', '_', '-' ), ' ', (string) $greeting ) );
 
 	gstore_render_myaccount_page_header(
 		$greeting

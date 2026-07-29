@@ -7475,6 +7475,17 @@ body.woocommerce-account main#wp--skip-link--target.wp-block-group.wp-block-grou
 	background: color-mix(in srgb, var(--gstore-account-sidebar) 52%, var(--gstore-account-canvas)) !important;
 }
 
+@media (min-width: 769px) {
+	.gstore-view-order .gstore-fulfillment-timeline {
+		overflow-x: hidden;
+		border-radius: 14px;
+	}
+
+	.gstore-view-order .gstore-fulfillment-timeline__step:last-child {
+		flex: 1;
+	}
+}
+
 @media (max-width: 980px) {
 	.gstore-orders-list__table .woocommerce-orders-table__header-order-tracking,
 	.gstore-orders-list__table .woocommerce-orders-table__cell-order-tracking {
