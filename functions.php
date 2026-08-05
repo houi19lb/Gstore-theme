@@ -9962,7 +9962,7 @@ function gstore_hide_unapproved_blog_comments( $query ) {
 add_action( 'pre_get_comments', 'gstore_hide_unapproved_blog_comments', 20 );
 
 /**
- * Simplifica o formulario de comentarios dos artigos e torna o login opcional.
+ * Simplifica o formulario de comentarios dos artigos.
  *
  * @param array $fields Campos padrao do formulario.
  * @return array
@@ -9992,18 +9992,13 @@ function gstore_customize_blog_comment_form( $defaults ) {
 	$defaults['title_reply']         = __( 'Deixe um comentario', 'gstore' );
 	$defaults['comment_notes_after'] = '';
 
-	if ( is_user_logged_in() ) {
-		$defaults['comment_notes_before'] = '';
-		return $defaults;
-	}
-
 	$login_url = wp_login_url( get_permalink() );
-	$defaults['comment_notes_before'] = sprintf(
-		'<p class="comment-notes Gstore-blog-comment-login">%1$s <a href="%2$s">%3$s</a>. %4$s</p>',
-		esc_html__( 'Ja tem uma conta?', 'gstore' ),
+	$defaults['must_log_in'] = sprintf(
+		'<p class="comment-notes Gstore-blog-comment-login">%1$s <a href="%2$s">%3$s</a> %4$s</p>',
+		esc_html__( 'Para deixar um comentario,', 'gstore' ),
 		esc_url( $login_url ),
-		esc_html__( 'Entrar', 'gstore' ),
-		esc_html__( 'Ou continue sem login: informe seu nome e e-mail. Seu comentario so sera exibido depois da aprovacao.', 'gstore' )
+		esc_html__( 'entre na sua conta', 'gstore' ),
+		esc_html__( 'usando o e-mail cadastrado na loja.', 'gstore' )
 	);
 
 	return $defaults;
