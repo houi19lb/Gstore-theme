@@ -79,6 +79,16 @@ svg {
 	height: auto;
 }
 
+img.emoji,
+img.wp-smiley {
+	display: inline !important;
+	width: 1em !important;
+	height: 1em !important;
+	max-width: none !important;
+	margin: 0 .07em !important;
+	vertical-align: -0.1em;
+}
+
 [hidden] {
 	display: none !important;
 }
@@ -168,4 +178,3 @@ ol {
 	white-space: nowrap;
 	border-width: 0;
 }
-
