@@ -13478,6 +13478,115 @@ function gstore_normalize_home_section_output( $html ) {
 }
 
 /**
+ * Lê a campanha ativa do plugin sem duplicar regras no tema.
+ *
+ * @return array
+ */
+function gstore_theme_get_active_flash_sale() {
+	if ( ! class_exists( 'GStore\\Services\\Flash_Sale_Service' ) ) {
+		return array();
+	}
+	$service = \GStore\Services\Flash_Sale_Service::get_instance();
+	return $service ? $service->get_public_campaign() : array();
+}
+
+/**
+ * Renderiza a vitrine de uma campanha ativa com dois ou mais produtos.
+ * A regra e os preços vêm do plugin; o tema só decide a apresentação.
+ *
+ * @return string
+ */
+function gstore_render_flash_sale_home_section() {
+	if ( ! function_exists( 'wc_get_product' ) ) {
+		return '';
+	}
+
+	$campaign = gstore_theme_get_active_flash_sale();
+	$items    = is_array( $campaign['items'] ?? null ) ? $campaign['items'] : array();
+	if ( count( $items ) < 2 || empty( $campaign['ends_at'] ) ) {
+		return '';
+	}
+
+	$product_ids = array();
+	foreach ( $items as $item ) {
+		$product_id = absint( $item['product_id'] ?? 0 );
+		$product    = $product_id ? wc_get_product( $product_id ) : null;
+		if ( $product && $product->is_visible() && $product->is_in_stock() ) {
+			$product_ids[] = $product_id;
+		}
+	}
+	if ( count( $product_ids ) < 2 ) {
+		return '';
+	}
+
+	$shortcode = sprintf(
+		'[products ids="%1$s" columns="4" orderby="post__in" order="ASC" paginate="false"]',
+		implode( ',', array_map( 'absint', $product_ids ) )
+	);
+
+	return sprintf(
+		'<section class="gstore-flash-sale-section" aria-label="%1$s"><header class="gstore-flash-sale-heading"><div><h2>⚡ %1$s</h2><p>Preços especiais por tempo limitado</p></div><div class="gstore-flash-sale-clock"><span>Termina em</span><time data-gstore-flash-sale-end="%2$s">--:--:--</time></div></header>%3$s</section>',
+		esc_html__( 'Ofertas relâmpago', 'gstore' ),
+		esc_attr( (string) $campaign['ends_at'] ),
+		do_shortcode( $shortcode )
+	);
+}
+add_shortcode( 'gstore_flash_sale', 'gstore_render_flash_sale_home_section' );
+
+/**
+ * Para uma oferta com item único, exibe um cartão discreto no canto da home.
+ *
+ * @return void
+ */
+function gstore_render_single_flash_sale_floating_card() {
+	if ( ! is_front_page() || ! function_exists( 'wc_get_product' ) ) {
+		return;
+	}
+	$campaign = gstore_theme_get_active_flash_sale();
+	$items    = is_array( $campaign['items'] ?? null ) ? $campaign['items'] : array();
+	if ( 1 !== count( $items ) || empty( $campaign['ends_at'] ) ) {
+		return;
+	}
+
+	$product = wc_get_product( absint( $items[0]['product_id'] ?? 0 ) );
+	if ( ! $product || ! $product->is_visible() || ! $product->is_in_stock() ) {
+		return;
+	}
+	$price     = (float) $product->get_price();
+	$pix_price = function_exists( 'gstore_blu_pix_get_discounted_price' ) ? gstore_blu_pix_get_discounted_price( $price, $product->get_id() ) : false;
+	$display_price = false !== $pix_price ? wc_price( $pix_price ) : $product->get_price_html();
+	?>
+	<aside class="gstore-flash-sale-floating" aria-label="<?php echo esc_attr__( 'Oferta relâmpago em destaque', 'gstore' ); ?>">
+		<button type="button" class="gstore-flash-sale-floating__close" data-gstore-flash-sale-close aria-label="<?php echo esc_attr__( 'Fechar oferta', 'gstore' ); ?>">×</button>
+		<div class="gstore-flash-sale-floating__top">⚡ <?php esc_html_e( 'Oferta relâmpago', 'gstore' ); ?></div>
+		<div class="gstore-flash-sale-floating__body">
+			<?php echo $product->get_image( 'woocommerce_thumbnail', array( 'class' => 'gstore-flash-sale-floating__image' ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+			<p class="gstore-flash-sale-floating__name"><?php echo esc_html( $product->get_name() ); ?></p>
+			<time class="gstore-flash-sale-floating__timer" data-gstore-flash-sale-end="<?php echo esc_attr( (string) $campaign['ends_at'] ); ?>">--:--:--</time>
+			<div class="gstore-flash-sale-floating__price"><small><?php esc_html_e( 'à vista no Pix', 'gstore' ); ?></small><strong><?php echo wp_kses_post( $display_price ); ?></strong></div>
+			<a class="gstore-flash-sale-floating__cta" href="<?php echo esc_url( $product->get_permalink() ); ?>"><?php esc_html_e( 'Ver oferta', 'gstore' ); ?></a>
+		</div>
+	</aside>
+	<?php
+}
+add_action( 'wp_footer', 'gstore_render_single_flash_sale_floating_card', 35 );
+
+/**
+ * Carrega o visual somente quando há uma oferta ativa na página inicial.
+ *
+ * @return void
+ */
+function gstore_enqueue_flash_sale_assets() {
+	if ( ! is_front_page() || empty( gstore_theme_get_active_flash_sale() ) ) {
+		return;
+	}
+	$version = wp_get_theme()->get( 'Version' );
+	wp_enqueue_style( 'gstore-flash-sale', gstore_theme_asset_uri( 'assets/css/flash-sale.css' ), array( 'gstore-main' ), gstore_theme_asset_version( 'assets/css/flash-sale.css', $version ) );
+	wp_enqueue_script( 'gstore-flash-sale', gstore_theme_asset_uri( 'assets/js/flash-sale.js' ), array(), gstore_theme_asset_version( 'assets/js/flash-sale.js', $version ), true );
+}
+add_action( 'wp_enqueue_scripts', 'gstore_enqueue_flash_sale_assets', 25 );
+
+/**
  * Renderiza as seções da Home na ordem configurada no admin (via plugin),
  * com fallback para a ordem fixa quando o plugin estiver inativo/sem config.
  *
@@ -13506,7 +13615,7 @@ function gstore_home_sections_shortcode() {
 			return gstore_resolve_home_relative_urls( $rendered );
 		};
 
-		$out  = '';
+		$out  = do_shortcode( '[gstore_flash_sale]' );
 		$out .= $render_part( 'parts/home-lancamentos.html' );
 		$out .= $render_part( 'parts/home-promocoes.html' );
 		$out .= do_shortcode( '[gstore_banner_youtube]' );
@@ -13571,7 +13680,7 @@ function gstore_home_sections_shortcode() {
 		$sections = array_values( $sections );
 	}
 
-	$out = '';
+	$out = do_shortcode( '[gstore_flash_sale]' );
 
 	// Helper local: carrega um template part HTML do tema e renderiza os blocos.
 	$render_part = function( $template_path ) {
