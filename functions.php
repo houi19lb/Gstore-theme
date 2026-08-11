@@ -13561,12 +13561,14 @@ function gstore_render_single_flash_sale_floating_card() {
 		<div class="gstore-flash-sale-floating__top"><i class="fa-solid fa-bolt" aria-hidden="true"></i><span><?php esc_html_e( 'Oferta relâmpago', 'gstore' ); ?></span></div>
 		<div class="gstore-flash-sale-floating__body">
 			<div class="gstore-flash-sale-floating__image-frame">
-				<?php echo $product->get_image( 'woocommerce_single', array( 'class' => 'gstore-flash-sale-floating__image' ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+				<div class="gstore-flash-sale-floating__image-canvas">
+					<?php echo $product->get_image( 'woocommerce_single', array( 'class' => 'gstore-flash-sale-floating__image' ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+				</div>
 			</div>
 			<p class="gstore-flash-sale-floating__name"><?php echo esc_html( $product->get_name() ); ?></p>
 			<div class="gstore-flash-sale-floating__deadline">
-				<span><?php esc_html_e( 'Termina em', 'gstore' ); ?></span>
-				<time class="gstore-flash-sale-floating__timer" data-gstore-flash-sale-end="<?php echo esc_attr( (string) $campaign['ends_at'] ); ?>">--:--:--</time>
+				<i class="fa-regular fa-clock" aria-hidden="true"></i>
+				<div class="gstore-flash-sale-floating__deadline-content"><span><?php esc_html_e( 'Termina em', 'gstore' ); ?></span><time class="gstore-flash-sale-floating__timer" data-gstore-flash-sale-end="<?php echo esc_attr( (string) $campaign['ends_at'] ); ?>">--:--:--</time></div>
 			</div>
 			<div class="gstore-flash-sale-floating__price">
 				<?php if ( $show_regular ) : ?>
