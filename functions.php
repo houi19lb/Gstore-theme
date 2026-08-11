@@ -13558,7 +13558,7 @@ function gstore_render_single_flash_sale_floating_card() {
 	?>
 	<aside class="gstore-flash-sale-floating" aria-label="<?php echo esc_attr__( 'Oferta relâmpago em destaque', 'gstore' ); ?>">
 		<button type="button" class="gstore-flash-sale-floating__close" data-gstore-flash-sale-close aria-label="<?php echo esc_attr__( 'Fechar oferta', 'gstore' ); ?>">×</button>
-		<div class="gstore-flash-sale-floating__top">⚡ <?php esc_html_e( 'Oferta relâmpago', 'gstore' ); ?></div>
+		<div class="gstore-flash-sale-floating__top"><i class="fa-solid fa-bolt" aria-hidden="true"></i><span><?php esc_html_e( 'Oferta relâmpago', 'gstore' ); ?></span></div>
 		<div class="gstore-flash-sale-floating__body">
 			<div class="gstore-flash-sale-floating__image-frame">
 				<?php echo $product->get_image( 'woocommerce_single', array( 'class' => 'gstore-flash-sale-floating__image' ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>

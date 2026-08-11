@@ -80,6 +80,9 @@
 }
 
 .gstore-flash-sale-floating__top {
+  display: flex;
+  align-items: center;
+  gap: 9px;
   padding: 22px 52px 16px 22px;
   color: #ffc438;
   font-size: .95rem;
@@ -87,6 +90,10 @@
   letter-spacing: .045em;
   text-align: left;
   text-transform: uppercase;
+}
+
+.gstore-flash-sale-floating__top i {
+  font-size: 1.05em;
 }
 
 .gstore-flash-sale-floating__body {
