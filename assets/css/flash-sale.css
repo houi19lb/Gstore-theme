@@ -68,7 +68,7 @@
 .gstore-flash-sale-floating__card-link {
   position: absolute;
   z-index: 1;
-  inset: 0;
+  inset: 42px 0 0;
   border-radius: inherit;
   cursor: pointer;
 }
