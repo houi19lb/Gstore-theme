@@ -13552,6 +13552,10 @@ function gstore_render_single_flash_sale_floating_card() {
 	if ( ! $product || ! $product->is_visible() || ! $product->is_in_stock() ) {
 		return;
 	}
+	$transparent_image_id = absint( $items[0]['transparent_image_id'] ?? 0 );
+	$image_html = $transparent_image_id
+		? wp_get_attachment_image( $transparent_image_id, 'woocommerce_thumbnail', false, array( 'class' => 'gstore-flash-sale-floating__image' ) )
+		: $product->get_image( 'woocommerce_thumbnail', array( 'class' => 'gstore-flash-sale-floating__image' ) );
 	$price     = (float) $product->get_price();
 	$pix_price = function_exists( 'gstore_blu_pix_get_discounted_price' ) ? gstore_blu_pix_get_discounted_price( $price, $product->get_id() ) : false;
 	$display_price = false !== $pix_price ? wc_price( $pix_price ) : $product->get_price_html();
@@ -13560,7 +13564,7 @@ function gstore_render_single_flash_sale_floating_card() {
 		<button type="button" class="gstore-flash-sale-floating__close" data-gstore-flash-sale-close aria-label="<?php echo esc_attr__( 'Fechar oferta', 'gstore' ); ?>">×</button>
 		<div class="gstore-flash-sale-floating__top">⚡ <?php esc_html_e( 'Oferta relâmpago', 'gstore' ); ?></div>
 		<div class="gstore-flash-sale-floating__body">
-			<?php echo $product->get_image( 'woocommerce_thumbnail', array( 'class' => 'gstore-flash-sale-floating__image' ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+			<?php echo $image_html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
 			<p class="gstore-flash-sale-floating__name"><?php echo esc_html( $product->get_name() ); ?></p>
 			<time class="gstore-flash-sale-floating__timer" data-gstore-flash-sale-end="<?php echo esc_attr( (string) $campaign['ends_at'] ); ?>">--:--:--</time>
 			<div class="gstore-flash-sale-floating__price"><small><?php esc_html_e( 'à vista no Pix', 'gstore' ); ?></small><strong><?php echo wp_kses_post( $display_price ); ?></strong></div>
