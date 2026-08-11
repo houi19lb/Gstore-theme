@@ -143,9 +143,8 @@
   letter-spacing: -.02em;
   line-height: 1.14;
   overflow: hidden;
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
+  text-overflow: clip;
+  white-space: nowrap;
 }
 
 .gstore-flash-sale-floating__deadline {
