@@ -12,6 +12,19 @@
     });
   }
 
+  function fitProductNames() {
+    document.querySelectorAll('[data-gstore-flash-sale-name]').forEach(function (element) {
+      var fullName = element.getAttribute('data-gstore-flash-sale-name') || '';
+      var words = fullName.trim().split(/\s+/);
+
+      element.textContent = fullName;
+      while (words.length && element.scrollWidth > element.clientWidth) {
+        words.pop();
+        element.textContent = words.join(' ');
+      }
+    });
+  }
+
   document.addEventListener('click', function (event) {
     var close = event.target.closest('[data-gstore-flash-sale-close]');
     if (!close) return;
@@ -20,5 +33,7 @@
   });
 
   updateTimers();
+  fitProductNames();
   window.setInterval(updateTimers, 1000);
+  window.addEventListener('resize', fitProductNames);
 }());
