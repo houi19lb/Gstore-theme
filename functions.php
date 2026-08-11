@@ -13552,18 +13552,28 @@ function gstore_render_single_flash_sale_floating_card() {
 	if ( ! $product || ! $product->is_visible() || ! $product->is_in_stock() ) {
 		return;
 	}
-	$price     = (float) $product->get_price();
-	$pix_price = function_exists( 'gstore_blu_pix_get_discounted_price' ) ? gstore_blu_pix_get_discounted_price( $price, $product->get_id() ) : false;
-	$display_price = false !== $pix_price ? wc_price( $pix_price ) : $product->get_price_html();
+	$price         = (float) $product->get_price();
+	$regular_price = (float) $product->get_regular_price();
+	$show_regular  = $regular_price > $price;
 	?>
 	<aside class="gstore-flash-sale-floating" aria-label="<?php echo esc_attr__( 'Oferta relâmpago em destaque', 'gstore' ); ?>">
 		<button type="button" class="gstore-flash-sale-floating__close" data-gstore-flash-sale-close aria-label="<?php echo esc_attr__( 'Fechar oferta', 'gstore' ); ?>">×</button>
 		<div class="gstore-flash-sale-floating__top">⚡ <?php esc_html_e( 'Oferta relâmpago', 'gstore' ); ?></div>
 		<div class="gstore-flash-sale-floating__body">
-			<?php echo $product->get_image( 'woocommerce_thumbnail', array( 'class' => 'gstore-flash-sale-floating__image' ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+			<div class="gstore-flash-sale-floating__image-frame">
+				<?php echo $product->get_image( 'woocommerce_single', array( 'class' => 'gstore-flash-sale-floating__image' ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+			</div>
 			<p class="gstore-flash-sale-floating__name"><?php echo esc_html( $product->get_name() ); ?></p>
-			<time class="gstore-flash-sale-floating__timer" data-gstore-flash-sale-end="<?php echo esc_attr( (string) $campaign['ends_at'] ); ?>">--:--:--</time>
-			<div class="gstore-flash-sale-floating__price"><small><?php esc_html_e( 'à vista no Pix', 'gstore' ); ?></small><strong><?php echo wp_kses_post( $display_price ); ?></strong></div>
+			<div class="gstore-flash-sale-floating__deadline">
+				<span><?php esc_html_e( 'Termina em', 'gstore' ); ?></span>
+				<time class="gstore-flash-sale-floating__timer" data-gstore-flash-sale-end="<?php echo esc_attr( (string) $campaign['ends_at'] ); ?>">--:--:--</time>
+			</div>
+			<div class="gstore-flash-sale-floating__price">
+				<?php if ( $show_regular ) : ?>
+					<span class="gstore-flash-sale-floating__regular"><?php esc_html_e( 'De', 'gstore' ); ?> <del><?php echo wp_kses_post( wc_price( $regular_price ) ); ?></del></span>
+				<?php endif; ?>
+				<div class="gstore-flash-sale-floating__current"><span><?php esc_html_e( 'Por', 'gstore' ); ?></span><strong><?php echo wp_kses_post( wc_price( $price ) ); ?></strong></div>
+			</div>
 			<a class="gstore-flash-sale-floating__cta" href="<?php echo esc_url( $product->get_permalink() ); ?>"><?php esc_html_e( 'Ver oferta', 'gstore' ); ?></a>
 		</div>
 	</aside>

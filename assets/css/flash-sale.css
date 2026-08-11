@@ -56,92 +56,150 @@
   z-index: 900;
   right: 28px;
   bottom: 106px;
-  width: min(320px, calc(100vw - 32px));
+  width: min(380px, calc(100vw - 32px));
   overflow: hidden;
-  border: 1px solid var(--gstore-flash-gold);
-  border-radius: 18px;
-  background: linear-gradient(145deg, #171717, #252525);
-  box-shadow: 0 18px 42px rgba(0, 0, 0, .32);
+  border: 1px solid rgba(234, 208, 78, .62);
+  border-radius: 22px;
+  background: radial-gradient(circle at 50% 0, #2d2d2d 0, #171717 49%, #111 100%);
+  box-shadow: 0 20px 48px rgba(0, 0, 0, .4);
   color: #fff;
 }
 
 .gstore-flash-sale-floating__close {
   position: absolute;
-  top: 8px;
-  right: 9px;
+  top: 13px;
+  right: 15px;
   z-index: 1;
   border: 0;
   background: transparent;
   color: #fff;
-  font-size: 1.6rem;
+  font-size: 2rem;
+  font-weight: 300;
   line-height: 1;
   cursor: pointer;
 }
 
 .gstore-flash-sale-floating__top {
-  padding: 22px 22px 12px;
-  color: #ead04e;
-  font-size: .92rem;
+  padding: 22px 52px 16px 22px;
+  color: #ffc438;
+  font-size: .95rem;
   font-weight: 800;
-  text-align: center;
+  letter-spacing: .045em;
+  text-align: left;
   text-transform: uppercase;
 }
 
 .gstore-flash-sale-floating__body {
   display: grid;
-  gap: 8px;
-  padding: 0 22px 22px;
-  text-align: center;
+  gap: 14px;
+  padding: 0 18px 18px;
+  text-align: left;
+}
+
+.gstore-flash-sale-floating__image-frame {
+  display: grid;
+  aspect-ratio: 1.45 / 1;
+  place-items: center;
+  overflow: hidden;
+  border: 2px solid rgba(236, 215, 161, .82);
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: inset 0 0 18px rgba(0, 0, 0, .08);
+  padding: 12px;
 }
 
 .gstore-flash-sale-floating__image {
-  width: 130px;
-  height: 112px;
-  margin: 0 auto;
+  display: block;
+  width: 100%;
+  height: 100%;
   object-fit: contain;
 }
 
 .gstore-flash-sale-floating__name {
-  overflow: hidden;
   margin: 0;
   color: #fff;
-  font-size: .95rem;
-  font-weight: 700;
-  line-height: 1.3;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  font-size: clamp(1.08rem, 4.4vw, 1.4rem);
+  font-weight: 800;
+  letter-spacing: -.02em;
+  line-height: 1.14;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
 }
 
-.gstore-flash-sale-floating__timer {
-  margin: 2px 0 6px;
-  font-family: monospace;
-  font-size: 2rem;
-  letter-spacing: .06em;
+.gstore-flash-sale-floating__deadline {
+  display: grid;
+  gap: 2px;
+  border-bottom: 1px solid rgba(255, 255, 255, .18);
+  padding-bottom: 13px;
 }
 
-.gstore-flash-sale-floating__price small {
-  display: block;
-  color: #d8d8d8;
-  font-size: .73rem;
+.gstore-flash-sale-floating__deadline > span,
+.gstore-flash-sale-floating__current > span,
+.gstore-flash-sale-floating__regular {
+  color: #c4c4c4;
+  font-size: .76rem;
+  font-weight: 800;
+  letter-spacing: .08em;
   text-transform: uppercase;
 }
 
-.gstore-flash-sale-floating__price strong {
-  color: #ead04e;
-  font-size: 1.55rem;
+.gstore-flash-sale-floating__timer {
+  color: #ffc438;
+  font-family: monospace;
+  font-size: clamp(1.65rem, 7vw, 2.25rem);
+  font-weight: 800;
+  letter-spacing: .06em;
+}
+
+.gstore-flash-sale-floating__price {
+  display: grid;
+  gap: 5px;
+}
+
+.gstore-flash-sale-floating__regular del {
+  color: #a8a8a8;
+  font-size: 1.05rem;
+  font-weight: 700;
+  text-decoration-thickness: 2px;
+}
+
+.gstore-flash-sale-floating__current {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.gstore-flash-sale-floating__current strong {
+  color: #ffc438;
+  font-size: clamp(2rem, 9vw, 3rem);
+  font-weight: 900;
+  letter-spacing: -.065em;
+  line-height: .95;
 }
 
 .gstore-flash-sale-floating__cta {
   display: block;
-  margin-top: 8px;
-  border-radius: 7px;
-  background: var(--gstore-flash-gold);
-  padding: 12px;
-  color: #111 !important;
-  font-size: .9rem;
-  font-weight: 800;
+  margin-top: 3px;
+  border-radius: 12px;
+  background: #ffc438;
+  box-shadow: 0 7px 18px rgba(255, 196, 56, .18);
+  padding: 15px 12px;
+  color: #161616 !important;
+  font-size: 1rem;
+  font-weight: 900;
+  letter-spacing: .035em;
+  text-align: center;
   text-decoration: none;
   text-transform: uppercase;
+}
+
+.gstore-flash-sale-floating__cta:hover,
+.gstore-flash-sale-floating__cta:focus-visible {
+  background: #ffcf58;
+  color: #111 !important;
 }
 
 @media (max-width: 700px) {
