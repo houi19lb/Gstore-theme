@@ -65,11 +65,24 @@
   color: #fff;
 }
 
+.gstore-flash-sale-floating__card-link {
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  border-radius: inherit;
+  cursor: pointer;
+}
+
+.gstore-flash-sale-floating__card-link:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: -4px;
+}
+
 .gstore-flash-sale-floating__close {
   position: absolute;
   top: 9px;
   right: 10px;
-  z-index: 1;
+  z-index: 2;
   border: 0;
   background: transparent;
   color: #fff;
@@ -230,8 +243,8 @@
   text-transform: uppercase;
 }
 
-.gstore-flash-sale-floating__cta:hover,
-.gstore-flash-sale-floating__cta:focus-visible {
+.gstore-flash-sale-floating:hover .gstore-flash-sale-floating__cta,
+.gstore-flash-sale-floating:focus-within .gstore-flash-sale-floating__cta {
   background: #ffcf58;
   color: #111 !important;
 }

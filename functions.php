@@ -13555,8 +13555,10 @@ function gstore_render_single_flash_sale_floating_card() {
 	$price         = (float) $product->get_price();
 	$regular_price = (float) $product->get_regular_price();
 	$show_regular  = $regular_price > $price;
+	$product_url   = $product->get_permalink();
 	?>
 	<aside class="gstore-flash-sale-floating" aria-label="<?php echo esc_attr__( 'Oferta relâmpago em destaque', 'gstore' ); ?>">
+		<a class="gstore-flash-sale-floating__card-link" href="<?php echo esc_url( $product_url ); ?>" aria-label="<?php echo esc_attr( sprintf( __( 'Ver oferta: %s', 'gstore' ), $product->get_name() ) ); ?>"></a>
 		<button type="button" class="gstore-flash-sale-floating__close" data-gstore-flash-sale-close aria-label="<?php echo esc_attr__( 'Fechar oferta', 'gstore' ); ?>">×</button>
 		<div class="gstore-flash-sale-floating__top"><i class="fa-solid fa-bolt" aria-hidden="true"></i><span><?php esc_html_e( 'Oferta relâmpago', 'gstore' ); ?></span></div>
 		<div class="gstore-flash-sale-floating__body">
@@ -13576,7 +13578,7 @@ function gstore_render_single_flash_sale_floating_card() {
 				<?php endif; ?>
 				<div class="gstore-flash-sale-floating__current"><span><?php esc_html_e( 'Por', 'gstore' ); ?></span><strong><?php echo wp_kses_post( wc_price( $price ) ); ?></strong></div>
 			</div>
-			<a class="gstore-flash-sale-floating__cta" href="<?php echo esc_url( $product->get_permalink() ); ?>"><?php esc_html_e( 'Ver oferta', 'gstore' ); ?></a>
+			<span class="gstore-flash-sale-floating__cta" aria-hidden="true"><?php esc_html_e( 'Ver oferta', 'gstore' ); ?></span>
 		</div>
 	</aside>
 	<?php
