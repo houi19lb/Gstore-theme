@@ -54,12 +54,12 @@
 .gstore-flash-sale-floating {
   position: fixed;
   z-index: 900;
-  right: 28px;
-  bottom: 106px;
-  width: min(380px, calc(100vw - 32px));
+  right: clamp(12px, 1.5vw, 20px);
+  bottom: 84px;
+  width: min(clamp(224px, 16vw, 260px), calc(100vw - 24px));
   overflow: hidden;
   border: 1px solid rgba(234, 208, 78, .62);
-  border-radius: 22px;
+  border-radius: 16px;
   background: radial-gradient(circle at 50% 0, #2d2d2d 0, #171717 49%, #111 100%);
   box-shadow: 0 20px 48px rgba(0, 0, 0, .4);
   color: #fff;
@@ -67,13 +67,13 @@
 
 .gstore-flash-sale-floating__close {
   position: absolute;
-  top: 13px;
-  right: 15px;
+  top: 9px;
+  right: 10px;
   z-index: 1;
   border: 0;
   background: transparent;
   color: #fff;
-  font-size: 2rem;
+  font-size: 1.3rem;
   font-weight: 300;
   line-height: 1;
   cursor: pointer;
@@ -82,10 +82,10 @@
 .gstore-flash-sale-floating__top {
   display: flex;
   align-items: center;
-  gap: 9px;
-  padding: 22px 52px 16px 22px;
+  gap: 6px;
+  padding: 14px 36px 10px 14px;
   color: #ffc438;
-  font-size: .95rem;
+  font-size: .65rem;
   font-weight: 800;
   letter-spacing: .045em;
   text-align: left;
@@ -98,8 +98,8 @@
 
 .gstore-flash-sale-floating__body {
   display: grid;
-  gap: 14px;
-  padding: 0 18px 18px;
+  gap: 8px;
+  padding: 0 12px 12px;
   text-align: left;
 }
 
@@ -109,8 +109,8 @@
   justify-content: center;
   aspect-ratio: 1.45 / 1;
   overflow: hidden;
-  border: 2px solid rgba(236, 215, 161, .82);
-  border-radius: 16px;
+  border: 1px solid rgba(236, 215, 161, .82);
+  border-radius: 10px;
   background: #fff;
   box-shadow: inset 0 0 18px rgba(0, 0, 0, .08);
 }
@@ -138,7 +138,7 @@
 .gstore-flash-sale-floating__name {
   margin: 0;
   color: #fff;
-  font-size: clamp(1.08rem, 4.4vw, 1.4rem);
+  font-size: clamp(.78rem, 1vw, .95rem);
   font-weight: 800;
   letter-spacing: -.02em;
   line-height: 1.14;
@@ -151,15 +151,15 @@
 .gstore-flash-sale-floating__deadline {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 6px;
   border-bottom: 1px solid rgba(255, 255, 255, .18);
-  padding-bottom: 13px;
+  padding-bottom: 8px;
 }
 
 .gstore-flash-sale-floating__deadline > i {
   flex: 0 0 auto;
   color: #ffc438;
-  font-size: 1.8rem;
+  font-size: 1.15rem;
 }
 
 .gstore-flash-sale-floating__deadline-content {
@@ -171,7 +171,7 @@
 .gstore-flash-sale-floating__current > span,
 .gstore-flash-sale-floating__regular {
   color: #c4c4c4;
-  font-size: .76rem;
+  font-size: .58rem;
   font-weight: 800;
   letter-spacing: .08em;
   text-transform: uppercase;
@@ -180,19 +180,19 @@
 .gstore-flash-sale-floating__timer {
   color: #ffc438;
   font-family: monospace;
-  font-size: clamp(1.65rem, 7vw, 2.25rem);
+  font-size: clamp(1.2rem, 2vw, 1.45rem);
   font-weight: 800;
   letter-spacing: .06em;
 }
 
 .gstore-flash-sale-floating__price {
   display: grid;
-  gap: 5px;
+  gap: 3px;
 }
 
 .gstore-flash-sale-floating__regular del {
   color: #a8a8a8;
-  font-size: 1.05rem;
+  font-size: .7rem;
   font-weight: 700;
   text-decoration-thickness: 2px;
 }
@@ -201,12 +201,12 @@
   display: flex;
   align-items: baseline;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 5px;
 }
 
 .gstore-flash-sale-floating__current strong {
   color: #ffc438;
-  font-size: clamp(2rem, 9vw, 3rem);
+  font-size: clamp(1.45rem, 2.8vw, 1.9rem);
   font-weight: 900;
   letter-spacing: -.065em;
   line-height: .95;
@@ -214,13 +214,13 @@
 
 .gstore-flash-sale-floating__cta {
   display: block;
-  margin-top: 3px;
-  border-radius: 12px;
+  margin-top: 1px;
+  border-radius: 8px;
   background: #ffc438;
   box-shadow: 0 7px 18px rgba(255, 196, 56, .18);
-  padding: 15px 12px;
+  padding: 10px 8px;
   color: #161616 !important;
-  font-size: 1rem;
+  font-size: .7rem;
   font-weight: 900;
   letter-spacing: .035em;
   text-align: center;
@@ -237,5 +237,5 @@
 @media (max-width: 700px) {
   .gstore-flash-sale-section { padding: 0 16px; }
   .gstore-flash-sale-heading { align-items: flex-start; flex-direction: column; gap: 10px; }
-  .gstore-flash-sale-floating { right: 16px; bottom: 84px; }
+  .gstore-flash-sale-floating { right: 12px; bottom: 72px; }
 }
