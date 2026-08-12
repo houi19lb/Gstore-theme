@@ -2437,6 +2437,60 @@ const subtotal = decodeHtmlEntities(stripHtmlText(it.subtotal || ''));
 		'billing_city',
 		'billing_state'
 	];
+
+	// A etapa de dados precisa estar completa antes de liberar a finalização.
+	// No link de pagamento exibimos os quatro dados básicos; no Pix também
+	// exibimos os dados de cobrança completos.
+	const PAYMENT_LINK_CONTACT_FIELDS = [
+		'billing_first_name',
+		'billing_postcode',
+		'billing_phone',
+		'billing_email'
+	];
+	const PIX_CONTACT_FIELDS = [...new Set([
+		...PAYMENT_LINK_CONTACT_FIELDS,
+		...PIX_BILLING_FIELDS
+	])];
+
+	function getContactRequiredFields(showForPix) {
+		return showForPix ? PIX_CONTACT_FIELDS : PAYMENT_LINK_CONTACT_FIELDS;
+	}
+
+	function setContactFieldRequired(fieldId, isRequired) {
+		const $field = $(`#${fieldId}_field`);
+		if (!$field.length) return;
+
+		const $input = $field.find('input:not([type="hidden"]), select, textarea').first();
+		if (!$input.length) return;
+
+		$field.toggleClass('validate-required', isRequired);
+		$input.prop('required', isRequired).attr('aria-required', isRequired ? 'true' : 'false');
+
+		const inputId = $input.attr('id');
+		const $label = inputId
+			? $field.find(`label[for="${inputId}"]`).first()
+			: $field.find('label').first();
+		if (!$label.length) return;
+
+		const $marker = $label.find('.Gstore-checkout-required-marker');
+		if (isRequired) {
+			// O complemento vem do WooCommerce com a indicação "(opcional)".
+			// No Pix ele também é obrigatório e não pode manter esse rótulo.
+			$label.find('.optional').remove();
+			if (!$label.find('abbr.required').length) {
+				$label.append(' <abbr class="required Gstore-checkout-required-marker" title="obrigatório">*</abbr>');
+			}
+		} else if (!isRequired) {
+			$marker.remove();
+		}
+	}
+
+	function syncContactRequiredFields(showForPix) {
+		const requiredFields = getContactRequiredFields(showForPix);
+		PIX_CONTACT_FIELDS.forEach(fieldId => {
+			setContactFieldRequired(fieldId, requiredFields.indexOf(fieldId) !== -1);
+		});
+	}
 	
 	/**
 	 * Mostra/esconde campos de billing baseado no método de pagamento selecionado
@@ -2503,6 +2557,8 @@ const subtotal = decodeHtmlEntities(stripHtmlText(it.subtotal || ''));
 			const $stepDescription = $('[data-step="contact"] .Gstore-checkout-step__description');
 			$stepDescription.text('Informe seu nome completo, CEP, celular e email para calcular o frete.');
 		}
+
+		syncContactRequiredFields(showForPix);
 		ensureCpfPurchaseLimitFieldVisibility();
 	}
 
@@ -2535,6 +2591,7 @@ const subtotal = decodeHtmlEntities(stripHtmlText(it.subtotal || ''));
 				}
 			});
 			ensureCpfPurchaseLimitFieldVisibility();
+			syncContactRequiredFields(getEffectivePaymentMethod($checkoutForm) === 'blu_pix');
 		}
 
 		// Etapa 3: Footer de finalização (termos + privacidade + CTA)
@@ -4877,7 +4934,10 @@ function getInstallmentDisplayTotals(summaryData) {
 			}
 		}
 
-		const fieldsToValidate = step.fields.slice();
+		const isPixPayment = getEffectivePaymentMethod($checkoutForm) === 'blu_pix';
+		const fieldsToValidate = step.id === 'contact'
+			? getContactRequiredFields(isPixPayment).slice()
+			: step.fields.slice();
 		if (step.id === 'contact' && hasCpfPurchaseLimitProducts() && fieldsToValidate.indexOf('billing_cpf') === -1) {
 			fieldsToValidate.push('billing_cpf');
 		}
@@ -4888,7 +4948,8 @@ function getInstallmentDisplayTotals(summaryData) {
 			
 			if (!$input.length) return;
 
-			const isRequired = $fieldWrapper.hasClass('validate-required') || 
+			const isRequired = (step.id === 'contact' && fieldsToValidate.indexOf(fieldId) !== -1) ||
+			                   $fieldWrapper.hasClass('validate-required') ||
 			                   $input.prop('required') ||
 			                   $input.attr('aria-required') === 'true';
 
