@@ -13491,6 +13491,24 @@ function gstore_theme_get_active_flash_sale() {
 }
 
 /**
+ * Lê uma campanha futura do plugin para anunciar a próxima oferta na Home.
+ *
+ * @return array<string,mixed>
+ */
+function gstore_theme_get_upcoming_flash_sale() {
+	if ( ! class_exists( 'GStore\\Services\\Flash_Sale_Service' ) ) {
+		return array();
+	}
+
+	$service = \GStore\Services\Flash_Sale_Service::get_instance();
+	if ( ! $service || ! method_exists( $service, 'get_public_upcoming_campaign' ) ) {
+		return array();
+	}
+
+	return $service->get_public_upcoming_campaign();
+}
+
+/**
  * Retorna os IDs visíveis e ordenados dos produtos da campanha ativa.
  *
  * @param array<string,mixed>|null $campaign Dados públicos da campanha.
@@ -13531,6 +13549,94 @@ function gstore_get_flash_sale_catalog_url() {
 }
 
 /**
+ * Formata a abertura da campanha no fuso horário configurado na loja.
+ *
+ * @param string $starts_at Data de início da campanha.
+ * @return string
+ */
+function gstore_theme_format_flash_sale_start( $starts_at ) {
+	try {
+		$timezone  = function_exists( 'wp_timezone' ) ? wp_timezone() : new DateTimeZone( 'UTC' );
+		$datetime  = new DateTimeImmutable( $starts_at, $timezone );
+		return $datetime->format( 'd/m \\à\\s H\\h' );
+	} catch ( Exception $e ) {
+		return '';
+	}
+}
+
+/**
+ * Converte uma data da loja para ISO-8601 com fuso, seguro para o navegador.
+ *
+ * @param string $datetime Data local da campanha.
+ * @return string
+ */
+function gstore_theme_flash_sale_datetime_iso( $datetime ) {
+	try {
+		$timezone = function_exists( 'wp_timezone' ) ? wp_timezone() : new DateTimeZone( 'UTC' );
+		return ( new DateTimeImmutable( $datetime, $timezone ) )->format( DATE_ATOM );
+	} catch ( Exception $e ) {
+		return '';
+	}
+}
+
+/**
+ * Renderiza uma faixa de anúncio enquanto a campanha ainda não começou.
+ *
+ * @param array<string,mixed> $campaign Dados públicos da campanha futura.
+ * @return string
+ */
+function gstore_render_flash_sale_upcoming_section( $campaign ) {
+	if ( ! function_exists( 'wc_get_product' ) || empty( $campaign['starts_at'] ) || empty( $campaign['items'] ) ) {
+		return '';
+	}
+
+	$previews = array();
+	foreach ( array_slice( (array) $campaign['items'], 0, 3 ) as $item ) {
+		$product_id = absint( is_array( $item ) ? ( $item['product_id'] ?? 0 ) : 0 );
+		$product    = $product_id ? wc_get_product( $product_id ) : null;
+		if ( ! $product ) {
+			continue;
+		}
+
+		$previews[] = sprintf(
+			'<article class="gstore-flash-sale-upcoming__product"><div class="gstore-flash-sale-upcoming__product-image">%1$s</div><span class="gstore-flash-sale-upcoming__product-lock"><i class="fa-solid fa-lock" aria-hidden="true"></i><span class="screen-reader-text">%2$s</span></span></article>',
+			$product->get_image( 'woocommerce_thumbnail', array( 'class' => 'gstore-flash-sale-upcoming__product-thumbnail' ) ), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+			esc_html__( 'Produto revelado no início da oferta', 'gstore' )
+		);
+	}
+
+	if ( empty( $previews ) ) {
+		return '';
+	}
+
+	$opening_label = gstore_theme_format_flash_sale_start( (string) $campaign['starts_at'] );
+	$starts_at     = gstore_theme_flash_sale_datetime_iso( (string) $campaign['starts_at'] );
+	$announced_at  = gstore_theme_flash_sale_datetime_iso( (string) ( $campaign['announced_at'] ?? '' ) );
+	if ( '' === $starts_at ) {
+		return '';
+	}
+
+	return sprintf(
+		'<section class="gstore-flash-sale-upcoming" aria-label="%1$s" data-gstore-flash-sale-upcoming data-gstore-flash-sale-start="%2$s" data-gstore-flash-sale-announced="%3$s"><div class="gstore-flash-sale-upcoming__content"><header class="gstore-flash-sale-upcoming__brand"><i class="fa-solid fa-bolt" aria-hidden="true"></i><h2><span>%1$s</span><strong>%4$s</strong></h2></header><div class="gstore-flash-sale-upcoming__countdown"><p><i class="fa-regular fa-calendar" aria-hidden="true"></i><span>%5$s <time datetime="%2$s">%6$s</time></span></p><div class="gstore-flash-sale-upcoming__units" aria-live="polite"><div><strong data-gstore-flash-sale-countdown="days">00</strong><span>%7$s</span></div><div><strong data-gstore-flash-sale-countdown="hours">00</strong><span>%8$s</span></div><div><strong data-gstore-flash-sale-countdown="minutes">00</strong><span>%9$s</span></div><div><strong data-gstore-flash-sale-countdown="seconds">00</strong><span>%10$s</span></div></div></div><div class="gstore-flash-sale-upcoming__previews gstore-flash-sale-upcoming__previews--count-%11$d">%12$s</div></div><div class="gstore-flash-sale-upcoming__progress" role="progressbar" aria-label="%13$s" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span>%14$s</span><div><i></i></div><span>%15$s</span></div></section>',
+		esc_html__( 'Ofertas relâmpago', 'gstore' ),
+		esc_attr( $starts_at ),
+		esc_attr( $announced_at ),
+		esc_html__( 'Em breve', 'gstore' ),
+		esc_html__( 'Começa em', 'gstore' ),
+		esc_html( $opening_label ),
+		esc_html__( 'Dias', 'gstore' ),
+		esc_html__( 'Horas', 'gstore' ),
+		esc_html__( 'Min', 'gstore' ),
+		esc_html__( 'Seg', 'gstore' ),
+		count( $previews ),
+		implode( '', $previews ),
+		esc_html__( 'Progresso até a abertura da oferta', 'gstore' ),
+		esc_html__( 'Anúncio', 'gstore' ),
+		esc_html__( 'Abertura', 'gstore' )
+	);
+}
+
+/**
  * Renderiza a vitrine de uma campanha ativa com dois ou mais produtos.
  * A regra e os preços vêm do plugin; o tema só decide a apresentação.
  *
@@ -13544,7 +13650,7 @@ function gstore_render_flash_sale_home_section() {
 	$campaign    = gstore_theme_get_active_flash_sale();
 	$product_ids = gstore_theme_get_flash_sale_product_ids( $campaign );
 	if ( count( $product_ids ) < 2 || empty( $campaign['ends_at'] ) ) {
-		return '';
+		return gstore_render_flash_sale_upcoming_section( gstore_theme_get_upcoming_flash_sale() );
 	}
 
 	$home_limit       = max( 1, absint( apply_filters( 'gstore_flash_sale_home_product_limit', 8 ) ) );
@@ -13576,7 +13682,7 @@ function gstore_render_flash_sale_home_section() {
 add_shortcode( 'gstore_flash_sale', 'gstore_render_flash_sale_home_section' );
 
 /**
- * Renderiza todos os itens da campanha ativa dentro da página /ofertas/.
+ * Renderiza todos os itens da campanha ativa dentro da página /ofertas-relampago/.
  *
  * @return string
  */

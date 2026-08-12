@@ -1,7 +1,12 @@
 (function () {
+  function parseDate(value) {
+    if (!value) return NaN;
+    return new Date(value.replace(' ', 'T')).getTime();
+  }
+
   function updateTimers() {
     document.querySelectorAll('[data-gstore-flash-sale-end]').forEach(function (element) {
-      var end = new Date(element.getAttribute('data-gstore-flash-sale-end').replace(' ', 'T')).getTime();
+      var end = parseDate(element.getAttribute('data-gstore-flash-sale-end'));
       var seconds = Math.max(0, Math.floor((end - Date.now()) / 1000));
       var hours = Math.floor(seconds / 3600);
       var minutes = Math.floor((seconds % 3600) / 60);
@@ -25,6 +30,48 @@
     });
   }
 
+  function pad(value) {
+    return String(Math.max(0, value)).padStart(2, '0');
+  }
+
+  function updateUpcomingFlashSales() {
+    document.querySelectorAll('[data-gstore-flash-sale-upcoming]').forEach(function (banner) {
+      var start = parseDate(banner.getAttribute('data-gstore-flash-sale-start'));
+      var announced = parseDate(banner.getAttribute('data-gstore-flash-sale-announced'));
+      var remaining = Math.max(0, Math.floor((start - Date.now()) / 1000));
+
+      if (!Number.isFinite(start)) return;
+
+      if (remaining <= 0) {
+        window.location.reload();
+        return;
+      }
+
+      var values = {
+        days: Math.floor(remaining / 86400),
+        hours: Math.floor((remaining % 86400) / 3600),
+        minutes: Math.floor((remaining % 3600) / 60),
+        seconds: remaining % 60
+      };
+
+      Object.keys(values).forEach(function (unit) {
+        var element = banner.querySelector('[data-gstore-flash-sale-countdown="' + unit + '"]');
+        if (element) element.textContent = pad(values[unit]);
+      });
+
+      var percentage = 0;
+      if (Number.isFinite(announced) && announced < start) {
+        percentage = Math.min(100, Math.max(0, ((Date.now() - announced) / (start - announced)) * 100));
+      }
+
+      var progress = banner.querySelector('.gstore-flash-sale-upcoming__progress');
+      if (progress) {
+        progress.setAttribute('aria-valuenow', String(Math.round(percentage)));
+        progress.style.setProperty('--gstore-flash-sale-progress', percentage + '%');
+      }
+    });
+  }
+
   document.addEventListener('click', function (event) {
     var close = event.target.closest('[data-gstore-flash-sale-close]');
     if (!close) return;
@@ -33,7 +80,11 @@
   });
 
   updateTimers();
+  updateUpcomingFlashSales();
   fitProductNames();
-  window.setInterval(updateTimers, 1000);
+  window.setInterval(function () {
+    updateTimers();
+    updateUpcomingFlashSales();
+  }, 1000);
   window.addEventListener('resize', fitProductNames);
 }());
