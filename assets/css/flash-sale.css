@@ -445,6 +445,12 @@
   font-size: .9em;
 }
 
+.gstore-flash-sale-section__view-all {
+  display: flex;
+  justify-content: center;
+  padding-top: 20px;
+}
+
 .gstore-flash-sale-catalog {
   width: 100%;
 }
@@ -892,7 +898,8 @@
   .gstore-flash-sale-live { padding: 9px 11px; font-size: .72rem; }
   .gstore-flash-sale-clock { gap: 9px; font-size: .72rem; }
   .gstore-flash-sale-clock time { border-radius: 8px; padding: 8px 10px; font-size: 1.65rem; }
-  .gstore-flash-sale-view-all { margin-left: auto; padding: 9px 11px; font-size: .72rem; }
+  .gstore-flash-sale-section__view-all { padding-top: 16px; }
+  .gstore-flash-sale-view-all { padding: 9px 11px; font-size: .72rem; }
   .gstore-flash-sale-catalog__header { align-items: flex-start; flex-direction: column; gap: 12px; }
   .gstore-flash-sale-catalog__timer { font-size: .72rem; }
   .gstore-flash-sale-catalog__timer time { font-size: 1.05rem; }

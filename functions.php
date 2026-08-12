@@ -13659,7 +13659,7 @@ function gstore_render_flash_sale_home_section() {
 
 	if ( count( $product_ids ) > count( $home_product_ids ) ) {
 		$view_all_link = sprintf(
-			'<a class="gstore-flash-sale-view-all" href="%1$s"><span>%2$s</span><i class="fa-solid fa-arrow-right" aria-hidden="true"></i></a>',
+			'<div class="gstore-flash-sale-section__view-all"><a class="gstore-flash-sale-view-all" href="%1$s"><span>%2$s</span><i class="fa-solid fa-arrow-right" aria-hidden="true"></i></a></div>',
 			esc_url( gstore_get_flash_sale_catalog_url() ),
 			esc_html__( 'Ver todas as ofertas', 'gstore' )
 		);
@@ -13671,7 +13671,7 @@ function gstore_render_flash_sale_home_section() {
 	);
 
 	return sprintf(
-		'<section class="gstore-flash-sale-section" aria-label="%1$s"><header class="gstore-flash-sale-heading"><div class="gstore-flash-sale-heading__intro"><h2><i class="fa-solid fa-bolt" aria-hidden="true"></i> %1$s</h2><p>Preços especiais por tempo limitado</p></div><div class="gstore-flash-sale-live"><i class="fa-solid fa-circle" aria-hidden="true"></i><span>%4$s</span></div><div class="gstore-flash-sale-clock"><span>Termina em</span><time data-gstore-flash-sale-end="%2$s">--:--:--</time></div>%5$s</header><div class="Gstore-products-grid">%3$s</div></section>',
+		'<section class="gstore-flash-sale-section" aria-label="%1$s"><header class="gstore-flash-sale-heading"><div class="gstore-flash-sale-heading__intro"><h2><i class="fa-solid fa-bolt" aria-hidden="true"></i> %1$s</h2><p>Preços especiais por tempo limitado</p></div><div class="gstore-flash-sale-live"><i class="fa-solid fa-circle" aria-hidden="true"></i><span>%4$s</span></div><div class="gstore-flash-sale-clock"><span>Termina em</span><time data-gstore-flash-sale-end="%2$s">--:--:--</time></div></header><div class="Gstore-products-grid">%3$s</div>%5$s</section>',
 		esc_html__( 'Ofertas relâmpago', 'gstore' ),
 		esc_attr( (string) $campaign['ends_at'] ),
 		do_shortcode( $shortcode ),
