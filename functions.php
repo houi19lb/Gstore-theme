@@ -1912,7 +1912,7 @@ function gstore_should_noindex_catalog_request() {
 		return true;
 	}
 
-	if ( function_exists( 'is_page' ) && is_page( array( 'catalogo', 'ofertas' ) ) ) {
+	if ( function_exists( 'is_page' ) && is_page( array( 'catalogo', 'ofertas', 'ofertas-relampago' ) ) ) {
 		return true;
 	}
 
@@ -2460,7 +2460,7 @@ function gstore_is_catalog_pagination_request() {
 		return true;
 	}
 
-	if ( function_exists( 'is_page' ) && is_page( array( 'catalogo', 'loja', 'ofertas' ) ) ) {
+	if ( function_exists( 'is_page' ) && is_page( array( 'catalogo', 'loja', 'ofertas', 'ofertas-relampago' ) ) ) {
 		return true;
 	}
 
@@ -5011,14 +5011,14 @@ function gstore_is_home_layout_context() {
  */
 function gstore_is_catalog_layout_context() {
 	if ( function_exists( 'is_page' ) ) {
-		$catalog_pages = array( 'catalogo', 'ofertas', 'favoritos', 'loja' );
+		$catalog_pages = array( 'catalogo', 'ofertas', 'ofertas-relampago', 'favoritos', 'loja' );
 		if ( is_page( $catalog_pages ) ) {
 			return true;
 		}
 
 		if ( is_page() && function_exists( 'get_page_template_slug' ) ) {
 			$template = (string) get_page_template_slug();
-			if ( in_array( $template, array( 'page-catalogo', 'page-catalogo.html', 'page-ofertas', 'page-ofertas.html', 'page-favoritos', 'page-favoritos.html', 'page-loja', 'page-loja.html', 'templates/page-catalogo.html', 'templates/page-ofertas.html', 'templates/page-favoritos.html', 'templates/page-loja.html' ), true ) ) {
+			if ( in_array( $template, array( 'page-catalogo', 'page-catalogo.html', 'page-ofertas', 'page-ofertas.html', 'page-ofertas-relampago', 'page-ofertas-relampago.html', 'page-favoritos', 'page-favoritos.html', 'page-loja', 'page-loja.html', 'templates/page-catalogo.html', 'templates/page-ofertas.html', 'templates/page-ofertas-relampago.html', 'templates/page-favoritos.html', 'templates/page-loja.html' ), true ) ) {
 				return true;
 			}
 		}
@@ -7367,8 +7367,8 @@ function gstore_enqueue_scripts() {
 		$is_catalog_page = false;
 		if ( function_exists( 'is_page' ) ) {
 			// Páginas estáticas de catálogo
-			$catalog_pages = array( 'catalogo', 'ofertas' );
-			$catalog_templates = array( 'page-catalogo', 'page-ofertas' );
+			$catalog_pages = array( 'catalogo', 'ofertas', 'ofertas-relampago' );
+			$catalog_templates = array( 'page-catalogo', 'page-ofertas', 'page-ofertas-relampago' );
 
 			$is_catalog_page = is_page( $catalog_pages );
 
@@ -13522,12 +13522,12 @@ function gstore_theme_get_flash_sale_product_ids( $campaign = null ) {
  * @return string
  */
 function gstore_get_flash_sale_catalog_url() {
-	$page = get_page_by_path( 'ofertas' );
+	$page = get_page_by_path( 'ofertas-relampago' );
 	if ( $page instanceof WP_Post && 'publish' === $page->post_status ) {
 		return get_permalink( $page->ID );
 	}
 
-	return home_url( '/ofertas/' );
+	return home_url( '/ofertas-relampago/' );
 }
 
 /**
@@ -13666,7 +13666,7 @@ add_action( 'wp_footer', 'gstore_render_single_flash_sale_floating_card', 35 );
  * @return void
  */
 function gstore_enqueue_flash_sale_assets() {
-	$is_flash_sale_page = function_exists( 'is_page' ) && is_page( 'ofertas' );
+	$is_flash_sale_page = function_exists( 'is_page' ) && is_page( 'ofertas-relampago' );
 	if ( ! is_front_page() && ! $is_flash_sale_page ) {
 		return;
 	}
@@ -16277,11 +16277,11 @@ function gstore_is_catalog_context() {
 		return false;
 	}
 
-	if ( function_exists( 'is_page' ) && is_page( array( 'catalogo', 'loja', 'ofertas', 'marcas', 'categorias-produto', 'categoria-produto' ) ) ) {
+	if ( function_exists( 'is_page' ) && is_page( array( 'catalogo', 'loja', 'ofertas', 'ofertas-relampago', 'marcas', 'categorias-produto', 'categoria-produto' ) ) ) {
 		return true;
 	}
 
-	if ( function_exists( 'is_page_template' ) && is_page_template( array( 'templates/page-catalogo.html', 'templates/page-loja.html', 'templates/page-ofertas.html' ) ) ) {
+	if ( function_exists( 'is_page_template' ) && is_page_template( array( 'templates/page-catalogo.html', 'templates/page-loja.html', 'templates/page-ofertas.html', 'templates/page-ofertas-relampago.html' ) ) ) {
 		return true;
 	}
 
@@ -19705,6 +19705,14 @@ function gstore_get_required_pages() {
 			'description' => 'Página de produtos em promoção.',
 			'wc_option'   => null,
 		),
+		'ofertas-relampago' => array(
+			'title'       => 'Ofertas relâmpago',
+			'slug'        => 'ofertas-relampago',
+			'template'    => 'page-ofertas-relampago',
+			'content'     => '',
+			'description' => 'Catálogo da campanha ativa de ofertas relâmpago.',
+			'wc_option'   => null,
+		),
 		'carrinho' => array(
 			'title'       => 'Carrinho',
 			'slug'        => 'carrinho',
@@ -20967,6 +20975,24 @@ function gstore_create_all_pages( $force = false ) {
 
 	return $results;
 }
+
+/**
+ * Cria uma única vez a rota dedicada às campanhas de ofertas relâmpago.
+ *
+ * Não interfere na página /ofertas/, que continua sendo o catálogo geral de
+ * produtos em promoção. A criação acontece somente em uma sessão de administrador
+ * para não executar uma escrita durante a navegação dos clientes.
+ *
+ * @return void
+ */
+function gstore_maybe_create_flash_sale_catalog_page() {
+	if ( ! current_user_can( 'manage_options' ) || gstore_get_page_by_slug( 'ofertas-relampago' ) ) {
+		return;
+	}
+
+	gstore_create_page( 'ofertas-relampago' );
+}
+add_action( 'admin_init', 'gstore_maybe_create_flash_sale_catalog_page', 15 );
 
 /**
  * Executa diagnóstico dos assets críticos do tema.
