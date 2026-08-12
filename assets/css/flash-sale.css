@@ -615,7 +615,7 @@
   margin: 0;
 }
 
-.gstore-flash-sale-catalog__upcoming-brand p {
+.gstore-flash-sale-catalog__upcoming-brand .gstore-flash-sale-catalog__upcoming-label {
   position: absolute;
   width: 1px;
   height: 1px;
@@ -633,7 +633,7 @@
   white-space: nowrap;
 }
 
-.gstore-flash-sale-catalog__upcoming-brand span {
+.gstore-flash-sale-catalog__upcoming-brand .gstore-flash-sale-catalog__upcoming-subtitle {
   display: block;
   max-width: 390px;
   margin-top: 3px;
