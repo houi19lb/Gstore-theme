@@ -13525,10 +13525,11 @@ function gstore_render_flash_sale_home_section() {
 	);
 
 	return sprintf(
-		'<section class="gstore-flash-sale-section" aria-label="%1$s"><header class="gstore-flash-sale-heading"><div><h2><i class="fa-solid fa-bolt" aria-hidden="true"></i> %1$s</h2><p>Preços especiais por tempo limitado</p></div><div class="gstore-flash-sale-clock"><span>Termina em</span><time data-gstore-flash-sale-end="%2$s">--:--:--</time></div></header><div class="Gstore-products-grid">%3$s</div></section>',
+		'<section class="gstore-flash-sale-section" aria-label="%1$s"><header class="gstore-flash-sale-heading"><div class="gstore-flash-sale-heading__intro"><h2><i class="fa-solid fa-bolt" aria-hidden="true"></i> %1$s</h2><p>Preços especiais por tempo limitado</p></div><div class="gstore-flash-sale-live"><i class="fa-solid fa-circle" aria-hidden="true"></i><span>%4$s</span></div><div class="gstore-flash-sale-clock"><span>Termina em</span><time data-gstore-flash-sale-end="%2$s">--:--:--</time></div></header><div class="Gstore-products-grid">%3$s</div></section>',
 		esc_html__( 'Ofertas relâmpago', 'gstore' ),
 		esc_attr( (string) $campaign['ends_at'] ),
-		do_shortcode( $shortcode )
+		do_shortcode( $shortcode ),
+		esc_html__( 'Ao vivo', 'gstore' )
 	);
 }
 add_shortcode( 'gstore_flash_sale', 'gstore_render_flash_sale_home_section' );
