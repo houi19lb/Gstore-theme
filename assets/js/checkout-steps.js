@@ -2477,7 +2477,13 @@ const subtotal = decodeHtmlEntities(stripHtmlText(it.subtotal || ''));
 			// O complemento vem do WooCommerce com a indicação "(opcional)".
 			// No Pix ele também é obrigatório e não pode manter esse rótulo.
 			$label.find('.optional').remove();
-			if (!$label.find('abbr.required').length) {
+			const $nativeMarker = $label.find('.required').not('.Gstore-checkout-required-marker');
+			if ($nativeMarker.length) {
+				// WooCommerce já renderiza o asterisco para este campo.
+				// Remove um marcador criado por uma execução anterior para
+				// que o rótulo sempre tenha apenas um asterisco.
+				$marker.remove();
+			} else if (!$marker.length) {
 				$label.append(' <abbr class="required Gstore-checkout-required-marker" title="obrigatório">*</abbr>');
 			}
 		} else if (!isRequired) {
