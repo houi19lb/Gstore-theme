@@ -573,6 +573,8 @@
 .gstore-flash-sale-catalog--upcoming {
   --gstore-flash-upcoming-gold: #ffc438;
   --gstore-flash-sale-progress: 0%;
+  width: min(100%, 520px);
+  margin-inline: auto;
   overflow: hidden;
   border: 1px solid rgba(234, 197, 93, .44);
   border-radius: 22px;
@@ -585,23 +587,25 @@
 
 .gstore-flash-sale-catalog__upcoming {
   display: grid;
-  grid-template-columns: minmax(245px, .88fr) minmax(290px, 1.08fr) minmax(210px, .84fr);
-  align-items: center;
-  gap: clamp(20px, 2.4vw, 36px);
-  padding: clamp(30px, 3.4vw, 42px) clamp(28px, 3.8vw, 48px);
+  justify-items: center;
+  gap: 12px;
+  width: min(100%, 440px);
+  margin-inline: auto;
+  padding: clamp(30px, 3.5vw, 44px) 24px clamp(24px, 3vw, 34px);
+  text-align: center;
 }
 
 .gstore-flash-sale-catalog__upcoming-brand {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: clamp(12px, 1.45vw, 20px);
+  gap: 7px;
   min-width: 0;
 }
 
 .gstore-flash-sale-catalog__upcoming-brand > i {
-  flex: 0 0 auto;
   color: #ffc438;
-  font-size: clamp(3.2rem, 4.5vw, 4.8rem);
+  font-size: clamp(1.35rem, 2vw, 1.8rem);
   filter: drop-shadow(0 0 12px rgba(255, 196, 56, .42));
 }
 
@@ -612,32 +616,30 @@
 }
 
 .gstore-flash-sale-catalog__upcoming-brand p {
-  color: #ffc438;
-  font-size: .72rem;
-  font-weight: 900;
-  letter-spacing: .08em;
-  text-transform: uppercase;
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
 }
 
 .gstore-flash-sale-catalog__upcoming-brand h2 {
-  display: grid;
-  gap: 1px;
-  margin-top: 5px;
   color: #fff;
-  font-size: clamp(1.45rem, 2.15vw, 2.05rem);
+  font-size: clamp(1.1rem, 1.55vw, 1.45rem);
   font-weight: 900;
-  line-height: 1.03;
+  line-height: 1.1;
   text-transform: uppercase;
+  white-space: nowrap;
 }
-
-.gstore-flash-sale-catalog__upcoming-brand h2 span { display: block; white-space: nowrap; }
 
 .gstore-flash-sale-catalog__upcoming-brand span {
   display: block;
-  max-width: 220px;
+  max-width: 315px;
   margin-top: 8px;
   color: rgba(255, 255, 255, .72);
-  font-size: .82rem;
+  font-size: .78rem;
+  line-height: 1.35;
 }
 
 .gstore-flash-sale-catalog__upcoming-countdown > p {
@@ -645,7 +647,7 @@
   align-items: center;
   justify-content: center;
   gap: 9px;
-  margin: 0 0 16px;
+  margin: 7px 0 10px;
   color: #fff;
   font-size: clamp(.78rem, 1.1vw, .95rem);
   font-weight: 800;
@@ -661,14 +663,18 @@
 .gstore-flash-sale-catalog__upcoming-units {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, .08);
+  border-radius: 9px;
+  background: rgba(0, 0, 0, .22);
 }
 
 .gstore-flash-sale-catalog__upcoming-units > div {
   display: grid;
-  gap: 6px;
+  gap: 4px;
   justify-items: center;
   min-width: 0;
-  padding: 0 clamp(6px, .95vw, 12px);
+  padding: 9px clamp(9px, 1.1vw, 15px) 8px;
   border-left: 1px solid rgba(255, 196, 56, .62);
 }
 
@@ -679,7 +685,7 @@
 .gstore-flash-sale-catalog__upcoming-units strong {
   color: #ffc438;
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  font-size: clamp(1.75rem, 3vw, 3rem);
+  font-size: clamp(1.55rem, 2.65vw, 2.45rem);
   font-weight: 900;
   letter-spacing: -.075em;
   line-height: .95;
@@ -697,6 +703,16 @@
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 9px;
+  width: min(100%, 350px);
+}
+
+.gstore-flash-sale-catalog__upcoming-reveal {
+  margin: 5px 0 -2px;
+  color: #ffc438;
+  font-size: .66rem;
+  font-weight: 900;
+  letter-spacing: .06em;
+  text-transform: uppercase;
 }
 
 .gstore-flash-sale-catalog__upcoming-products--count-1 {
@@ -753,13 +769,7 @@
 
 @media (max-width: 1100px) {
   .gstore-flash-sale-catalog__upcoming {
-    grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr);
-  }
-
-  .gstore-flash-sale-catalog__upcoming-products {
-    grid-column: 1 / -1;
-    width: min(360px, 100%);
-    margin: 0 auto;
+    width: min(100%, 410px);
   }
 }
 
@@ -771,31 +781,28 @@
   }
 
   .gstore-flash-sale-catalog__upcoming {
-    grid-template-columns: 1fr;
-    gap: 24px;
+    gap: 10px;
     padding: 28px 18px 24px;
   }
 
   .gstore-flash-sale-catalog__upcoming-brand {
-    justify-content: center;
     text-align: center;
   }
 
   .gstore-flash-sale-catalog__upcoming-countdown > p {
-    margin-bottom: 14px;
+    margin: 6px 0 9px;
     font-size: .76rem;
   }
 
   .gstore-flash-sale-catalog__upcoming-units > div {
-    padding: 0 5px;
+    padding: 8px 5px 7px;
   }
 
   .gstore-flash-sale-catalog__upcoming-units strong {
-    font-size: clamp(1.55rem, 8vw, 2.15rem);
+    font-size: clamp(1.45rem, 8vw, 2.1rem);
   }
 
   .gstore-flash-sale-catalog__upcoming-products {
-    grid-column: auto;
     width: 100%;
   }
 }
