@@ -1780,14 +1780,23 @@ body.woocommerce-checkout .Gstore-checkout-steps-shell {
 }
 
 /* Campo inválido */
-.Gstore-checkout-step__fields .woocommerce-invalid .input-text,
-.Gstore-checkout-step__fields .woocommerce-invalid select {
-	border-color: var(--gstore-color-error, #dc2626);
+.Gstore-checkout-step__fields .woocommerce-invalid label {
+	color: var(--gstore-color-error, #b91c1c);
 }
 
-.Gstore-checkout-step__fields .woocommerce-invalid .input-text:focus,
-.Gstore-checkout-step__fields .woocommerce-invalid select:focus {
-	box-shadow: none;
+.Gstore-checkout-step__fields .woocommerce-invalid input:not([type="hidden"]),
+.Gstore-checkout-step__fields .woocommerce-invalid select,
+.Gstore-checkout-step__fields .woocommerce-invalid textarea {
+	border-color: var(--gstore-color-error, #dc2626);
+	background: #fef2f2;
+	box-shadow: 0 0 0 1px rgba(220, 38, 38, 0.12);
+}
+
+.Gstore-checkout-step__fields .woocommerce-invalid input:not([type="hidden"]):focus,
+.Gstore-checkout-step__fields .woocommerce-invalid select:focus,
+.Gstore-checkout-step__fields .woocommerce-invalid textarea:focus {
+	border-color: var(--gstore-color-error, #dc2626);
+	box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.18);
 }
 
 /* Select2 (se usado) */

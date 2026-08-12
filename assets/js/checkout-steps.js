@@ -5041,6 +5041,15 @@ function getInstallmentDisplayTotals(summaryData) {
 			}
 		}
 
+		if ($firstError) {
+			const $notice = showNotice(
+				'Por favor, preencha todos os campos obrigatórios corretamente.',
+				'error',
+				0
+			);
+			scrollToCheckoutNotice($notice);
+		}
+
 		return isValid;
 	}
 
@@ -5063,7 +5072,7 @@ function getInstallmentDisplayTotals(summaryData) {
 		// Remove após o tempo configurado
 		const hideDelay = typeof autoHideMs === 'number' ? autoHideMs : 5000;
 		if (hideDelay <= 0) {
-			return;
+			return $notice;
 		}
 
 		setTimeout(() => {
@@ -5071,6 +5080,19 @@ function getInstallmentDisplayTotals(summaryData) {
 				$(this).remove();
 			});
 		}, hideDelay);
+
+		return $notice;
+	}
+
+	function scrollToCheckoutNotice($notice) {
+		if (!$notice || !$notice.length) return;
+
+		const offset = $notice.offset();
+		if (!offset) return;
+
+		$('html, body').stop(true).animate({
+			scrollTop: Math.max(0, offset.top - 112)
+		}, 300);
 	}
 
 	function showStepFooterNotice(message, type, autoHideMs) {
