@@ -13691,9 +13691,14 @@ function gstore_render_flash_sale_catalog() {
 	$product_ids = gstore_theme_get_flash_sale_product_ids( $campaign );
 
 	if ( empty( $campaign['ends_at'] ) || empty( $product_ids ) ) {
+		$upcoming_campaign = gstore_theme_get_upcoming_flash_sale();
+		if ( ! empty( $upcoming_campaign ) ) {
+			return gstore_render_flash_sale_catalog_upcoming( $upcoming_campaign );
+		}
+
 		return sprintf(
 			'<section class="gstore-flash-sale-catalog gstore-flash-sale-catalog--empty"><div class="gstore-flash-sale-catalog__empty"><i class="fa-solid fa-bolt" aria-hidden="true"></i><h2>%1$s</h2><p>%2$s</p></div></section>',
-			esc_html__( 'Nenhuma oferta relâmpago ativa', 'gstore' ),
+			esc_html__( 'Nenhuma oferta ativa', 'gstore' ),
 			esc_html__( 'Volte em breve para conferir as próximas oportunidades.', 'gstore' )
 		);
 	}
@@ -13713,6 +13718,64 @@ function gstore_render_flash_sale_catalog() {
 	);
 }
 add_shortcode( 'gstore_flash_sale_catalog', 'gstore_render_flash_sale_catalog' );
+
+/**
+ * Renderiza a próxima campanha na página de catálogo enquanto o aviso estiver ativo.
+ *
+ * @param array<string,mixed> $campaign Dados públicos da campanha futura.
+ * @return string
+ */
+function gstore_render_flash_sale_catalog_upcoming( $campaign ) {
+	if ( ! function_exists( 'wc_get_product' ) || empty( $campaign['starts_at'] ) || empty( $campaign['items'] ) ) {
+		return '';
+	}
+
+	$previews = array();
+	foreach ( array_slice( (array) $campaign['items'], 0, 3 ) as $item ) {
+		$product_id = absint( is_array( $item ) ? ( $item['product_id'] ?? 0 ) : 0 );
+		$product    = $product_id ? wc_get_product( $product_id ) : null;
+		if ( ! $product ) {
+			continue;
+		}
+
+		$previews[] = sprintf(
+			'<article class="gstore-flash-sale-catalog__upcoming-product"><div class="gstore-flash-sale-catalog__upcoming-product-image">%1$s</div><span class="gstore-flash-sale-catalog__upcoming-product-lock"><i class="fa-solid fa-lock" aria-hidden="true"></i><span class="screen-reader-text">%2$s</span></span></article>',
+			$product->get_image( 'woocommerce_thumbnail', array( 'class' => 'gstore-flash-sale-catalog__upcoming-product-thumbnail' ) ), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+			esc_html__( 'Produto revelado no início da oferta', 'gstore' )
+		);
+	}
+
+	if ( empty( $previews ) ) {
+		return '';
+	}
+
+	$opening_label = gstore_theme_format_flash_sale_start( (string) $campaign['starts_at'] );
+	$starts_at     = gstore_theme_flash_sale_datetime_iso( (string) $campaign['starts_at'] );
+	$announced_at  = gstore_theme_flash_sale_datetime_iso( (string) ( $campaign['announced_at'] ?? '' ) );
+	if ( '' === $starts_at ) {
+		return '';
+	}
+
+	return sprintf(
+		'<section class="gstore-flash-sale-catalog gstore-flash-sale-catalog--upcoming" aria-label="%1$s" data-gstore-flash-sale-upcoming data-gstore-flash-sale-start="%2$s" data-gstore-flash-sale-announced="%3$s"><div class="gstore-flash-sale-catalog__upcoming"><header class="gstore-flash-sale-catalog__upcoming-brand"><i class="fa-solid fa-bolt" aria-hidden="true"></i><div><p>%1$s</p><h2>%4$s</h2><span>%5$s</span></div></header><div class="gstore-flash-sale-catalog__upcoming-countdown"><p><i class="fa-regular fa-calendar" aria-hidden="true"></i><span>%6$s <time datetime="%2$s">%7$s</time></span></p><div class="gstore-flash-sale-catalog__upcoming-units" aria-live="polite"><div><strong data-gstore-flash-sale-countdown="days">00</strong><span>%8$s</span></div><div><strong data-gstore-flash-sale-countdown="hours">00</strong><span>%9$s</span></div><div><strong data-gstore-flash-sale-countdown="minutes">00</strong><span>%10$s</span></div><div><strong data-gstore-flash-sale-countdown="seconds">00</strong><span>%11$s</span></div></div></div><div class="gstore-flash-sale-catalog__upcoming-products gstore-flash-sale-catalog__upcoming-products--count-%12$d">%13$s</div></div><div class="gstore-flash-sale-upcoming__progress" role="progressbar" aria-label="%14$s" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span>%15$s</span><div><i></i></div><span>%16$s</span></div></section>',
+		esc_html__( 'Ofertas relâmpago', 'gstore' ),
+		esc_attr( $starts_at ),
+		esc_attr( $announced_at ),
+		esc_html__( 'Próxima oferta em breve', 'gstore' ),
+		esc_html__( 'Fique ligado: novas oportunidades chegando.', 'gstore' ),
+		esc_html__( 'Começa em', 'gstore' ),
+		esc_html( $opening_label ),
+		esc_html__( 'Dias', 'gstore' ),
+		esc_html__( 'Horas', 'gstore' ),
+		esc_html__( 'Min', 'gstore' ),
+		esc_html__( 'Seg', 'gstore' ),
+		count( $previews ),
+		implode( '', $previews ),
+		esc_html__( 'Progresso até a abertura da oferta', 'gstore' ),
+		esc_html__( 'Anúncio', 'gstore' ),
+		esc_html__( 'Abertura', 'gstore' )
+	);
+}
 
 /**
  * Para uma oferta com item único, exibe um cartão discreto no canto da home.
