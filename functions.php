@@ -13762,7 +13762,7 @@ function gstore_render_flash_sale_catalog_upcoming( $campaign ) {
 		esc_attr( $starts_at ),
 		esc_attr( $announced_at ),
 		esc_html__( 'Próxima oferta em breve', 'gstore' ),
-		esc_html__( 'Fique ligado: novas oportunidades chegando.', 'gstore' ),
+		esc_html__( 'Preços especiais liberados por tempo limitado.', 'gstore' ),
 		esc_html__( 'Começa em', 'gstore' ),
 		esc_html( $opening_label ),
 		esc_html__( 'Dias', 'gstore' ),
