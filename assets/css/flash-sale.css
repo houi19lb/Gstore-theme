@@ -573,8 +573,6 @@
 .gstore-flash-sale-catalog--upcoming {
   --gstore-flash-upcoming-gold: #ffc438;
   --gstore-flash-sale-progress: 0%;
-  width: min(100%, 520px);
-  margin: 0 auto;
   overflow: hidden;
   border: 1px solid rgba(234, 197, 93, .44);
   border-radius: 22px;
@@ -587,27 +585,24 @@
 
 .gstore-flash-sale-catalog__upcoming {
   display: grid;
-  justify-items: center;
-  gap: 12px;
-  max-width: 440px;
-  margin: 0 auto;
-  padding: clamp(30px, 3.5vw, 44px) 24px clamp(24px, 3vw, 34px);
-  text-align: center;
+  grid-template-columns: minmax(245px, .88fr) minmax(290px, 1.08fr) minmax(210px, .84fr);
+  align-items: center;
+  gap: clamp(20px, 2.4vw, 36px);
+  padding: clamp(30px, 3.4vw, 42px) clamp(28px, 3.8vw, 48px);
 }
 
 .gstore-flash-sale-catalog__upcoming-brand {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: 7px;
+  gap: clamp(12px, 1.45vw, 20px);
   min-width: 0;
 }
 
 .gstore-flash-sale-catalog__upcoming-brand > i {
   flex: 0 0 auto;
   color: #ffc438;
-  font-size: clamp(1.35rem, 2vw, 1.8rem);
-  filter: drop-shadow(0 0 9px rgba(255, 196, 56, .42));
+  font-size: clamp(3.2rem, 4.5vw, 4.8rem);
+  filter: drop-shadow(0 0 12px rgba(255, 196, 56, .42));
 }
 
 .gstore-flash-sale-catalog__upcoming-brand p,
@@ -617,31 +612,32 @@
 }
 
 .gstore-flash-sale-catalog__upcoming-brand p {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  overflow: hidden;
-  clip: rect(0 0 0 0);
-  clip-path: inset(50%);
-  white-space: nowrap;
+  color: #ffc438;
+  font-size: .72rem;
+  font-weight: 900;
+  letter-spacing: .08em;
+  text-transform: uppercase;
 }
 
 .gstore-flash-sale-catalog__upcoming-brand h2 {
-  margin-top: 0;
+  display: grid;
+  gap: 1px;
+  margin-top: 5px;
   color: #fff;
-  font-size: clamp(1.1rem, 1.55vw, 1.45rem);
+  font-size: clamp(1.45rem, 2.15vw, 2.05rem);
   font-weight: 900;
-  line-height: 1.08;
+  line-height: 1.03;
   text-transform: uppercase;
-  white-space: nowrap;
 }
+
+.gstore-flash-sale-catalog__upcoming-brand h2 span { display: block; white-space: nowrap; }
 
 .gstore-flash-sale-catalog__upcoming-brand span {
   display: block;
-  max-width: 315px;
+  max-width: 220px;
   margin-top: 8px;
   color: rgba(255, 255, 255, .72);
-  font-size: .78rem;
+  font-size: .82rem;
 }
 
 .gstore-flash-sale-catalog__upcoming-countdown > p {
@@ -649,9 +645,9 @@
   align-items: center;
   justify-content: center;
   gap: 9px;
-  margin: 7px 0 10px;
+  margin: 0 0 16px;
   color: #fff;
-  font-size: clamp(.76rem, 1.05vw, .9rem);
+  font-size: clamp(.78rem, 1.1vw, .95rem);
   font-weight: 800;
   text-transform: uppercase;
   white-space: nowrap;
@@ -665,18 +661,14 @@
 .gstore-flash-sale-catalog__upcoming-units {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  overflow: hidden;
-  border: 1px solid rgba(255, 196, 56, .18);
-  border-radius: 10px;
-  background: rgba(4, 5, 6, .26);
 }
 
 .gstore-flash-sale-catalog__upcoming-units > div {
   display: grid;
-  gap: 4px;
+  gap: 6px;
   justify-items: center;
   min-width: 0;
-  padding: 9px clamp(9px, 1.1vw, 15px) 8px;
+  padding: 0 clamp(6px, .95vw, 12px);
   border-left: 1px solid rgba(255, 196, 56, .62);
 }
 
@@ -687,7 +679,7 @@
 .gstore-flash-sale-catalog__upcoming-units strong {
   color: #ffc438;
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  font-size: clamp(1.55rem, 2.65vw, 2.45rem);
+  font-size: clamp(1.75rem, 3vw, 3rem);
   font-weight: 900;
   letter-spacing: -.075em;
   line-height: .95;
@@ -695,7 +687,7 @@
 
 .gstore-flash-sale-catalog__upcoming-units span {
   color: #fff;
-  font-size: clamp(.55rem, .75vw, .68rem);
+  font-size: clamp(.58rem, .82vw, .76rem);
   font-weight: 800;
   letter-spacing: .04em;
   text-transform: uppercase;
@@ -705,16 +697,6 @@
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 9px;
-  width: min(100%, 350px);
-}
-
-.gstore-flash-sale-catalog__upcoming-reveal {
-  margin: 5px 0 -2px;
-  color: #ffc438;
-  font-size: .62rem;
-  font-weight: 900;
-  letter-spacing: .07em;
-  text-transform: uppercase;
 }
 
 .gstore-flash-sale-catalog__upcoming-products--count-1 {
@@ -771,7 +753,13 @@
 
 @media (max-width: 1100px) {
   .gstore-flash-sale-catalog__upcoming {
-    max-width: 410px;
+    grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr);
+  }
+
+  .gstore-flash-sale-catalog__upcoming-products {
+    grid-column: 1 / -1;
+    width: min(360px, 100%);
+    margin: 0 auto;
   }
 }
 
@@ -783,12 +771,13 @@
   }
 
   .gstore-flash-sale-catalog__upcoming {
-    gap: 10px;
-    max-width: 380px;
+    grid-template-columns: 1fr;
+    gap: 24px;
     padding: 28px 18px 24px;
   }
 
   .gstore-flash-sale-catalog__upcoming-brand {
+    justify-content: center;
     text-align: center;
   }
 
@@ -806,6 +795,7 @@
   }
 
   .gstore-flash-sale-catalog__upcoming-products {
+    grid-column: auto;
     width: 100%;
   }
 }

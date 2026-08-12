@@ -13757,11 +13757,13 @@ function gstore_render_flash_sale_catalog_upcoming( $campaign ) {
 	}
 
 	return sprintf(
-		'<section class="gstore-flash-sale-catalog gstore-flash-sale-catalog--upcoming" aria-label="%1$s" data-gstore-flash-sale-upcoming data-gstore-flash-sale-start="%2$s" data-gstore-flash-sale-announced="%3$s"><div class="gstore-flash-sale-catalog__upcoming"><header class="gstore-flash-sale-catalog__upcoming-brand"><i class="fa-solid fa-bolt" aria-hidden="true"></i><div><p>%1$s</p><h2>%4$s</h2><span>%5$s</span></div></header><div class="gstore-flash-sale-catalog__upcoming-countdown"><p><i class="fa-regular fa-calendar" aria-hidden="true"></i><span>%6$s <time datetime="%2$s">%7$s</time></span></p><div class="gstore-flash-sale-catalog__upcoming-units" aria-live="polite"><div><strong data-gstore-flash-sale-countdown="days">00</strong><span>%8$s</span></div><div><strong data-gstore-flash-sale-countdown="hours">00</strong><span>%9$s</span></div><div><strong data-gstore-flash-sale-countdown="minutes">00</strong><span>%10$s</span></div><div><strong data-gstore-flash-sale-countdown="seconds">00</strong><span>%11$s</span></div></div></div><p class="gstore-flash-sale-catalog__upcoming-reveal">%12$s</p><div class="gstore-flash-sale-catalog__upcoming-products gstore-flash-sale-catalog__upcoming-products--count-%13$d">%14$s</div></div><div class="gstore-flash-sale-upcoming__progress" role="progressbar" aria-label="%15$s" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span>%16$s</span><div><i></i></div><span>%17$s</span></div></section>',
+		'<section class="gstore-flash-sale-catalog gstore-flash-sale-catalog--upcoming" aria-label="%1$s" data-gstore-flash-sale-upcoming data-gstore-flash-sale-start="%2$s" data-gstore-flash-sale-announced="%3$s"><div class="gstore-flash-sale-catalog__upcoming"><header class="gstore-flash-sale-catalog__upcoming-brand"><i class="fa-solid fa-bolt" aria-hidden="true"></i><div><p>%1$s</p><h2><span>%4$s</span><span>%5$s</span><span>%6$s</span></h2><span>%7$s</span></div></header><div class="gstore-flash-sale-catalog__upcoming-countdown"><p><i class="fa-regular fa-calendar" aria-hidden="true"></i><span>%8$s <time datetime="%2$s">%9$s</time></span></p><div class="gstore-flash-sale-catalog__upcoming-units" aria-live="polite"><div><strong data-gstore-flash-sale-countdown="days">00</strong><span>%10$s</span></div><div><strong data-gstore-flash-sale-countdown="hours">00</strong><span>%11$s</span></div><div><strong data-gstore-flash-sale-countdown="minutes">00</strong><span>%12$s</span></div><div><strong data-gstore-flash-sale-countdown="seconds">00</strong><span>%13$s</span></div></div></div><div class="gstore-flash-sale-catalog__upcoming-products gstore-flash-sale-catalog__upcoming-products--count-%14$d">%15$s</div></div><div class="gstore-flash-sale-upcoming__progress" role="progressbar" aria-label="%16$s" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span>%17$s</span><div><i></i></div><span>%18$s</span></div></section>',
 		esc_html__( 'Ofertas relâmpago', 'gstore' ),
 		esc_attr( $starts_at ),
 		esc_attr( $announced_at ),
-		esc_html__( 'Próxima oferta em breve', 'gstore' ),
+		esc_html__( 'Próxima', 'gstore' ),
+		esc_html__( 'oferta', 'gstore' ),
+		esc_html__( 'em breve', 'gstore' ),
 		esc_html__( 'Fique ligado: novas oportunidades chegando.', 'gstore' ),
 		esc_html__( 'Começa em', 'gstore' ),
 		esc_html( $opening_label ),
@@ -13769,7 +13771,6 @@ function gstore_render_flash_sale_catalog_upcoming( $campaign ) {
 		esc_html__( 'Horas', 'gstore' ),
 		esc_html__( 'Min', 'gstore' ),
 		esc_html__( 'Seg', 'gstore' ),
-		esc_html__( 'O que vem por aí', 'gstore' ),
 		count( $previews ),
 		implode( '', $previews ),
 		esc_html__( 'Progresso até a abertura da oferta', 'gstore' ),
