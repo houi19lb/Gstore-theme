@@ -24,7 +24,6 @@
   background-image: url('../images/flash-sale-panel-texture.png');
   background-position: center;
   background-size: cover;
-  box-shadow: 0 24px 48px rgba(0, 0, 0, .34);
   color: #fff;
 }
 
@@ -39,7 +38,7 @@
 .gstore-flash-sale-upcoming__brand {
   display: flex;
   align-items: center;
-  gap: clamp(16px, 2.25vw, 30px);
+  gap: clamp(12px, 1.5vw, 22px);
   min-width: 0;
   padding-right: clamp(18px, 2vw, 32px);
   border-right: 1px solid rgba(255, 255, 255, .24);
@@ -60,8 +59,8 @@
   font-size: clamp(1.55rem, 2.8vw, 3.1rem);
   font-weight: 900;
   font-style: italic;
-  letter-spacing: -.055em;
-  line-height: .88;
+  letter-spacing: -.04em;
+  line-height: 1;
   text-transform: uppercase;
 }
 
@@ -192,8 +191,7 @@
 }
 
 .gstore-flash-sale-upcoming__progress {
-  display: grid;
-  grid-template-columns: max-content minmax(100px, 1fr) max-content;
+  display: flex;
   align-items: center;
   gap: 16px;
   padding: 14px clamp(22px, 3.4vw, 54px) 19px;
@@ -205,9 +203,16 @@
   text-transform: uppercase;
 }
 
+.gstore-flash-sale-upcoming__progress > span {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
 .gstore-flash-sale-upcoming__progress > div {
   position: relative;
+  flex: 1 1 auto;
   height: 4px;
+  min-width: 100px;
   overflow: visible;
   border-radius: 999px;
   background: rgba(255, 255, 255, .2);
@@ -254,15 +259,30 @@
   transform: translateY(-50%);
 }
 
-@media (max-width: 1080px) {
+@media (max-width: 1200px) {
   .gstore-flash-sale-upcoming__content {
-    grid-template-columns: minmax(220px, .82fr) minmax(330px, 1.18fr);
+    grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr);
+    gap: 28px;
+    padding: 30px clamp(24px, 4vw, 48px) 26px;
   }
 
   .gstore-flash-sale-upcoming__previews {
     grid-column: 1 / -1;
     width: min(360px, 100%);
     margin: 0 auto;
+  }
+
+  .gstore-flash-sale-upcoming__brand {
+    gap: 14px;
+    padding-right: 24px;
+  }
+
+  .gstore-flash-sale-upcoming__brand > i {
+    font-size: clamp(3.6rem, 7vw, 5rem);
+  }
+
+  .gstore-flash-sale-upcoming__brand h2 {
+    font-size: clamp(1.8rem, 3.5vw, 2.6rem);
   }
 }
 
@@ -319,6 +339,10 @@
     gap: 9px;
     padding: 12px 18px 16px;
     font-size: .58rem;
+  }
+
+  .gstore-flash-sale-upcoming__progress > div {
+    min-width: 44px;
   }
 }
 
