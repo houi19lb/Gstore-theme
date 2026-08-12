@@ -573,6 +573,8 @@
 .gstore-flash-sale-catalog--upcoming {
   --gstore-flash-upcoming-gold: #ffc438;
   --gstore-flash-sale-progress: 0%;
+  width: min(100%, 520px);
+  margin: 0 auto;
   overflow: hidden;
   border: 1px solid rgba(234, 197, 93, .44);
   border-radius: 22px;
