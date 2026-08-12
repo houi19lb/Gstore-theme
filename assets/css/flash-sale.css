@@ -40,8 +40,6 @@
   align-items: center;
   gap: clamp(12px, 1.5vw, 22px);
   min-width: 0;
-  padding-right: clamp(18px, 2vw, 32px);
-  border-right: 1px solid rgba(255, 255, 255, .24);
 }
 
 .gstore-flash-sale-upcoming__brand > i {
