@@ -13491,6 +13491,46 @@ function gstore_theme_get_active_flash_sale() {
 }
 
 /**
+ * Retorna os IDs visíveis e ordenados dos produtos da campanha ativa.
+ *
+ * @param array<string,mixed>|null $campaign Dados públicos da campanha.
+ * @return int[]
+ */
+function gstore_theme_get_flash_sale_product_ids( $campaign = null ) {
+	if ( ! is_array( $campaign ) ) {
+		$campaign = gstore_theme_get_active_flash_sale();
+	}
+
+	$items       = is_array( $campaign['items'] ?? null ) ? $campaign['items'] : array();
+	$product_ids = array();
+
+	foreach ( $items as $item ) {
+		$product_id = absint( $item['product_id'] ?? 0 );
+		$product    = $product_id && function_exists( 'wc_get_product' ) ? wc_get_product( $product_id ) : null;
+
+		if ( $product && $product->is_visible() && $product->is_in_stock() && ! in_array( $product_id, $product_ids, true ) ) {
+			$product_ids[] = $product_id;
+		}
+	}
+
+	return $product_ids;
+}
+
+/**
+ * Retorna a URL da página que lista toda a campanha ativa.
+ *
+ * @return string
+ */
+function gstore_get_flash_sale_catalog_url() {
+	$page = get_page_by_path( 'ofertas' );
+	if ( $page instanceof WP_Post && 'publish' === $page->post_status ) {
+		return get_permalink( $page->ID );
+	}
+
+	return home_url( '/ofertas/' );
+}
+
+/**
  * Renderiza a vitrine de uma campanha ativa com dois ou mais produtos.
  * A regra e os preços vêm do plugin; o tema só decide a apresentação.
  *
@@ -13501,38 +13541,72 @@ function gstore_render_flash_sale_home_section() {
 		return '';
 	}
 
-	$campaign = gstore_theme_get_active_flash_sale();
-	$items    = is_array( $campaign['items'] ?? null ) ? $campaign['items'] : array();
-	if ( count( $items ) < 2 || empty( $campaign['ends_at'] ) ) {
+	$campaign    = gstore_theme_get_active_flash_sale();
+	$product_ids = gstore_theme_get_flash_sale_product_ids( $campaign );
+	if ( count( $product_ids ) < 2 || empty( $campaign['ends_at'] ) ) {
 		return '';
 	}
 
-	$product_ids = array();
-	foreach ( $items as $item ) {
-		$product_id = absint( $item['product_id'] ?? 0 );
-		$product    = $product_id ? wc_get_product( $product_id ) : null;
-		if ( $product && $product->is_visible() && $product->is_in_stock() ) {
-			$product_ids[] = $product_id;
-		}
-	}
-	if ( count( $product_ids ) < 2 ) {
-		return '';
+	$home_limit       = max( 1, absint( apply_filters( 'gstore_flash_sale_home_product_limit', 8 ) ) );
+	$home_product_ids = array_slice( $product_ids, 0, $home_limit );
+	$view_all_link    = '';
+
+	if ( count( $product_ids ) > count( $home_product_ids ) ) {
+		$view_all_link = sprintf(
+			'<a class="gstore-flash-sale-view-all" href="%1$s"><span>%2$s</span><i class="fa-solid fa-arrow-right" aria-hidden="true"></i></a>',
+			esc_url( gstore_get_flash_sale_catalog_url() ),
+			esc_html__( 'Ver todas as ofertas', 'gstore' )
+		);
 	}
 
 	$shortcode = sprintf(
 		'[products ids="%1$s" columns="4" orderby="post__in" order="ASC" paginate="false"]',
+		implode( ',', array_map( 'absint', $home_product_ids ) )
+	);
+
+	return sprintf(
+		'<section class="gstore-flash-sale-section" aria-label="%1$s"><header class="gstore-flash-sale-heading"><div class="gstore-flash-sale-heading__intro"><h2><i class="fa-solid fa-bolt" aria-hidden="true"></i> %1$s</h2><p>Preços especiais por tempo limitado</p></div><div class="gstore-flash-sale-live"><i class="fa-solid fa-circle" aria-hidden="true"></i><span>%4$s</span></div><div class="gstore-flash-sale-clock"><span>Termina em</span><time data-gstore-flash-sale-end="%2$s">--:--:--</time></div>%5$s</header><div class="Gstore-products-grid">%3$s</div></section>',
+		esc_html__( 'Ofertas relâmpago', 'gstore' ),
+		esc_attr( (string) $campaign['ends_at'] ),
+		do_shortcode( $shortcode ),
+		esc_html__( 'Ao vivo', 'gstore' ),
+		$view_all_link
+	);
+}
+add_shortcode( 'gstore_flash_sale', 'gstore_render_flash_sale_home_section' );
+
+/**
+ * Renderiza todos os itens da campanha ativa dentro da página /ofertas/.
+ *
+ * @return string
+ */
+function gstore_render_flash_sale_catalog() {
+	$campaign    = gstore_theme_get_active_flash_sale();
+	$product_ids = gstore_theme_get_flash_sale_product_ids( $campaign );
+
+	if ( empty( $campaign['ends_at'] ) || empty( $product_ids ) ) {
+		return sprintf(
+			'<section class="gstore-flash-sale-catalog gstore-flash-sale-catalog--empty"><div class="gstore-flash-sale-catalog__empty"><i class="fa-solid fa-bolt" aria-hidden="true"></i><h2>%1$s</h2><p>%2$s</p></div></section>',
+			esc_html__( 'Nenhuma oferta relâmpago ativa', 'gstore' ),
+			esc_html__( 'Volte em breve para conferir as próximas oportunidades.', 'gstore' )
+		);
+	}
+
+	$shortcode = sprintf(
+		'[products ids="%1$s" limit="15" columns="3" orderby="post__in" order="ASC" paginate="true"]',
 		implode( ',', array_map( 'absint', $product_ids ) )
 	);
 
 	return sprintf(
-		'<section class="gstore-flash-sale-section" aria-label="%1$s"><header class="gstore-flash-sale-heading"><div class="gstore-flash-sale-heading__intro"><h2><i class="fa-solid fa-bolt" aria-hidden="true"></i> %1$s</h2><p>Preços especiais por tempo limitado</p></div><div class="gstore-flash-sale-live"><i class="fa-solid fa-circle" aria-hidden="true"></i><span>%4$s</span></div><div class="gstore-flash-sale-clock"><span>Termina em</span><time data-gstore-flash-sale-end="%2$s">--:--:--</time></div></header><div class="Gstore-products-grid">%3$s</div></section>',
+		'<section class="gstore-flash-sale-catalog" aria-label="%1$s"><header class="gstore-flash-sale-catalog__header"><div><p class="gstore-flash-sale-catalog__eyebrow"><i class="fa-solid fa-bolt" aria-hidden="true"></i> %1$s</p><p class="gstore-flash-sale-catalog__description">%2$s</p></div><div class="gstore-flash-sale-catalog__timer"><span>%3$s</span><time data-gstore-flash-sale-end="%4$s">--:--:--</time></div></header><div class="Gstore-products-grid Gstore-products-grid--light">%5$s</div></section>',
 		esc_html__( 'Ofertas relâmpago', 'gstore' ),
+		esc_html__( 'Produtos selecionados com preços especiais por tempo limitado.', 'gstore' ),
+		esc_html__( 'Termina em', 'gstore' ),
 		esc_attr( (string) $campaign['ends_at'] ),
-		do_shortcode( $shortcode ),
-		esc_html__( 'Ao vivo', 'gstore' )
+		do_shortcode( $shortcode )
 	);
 }
-add_shortcode( 'gstore_flash_sale', 'gstore_render_flash_sale_home_section' );
+add_shortcode( 'gstore_flash_sale_catalog', 'gstore_render_flash_sale_catalog' );
 
 /**
  * Para uma oferta com item único, exibe um cartão discreto no canto da home.
@@ -13592,7 +13666,8 @@ add_action( 'wp_footer', 'gstore_render_single_flash_sale_floating_card', 35 );
  * @return void
  */
 function gstore_enqueue_flash_sale_assets() {
-	if ( ! is_front_page() || empty( gstore_theme_get_active_flash_sale() ) ) {
+	$is_flash_sale_page = function_exists( 'is_page' ) && is_page( 'ofertas' );
+	if ( ! is_front_page() && ! $is_flash_sale_page ) {
 		return;
 	}
 	$version = wp_get_theme()->get( 'Version' );
