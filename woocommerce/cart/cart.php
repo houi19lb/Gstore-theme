@@ -361,6 +361,8 @@ if ( function_exists( 'wc_wp_theme_get_element_class_name' ) ) {
 						<?php do_action( 'woocommerce_cart_contents' ); ?>
 					</div>
 
+					<?php gstore_render_cart_product_upsells( 'cart' ); ?>
+
 					<?php do_action( 'woocommerce_after_cart_contents' ); ?>
 				</div>
 
@@ -468,9 +470,6 @@ if ( function_exists( 'wc_wp_theme_get_element_class_name' ) ) {
 			<?php do_action( 'woocommerce_after_cart_table' ); ?>
 		</form>
 
-		<div class="Gstore-cart-cross-sells">
-			<?php woocommerce_cross_sell_display(); ?>
-		</div>
 	</div>
 </section>
 

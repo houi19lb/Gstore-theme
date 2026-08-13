@@ -34,6 +34,8 @@ if ( file_exists( $gstore_armastore_migration_config ) ) {
 	require_once $gstore_armastore_migration_config;
 }
 
+require_once get_theme_file_path( 'inc/gstore-product-upsells.php' );
+
 /**
  * Configurações iniciais do tema filho.
  */
