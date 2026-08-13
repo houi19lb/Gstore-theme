@@ -83,4 +83,12 @@ describe('GStore product upsells', () => {
 	test('makes the cart toast prefer the clicked upsell data over the main product card', () => {
 		expect(toastScript).toContain('addedButton.gstoreToastProductInfo');
 	});
+
+	test('keeps the discount tied to the configured source product in the cart', () => {
+		expect(template).toContain("GSTORE_PRODUCT_UPSELL_DISCOUNTS_META_KEY = '_gstore_product_upsell_discounts'");
+		expect(template).toContain('gstore_get_product_upsell_discounted_price');
+		expect(template).toContain('gstore_cart_contains_product_upsell_source');
+		expect(template).toContain('gstore_apply_product_upsell_discounts_to_cart');
+		expect(template).toContain("'gstore_upsell_regular_price'");
+	});
 });
