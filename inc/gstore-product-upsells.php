@@ -58,6 +58,9 @@ function gstore_get_product_upsell_ids( $source_product_id ) {
 function gstore_normalize_product_upsell_discount_value( $raw_value, $type ) {
 	$raw_value = is_scalar( $raw_value ) ? trim( (string) $raw_value ) : '';
 	$raw_value = str_replace( array( 'R$', ' ' ), array( '', '' ), $raw_value );
+	if ( 'percent' === $type ) {
+		$raw_value = str_replace( '%', '', $raw_value );
+	}
 	if ( false !== strpos( $raw_value, ',' ) ) {
 		$raw_value = str_replace( '.', '', $raw_value );
 		$raw_value = str_replace( ',', '.', $raw_value );
