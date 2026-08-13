@@ -306,11 +306,13 @@ function gstore_render_cart_product_upsells( $context = 'cart' ) {
 }
 
 /**
- * Exibe o conjunto configurado dentro do formulario nativo da pagina de produto.
+ * Exibe os complementos da página de produto no mesmo padrão direto do carrinho.
+ * Cada botão adiciona somente o respectivo complemento via AJAX, sem checkbox ou
+ * submissão do produto principal.
  *
  * @return void
  */
-function gstore_render_single_product_upsell_bundle() {
+function gstore_render_single_product_upsells() {
 	global $product;
 	if ( ! $product instanceof WC_Product ) {
 		return;
@@ -321,62 +323,21 @@ function gstore_render_single_product_upsell_bundle() {
 		return;
 	}
 
-	$base_price = (float) wc_get_price_to_display( $product );
 	?>
-	<section class="Gstore-product-upsells Gstore-product-upsells--single" data-gstore-upsell-bundle data-base-price="<?php echo esc_attr( (string) $base_price ); ?>">
+	<section class="Gstore-product-upsells Gstore-product-upsells--single" data-gstore-product-upsells>
 		<header class="Gstore-product-upsells__header">
 			<h2><?php esc_html_e( 'Monte seu conjunto', 'gstore' ); ?></h2>
-			<p><?php esc_html_e( 'Escolha os itens que fazem sentido para você.', 'gstore' ); ?></p>
 		</header>
 		<div class="Gstore-product-upsells__list">
 			<?php foreach ( $items as $item ) : ?>
-				<label class="Gstore-product-upsells__item Gstore-product-upsells__item--single">
-					<input type="checkbox" name="gstore_product_upsells[]" value="<?php echo esc_attr( (string) $item['id'] ); ?>" data-gstore-upsell-checkbox data-price="<?php echo esc_attr( (string) $item['price'] ); ?>" />
-					<span class="Gstore-product-upsells__media"><?php echo wp_kses_post( $item['image_html'] ); ?></span>
-					<span class="Gstore-product-upsells__body">
-						<span class="Gstore-product-upsells__name"><?php echo esc_html( $item['name'] ); ?></span>
-						<span class="Gstore-product-upsells__price"><?php echo wp_kses_post( $item['price_html'] ); ?></span>
-					</span>
-				</label>
+				<?php gstore_render_product_upsell_card( $item, 'single' ); ?>
 			<?php endforeach; ?>
 		</div>
-		<div class="Gstore-product-upsells__bundle-total">
-			<span><?php esc_html_e( 'Total com selecionados', 'gstore' ); ?></span>
-			<strong data-gstore-upsell-total><?php echo wp_kses_post( wc_price( $base_price ) ); ?></strong>
-		</div>
-		<button type="submit" name="gstore_add_bundle" value="1" class="Gstore-product-upsells__bundle-add" data-gstore-upsell-bundle-add disabled>
-			<?php esc_html_e( 'Adicionar conjunto', 'gstore' ); ?>
-		</button>
+		<p class="Gstore-product-upsells__status" data-gstore-upsell-status aria-live="polite"></p>
 	</section>
 	<?php
 }
-add_action( 'woocommerce_after_add_to_cart_button', 'gstore_render_single_product_upsell_bundle', 30 );
-
-/**
- * Depois de validar o produto principal, inclui os complementos escolhidos no mesmo carrinho.
- *
- * @param string $cart_item_key Chave do item principal.
- * @param int    $product_id Produto principal.
- * @return void
- */
-function gstore_add_selected_product_upsells_to_cart( $cart_item_key, $product_id ) {
-	static $is_processing = false;
-	if ( $is_processing || empty( $_REQUEST['gstore_add_bundle'] ) || empty( $_REQUEST['gstore_product_upsells'] ) || ! function_exists( 'WC' ) || ! WC()->cart ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-		return;
-	}
-
-	$requested = array_values( array_unique( array_filter( array_map( 'absint', (array) wp_unslash( $_REQUEST['gstore_product_upsells'] ) ) ) ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-	$allowed   = gstore_get_product_upsell_ids( $product_id );
-	$is_processing = true;
-	foreach ( array_slice( $requested, 0, 2 ) as $candidate_id ) {
-		if ( ! in_array( $candidate_id, $allowed, true ) || ! gstore_get_eligible_product_upsell( $candidate_id ) ) {
-			continue;
-		}
-		WC()->cart->add_to_cart( $candidate_id, 1, 0, array(), array( 'gstore_upsell_source' => absint( $product_id ) ) );
-	}
-	$is_processing = false;
-}
-add_action( 'woocommerce_add_to_cart', 'gstore_add_selected_product_upsells_to_cart', 20, 2 );
+add_action( 'woocommerce_after_add_to_cart_button', 'gstore_render_single_product_upsells', 30 );
 
 /**
  * Valida e adiciona uma sugestao clicada em carrinho ou mini-carrinho.

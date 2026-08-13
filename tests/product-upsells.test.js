@@ -5,6 +5,7 @@ const fs = require('fs');
 const path = require('path');
 
 const script = fs.readFileSync(path.join(__dirname, '..', 'assets', 'js', 'product-upsells.js'), 'utf8');
+const template = fs.readFileSync(path.join(__dirname, '..', 'inc', 'gstore-product-upsells.php'), 'utf8');
 
 function boot() {
 	window.gstoreProductUpsells = {
@@ -28,27 +29,13 @@ describe('GStore product upsells', () => {
 		jest.useRealTimers();
 	});
 
-	test('updates the bundle total and enables the native bundle submit only after a choice', () => {
-		document.body.innerHTML = `
-			<section data-gstore-upsell-bundle data-base-price="100">
-				<input type="checkbox" data-gstore-upsell-checkbox data-price="25" />
-				<strong data-gstore-upsell-total></strong>
-				<button data-gstore-upsell-bundle-add disabled>Adicionar conjunto</button>
-			</section>
-		`;
-
-		boot();
-		const checkbox = document.querySelector('[data-gstore-upsell-checkbox]');
-		const submit = document.querySelector('[data-gstore-upsell-bundle-add]');
-
-		expect(document.querySelector('[data-gstore-upsell-total]').textContent).toContain('100,00');
-		expect(submit.disabled).toBe(true);
-
-		checkbox.checked = true;
-		checkbox.dispatchEvent(new Event('change', { bubbles: true }));
-
-		expect(document.querySelector('[data-gstore-upsell-total]').textContent).toContain('125,00');
-		expect(submit.disabled).toBe(false);
+	test('uses direct card actions instead of selection and bundle-total behavior', () => {
+		expect(template).toContain("gstore_render_product_upsell_card( $item, 'single' )");
+		expect(template).not.toContain('gstore_add_bundle');
+		expect(template).not.toContain('data-gstore-upsell-checkbox');
+		expect(script).not.toContain('data-gstore-upsell-checkbox');
+		expect(script).not.toContain('data-gstore-upsell-bundle-add');
+		expect(script).not.toContain('gstore_add_bundle');
 	});
 
 	test('sends the chosen card to the validated server endpoint and emits cart events', async () => {

@@ -9,22 +9,6 @@
 	var miniRequest = null;
 	var lastMiniFooter = null;
 
-	function parsePrice(value) {
-		var parsed = parseFloat(value);
-		return Number.isFinite(parsed) ? parsed : 0;
-	}
-
-	function formatPrice(value) {
-		try {
-			return new Intl.NumberFormat('pt-BR', {
-				style: 'currency',
-				currency: 'BRL',
-			}).format(value);
-		} catch (error) {
-			return 'R$ ' + value.toFixed(2).replace('.', ',');
-		}
-	}
-
 	function setStatus(scope, message, isError) {
 		var container = scope && scope.closest ? scope.closest('[data-gstore-product-upsells]') : null;
 		var status = container ? container.querySelector('[data-gstore-upsell-status]') : null;
@@ -83,62 +67,6 @@
 			bubbles: true,
 			detail: detail,
 		}));
-	}
-
-	function refreshBundle(bundle) {
-		if (!bundle) {
-			return;
-		}
-
-		var total = parsePrice(bundle.getAttribute('data-base-price'));
-		var checked = bundle.querySelectorAll('[data-gstore-upsell-checkbox]:checked');
-		checked.forEach(function (input) {
-			total += parsePrice(input.getAttribute('data-price'));
-		});
-
-		var output = bundle.querySelector('[data-gstore-upsell-total]');
-		if (output) {
-			output.textContent = formatPrice(total);
-		}
-
-		var submit = bundle.querySelector('[data-gstore-upsell-bundle-add]');
-		if (submit) {
-			submit.disabled = checked.length === 0;
-		}
-	}
-
-	function bindBundles() {
-		document.querySelectorAll('[data-gstore-upsell-bundle]').forEach(function (bundle) {
-			bundle.setAttribute('data-initial-base-price', bundle.getAttribute('data-base-price') || '0');
-			bundle.addEventListener('change', function (event) {
-				if (event.target.matches('[data-gstore-upsell-checkbox]')) {
-					refreshBundle(bundle);
-				}
-			});
-			refreshBundle(bundle);
-		});
-
-		if (typeof $ !== 'function') {
-			return;
-		}
-
-		$('.variations_form')
-			.on('found_variation.gstoreProductUpsells', function (event, variation) {
-				var form = event.currentTarget;
-				form.querySelectorAll('[data-gstore-upsell-bundle]').forEach(function (bundle) {
-					if (variation && typeof variation.display_price !== 'undefined') {
-						bundle.setAttribute('data-base-price', String(variation.display_price));
-					}
-					refreshBundle(bundle);
-				});
-			})
-			.on('reset_data.gstoreProductUpsells', function (event) {
-				var form = event.currentTarget;
-				form.querySelectorAll('[data-gstore-upsell-bundle]').forEach(function (bundle) {
-					bundle.setAttribute('data-base-price', bundle.getAttribute('data-initial-base-price') || '0');
-					refreshBundle(bundle);
-				});
-			});
 	}
 
 	function findMiniFooter() {
@@ -253,11 +181,9 @@
 
 	if (document.readyState === 'loading') {
 		document.addEventListener('DOMContentLoaded', function () {
-			bindBundles();
 			bindCartEvents();
 		});
 	} else {
-		bindBundles();
 		bindCartEvents();
 	}
 })(window.jQuery);
