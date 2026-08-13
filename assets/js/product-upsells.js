@@ -42,12 +42,33 @@
 		});
 	}
 
-	function emitCartUpdated(payload, button) {
+	function getUpsellProductInfo(button) {
+		var item = button && button.closest ? button.closest('.Gstore-product-upsells__item') : null;
+		if (!item) {
+			return null;
+		}
+
+		var image = item.querySelector('.Gstore-product-upsells__media img');
+		var name = item.querySelector('.Gstore-product-upsells__name');
+		var price = item.querySelector('.Gstore-product-upsells__price');
+		return {
+			image: image ? (image.currentSrc || image.src || '') : '',
+			name: name ? name.textContent.trim() : '',
+			price: price ? price.textContent.trim() : '',
+			quantity: 1,
+		};
+	}
+
+	function emitCartUpdated(payload, button, productInfo) {
 		var detail = {
 			preserveCartData: false,
 			fragments: {},
 			cartHash: payload && payload.cart_hash ? payload.cart_hash : null,
+			product: productInfo || null,
 		};
+		if (button && productInfo) {
+			button.gstoreToastProductInfo = productInfo;
+		}
 
 		if (typeof $ === 'function') {
 			$(document.body).trigger('added_to_cart', [detail.fragments, detail.cartHash, $(button)]);
@@ -163,7 +184,7 @@
 
 			button.textContent = 'Adicionado';
 			setStatus(button, response.data && response.data.message ? response.data.message : 'Produto adicionado ao carrinho.');
-			emitCartUpdated(response.data || {}, button);
+			emitCartUpdated(response.data || {}, button, getUpsellProductInfo(button));
 			scheduleMiniRefresh();
 
 			if (config.isCart) {

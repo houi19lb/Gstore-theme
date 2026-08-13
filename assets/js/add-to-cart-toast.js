@@ -169,6 +169,13 @@
      * Extrai informações do produto do card
      */
     function extractProductInfo(addedButton) {
+        // Upsells próprios são renderizados dentro da página do produto. Nesse
+        // contexto, o card-pai `.product` é o produto principal, então usamos
+        // os dados capturados do card de complemento que foi realmente clicado.
+        if (addedButton && addedButton.gstoreToastProductInfo) {
+            return addedButton.gstoreToastProductInfo;
+        }
+
         const productCard = addedButton.closest('.Gstore-product-card, .product, li.product');
         if (!productCard) {
             return { name: 'Produto adicionado', quantity: 1 };

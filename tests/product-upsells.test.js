@@ -6,6 +6,7 @@ const path = require('path');
 
 const script = fs.readFileSync(path.join(__dirname, '..', 'assets', 'js', 'product-upsells.js'), 'utf8');
 const template = fs.readFileSync(path.join(__dirname, '..', 'inc', 'gstore-product-upsells.php'), 'utf8');
+const toastScript = fs.readFileSync(path.join(__dirname, '..', 'assets', 'js', 'add-to-cart-toast.js'), 'utf8');
 
 function boot() {
 	window.gstoreProductUpsells = {
@@ -41,7 +42,14 @@ describe('GStore product upsells', () => {
 	test('sends the chosen card to the validated server endpoint and emits cart events', async () => {
 		document.body.innerHTML = `
 			<section data-gstore-product-upsells>
-				<button data-gstore-upsell-add data-product-id="22" data-source-product-id="11">Adicionar</button>
+				<article class="Gstore-product-upsells__item">
+					<div class="Gstore-product-upsells__media"><img src="https://example.com/municao.jpg" alt="Munição" /></div>
+					<div class="Gstore-product-upsells__body">
+						<h3 class="Gstore-product-upsells__name">Munição correta</h3>
+						<div class="Gstore-product-upsells__price">R$ 499,99</div>
+					</div>
+					<button data-gstore-upsell-add data-product-id="22" data-source-product-id="11">Adicionar</button>
+				</article>
 				<p data-gstore-upsell-status></p>
 			</section>
 		`;
@@ -64,5 +72,15 @@ describe('GStore product upsells', () => {
 		);
 		expect(document.querySelector('[data-gstore-upsell-add]').textContent).toBe('Adicionado');
 		expect(eventListener).toHaveBeenCalled();
+		expect(document.querySelector('[data-gstore-upsell-add]').gstoreToastProductInfo).toEqual({
+			image: 'https://example.com/municao.jpg',
+			name: 'Munição correta',
+			price: 'R$ 499,99',
+			quantity: 1,
+		});
+	});
+
+	test('makes the cart toast prefer the clicked upsell data over the main product card', () => {
+		expect(toastScript).toContain('addedButton.gstoreToastProductInfo');
 	});
 });
