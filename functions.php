@@ -23342,7 +23342,7 @@ function gstore_get_footer_location_map_html() {
 			'q'      => $query,
 			'output' => 'embed',
 		),
-		'https://www.google.com/maps'
+		'https://maps.google.com/maps'
 	);
 	$title = sprintf(
 		/* translators: %s: store display name. */

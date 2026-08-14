@@ -214,10 +214,10 @@
 }
 
 .footer-store-map {
-	width: calc(100% - 24px);
+	width: 100%;
 	max-width: 270px;
 	height: 140px;
-	margin: 14px 0 0 24px;
+	margin: 14px 0 0;
 	overflow: hidden;
 	border: 1px solid #292929;
 	border-radius: 4px;
