@@ -288,8 +288,9 @@
 
 .payment-methods__logo--whatsapp {
 	grid-area: whatsapp;
-	width: 32px;
-	height: 32px;
+	justify-self: center;
+	width: 44px;
+	height: 44px;
 }
 
 .payment-methods__note {
@@ -567,8 +568,8 @@
 	}
 
 	.footer-mobile-commerce-group--payment .payment-methods__logo--whatsapp {
-		width: 30px;
-		height: 30px;
+		width: 42px;
+		height: 42px;
 	}
 
 	.footer-mobile-commerce-group--payment .payment-methods__note {
