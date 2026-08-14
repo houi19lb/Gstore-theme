@@ -254,15 +254,15 @@
 
 .payment-methods {
 	display: grid;
-	grid-template-columns: minmax(0, 118px) 26px;
+	grid-template-columns: 76px minmax(0, 1fr);
 	grid-template-areas:
-		"mastercard mastercard"
-		"visa whatsapp";
+		"mastercard visa"
+		"whatsapp note";
 	align-items: center;
 	justify-content: start;
-	column-gap: 10px;
-	row-gap: 5px;
-	max-width: 164px;
+	column-gap: 14px;
+	row-gap: 12px;
+	max-width: 246px;
 }
 
 .payment-methods__logo {
@@ -278,18 +278,27 @@
 
 .payment-methods__logo--mastercard {
 	grid-area: mastercard;
-	max-height: 42px;
+	width: 76px;
 }
 
 .payment-methods__logo--visa {
 	grid-area: visa;
-	width: 118px;
+	width: 76px;
 }
 
 .payment-methods__logo--whatsapp {
 	grid-area: whatsapp;
-	width: 22px;
-	height: 22px;
+	width: 32px;
+	height: 32px;
+}
+
+.payment-methods__note {
+	grid-area: note;
+	margin: 0;
+	color: #666;
+	font-size: var(--gstore-font-size-xs);
+	font-style: italic;
+	line-height: 1.35;
 }
 
 .security-badges img {
@@ -309,13 +318,6 @@
 	font-weight: bold;
 	color: var(--gstore-color-accent, #b5a642);
 	margin-bottom: 8px;
-}
-
-.payment-security .note {
-	font-style: italic;
-	font-size: var(--gstore-font-size-xs);
-	color: #666;
-	margin-top: 5px;
 }
 
 .footer-trust-strip {
@@ -522,10 +524,10 @@
 
 	.footer-mobile-commerce-box {
 		display: grid;
-		grid-template-columns: minmax(0, 1fr) minmax(112px, 0.9fr);
+		grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
 		grid-template-areas:
-			"account payment"
-			"social payment";
+			"account social"
+			"payment payment";
 		gap: 18px 16px;
 		align-items: start;
 		padding: 16px;
@@ -550,27 +552,27 @@
 	}
 
 	.footer-mobile-commerce-group--payment .payment-methods {
-		grid-template-columns: minmax(0, 96px) 22px;
-		column-gap: 8px;
-		row-gap: 4px;
-		max-width: 126px;
+		grid-template-columns: 68px minmax(0, 1fr);
+		column-gap: 12px;
+		row-gap: 10px;
+		max-width: 248px;
 	}
 
 	.footer-mobile-commerce-group--payment .payment-methods__logo--mastercard {
-		max-height: 36px;
+		width: 68px;
 	}
 
 	.footer-mobile-commerce-group--payment .payment-methods__logo--visa {
-		width: 96px;
+		width: 68px;
 	}
 
 	.footer-mobile-commerce-group--payment .payment-methods__logo--whatsapp {
-		width: 20px;
-		height: 20px;
+		width: 30px;
+		height: 30px;
 	}
 
-	.footer-mobile-commerce-group--payment .note {
-		max-width: 128px;
+	.footer-mobile-commerce-group--payment .payment-methods__note {
+		max-width: 160px;
 		line-height: 1.35;
 	}
 
