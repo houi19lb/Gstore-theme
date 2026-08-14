@@ -296,8 +296,8 @@
 .payment-methods__note {
 	grid-area: note;
 	margin: 0;
-	color: #666;
-	font-size: var(--gstore-font-size-xs);
+	color: #fff;
+	font-size: var(--gstore-font-size-sm);
 	font-style: italic;
 	line-height: 1.35;
 }
