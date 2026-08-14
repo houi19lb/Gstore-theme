@@ -217,7 +217,7 @@
 	width: 100%;
 	max-width: 270px;
 	height: 140px;
-	margin: 14px 0 0;
+	margin: 14px auto 0;
 	overflow: hidden;
 	border: 1px solid #292929;
 	border-radius: 4px;
