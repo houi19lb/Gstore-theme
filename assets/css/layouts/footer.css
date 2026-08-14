@@ -260,8 +260,8 @@
 		"whatsapp note";
 	align-items: center;
 	justify-content: start;
-	column-gap: 14px;
-	row-gap: 12px;
+	column-gap: 6px;
+	row-gap: 6px;
 	max-width: 246px;
 }
 
@@ -554,8 +554,8 @@
 
 	.footer-mobile-commerce-group--payment .payment-methods {
 		grid-template-columns: 68px minmax(0, 1fr);
-		column-gap: 12px;
-		row-gap: 10px;
+		column-gap: 6px;
+		row-gap: 5px;
 		max-width: 248px;
 	}
 
