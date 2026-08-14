@@ -23324,6 +23324,40 @@ function gstore_get_maps_url() {
 }
 
 /**
+ * Renderiza o mapa compacto do rodapé a partir do endereço configurado no Store Info.
+ *
+ * @return string
+ */
+function gstore_get_footer_location_map_html() {
+	$address = trim( preg_replace( '/\s+/', ' ', wp_strip_all_tags( (string) gstore_get_address( 'full' ) ) ) );
+
+	if ( '' === $address ) {
+		return '';
+	}
+
+	$country = trim( (string) gstore_store_info()->get_value( 'address.country', '' ) );
+	$query   = implode( ', ', array_filter( array( $address, $country ), 'strlen' ) );
+	$map_url = add_query_arg(
+		array(
+			'q'      => $query,
+			'output' => 'embed',
+		),
+		'https://www.google.com/maps'
+	);
+	$title = sprintf(
+		/* translators: %s: store display name. */
+		__( 'Mapa de localização de %s', 'gstore' ),
+		gstore_get_store_name( 'display' )
+	);
+
+	return sprintf(
+		'<div class="footer-store-map"><iframe src="%1$s" title="%2$s" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe></div>',
+		esc_url( $map_url ),
+		esc_attr( $title )
+	);
+}
+
+/**
  * Obtém horário de funcionamento.
  *
  * @param string $format 'full', 'weekdays', 'saturday', ou 'support'.
@@ -24153,6 +24187,7 @@ function gstore_build_store_info_placeholders_map() {
 		'{{address_short}}'       => gstore_get_address( 'short' ),
 		'{{address_city_state}}'  => gstore_get_address( 'city_state' ),
 		'{{maps_url}}'            => gstore_get_maps_url(),
+		'{{footer_location_map}}' => gstore_get_footer_location_map_html(),
 
 		// Business hours
 		'{{business_hours}}'      => gstore_get_business_hours(),
