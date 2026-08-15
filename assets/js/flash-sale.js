@@ -8,9 +8,16 @@
     document.querySelectorAll('[data-gstore-flash-sale-end]').forEach(function (element) {
       var end = parseDate(element.getAttribute('data-gstore-flash-sale-end'));
       var seconds = Math.max(0, Math.floor((end - Date.now()) / 1000));
-      var hours = Math.floor(seconds / 3600);
+      var days = Math.floor(seconds / 86400);
+      var hours = Math.floor((seconds % 86400) / 3600);
       var minutes = Math.floor((seconds % 3600) / 60);
       var remainingSeconds = seconds % 60;
+
+      if (days > 0) {
+        element.textContent = [pad(days) + 'd', pad(hours) + 'h', pad(minutes) + 'm'].join(' ');
+        return;
+      }
+
       element.textContent = [hours, minutes, remainingSeconds].map(function (part) {
         return String(part).padStart(2, '0');
       }).join(':');

@@ -9,7 +9,7 @@
   background-image: url('../images/flash-sale-panel-texture.png');
   background-position: center;
   background-size: cover;
-  padding: 24px;
+  padding: 28px;
 }
 
 .gstore-flash-sale-upcoming {
@@ -357,9 +357,9 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 28px;
-  margin-bottom: 22px;
-  padding: 0;
+  gap: 32px;
+  margin-bottom: 26px;
+  padding: 2px 0;
   border: 0;
 }
 
@@ -388,7 +388,7 @@
 }
 
 .gstore-flash-sale-heading p {
-  margin: 8px 0 0 1.05em;
+  margin: 10px 0 0 1.05em;
   color: rgba(255, 255, 255, .92);
   font-size: 1rem;
   font-weight: 600;
@@ -398,6 +398,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  gap: 8px;
   border: 1px solid rgba(255, 92, 92, .55);
   border-radius: 10px;
   background: #270a0d;
@@ -406,7 +407,7 @@
   font-size: .86rem;
   font-weight: 900;
   letter-spacing: .04em;
-  padding: 11px 15px;
+  padding: 12px 16px;
   text-transform: uppercase;
   white-space: nowrap;
 }
@@ -446,7 +447,6 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
   border: 1px solid rgba(255, 196, 56, .72);
   border-radius: 8px;
   color: #ffc438;
@@ -1169,12 +1169,12 @@
 @media (max-width: 700px) {
   .gstore-flash-sale-section {
     margin: 20px 12px;
-    padding: 16px;
+    padding: 20px;
   }
-  .gstore-flash-sale-heading { align-items: flex-start; flex-wrap: wrap; gap: 12px; }
+  .gstore-flash-sale-heading { align-items: flex-start; flex-wrap: wrap; gap: 14px; }
   .gstore-flash-sale-heading h2 { font-size: 1.65rem; }
   .gstore-flash-sale-heading p { margin-left: 0; font-size: .9rem; }
-  .gstore-flash-sale-live { padding: 9px 11px; font-size: .72rem; }
+  .gstore-flash-sale-live { padding: 10px 13px; font-size: .72rem; }
   .gstore-flash-sale-clock { gap: 9px; font-size: .72rem; }
   .gstore-flash-sale-clock time { border-radius: 8px; padding: 8px 10px; font-size: 1.65rem; }
   .gstore-flash-sale-section__view-all { padding-top: 16px; }
@@ -1193,7 +1193,7 @@
     border-right: 0;
     border-left: 0;
     border-radius: 0;
-    padding: 16px 0 20px;
+    padding: 20px 0 24px;
   }
 
   .gstore-flash-sale-section .Gstore-products-grid { padding: 0; }
@@ -1207,5 +1207,5 @@
   }
 
   .gstore-flash-sale-section .Gstore-products-carousel__button:hover:not([disabled]) { background: #171a1d; }
-  .gstore-flash-sale-heading { margin-bottom: 14px; padding: 0 16px; }
+  .gstore-flash-sale-heading { margin-bottom: 18px; padding: 2px 16px; }
 }
