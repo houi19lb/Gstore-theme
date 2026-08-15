@@ -1257,3 +1257,145 @@
   .gstore-flash-sale-heading h2 { font-size: 1.05rem; }
   .gstore-flash-sale-live { gap: 5px; padding: 8px 8px; font-size: .61rem; }
 }
+
+@media (min-width: 769px) {
+  .gstore-flash-sale-heading {
+    display: grid;
+    grid-template-areas: "intro live" "intro clock";
+    grid-template-columns: minmax(0, 1fr) minmax(460px, .95fr);
+    align-items: center;
+    column-gap: clamp(28px, 4vw, 56px);
+    row-gap: 14px;
+    margin-bottom: 28px;
+    padding: 6px 0 0;
+  }
+
+  .gstore-flash-sale-heading__intro {
+    grid-area: intro;
+    align-self: center;
+  }
+
+  .gstore-flash-sale-heading h2 {
+    gap: clamp(12px, 1.2vw, 20px);
+    font-size: clamp(2.15rem, 4vw, 4rem);
+  }
+
+  .gstore-flash-sale-heading p {
+    position: relative;
+    margin: 12px 0 0 clamp(2.6rem, 4vw, 5.2rem);
+    padding-bottom: 13px;
+    font-size: clamp(1rem, 1.45vw, 1.35rem);
+  }
+
+  .gstore-flash-sale-heading p::after {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: min(100%, 420px);
+    height: 3px;
+    border-radius: 999px;
+    background: #ffc438;
+    content: '';
+  }
+
+  .gstore-flash-sale-live {
+    grid-area: live;
+    justify-self: end;
+    padding: 12px 20px;
+    font-size: .95rem;
+  }
+
+  .gstore-flash-sale-clock {
+    box-sizing: border-box;
+    display: grid;
+    grid-area: clock;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: center;
+    gap: clamp(20px, 2.4vw, 38px);
+    width: 100%;
+    min-height: 110px;
+    border: 2px solid #e2ae24;
+    border-radius: 14px;
+    background: #0a0b0d;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .08);
+    padding: 14px clamp(16px, 2vw, 28px);
+  }
+
+  .gstore-flash-sale-clock__label {
+    color: #ffc438;
+    font-size: clamp(.88rem, 1.25vw, 1.2rem);
+    font-weight: 900;
+  }
+
+  .gstore-flash-sale-clock time {
+    display: none;
+  }
+
+  .gstore-flash-sale-clock__mobile-units {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    min-width: 0;
+  }
+
+  .gstore-flash-sale-clock__mobile-units > div {
+    display: grid;
+    gap: 6px;
+    justify-items: center;
+    min-width: 0;
+    padding: 0 clamp(8px, 1.4vw, 20px);
+    border-left: 1px solid rgba(255, 196, 56, .62);
+  }
+
+  .gstore-flash-sale-clock__mobile-units [data-gstore-flash-sale-mobile-countdown="days"] {
+    display: none;
+  }
+
+  .gstore-flash-sale-clock__mobile-units [data-gstore-flash-sale-mobile-countdown="hours"] {
+    border-left: 0;
+  }
+
+  .gstore-flash-sale-clock--has-days .gstore-flash-sale-clock__mobile-units {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .gstore-flash-sale-clock--has-days [data-gstore-flash-sale-mobile-countdown="days"] {
+    display: grid;
+    border-left: 0;
+  }
+
+  .gstore-flash-sale-clock--has-days [data-gstore-flash-sale-mobile-countdown="hours"] {
+    border-left: 1px solid rgba(255, 196, 56, .62);
+  }
+
+  .gstore-flash-sale-clock__mobile-units > div strong {
+    color: #ffc438;
+    font-family: monospace;
+    font-size: clamp(2rem, 3vw, 3rem);
+    font-weight: 900;
+    letter-spacing: -.06em;
+    line-height: .9;
+  }
+
+  .gstore-flash-sale-clock__mobile-units > div span {
+    color: #fff;
+    font-size: clamp(.68rem, .88vw, .9rem);
+    font-weight: 800;
+    letter-spacing: .03em;
+    line-height: 1;
+    text-transform: uppercase;
+  }
+}
+
+@media (min-width: 769px) and (max-width: 1100px) {
+  .gstore-flash-sale-heading {
+    grid-template-columns: minmax(0, .9fr) minmax(400px, 1.1fr);
+  }
+
+  .gstore-flash-sale-heading h2 {
+    font-size: clamp(2rem, 4.2vw, 2.7rem);
+  }
+
+  .gstore-flash-sale-clock {
+    min-height: 94px;
+  }
+}
