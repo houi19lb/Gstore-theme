@@ -1309,9 +1309,9 @@
     box-sizing: border-box;
     display: grid;
     grid-area: clock;
-    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-columns: 20px auto minmax(0, 1fr);
     align-items: center;
-    gap: clamp(20px, 2.4vw, 38px);
+    column-gap: 10px;
     width: 100%;
     min-height: 110px;
     border: 2px solid #e2ae24;
@@ -1325,6 +1325,13 @@
     color: #ffc438;
     font-size: clamp(.88rem, 1.25vw, 1.2rem);
     font-weight: 900;
+    margin-right: clamp(10px, 1.8vw, 26px);
+  }
+
+  .gstore-flash-sale-clock > i {
+    display: block;
+    color: #ffc438;
+    font-size: 1.2rem;
   }
 
   .gstore-flash-sale-clock time {
@@ -1337,7 +1344,7 @@
 
   .gstore-flash-sale-clock__mobile-units {
     display: grid;
-    grid-column: 2;
+    grid-column: 3;
     grid-row: 1;
     grid-template-columns: repeat(4, minmax(0, 1fr));
     width: 100%;
