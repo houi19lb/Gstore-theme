@@ -7,7 +7,7 @@
 (function () {
 	'use strict';
 
-	const GRID_SELECTOR = '.Gstore-home-products .Gstore-products-grid';
+	const GRID_SELECTOR = '.Gstore-home-products .Gstore-products-grid, .gstore-flash-sale-section .Gstore-products-grid';
 	const LIST_SELECTOR = 'ul.products, ul.wc-block-product-template, .wc-block-product-template';
 	const SLIDE_SELECTOR = 'li.product, .wc-block-product';
 	const MOBILE_BREAKPOINT = 768;
@@ -17,6 +17,10 @@
 	}
 
 	function getSectionLabel(grid) {
+		if (grid.closest('.gstore-flash-sale-section')) {
+			return 'Carrossel de ofertas relâmpago';
+		}
+
 		const section = grid.closest('.Gstore-home-section');
 		const heading = section ? section.querySelector('.Gstore-home-section__header .wp-block-heading') : null;
 		const title = heading ? heading.textContent.trim() : '';
