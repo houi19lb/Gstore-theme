@@ -443,6 +443,11 @@
   line-height: 1;
 }
 
+.gstore-flash-sale-clock > i,
+.gstore-flash-sale-clock__mobile-units {
+  display: none;
+}
+
 .gstore-flash-sale-view-all {
   display: inline-flex;
   align-items: center;
@@ -1207,5 +1212,48 @@
   }
 
   .gstore-flash-sale-section .Gstore-products-carousel__button:hover:not([disabled]) { background: #171a1d; }
-  .gstore-flash-sale-heading { margin-bottom: 18px; padding: 2px 16px; }
+  .gstore-flash-sale-heading {
+    display: grid;
+    grid-template-areas: "intro live" "clock clock";
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: start;
+    gap: 10px 12px;
+    margin-bottom: 18px;
+    padding: 2px 16px;
+  }
+  .gstore-flash-sale-heading__intro { grid-area: intro; }
+  .gstore-flash-sale-heading h2 { gap: 8px; font-size: clamp(1.15rem, 5.2vw, 1.4rem); white-space: nowrap; }
+  .gstore-flash-sale-heading p { margin: 5px 0 0; font-size: .74rem; }
+  .gstore-flash-sale-live { grid-area: live; align-self: start; margin-top: 1px; padding: 8px 10px; font-size: .66rem; }
+  .gstore-flash-sale-clock {
+    box-sizing: border-box;
+    display: grid;
+    grid-area: clock;
+    grid-template-columns: 18px auto minmax(0, 1fr);
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    border: 1px solid #e2ae24;
+    border-radius: 8px;
+    background: #0a0b0d;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .08);
+    padding: 8px 9px;
+  }
+  .gstore-flash-sale-clock > i { display: block; color: #ffc438; font-size: 1rem; }
+  .gstore-flash-sale-clock__label { font-size: .63rem; }
+  .gstore-flash-sale-clock time { display: none; }
+  .gstore-flash-sale-clock__mobile-units { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); min-width: 0; }
+  .gstore-flash-sale-clock__mobile-units > div { display: grid; gap: 1px; justify-items: center; min-width: 0; padding: 0 4px; border-left: 1px solid rgba(255, 255, 255, .2); }
+  .gstore-flash-sale-clock__mobile-units > div strong { color: #ffc438; font-family: monospace; font-size: 1.25rem; font-weight: 900; letter-spacing: -.05em; line-height: 1; }
+  .gstore-flash-sale-clock__mobile-units > div span { color: #fff; font-size: .5rem; font-weight: 800; letter-spacing: .02em; line-height: 1.1; text-transform: uppercase; }
+  .gstore-flash-sale-clock__mobile-units [data-gstore-flash-sale-mobile-countdown="days"] { display: none; }
+  .gstore-flash-sale-clock__mobile-units [data-gstore-flash-sale-mobile-countdown="hours"] { border-left: 0; }
+  .gstore-flash-sale-clock--has-days [data-gstore-flash-sale-mobile-countdown="days"] { display: grid; border-left: 0; }
+  .gstore-flash-sale-clock--has-days [data-gstore-flash-sale-mobile-countdown="seconds"] { display: none; }
+  .gstore-flash-sale-clock--has-days [data-gstore-flash-sale-mobile-countdown="hours"] { border-left: 1px solid rgba(255, 255, 255, .2); }
+}
+
+@media (max-width: 340px) {
+  .gstore-flash-sale-heading h2 { font-size: 1.05rem; }
+  .gstore-flash-sale-live { gap: 5px; padding: 8px 8px; font-size: .61rem; }
 }

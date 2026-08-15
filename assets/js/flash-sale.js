@@ -4,6 +4,17 @@
     return new Date(value.replace(' ', 'T')).getTime();
   }
 
+  function updateMobileTimerUnits(element, values) {
+    var clock = element.closest('.gstore-flash-sale-clock');
+    if (!clock) return;
+
+    clock.classList.toggle('gstore-flash-sale-clock--has-days', values.days > 0);
+    Object.keys(values).forEach(function (unit) {
+      var unitElement = clock.querySelector('[data-gstore-flash-sale-mobile-countdown="' + unit + '"]');
+      if (unitElement) unitElement.textContent = pad(values[unit]);
+    });
+  }
+
   function updateTimers() {
     document.querySelectorAll('[data-gstore-flash-sale-end]').forEach(function (element) {
       var end = parseDate(element.getAttribute('data-gstore-flash-sale-end'));
@@ -12,6 +23,13 @@
       var hours = Math.floor((seconds % 86400) / 3600);
       var minutes = Math.floor((seconds % 3600) / 60);
       var remainingSeconds = seconds % 60;
+
+      updateMobileTimerUnits(element, {
+        days: days,
+        hours: hours,
+        minutes: minutes,
+        seconds: remainingSeconds
+      });
 
       if (days > 0) {
         element.textContent = [pad(days) + 'd', pad(hours) + 'h', pad(minutes) + 'm'].join(' ');
