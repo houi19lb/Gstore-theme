@@ -1242,15 +1242,15 @@
   .gstore-flash-sale-clock > i { display: block; color: #ffc438; font-size: 1rem; }
   .gstore-flash-sale-clock__label { font-size: .63rem; }
   .gstore-flash-sale-clock time { display: none; }
-  .gstore-flash-sale-clock__mobile-units { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); min-width: 0; }
-  .gstore-flash-sale-clock__mobile-units > div { display: grid; gap: 1px; justify-items: center; min-width: 0; padding: 0 4px; border-left: 1px solid rgba(255, 255, 255, .2); }
-  .gstore-flash-sale-clock__mobile-units > div strong { color: #ffc438; font-family: monospace; font-size: 1.25rem; font-weight: 900; letter-spacing: -.05em; line-height: 1; }
-  .gstore-flash-sale-clock__mobile-units > div span { color: #fff; font-size: .5rem; font-weight: 800; letter-spacing: .02em; line-height: 1.1; text-transform: uppercase; }
-  .gstore-flash-sale-clock__mobile-units [data-gstore-flash-sale-mobile-countdown="days"] { display: none; }
-  .gstore-flash-sale-clock__mobile-units [data-gstore-flash-sale-mobile-countdown="hours"] { border-left: 0; }
-  .gstore-flash-sale-clock--has-days [data-gstore-flash-sale-mobile-countdown="days"] { display: grid; border-left: 0; }
-  .gstore-flash-sale-clock--has-days [data-gstore-flash-sale-mobile-countdown="seconds"] { display: none; }
-  .gstore-flash-sale-clock--has-days [data-gstore-flash-sale-mobile-countdown="hours"] { border-left: 1px solid rgba(255, 255, 255, .2); }
+  .gstore-flash-sale-clock > p { display: none !important; }
+  .gstore-flash-sale-clock__mobile-units { display: grid; grid-column: 3; grid-row: 1; grid-template-columns: repeat(4, minmax(0, 1fr)); width: 100%; min-width: 0; }
+  .gstore-flash-sale-clock__mobile-units > [data-gstore-flash-sale-mobile-countdown] { display: grid; gap: 1px; justify-items: center; min-width: 0; padding: 0 4px; border-left: 1px solid rgba(255, 255, 255, .2); color: #ffc438; font-family: monospace; font-size: 1.25rem; font-weight: 900; letter-spacing: -.05em; line-height: 1; }
+  .gstore-flash-sale-clock__mobile-units > [data-gstore-flash-sale-mobile-countdown]:first-child { border-left: 0; }
+  .gstore-flash-sale-clock__mobile-units > [data-gstore-flash-sale-mobile-countdown]::after { color: #fff; font-family: var(--gstore-font-family-base, Arial, sans-serif); font-size: .5rem; font-weight: 800; letter-spacing: .02em; line-height: 1.1; text-transform: uppercase; }
+  .gstore-flash-sale-clock__mobile-units [data-gstore-flash-sale-mobile-countdown="days"]::after { content: 'Dias'; }
+  .gstore-flash-sale-clock__mobile-units [data-gstore-flash-sale-mobile-countdown="hours"]::after { content: 'Horas'; }
+  .gstore-flash-sale-clock__mobile-units [data-gstore-flash-sale-mobile-countdown="minutes"]::after { content: 'Min'; }
+  .gstore-flash-sale-clock__mobile-units [data-gstore-flash-sale-mobile-countdown="seconds"]::after { content: 'Seg'; }
 }
 
 @media (max-width: 340px) {
@@ -1333,11 +1333,11 @@
 
   .gstore-flash-sale-clock__mobile-units {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(4, minmax(0, 1fr));
     min-width: 0;
   }
 
-  .gstore-flash-sale-clock__mobile-units > div {
+  .gstore-flash-sale-clock__mobile-units > [data-gstore-flash-sale-mobile-countdown] {
     display: grid;
     gap: 6px;
     justify-items: center;
@@ -1346,28 +1346,11 @@
     border-left: 1px solid rgba(255, 196, 56, .62);
   }
 
-  .gstore-flash-sale-clock__mobile-units [data-gstore-flash-sale-mobile-countdown="days"] {
-    display: none;
-  }
-
-  .gstore-flash-sale-clock__mobile-units [data-gstore-flash-sale-mobile-countdown="hours"] {
+  .gstore-flash-sale-clock__mobile-units > [data-gstore-flash-sale-mobile-countdown]:first-child {
     border-left: 0;
   }
 
-  .gstore-flash-sale-clock--has-days .gstore-flash-sale-clock__mobile-units {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-  }
-
-  .gstore-flash-sale-clock--has-days [data-gstore-flash-sale-mobile-countdown="days"] {
-    display: grid;
-    border-left: 0;
-  }
-
-  .gstore-flash-sale-clock--has-days [data-gstore-flash-sale-mobile-countdown="hours"] {
-    border-left: 1px solid rgba(255, 196, 56, .62);
-  }
-
-  .gstore-flash-sale-clock__mobile-units > div strong {
+  .gstore-flash-sale-clock__mobile-units > [data-gstore-flash-sale-mobile-countdown] {
     color: #ffc438;
     font-family: monospace;
     font-size: clamp(2rem, 3vw, 3rem);
@@ -1376,14 +1359,21 @@
     line-height: .9;
   }
 
-  .gstore-flash-sale-clock__mobile-units > div span {
+  .gstore-flash-sale-clock__mobile-units > [data-gstore-flash-sale-mobile-countdown]::after {
+    content: '';
     color: #fff;
+    font-family: var(--gstore-font-family-base, Arial, sans-serif);
     font-size: clamp(.68rem, .88vw, .9rem);
     font-weight: 800;
     letter-spacing: .03em;
     line-height: 1;
     text-transform: uppercase;
   }
+
+  .gstore-flash-sale-clock__mobile-units [data-gstore-flash-sale-mobile-countdown="days"]::after { content: 'Dias'; }
+  .gstore-flash-sale-clock__mobile-units [data-gstore-flash-sale-mobile-countdown="hours"]::after { content: 'Horas'; }
+  .gstore-flash-sale-clock__mobile-units [data-gstore-flash-sale-mobile-countdown="minutes"]::after { content: 'Min'; }
+  .gstore-flash-sale-clock__mobile-units [data-gstore-flash-sale-mobile-countdown="seconds"]::after { content: 'Seg'; }
 }
 
 @media (min-width: 769px) and (max-width: 1100px) {
