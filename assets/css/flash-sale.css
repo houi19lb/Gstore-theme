@@ -398,7 +398,6 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
   border: 1px solid rgba(255, 92, 92, .55);
   border-radius: 10px;
   background: #270a0d;
@@ -463,10 +462,6 @@
 .gstore-flash-sale-view-all:focus-visible {
   background: #ffc438;
   color: #141414;
-}
-
-.gstore-flash-sale-view-all i {
-  font-size: .9em;
 }
 
 .gstore-flash-sale-section__view-all {

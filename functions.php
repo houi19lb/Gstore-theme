@@ -13661,7 +13661,7 @@ function gstore_render_flash_sale_home_section() {
 
 	if ( count( $product_ids ) > count( $home_product_ids ) ) {
 		$view_all_link = sprintf(
-			'<div class="gstore-flash-sale-section__view-all"><a class="gstore-flash-sale-view-all" href="%1$s"><span>%2$s</span><i class="fa-solid fa-arrow-right" aria-hidden="true"></i></a></div>',
+			'<div class="gstore-flash-sale-section__view-all"><a class="gstore-flash-sale-view-all" href="%1$s"><span>%2$s</span></a></div>',
 			esc_url( gstore_get_flash_sale_catalog_url() ),
 			esc_html__( 'Ver todas as ofertas', 'gstore' )
 		);
