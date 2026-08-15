@@ -1331,9 +1331,16 @@
     display: none;
   }
 
+  .gstore-flash-sale-clock > p {
+    display: none !important;
+  }
+
   .gstore-flash-sale-clock__mobile-units {
     display: grid;
+    grid-column: 2;
+    grid-row: 1;
     grid-template-columns: repeat(4, minmax(0, 1fr));
+    width: 100%;
     min-width: 0;
   }
 
