@@ -1695,10 +1695,13 @@ body:has(.Gstore-flash-sale-page) .wp-site-blocks > .wp-block-group:not(header):
 }
 
 .Gstore-flash-sale-page .gstore-flash-sale-section--catalog .gstore-flash-sale-heading {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 951px;
   grid-template-columns: minmax(0, 1fr) minmax(350px, 400px);
   column-gap: 24px;
   row-gap: 6px;
-  margin-bottom: 12px;
+  margin: 0 auto 12px;
   padding: 0;
 }
 
