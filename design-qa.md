@@ -1,12 +1,12 @@
-# Design QA — segunda compactação do relógio responsivo
+# Design QA — respiro do ícone do relógio responsivo
 
 **Findings**
 
-- [P2] O relógio ainda cobre o subtítulo na menor largura intermediária.
+- [P2] O ícone do relógio encosta no texto “TERMINA EM” na faixa intermediária.
   Location: cabeçalho da página dedicada entre 769 px e 1100 px.
-  Evidence: na primeira captura existe um pequeno respiro; na segunda, mais estreita, a borda e o rótulo do relógio voltam a atravessar o final do subtítulo.
-  Impact: a frase fica parcialmente ilegível antes de o layout mobile assumir.
-  Fix: a coluna do relógio foi reduzida novamente, de 280–300 px para 240–260 px, com padding de 3 × 4 px, gaps de 2 px e unidades com 1 px de padding lateral.
+  Evidence: a captura mostra o ícone ocupando uma coluna de 12 px embora seu tamanho renderizado seja próximo de 14 px, deixando o texto visualmente colado.
+  Impact: o início do contador perde legibilidade e parece sobreposto.
+  Fix: a coluna exclusiva do ícone passou de 12 px para 14 px e o espaço até o rótulo passou de 2 px para 3 px, sem aumentar o padding geral do contador.
 
 **Open Questions**
 
@@ -15,37 +15,36 @@
 **Implementation Checklist**
 
 1. Sincronizar a branch `alpha`.
-2. Repetir as duas larguras intermediárias das capturas.
-3. Confirmar respiro entre o subtítulo e o relógio em ambas.
-4. Confirmar que desktop amplo e mobile não mudaram.
+2. Repetir a largura intermediária da captura.
+3. Confirmar o respiro entre o ícone e “TERMINA EM”.
+4. Confirmar que a borda do contador continua livre do subtítulo.
 
 **Follow-up Polish**
 
-- Nenhuma mudança foi aplicada aos cards, filtros ou textos.
+- Nenhuma mudança foi aplicada aos números, cards, filtros ou demais breakpoints.
 
 ## Comparison evidence
 
-- Source visual truth path: `C:/Users/mathe/AppData/Local/Temp/codex-clipboard-d7a86a29-73e6-49e9-b144-7b875d96b190.png` (683 × 774 px), largura intermediária sem colisão relevante.
-- Pre-fix implementation screenshot path: `C:/Users/mathe/AppData/Local/Temp/codex-clipboard-39d60cea-40ed-480f-90b1-a1fd99bcc00c.png` (672 × 811 px), largura menor com colisão.
+- Source visual truth path: `C:/Users/mathe/AppData/Local/Temp/codex-clipboard-fccde2b7-7fc7-4210-9c7f-ab8f5bc42ef9.png` (309 × 159 px), com o ícone próximo demais do rótulo.
 - Post-fix implementation screenshot path: indisponível antes da sincronização do ambiente.
 - Implementation URL: `https://lojateste.kivodigital.com.br/ofertas-relampago/`.
-- Viewport: modo responsivo intermediário; as capturas não exibem o valor exato da largura CSS.
-- Density normalization: não aplicada; comparação feita pela posição relativa do título, subtítulo e relógio.
-- State: campanha ativa, filtros visíveis e grid com duas colunas.
-- Full-view comparison evidence: ao estreitar a página, o relógio mantém largura suficiente para avançar sobre a coluna textual.
-- Focused region comparison evidence: na segunda captura, “Termina em” e a borda esquerda aparecem sobre o final de “tempo limitado”.
-- Fonts and typography: tamanhos e pesos foram preservados.
-- Spacing and layout rhythm: coluna limitada a 260 px, gap externo de 8 px, altura mínima de 38 px e padding interno de 3 × 4 px.
+- Viewport: recorte da faixa responsiva intermediária; a captura não exibe o valor exato da largura CSS.
+- Density normalization: não aplicada; a avaliação usa a relação visual entre ícone, rótulo e borda.
+- State: campanha ativa, contador visível e ordenação logo abaixo.
+- Full-view comparison evidence: não necessária para esta correção pontual; nenhuma estrutura externa foi alterada.
+- Focused region comparison evidence: o recorte mostra o ícone praticamente encostado em “TERMINA EM”.
+- Fonts and typography: preservadas.
+- Spacing and layout rhythm: somente a coluna do ícone e o gap adjacente foram aumentados.
 - Colors and visual tokens: não alterados.
-- Image quality and asset fidelity: não há novos assets; ícones existentes foram preservados.
+- Image quality and asset fidelity: o ícone existente foi preservado; nenhum asset novo foi criado.
 - Copy and content: não alterados.
 - Primary interactions tested: timer e JavaScript não foram modificados.
-- Console errors checked: não disponível antes da publicação no ambiente autenticado.
+- Console errors checked: indisponível antes da publicação no ambiente autenticado.
 
 ## Comparison history
 
-1. Ajuste anterior: relógio reduzido para 280–300 px; resolveu a largura maior, mas não a menor.
-2. Correção atual: relógio reduzido para 240–260 px e espaçamentos internos compactados novamente.
-3. Pós-fix: assets minificados, escopo CSS e testes automatizados passaram; falta captura após sincronização.
+1. Estado anterior: coluna do ícone com 12 px e gap de 2 px.
+2. Correção atual: coluna do ícone com 14 px e gap de 3 px.
+3. Pós-fix: falta captura após sincronização para encerrar a comparação visual.
 
 final result: blocked

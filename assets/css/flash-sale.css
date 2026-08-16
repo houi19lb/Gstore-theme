@@ -1849,8 +1849,8 @@ body:has(.Gstore-flash-sale-page) .Gstore-catalog-sidebar__inner.Gstore-catalog-
   }
 
   .Gstore-flash-sale-page .gstore-flash-sale-section--catalog .gstore-flash-sale-clock {
-    grid-template-columns: 12px auto minmax(0, 1fr);
-    column-gap: 2px;
+    grid-template-columns: 14px auto minmax(0, 1fr);
+    column-gap: 3px;
     min-height: 38px;
     padding: 3px 4px;
   }
