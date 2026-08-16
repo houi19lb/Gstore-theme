@@ -1500,7 +1500,7 @@ body:has(.Gstore-flash-sale-page) .wp-site-blocks > .wp-block-group:not(header):
 
 .Gstore-flash-sale-page .Gstore-catalog-header {
   width: 100%;
-  max-width: none !important;
+  max-width: 1243px !important;
   margin: 0;
   padding: 0;
   border: 0;
