@@ -1547,7 +1547,7 @@ body:has(.Gstore-flash-sale-page) .wp-site-blocks > .wp-block-group:not(header):
 
 .Gstore-flash-sale-page .Gstore-catalog-layout {
   align-items: flex-start;
-  gap: 24px !important;
+  gap: 32px !important;
 }
 
 .Gstore-flash-sale-page .Gstore-catalog-layout.alignwide {
@@ -1557,7 +1557,7 @@ body:has(.Gstore-flash-sale-page) .wp-site-blocks > .wp-block-group:not(header):
 }
 
 .Gstore-flash-sale-page .Gstore-catalog-sidebar {
-  flex: 0 0 min(282px, 23vw) !important;
+  flex: 0 0 min(260px, 23vw) !important;
   min-width: 0;
 }
 
@@ -1572,16 +1572,16 @@ body:has(.Gstore-flash-sale-page) .wp-site-blocks > .wp-block-group:not(header):
   box-sizing: border-box;
   background: rgba(16, 18, 20, .96);
   border: 1px solid rgba(220, 225, 227, .42);
-  border-radius: 12px;
-  box-shadow: 0 12px 28px rgba(0, 0, 0, .28);
+  border-radius: 4px;
+  box-shadow: none;
   color: #fff;
-  padding: 20px 18px;
+  padding: 20px;
 }
 
 .Gstore-flash-sale-page .Gstore-catalog-sidebar__title-wrapper {
-  margin-bottom: 18px;
-  padding-bottom: 0;
-  border: 0;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, .16);
 }
 
 .Gstore-flash-sale-page .Gstore-catalog-sidebar__title,
@@ -1590,14 +1590,14 @@ body:has(.Gstore-flash-sale-page) .wp-site-blocks > .wp-block-group:not(header):
 }
 
 .Gstore-flash-sale-page .Gstore-catalog-sidebar__title {
-  font-size: 1.1rem;
-  font-weight: 800;
+  font-size: .875rem;
+  font-weight: 700;
 }
 
 .Gstore-flash-sale-page .Gstore-catalog-sidebar__subtitle {
   margin: 0 0 12px;
-  font-size: .75rem;
-  font-weight: 800;
+  font-size: .625rem;
+  font-weight: 700;
   letter-spacing: .02em;
 }
 
@@ -1701,7 +1701,7 @@ body:has(.Gstore-flash-sale-page) .wp-site-blocks > .wp-block-group:not(header):
   grid-template-columns: minmax(0, 1fr) minmax(350px, 400px);
   column-gap: 24px;
   row-gap: 6px;
-  margin: 0 auto 12px;
+  margin: 0 auto 12px 0;
   padding: 0;
 }
 
@@ -1780,7 +1780,7 @@ body:has(.Gstore-flash-sale-page) .wp-site-blocks > .wp-block-group:not(header):
  * de filtros precisa vencer as regras dessa casca e permanecer escuro, como
  * no layout da campanha. */
 .Gstore-flash-sale-page .Gstore-flash-sale-page__stage.Gstore-catalog-shell--light .Gstore-catalog-sidebar {
-  flex-basis: 282px !important;
+  flex-basis: 260px !important;
   flex-grow: 0;
   flex-shrink: 0;
 }
@@ -1795,10 +1795,10 @@ body:has(.Gstore-flash-sale-page) .wp-site-blocks > .wp-block-group:not(header):
   box-sizing: border-box;
   background: rgba(16, 18, 20, .96);
   border: 1px solid rgba(220, 225, 227, .42);
-  border-radius: 12px;
-  box-shadow: 0 12px 28px rgba(0, 0, 0, .28);
+  border-radius: 4px;
+  box-shadow: none;
   color: #fff;
-  padding: 20px 18px;
+  padding: 20px;
 }
 
 .Gstore-flash-sale-page .Gstore-flash-sale-page__stage.Gstore-catalog-shell--light .Gstore-catalog-sidebar__title,
@@ -1868,7 +1868,7 @@ body:has(.Gstore-flash-sale-page) .wp-site-blocks > .wp-block-group:not(header):
   .Gstore-flash-sale-page .gstore-flash-sale-section--catalog .Gstore-products-grid ul.wc-block-product-template {
     grid-template-columns: repeat(3, minmax(0, 309px)) !important;
     gap: 12px !important;
-    justify-content: center;
+    justify-content: start;
   }
 }
 
