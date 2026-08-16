@@ -1,12 +1,12 @@
-# Design QA — quebra intermediária do grid
+# Design QA — relógio responsivo sem colisão
 
 **Findings**
 
-- [P2] O grid de três colunas deixa o CTA dos cards estreito demais em 1049 px.
-  Location: página dedicada, grade de produtos entre 1025 px e 1200 px.
-  Evidence: a captura mostra “Adicionar ao carrinho” quebrando em duas linhas nos três cards da primeira fileira.
-  Impact: aumenta a altura do botão e deixa os cards mais estreitos que o padrão visual do catálogo.
-  Fix: nessa faixa intermediária, o grid passa para duas colunas de até 309 px; acima de 1200 px continuam três colunas.
+- [P2] O relógio invade o subtítulo em larguras próximas de 1039 px.
+  Location: cabeçalho da página dedicada entre 769 px e 1100 px.
+  Evidence: a captura mostra a borda e o rótulo “Termina em” sobre “Produtos selecionados com preços especiais por tempo limitado.”.
+  Impact: prejudica a leitura do subtítulo e deixa o cabeçalho visualmente congestionado.
+  Fix: a coluna do relógio passa de 330–360 px para 280–300 px nessa faixa; gaps, altura mínima e padding interno também foram reduzidos.
 
 **Open Questions**
 
@@ -14,38 +14,38 @@
 
 **Implementation Checklist**
 
-1. Sincronizar a branch `alpha` na loja teste.
-2. Conferir a página entre 1025 px e 1200 px.
-3. Confirmar duas colunas e o CTA em uma linha.
-4. Confirmar três colunas acima de 1200 px e uma coluna no mobile estreito.
+1. Sincronizar a branch `alpha`.
+2. Conferir o cabeçalho em 1039 px e nas larguras próximas.
+3. Confirmar que o relógio não cobre o subtítulo.
+4. Confirmar que desktop amplo e mobile mantêm os respectivos layouts.
 
 **Follow-up Polish**
 
-- Nenhuma mudança foi aplicada à estrutura, tipografia ou altura interna dos cards.
+- Nenhuma mudança foi aplicada aos cards ou ao conteúdo do timer.
 
 ## Comparison evidence
 
-- Source visual truth path: `C:/Users/mathe/AppData/Local/Temp/codex-clipboard-d2564917-4074-4680-89e6-f358894b1d73.png` (703 × 852 px).
-- Pre-fix implementation screenshot path: `C:/Users/mathe/AppData/Local/Temp/codex-clipboard-d2564917-4074-4680-89e6-f358894b1d73.png` (703 × 852 px).
+- Source visual truth path: `C:/Users/mathe/AppData/Local/Temp/codex-clipboard-dd9dfef1-2566-432e-8311-1a858d7c3cb4.png` (232 × 46 px), recorte do relógio.
+- Pre-fix implementation screenshot path: `C:/Users/mathe/AppData/Local/Temp/codex-clipboard-cfb16985-173d-4f58-a688-1ebfe9ea56da.png` (723 × 850 px).
 - Post-fix implementation screenshot path: indisponível antes da sincronização do ambiente.
 - Implementation URL: `https://lojateste.kivodigital.com.br/ofertas-relampago/`.
-- Viewport: 1049 × 1274 CSS px, conforme o painel responsivo visível na captura; screenshot exibida a 50%.
-- Density normalization: não aplicada; a avaliação usa a estrutura e a quebra visível do texto.
-- State: campanha ativa, filtros visíveis, cinco produtos carregados.
-- Full-view comparison evidence: três colunas comprimem cada card e fazem todos os CTAs visíveis quebrarem.
-- Focused region comparison evidence: os botões da primeira fileira exibem “Adicionar ao” e “carrinho” em linhas separadas.
-- Fonts and typography: não alteradas.
-- Spacing and layout rhythm: somente a contagem de colunas muda; gap de 12 px e largura máxima de 309 px são preservados.
+- Viewport: 1039 × 1274 CSS px, conforme o painel responsivo da captura; screenshot exibida a 50%.
+- Density normalization: não aplicada; a colisão é avaliada pela posição relativa entre subtítulo e relógio.
+- State: campanha ativa, filtro visível e grid com duas colunas.
+- Full-view comparison evidence: o relógio começa antes do término visual do subtítulo.
+- Focused region comparison evidence: a borda esquerda e “Termina em” cruzam a última parte da frase abaixo do título.
+- Fonts and typography: tamanhos e pesos não foram alterados.
+- Spacing and layout rhythm: coluna do relógio limitada a 300 px, gap externo reduzido para 12 px, padding para 5 × 7 px e padding das unidades para 2 px.
 - Colors and visual tokens: não alterados.
-- Image quality and asset fidelity: imagens e recortes dos produtos não foram alterados.
+- Image quality and asset fidelity: não há novos assets; ícones existentes foram preservados.
 - Copy and content: não alterados.
-- Primary interactions tested: não houve mudança funcional no botão ou no carrinho.
+- Primary interactions tested: atualização do timer e JavaScript não foram modificados.
 - Console errors checked: não disponível antes da publicação no ambiente autenticado.
 
 ## Comparison history
 
-1. Antes do ajuste: em 1049 px, o grid permanece com três colunas e o CTA quebra em duas linhas.
-2. Correção: breakpoint intermediário entre 1025 px e 1200 px define duas colunas de até 309 px.
+1. Antes do ajuste: relógio de pelo menos 330 px ocupa parte do espaço necessário ao subtítulo em 1039 px.
+2. Correção: relógio e espaçamentos internos são compactados somente entre 769 px e 1100 px.
 3. Pós-fix: assets minificados, escopo CSS e testes automatizados passaram; falta captura após sincronização.
 
 final result: blocked

@@ -1842,6 +1842,28 @@ body:has(.Gstore-flash-sale-page) .Gstore-catalog-sidebar__inner.Gstore-catalog-
   }
 }
 
+@media (min-width: 769px) and (max-width: 1100px) {
+  .Gstore-flash-sale-page .gstore-flash-sale-section--catalog .gstore-flash-sale-heading {
+    grid-template-columns: minmax(0, 1fr) minmax(280px, 300px);
+    column-gap: 12px;
+  }
+
+  .Gstore-flash-sale-page .gstore-flash-sale-section--catalog .gstore-flash-sale-clock {
+    grid-template-columns: 14px auto minmax(0, 1fr);
+    column-gap: 4px;
+    min-height: 42px;
+    padding: 5px 7px;
+  }
+
+  .Gstore-flash-sale-page .gstore-flash-sale-section--catalog .gstore-flash-sale-clock__label {
+    margin-right: 0;
+  }
+
+  .Gstore-flash-sale-page .gstore-flash-sale-section--catalog .gstore-flash-sale-clock__mobile-units > [data-gstore-flash-sale-mobile-countdown] {
+    padding: 0 2px;
+  }
+}
+
 .Gstore-flash-sale-page .Gstore-catalog-filters-toggle {
   border: 1px solid #ffc438;
   background: #ffc438;
