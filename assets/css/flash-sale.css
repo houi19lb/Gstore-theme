@@ -1495,7 +1495,7 @@ body:has(.Gstore-flash-sale-page) .wp-site-blocks > .wp-block-group:not(header):
   width: 100%;
   max-width: none !important;
   margin: 0 !important;
-  padding: 12px clamp(24px, 5.5vw, 90px) 10px;
+  padding: 20px clamp(24px, 5.5vw, 90px) 18px;
 }
 
 .Gstore-flash-sale-page .Gstore-catalog-header {
