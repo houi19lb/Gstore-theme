@@ -1492,10 +1492,10 @@ body:has(.Gstore-flash-sale-page) .wp-site-blocks > .wp-block-group:not(header):
 
 .Gstore-flash-sale-page .Gstore-flash-sale-page__topbar-content.alignwide {
   box-sizing: border-box;
-  width: 100%;
-  max-width: none !important;
-  margin: 0 !important;
-  padding: 20px clamp(24px, 5.5vw, 90px) 18px;
+  width: calc(100% - clamp(48px, 10.4vw, 116px));
+  max-width: 1280px !important;
+  margin: 0 auto !important;
+  padding: 20px 0 18px;
 }
 
 .Gstore-flash-sale-page .Gstore-catalog-header {
@@ -1874,7 +1874,8 @@ body:has(.Gstore-flash-sale-page) .wp-site-blocks > .wp-block-group:not(header):
 
 @media (max-width: 1024px) {
   .Gstore-flash-sale-page__topbar-content {
-    padding: 14px 24px 12px;
+    width: calc(100% - 32px) !important;
+    padding: 14px 0 12px;
   }
 
   .Gstore-flash-sale-page .Gstore-catalog-header {
@@ -1916,7 +1917,7 @@ body:has(.Gstore-flash-sale-page) .wp-site-blocks > .wp-block-group:not(header):
 
 @media (max-width: 640px) {
   .Gstore-flash-sale-page__topbar-content {
-    padding: 12px 16px;
+    padding: 12px 0;
   }
 
   .Gstore-flash-sale-page .Gstore-catalog-title {
