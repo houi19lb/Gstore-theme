@@ -1,23 +1,23 @@
-# Design QA — faixa branca do cabeçalho de ofertas relâmpago
+# Design QA — alinhamento da faixa superior de ofertas relâmpago
 
 **Findings**
 
-- [P2] O intervalo abaixo do cabeçalho ainda aparece preto no ambiente de teste.
-  Location: `/ofertas-relampago/`, entre `.Gstore-flash-sale-page__topbar` e `.Gstore-flash-sale-page__stage`.
-  Evidence: no viewport de 1536 × 695 CSS px, o cabeçalho termina em `y=204,8` e a área texturizada começa em `y=228,8`; o intervalo de 24 px recebe o fundo preto do elemento principal.
-  Impact: a faixa branca fica visualmente interrompida por uma barra preta lisa antes da área de ofertas.
-  Fix: o seletor global de fundo preto passou a excluir `.Gstore-flash-sale-page`, permitindo que o intervalo use o fundo branco do cabeçalho. A área de ofertas mantém seu próprio fundo preto texturizado.
+- [P2] O título e o breadcrumb publicados ainda não seguem os limites laterais da área principal.
+  Location: `/ofertas-relampago/`, `.Gstore-flash-sale-page__topbar-content`.
+  Evidence: no viewport de 1536 × 639 CSS px, a main ocupa `x=120,4…1400,4`; o título começa em `x=84,5` e o breadcrumb termina em `x=1436,3`.
+  Impact: a faixa branca usa margens diferentes do filtro e da grade de cards, quebrando o alinhamento do catálogo.
+  Fix: aplicado no commit `cd76661`; a faixa superior agora usa o mesmo contêiner máximo de 1280 px da main e o mesmo respiro lateral responsivo.
 
 **Open Questions**
 
-- Nenhuma sobre o ajuste. A captura final depende de o ambiente de teste sincronizar o commit `5147724` da branch `alpha`.
+- Nenhuma sobre o layout. A captura final depende de o ambiente de teste sincronizar o commit `cd76661` da branch `alpha`.
 
 **Implementation Checklist**
 
-1. Sincronizar o commit `5147724` no ambiente de teste.
-2. Confirmar que os 24 px entre o cabeçalho e a área texturizada aparecem brancos.
-3. Confirmar que a área de ofertas continua preta e texturizada.
-4. Confirmar que título, breadcrumb, filtros e cards não sofreram alteração.
+1. Sincronizar o commit `cd76661` no ambiente de teste.
+2. Confirmar título em `x=120,4`, alinhado à borda esquerda do filtro.
+3. Confirmar breadcrumb terminando em `x=1400,4`, alinhado ao limite direito da main.
+4. Conferir o respiro lateral de 16 px em tablet e celular.
 
 **Follow-up Polish**
 
@@ -25,27 +25,26 @@
 
 ## Comparison evidence
 
-- Source visual truth path: `C:/Users/mathe/AppData/Local/Temp/codex-clipboard-fdb13c0d-2dae-4dda-872c-4a4bac51965f.png` (1900 × 124 px).
-- Implementation screenshot path: `C:/Users/mathe/AppData/Local/Temp/gstore-flash-white-strip-before-b8f79ab-1536x695.png` (1521 × 633 px).
+- Source visual truth path: `C:/Users/mathe/AppData/Local/Temp/codex-clipboard-c10c6ea1-54d2-4d9f-b216-172efa1c7431.png` (1919 × 520 px).
+- Implementation screenshot path: `C:/Users/mathe/AppData/Local/Temp/gstore-flash-topbar-before-cd76661-1536x639.png` (1521 × 633 px).
 - Implementation URL: `https://lojateste.kivodigital.com.br/ofertas-relampago/`.
-- Viewport: 1536 × 695 CSS px; captura retornada pelo navegador em 1521 × 633 px.
-- State: página de ofertas relâmpago carregada, cabeçalho branco e início da área texturizada visíveis.
-- Density normalization: a referência é um recorte focado do cabeçalho; a implementação foi medida no DOM em CSS px. Não há julgamento de escala tipográfica nesta rodada.
-- Full-view comparison evidence: a implementação publicada ainda exibe uma faixa preta lisa entre o cabeçalho branco e a área texturizada.
-- Focused region comparison evidence: a própria referência é o recorte focado da transição; não foi necessário um segundo recorte.
+- Viewport: 1536 × 639 CSS px; captura retornada pelo navegador em 1521 × 633 px.
+- State: campanha ativa, cabeçalho branco, filtro, cronômetro e primeira linha de cards visíveis.
+- Density normalization: a referência foi usada como evidência visual do desalinhamento; as posições objetivas foram medidas no DOM em CSS px.
+- Full-view comparison evidence: a faixa superior publicada usa 84,48 px de padding lateral, enquanto a main centralizada começa em 120,4 px.
+- Focused region comparison evidence: título deslocado 35,9 px para fora à esquerda e breadcrumb 35,9 px para fora à direita em relação à main.
 - Fonts and typography: família, peso, tamanho, altura de linha e conteúdo não foram alterados.
-- Spacing and layout rhythm: o intervalo existente de 24 px foi preservado; somente sua cor de fundo foi corrigida.
-- Colors and visual tokens: o intervalo passa de `rgb(8, 10, 11)` para branco; o fundo texturizado da área de ofertas permanece inalterado.
+- Spacing and layout rhythm: o contêiner superior passou a compartilhar `max-width: 1280px`, centralização e respiro responsivo da main.
+- Colors and visual tokens: branco, preto, amarelo e demais cores permanecem inalterados.
 - Image quality and asset fidelity: textura e imagens de produtos não foram modificadas.
 - Copy and content: título, breadcrumb e demais textos permanecem inalterados.
 - Primary interactions tested: carregamento da página; nenhuma interação foi alterada.
-- Console errors checked: nenhum erro relacionado a esta alteração foi observado.
+- Console errors checked: nenhum erro relacionado ao layout foi observado.
 
 ## Comparison history
 
-1. Antes do ajuste: `.Gstore-flash-sale-page` recebia o fundo preto de uma regra global mais específica; o intervalo entre topbar e stage media 24 px.
-2. Primeira correção `b8f79ab`: tornou o fundo branco importante, mas ainda perdia em especificidade para a regra global.
-3. Correção definitiva `5147724`: a regra global foi limitada para não pintar o elemento principal da página; validações de assets, escopo CSS e testes passaram.
-4. Pós-fix: o ambiente de teste ainda serve o CSS anterior (`flash-sale.min.css?ver=1786902142`), portanto ainda não existe captura renderizada do resultado final.
+1. Antes do ajuste: main em `x=120,4…1400,4`; título em `x=84,5`; breadcrumb terminando em `x=1436,3`.
+2. Correção `cd76661`: topbar limitada a 1280 px, centralizada e com largura responsiva equivalente à área principal; validações de assets, escopo CSS e testes passaram.
+3. Pós-fix: o ambiente de teste ainda serve o CSS anterior (`flash-sale.min.css?ver=1786902142`), portanto ainda não existe captura renderizada do alinhamento final.
 
 final result: blocked
