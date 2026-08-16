@@ -1466,13 +1466,13 @@ body:has(.Gstore-flash-sale-page) .wp-site-blocks {
   background-size: cover !important;
 }
 
-body:has(.Gstore-flash-sale-page) .wp-site-blocks > .wp-block-group:not(header):not(footer) {
+body:has(.Gstore-flash-sale-page) .wp-site-blocks > .wp-block-group:not(header):not(footer):not(.Gstore-flash-sale-page) {
   background-color: #080a0b !important;
 }
 
 .Gstore-flash-sale-page {
   min-height: auto;
-  background: #fff !important;
+  background: #fff;
   padding: 0;
 }
 
