@@ -1481,6 +1481,7 @@ body:has(.Gstore-flash-sale-page) .wp-site-blocks > .wp-block-group:not(header):
 
 .Gstore-flash-sale-page__topbar {
   background: #fff;
+  display: none !important;
 }
 
 .Gstore-flash-sale-page .Gstore-flash-sale-page__topbar-content.alignwide {
