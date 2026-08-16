@@ -1953,6 +1953,16 @@ body:has(.Gstore-flash-sale-page) .Gstore-catalog-sidebar__inner.Gstore-catalog-
   }
 }
 
+/* Entre o layout amplo e o tablet, três cards deixam pouco espaço para o CTA.
+ * Duas colunas preservam a largura padrão e mantêm o texto em uma linha. */
+@media (min-width: 1025px) and (max-width: 1200px) {
+  .Gstore-flash-sale-page .gstore-flash-sale-section--catalog .Gstore-products-grid ul.products,
+  .Gstore-flash-sale-page .gstore-flash-sale-section--catalog .Gstore-products-grid .wc-block-product-template,
+  .Gstore-flash-sale-page .gstore-flash-sale-section--catalog .Gstore-products-grid ul.wc-block-product-template {
+    grid-template-columns: repeat(2, minmax(0, 309px)) !important;
+  }
+}
+
 @media (max-width: 1024px) {
   .Gstore-flash-sale-page__topbar-content {
     width: calc(100% - 32px) !important;
