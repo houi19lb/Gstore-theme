@@ -2013,8 +2013,12 @@ body:has(.Gstore-flash-sale-page) .Gstore-catalog-sidebar__inner.Gstore-catalog-
     padding: 12px 0;
   }
 
-  .Gstore-flash-sale-page .Gstore-catalog-title {
-    font-size: 1.25rem;
+  .Gstore-flash-sale-page__topbar .Gstore-catalog-title {
+    display: none;
+  }
+
+  .Gstore-flash-sale-page .Gstore-catalog-header__actions {
+    margin-top: 0;
   }
 
   .Gstore-flash-sale-page .Gstore-breadcrumb {
