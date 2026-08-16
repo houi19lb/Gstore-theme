@@ -1687,13 +1687,79 @@ body:has(.Gstore-flash-sale-page) .Gstore-catalog-sidebar__inner.Gstore-catalog-
 }
 
 .Gstore-flash-sale-page .gstore-flash-sale-section--catalog .Gstore-products-grid {
+  width: 100%;
+  max-width: 951px;
   padding: 0;
 }
 
-.Gstore-flash-sale-page .gstore-flash-sale-section--catalog .woocommerce-notices-wrapper,
-.Gstore-flash-sale-page .gstore-flash-sale-section--catalog .woocommerce-result-count,
-.Gstore-flash-sale-page .gstore-flash-sale-section--catalog .woocommerce-ordering {
+.Gstore-flash-sale-page .gstore-flash-sale-section--catalog .woocommerce-notices-wrapper {
   display: none !important;
+}
+
+.Gstore-flash-sale-page .gstore-flash-sale-section--catalog .Gstore-products-grid > div > .woocommerce {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  column-gap: 24px;
+  row-gap: 14px;
+}
+
+.Gstore-flash-sale-page .gstore-flash-sale-section--catalog .woocommerce-result-count {
+  display: block !important;
+  grid-column: 1;
+  float: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  color: rgba(255, 255, 255, .72) !important;
+  font-size: .75rem;
+  line-height: 1.4;
+}
+
+.Gstore-flash-sale-page .gstore-flash-sale-section--catalog .woocommerce-ordering {
+  display: block !important;
+  grid-column: 2;
+  float: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.Gstore-flash-sale-page .gstore-flash-sale-section--catalog .woocommerce-ordering select {
+  box-sizing: border-box;
+  width: 240px;
+  min-height: 40px;
+  border: 1px solid rgba(255, 196, 56, .46);
+  border-radius: 6px;
+  background-color: #101214;
+  color: #fff;
+  padding: 0 12px;
+  font-size: .78rem;
+  cursor: pointer;
+}
+
+.Gstore-flash-sale-page .gstore-flash-sale-section--catalog .woocommerce-ordering select:focus-visible {
+  outline: 2px solid #ffc438;
+  outline-offset: 2px;
+}
+
+.Gstore-flash-sale-page .gstore-flash-sale-section--catalog .woocommerce-pagination,
+.Gstore-flash-sale-page .gstore-flash-sale-section--catalog .Gstore-products-grid ul.products {
+  grid-column: 1 / -1;
+}
+
+@media (max-width: 640px) {
+  .Gstore-flash-sale-page .gstore-flash-sale-section--catalog .Gstore-products-grid > div > .woocommerce {
+    grid-template-columns: 1fr;
+    row-gap: 10px;
+  }
+
+  .Gstore-flash-sale-page .gstore-flash-sale-section--catalog .woocommerce-result-count,
+  .Gstore-flash-sale-page .gstore-flash-sale-section--catalog .woocommerce-ordering {
+    grid-column: 1;
+  }
+
+  .Gstore-flash-sale-page .gstore-flash-sale-section--catalog .woocommerce-ordering select {
+    width: 100%;
+  }
 }
 
 .Gstore-flash-sale-page .gstore-flash-sale-section--catalog .gstore-flash-sale-heading {
