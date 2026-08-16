@@ -1724,6 +1724,15 @@ body:has(.Gstore-flash-sale-page) .wp-site-blocks > .wp-block-group:not(header):
   white-space: nowrap;
 }
 
+@media (min-width: 769px) {
+  .Gstore-flash-sale-page .gstore-flash-sale-section--catalog .gstore-flash-sale-live {
+    gap: 6px;
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-size: .72rem;
+  }
+}
+
 .Gstore-flash-sale-page .gstore-flash-sale-section--catalog .gstore-flash-sale-clock {
   grid-template-columns: 16px auto minmax(0, 1fr);
   column-gap: 6px;
