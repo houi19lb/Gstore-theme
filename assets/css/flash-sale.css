@@ -2118,3 +2118,11 @@ body:has(.Gstore-flash-sale-page) .Gstore-catalog-sidebar__inner.Gstore-catalog-
     font-size: .78rem;
   }
 }
+
+@media (max-width: 400px) {
+  .Gstore-flash-sale-page .gstore-flash-sale-section--catalog .gstore-flash-sale-live {
+    gap: 5px;
+    padding: 7px 8px;
+    font-size: .58rem;
+  }
+}
