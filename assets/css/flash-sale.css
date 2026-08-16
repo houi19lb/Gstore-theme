@@ -1980,6 +1980,13 @@ body:has(.Gstore-flash-sale-page) .Gstore-catalog-sidebar__inner.Gstore-catalog-
     margin: 0;
   }
 
+  .Gstore-flash-sale-page .Gstore-flash-sale-page__stage.Gstore-catalog-shell--light .Gstore-catalog-sidebar {
+    flex-basis: auto !important;
+    flex-grow: 0;
+    flex-shrink: 1;
+    margin-bottom: 0;
+  }
+
   .Gstore-flash-sale-page .Gstore-catalog-sidebar__inner--collapsible,
   .Gstore-flash-sale-page .Gstore-catalog-sidebar__inner--collapsible.Gstore-catalog-sidebar--detached {
     background: #101214;
@@ -1989,6 +1996,15 @@ body:has(.Gstore-flash-sale-page) .Gstore-catalog-sidebar__inner.Gstore-catalog-
 
   .Gstore-flash-sale-page .Gstore-catalog-sidebar__close:hover {
     background: rgba(255, 255, 255, .1);
+  }
+}
+
+@media (max-width: 768px) {
+  .Gstore-flash-sale-page .gstore-flash-sale-section--catalog {
+    width: 100%;
+    max-width: 100%;
+    margin: 0;
+    padding: 0;
   }
 }
 
