@@ -1585,7 +1585,9 @@ body:has(.Gstore-flash-sale-page) .wp-site-blocks > .wp-block-group:not(header):
 }
 
 body:has(.Gstore-flash-sale-page) .Gstore-flash-sale-page .Gstore-flash-sale-page__stage .Gstore-catalog-sidebar__inner .wp-block-heading.Gstore-catalog-sidebar__title,
-body:has(.Gstore-flash-sale-page) .Gstore-flash-sale-page .Gstore-flash-sale-page__stage .Gstore-catalog-sidebar__inner .wp-block-heading.Gstore-catalog-sidebar__subtitle {
+body:has(.Gstore-flash-sale-page) .Gstore-flash-sale-page .Gstore-flash-sale-page__stage .Gstore-catalog-sidebar__inner .wp-block-heading.Gstore-catalog-sidebar__subtitle,
+body:has(.Gstore-flash-sale-page) .Gstore-catalog-sidebar__inner.Gstore-catalog-sidebar--detached .wp-block-heading.Gstore-catalog-sidebar__title,
+body:has(.Gstore-flash-sale-page) .Gstore-catalog-sidebar__inner.Gstore-catalog-sidebar--detached .wp-block-heading.Gstore-catalog-sidebar__subtitle {
   color: #fff !important;
 }
 
