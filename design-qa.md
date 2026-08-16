@@ -1,12 +1,12 @@
-# Design QA — equilíbrio lateral do relógio responsivo
+# Design QA — correção da margem esquerda do relógio
 
 **Findings**
 
-- [P2] O ícone ainda precisa de mais respiro e as margens visuais das extremidades não estão equilibradas.
+- [P2] A tentativa anterior diminuiu a margem direita, invertendo a direção solicitada.
   Location: contador da página dedicada entre 769 px e 1100 px.
-  Evidence: a captura mostra pouco espaço entre o ícone e “TERMINA EM”, enquanto o conteúdo dos segundos termina mais distante da borda direita.
-  Impact: o bloco parece comprimido à esquerda e deslocado visualmente para a direita.
-  Fix: a coluna do ícone passou para 16 px, o gap adjacente para 4 px e o padding horizontal externo para 6 px; a unidade de segundos foi alinhada ao fim para igualar a margem visual direita à margem esquerda do ícone.
+  Evidence: os segundos foram alinhados ao fim da última coluna, removendo o respiro direito que deveria servir de referência para a esquerda.
+  Impact: o contador ficou visualmente apertado dos dois lados e piorou a composição.
+  Fix: o alinhamento especial dos segundos foi removido, a margem direita original foi restaurada e somente o padding esquerdo aumentou para 10 px.
 
 **Open Questions**
 
@@ -16,25 +16,25 @@
 
 1. Sincronizar a branch `alpha`.
 2. Repetir a largura intermediária da captura.
-3. Comparar a distância antes do ícone com a distância depois dos segundos.
-4. Confirmar que o relógio permanece livre do subtítulo.
+3. Confirmar que a margem direita dos segundos voltou ao estado anterior.
+4. Confirmar que a margem antes do ícone agora tem proporção equivalente.
 
 **Follow-up Polish**
 
-- Nenhuma mudança foi aplicada aos números, textos, cards, filtros ou demais breakpoints.
+- A coluna do ícone e o espaço até “TERMINA EM” foram preservados; números, cards, filtros e demais breakpoints não mudaram.
 
 ## Comparison evidence
 
-- Source visual truth path: `C:/Users/mathe/AppData/Local/Temp/codex-clipboard-330dc081-d619-41cd-930a-29ead8c6e692.png` (277 × 104 px), com assimetria perceptível entre as extremidades do contador.
+- Source visual truth path: `C:/Users/mathe/AppData/Local/Temp/codex-clipboard-330dc081-d619-41cd-930a-29ead8c6e692.png` (277 × 104 px), cuja margem direita deve ser preservada e repetida à esquerda.
 - Post-fix implementation screenshot path: indisponível antes da sincronização do ambiente.
 - Implementation URL: `https://lojateste.kivodigital.com.br/ofertas-relampago/`.
 - Viewport: recorte da faixa responsiva intermediária; a captura não exibe o valor exato da largura CSS.
 - Density normalization: não aplicada; a avaliação usa as distâncias visuais entre borda, ícone e segundos.
 - State: campanha ativa, contador visível e ordenação logo abaixo.
 - Full-view comparison evidence: não necessária para esta correção pontual; nenhuma estrutura externa foi alterada.
-- Focused region comparison evidence: o recorte mostra o ícone comprimido à esquerda e uma sobra maior depois dos segundos.
+- Focused region comparison evidence: a referência conserva um respiro perceptível depois dos segundos, que deve ser espelhado antes do ícone.
 - Fonts and typography: preservadas.
-- Spacing and layout rhythm: coluna do ícone, gap e padding horizontal ajustados; segundos alinhados à borda interna direita.
+- Spacing and layout rhythm: padding direito voltou para 4 px e o esquerdo passou para 10 px; o conteúdo dos segundos voltou ao alinhamento padrão.
 - Colors and visual tokens: não alterados.
 - Image quality and asset fidelity: o ícone existente foi preservado; nenhum asset novo foi criado.
 - Copy and content: não alterados.
@@ -43,8 +43,9 @@
 
 ## Comparison history
 
-1. Estado anterior: coluna do ícone com 14 px, gap de 3 px e padding horizontal de 4 px.
-2. Correção atual: coluna de 16 px, gap de 4 px, padding horizontal de 6 px e segundos alinhados ao fim.
-3. Pós-fix: falta captura após sincronização para encerrar a comparação visual.
+1. Estado de referência: margem direita natural da última unidade, com margem esquerda menor.
+2. Iteração incorreta: segundos alinhados ao fim e padding externo simétrico de 6 px, reduzindo a margem direita.
+3. Correção atual: alinhamento dos segundos restaurado e apenas o padding esquerdo aumentado para 10 px.
+4. Pós-fix: falta captura após sincronização para encerrar a comparação visual.
 
 final result: blocked
