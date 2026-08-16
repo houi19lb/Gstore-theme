@@ -1674,6 +1674,90 @@ body:has(.Gstore-flash-sale-page) .wp-site-blocks > .wp-block-group:not(header):
   color: #fff;
 }
 
+/* A página usa a casca clara do catálogo apenas na estrutura. Aqui o painel
+ * de filtros precisa vencer as regras dessa casca e permanecer escuro, como
+ * no layout da campanha. */
+.Gstore-flash-sale-page .Gstore-flash-sale-page__stage.Gstore-catalog-shell--light .Gstore-catalog-sidebar {
+  flex-basis: 282px !important;
+  flex-grow: 0;
+  flex-shrink: 0;
+}
+
+.Gstore-flash-sale-page .Gstore-flash-sale-page__stage.Gstore-catalog-shell--light .Gstore-catalog-sidebar__inner {
+  --filter-primary: #ffc438;
+  --filter-bg: transparent;
+  --filter-border: rgba(255, 255, 255, .3);
+  --filter-text: #fff;
+  --filter-text-muted: rgba(255, 255, 255, .66);
+  --filter-hover: rgba(255, 196, 56, .1);
+  box-sizing: border-box;
+  background: rgba(16, 18, 20, .96);
+  border: 1px solid rgba(220, 225, 227, .42);
+  border-radius: 12px;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, .28);
+  color: #fff;
+  padding: 20px 18px;
+}
+
+.Gstore-flash-sale-page .Gstore-flash-sale-page__stage.Gstore-catalog-shell--light .Gstore-catalog-sidebar__title,
+.Gstore-flash-sale-page .Gstore-flash-sale-page__stage.Gstore-catalog-shell--light .Gstore-catalog-sidebar__subtitle,
+.Gstore-flash-sale-page .Gstore-flash-sale-page__stage.Gstore-catalog-shell--light .Gstore-catalog-search .wp-block-search__input,
+.Gstore-flash-sale-page .Gstore-flash-sale-page__stage.Gstore-catalog-shell--light .gstore-category-filter__section-title,
+.Gstore-flash-sale-page .Gstore-flash-sale-page__stage.Gstore-catalog-shell--light .gstore-category-filter__link,
+.Gstore-flash-sale-page .Gstore-flash-sale-page__stage.Gstore-catalog-shell--light .gstore-category-filter__name,
+.Gstore-flash-sale-page .Gstore-flash-sale-page__stage.Gstore-catalog-shell--light .gstore-category-filter__label {
+  color: #fff;
+}
+
+.Gstore-flash-sale-page .Gstore-flash-sale-page__stage.Gstore-catalog-shell--light .Gstore-catalog-search .wp-block-search__inside-wrapper,
+.Gstore-flash-sale-page .Gstore-flash-sale-page__stage.Gstore-catalog-shell--light .gstore-category-filter__search {
+  border-color: rgba(255, 255, 255, .34);
+  background: #101214;
+}
+
+.Gstore-flash-sale-page .Gstore-flash-sale-page__stage.Gstore-catalog-shell--light .Gstore-catalog-search .wp-block-search__input::placeholder,
+.Gstore-flash-sale-page .Gstore-flash-sale-page__stage.Gstore-catalog-shell--light .gstore-category-filter__search::placeholder {
+  color: rgba(255, 255, 255, .7);
+}
+
+.Gstore-flash-sale-page .Gstore-flash-sale-page__stage.Gstore-catalog-shell--light .Gstore-catalog-search .wp-block-search__button {
+  background: #ffc438;
+  color: #101214;
+}
+
+.Gstore-flash-sale-page .Gstore-flash-sale-page__stage.Gstore-catalog-shell--light .gstore-category-filter__count {
+  background: transparent;
+  color: #ffc438;
+  font-size: .88rem;
+  font-weight: 800;
+  padding: 0;
+}
+
+/* O shortcode do catálogo já solicita três itens. Esta regra impede que o
+ * grid genérico da home o substitua por quatro colunas nesta campanha. */
+.Gstore-flash-sale-page .gstore-flash-sale-section--catalog .Gstore-products-grid ul.products,
+.Gstore-flash-sale-page .gstore-flash-sale-section--catalog .Gstore-products-grid .wc-block-product-template,
+.Gstore-flash-sale-page .gstore-flash-sale-section--catalog .Gstore-products-grid ul.wc-block-product-template {
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 12px !important;
+}
+
+@media (max-width: 1180px) {
+  .Gstore-flash-sale-page .gstore-flash-sale-section--catalog .Gstore-products-grid ul.products,
+  .Gstore-flash-sale-page .gstore-flash-sale-section--catalog .Gstore-products-grid .wc-block-product-template,
+  .Gstore-flash-sale-page .gstore-flash-sale-section--catalog .Gstore-products-grid ul.wc-block-product-template {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
+
+@media (max-width: 640px) {
+  .Gstore-flash-sale-page .gstore-flash-sale-section--catalog .Gstore-products-grid ul.products,
+  .Gstore-flash-sale-page .gstore-flash-sale-section--catalog .Gstore-products-grid .wc-block-product-template,
+  .Gstore-flash-sale-page .gstore-flash-sale-section--catalog .Gstore-products-grid ul.wc-block-product-template {
+    grid-template-columns: 1fr !important;
+  }
+}
+
 @media (max-width: 1024px) {
   .Gstore-flash-sale-page__topbar-content {
     padding-bottom: 16px;
