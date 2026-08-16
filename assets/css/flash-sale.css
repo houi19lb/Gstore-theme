@@ -1472,7 +1472,7 @@ body:has(.Gstore-flash-sale-page) .wp-site-blocks > .wp-block-group:not(header):
 
 .Gstore-flash-sale-page {
   min-height: auto;
-  background: #fff;
+  background: #fff !important;
   padding: 0;
 }
 
