@@ -1792,6 +1792,10 @@ body:has(.Gstore-flash-sale-page) .Gstore-catalog-sidebar__inner.Gstore-catalog-
   white-space: nowrap;
 }
 
+.Gstore-flash-sale-page .gstore-flash-sale-heading__subtitle-mobile {
+  display: none;
+}
+
 @media (min-width: 769px) {
   .Gstore-flash-sale-page .gstore-flash-sale-section--catalog .gstore-flash-sale-live {
     gap: 6px;
@@ -2005,6 +2009,63 @@ body:has(.Gstore-flash-sale-page) .Gstore-catalog-sidebar__inner.Gstore-catalog-
     max-width: 100%;
     margin: 0;
     padding: 0;
+  }
+
+  /* No celular, o cabeçalho dedicado replica as mesmas proporções da vitrine
+   * de ofertas relâmpago da home. */
+  .Gstore-flash-sale-page .gstore-flash-sale-section--catalog .gstore-flash-sale-heading {
+    grid-template-columns: minmax(0, 1fr) auto;
+    column-gap: 12px;
+    row-gap: 10px;
+    margin-bottom: 18px;
+    padding: 2px 0;
+  }
+
+  .Gstore-flash-sale-page .gstore-flash-sale-section--catalog .gstore-flash-sale-heading h2 {
+    gap: 8px;
+    font-size: clamp(1.15rem, 5.2vw, 1.4rem);
+    letter-spacing: -.04em;
+  }
+
+  .Gstore-flash-sale-page .gstore-flash-sale-section--catalog .gstore-flash-sale-heading p {
+    margin: 5px 0 0;
+    padding-bottom: 0;
+    font-size: .74rem;
+    line-height: normal;
+  }
+
+  .Gstore-flash-sale-page .gstore-flash-sale-heading__subtitle-desktop {
+    display: none;
+  }
+
+  .Gstore-flash-sale-page .gstore-flash-sale-heading__subtitle-mobile {
+    display: inline;
+  }
+
+  .Gstore-flash-sale-page .gstore-flash-sale-section--catalog .gstore-flash-sale-clock {
+    grid-template-columns: 18px auto minmax(0, 1fr);
+    column-gap: 8px;
+    min-height: 0;
+    padding: 8px 9px;
+  }
+
+  .Gstore-flash-sale-page .gstore-flash-sale-section--catalog .gstore-flash-sale-clock > i {
+    font-size: 1rem;
+  }
+
+  .Gstore-flash-sale-page .gstore-flash-sale-section--catalog .gstore-flash-sale-clock__label {
+    margin-right: 0;
+    font-size: .63rem;
+  }
+
+  .Gstore-flash-sale-page .gstore-flash-sale-section--catalog .gstore-flash-sale-clock__mobile-units > [data-gstore-flash-sale-mobile-countdown] {
+    padding: 0 4px;
+    font-size: 1.25rem;
+    line-height: 1;
+  }
+
+  .Gstore-flash-sale-page .gstore-flash-sale-section--catalog .gstore-flash-sale-clock__mobile-units > [data-gstore-flash-sale-mobile-countdown]::after {
+    font-size: .5rem;
   }
 }
 

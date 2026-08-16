@@ -1,50 +1,58 @@
-# Design QA — título do topo no mobile
+# Design QA — cabeçalho mobile igual à home
 
 **Findings**
 
-- [P2] O título “Ofertas relâmpago” ocupa uma linha desnecessária na faixa branca do mobile.
-  Location: `.Gstore-flash-sale-page__topbar .Gstore-catalog-title`, até 640 px.
-  Evidence: a captura de referência pede a remoção isolada desse título; o breadcrumb e o botão de filtros devem permanecer.
-  Impact: a faixa branca fica mais alta e empurra a campanha para baixo.
-  Fix: o título foi ocultado somente no mobile e a margem superior residual das ações foi removida.
+- [P1] O título da página dedicada invade o selo “Ao vivo”.
+  Location: `.gstore-flash-sale-section--catalog .gstore-flash-sale-heading` no mobile.
+  Evidence: a comparação mostra o título da página dedicada sobreposto ao selo; uma regra específica mantém `minmax(330px, 360px)` abaixo de 1200 px, inclusive em uma tela com cerca de 390 px.
+  Impact: a leitura do título e do estado da campanha fica comprometida.
+  Fix: no breakpoint mobile, a grade volta ao padrão da home, `minmax(0, 1fr) auto`, com título e espaçamentos equivalentes.
+
+- [P2] Título, subtítulo e números do timer usam proporções diferentes da home.
+  Location: título, subtítulo e relógio do cabeçalho da campanha.
+  Evidence: a página dedicada conserva os overrides compactos do desktop, enquanto a home usa os tokens mobile compartilhados.
+  Impact: o cabeçalho parece mais apertado e perde a hierarquia visual da vitrine principal.
+  Fix: título, subtítulo, relógio, rótulos, ícones e unidades foram alinhados aos mesmos valores da home; o mobile usa também o subtítulo curto da home.
 
 **Open Questions**
 
-- Nenhuma sobre o escopo. A captura pós-fix depende da sincronização do ambiente de teste em um celular real.
+- A captura pós-fix depende da sincronização da branch `alpha`; o navegador interno não acessa a loja teste por causa da autenticação do ambiente.
 
 **Implementation Checklist**
 
-1. Sincronizar a branch `alpha` no ambiente de teste.
-2. Confirmar que apenas o título superior desapareceu no mobile.
-3. Confirmar que breadcrumb, botão de filtros, cabeçalho amarelo, cards e desktop permanecem iguais.
+1. Sincronizar a branch `alpha` na loja teste.
+2. Capturar a página dedicada em um celular real.
+3. Confirmar que título, selo, subtítulo e timer correspondem à home sem sobreposição.
+4. Confirmar que desktop, filtros e cards permanecem inalterados.
 
 **Follow-up Polish**
 
-- Nenhum; a mudança é intencionalmente restrita à faixa branca no mobile.
+- Nenhum ajuste adicional foi aplicado fora do cabeçalho mobile.
 
 ## Comparison evidence
 
-- Source visual truth path: `C:/Users/mathe/AppData/Local/Temp/codex-clipboard-18c5dfd7-059a-474a-9d6a-598c9c20eb15.png` (269 × 42 px).
-- Pre-fix implementation screenshot path: `C:/Users/mathe/AppData/Local/Temp/codex-clipboard-18c5dfd7-059a-474a-9d6a-598c9c20eb15.png` (269 × 42 px).
+- Source visual truth path: `C:/Users/mathe/AppData/Local/Temp/codex-clipboard-3d50439e-3dd5-4c1d-af7a-59ee4694e08a.png` (266 × 79 px), cabeçalho mobile da home.
+- Pre-fix implementation screenshot path: `C:/Users/mathe/AppData/Local/Temp/codex-clipboard-1e9a047e-e79e-476a-8e61-39ff35de9513.png` (260 × 98 px), página dedicada antes do ajuste.
+- Combined comparison path: `C:/Users/mathe/AppData/Local/Temp/gstore-flash-mobile-home-vs-catalog.png` (526 × 98 px).
 - Post-fix implementation screenshot path: indisponível antes da sincronização do ambiente.
 - Implementation URL: `https://lojateste.kivodigital.com.br/ofertas-relampago/`.
-- Viewport: recorte fornecido pelo usuário de uma tela mobile real; breakpoint implementado em até 640 px.
-- Density normalization: não necessária para o recorte; nenhuma emulação de viewport foi usada no navegador desktop.
-- State: topo branco da página dedicada de ofertas relâmpago no mobile.
-- Full-view comparison evidence: não aplicável; o alvo é um único elemento isolado da faixa superior.
-- Focused region comparison evidence: o recorte mostra apenas o título que deve ser removido.
-- Fonts and typography: somente o título superior é ocultado; nenhuma propriedade tipográfica restante foi alterada.
-- Spacing and layout rhythm: removida a margem superior residual das ações após ocultar o título.
-- Colors and visual tokens: não alterados.
-- Image quality and asset fidelity: não há imagens ou assets envolvidos.
-- Copy and content: o texto continua no cabeçalho amarelo da campanha; apenas a duplicação na faixa branca é ocultada.
-- Primary interactions tested: não aplicável à regra visual; filtros e breadcrumb não foram ocultados.
-- Console errors checked: captura pós-fix não disponível; sem emulação no navegador do usuário.
+- Viewport: capturas mobile fornecidas pelo usuário; breakpoint implementado até 768 px.
+- Density normalization: comparação por proporção e estrutura; os recortes têm diferença de 6 px de largura e não foram redimensionados.
+- State: campanha ativa, cabeçalho com selo “Ao vivo” e timer em execução.
+- Full-view comparison evidence: o cabeçalho da home ocupa 79 px no recorte; o atual ocupa 98 px e apresenta sobreposição no primeiro bloco.
+- Focused region comparison evidence: a composição lado a lado mostra a coluna rígida da página dedicada atravessando o limite do título e do selo.
+- Fonts and typography: família e peso existentes foram preservados; tamanhos, letter-spacing e line-height mobile passam a usar os valores da home.
+- Spacing and layout rhythm: grade, gaps, margens e padding interno do cabeçalho foram igualados ao padrão mobile da home, considerando o padding já fornecido pela página dedicada.
+- Colors and visual tokens: cores, bordas, textura e sombras não foram alteradas.
+- Image quality and asset fidelity: os ícones Font Awesome existentes foram preservados; não há novos assets.
+- Copy and content: desktop mantém “Produtos selecionados com preços especiais por tempo limitado.”; mobile usa “Preços especiais por tempo limitado”, como a home.
+- Primary interactions tested: o timer continua com os mesmos atributos de atualização; não houve mudança de JavaScript.
+- Console errors checked: não disponível, pois o navegador interno encontrou a autenticação protegida da loja teste.
 
 ## Comparison history
 
-1. Antes do ajuste: o título aparece sozinho no topo branco e aumenta a altura da área superior.
-2. Correção: `display: none` aplicado ao título apenas até 640 px, com a margem superior das ações zerada.
-3. Pós-fix: validação visual real ainda depende da sincronização da `alpha` no ambiente de teste.
+1. Antes do ajuste: grade mobile herda uma coluna mínima de 330 px, título maior e valores compactos específicos do catálogo.
+2. Correção: grade, tipografia e relógio são redefinidos no mobile com as proporções da home; subtítulo curto é exibido somente nessa resolução.
+3. Pós-fix: sintaxe PHP, assets minificados, escopo CSS e testes automatizados passaram; falta captura visual após a sincronização.
 
 final result: blocked
