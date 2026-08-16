@@ -1,51 +1,51 @@
-# Design QA — alinhamento do cabeçalho de ofertas relâmpago
+# Design QA — faixa branca do cabeçalho de ofertas relâmpago
 
 **Findings**
 
-- [P1] O cabeçalho publicado ultrapassa os limites laterais dos três cards.
-  Location: `/ofertas-relampago/`, `.gstore-flash-sale-heading`.
-  Evidence: no viewport de 1536 × 695, os cards ocupam `x=438` até `x=1389` (951 px), enquanto título, status ao vivo e cronômetro ocupam `x=364` até `x=1463` (1099 px).
-  Impact: título e cronômetro parecem desconectados da grade e criam duas margens laterais diferentes na mesma seção.
-  Fix: aplicado no commit `ce2f4bb`: cabeçalho limitado a 951 px, centralizado e mantido responsivo com largura de 100%.
+- [P2] O intervalo abaixo do cabeçalho ainda aparece preto no ambiente de teste.
+  Location: `/ofertas-relampago/`, entre `.Gstore-flash-sale-page__topbar` e `.Gstore-flash-sale-page__stage`.
+  Evidence: no viewport de 1536 × 695 CSS px, o cabeçalho termina em `y=204,8` e a área texturizada começa em `y=228,8`; o intervalo de 24 px recebe o fundo preto do elemento principal.
+  Impact: a faixa branca fica visualmente interrompida por uma barra preta lisa antes da área de ofertas.
+  Fix: o seletor global de fundo preto passou a excluir `.Gstore-flash-sale-page`, permitindo que o intervalo use o fundo branco do cabeçalho. A área de ofertas mantém seu próprio fundo preto texturizado.
 
 **Open Questions**
 
-- Nenhuma sobre o design. A validação final depende de o ambiente de homologação receber o commit `ce2f4bb` da branch `alpha`.
+- Nenhuma sobre o ajuste. A captura final depende de o ambiente de teste sincronizar o commit `5147724` da branch `alpha`.
 
 **Implementation Checklist**
 
-1. Publicar o commit `ce2f4bb` no ambiente de homologação.
-2. Confirmar cabeçalho em `x=438`, largura de 951 px e término em `x=1389` no viewport de 1536 px.
-3. Confirmar que título, subtítulo, “Ao vivo” e cronômetro permanecem dentro dessa caixa.
-4. Conferir que tablet e celular continuam usando 100% da largura disponível.
+1. Sincronizar o commit `5147724` no ambiente de teste.
+2. Confirmar que os 24 px entre o cabeçalho e a área texturizada aparecem brancos.
+3. Confirmar que a área de ofertas continua preta e texturizada.
+4. Confirmar que título, breadcrumb, filtros e cards não sofreram alteração.
 
 **Follow-up Polish**
 
-- Nenhum ajuste adicional foi identificado para tipografia, cores, imagens ou conteúdo nesta rodada.
+- Nenhum refinamento adicional foi identificado nesta alteração isolada.
 
 ## Comparison evidence
 
-- Source visual truth path: `C:/Users/mathe/AppData/Local/Temp/codex-clipboard-7f4f65c9-808c-451e-830d-ba5a8a4f3c6e.png` (1495 × 561 px).
-- Implementation screenshot path: `C:/Users/mathe/AppData/Local/Temp/gstore-flash-heading-before-ce2f4bb-1536x695.png` (1536 × 695 px).
+- Source visual truth path: `C:/Users/mathe/AppData/Local/Temp/codex-clipboard-fdb13c0d-2dae-4dda-872c-4a4bac51965f.png` (1900 × 124 px).
+- Implementation screenshot path: `C:/Users/mathe/AppData/Local/Temp/gstore-flash-white-strip-before-b8f79ab-1536x695.png` (1521 × 633 px).
 - Implementation URL: `https://lojateste.kivodigital.com.br/ofertas-relampago/`.
-- Viewport: 1536 × 695 CSS px, densidade 1×.
-- State: campanha ativa, cabeçalho, cronômetro e primeira linha de três cards visíveis.
-- Density normalization: a referência do usuário foi usada como evidência focada; as medidas objetivas vieram do DOM renderizado em 1536 × 695.
-- Full-view comparison evidence: o cabeçalho publicado ocupa 1099 px, mas a área visual formada pelos três cards ocupa 951 px.
-- Focused region comparison evidence: borda esquerda do cabeçalho em 364 contra primeiro card em 438; borda direita do cabeçalho em 1463 contra terceiro card em 1389.
-- Fonts and typography: tamanhos, pesos, quebras e hierarquia permanecem inalterados; somente a caixa de alinhamento foi ajustada.
-- Spacing and layout rhythm: correção de `max-width: 951px` e `margin: 0 auto 12px` aplicada ao cabeçalho.
-- Colors and visual tokens: preto, branco, amarelo e vermelho permanecem inalterados.
-- Image quality and asset fidelity: cards e imagens de produtos não foram modificados.
-- Copy and content: título, subtítulo, status e unidades do cronômetro permanecem inalterados.
-- Primary interactions tested: carregamento da página e atualização do cronômetro; nenhum comportamento interativo foi alterado.
-- Console errors checked: nenhum erro relacionado ao layout foi observado.
+- Viewport: 1536 × 695 CSS px; captura retornada pelo navegador em 1521 × 633 px.
+- State: página de ofertas relâmpago carregada, cabeçalho branco e início da área texturizada visíveis.
+- Density normalization: a referência é um recorte focado do cabeçalho; a implementação foi medida no DOM em CSS px. Não há julgamento de escala tipográfica nesta rodada.
+- Full-view comparison evidence: a implementação publicada ainda exibe uma faixa preta lisa entre o cabeçalho branco e a área texturizada.
+- Focused region comparison evidence: a própria referência é o recorte focado da transição; não foi necessário um segundo recorte.
+- Fonts and typography: família, peso, tamanho, altura de linha e conteúdo não foram alterados.
+- Spacing and layout rhythm: o intervalo existente de 24 px foi preservado; somente sua cor de fundo foi corrigida.
+- Colors and visual tokens: o intervalo passa de `rgb(8, 10, 11)` para branco; o fundo texturizado da área de ofertas permanece inalterado.
+- Image quality and asset fidelity: textura e imagens de produtos não foram modificadas.
+- Copy and content: título, breadcrumb e demais textos permanecem inalterados.
+- Primary interactions tested: carregamento da página; nenhuma interação foi alterada.
+- Console errors checked: nenhum erro relacionado a esta alteração foi observado.
 
 ## Comparison history
 
-1. Rodada anterior: cards da página mediam 313 × 311 px; correção `9360a76` aplicada e já observada na homologação em 309 × 440 px.
-2. Rodada atual, antes do ajuste: cabeçalho em `x=364..1463`; cards em `x=438..1389`.
-3. Correção aplicada: cabeçalho limitado à mesma largura total de 951 px dos três cards no commit `ce2f4bb`.
-4. Pós-fix: o commit está em `origin/alpha`, mas ainda não foi renderizado na homologação para a captura final.
+1. Antes do ajuste: `.Gstore-flash-sale-page` recebia o fundo preto de uma regra global mais específica; o intervalo entre topbar e stage media 24 px.
+2. Primeira correção `b8f79ab`: tornou o fundo branco importante, mas ainda perdia em especificidade para a regra global.
+3. Correção definitiva `5147724`: a regra global foi limitada para não pintar o elemento principal da página; validações de assets, escopo CSS e testes passaram.
+4. Pós-fix: o ambiente de teste ainda serve o CSS anterior (`flash-sale.min.css?ver=1786902142`), portanto ainda não existe captura renderizada do resultado final.
 
 final result: blocked
