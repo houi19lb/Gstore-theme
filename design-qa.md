@@ -1,12 +1,12 @@
-# Design QA — respiro do ícone do relógio responsivo
+# Design QA — equilíbrio lateral do relógio responsivo
 
 **Findings**
 
-- [P2] O ícone do relógio encosta no texto “TERMINA EM” na faixa intermediária.
-  Location: cabeçalho da página dedicada entre 769 px e 1100 px.
-  Evidence: a captura mostra o ícone ocupando uma coluna de 12 px embora seu tamanho renderizado seja próximo de 14 px, deixando o texto visualmente colado.
-  Impact: o início do contador perde legibilidade e parece sobreposto.
-  Fix: a coluna exclusiva do ícone passou de 12 px para 14 px e o espaço até o rótulo passou de 2 px para 3 px, sem aumentar o padding geral do contador.
+- [P2] O ícone ainda precisa de mais respiro e as margens visuais das extremidades não estão equilibradas.
+  Location: contador da página dedicada entre 769 px e 1100 px.
+  Evidence: a captura mostra pouco espaço entre o ícone e “TERMINA EM”, enquanto o conteúdo dos segundos termina mais distante da borda direita.
+  Impact: o bloco parece comprimido à esquerda e deslocado visualmente para a direita.
+  Fix: a coluna do ícone passou para 16 px, o gap adjacente para 4 px e o padding horizontal externo para 6 px; a unidade de segundos foi alinhada ao fim para igualar a margem visual direita à margem esquerda do ícone.
 
 **Open Questions**
 
@@ -16,25 +16,25 @@
 
 1. Sincronizar a branch `alpha`.
 2. Repetir a largura intermediária da captura.
-3. Confirmar o respiro entre o ícone e “TERMINA EM”.
-4. Confirmar que a borda do contador continua livre do subtítulo.
+3. Comparar a distância antes do ícone com a distância depois dos segundos.
+4. Confirmar que o relógio permanece livre do subtítulo.
 
 **Follow-up Polish**
 
-- Nenhuma mudança foi aplicada aos números, cards, filtros ou demais breakpoints.
+- Nenhuma mudança foi aplicada aos números, textos, cards, filtros ou demais breakpoints.
 
 ## Comparison evidence
 
-- Source visual truth path: `C:/Users/mathe/AppData/Local/Temp/codex-clipboard-fccde2b7-7fc7-4210-9c7f-ab8f5bc42ef9.png` (309 × 159 px), com o ícone próximo demais do rótulo.
+- Source visual truth path: `C:/Users/mathe/AppData/Local/Temp/codex-clipboard-330dc081-d619-41cd-930a-29ead8c6e692.png` (277 × 104 px), com assimetria perceptível entre as extremidades do contador.
 - Post-fix implementation screenshot path: indisponível antes da sincronização do ambiente.
 - Implementation URL: `https://lojateste.kivodigital.com.br/ofertas-relampago/`.
 - Viewport: recorte da faixa responsiva intermediária; a captura não exibe o valor exato da largura CSS.
-- Density normalization: não aplicada; a avaliação usa a relação visual entre ícone, rótulo e borda.
+- Density normalization: não aplicada; a avaliação usa as distâncias visuais entre borda, ícone e segundos.
 - State: campanha ativa, contador visível e ordenação logo abaixo.
 - Full-view comparison evidence: não necessária para esta correção pontual; nenhuma estrutura externa foi alterada.
-- Focused region comparison evidence: o recorte mostra o ícone praticamente encostado em “TERMINA EM”.
+- Focused region comparison evidence: o recorte mostra o ícone comprimido à esquerda e uma sobra maior depois dos segundos.
 - Fonts and typography: preservadas.
-- Spacing and layout rhythm: somente a coluna do ícone e o gap adjacente foram aumentados.
+- Spacing and layout rhythm: coluna do ícone, gap e padding horizontal ajustados; segundos alinhados à borda interna direita.
 - Colors and visual tokens: não alterados.
 - Image quality and asset fidelity: o ícone existente foi preservado; nenhum asset novo foi criado.
 - Copy and content: não alterados.
@@ -43,8 +43,8 @@
 
 ## Comparison history
 
-1. Estado anterior: coluna do ícone com 12 px e gap de 2 px.
-2. Correção atual: coluna do ícone com 14 px e gap de 3 px.
+1. Estado anterior: coluna do ícone com 14 px, gap de 3 px e padding horizontal de 4 px.
+2. Correção atual: coluna de 16 px, gap de 4 px, padding horizontal de 6 px e segundos alinhados ao fim.
 3. Pós-fix: falta captura após sincronização para encerrar a comparação visual.
 
 final result: blocked
