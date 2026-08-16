@@ -1950,9 +1950,9 @@ body:has(.Gstore-flash-sale-page) .Gstore-catalog-sidebar__inner.Gstore-catalog-
 }
 
 @media (max-width: 1024px) {
-  .Gstore-flash-sale-page__topbar-content {
+  .Gstore-flash-sale-page .Gstore-flash-sale-page__topbar-content.alignwide {
     width: calc(100% - 32px) !important;
-    padding: 14px 0 12px;
+    padding: 12px 0 !important;
   }
 
   .Gstore-flash-sale-page .Gstore-catalog-header {
@@ -1967,6 +1967,7 @@ body:has(.Gstore-flash-sale-page) .Gstore-catalog-sidebar__inner.Gstore-catalog-
   }
 
   .Gstore-flash-sale-page__stage {
+    margin-top: 0 !important;
     padding: 18px 16px 38px;
   }
 
@@ -1976,6 +1977,9 @@ body:has(.Gstore-flash-sale-page) .Gstore-catalog-sidebar__inner.Gstore-catalog-
   }
 
   .Gstore-flash-sale-page .Gstore-catalog-sidebar {
+    flex: 0 0 0 !important;
+    height: 0;
+    min-height: 0;
     width: 100%;
     margin: 0;
   }
@@ -1992,16 +1996,75 @@ body:has(.Gstore-flash-sale-page) .Gstore-catalog-sidebar__inner.Gstore-catalog-
   }
 }
 
-@media (max-width: 640px) {
-  .Gstore-flash-sale-page__topbar-content {
-    padding: 12px 0;
+@media (max-width: 768px) {
+  .Gstore-flash-sale-page .gstore-flash-sale-section--catalog .gstore-flash-sale-heading {
+    grid-template-areas: "intro live" "clock clock";
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: start;
+    column-gap: 12px;
+    row-gap: 10px;
+    margin: 0 0 18px;
+    padding: 2px 0;
   }
 
+  .Gstore-flash-sale-page .gstore-flash-sale-section--catalog .gstore-flash-sale-heading h2 {
+    gap: 8px;
+    font-size: clamp(1.15rem, 5.2vw, 1.4rem);
+    letter-spacing: -.04em;
+  }
+
+  .Gstore-flash-sale-page .gstore-flash-sale-section--catalog .gstore-flash-sale-heading p {
+    margin: 5px 0 0;
+    padding: 0;
+    font-size: .74rem;
+    line-height: 1.5;
+    white-space: normal;
+  }
+
+  .Gstore-flash-sale-page .gstore-flash-sale-section--catalog .gstore-flash-sale-clock {
+    grid-template-columns: 18px auto minmax(0, 1fr);
+    column-gap: 8px;
+    min-height: 0;
+    padding: 8px 9px;
+  }
+
+  .Gstore-flash-sale-page .gstore-flash-sale-section--catalog .gstore-flash-sale-clock > i {
+    font-size: 1rem;
+  }
+
+  .Gstore-flash-sale-page .gstore-flash-sale-section--catalog .gstore-flash-sale-clock__label {
+    margin-right: 0;
+    font-size: .63rem;
+  }
+
+  .Gstore-flash-sale-page .gstore-flash-sale-section--catalog .gstore-flash-sale-clock__mobile-units > [data-gstore-flash-sale-mobile-countdown] {
+    font-size: 1.25rem;
+    line-height: 1;
+  }
+
+  .Gstore-flash-sale-page .gstore-flash-sale-section--catalog .gstore-flash-sale-clock__mobile-units > [data-gstore-flash-sale-mobile-countdown]::after {
+    font-size: .5rem;
+  }
+}
+
+@media (max-width: 640px) {
   .Gstore-flash-sale-page .Gstore-catalog-title {
     font-size: 1.25rem;
   }
 
   .Gstore-flash-sale-page .Gstore-breadcrumb {
     font-size: .78rem;
+  }
+}
+
+@media (max-width: 340px) {
+  .Gstore-flash-sale-page .gstore-flash-sale-section--catalog .gstore-flash-sale-heading h2 {
+    font-size: 1.05rem;
+  }
+
+  .Gstore-flash-sale-page .gstore-flash-sale-section--catalog .gstore-flash-sale-live {
+    gap: 5px;
+    padding: 8px;
+    font-size: .61rem;
   }
 }
