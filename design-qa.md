@@ -1,51 +1,51 @@
-# Design QA — alinhamento lateral do breadcrumb
+# Design QA — cabeçalho mobile das ofertas relâmpago
 
 **Findings**
 
-- [P2] O ambiente de teste ainda posiciona o breadcrumb 37 px além da borda direita do terceiro card.
-  Location: `/ofertas-relampago/`, `.Gstore-catalog-header` e `.Gstore-breadcrumb`.
-  Evidence: no CSS publicado, o cabeçalho mede 1280 px e termina em `x=1400,4`; o terceiro card termina em `x=1363,4`. A implementação local limita o cabeçalho a 1243 px, exatamente a largura ocupada por filtro, gap e três cards.
-  Impact: a faixa branca perde o mesmo eixo lateral usado pela área principal da página.
-  Fix: aplicado no commit `3a9d759`; falta o ambiente de teste sincronizar a nova versão do asset.
+- [P1] O ambiente de teste ainda exibe um vazio de 260 px antes do cabeçalho da campanha e comprime o título no mobile.
+  Location: `/ofertas-relampago/`, `.Gstore-catalog-sidebar` e `.gstore-flash-sale-heading` em 390 px.
+  Evidence: a referência da home mostra título, selo “Ao vivo” e timer em um bloco de 103,4 px. Na página dedicada publicada, o filtro fechado reserva 260 px e o grid do cabeçalho usa colunas de `12,4px 360px`, deixando título e subtítulo sem largura útil.
+  Impact: o principal conteúdo promocional fica fora da primeira dobra e o bloco mais importante da página perde legibilidade.
+  Fix: aplicado no commit `6c9423c`; o filtro fechado deixa de reservar altura, o cabeçalho volta a `minmax(0, 1fr) auto` e o timer recebe as mesmas medidas mobile da home.
 
 **Open Questions**
 
-- Nenhuma sobre o alinhamento. A captura final depende apenas da sincronização do ambiente de teste com a branch `alpha`.
+- Nenhuma sobre a direção visual. A comparação pós-fix depende da sincronização do ambiente de teste com a branch `alpha`.
 
 **Implementation Checklist**
 
-1. Sincronizar o commit `3a9d759` no ambiente de teste.
-2. Confirmar que o breadcrumb termina em `x=1363,4`, no mesmo eixo do terceiro card.
-3. Confirmar que o título continua começando em `x=120,4`, alinhado ao filtro.
-4. Revalidar o cabeçalho responsivo abaixo de 1024 px.
+1. Sincronizar o commit `6c9423c` no ambiente de teste.
+2. Confirmar que o cabeçalho da campanha começa logo após o padding superior da área preta.
+3. Confirmar título e selo “Ao vivo” na primeira linha, subtítulo abaixo e timer em largura total.
+4. Confirmar o comportamento em 390 px e 320 px, incluindo a abertura do painel de filtros.
 
 **Follow-up Polish**
 
-- Nenhum refinamento adicional foi identificado nesta correção isolada.
+- Nenhum refinamento P3 foi identificado antes da captura pós-fix.
 
 ## Comparison evidence
 
-- Source visual truth path: `C:/Users/mathe/AppData/Local/Temp/codex-clipboard-b2410d11-c13c-41ad-baba-ff4506d206db.png` (1616 × 235 px) e requisito textual de alinhar o breadcrumb à borda dos cards.
-- Implementation screenshot path: `C:/Users/mathe/AppData/Local/Temp/gstore-breadcrumb-before-3a9d759-1521x235.png` (1521 × 235 px).
-- Combined comparison path: `C:/Users/mathe/AppData/Local/Temp/gstore-breadcrumb-comparison-3a9d759.png`.
+- Source visual truth path: `C:/Users/mathe/AppData/Local/Temp/gstore-home-flash-mobile-reference-390x844.png` (375 × 811 px), versão mobile da home no mesmo ambiente.
+- Implementation screenshot path: `C:/Users/mathe/AppData/Local/Temp/gstore-flash-page-mobile-before-top-383x844.png` (383 × 844 px).
+- Combined comparison path: `C:/Users/mathe/AppData/Local/Temp/gstore-flash-mobile-comparison-before-v2.png`.
 - Implementation URL: `https://lojateste.kivodigital.com.br/ofertas-relampago/`.
-- Viewport: 1536 px de largura; área útil de 1521 px; recorte comparado de 1521 × 235 CSS px.
-- Density normalization: `devicePixelRatio=1.25`; a captura do navegador foi retornada em 1 px por CSS px para o recorte. A comparação geométrica usou medidas DOM em CSS px.
-- State: campanha ativa, faixa branca, cabeçalho da campanha e início dos cards visíveis.
-- Full-view comparison evidence: título da faixa branca alinhado ao filtro; breadcrumb ainda alinhado ao fim do contêiner de 1280 px no asset publicado.
-- Focused region comparison evidence: breadcrumb publicado termina em `x=1400,4`; terceiro card termina em `x=1363,4`; diferença objetiva de 37 px.
-- Fonts and typography: nenhuma propriedade tipográfica foi alterada.
-- Spacing and layout rhythm: somente o limite máximo do cabeçalho mudou de 1280 px para 1243 px; cards, filtro, gaps e paddings foram preservados.
-- Colors and visual tokens: nenhuma cor ou token foi alterado.
-- Image quality and asset fidelity: nenhuma imagem, textura ou ícone foi alterado.
-- Copy and content: nenhum texto foi alterado.
-- Primary interactions tested: carregamento da página e medição dos limites laterais; nenhuma interação funcional foi afetada.
+- Viewport: 390 × 844 CSS px; as capturas refletem a largura útil depois da barra de rolagem do navegador.
+- Density normalization: ambas as páginas foram medidas no mesmo navegador e viewport; a comparação geométrica usa CSS px.
+- State: campanha ativa, cabeçalho promocional e primeiro card visíveis; a home foi rolada até a seção equivalente.
+- Full-view comparison evidence: a home apresenta o bloco promocional imediatamente antes dos cards; a página dedicada publicada contém um vazio preto de 260 px entre a navegação e o cabeçalho da campanha.
+- Focused region comparison evidence: home usa colunas `260,5px 85,9px`, gap de 12 px, título de 20,3 px e timer de 47,4 px; página dedicada publicada usa `12,4px 360px`, título de 27,2 px e timer com largura extrapolada para 390,4 px.
+- Fonts and typography: o fix replica os tamanhos mobile da home para título, selo, rótulo e unidades do timer; o subtítulo mantém a cópia da página e pode quebrar naturalmente.
+- Spacing and layout rhythm: removidos 260 px reservados pelo filtro fechado e 24 px de margem entre a faixa branca e a área preta; padding superior da faixa branca reduzido para 12 px.
+- Colors and visual tokens: cores, bordas, textura e contraste permanecem os mesmos da campanha existente.
+- Image quality and asset fidelity: nenhuma imagem, textura, ícone ou foto de produto foi alterada.
+- Copy and content: textos e contagem regressiva foram preservados.
+- Primary interactions tested: carregamento responsivo e estrutura do painel lateral; a abertura pós-fix do filtro aguarda o CSS novo no ambiente.
 - Console errors checked: nenhum erro ou aviso relacionado ao componente foi observado.
 
 ## Comparison history
 
-1. Antes do ajuste: título em `x=120,4`, filtro em `x=120,4`, breadcrumb terminando em `x=1400,4` e terceiro card em `x=1363,4`.
-2. Correção `3a9d759`: `.Gstore-catalog-header` limitado a 1243 px, mantendo a origem em `x=120,4` e trazendo o limite direito esperado para `x=1363,4`.
-3. Pós-fix: validações locais passaram, mas o ambiente de teste ainda serve `flash-sale.min.css?ver=1786902736`, com `max-width: none` no cabeçalho; não há captura renderizada da versão final.
+1. Antes do ajuste: filtro fechado com 260 px de altura, cabeçalho iniciando em `y=526,4`, grid `12,4px 360px`, título de 27,2 px e subtítulo sem largura útil.
+2. Correção `6c9423c`: filtro fechado passa a `flex-basis: 0` e altura zero; margem superior da área preta removida; cabeçalho e timer recebem a composição mobile da home.
+3. Pós-fix: validações locais passaram, mas o ambiente ainda serve `flash-sale.min.css?ver=1786902736`; a captura publicada permanece anterior ao commit.
 
 final result: blocked
