@@ -1541,7 +1541,7 @@ body:has(.Gstore-flash-sale-page) .wp-site-blocks > .wp-block-group:not(header):
 .Gstore-flash-sale-page .Gstore-flash-sale-page__content.alignwide {
   box-sizing: border-box;
   width: 100%;
-  max-width: 1440px !important;
+  max-width: 1280px !important;
   margin: 0 auto !important;
 }
 
