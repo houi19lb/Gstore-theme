@@ -1930,7 +1930,8 @@ body:has(.Gstore-flash-sale-page) .wp-site-blocks > .wp-block-group:not(header):
   .Gstore-flash-sale-page .gstore-flash-sale-section--catalog .Gstore-products-grid ul.products,
   .Gstore-flash-sale-page .gstore-flash-sale-section--catalog .Gstore-products-grid .wc-block-product-template,
   .Gstore-flash-sale-page .gstore-flash-sale-section--catalog .Gstore-products-grid ul.wc-block-product-template {
-    grid-template-columns: repeat(3, minmax(0, 360px)) !important;
+    grid-template-columns: repeat(3, minmax(0, 313px)) !important;
+    gap: 24px !important;
     justify-content: center;
   }
 }
