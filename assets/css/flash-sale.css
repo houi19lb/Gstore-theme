@@ -12,6 +12,58 @@
   padding: 28px;
 }
 
+body:has(.Gstore-flash-sale-page),
+body:has(.Gstore-flash-sale-page) .wp-site-blocks,
+body:has(.Gstore-flash-sale-page) .wp-site-blocks > .wp-block-group:not(header):not(footer) {
+  background-color: #0b0d0f !important;
+}
+
+.Gstore-flash-sale-page {
+  min-height: 100vh;
+  background-color: #0b0d0f;
+  background-image: url('../images/flash-sale-panel-texture.png');
+  background-position: center;
+  background-size: cover;
+  padding: clamp(20px, 2.25vw, 32px) clamp(16px, 2vw, 30px) clamp(32px, 4vw, 60px);
+}
+
+.Gstore-flash-sale-page__content {
+  max-width: 1440px;
+  margin-inline: auto;
+}
+
+.gstore-flash-sale-section--catalog {
+  max-width: 1440px;
+  min-height: calc(100vh - 180px);
+  margin: 0 auto;
+  border: 0;
+  border-radius: 0;
+  background-color: transparent;
+  background-image: none;
+  padding: 0;
+}
+
+.gstore-flash-sale-section--catalog .Gstore-products-grid {
+  width: 100%;
+}
+
+.gstore-flash-sale-section--catalog .woocommerce-pagination {
+  margin-top: 28px;
+}
+
+.gstore-flash-sale-section--catalog .woocommerce-pagination a,
+.gstore-flash-sale-section--catalog .woocommerce-pagination span {
+  border-color: rgba(255, 196, 56, .55);
+  background: #101214;
+  color: #fff;
+}
+
+.gstore-flash-sale-section--catalog .woocommerce-pagination .current,
+.gstore-flash-sale-section--catalog .woocommerce-pagination a:hover {
+  background: #ffc438;
+  color: #141414;
+}
+
 .gstore-flash-sale-upcoming {
   --gstore-flash-upcoming-gold: #ffc438;
   --gstore-flash-sale-progress: 0%;

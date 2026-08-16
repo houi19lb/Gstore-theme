@@ -13711,10 +13711,11 @@ function gstore_render_flash_sale_catalog() {
 	);
 
 	return sprintf(
-		'<section class="gstore-flash-sale-catalog" aria-label="%1$s"><header class="gstore-flash-sale-catalog__header"><div><p class="gstore-flash-sale-catalog__eyebrow"><i class="fa-solid fa-bolt" aria-hidden="true"></i> %1$s</p><p class="gstore-flash-sale-catalog__description">%2$s</p></div><div class="gstore-flash-sale-catalog__timer"><span>%3$s</span><time data-gstore-flash-sale-end="%4$s">--:--:--</time></div></header><div class="Gstore-products-grid Gstore-products-grid--light">%5$s</div></section>',
+		'<section class="gstore-flash-sale-section gstore-flash-sale-section--catalog" aria-label="%1$s"><header class="gstore-flash-sale-heading"><div class="gstore-flash-sale-heading__intro"><h2><i class="fa-solid fa-bolt" aria-hidden="true"></i> %1$s</h2><p>%2$s</p></div><div class="gstore-flash-sale-live"><i class="fa-solid fa-circle" aria-hidden="true"></i><span>%4$s</span></div><div class="gstore-flash-sale-clock"><i class="fa-regular fa-clock" aria-hidden="true"></i><span class="gstore-flash-sale-clock__label">%3$s</span><time data-gstore-flash-sale-end="%5$s">--:--:--</time><span class="gstore-flash-sale-clock__mobile-units" aria-live="polite"><span data-gstore-flash-sale-mobile-countdown="days">00</span><span data-gstore-flash-sale-mobile-countdown="hours">00</span><span data-gstore-flash-sale-mobile-countdown="minutes">00</span><span data-gstore-flash-sale-mobile-countdown="seconds">00</span></span></div></header><div class="Gstore-products-grid">%6$s</div></section>',
 		esc_html__( 'Ofertas relâmpago', 'gstore' ),
 		esc_html__( 'Produtos selecionados com preços especiais por tempo limitado.', 'gstore' ),
 		esc_html__( 'Termina em', 'gstore' ),
+		esc_html__( 'Ao vivo', 'gstore' ),
 		esc_attr( (string) $campaign['ends_at'] ),
 		do_shortcode( $shortcode )
 	);
