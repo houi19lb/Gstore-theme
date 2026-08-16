@@ -1459,9 +1459,15 @@ body:has(.Gstore-flash-sale-page) .wp-site-blocks > .wp-block-group:not(header):
 
 /* Página dedicada: mantém a navegação e os filtros, mas no mesmo acabamento da campanha. */
 body:has(.Gstore-flash-sale-page),
-body:has(.Gstore-flash-sale-page) .wp-site-blocks,
+body:has(.Gstore-flash-sale-page) .wp-site-blocks {
+  background-color: #080a0b !important;
+  background-image: url('../images/flash-sale-panel-texture.png') !important;
+  background-position: center top;
+  background-size: cover !important;
+}
+
 body:has(.Gstore-flash-sale-page) .wp-site-blocks > .wp-block-group:not(header):not(footer) {
-  background: #fff !important;
+  background-color: #080a0b !important;
 }
 
 .Gstore-flash-sale-page {
