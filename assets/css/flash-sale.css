@@ -1751,73 +1751,6 @@ body:has(.Gstore-flash-sale-page) .wp-site-blocks > .wp-block-group:not(header):
   font-size: .46rem;
 }
 
-/* Mantém a estrutura padrão do card, mas traz o catálogo da campanha para a
- * mesma densidade visual das grades regulares. */
-.Gstore-flash-sale-page .gstore-flash-sale-section--catalog .Gstore-product-card__top {
-  height: auto !important;
-  aspect-ratio: 2.35 / 1;
-  margin: 8px 8px 0;
-  padding: 10px !important;
-}
-
-.Gstore-flash-sale-page .gstore-flash-sale-section--catalog .Gstore-product-card__image {
-  height: 100% !important;
-}
-
-.Gstore-flash-sale-page .gstore-flash-sale-section--catalog .Gstore-product-card__badge {
-  top: 8px !important;
-  left: 8px !important;
-  font-size: .64rem !important;
-  padding: 5px 8px !important;
-}
-
-.Gstore-flash-sale-page .gstore-flash-sale-section--catalog .Gstore-product-card__favorite {
-  top: 10px !important;
-  right: 10px !important;
-  transform: scale(.84);
-  transform-origin: top right;
-}
-
-.Gstore-flash-sale-page .gstore-flash-sale-section--catalog .Gstore-product-card__meta {
-  padding: 8px 12px 5px !important;
-}
-
-.Gstore-flash-sale-page .gstore-flash-sale-section--catalog .Gstore-product-card__title,
-.Gstore-flash-sale-page .gstore-flash-sale-section--catalog .Gstore-product-card__title a {
-  font-size: .82rem !important;
-  line-height: 1.22 !important;
-}
-
-.Gstore-flash-sale-page .gstore-flash-sale-section--catalog .Gstore-product-card__price-section {
-  padding: 0 12px 8px !important;
-}
-
-.Gstore-flash-sale-page .gstore-flash-sale-section--catalog .Gstore-product-card__price-original {
-  font-size: .75rem !important;
-}
-
-.Gstore-flash-sale-page .gstore-flash-sale-section--catalog .Gstore-product-card__price-row,
-.Gstore-flash-sale-page .gstore-flash-sale-section--catalog .Gstore-product-card__price-row .woocommerce-Price-amount {
-  font-size: clamp(1.25rem, 1.6vw, 1.65rem) !important;
-}
-
-.Gstore-flash-sale-page .gstore-flash-sale-section--catalog .Gstore-product-card__price-details {
-  gap: 0 4px !important;
-  font-size: .75rem !important;
-}
-
-.Gstore-flash-sale-page .gstore-flash-sale-section--catalog .Gstore-product-card__footer {
-  padding: 0 12px 12px !important;
-}
-
-.Gstore-flash-sale-page .gstore-flash-sale-section--catalog .Gstore-product-card__footer .button,
-.Gstore-flash-sale-page .gstore-flash-sale-section--catalog .Gstore-product-card__footer .add_to_cart_button,
-.Gstore-flash-sale-page .gstore-flash-sale-section--catalog .Gstore-product-card__footer .product_type_simple,
-.Gstore-flash-sale-page .gstore-flash-sale-section--catalog .Gstore-product-card__footer .ajax_add_to_cart {
-  padding: 8px 10px !important;
-  font-size: .75rem !important;
-}
-
 @media (max-width: 1200px) {
   .Gstore-flash-sale-page .gstore-flash-sale-section--catalog .gstore-flash-sale-heading {
     grid-template-columns: minmax(0, 1fr) minmax(330px, 360px);
@@ -1924,14 +1857,14 @@ body:has(.Gstore-flash-sale-page) .wp-site-blocks > .wp-block-group:not(header):
   }
 }
 
-/* Em telas largas, evita que cada card cresça além da largura da referência.
- * O grid e o conteúdo interno permanecem os mesmos. */
+/* Replica na página dedicada a mesma largura e o mesmo respiro dos cards da
+ * vitrine de ofertas relâmpago da homepage. */
 @media (min-width: 1025px) {
   .Gstore-flash-sale-page .gstore-flash-sale-section--catalog .Gstore-products-grid ul.products,
   .Gstore-flash-sale-page .gstore-flash-sale-section--catalog .Gstore-products-grid .wc-block-product-template,
   .Gstore-flash-sale-page .gstore-flash-sale-section--catalog .Gstore-products-grid ul.wc-block-product-template {
-    grid-template-columns: repeat(3, minmax(0, 313px)) !important;
-    gap: 24px !important;
+    grid-template-columns: repeat(3, minmax(0, 309px)) !important;
+    gap: 12px !important;
     justify-content: center;
   }
 }
