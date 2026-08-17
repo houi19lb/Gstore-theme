@@ -930,6 +930,12 @@ $stock_status            = (string) $product->get_stock_status();
 $is_variable             = $product->is_type( 'variable' );
 $sku                     = (string) $product->get_sku();
 $product_id              = (int) $product->get_id();
+$flash_sale_campaign     = function_exists( 'gstore_theme_get_product_flash_sale_campaign' )
+	? gstore_theme_get_product_flash_sale_campaign( $product_id )
+	: array();
+$flash_sale_ends_at      = ! empty( $flash_sale_campaign['ends_at'] ) && function_exists( 'gstore_theme_flash_sale_datetime_iso' )
+	? gstore_theme_flash_sale_datetime_iso( (string) $flash_sale_campaign['ends_at'] )
+	: '';
 $related_category_cards  = gstore_get_product_related_category_cards( $product_id );
 $is_public_draft_product = function_exists( 'gstore_theme_is_public_draft_product' )
 	? gstore_theme_is_public_draft_product( $product )
@@ -1447,6 +1453,24 @@ $gstore_tab_next_cta_labels = array(
 				</div>
 
 				<div class="Gstore-single-product__summary">
+					<?php if ( '' !== $flash_sale_ends_at ) : ?>
+						<section class="Gstore-single-product__flash-sale" aria-label="<?php esc_attr_e( 'Oferta relâmpago: tempo restante', 'gstore' ); ?>" data-gstore-flash-sale-clock>
+							<div class="Gstore-single-product__flash-sale-label">
+								<i class="fa-regular fa-clock" aria-hidden="true"></i>
+								<span>
+									<strong><?php esc_html_e( 'Oferta relâmpago', 'gstore' ); ?></strong>
+									<small><?php esc_html_e( 'Termina em', 'gstore' ); ?></small>
+								</span>
+							</div>
+							<time class="screen-reader-text" datetime="<?php echo esc_attr( $flash_sale_ends_at ); ?>" data-gstore-flash-sale-end="<?php echo esc_attr( $flash_sale_ends_at ); ?>">--:--:--</time>
+							<div class="Gstore-single-product__flash-sale-units" aria-live="polite">
+								<span class="Gstore-single-product__flash-sale-unit"><strong data-gstore-flash-sale-mobile-countdown="days">00</strong><small><?php esc_html_e( 'Dias', 'gstore' ); ?></small></span>
+								<span class="Gstore-single-product__flash-sale-unit"><strong data-gstore-flash-sale-mobile-countdown="hours">00</strong><small><?php esc_html_e( 'Horas', 'gstore' ); ?></small></span>
+								<span class="Gstore-single-product__flash-sale-unit"><strong data-gstore-flash-sale-mobile-countdown="minutes">00</strong><small><?php esc_html_e( 'Min', 'gstore' ); ?></small></span>
+								<span class="Gstore-single-product__flash-sale-unit"><strong data-gstore-flash-sale-mobile-countdown="seconds">00</strong><small><?php esc_html_e( 'Seg', 'gstore' ); ?></small></span>
+							</div>
+						</section>
+					<?php endif; ?>
 					<div class="Gstore-single-product__summary-card Gstore-single-product__buybox buybox <?php echo esc_attr( $buybox_stock_class ); ?>">
 						<!-- Preço -->
 						<?php if ( $show_buybox_header ) : ?>

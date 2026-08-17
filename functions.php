@@ -13537,6 +13537,34 @@ function gstore_theme_get_flash_sale_product_ids( $campaign = null ) {
 }
 
 /**
+ * Retorna a campanha ativa quando um produto participa da oferta relâmpago.
+ *
+ * @param int $product_id ID do produto.
+ * @return array<string,mixed>
+ */
+function gstore_theme_get_product_flash_sale_campaign( $product_id ) {
+	static $campaigns_by_product = array();
+
+	$product_id = absint( $product_id );
+	if ( $product_id <= 0 ) {
+		return array();
+	}
+	if ( array_key_exists( $product_id, $campaigns_by_product ) ) {
+		return $campaigns_by_product[ $product_id ];
+	}
+
+	$campaign = gstore_theme_get_active_flash_sale();
+	if ( empty( $campaign['ends_at'] ) ) {
+		$campaigns_by_product[ $product_id ] = array();
+		return $campaigns_by_product[ $product_id ];
+	}
+
+	$product_ids = gstore_theme_get_flash_sale_product_ids( $campaign );
+	$campaigns_by_product[ $product_id ] = in_array( $product_id, $product_ids, true ) ? $campaign : array();
+	return $campaigns_by_product[ $product_id ];
+}
+
+/**
  * Retorna a URL da página que lista toda a campanha ativa.
  *
  * @return string
@@ -13841,11 +13869,18 @@ add_action( 'wp_footer', 'gstore_render_single_flash_sale_floating_card', 35 );
  */
 function gstore_enqueue_flash_sale_assets() {
 	$is_flash_sale_page = function_exists( 'is_page' ) && is_page( 'ofertas-relampago' );
-	if ( ! is_front_page() && ! $is_flash_sale_page ) {
+	$is_flash_sale_product = false;
+	if ( function_exists( 'is_product' ) && is_product() ) {
+		$is_flash_sale_product = ! empty( gstore_theme_get_product_flash_sale_campaign( get_queried_object_id() ) );
+	}
+
+	if ( ! is_front_page() && ! $is_flash_sale_page && ! $is_flash_sale_product ) {
 		return;
 	}
 	$version = wp_get_theme()->get( 'Version' );
-	wp_enqueue_style( 'gstore-flash-sale', gstore_theme_asset_uri( 'assets/css/flash-sale.css' ), array( 'gstore-main' ), gstore_theme_asset_version( 'assets/css/flash-sale.css', $version ) );
+	if ( ! $is_flash_sale_product ) {
+		wp_enqueue_style( 'gstore-flash-sale', gstore_theme_asset_uri( 'assets/css/flash-sale.css' ), array( 'gstore-main' ), gstore_theme_asset_version( 'assets/css/flash-sale.css', $version ) );
+	}
 	wp_enqueue_script( 'gstore-flash-sale', gstore_theme_asset_uri( 'assets/js/flash-sale.js' ), array(), gstore_theme_asset_version( 'assets/js/flash-sale.js', $version ), true );
 }
 add_action( 'wp_enqueue_scripts', 'gstore_enqueue_flash_sale_assets', 25 );

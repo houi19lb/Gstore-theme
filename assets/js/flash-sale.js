@@ -5,7 +5,7 @@
   }
 
   function updateMobileTimerUnits(element, values) {
-    var clock = element.closest('.gstore-flash-sale-clock');
+    var clock = element.closest('[data-gstore-flash-sale-clock], .gstore-flash-sale-clock');
     if (!clock) return;
 
     clock.classList.toggle('gstore-flash-sale-clock--has-days', values.days > 0);
