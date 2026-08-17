@@ -563,7 +563,7 @@ body.single-product .onsale {
 	top: 13px;
 	bottom: 13px;
 	width: 1px;
-	background: rgba(181, 166, 66, 0.72);
+	background: var(--gstore-color-accent, #b5a642);
 }
 
 .Gstore-single-product__flash-sale-unit strong {
