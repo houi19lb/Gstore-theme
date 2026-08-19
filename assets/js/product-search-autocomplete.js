@@ -9,7 +9,17 @@
 	var endpoint = config.endpoint || '';
 	var minCharsRaw = config.minChars;
 	var minChars = typeof minCharsRaw === 'number' ? minCharsRaw : parseInt(minCharsRaw, 10);
-	if (!isFinite(minChars) || minChars < 1) minChars = 2;
+	if (!isFinite(minChars) || minChars < 3) minChars = 3;
+
+	var debounceMsRaw = config.debounceMs;
+	var debounceMs = typeof debounceMsRaw === 'number' ? debounceMsRaw : parseInt(debounceMsRaw, 10);
+	if (!isFinite(debounceMs) || debounceMs < 250) debounceMs = 350;
+
+	var cacheTtlRaw = config.cacheTtlMs;
+	var cacheTtlMs = typeof cacheTtlRaw === 'number' ? cacheTtlRaw : parseInt(cacheTtlRaw, 10);
+	if (!isFinite(cacheTtlMs) || cacheTtlMs < 1000) cacheTtlMs = 60000;
+
+	var suggestionCache = {};
 
 	if (!endpoint) {
 		return;
@@ -33,6 +43,59 @@
 		};
 	}
 
+	function normalizeQuery(value) {
+		return (value || '').trim();
+	}
+
+	function getCacheKey(query) {
+		return normalizeQuery(query).toLowerCase();
+	}
+
+	function getCachedSuggestion(query) {
+		var key = getCacheKey(query);
+		var entry = suggestionCache[key];
+		if (!entry) return null;
+
+		if (entry.expiresAt <= Date.now()) {
+			delete suggestionCache[key];
+			return null;
+		}
+
+		return entry.payload;
+	}
+
+	function cacheSuggestion(query, payload) {
+		var key = getCacheKey(query);
+		var now = Date.now();
+		var keys = Object.keys(suggestionCache);
+		var oldestKey = '';
+		var oldestExpiry = Infinity;
+		var activeEntries = 0;
+
+		for (var i = 0; i < keys.length; i++) {
+			var existing = suggestionCache[keys[i]];
+			if (!existing || existing.expiresAt <= now) {
+				delete suggestionCache[keys[i]];
+				continue;
+			}
+
+			activeEntries++;
+			if (existing.expiresAt < oldestExpiry) {
+				oldestExpiry = existing.expiresAt;
+				oldestKey = keys[i];
+			}
+		}
+
+		if (activeEntries >= 50 && oldestKey && oldestKey !== key) {
+			delete suggestionCache[oldestKey];
+		}
+
+		suggestionCache[key] = {
+			expiresAt: now + cacheTtlMs,
+			payload: payload
+		};
+	}
+
 	function createEl(tag, className, text) {
 		var el = document.createElement(tag);
 		if (className) el.className = className;
@@ -52,7 +115,14 @@
 		this.items = [];
 		this.activeIndex = -1;
 		this.lastQuery = '';
+		this.pendingQuery = '';
 		this.abort = null;
+		this.requestId = 0;
+
+		var self = this;
+		this.scheduleSuggest = debounce(function (query) {
+			self.requestSuggest(query);
+		}, debounceMs);
 
 		if (!this.input) return;
 		if (this.input.dataset.gstoreSuggestInit === '1') return;
@@ -73,6 +143,7 @@
 	};
 
 	SearchSuggest.prototype.clear = function () {
+		this.cancelPendingRequest();
 		this.items = [];
 		this.activeIndex = -1;
 		this.dropdown.innerHTML = '';
@@ -179,12 +250,18 @@
 		this.dropdown.hidden = false;
 	};
 
+	SearchSuggest.prototype.cancelPendingRequest = function () {
+		this.requestId++;
+		if (this.abort && typeof this.abort.abort === 'function') {
+			this.abort.abort();
+		}
+		this.abort = null;
+	};
+
 	SearchSuggest.prototype.fetchSuggest = function (query) {
 		var self = this;
-		if (self.abort && typeof self.abort.abort === 'function') {
-			self.abort.abort();
-			self.abort = null;
-		}
+		self.cancelPendingRequest();
+		var requestId = ++self.requestId;
 
 		self.abort = typeof AbortController !== 'undefined' ? new AbortController() : null;
 
@@ -202,25 +279,45 @@
 				return r.json();
 			})
 			.then(function (data) {
+				if (requestId !== self.requestId || query !== self.pendingQuery) return;
+				self.abort = null;
+				self.lastQuery = query;
+				cacheSuggestion(query, data);
 				self.render(data);
 			})
 			.catch(function () {
+				if (requestId === self.requestId) {
+					self.abort = null;
+				}
 				// silenciar (offline/abort)
 			});
 	};
 
-	SearchSuggest.prototype.onInput = debounce(function (value) {
-		var q = (value || '').trim();
-		if (q === this.lastQuery) return;
-		this.lastQuery = q;
+	SearchSuggest.prototype.requestSuggest = function (query) {
+		if (query !== this.pendingQuery) return;
+
+		var cached = getCachedSuggestion(query);
+		if (cached) {
+			this.lastQuery = query;
+			this.render(cached);
+			return;
+		}
+
+		this.fetchSuggest(query);
+	};
+
+	SearchSuggest.prototype.onInput = function (value) {
+		var q = normalizeQuery(value);
+		this.pendingQuery = q;
+		this.cancelPendingRequest();
 
 		if (q.length < minChars) {
 			this.clear();
 			return;
 		}
 
-		this.fetchSuggest(q);
-	}, 180);
+		this.scheduleSuggest(q);
+	};
 
 	SearchSuggest.prototype.bind = function () {
 		var self = this;

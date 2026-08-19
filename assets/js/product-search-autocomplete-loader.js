@@ -18,7 +18,7 @@
 	var loaded = false;
 
 	if (!isFinite(minChars) || minChars < 1) {
-		minChars = 2;
+		minChars = 3;
 	}
 
 	var FORM_SELECTOR = [

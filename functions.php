@@ -7017,7 +7017,9 @@ function gstore_enqueue_scripts() {
 			array(
 			'endpoint'      => rest_url( 'gstore/v1/search-suggest' ),
 			'catalogUrl'    => gstore_get_catalog_url(),
-			'minChars'      => 2,
+			'minChars'      => 3,
+			'debounceMs'    => 350,
+			'cacheTtlMs'    => 60000,
 			'limit'         => 8,
 			'scriptUrl'     => esc_url_raw( add_query_arg( 'ver', $product_search_js_version, gstore_theme_asset_uri( $product_search_js_path ) ) ),
 			'scriptVersion' => $product_search_js_version,
@@ -18543,7 +18545,7 @@ function gstore_handle_search_suggest( WP_REST_Request $request ) {
 	$term = trim( $term );
 
 	$len = function_exists( 'mb_strlen' ) ? (int) mb_strlen( $term ) : (int) strlen( $term );
-	if ( $len < 2 ) {
+	if ( $len < 3 ) {
 		return new WP_REST_Response(
 			array(
 				'products'   => array(),
