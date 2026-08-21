@@ -7215,7 +7215,7 @@ function gstore_enqueue_scripts() {
 			'gstore-product-card',
 			gstore_theme_asset_uri( 'assets/js/product-card.js' ),
 			array( 'gstore-favorites-core' ),
-			wp_get_theme()->get( 'Version' ),
+			gstore_theme_asset_version( 'assets/js/product-card.js', wp_get_theme()->get( 'Version' ) ),
 			true
 		);
 
