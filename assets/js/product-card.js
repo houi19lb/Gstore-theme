@@ -270,7 +270,6 @@
 			body.set('product_id', productId);
 			body.set('quantity', String(quantity));
 			body.set('max', String(max));
-			body.set('only_installments', String(max));
 			body.set('gstore_price_context', 'card');
 
 			const fetchPromise = fetch(ajaxUrl, {
