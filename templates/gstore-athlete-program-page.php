@@ -42,7 +42,7 @@ echo do_blocks( '<!-- wp:template-part {"slug":"header","area":"header"} /-->' )
 	<section class="gstore-athlete-hero">
 		<div class="gstore-athlete-container">
 			<span class="gstore-athlete-eyebrow"><?php esc_html_e( 'Programa Atleta', 'gstore' ); ?></span>
-			<h1><?php esc_html_e( 'Mais vantagens.', 'gstore' ); ?><br><?php esc_html_e( 'Mais treino.', 'gstore' ); ?><br><?php esc_html_e( 'Mais desempenho.', 'gstore' ); ?></h1>
+			<h1><?php esc_html_e( 'Mais vantagens', 'gstore' ); ?><br><?php esc_html_e( 'Mais treino', 'gstore' ); ?><br><?php esc_html_e( 'Mais desempenho', 'gstore' ); ?></h1>
 			<p><?php esc_html_e( 'Descontos, prioridade em promoções e condições especiais em armas, munições e produtos selecionados para você treinar mais e evoluir no esporte.', 'gstore' ); ?></p>
 			<div class="gstore-athlete-actions">
 				<?php if ( $logged_in ) : ?>
