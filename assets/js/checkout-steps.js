@@ -62,7 +62,9 @@
 	const CART_DESTINATION_STORAGE_KEY = 'gstore_cart_shipping_destination';
 	const CART_RATES_STORAGE_KEY = 'gstore_cart_shipping_rates';
 	const CART_RATES_STORAGE_VERSION_KEY = 'gstore_cart_shipping_rates_version';
-	const CART_RATES_STORAGE_VERSION = '20260630-product-shipping-other-note-v2';
+	// Invalida rates calculadas antes da ativação da modalidade global de frete
+	// pago na entrega, para que a nova opção seja buscada no carrinho e checkout.
+	const CART_RATES_STORAGE_VERSION = '20260828-payment-on-delivery-v1';
 	let checkoutSelectedShippingMode = 'land';
 	let checkoutShippingRates = [];
 	let checkoutShippingStatus = 'idle';
@@ -2830,10 +2832,11 @@ const subtotal = decodeHtmlEntities(stripHtmlText(it.subtotal || ''));
 
 	function normalizeShippingRate(rate) {
 		const raw = rate && typeof rate === 'object' ? rate : {};
+		const rateId = String(raw.rate_id || raw.id || '');
 		const quoteValueEnabled = raw.quote_value_enabled;
 		return {
-			rate_id: String(raw.rate_id || raw.id || ''),
-			mode: normalizeRateMode(raw.mode || raw.label || ''),
+			rate_id: rateId,
+			mode: normalizeRateMode(raw.mode || raw.label || getRateModeFromId(rateId)),
 			label: raw.label || '',
 			carrier_id: raw.carrier_id || '',
 			service_id: raw.service_id || '',
@@ -3743,10 +3746,11 @@ function getInstallmentDisplayTotals(summaryData) {
 		const rates = data && Array.isArray(data.rates) ? data.rates : [];
 		return rates
 			.map((rate) => {
-				const mode = normalizeRateMode(rate.mode || rate.label || '');
+				const rateId = String(rate.rate_id || rate.id || '');
+				const mode = normalizeRateMode(rate.mode || rate.label || getRateModeFromId(rateId));
 				const label = rate.label || (mode === 'air' ? 'Frete Aéreo' : mode === 'pickup' ? 'Retirada na loja' : mode === 'other' ? 'Outros' : 'Frete Terrestre');
 				return {
-					rate_id: String(rate.rate_id || rate.id || ''),
+					rate_id: rateId,
 					mode,
 					label,
 					carrier_id: rate.carrier_id || '',

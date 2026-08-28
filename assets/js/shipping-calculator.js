@@ -232,13 +232,18 @@
 
 			const ratesHtml = rates.map((rate) => {
 				const label = rate.label || '';
-				const mode = (rate.mode || '').toLowerCase();
+				const rateId = String(rate.rate_id || rate.id || '').toLowerCase();
+				const mode = (rate.mode || '').toLowerCase()
+					|| (rateId.indexOf(':other') !== -1 ? 'other' : '')
+					|| (rateId.indexOf(':pickup') !== -1 ? 'pickup' : '')
+					|| (rateId.indexOf(':air') !== -1 ? 'air' : '')
+					|| (rateId.indexOf(':land') !== -1 ? 'land' : '');
 				const rateIcon = mode === 'air'
 					? '<i class="fa-solid fa-plane" aria-hidden="true"></i>'
 					: '<i class="fa-solid fa-truck" aria-hidden="true"></i>';
 				let labelText = label
 					? label
-					: ((rate.mode || '').toLowerCase() === 'air' ? 'Frete Aéreo' : (rate.mode || '').toLowerCase() === 'pickup' ? 'Retirada na loja' : 'Frete Terrestre');
+					: (mode === 'air' ? 'Frete Aéreo' : mode === 'pickup' ? 'Retirada na loja' : 'Frete Terrestre');
 				if (!label && mode === 'other') {
 					labelText = 'Outros';
 				}

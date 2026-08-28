@@ -19,7 +19,10 @@
 	const CART_CALCULATED_SESSION_KEY = 'gstore_cart_shipping_calculated_session';
 	const CART_RATES_STORAGE_KEY = 'gstore_cart_shipping_rates';
 	const CART_RATES_STORAGE_VERSION_KEY = 'gstore_cart_shipping_rates_version';
-	const CART_RATES_STORAGE_VERSION = '20260630-product-shipping-other-note-v2';
+	// A modalidade global "pago na entrega" pode ter sido ativada depois de o
+	// cliente salvar as rates no navegador. Esta versão força o recálculo e evita
+	// que carrinho e checkout reutilizem aquela lista sem a nova modalidade.
+	const CART_RATES_STORAGE_VERSION = '20260828-payment-on-delivery-v1';
 
 	function escapeHtml(value) {
 		return String(value || '')
@@ -230,10 +233,11 @@
 		return rates
 			.map((rate) => {
 				const raw = rate && typeof rate === 'object' ? rate : {};
+				const rateId = String(raw.rate_id || raw.id || '');
 				const quoteValueEnabled = raw.quote_value_enabled;
 				return {
-					rate_id: String(raw.rate_id || raw.id || ''),
-					mode: normalizeRateMode(raw.mode || raw.label || ''),
+					rate_id: rateId,
+					mode: normalizeRateMode(raw.mode || raw.label || getRateModeFromId(rateId)),
 					label: raw.label ? String(raw.label) : '',
 					carrier_id: raw.carrier_id ? String(raw.carrier_id) : '',
 					service_id: raw.service_id ? String(raw.service_id) : '',
@@ -955,6 +959,26 @@
 		return '';
 	}
 
+	function getRateModeFromId(rateId) {
+		const value = String(rateId || '').toLowerCase();
+		if (!value) {
+			return '';
+		}
+		if (value.indexOf(':pickup') !== -1 || /(?:^|[-_:])pickup(?:$|[-_:])/.test(value)) {
+			return 'pickup';
+		}
+		if (value.indexOf(':other') !== -1 || /(?:^|[-_:])other(?:$|[-_:])/.test(value) || /(?:^|[-_:])outros?(?:$|[-_:])/.test(value)) {
+			return 'other';
+		}
+		if (value.indexOf(':air') !== -1 || /(?:^|[-_:])air(?:$|[-_:])/.test(value) || /(?:^|[-_:])aereo(?:$|[-_:])/.test(value)) {
+			return 'air';
+		}
+		if (value.indexOf(':land') !== -1 || /(?:^|[-_:])land(?:$|[-_:])/.test(value) || /(?:^|[-_:])terrestre(?:$|[-_:])/.test(value)) {
+			return 'land';
+		}
+		return '';
+	}
+
 	function getRateModeLabel(mode) {
 		const normalized = normalizeRateMode(mode);
 		if (normalized === 'air') {
@@ -1095,24 +1119,27 @@
 		let ratesInput = shippingBlock.querySelector(`input[name="gstore_shipping_rates[${cartItemKey}]"]`);
 
 		const normalizedRates = (rates || [])
-			.map((rate) => ({
-				rate_id: String(rate.rate_id || rate.id || ''),
-				// Alinha com o checkout: quando mode não vier preenchido, tenta inferir pelo label.
-				mode: normalizeRateMode(rate.mode || rate.label || ''),
-				label: rate.label || '',
-				carrier_id: rate.carrier_id || '',
-				service_id: rate.service_id || '',
-				cost: Object.prototype.hasOwnProperty.call(rate, 'cost') ? rate.cost : '',
-				cost_formatted: rate.cost_formatted || '',
-				quote_value_enabled: rate.quote_value_enabled === undefined
-					? true
-					: !(rate.quote_value_enabled === false || rate.quote_value_enabled === 'false' || rate.quote_value_enabled === 0 || rate.quote_value_enabled === '0'),
-				quote_notice_message: rate.quote_notice_message || '',
-				quote_notice_html: rate.quote_notice_html || '',
-				other_note: rate.other_note || '',
-				rate_kind: rate.rate_kind || '',
-				pricing_type: rate.pricing_type || '',
-			}))
+			.map((rate) => {
+				const rateId = String(rate.rate_id || rate.id || '');
+				return {
+					rate_id: rateId,
+					// Alinha com o checkout: quando mode não vier preenchido, tenta inferir pelo ID da rate.
+					mode: normalizeRateMode(rate.mode || rate.label || getRateModeFromId(rateId)),
+					label: rate.label || '',
+					carrier_id: rate.carrier_id || '',
+					service_id: rate.service_id || '',
+					cost: Object.prototype.hasOwnProperty.call(rate, 'cost') ? rate.cost : '',
+					cost_formatted: rate.cost_formatted || '',
+					quote_value_enabled: rate.quote_value_enabled === undefined
+						? true
+						: !(rate.quote_value_enabled === false || rate.quote_value_enabled === 'false' || rate.quote_value_enabled === 0 || rate.quote_value_enabled === '0'),
+					quote_notice_message: rate.quote_notice_message || '',
+					quote_notice_html: rate.quote_notice_html || '',
+					other_note: rate.other_note || '',
+					rate_kind: rate.rate_kind || '',
+					pricing_type: rate.pricing_type || '',
+				};
+			})
 			.filter((rate) => rate.mode && rate.rate_id);
 		storeShippingRates(cartItemKey, normalizedRates);
 
