@@ -11016,6 +11016,11 @@ require_once get_theme_file_path( 'inc/gstore-vip-account.php' );
 require_once get_theme_file_path( 'inc/gstore-partner-account.php' );
 
 /**
+ * Programa Atleta: página pública de inscrição e acesso restrito.
+ */
+require_once get_theme_file_path( 'inc/gstore-athlete-account.php' );
+
+/**
  * Função helper para fazer log de debug.
  *
  * @param string $location Localização (arquivo:linha).
