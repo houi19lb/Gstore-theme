@@ -318,7 +318,8 @@
 }
 
 .gstore-athlete-story__media {
-	min-height: 480px;
+	aspect-ratio: 1;
+	min-height: 0;
 	overflow: hidden;
 }
 
@@ -326,19 +327,29 @@
 	width: 100%;
 	height: 100%;
 	object-fit: cover;
-	object-position: left center;
+	object-position: center;
 }
 
 .gstore-athlete-story__content {
 	display: flex;
 	flex-direction: column;
 	justify-content: center;
-	padding: clamp(38px, 6vw, 82px);
+	padding: clamp(42px, 6vw, 108px);
+}
+
+.gstore-athlete-story h2 {
+	max-width: 660px;
+	font-size: clamp(2.5rem, 4.6vw, 5.1rem);
+	font-weight: 950;
+	letter-spacing: 0;
+	line-height: 1.02;
 }
 
 .gstore-athlete-story__content > p {
-	margin: 20px 0 0;
+	max-width: 610px;
+	margin: 24px 0 0;
 	color: var(--gstore-athlete-muted);
+	font-size: clamp(1rem, 1.3vw, 1.2rem);
 	line-height: 1.65;
 }
 
@@ -351,11 +362,16 @@
 	list-style: none;
 }
 
+.gstore-athlete-story__list {
+	gap: 22px;
+	margin-top: 34px;
+}
+
 .gstore-athlete-story__list li,
 .gstore-athlete-application__highlights li {
 	display: flex;
 	align-items: flex-start;
-	gap: 12px;
+	gap: 16px;
 }
 
 .gstore-athlete-story__list i,
@@ -373,12 +389,54 @@
 	line-height: 1.45;
 }
 
+.gstore-athlete-story__benefit-icon {
+	display: inline-flex !important;
+	flex: 0 0 auto;
+	align-items: center;
+	justify-content: center;
+	width: 62px;
+	height: 62px;
+	border: 1px solid var(--gstore-athlete-accent);
+	border-radius: 50%;
+	color: var(--gstore-athlete-accent) !important;
+}
+
+.gstore-athlete-story__benefit-icon svg {
+	width: 30px;
+	height: 30px;
+	fill: none;
+	stroke: currentColor;
+	stroke-linecap: round;
+	stroke-linejoin: round;
+	stroke-width: 1.45;
+}
+
+.gstore-athlete-story__list > li > span:not(.gstore-athlete-story__benefit-icon) {
+	padding-top: 5px;
+	font-size: 1rem;
+	line-height: 1.45;
+}
+
 .gstore-athlete-story__list strong,
 .gstore-athlete-application__highlights strong {
 	color: var(--gstore-athlete-text);
 	font-size: .86rem;
 	font-weight: 800;
 	text-transform: uppercase;
+}
+
+.gstore-athlete-story__list strong {
+	font-size: 1.1rem;
+}
+
+.gstore-athlete-story__cta {
+	justify-content: space-between !important;
+	width: min(100%, 430px);
+	margin-top: 36px;
+}
+
+.gstore-athlete-story__cta i {
+	font-size: 1.2rem;
 }
 
 .gstore-athlete-section--form {
@@ -615,7 +673,8 @@
 	}
 
 	.gstore-athlete-story__media {
-		min-height: min(74vw, 520px);
+		aspect-ratio: 4 / 3;
+		min-height: 0;
 	}
 
 	.gstore-athlete-application__intro {
@@ -695,6 +754,10 @@
 
 	.gstore-athlete-story__content {
 		padding: 38px 26px 42px;
+	}
+
+	.gstore-athlete-story__cta {
+		width: 100%;
 	}
 
 	.gstore-athlete-steps {

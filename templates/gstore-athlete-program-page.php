@@ -94,16 +94,21 @@ echo do_blocks( '<!-- wp:template-part {"slug":"header","area":"header"} /-->' )
 
 	<section class="gstore-athlete-story">
 		<div class="gstore-athlete-container gstore-athlete-story__grid">
-			<div class="gstore-athlete-story__media"><img src="<?php echo esc_url( get_theme_file_uri( 'assets/images/athlete/athlete-program-story.webp' ) ); ?>" alt="<?php esc_attr_e( 'Atleta em treinamento de tiro esportivo', 'gstore' ); ?>"></div>
+			<div class="gstore-athlete-story__media"><img src="<?php echo esc_url( get_theme_file_uri( 'assets/images/athlete/athlete-program-benefits.webp' ) ); ?>" alt="<?php esc_attr_e( 'Atleta se preparando para treinamento de tiro esportivo', 'gstore' ); ?>" loading="lazy" decoding="async"></div>
 			<div class="gstore-athlete-story__content">
 				<span class="gstore-athlete-eyebrow"><?php esc_html_e( 'Programa Atleta', 'gstore' ); ?></span>
-				<h2><?php esc_html_e( 'Mais que equipamento: parceria de performance.', 'gstore' ); ?></h2>
-				<p><?php esc_html_e( 'O Programa Atleta foi criado para aproximar quem leva o esporte a sério de uma seleção exclusiva de produtos.', 'gstore' ); ?></p>
+				<h2><?php esc_html_e( 'Vantagens para quem vive o esporte.', 'gstore' ); ?></h2>
+				<p><?php esc_html_e( 'Após a aprovação, você recebe benefícios pensados para apoiar sua rotina como atleta.', 'gstore' ); ?></p>
 				<ul class="gstore-athlete-story__list">
-					<li><i class="fa-solid fa-circle-check" aria-hidden="true"></i><span><strong><?php esc_html_e( 'Perfil esportivo', 'gstore' ); ?></strong><?php esc_html_e( 'Informe a modalidade que faz parte da sua rotina.', 'gstore' ); ?></span></li>
-					<li><i class="fa-solid fa-circle-check" aria-hidden="true"></i><span><strong><?php esc_html_e( 'Acesso de atleta', 'gstore' ); ?></strong><?php esc_html_e( 'Após aprovado, seu selo libera os produtos exclusivos.', 'gstore' ); ?></span></li>
-					<li><i class="fa-solid fa-circle-check" aria-hidden="true"></i><span><strong><?php esc_html_e( 'Status no seu tempo', 'gstore' ); ?></strong><?php esc_html_e( 'Acompanhe a análise diretamente nesta página.', 'gstore' ); ?></span></li>
+					<li><span class="gstore-athlete-story__benefit-icon"><?php echo gstore_partner_account_icon( 'percent' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></span><span><strong><?php esc_html_e( 'Descontos para atletas', 'gstore' ); ?></strong><?php esc_html_e( 'Condições especiais em produtos selecionados.', 'gstore' ); ?></span></li>
+					<li><span class="gstore-athlete-story__benefit-icon"><?php echo gstore_partner_account_icon( 'gift' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></span><span><strong><?php esc_html_e( 'Prioridade em promoções', 'gstore' ); ?></strong><?php esc_html_e( 'Acesso antecipado a campanhas e oportunidades.', 'gstore' ); ?></span></li>
+					<li><span class="gstore-athlete-story__benefit-icon"><?php echo gstore_partner_account_icon( 'user' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></span><span><strong><?php esc_html_e( 'Página exclusiva', 'gstore' ); ?></strong><?php esc_html_e( 'Uma seleção de produtos criada para atletas.', 'gstore' ); ?></span></li>
 				</ul>
+				<?php if ( $logged_in ) : ?>
+					<a class="button gstore-athlete-button gstore-athlete-story__cta" href="#gstore-athlete-application"><span><?php esc_html_e( 'Quero participar', 'gstore' ); ?></span><i class="fa-solid fa-arrow-right" aria-hidden="true"></i></a>
+				<?php else : ?>
+					<button class="button gstore-athlete-button gstore-athlete-story__cta" type="button" data-gstore-athlete-dialog-open><span><?php esc_html_e( 'Quero participar', 'gstore' ); ?></span><i class="fa-solid fa-arrow-right" aria-hidden="true"></i></button>
+				<?php endif; ?>
 			</div>
 		</div>
 	</section>
