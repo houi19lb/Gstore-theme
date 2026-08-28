@@ -18342,11 +18342,28 @@ function gstore_catalog_default_orderby_popularity( $default_orderby ) {
 }
 
 /**
+ * Controla a ordenacao SQL customizada do catalogo.
+ *
+ * A implementacao antiga faz LEFT JOIN em wp_postmeta para estoque e vendas,
+ * seguida de ORDER BY com CASE. Na base atual isso provoca filesort caro e
+ * timeouts. Fica desativada por padrao ate ser reimplementada sobre a tabela
+ * de lookup do WooCommerce.
+ *
+ * @return bool
+ */
+function gstore_catalog_custom_sql_order_enabled() {
+	return (bool) apply_filters( 'gstore_catalog_custom_sql_order_enabled', false );
+}
+
+/**
  * Marca queries de shortcode no catalogo para priorizar itens com estoque.
  */
 add_filter( 'woocommerce_shortcode_products_query', 'gstore_catalog_mark_shortcode_stock_priority', 35, 3 );
 function gstore_catalog_mark_shortcode_stock_priority( $query_args, $attr, $type ) {
 	if ( ! gstore_is_catalog_context() ) {
+		return $query_args;
+	}
+	if ( ! gstore_catalog_custom_sql_order_enabled() ) {
 		return $query_args;
 	}
 
@@ -18366,6 +18383,9 @@ function gstore_catalog_mark_shortcode_stock_priority( $query_args, $attr, $type
 add_action( 'woocommerce_product_query', 'gstore_catalog_mark_main_query_stock_priority', 30 );
 function gstore_catalog_mark_main_query_stock_priority( $query ) {
 	if ( ! gstore_is_catalog_context() ) {
+		return;
+	}
+	if ( ! gstore_catalog_custom_sql_order_enabled() ) {
 		return;
 	}
 
@@ -26385,32 +26405,3 @@ function gstore_async_noncritical_css( $tag, $handle ) {
 	return $async_tag . $noscript;
 }
 add_filter( 'style_loader_tag', 'gstore_async_noncritical_css', 20, 2 );
-
-/**
- * Desativa temporariamente a ordenacao SQL customizada apenas em requisicoes
- * de diagnostico do incidente de catalogo de 28/08/2026.
- *
- * @return void
- */
-function gstore_catalog_incident_diagnostic_mode() {
-	$mode = isset( $_GET['gstore_catalog_diag'] )
-		? sanitize_key( wp_unslash( $_GET['gstore_catalog_diag'] ) )
-		: '';
-
-	if ( 'plain-20260828' !== $mode ) {
-		return;
-	}
-
-	remove_filter( 'woocommerce_default_catalog_orderby', 'gstore_catalog_default_orderby_popularity', 20 );
-	remove_filter( 'woocommerce_shortcode_products_query', 'gstore_catalog_mark_shortcode_stock_priority', 35 );
-	remove_action( 'woocommerce_product_query', 'gstore_catalog_mark_main_query_stock_priority', 30 );
-	remove_filter( 'posts_clauses', 'gstore_catalog_order_by_stock_first', 20 );
-
-	add_action(
-		'send_headers',
-		static function () {
-			header( 'X-Arma-Catalog-Diagnostic: custom-order-disabled' );
-		}
-	);
-}
-add_action( 'after_setup_theme', 'gstore_catalog_incident_diagnostic_mode', PHP_INT_MAX );
