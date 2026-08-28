@@ -50,7 +50,7 @@ echo do_blocks( '<!-- wp:template-part {"slug":"header","area":"header"} /-->' )
 				<?php else : ?>
 					<button class="button gstore-athlete-button" type="button" data-gstore-athlete-dialog-open><?php esc_html_e( 'Quero me cadastrar', 'gstore' ); ?></button>
 				<?php endif; ?>
-				<a class="gstore-athlete-link" href="#como-funciona"><i class="fa-solid fa-arrow-down" aria-hidden="true"></i><?php esc_html_e( 'Como funciona', 'gstore' ); ?></a>
+				<a class="gstore-athlete-link" href="#como-funciona"><?php esc_html_e( 'Como funciona', 'gstore' ); ?></a>
 			</div>
 		</div>
 	</section>
