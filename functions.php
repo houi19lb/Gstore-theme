@@ -20718,7 +20718,7 @@ function gstore_render_color_tokens( $colors ) {
 }
 
 /**
- * Determina a cor do texto baseado no contraste do fundo.
+ * Determina a cor do texto com maior contraste para o fundo.
  */
 function gstore_get_contrast_color( $color ) {
 	// Se for rgba ou variável, retorna preto por padrão
@@ -20749,11 +20749,23 @@ function gstore_get_contrast_color( $color ) {
 	$g = hexdec( substr( $color, 2, 2 ) );
 	$b = hexdec( substr( $color, 4, 2 ) );
 
-	// Calcula luminância relativa
-	$luminance = ( 0.299 * $r + 0.587 * $g + 0.114 * $b ) / 255;
+	// Calcula a luminância relativa em sRGB, conforme WCAG.
+	$channels  = array( $r, $g, $b );
+	$weights   = array( 0.2126, 0.7152, 0.0722 );
+	$luminance = 0;
 
-	// Retorna branco para fundos escuros, preto para fundos claros
-	return $luminance > 0.5 ? '#000' : '#fff';
+	foreach ( $channels as $index => $channel ) {
+		$normalized = $channel / 255;
+		$linear     = $normalized <= 0.03928
+			? $normalized / 12.92
+			: pow( ( $normalized + 0.055 ) / 1.055, 2.4 );
+		$luminance += $linear * $weights[ $index ];
+	}
+
+	$contrast_with_black = ( $luminance + 0.05 ) / 0.05;
+	$contrast_with_white = 1.05 / ( $luminance + 0.05 );
+
+	return $contrast_with_white > $contrast_with_black ? '#fff' : '#000';
 }
 
 /**
