@@ -453,13 +453,8 @@
 }
 
 .gstore-athlete-story__cta {
-	justify-content: space-between !important;
-	width: min(100%, 430px);
+	align-self: flex-start;
 	margin-top: 24px;
-}
-
-.gstore-athlete-story__cta i {
-	font-size: 1.2rem;
 }
 
 .gstore-athlete-section--form {

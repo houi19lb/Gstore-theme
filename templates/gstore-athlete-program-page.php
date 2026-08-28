@@ -105,9 +105,9 @@ echo do_blocks( '<!-- wp:template-part {"slug":"header","area":"header"} /-->' )
 					<li><span class="gstore-athlete-story__benefit-icon"><?php echo gstore_partner_account_icon( 'user' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></span><span><strong><?php esc_html_e( 'Página exclusiva', 'gstore' ); ?></strong><?php esc_html_e( 'Uma seleção de produtos criada para atletas.', 'gstore' ); ?></span></li>
 				</ul>
 				<?php if ( $logged_in ) : ?>
-					<a class="button gstore-athlete-button gstore-athlete-story__cta" href="#gstore-athlete-application"><span><?php esc_html_e( 'Quero participar', 'gstore' ); ?></span><i class="fa-solid fa-arrow-right" aria-hidden="true"></i></a>
+					<a class="button gstore-athlete-button gstore-athlete-story__cta" href="#gstore-athlete-application"><?php esc_html_e( 'Quero participar', 'gstore' ); ?></a>
 				<?php else : ?>
-					<button class="button gstore-athlete-button gstore-athlete-story__cta" type="button" data-gstore-athlete-dialog-open><span><?php esc_html_e( 'Quero participar', 'gstore' ); ?></span><i class="fa-solid fa-arrow-right" aria-hidden="true"></i></button>
+					<button class="button gstore-athlete-button gstore-athlete-story__cta" type="button" data-gstore-athlete-dialog-open><?php esc_html_e( 'Quero participar', 'gstore' ); ?></button>
 				<?php endif; ?>
 			</div>
 		</div>
