@@ -57,9 +57,9 @@ echo do_blocks( '<!-- wp:template-part {"slug":"header","area":"header"} /-->' )
 
 	<section class="gstore-athlete-benefits" aria-label="<?php esc_attr_e( 'Benefícios do Programa Atleta', 'gstore' ); ?>">
 		<div class="gstore-athlete-container gstore-athlete-benefit-grid">
-			<article><i class="fa-solid fa-award" aria-hidden="true"></i><div><strong><?php esc_html_e( 'Acesso exclusivo', 'gstore' ); ?></strong><span><?php esc_html_e( 'Produtos selecionados liberados apenas para atletas aprovados.', 'gstore' ); ?></span></div></article>
-			<article><i class="fa-solid fa-chart-line" aria-hidden="true"></i><div><strong><?php esc_html_e( 'Apoio à evolução', 'gstore' ); ?></strong><span><?php esc_html_e( 'Uma parceria para quem vive e evolui no esporte.', 'gstore' ); ?></span></div></article>
-			<article><i class="fa-regular fa-user" aria-hidden="true"></i><div><strong><?php esc_html_e( 'Análise individual', 'gstore' ); ?></strong><span><?php esc_html_e( 'Cada inscrição é avaliada pela equipe do programa.', 'gstore' ); ?></span></div></article>
+			<article><span><?php echo gstore_partner_account_icon( 'gift' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></span><div><strong><?php esc_html_e( 'Acesso exclusivo', 'gstore' ); ?></strong><small><?php esc_html_e( 'Produtos selecionados liberados apenas para atletas aprovados.', 'gstore' ); ?></small></div></article>
+			<article><span><?php echo gstore_partner_account_icon( 'target' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></span><div><strong><?php esc_html_e( 'Apoio à evolução', 'gstore' ); ?></strong><small><?php esc_html_e( 'Uma parceria para quem vive e evolui no esporte.', 'gstore' ); ?></small></div></article>
+			<article><span><?php echo gstore_partner_account_icon( 'user' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></span><div><strong><?php esc_html_e( 'Análise individual', 'gstore' ); ?></strong><small><?php esc_html_e( 'Cada inscrição é avaliada pela equipe do programa.', 'gstore' ); ?></small></div></article>
 		</div>
 	</section>
 
