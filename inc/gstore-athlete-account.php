@@ -9,7 +9,7 @@ defined( 'ABSPATH' ) || exit;
 
 if ( ! function_exists( 'gstore_athlete_account_program_url' ) ) {
 	function gstore_athlete_account_program_url() {
-		return home_url( user_trailingslashit( 'atleta' ) );
+		return home_url( user_trailingslashit( 'atletas' ) );
 	}
 }
 
@@ -21,7 +21,7 @@ if ( ! function_exists( 'gstore_athlete_account_restricted_url' ) ) {
 
 if ( ! function_exists( 'gstore_athlete_account_register_pages' ) ) {
 	function gstore_athlete_account_register_pages() {
-		add_rewrite_rule( '^atleta/?$', 'index.php?gstore_athlete_program_page=1', 'top' );
+		add_rewrite_rule( '^atletas/?$', 'index.php?gstore_athlete_program_page=1', 'top' );
 		add_rewrite_rule( '^produto-exclusivo-atleta/?$', 'index.php?gstore_athlete_restricted_page=1', 'top' );
 	}
 }
@@ -38,7 +38,7 @@ add_filter( 'query_vars', 'gstore_athlete_account_query_vars' );
 
 if ( ! function_exists( 'gstore_athlete_account_maybe_flush_pages' ) ) {
 	function gstore_athlete_account_maybe_flush_pages() {
-		$version = '20260827';
+		$version = '20260827-atletas';
 		if ( get_option( 'gstore_athlete_account_pages_version' ) === $version ) {
 			return;
 		}
@@ -98,7 +98,7 @@ if ( ! function_exists( 'gstore_athlete_account_enqueue_assets' ) ) {
 			return;
 		}
 		if ( function_exists( 'gstore_enqueue_theme_style' ) ) {
-			gstore_enqueue_theme_style( 'gstore-athlete-program-css', 'assets/css/athlete-program.css', array(), '20260827' );
+			gstore_enqueue_theme_style( 'gstore-athlete-program-css', 'assets/css/athlete-program.css', array(), '20260827-atletas' );
 		}
 	}
 }
