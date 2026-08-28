@@ -49,10 +49,11 @@
 
 .gstore-athlete-hero h1 {
 	max-width: 660px;
-	font-size: clamp(36px, 4.4vw, 61px);
+	font-size: clamp(38px, 4.8vw, 67px);
 	font-weight: 950;
 	letter-spacing: 0;
 	line-height: 1.02;
+	white-space: nowrap;
 }
 
 .gstore-athlete-eyebrow,
@@ -731,7 +732,7 @@
 
 	.gstore-athlete-hero h1 {
 		max-width: 430px;
-		font-size: 31px;
+		font-size: 34px;
 	}
 
 	.gstore-athlete-actions,
@@ -871,5 +872,11 @@
 
 	.gstore-athlete-form-grid__wide {
 		grid-column: auto;
+	}
+}
+
+@media (max-width: 360px) {
+	.gstore-athlete-hero h1 {
+		font-size: 30px;
 	}
 }
