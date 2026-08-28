@@ -18,12 +18,13 @@
 }
 
 .gstore-athlete-hero {
-	min-height: clamp(520px, 42vw, 690px);
+	height: 70vh;
+	min-height: 460px;
 	display: flex;
 	align-items: center;
 	padding: clamp(72px, 8vw, 128px) 0;
 	background-color: var(--gstore-athlete-dark);
-	background-image: url('../images/athlete/athlete-program-hero.png');
+	background-image: url('../images/athlete/athlete-program-hero.webp');
 	background-position: center;
 	background-repeat: no-repeat;
 	background-size: cover;
@@ -550,7 +551,8 @@
 
 @media (max-width: 860px) {
 	.gstore-athlete-hero {
-		min-height: 560px;
+		height: 70vh;
+		min-height: 520px;
 		background-position: 63% center;
 	}
 
@@ -599,7 +601,8 @@
 	}
 
 	.gstore-athlete-hero {
-		min-height: 575px;
+		height: 70vh;
+		min-height: 500px;
 		align-items: flex-end;
 		padding: 60px 0;
 		background-position: 66% center;

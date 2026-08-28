@@ -79,7 +79,7 @@ echo do_blocks( '<!-- wp:template-part {"slug":"header","area":"header"} /-->' )
 
 	<section class="gstore-athlete-story">
 		<div class="gstore-athlete-container gstore-athlete-story__grid">
-			<div class="gstore-athlete-story__media"><img src="<?php echo esc_url( get_theme_file_uri( 'assets/images/athlete/athlete-program-story.png' ) ); ?>" alt="<?php esc_attr_e( 'Atleta em treinamento de tiro esportivo', 'gstore' ); ?>"></div>
+			<div class="gstore-athlete-story__media"><img src="<?php echo esc_url( get_theme_file_uri( 'assets/images/athlete/athlete-program-story.webp' ) ); ?>" alt="<?php esc_attr_e( 'Atleta em treinamento de tiro esportivo', 'gstore' ); ?>"></div>
 			<div class="gstore-athlete-story__content">
 				<span class="gstore-athlete-eyebrow"><?php esc_html_e( 'Programa Atleta', 'gstore' ); ?></span>
 				<h2><?php esc_html_e( 'Mais que equipamento: parceria de performance.', 'gstore' ); ?></h2>
