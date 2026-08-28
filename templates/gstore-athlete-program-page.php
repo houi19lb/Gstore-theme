@@ -70,9 +70,24 @@ echo do_blocks( '<!-- wp:template-part {"slug":"header","area":"header"} /-->' )
 				<h2><?php esc_html_e( 'Como funciona', 'gstore' ); ?></h2>
 			</header>
 			<ol class="gstore-athlete-steps">
-				<li><span class="gstore-athlete-step-number">01</span><i class="fa-regular fa-clipboard" aria-hidden="true"></i><strong><?php esc_html_e( 'Cadastro', 'gstore' ); ?></strong><span><?php esc_html_e( 'Crie sua conta e preencha o formulário com seus dados.', 'gstore' ); ?></span></li>
-				<li><span class="gstore-athlete-step-number">02</span><i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i><strong><?php esc_html_e( 'Análise de perfil', 'gstore' ); ?></strong><span><?php esc_html_e( 'Nossa equipe confere a solicitação enviada.', 'gstore' ); ?></span></li>
-				<li><span class="gstore-athlete-step-number">03</span><i class="fa-regular fa-circle-check" aria-hidden="true"></i><strong><?php esc_html_e( 'Retorno da equipe', 'gstore' ); ?></strong><span><?php esc_html_e( 'Acompanhe nesta página o resultado da análise.', 'gstore' ); ?></span></li>
+				<li>
+					<span class="gstore-athlete-step-number">01</span>
+					<div class="gstore-athlete-steps__icon"><?php echo gstore_partner_account_icon( 'document' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></div>
+					<h3><?php esc_html_e( 'Cadastro', 'gstore' ); ?></h3>
+					<p><?php esc_html_e( 'Crie sua conta e preencha o formulário com seus dados.', 'gstore' ); ?></p>
+				</li>
+				<li>
+					<span class="gstore-athlete-step-number">02</span>
+					<div class="gstore-athlete-steps__icon"><?php echo gstore_partner_account_icon( 'check' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></div>
+					<h3><?php esc_html_e( 'Análise de perfil', 'gstore' ); ?></h3>
+					<p><?php esc_html_e( 'Nossa equipe confere a solicitação enviada.', 'gstore' ); ?></p>
+				</li>
+				<li>
+					<span class="gstore-athlete-step-number">03</span>
+					<div class="gstore-athlete-steps__icon"><?php echo gstore_partner_account_icon( 'user' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></div>
+					<h3><?php esc_html_e( 'Retorno da equipe', 'gstore' ); ?></h3>
+					<p><?php esc_html_e( 'Acompanhe nesta página o resultado da análise.', 'gstore' ); ?></p>
+				</li>
 			</ol>
 		</div>
 	</section>
