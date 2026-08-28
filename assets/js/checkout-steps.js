@@ -62,9 +62,7 @@
 	const CART_DESTINATION_STORAGE_KEY = 'gstore_cart_shipping_destination';
 	const CART_RATES_STORAGE_KEY = 'gstore_cart_shipping_rates';
 	const CART_RATES_STORAGE_VERSION_KEY = 'gstore_cart_shipping_rates_version';
-	// Invalida rates calculadas antes da ativação da modalidade global de frete
-	// pago na entrega, para que a nova opção seja buscada no carrinho e checkout.
-	const CART_RATES_STORAGE_VERSION = '20260828-payment-on-delivery-v1';
+	const CART_RATES_STORAGE_VERSION = '20260630-product-shipping-other-note-v2';
 	let checkoutSelectedShippingMode = 'land';
 	let checkoutShippingRates = [];
 	let checkoutShippingStatus = 'idle';
