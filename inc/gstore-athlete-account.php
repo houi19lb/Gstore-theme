@@ -98,7 +98,7 @@ if ( ! function_exists( 'gstore_athlete_account_enqueue_assets' ) ) {
 			return;
 		}
 		if ( function_exists( 'gstore_enqueue_theme_style' ) ) {
-			gstore_enqueue_theme_style( 'gstore-athlete-program-css', 'assets/css/athlete-program.css', array(), '20260828-atletas-hero-compact' );
+			gstore_enqueue_theme_style( 'gstore-athlete-program-css', 'assets/css/athlete-program.css', array(), '20260828-atletas-viewport-panel' );
 		}
 	}
 }
