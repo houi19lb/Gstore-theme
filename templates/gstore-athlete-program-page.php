@@ -42,15 +42,15 @@ echo do_blocks( '<!-- wp:template-part {"slug":"header","area":"header"} /-->' )
 	<section class="gstore-athlete-hero">
 		<div class="gstore-athlete-container">
 			<span class="gstore-athlete-eyebrow"><?php esc_html_e( 'Programa Atleta', 'gstore' ); ?></span>
-			<h1><?php esc_html_e( 'Seu desempenho merece apoio à altura.', 'gstore' ); ?></h1>
-			<p><?php esc_html_e( 'Cadastre seu perfil esportivo e apresente sua trajetória para nossa equipe.', 'gstore' ); ?></p>
+			<h1><?php esc_html_e( 'Mais vantagens.', 'gstore' ); ?><br><?php esc_html_e( 'Mais treino.', 'gstore' ); ?><br><?php esc_html_e( 'Mais desempenho.', 'gstore' ); ?></h1>
+			<p><?php esc_html_e( 'Descontos, prioridade em promoções e condições especiais em armas, munições e produtos selecionados para você treinar mais e evoluir no esporte.', 'gstore' ); ?></p>
 			<div class="gstore-athlete-actions">
 				<?php if ( $logged_in ) : ?>
-					<a class="button gstore-athlete-button" href="#gstore-athlete-application"><?php echo esc_html( $is_athlete ? __( 'Ver meu status', 'gstore' ) : __( 'Quero me cadastrar', 'gstore' ) ); ?></a>
+					<a class="button gstore-athlete-button" href="#gstore-athlete-application"><?php echo esc_html( $is_athlete ? __( 'Ver meu status', 'gstore' ) : __( 'Quero participar', 'gstore' ) ); ?></a>
 				<?php else : ?>
-					<button class="button gstore-athlete-button" type="button" data-gstore-athlete-dialog-open><?php esc_html_e( 'Quero me cadastrar', 'gstore' ); ?></button>
+					<button class="button gstore-athlete-button" type="button" data-gstore-athlete-dialog-open><?php esc_html_e( 'Quero participar', 'gstore' ); ?></button>
 				<?php endif; ?>
-				<a class="gstore-athlete-link" href="#como-funciona"><?php esc_html_e( 'Como funciona', 'gstore' ); ?></a>
+				<a class="gstore-athlete-link" href="#beneficios"><?php esc_html_e( 'Ver benefícios', 'gstore' ); ?></a>
 			</div>
 		</div>
 	</section>
@@ -92,7 +92,7 @@ echo do_blocks( '<!-- wp:template-part {"slug":"header","area":"header"} /-->' )
 		</div>
 	</section>
 
-	<section class="gstore-athlete-story">
+	<section id="beneficios" class="gstore-athlete-story">
 		<div class="gstore-athlete-container gstore-athlete-story__grid">
 			<div class="gstore-athlete-story__media"><img src="<?php echo esc_url( get_theme_file_uri( 'assets/images/athlete/athlete-program-benefits.webp' ) ); ?>" alt="<?php esc_attr_e( 'Atleta se preparando para treinamento de tiro esportivo', 'gstore' ); ?>" loading="lazy" decoding="async"></div>
 			<div class="gstore-athlete-story__content">
