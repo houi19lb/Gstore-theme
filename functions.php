@@ -26385,3 +26385,32 @@ function gstore_async_noncritical_css( $tag, $handle ) {
 	return $async_tag . $noscript;
 }
 add_filter( 'style_loader_tag', 'gstore_async_noncritical_css', 20, 2 );
+
+/**
+ * Desativa temporariamente a ordenacao SQL customizada apenas em requisicoes
+ * de diagnostico do incidente de catalogo de 28/08/2026.
+ *
+ * @return void
+ */
+function gstore_catalog_incident_diagnostic_mode() {
+	$mode = isset( $_GET['gstore_catalog_diag'] )
+		? sanitize_key( wp_unslash( $_GET['gstore_catalog_diag'] ) )
+		: '';
+
+	if ( 'plain-20260828' !== $mode ) {
+		return;
+	}
+
+	remove_filter( 'woocommerce_default_catalog_orderby', 'gstore_catalog_default_orderby_popularity', 20 );
+	remove_filter( 'woocommerce_shortcode_products_query', 'gstore_catalog_mark_shortcode_stock_priority', 35 );
+	remove_action( 'woocommerce_product_query', 'gstore_catalog_mark_main_query_stock_priority', 30 );
+	remove_filter( 'posts_clauses', 'gstore_catalog_order_by_stock_first', 20 );
+
+	add_action(
+		'send_headers',
+		static function () {
+			header( 'X-Arma-Catalog-Diagnostic: custom-order-disabled' );
+		}
+	);
+}
+add_action( 'after_setup_theme', 'gstore_catalog_incident_diagnostic_mode', PHP_INT_MAX );
