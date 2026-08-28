@@ -42,44 +42,67 @@ echo do_blocks( '<!-- wp:template-part {"slug":"header","area":"header"} /-->' )
 	<section class="gstore-athlete-hero">
 		<div class="gstore-athlete-container">
 			<span class="gstore-athlete-eyebrow"><?php esc_html_e( 'Programa Atleta', 'gstore' ); ?></span>
-			<h1><?php esc_html_e( 'Equipamentos selecionados para quem vive o esporte.', 'gstore' ); ?></h1>
-			<p><?php esc_html_e( 'Faça seu cadastro, passe pela análise da equipe e tenha acesso a produtos exclusivos para atletas aprovados.', 'gstore' ); ?></p>
+			<h1><?php esc_html_e( 'Seu desempenho merece apoio à altura.', 'gstore' ); ?></h1>
+			<p><?php esc_html_e( 'Cadastre seu perfil esportivo e apresente sua trajetória para nossa equipe.', 'gstore' ); ?></p>
 			<div class="gstore-athlete-actions">
 				<?php if ( $logged_in ) : ?>
-					<a class="button gstore-athlete-button" href="#gstore-athlete-application"><?php echo esc_html( $is_athlete ? __( 'Ver meu status', 'gstore' ) : __( 'Solicitar cadastro', 'gstore' ) ); ?></a>
+					<a class="button gstore-athlete-button" href="#gstore-athlete-application"><?php echo esc_html( $is_athlete ? __( 'Ver meu status', 'gstore' ) : __( 'Quero me cadastrar', 'gstore' ) ); ?></a>
 				<?php else : ?>
-					<button class="button gstore-athlete-button" type="button" data-gstore-athlete-dialog-open><?php esc_html_e( 'Quero participar', 'gstore' ); ?></button>
+					<button class="button gstore-athlete-button" type="button" data-gstore-athlete-dialog-open><?php esc_html_e( 'Quero me cadastrar', 'gstore' ); ?></button>
 				<?php endif; ?>
-				<a class="gstore-athlete-link" href="#como-funciona"><?php esc_html_e( 'Como funciona', 'gstore' ); ?></a>
+				<a class="gstore-athlete-link" href="#como-funciona"><i class="fa-solid fa-arrow-down" aria-hidden="true"></i><?php esc_html_e( 'Como funciona', 'gstore' ); ?></a>
 			</div>
 		</div>
 	</section>
 
 	<section class="gstore-athlete-benefits" aria-label="<?php esc_attr_e( 'Benefícios do Programa Atleta', 'gstore' ); ?>">
 		<div class="gstore-athlete-container gstore-athlete-benefit-grid">
-			<article><strong><?php esc_html_e( 'Produtos exclusivos', 'gstore' ); ?></strong><span><?php esc_html_e( 'Veja e compre itens liberados somente para atletas aprovados.', 'gstore' ); ?></span></article>
-			<article><strong><?php esc_html_e( 'Compra normal', 'gstore' ); ?></strong><span><?php esc_html_e( 'Os produtos mantêm o preço e o checkout normal da loja.', 'gstore' ); ?></span></article>
-			<article><strong><?php esc_html_e( 'Análise individual', 'gstore' ); ?></strong><span><?php esc_html_e( 'A equipe confere os dados do cadastro antes de liberar o selo.', 'gstore' ); ?></span></article>
+			<article><i class="fa-solid fa-award" aria-hidden="true"></i><div><strong><?php esc_html_e( 'Acesso exclusivo', 'gstore' ); ?></strong><span><?php esc_html_e( 'Produtos selecionados liberados apenas para atletas aprovados.', 'gstore' ); ?></span></div></article>
+			<article><i class="fa-solid fa-chart-line" aria-hidden="true"></i><div><strong><?php esc_html_e( 'Apoio à evolução', 'gstore' ); ?></strong><span><?php esc_html_e( 'Uma parceria para quem vive e evolui no esporte.', 'gstore' ); ?></span></div></article>
+			<article><i class="fa-regular fa-user" aria-hidden="true"></i><div><strong><?php esc_html_e( 'Análise individual', 'gstore' ); ?></strong><span><?php esc_html_e( 'Cada inscrição é avaliada pela equipe do programa.', 'gstore' ); ?></span></div></article>
 		</div>
 	</section>
 
 	<section id="como-funciona" class="gstore-athlete-section">
 		<div class="gstore-athlete-container">
-			<h2><?php esc_html_e( 'Como funciona', 'gstore' ); ?></h2>
+			<header class="gstore-athlete-section-heading">
+				<span><?php esc_html_e( 'Programa Atleta', 'gstore' ); ?></span>
+				<h2><?php esc_html_e( 'Como funciona', 'gstore' ); ?></h2>
+			</header>
 			<ol class="gstore-athlete-steps">
-				<li><strong><?php esc_html_e( '1. Crie sua conta', 'gstore' ); ?></strong><span><?php esc_html_e( 'Use o cadastro seguro da loja para definir seu acesso.', 'gstore' ); ?></span></li>
-				<li><strong><?php esc_html_e( '2. Complete seus dados', 'gstore' ); ?></strong><span><?php esc_html_e( 'Informe modalidade, documento de identidade e endereço completo.', 'gstore' ); ?></span></li>
-				<li><strong><?php esc_html_e( '3. Acompanhe por aqui', 'gstore' ); ?></strong><span><?php esc_html_e( 'O status fica disponível nesta página enquanto a equipe analisa a solicitação.', 'gstore' ); ?></span></li>
+				<li><span class="gstore-athlete-step-number">01</span><i class="fa-regular fa-clipboard" aria-hidden="true"></i><strong><?php esc_html_e( 'Cadastro', 'gstore' ); ?></strong><span><?php esc_html_e( 'Crie sua conta e preencha o formulário com seus dados.', 'gstore' ); ?></span></li>
+				<li><span class="gstore-athlete-step-number">02</span><i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i><strong><?php esc_html_e( 'Análise de perfil', 'gstore' ); ?></strong><span><?php esc_html_e( 'Nossa equipe confere a solicitação enviada.', 'gstore' ); ?></span></li>
+				<li><span class="gstore-athlete-step-number">03</span><i class="fa-regular fa-circle-check" aria-hidden="true"></i><strong><?php esc_html_e( 'Retorno da equipe', 'gstore' ); ?></strong><span><?php esc_html_e( 'Acompanhe nesta página o resultado da análise.', 'gstore' ); ?></span></li>
 			</ol>
+		</div>
+	</section>
+
+	<section class="gstore-athlete-story">
+		<div class="gstore-athlete-container gstore-athlete-story__grid">
+			<div class="gstore-athlete-story__media"><img src="<?php echo esc_url( get_theme_file_uri( 'assets/images/athlete/athlete-program-story.png' ) ); ?>" alt="<?php esc_attr_e( 'Atleta em treinamento de tiro esportivo', 'gstore' ); ?>"></div>
+			<div class="gstore-athlete-story__content">
+				<span class="gstore-athlete-eyebrow"><?php esc_html_e( 'Programa Atleta', 'gstore' ); ?></span>
+				<h2><?php esc_html_e( 'Mais que equipamento: parceria de performance.', 'gstore' ); ?></h2>
+				<p><?php esc_html_e( 'O Programa Atleta foi criado para aproximar quem leva o esporte a sério de uma seleção exclusiva de produtos.', 'gstore' ); ?></p>
+				<ul class="gstore-athlete-story__list">
+					<li><i class="fa-solid fa-circle-check" aria-hidden="true"></i><span><strong><?php esc_html_e( 'Perfil esportivo', 'gstore' ); ?></strong><?php esc_html_e( 'Informe a modalidade que faz parte da sua rotina.', 'gstore' ); ?></span></li>
+					<li><i class="fa-solid fa-circle-check" aria-hidden="true"></i><span><strong><?php esc_html_e( 'Acesso de atleta', 'gstore' ); ?></strong><?php esc_html_e( 'Após aprovado, seu selo libera os produtos exclusivos.', 'gstore' ); ?></span></li>
+					<li><i class="fa-solid fa-circle-check" aria-hidden="true"></i><span><strong><?php esc_html_e( 'Status no seu tempo', 'gstore' ); ?></strong><?php esc_html_e( 'Acompanhe a análise diretamente nesta página.', 'gstore' ); ?></span></li>
+				</ul>
+			</div>
 		</div>
 	</section>
 
 	<section id="gstore-athlete-application" class="gstore-athlete-section gstore-athlete-section--form">
 		<div class="gstore-athlete-container gstore-athlete-application-wrap">
-			<div>
-				<span class="gstore-athlete-eyebrow gstore-athlete-eyebrow--dark"><?php esc_html_e( 'Sua conta', 'gstore' ); ?></span>
+			<div class="gstore-athlete-application__intro">
+				<span class="gstore-athlete-eyebrow"><?php esc_html_e( 'Sua conta', 'gstore' ); ?></span>
 				<h2><?php esc_html_e( 'Cadastro de atleta', 'gstore' ); ?></h2>
-				<p><?php esc_html_e( 'A modalidade é o único dado esportivo obrigatório nesta etapa. Seus dados e documento são usados apenas para análise do programa.', 'gstore' ); ?></p>
+				<p><?php esc_html_e( 'Preencha seus dados com atenção. A modalidade é o único dado esportivo obrigatório nesta etapa.', 'gstore' ); ?></p>
+				<ul class="gstore-athlete-application__highlights">
+					<li><i class="fa-solid fa-shield-halved" aria-hidden="true"></i><span><strong><?php esc_html_e( 'Seus dados estão seguros', 'gstore' ); ?></strong><?php esc_html_e( 'As informações são usadas somente na análise do programa.', 'gstore' ); ?></span></li>
+					<li><i class="fa-regular fa-user" aria-hidden="true"></i><span><strong><?php esc_html_e( 'Feito para atletas', 'gstore' ); ?></strong><?php esc_html_e( 'Uma inscrição simples, vinculada à sua conta da loja.', 'gstore' ); ?></span></li>
+				</ul>
 			</div>
 			<div class="gstore-athlete-card">
 				<?php if ( $status && $message ) : ?>
