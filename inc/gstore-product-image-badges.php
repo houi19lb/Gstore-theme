@@ -103,8 +103,9 @@ if ( ! function_exists( 'gstore_render_product_image_badges' ) ) {
 		}
 
 		$context = 'single' === $context ? 'single' : 'card';
+		$count   = min( 2, count( $badges ) );
 		?>
-		<div class="Gstore-product-image-badges Gstore-product-image-badges--<?php echo esc_attr( $context ); ?>" role="list" aria-label="<?php esc_attr_e( 'Destaques do produto', 'gstore' ); ?>">
+		<div class="Gstore-product-image-badges Gstore-product-image-badges--<?php echo esc_attr( $context ); ?> Gstore-product-image-badges--count-<?php echo esc_attr( (string) $count ); ?>" role="list" aria-label="<?php esc_attr_e( 'Destaques do produto', 'gstore' ); ?>">
 			<?php foreach ( $badges as $badge ) : ?>
 				<span class="Gstore-product-image-badge Gstore-product-image-badge--<?php echo esc_attr( $badge['tone'] ); ?>" role="listitem" title="<?php echo esc_attr( $badge['label'] ); ?>">
 					<i class="<?php echo esc_attr( $badge['icon'] ); ?>" aria-hidden="true"></i>

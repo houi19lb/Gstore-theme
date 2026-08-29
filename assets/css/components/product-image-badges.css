@@ -23,7 +23,7 @@
 	justify-content: flex-end;
 }
 
-.Gstore-product-image-badges--card:has(> .Gstore-product-image-badge:nth-child(2)) {
+.Gstore-product-image-badges--card.Gstore-product-image-badges--count-2 {
 	justify-content: center;
 }
 

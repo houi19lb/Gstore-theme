@@ -21,8 +21,12 @@
    - Correção: `box-shadow: none`, `border-radius: 0`, gap reduzido para 2 px e faixa movida para 4 px da borda inferior.
    - Evidência pós-correção: desktop e mobile reportaram `borderRadius: 0px`, `boxShadow: none`, `gap: 2px` e os dois badges permaneceram contidos na imagem.
 4. [P2] A dupla estava alinhada à direita, deixando uma margem lateral maior à esquerda.
-   - Correção: o container mantém 12 px nas laterais e usa `justify-content: center` somente quando detecta um segundo badge; com um badge, preserva `flex-end`.
-   - Evidência pós-correção: desktop registrou 14,19 px à esquerda e 14,20 px à direita; mobile registrou 24,19 px e 24,20 px. Um badge isolado manteve 12 px à direita nos dois breakpoints.
+	- Correção: o container mantém 12 px nas laterais e usa `justify-content: center` somente quando detecta um segundo badge; com um badge, preserva `flex-end`.
+	- Evidência pós-correção: desktop registrou 14,19 px à esquerda e 14,20 px à direita; mobile registrou 24,19 px e 24,20 px. Um badge isolado manteve 12 px à direita nos dois breakpoints.
+5. [P2] Na loja teste, a dupla continuava alinhada à direita apesar do CSS atualizado.
+   - Causa observada no primeiro card real: o WordPress inseriu elementos `<br>` entre os badges, então o antigo seletor baseado no segundo filho não reconhecia a dupla.
+   - Correção: o HTML agora recebe a classe explícita `Gstore-product-image-badges--count-2`, e somente o contexto `card` usa essa classe para centralizar o conjunto. A página individual continua sem essa regra.
+   - Evidência pós-correção: o preview registrou `justify-content: center`, 14,19 px à esquerda e 14,20 px à direita, diferença de 0,01 px. Console sem erros ou avisos.
 
 ## Required fidelity surfaces
 
@@ -34,9 +38,9 @@
 
 ## Comparison evidence
 
-- Source visual truth: `C:/Users/mathe/AppData/Local/Temp/codex-clipboard-e5576244-3932-4125-b4d1-c78e3883148e.png` — 345 × 588 px.
+- Source visual truth: `C:/Users/mathe/AppData/Local/Temp/codex-clipboard-b3c70a23-b1af-4b49-94d0-fbc7688dea4a.png` — 343 × 595 px; estado real do primeiro card da loja teste com dois badges ainda alinhados à direita.
 - Implementation URL: `http://127.0.0.1:8765/docs/visual-snapshots/manual/product-image-badges-preview.html`.
-- Full-view combined comparison: `C:/Users/mathe/Documents/Gstore-theme-codex-product-image-badges/docs/visual-snapshots/manual/product-image-badges-balanced-comparison.png` — 847 × 912 px; viewport CSS 862 × 698; DPR 1,25; captura normalizada para pixels CSS.
+- Full-view combined comparison: `C:/Users/mathe/Documents/Gstore-theme-codex-product-image-badges/docs/visual-snapshots/manual/product-image-badges-count-class-comparison.png` — 1064 × 639 px; viewport CSS 1536 × 639; DPR 1,25. A própria página de QA reúne a referência e a implementação na mesma captura.
 - Focused mobile evidence: `C:/Users/mathe/Documents/Gstore-theme-codex-product-image-badges/docs/visual-snapshots/manual/product-image-badges-balanced-mobile.png` — 375 × 811 px; viewport solicitado 390 × 844; DPR 1.
 - State: comparação de um e dois avisos no card; dupla centralizada; badge isolado alinhado à direita; galeria individual preservada.
 - Primary interactions tested: não aplicável aos badges, que são informativos e usam `pointer-events: none`.
