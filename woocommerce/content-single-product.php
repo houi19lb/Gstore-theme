@@ -1281,25 +1281,27 @@ $gstore_tab_next_cta_labels = array(
 							<div class="gallery-body Gstore-single-product__gallery">
 								<div class="gallery-thumbs" data-gstore-gallery-thumbs></div>
 
-								<div class="gallery-main">
+								<div class="gallery-main<?php echo $is_variable ? ' gallery-main--variable' : ''; ?>">
 									<?php do_action( 'woocommerce_before_single_product_summary' ); ?>
 
-									<?php
-									if ( function_exists( 'gstore_render_product_image_badges' ) ) {
-										gstore_render_product_image_badges( $product, 'single' );
-									}
-									?>
+									<div class="Gstore-single-product__gallery-toolbar<?php echo $is_variable ? ' Gstore-single-product__gallery-toolbar--variable' : ''; ?>">
+										<?php
+										if ( function_exists( 'gstore_render_product_image_badges' ) ) {
+											gstore_render_product_image_badges( $product, 'single' );
+										}
+										?>
 
-									<?php if ( $is_variable ) : ?>
-										<div class="gallery-preview">
-											<?php esc_html_e( 'Preview:', 'gstore' ); ?>
-											<strong id="variantPreview" data-gstore-variation-preview aria-live="polite">—</strong>
-										</div>
-									<?php endif; ?>
+										<?php if ( $is_variable ) : ?>
+											<div class="gallery-preview">
+												<?php esc_html_e( 'Preview:', 'gstore' ); ?>
+												<strong id="variantPreview" data-gstore-variation-preview aria-live="polite">—</strong>
+											</div>
+										<?php endif; ?>
 
-									<button type="button" class="btn-secondary" data-gstore-gallery-zoom>
-										<?php esc_html_e( 'Zoom', 'gstore' ); ?>
-									</button>
+										<button type="button" class="btn-secondary" data-gstore-gallery-zoom>
+											<?php esc_html_e( 'Zoom', 'gstore' ); ?>
+										</button>
+									</div>
 								</div>
 							</div>
 
