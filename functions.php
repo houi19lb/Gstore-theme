@@ -35,6 +35,7 @@ if ( file_exists( $gstore_armastore_migration_config ) ) {
 }
 
 require_once get_theme_file_path( 'inc/gstore-product-upsells.php' );
+require_once get_theme_file_path( 'inc/gstore-product-image-badges.php' );
 
 /**
  * Configurações iniciais do tema filho.
@@ -5446,6 +5447,7 @@ function gstore_enqueue_styles() {
 		array( 'gstore-main' ),
 		$stylesheet_version
 	);
+	gstore_enqueue_theme_style( 'gstore-product-image-badges-css', 'assets/css/components/product-image-badges.css', array( 'gstore-style' ), $theme_version );
 
 	gstore_enqueue_theme_style( 'gstore-footer-css', 'assets/css/layouts/footer.css', array( 'gstore-style' ), $theme_version );
 	gstore_enqueue_theme_style( 'gstore-header-legacy-css', 'assets/css/layouts/header-legacy.css', array( 'gstore-style' ), $theme_version );

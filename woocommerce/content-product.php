@@ -137,6 +137,11 @@ $render_product_card_footer = static function() {
 					<?php echo $product->get_image( 'woocommerce_thumbnail' ); ?>
 				</a>
 			</div>
+			<?php
+			if ( function_exists( 'gstore_render_product_image_badges' ) ) {
+				gstore_render_product_image_badges( $product, 'card' );
+			}
+			?>
 		</div>
 		<div class="Gstore-product-card__body">
 			<div class="Gstore-product-card__meta">

@@ -1284,6 +1284,12 @@ $gstore_tab_next_cta_labels = array(
 								<div class="gallery-main">
 									<?php do_action( 'woocommerce_before_single_product_summary' ); ?>
 
+									<?php
+									if ( function_exists( 'gstore_render_product_image_badges' ) ) {
+										gstore_render_product_image_badges( $product, 'single' );
+									}
+									?>
+
 									<?php if ( $is_variable ) : ?>
 										<div class="gallery-preview">
 											<?php esc_html_e( 'Preview:', 'gstore' ); ?>
