@@ -177,6 +177,26 @@
 		return 'gstore_blu_get_product_installment_quotes';
 	}
 
+	function resolveInstallmentBatchAction() {
+		if (typeof gstoreProductCardConfig !== 'undefined' && gstoreProductCardConfig?.batchAction) {
+			return String(gstoreProductCardConfig.batchAction);
+		}
+		return 'gstore_blu_get_product_installment_quotes_batch';
+	}
+
+	function resolveInstallmentMode() {
+		const config = typeof gstoreProductCardConfig !== 'undefined' ? gstoreProductCardConfig : {};
+		const configured = String(config?.mode || 'batch').toLowerCase();
+		const mode = ['batch', 'legacy', 'off'].includes(configured) ? configured : 'batch';
+
+		// A página de produto conserva o comportamento individual anterior. O lote
+		// é exclusivo de páginas de catálogo, home, busca e demais grades.
+		if (mode === 'batch' && Boolean(config?.isProductPage)) {
+			return 'legacy';
+		}
+		return mode;
+	}
+
 	function formatCurrency(value) {
 		if (!Number.isFinite(value)) return '';
 		try {
@@ -200,6 +220,10 @@
 	function initProductCardInstallmentQuotes() {
 		const targets = Array.from(document.querySelectorAll('[data-gstore-installment-scope="card"]'));
 		if (!targets.length) {
+			return;
+		}
+		const mode = resolveInstallmentMode();
+		if (mode === 'off') {
 			return;
 		}
 
@@ -323,6 +347,116 @@
 			gstoreInstallmentInFlight.set(signature, fetchPromise);
 		}
 
+		const batchQueue = new Set();
+		let batchTimer = null;
+		let batchInFlight = false;
+
+		function getBatchConfigNumber(key, fallback, min, max) {
+			const config = typeof gstoreProductCardConfig !== 'undefined' ? gstoreProductCardConfig : {};
+			const parsed = parseInt(String(config?.[key] ?? fallback), 10);
+			if (!Number.isFinite(parsed)) return fallback;
+			return Math.max(min, Math.min(max, parsed));
+		}
+
+		function enqueueBatchTarget(target) {
+			batchQueue.add(target);
+			if (batchTimer || batchInFlight) return;
+			const delay = getBatchConfigNumber('batchDelay', 100, 0, 1000);
+			batchTimer = window.setTimeout(function() {
+				batchTimer = null;
+				flushBatch();
+			}, delay);
+		}
+
+		function flushBatch() {
+			if (batchInFlight || !batchQueue.size) return;
+
+			const batchSize = getBatchConfigNumber('batchSize', 20, 1, 20);
+			const groups = new Map();
+			Array.from(batchQueue).forEach(function(target) {
+				const productId = String(target?.dataset?.productId || '').trim();
+				if (!/^\d+$/.test(productId) || parseInt(productId, 10) <= 0) {
+					batchQueue.delete(target);
+					return;
+				}
+
+				if (!groups.has(productId) && groups.size >= batchSize) {
+					return;
+				}
+
+				const max = getMaxInstallments(target);
+				const group = groups.get(productId) || { productId, max, targets: [] };
+				group.max = Math.max(group.max, max);
+				group.targets.push(target);
+				groups.set(productId, group);
+				batchQueue.delete(target);
+			});
+
+			if (!groups.size) return;
+
+			const ajaxUrl = resolveInstallmentAjaxUrl();
+			if (!ajaxUrl) return;
+
+			const items = Array.from(groups.values()).map(function(group) {
+				return { product_id: parseInt(group.productId, 10), max: group.max };
+			});
+			const body = new URLSearchParams();
+			body.set('action', resolveInstallmentBatchAction());
+			body.set('items', JSON.stringify(items));
+			body.set('gstore_price_context', 'card');
+
+			const timeout = getBatchConfigNumber('timeout', 8000, 1000, 30000);
+			const controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
+			const timeoutId = controller ? window.setTimeout(function() { controller.abort(); }, timeout) : null;
+			batchInFlight = true;
+
+			fetch(ajaxUrl, {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+				},
+				credentials: 'same-origin',
+				body: body.toString(),
+				...(controller ? { signal: controller.signal } : {}),
+			})
+				.then(async function(response) {
+					let payload;
+					try {
+						payload = await response.json();
+					} catch (parseError) {
+						throw new Error('Resposta inválida do lote de parcelas.');
+					}
+					if (!response.ok || !payload?.success || !payload?.data?.products) {
+						throw new Error('Falha ao obter lote de parcelas.');
+					}
+					return payload.data.products;
+				})
+				.then(function(products) {
+					groups.forEach(function(group, productId) {
+						const quote = products?.[productId];
+						if (!quote || !quote.installments || !quote.per_installment_text) return;
+						const text = String(quote.text || ('ou ' + quote.installments + 'x de ' + quote.per_installment_text));
+						group.targets.forEach(function(target) { applyText(target, text); });
+					});
+				})
+				.catch(function() {
+					// O HTML renderizado no servidor permanece intacto. Não há retry automático.
+				})
+				.finally(function() {
+					if (timeoutId) window.clearTimeout(timeoutId);
+					batchInFlight = false;
+					if (batchQueue.size) flushBatch();
+				});
+		}
+
+		function requestVisibleTarget(target) {
+			if (mode === 'batch') {
+				enqueueBatchTarget(target);
+				return;
+			}
+			requestTargetQuotes(target);
+		}
+
 		if ('IntersectionObserver' in window) {
 			const observer = new IntersectionObserver(
 				function(entries) {
@@ -330,14 +464,14 @@
 						if (!entry.isIntersecting) return;
 						const target = entry.target;
 						observer.unobserve(target);
-						requestTargetQuotes(target);
+						requestVisibleTarget(target);
 					});
 				},
 				{ rootMargin: '120px 0px' }
 			);
 			targets.forEach(function(target) { observer.observe(target); });
 		} else {
-			targets.forEach(function(target) { requestTargetQuotes(target); });
+			targets.forEach(function(target) { requestVisibleTarget(target); });
 		}
 	}
 	
