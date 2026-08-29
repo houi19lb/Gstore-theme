@@ -541,6 +541,14 @@ div.woocommerce section.Gstore-cart-shell div.Gstore-cart-container {
 	color: var(--gstore-cart-green);
 }
 
+.Gstore-cart-card__shipping-deadline {
+	display: block;
+	margin-top: 2px;
+	color: var(--gstore-cart-text-muted);
+	font-size: var(--gstore-font-size-xs);
+	font-weight: var(--gstore-font-weight-medium);
+}
+
 .Gstore-cart-card__shipping-option input[type="radio"] {
 	accent-color: var(--gstore-cart-green);
 }

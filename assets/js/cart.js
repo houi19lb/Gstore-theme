@@ -248,6 +248,11 @@
 					other_note: raw.other_note || '',
 					rate_kind: raw.rate_kind || '',
 					pricing_type: raw.pricing_type || '',
+					provider: raw.provider || '',
+					package_key: raw.package_key || '',
+					applicable_cart_item_keys: Array.isArray(raw.applicable_cart_item_keys) ? raw.applicable_cart_item_keys.map(String) : [],
+					delivery_time_min: parseInt(raw.delivery_time_min || 0, 10) || 0,
+					delivery_time_max: parseInt(raw.delivery_time_max || 0, 10) || 0,
 				};
 			})
 			.filter((rate) => rate.mode && rate.rate_id);
@@ -653,6 +658,9 @@
 	function getSelectedRateGroupKeyForItem(rate, itemEl) {
 		const rateId = String((rate && rate.rate_id) || '').trim();
 		const mode = normalizeRateMode(rate && rate.mode) || 'land';
+		if (isMelhorEnvioRate(rate)) {
+			return `melhor_envio:${String(rate.package_key || '')}:${rateId}`;
+		}
 		const suffix = shouldSplitRateByShippingProfile(rate, rateId)
 			? getItemShippingProfileGroupSuffix(itemEl)
 			: '';
@@ -827,13 +835,16 @@
 		const subtotalValue = getCartSubtotalValue();
 		const groundRow = ensureTotalsRow(totalsTable, 'gstore-shipping-ground', 'Frete terrestre');
 		const airRow = ensureTotalsRow(totalsTable, 'gstore-shipping-air', 'Frete aéreo');
+		const melhorEnvioRow = ensureTotalsRow(totalsTable, 'gstore-shipping-melhor-envio', 'Melhor Envio');
 
 		const shippingBlocks = document.querySelectorAll('[data-gstore-shipping-item]');
 		let groundTotal = 0;
 		let airTotal = 0;
+		let melhorEnvioTotal = 0;
 		let selectedTotal = 0;
 		let hasGround = false;
 		let hasAir = false;
+		let hasMelhorEnvio = false;
 		const selectedModes = new Set();
 		const selectedRateIds = new Set();
 		const selectedCostGroups = new Map();
@@ -886,6 +897,9 @@
 			} else if (group.mode === 'air') {
 				airTotal += groupedCost;
 				hasAir = true;
+			} else if (group.mode === 'melhor_envio') {
+				melhorEnvioTotal += groupedCost;
+				hasMelhorEnvio = true;
 			}
 		});
 
@@ -898,8 +912,10 @@
 			selectedTotal = cartLevelCost;
 			groundTotal = cartLevelMode === 'land' ? cartLevelCost : 0;
 			airTotal = cartLevelMode === 'air' ? cartLevelCost : 0;
+			melhorEnvioTotal = cartLevelMode === 'melhor_envio' ? cartLevelCost : 0;
 			hasGround = cartLevelMode === 'land';
 			hasAir = cartLevelMode === 'air';
+			hasMelhorEnvio = cartLevelMode === 'melhor_envio';
 		}
 
 		if (groundRow) {
@@ -914,6 +930,12 @@
 				valueCell.innerHTML = hasAir ? formatCurrency(airTotal) : '-';
 			}
 		}
+		if (melhorEnvioRow) {
+			const valueCell = melhorEnvioRow.querySelector('[data-gstore-value="true"]') || melhorEnvioRow.querySelector('td');
+			if (valueCell) {
+				valueCell.innerHTML = hasMelhorEnvio ? formatCurrency(melhorEnvioTotal) : '-';
+			}
+		}
 
 		if (selectedModes.size === 1) {
 			const [onlyMode] = Array.from(selectedModes);
@@ -923,12 +945,18 @@
 			if (airRow) {
 				airRow.style.display = onlyMode === 'air' ? '' : 'none';
 			}
+			if (melhorEnvioRow) {
+				melhorEnvioRow.style.display = onlyMode === 'melhor_envio' ? '' : 'none';
+			}
 		} else {
 			if (groundRow) {
 				groundRow.style.display = '';
 			}
 			if (airRow) {
 				airRow.style.display = '';
+			}
+			if (melhorEnvioRow) {
+				melhorEnvioRow.style.display = hasMelhorEnvio ? '' : 'none';
 			}
 		}
 
@@ -953,6 +981,9 @@
 		if (value === 'other' || value === 'outro' || value === 'outros') {
 			return 'other';
 		}
+		if (value === 'melhor_envio' || value === 'melhor-envio') {
+			return 'melhor_envio';
+		}
 		return '';
 	}
 
@@ -960,6 +991,9 @@
 		const value = String(rateId || '').toLowerCase();
 		if (!value) {
 			return '';
+		}
+		if (value.indexOf(':melhor_envio:') !== -1) {
+			return 'melhor_envio';
 		}
 		if (value.indexOf(':pickup') !== -1 || /(?:^|[-_:])pickup(?:$|[-_:])/.test(value)) {
 			return 'pickup';
@@ -986,6 +1020,9 @@
 		}
 		if (normalized === 'other') {
 			return 'Outros';
+		}
+		if (normalized === 'melhor_envio') {
+			return 'Melhor Envio';
 		}
 		return 'Terrestre';
 	}
@@ -1033,6 +1070,21 @@
 		return (rate && rate.cost_formatted) || '-';
 	}
 
+	function getRateDeadlineDisplay(rate) {
+		const min = parseInt((rate && rate.delivery_time_min) || 0, 10) || 0;
+		const max = parseInt((rate && rate.delivery_time_max) || 0, 10) || 0;
+		if (!min && !max) {
+			return '';
+		}
+		const text = min && max && min !== max ? `${min}–${max} dias úteis` : `${max || min} dias úteis`;
+		return `<small class="Gstore-cart-card__shipping-deadline">${escapeHtml(text)}</small>`;
+	}
+
+	function isMelhorEnvioRate(rate) {
+		return String((rate && rate.provider) || '') === 'melhor_envio'
+			|| String((rate && rate.rate_id) || '').indexOf('gstore_custom_shipping:melhor_envio:') === 0;
+	}
+
 	function groupRatesByMode(rates) {
 		const groups = new Map();
 		(rates || []).forEach((rate) => {
@@ -1046,7 +1098,7 @@
 			groups.get(mode).push(rate);
 		});
 
-		return ['land', 'air', 'pickup', 'other']
+		return ['land', 'air', 'melhor_envio', 'pickup', 'other']
 			.filter((mode) => groups.has(mode))
 			.map((mode) => ({
 				mode,
@@ -1073,6 +1125,7 @@
 				postcode: cep,
 				product_id: productId,
 				quantity: quantity,
+				exclude_melhor_envio: 1,
 			},
 		}).then((response) => {
 			if (!response || !response.success || !response.data || !Array.isArray(response.data.rates)) {
@@ -1106,6 +1159,77 @@
 		}).catch(() => null);
 	}
 
+	function selectRateInShippingBlock(cartItemKey, rate) {
+		if (!cartItemKey || !rate) {
+			return;
+		}
+		const itemEl = Array.from(document.querySelectorAll('[data-cart-item-key]')).find((item) => (
+			String(item.dataset.cartItemKey || item.getAttribute('data-cart-item-key') || '') === String(cartItemKey)
+		));
+		const shippingBlock = itemEl ? itemEl.querySelector('[data-gstore-shipping-item]') : null;
+		if (!shippingBlock) {
+			return;
+		}
+		const rateId = String(rate.rate_id || '');
+		const mode = normalizeRateMode(rate.mode) || 'land';
+		shippingBlock.querySelectorAll('input[type="radio"]').forEach((input) => {
+			input.checked = String(input.value || '') === rateId;
+		});
+		shippingBlock.dataset.lastSelectedMode = mode;
+		shippingBlock.dataset.lastSelectedRateId = rateId;
+		storeShippingMode(cartItemKey, mode);
+		storeSelectedRateId(cartItemKey, rateId);
+		ensureSelectionHiddenInputs(shippingBlock, cartItemKey, rateId, mode);
+	}
+
+	function synchronizeMelhorEnvioSelection(rate) {
+		if (!isMelhorEnvioRate(rate)) {
+			return;
+		}
+		const applicableKeys = Array.isArray(rate.applicable_cart_item_keys) ? rate.applicable_cart_item_keys.map(String) : [];
+		applicableKeys.forEach((cartItemKey) => {
+			const matchingRate = getRatesForItem(cartItemKey).find((candidate) => String(candidate.rate_id || '') === String(rate.rate_id || ''));
+			if (matchingRate) selectRateInShippingBlock(cartItemKey, matchingRate);
+		});
+	}
+
+	function leaveMelhorEnvioPackage(previousRate, sourceCartItemKey) {
+		if (!isMelhorEnvioRate(previousRate)) {
+			return;
+		}
+		const applicableKeys = Array.isArray(previousRate.applicable_cart_item_keys) ? previousRate.applicable_cart_item_keys.map(String) : [];
+		applicableKeys.forEach((cartItemKey) => {
+			if (cartItemKey === sourceCartItemKey) return;
+			const fallback = getRatesForItem(cartItemKey).find((candidate) => !isMelhorEnvioRate(candidate));
+			if (fallback) selectRateInShippingBlock(cartItemKey, fallback);
+		});
+	}
+
+	function applyCartLevelMelhorEnvioRates(shippingBlocks, preferredSelections) {
+		const melhorEnvioRates = (cartLevelRates || []).filter(isMelhorEnvioRate);
+		shippingBlocks.forEach((shippingBlock) => {
+			const itemEl = shippingBlock.closest('[data-cart-item-key]');
+			const cartItemKey = itemEl && (itemEl.dataset.cartItemKey || itemEl.getAttribute('data-cart-item-key'));
+			if (!cartItemKey) return;
+			const regularRates = getRatesForItem(cartItemKey).filter((rate) => !isMelhorEnvioRate(rate));
+			const applicableRates = melhorEnvioRates.filter((rate) => (
+				Array.isArray(rate.applicable_cart_item_keys) && rate.applicable_cart_item_keys.map(String).includes(String(cartItemKey))
+			));
+			const preferred = preferredSelections[cartItemKey] || getStoredSelectedRateId(cartItemKey) || '';
+			updateShippingBlock(shippingBlock, regularRates.concat(applicableRates), cartItemKey, preferred);
+		});
+
+		Object.keys(preferredSelections).some((cartItemKey) => {
+			const preferredRateId = preferredSelections[cartItemKey];
+			const preferredRate = getRatesForItem(cartItemKey).find((rate) => String(rate.rate_id || '') === String(preferredRateId || ''));
+			if (isMelhorEnvioRate(preferredRate)) {
+				synchronizeMelhorEnvioSelection(preferredRate);
+				return true;
+			}
+			return false;
+		});
+	}
+
 	function updateShippingBlock(shippingBlock, rates, cartItemKey, selectedMode) {
 		if (!shippingBlock) {
 			return;
@@ -1135,6 +1259,11 @@
 					other_note: rate.other_note || '',
 					rate_kind: rate.rate_kind || '',
 					pricing_type: rate.pricing_type || '',
+					provider: rate.provider || '',
+					package_key: rate.package_key || '',
+					applicable_cart_item_keys: Array.isArray(rate.applicable_cart_item_keys) ? rate.applicable_cart_item_keys.map(String) : [],
+					delivery_time_min: parseInt(rate.delivery_time_min || 0, 10) || 0,
+					delivery_time_max: parseInt(rate.delivery_time_max || 0, 10) || 0,
 				};
 			})
 			.filter((rate) => rate.mode && rate.rate_id);
@@ -1175,7 +1304,7 @@
 					<label class="Gstore-cart-card__shipping-option">
 						<input type="radio" name="gstore_selected_shipping_rate[${cartItemKey}]" value="${rate.rate_id}" data-gstore-mode="${group.mode}" ${checked} />
 						<span class="Gstore-cart-card__shipping-text">${escapeHtml(label)}</span>
-						<span class="Gstore-cart-card__shipping-price">${cost}</span>
+						<span class="Gstore-cart-card__shipping-price">${cost}${getRateDeadlineDisplay(rate)}</span>
 					</label>
 				`;
 				}).join('');
@@ -1204,7 +1333,7 @@
 						<div class="Gstore-cart-card__shipping-group-title">${escapeHtml(modeLabel)}</div>
 						<div class="Gstore-cart-card__shipping-fixed-option">
 							<span class="Gstore-cart-card__shipping-text">${escapeHtml(label)}</span>
-							<span class="Gstore-cart-card__shipping-price">${cost}</span>
+							<span class="Gstore-cart-card__shipping-price">${cost}${getRateDeadlineDisplay(onlyRate)}</span>
 							<input type="hidden" name="gstore_selected_shipping_rate[${cartItemKey}]" value="${onlyRate.rate_id}" />
 							<input type="hidden" name="gstore_shipping_mode[${cartItemKey}]" value="${onlyRate.mode}" />
 						</div>
@@ -1297,6 +1426,7 @@
 		}
 
 		ratesSyncInProgress = true;
+		const preferredSelections = {};
 
 		const requests = [];
 		requests.push(
@@ -1328,6 +1458,7 @@
 			const selectedRateId = selectedInput
 				? String(selectedInput.value || '')
 				: (hiddenRateId && hiddenRateId.value) || getStoredSelectedRateId(cartItemKey) || '';
+			preferredSelections[cartItemKey] = selectedRateId;
 			const selectedMode = selectedInput
 				? String(selectedInput.dataset.gstoreMode || '')
 				: (hiddenMode && hiddenMode.value) || storedMode || shippingBlock.dataset.lastSelectedMode || 'land';
@@ -1343,6 +1474,7 @@
 		});
 
 		Promise.allSettled(requests).then(() => {
+			applyCartLevelMelhorEnvioRates(shippingBlocks, preferredSelections);
 			ratesSyncInProgress = false;
 			updateCartTotalsSummary();
 			setCalculatedShippingFlag(true);
@@ -1678,11 +1810,20 @@
 
 			const selectedRateId = String(target.value || '');
 			const selectedMode = normalizeRateMode(target.dataset.gstoreMode || '');
+			const itemRates = getRatesForItem(cartItemKey);
+			const previousRateId = String(shippingBlock.dataset.lastSelectedRateId || getStoredSelectedRateId(cartItemKey) || '');
+			const previousRate = itemRates.find((rate) => String(rate.rate_id || '') === previousRateId);
+			const selectedRate = itemRates.find((rate) => String(rate.rate_id || '') === selectedRateId);
 			shippingBlock.dataset.lastSelectedMode = selectedMode;
 			shippingBlock.dataset.lastSelectedRateId = selectedRateId;
 			storeShippingMode(cartItemKey, selectedMode);
 			storeSelectedRateId(cartItemKey, selectedRateId);
 			ensureSelectionHiddenInputs(shippingBlock, cartItemKey, selectedRateId, selectedMode);
+			if (isMelhorEnvioRate(selectedRate)) {
+				synchronizeMelhorEnvioSelection(selectedRate);
+			} else {
+				leaveMelhorEnvioPackage(previousRate, cartItemKey);
+			}
 
 			updateCartTotalsSummary();
 			updateCheckoutAvailability();
@@ -1818,6 +1959,18 @@
 		});
 
 		mixedCartActionsDelegated = true;
+	}
+
+	if (typeof window !== 'undefined' && window.__GSTORE_SHIPPING_TEST__) {
+		window.gstoreCartMelhorEnvioTestApi = {
+			normalizeRateMode,
+			isMelhorEnvioRate,
+			getRateDeadlineDisplay,
+			getSelectedRateGroupKeyForItem,
+			synchronizeMelhorEnvioSelection,
+			leaveMelhorEnvioPackage,
+			fetchRatesForItem,
+		};
 	}
 
 	if (document.readyState === 'loading') {

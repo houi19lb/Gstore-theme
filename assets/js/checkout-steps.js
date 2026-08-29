@@ -2722,6 +2722,9 @@ const subtotal = decodeHtmlEntities(stripHtmlText(it.subtotal || ''));
 		if (value === 'other' || value === 'outro' || value === 'outros') {
 			return 'other';
 		}
+		if (value === 'melhor_envio' || value === 'melhor-envio') {
+			return 'melhor_envio';
+		}
 		return '';
 	}
 
@@ -2729,6 +2732,9 @@ const subtotal = decodeHtmlEntities(stripHtmlText(it.subtotal || ''));
 		const value = String(rateId || '').toLowerCase();
 		if (!value) {
 			return '';
+		}
+		if (value.indexOf(':melhor_envio:') !== -1) {
+			return 'melhor_envio';
 		}
 		if (value.indexOf(':pickup') !== -1 || /(?:^|[-_:])pickup(?:$|[-_:])/.test(value)) {
 			return 'pickup';
@@ -2755,6 +2761,9 @@ const subtotal = decodeHtmlEntities(stripHtmlText(it.subtotal || ''));
 		}
 		if (normalized === 'other') {
 			return 'Outros';
+		}
+		if (normalized === 'melhor_envio') {
+			return 'Melhor Envio';
 		}
 		return 'Frete Terrestre';
 	}
@@ -2812,6 +2821,9 @@ const subtotal = decodeHtmlEntities(stripHtmlText(it.subtotal || ''));
 			const uniqueLabels = Array.from(new Set(labels.map((label) => String(label || '').trim()).filter(Boolean)));
 			return uniqueLabels.length === 1 ? uniqueLabels[0] : 'Outros';
 		}
+		if (normalized === 'melhor_envio') {
+			return 'Melhor Envio';
+		}
 		return 'Frete terrestre';
 	}
 
@@ -2848,7 +2860,27 @@ const subtotal = decodeHtmlEntities(stripHtmlText(it.subtotal || ''));
 			other_note: raw.other_note || '',
 			rate_kind: raw.rate_kind || '',
 			pricing_type: raw.pricing_type || '',
+			provider: raw.provider || '',
+			package_key: raw.package_key || '',
+			applicable_cart_item_keys: Array.isArray(raw.applicable_cart_item_keys) ? raw.applicable_cart_item_keys.map(String) : [],
+			delivery_time_min: parseInt(raw.delivery_time_min || 0, 10) || 0,
+			delivery_time_max: parseInt(raw.delivery_time_max || 0, 10) || 0,
 		};
+	}
+
+	function isMelhorEnvioRate(rate) {
+		return String((rate && rate.provider) || '') === 'melhor_envio'
+			|| String((rate && rate.rate_id) || '').indexOf('gstore_custom_shipping:melhor_envio:') === 0;
+	}
+
+	function getRateDeadlineHtml(rate) {
+		const min = parseInt((rate && rate.delivery_time_min) || 0, 10) || 0;
+		const max = parseInt((rate && rate.delivery_time_max) || 0, 10) || 0;
+		if (!min && !max) {
+			return '';
+		}
+		const text = min && max && min !== max ? `${min}–${max} dias úteis` : `${max || min} dias úteis`;
+		return `<small class="Gstore-checkout-item-shipping-option__deadline">${escapeHtml(text)}</small>`;
 	}
 
 	function isRateQuoteNoticeActive(rate) {
@@ -3143,7 +3175,7 @@ const subtotal = decodeHtmlEntities(stripHtmlText(it.subtotal || ''));
 			groups.get(mode).push(rate);
 		});
 
-		return ['land', 'air', 'pickup', 'other']
+		return ['land', 'air', 'melhor_envio', 'pickup', 'other']
 			.filter((mode) => groups.has(mode))
 			.map((mode) => ({
 				mode,
@@ -3324,10 +3356,18 @@ const subtotal = decodeHtmlEntities(stripHtmlText(it.subtotal || ''));
 	}
 
 	function applyShippingSelectionToGroup(cartItemKey, rateId, mode, persistSelection) {
-		const memberKeys = getShippingGroupMemberKeys(cartItemKey);
 		const selectedRateId = String(rateId || '').trim();
 		const selectedMode = normalizeRateMode(mode) || 'land';
+		const sourceRates = checkoutShippingRatesByItem[cartItemKey] || [];
+		const sourceRate = sourceRates.find((rate) => String(rate.rate_id || '') === selectedRateId);
+		const memberKeys = isMelhorEnvioRate(sourceRate) && Array.isArray(sourceRate.applicable_cart_item_keys)
+			? sourceRate.applicable_cart_item_keys.map(String)
+			: getShippingGroupMemberKeys(cartItemKey);
 		memberKeys.forEach((key) => {
+			if (isMelhorEnvioRate(sourceRate)) {
+				const matchingRate = (checkoutShippingRatesByItem[key] || []).find((rate) => String(rate.rate_id || '') === selectedRateId);
+				if (!matchingRate) return;
+			}
 			checkoutSelectedShippingRateByItem[key] = selectedRateId;
 			checkoutSelectedShippingByItem[key] = selectedMode;
 			if (persistSelection) {
@@ -3336,6 +3376,21 @@ const subtotal = decodeHtmlEntities(stripHtmlText(it.subtotal || ''));
 			}
 		});
 		return memberKeys;
+	}
+
+	function leaveMelhorEnvioPackage(previousRate, sourceCartItemKey) {
+		if (!isMelhorEnvioRate(previousRate) || !Array.isArray(previousRate.applicable_cart_item_keys)) {
+			return;
+		}
+		previousRate.applicable_cart_item_keys.map(String).forEach((key) => {
+			if (key === String(sourceCartItemKey)) return;
+			const fallback = (checkoutShippingRatesByItem[key] || []).find((rate) => !isMelhorEnvioRate(rate));
+			if (!fallback) return;
+			checkoutSelectedShippingRateByItem[key] = String(fallback.rate_id || '');
+			checkoutSelectedShippingByItem[key] = normalizeRateMode(fallback.mode) || 'land';
+			persistSelectedRateForItem(key, checkoutSelectedShippingRateByItem[key]);
+			persistShippingModeForItem(key, checkoutSelectedShippingByItem[key]);
+		});
 	}
 
 	function buildShippingCalculationGroups(items) {
@@ -3369,6 +3424,9 @@ const subtotal = decodeHtmlEntities(stripHtmlText(it.subtotal || ''));
 
 	function getSelectedRateGroupKey(rate, selectedRateId, selectedMode, item) {
 		const rateId = String(selectedRateId || (rate && rate.rate_id) || '').trim();
+		if (isMelhorEnvioRate(rate)) {
+			return `melhor_envio:${String(rate.package_key || '')}:${rateId}`;
+		}
 		const profileSuffix = shouldSplitRateByShippingProfile(rate, rateId)
 			? getItemShippingProfileGroupSuffix(item)
 			: '';
@@ -3447,7 +3505,10 @@ const subtotal = decodeHtmlEntities(stripHtmlText(it.subtotal || ''));
 		}
 
 		return Promise.all(groups.map((group) => {
-			return fetchCheckoutRatesForGroup({ cart_item_keys: group.cartItemKeys }, cleanCep, nonce, ajaxUrl)
+			return fetchCheckoutRatesForGroup({
+				cart_item_keys: group.cartItemKeys,
+				exclude_melhor_envio: String(group.rateId || '').indexOf('gstore_custom_shipping:melhor_envio:') === 0 ? 0 : 1,
+			}, cleanCep, nonce, ajaxUrl)
 				.then((rates) => {
 					const normalizedRates = (rates || [])
 						.map(normalizeShippingRate)
@@ -3763,6 +3824,11 @@ function getInstallmentDisplayTotals(summaryData) {
 					other_note: rate.other_note || '',
 					rate_kind: rate.rate_kind || '',
 					pricing_type: rate.pricing_type || '',
+					provider: rate.provider || '',
+					package_key: rate.package_key || '',
+					applicable_cart_item_keys: Array.isArray(rate.applicable_cart_item_keys) ? rate.applicable_cart_item_keys.map(String) : [],
+					delivery_time_min: parseInt(rate.delivery_time_min || 0, 10) || 0,
+					delivery_time_max: parseInt(rate.delivery_time_max || 0, 10) || 0,
 				};
 			})
 			.filter((rate) => rate.mode && rate.rate_id);
@@ -3837,6 +3903,9 @@ function getInstallmentDisplayTotals(summaryData) {
 				return rateId;
 			}
 			if (rateId.indexOf('gstore_custom_shipping:service:') === 0) {
+				return rateId;
+			}
+			if (rateId.indexOf('gstore_custom_shipping:melhor_envio:') === 0) {
 				return rateId;
 			}
 			const modeFromRate = getRateModeFromId(rateId);
@@ -4071,7 +4140,7 @@ function getInstallmentDisplayTotals(summaryData) {
 							<label class="Gstore-checkout-item-shipping-option${selectedClass}${noticeClass}"${noticeOptionStyle}>
 								<input type="radio" name="gstore_selected_shipping_rate[${cartItemKey}]" data-cart-item-key="${cartItemKey}" data-gstore-mode="${group.mode}" value="${rate.rate_id}" ${checked}${noticeInputStyle} />
 								<span class="Gstore-checkout-item-shipping-option__label"${noticeLabelStyle}>${escapeHtml(label)}</span>
-								<span class="Gstore-checkout-item-shipping-option__price${priceNoticeClass}"${noticePriceStyle}>${cost}</span>
+								<span class="Gstore-checkout-item-shipping-option__price${priceNoticeClass}"${noticePriceStyle}>${cost}${getRateDeadlineHtml(rate)}</span>
 							</label>
 						`;
 					}).join('');
@@ -4197,9 +4266,10 @@ function getInstallmentDisplayTotals(summaryData) {
 		let selectedAirTotal = 0;
 		let selectedPickupTotal = 0;
 		let selectedOtherTotal = 0;
+		let selectedMelhorEnvioTotal = 0;
 		const selectedModes = new Set();
-		const selectedLabelsByMode = { land: new Set(), air: new Set(), pickup: new Set(), other: new Set() };
-		const selectedNoticesByMode = { land: new Set(), air: new Set(), pickup: new Set(), other: new Set() };
+		const selectedLabelsByMode = { land: new Set(), air: new Set(), melhor_envio: new Set(), pickup: new Set(), other: new Set() };
+		const selectedNoticesByMode = { land: new Set(), air: new Set(), melhor_envio: new Set(), pickup: new Set(), other: new Set() };
 
 		if (hasItemRates && items.length) {
 			const selectedRateGroups = buildSelectedRateGroups(items, ratesByItem);
@@ -4227,6 +4297,8 @@ function getInstallmentDisplayTotals(summaryData) {
 						selectedPickupTotal += selectedCost;
 					} else if (selectedModeForGroup === 'other') {
 						selectedOtherTotal += selectedCost;
+					} else if (selectedModeForGroup === 'melhor_envio') {
+						selectedMelhorEnvioTotal += selectedCost;
 					} else {
 						groundTotal += selectedCost;
 						selectedLandTotal += selectedCost;
@@ -4250,6 +4322,8 @@ function getInstallmentDisplayTotals(summaryData) {
 				selectedPickupTotal = selectedTotal;
 			} else if (selectedMode === 'other') {
 				selectedOtherTotal = selectedTotal;
+			} else if (selectedMode === 'melhor_envio') {
+				selectedMelhorEnvioTotal = selectedTotal;
 			} else {
 				groundTotal = selectedTotal;
 				selectedLandTotal = selectedTotal;
@@ -4267,6 +4341,7 @@ function getInstallmentDisplayTotals(summaryData) {
 			selectedAirTotal = onlyMode === 'air' ? backendShippingValue : 0;
 			selectedPickupTotal = onlyMode === 'pickup' ? backendShippingValue : 0;
 			selectedOtherTotal = onlyMode === 'other' ? backendShippingValue : 0;
+			selectedMelhorEnvioTotal = onlyMode === 'melhor_envio' ? backendShippingValue : 0;
 			groundTotal = selectedLandTotal;
 			airTotal = selectedAirTotal;
 		}
@@ -4324,12 +4399,14 @@ function getInstallmentDisplayTotals(summaryData) {
 				selectedLabelsByMode: {
 					land: Array.from(selectedLabelsByMode.land),
 					air: Array.from(selectedLabelsByMode.air),
+					melhor_envio: Array.from(selectedLabelsByMode.melhor_envio),
 					pickup: Array.from(selectedLabelsByMode.pickup),
 					other: Array.from(selectedLabelsByMode.other),
 				},
 				selectedNoticesByMode: {
 					land: Array.from(selectedNoticesByMode.land),
 					air: Array.from(selectedNoticesByMode.air),
+					melhor_envio: Array.from(selectedNoticesByMode.melhor_envio),
 					pickup: Array.from(selectedNoticesByMode.pickup),
 					other: Array.from(selectedNoticesByMode.other),
 				},
@@ -4337,6 +4414,7 @@ function getInstallmentDisplayTotals(summaryData) {
 				selectedAirTotal,
 				selectedPickupTotal,
 				selectedOtherTotal,
+				selectedMelhorEnvioTotal,
 			};
 
 		let totalsHtml = `
@@ -4350,6 +4428,7 @@ function getInstallmentDisplayTotals(summaryData) {
 				const modeRows = [
 					{ key: 'land', label: getSelectedModeLabel('land', selectedLabelsByMode), value: selectedLandTotal, notice: getSelectedModeNotice('land', selectedNoticesByMode) },
 					{ key: 'air', label: getSelectedModeLabel('air', selectedLabelsByMode), value: selectedAirTotal, notice: getSelectedModeNotice('air', selectedNoticesByMode) },
+					{ key: 'melhor_envio', label: getSelectedModeLabel('melhor_envio', selectedLabelsByMode), value: selectedMelhorEnvioTotal, notice: getSelectedModeNotice('melhor_envio', selectedNoticesByMode) },
 					{ key: 'pickup', label: getSelectedModeLabel('pickup', selectedLabelsByMode), value: selectedPickupTotal, notice: getSelectedModeNotice('pickup', selectedNoticesByMode) },
 					{ key: 'other', label: getSelectedModeLabel('other', selectedLabelsByMode), value: selectedOtherTotal, notice: getSelectedModeNotice('other', selectedNoticesByMode) },
 				];
@@ -4370,9 +4449,11 @@ function getInstallmentDisplayTotals(summaryData) {
 					? selectedAirTotal
 					: onlyMode === 'pickup'
 						? selectedPickupTotal
-						: onlyMode === 'other'
+					: onlyMode === 'other'
 							? selectedOtherTotal
-							: selectedLandTotal;
+							: onlyMode === 'melhor_envio'
+								? selectedMelhorEnvioTotal
+								: selectedLandTotal;
 				const onlyModeLabel = getSelectedModeLabel(onlyMode, selectedLabelsByMode);
 				const onlyModeNotice = getSelectedModeNotice(onlyMode, selectedNoticesByMode);
 				totalsHtml += `
@@ -4438,7 +4519,7 @@ function getInstallmentDisplayTotals(summaryData) {
 		}
 		const $orderTotal = $table.find('.order-total .woocommerce-Price-amount').first();
 		const $subtotalRow = $table.find('.cart-subtotal').first();
-			const $existing = $table.find('.gstore-shipping-land, .gstore-shipping-air, .gstore-shipping-pickup, .gstore-shipping-other');
+			const $existing = $table.find('.gstore-shipping-land, .gstore-shipping-air, .gstore-shipping-melhor_envio, .gstore-shipping-pickup, .gstore-shipping-other');
 			$existing.remove();
 
 			const modes = lastSummaryTotals.selectedModes || [];
@@ -4449,6 +4530,7 @@ function getInstallmentDisplayTotals(summaryData) {
 				const modeRows = [
 					{ key: 'land', label: getSelectedModeLabel('land', labelsByMode), value: lastSummaryTotals.selectedLandTotal || 0, notice: getSelectedModeNotice('land', noticesByMode) },
 					{ key: 'air', label: getSelectedModeLabel('air', labelsByMode), value: lastSummaryTotals.selectedAirTotal || 0, notice: getSelectedModeNotice('air', noticesByMode) },
+					{ key: 'melhor_envio', label: getSelectedModeLabel('melhor_envio', labelsByMode), value: lastSummaryTotals.selectedMelhorEnvioTotal || 0, notice: getSelectedModeNotice('melhor_envio', noticesByMode) },
 					{ key: 'pickup', label: getSelectedModeLabel('pickup', labelsByMode), value: lastSummaryTotals.selectedPickupTotal || 0, notice: getSelectedModeNotice('pickup', noticesByMode) },
 					{ key: 'other', label: getSelectedModeLabel('other', labelsByMode), value: lastSummaryTotals.selectedOtherTotal || 0, notice: getSelectedModeNotice('other', noticesByMode) },
 				];
@@ -4472,7 +4554,9 @@ function getInstallmentDisplayTotals(summaryData) {
 						? lastSummaryTotals.selectedPickupTotal
 						: modeKey === 'other'
 							? lastSummaryTotals.selectedOtherTotal
-							: lastSummaryTotals.selectedLandTotal;
+							: modeKey === 'melhor_envio'
+								? lastSummaryTotals.selectedMelhorEnvioTotal
+								: lastSummaryTotals.selectedLandTotal;
 				rowsHtml += `
 					<tr class="gstore-shipping-${modeKey}">
 						<th>${getOrderReviewShippingLabelHtml(onlyLabel)}</th>
@@ -4576,6 +4660,7 @@ function getInstallmentDisplayTotals(summaryData) {
 		// Faz chamadas AJAX por grupo de frete do carrinho. Itens per_variation
 		// compartilham a mesma consulta para evitar duplicação do frete.
 		const groups = buildShippingCalculationGroups(items);
+		const preferredRateIdsBeforeCalculation = Object.assign({}, checkoutSelectedShippingRateByItem);
 		const requests = groups.map(function(group) {
 			const requestData = Array.isArray(group.cartItemKeys) && group.cartItemKeys.length
 				? { cart_item_keys: group.cartItemKeys }
@@ -4584,11 +4669,19 @@ function getInstallmentDisplayTotals(summaryData) {
 					quantity: group.quantity || 1,
 				};
 			
+			requestData.exclude_melhor_envio = 1;
 			return fetchCheckoutRatesForGroup(requestData, cleanCep, nonce, ajaxUrl)
 				.then(function(rates) {
 					return { group: group, rates: rates };
 				});
 		});
+		const allCartItemKeys = items.map(getCartItemKey).filter(Boolean);
+		requests.push(
+			fetchCheckoutRatesForGroup({ cart_item_keys: allCartItemKeys }, cleanCep, nonce, ajaxUrl)
+				.then(function(rates) {
+					return { isMelhorEnvioPackage: true, rates: rates };
+				})
+		);
 		
 		Promise.all(requests).then(function(results) {
 			isCalculatingShipping = false;
@@ -4600,12 +4693,12 @@ function getInstallmentDisplayTotals(summaryData) {
 			
 			// Processa cada resultado por grupo e replica as rates para todos os itens
 			// que compartilham a mesma cobrança.
-			results.forEach(function(result) {
+			results.filter(function(result) { return !result?.isMelhorEnvioPackage; }).forEach(function(result) {
 				if (result && result.rates && result.rates.length > 0) {
-					hasAnyRates = true;
 					const normalizedRates = result.rates
 						.map(normalizeShippingRate)
-						.filter(function(rate) { return rate.mode && rate.rate_id; });
+						.filter(function(rate) { return rate.mode && rate.rate_id && !isMelhorEnvioRate(rate); });
+					if (normalizedRates.length) hasAnyRates = true;
 					
 					const groupItems = result.group && Array.isArray(result.group.items) ? result.group.items : [];
 					const memberKeys = groupItems.map(function(item) {
@@ -4637,6 +4730,30 @@ function getInstallmentDisplayTotals(summaryData) {
 						applyShippingSelectionToGroup(memberKeys[0], selectedRateId, selectedMode, false);
 					}
 				}
+			});
+
+			const packageResult = results.find(function(result) { return result?.isMelhorEnvioPackage; });
+			const melhorEnvioRates = packageResult && Array.isArray(packageResult.rates)
+				? packageResult.rates.map(normalizeShippingRate).filter(function(rate) { return rate.mode && rate.rate_id && isMelhorEnvioRate(rate); })
+				: [];
+			melhorEnvioRates.forEach(function(rate) {
+				const applicableKeys = Array.isArray(rate.applicable_cart_item_keys) ? rate.applicable_cart_item_keys.map(String) : [];
+				applicableKeys.forEach(function(key) {
+					checkoutShippingRatesByItem[key] = (checkoutShippingRatesByItem[key] || []).filter(function(candidate) {
+						return String(candidate.rate_id || '') !== String(rate.rate_id || '');
+					}).concat([rate]);
+				});
+			});
+			if (melhorEnvioRates.length) hasAnyRates = true;
+
+			Object.keys(preferredRateIdsBeforeCalculation).some(function(key) {
+				const preferredRateId = preferredRateIdsBeforeCalculation[key];
+				const preferredRate = (checkoutShippingRatesByItem[key] || []).find(function(rate) {
+					return String(rate.rate_id || '') === String(preferredRateId || '');
+				});
+				if (!isMelhorEnvioRate(preferredRate)) return false;
+				applyShippingSelectionToGroup(key, preferredRate.rate_id, preferredRate.mode, false);
+				return true;
 			});
 
 			synchronizeSharedShippingSelections(items, false);
@@ -5538,7 +5655,18 @@ function getInstallmentDisplayTotals(summaryData) {
 			const value = $(this).val();
 			if (cartItemKey) {
 				const normalizedMode = normalizeRateMode($(this).data('gstore-mode') || '') || 'land';
+				const previousRateId = String(checkoutSelectedShippingRateByItem[cartItemKey] || '');
+				const previousRate = (checkoutShippingRatesByItem[cartItemKey] || []).find(function(rate) {
+					return String(rate.rate_id || '') === previousRateId;
+				});
 				applyShippingSelectionToGroup(cartItemKey, String(value || ''), normalizedMode, true);
+				const selectedRate = (checkoutShippingRatesByItem[cartItemKey] || []).find(function(rate) {
+					return String(rate.rate_id || '') === String(value || '');
+				});
+				if (!isMelhorEnvioRate(selectedRate)) {
+					leaveMelhorEnvioPackage(previousRate, cartItemKey);
+				}
+				renderItemShippingOptions(lastCartSummaryData);
 
 				// Invalida cache de quotes de parcelamento (frete mudou, base de cálculo diferente)
 				installmentQuotes = null;

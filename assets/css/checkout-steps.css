@@ -3084,6 +3084,14 @@ body.gstore-blu-checkout-modal-open {
 	color: var(--gstore-foreground);
 }
 
+.Gstore-checkout-item-shipping-option__deadline {
+	display: block;
+	margin-top: 2px;
+	color: var(--gstore-text-muted);
+	font-size: var(--gstore-font-size-xs);
+	font-weight: var(--gstore-font-weight-medium);
+}
+
 .Gstore-summary-item .Gstore-checkout-item-shipping-option {
 	display: grid !important;
 	grid-template-columns: 16px minmax(0, 1fr) !important;

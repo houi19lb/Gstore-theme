@@ -234,6 +234,7 @@
 				const label = rate.label || '';
 				const rateId = String(rate.rate_id || rate.id || '').toLowerCase();
 				const mode = (rate.mode || '').toLowerCase()
+					|| (rateId.indexOf(':melhor_envio:') !== -1 ? 'melhor_envio' : '')
 					|| (rateId.indexOf(':other') !== -1 ? 'other' : '')
 					|| (rateId.indexOf(':pickup') !== -1 ? 'pickup' : '')
 					|| (rateId.indexOf(':air') !== -1 ? 'air' : '')
@@ -247,6 +248,9 @@
 				if (!label && mode === 'other') {
 					labelText = 'Outros';
 				}
+				if (!label && mode === 'melhor_envio') {
+					labelText = 'Melhor Envio';
+				}
 				const hasQuoteNotice = rate.quote_value_enabled === false
 					|| (mode === 'other' && rate.other_note)
 					|| String(rate.quote_notice_html || rate.cost_formatted || '').indexOf('gstore-shipping-quote-notice') !== -1;
@@ -256,13 +260,18 @@
 					: hasQuoteNotice
 					? (mode === 'other' && noticeMessage ? `<span class="gstore-shipping-quote-notice">${this.escapeHtml(noticeMessage)}</span>` : (rate.quote_notice_html || (noticeMessage ? `<span class="gstore-shipping-quote-notice">${this.escapeHtml(noticeMessage)}</span>` : (rate.cost_formatted || '-'))))
 					: (mode === 'other' ? '-' : (rate.cost_formatted || '-'));
+				const deliveryMin = parseInt(rate.delivery_time_min || 0, 10) || 0;
+				const deliveryMax = parseInt(rate.delivery_time_max || 0, 10) || 0;
+				const deliveryText = deliveryMin && deliveryMax && deliveryMin !== deliveryMax
+					? `${deliveryMin}–${deliveryMax} dias úteis`
+					: (deliveryMax || deliveryMin ? `${deliveryMax || deliveryMin} dias úteis` : '');
 				return `
 					<div class="gstore-shipping-calculator__result-row${hasQuoteNotice ? ' gstore-shipping-calculator__result-row--quote-notice' : ''}">
 						<span class="gstore-shipping-calculator__result-label">
 							${rateIcon}
 							${labelText}:
 						</span>
-						<strong class="gstore-shipping-calculator__result-value">${costHtml || '-'}</strong>
+						<strong class="gstore-shipping-calculator__result-value">${costHtml || '-'}${deliveryText ? `<small class="gstore-shipping-calculator__result-deadline">${this.escapeHtml(deliveryText)}</small>` : ''}</strong>
 					</div>
 				`;
 			}).join('');
