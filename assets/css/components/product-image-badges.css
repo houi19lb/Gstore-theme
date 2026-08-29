@@ -13,14 +13,18 @@
 }
 
 .Gstore-product-image-badges--card {
-	left: 4px;
-	right: 4px;
+	left: 12px;
+	right: 12px;
 	bottom: 4px;
 	gap: 2px;
 	max-width: none;
 	flex-flow: row nowrap;
 	align-items: center;
 	justify-content: flex-end;
+}
+
+.Gstore-product-image-badges--card:has(> .Gstore-product-image-badge:nth-child(2)) {
+	justify-content: center;
 }
 
 .Gstore-product-image-badges--card .Gstore-product-image-badge {
@@ -89,8 +93,8 @@
 
 @media (max-width: 640px) {
 	.Gstore-product-image-badges--card {
-		left: 4px;
-		right: 4px;
+		left: 12px;
+		right: 12px;
 		bottom: 4px;
 	}
 
