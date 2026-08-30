@@ -45,7 +45,7 @@ if ( ! function_exists( 'gstore_get_product_image_badges' ) ) {
 		}
 
 		$custom_text = trim( sanitize_text_field( (string) get_post_meta( $product_id, '_gstore_product_image_badge_custom_text', true ) ) );
-		$custom_text = function_exists( 'mb_substr' ) ? mb_substr( $custom_text, 0, 32 ) : substr( $custom_text, 0, 32 );
+		$custom_text = function_exists( 'mb_substr' ) ? mb_substr( $custom_text, 0, 18 ) : substr( $custom_text, 0, 18 );
 		$definitions = array(
 			'free_shipping'  => array(
 				'label' => __( 'Frete grátis', 'gstore' ),
