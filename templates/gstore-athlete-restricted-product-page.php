@@ -7,7 +7,10 @@
 
 defined( 'ABSPATH' ) || exit;
 
-$logged_in = is_user_logged_in();
+$logged_in          = is_user_logged_in();
+$restricted_catalog = (bool) get_query_var( 'gstore_athlete_products_page' );
+$title              = $restricted_catalog ? __( 'Esta página é exclusiva para atletas.', 'gstore' ) : __( 'Este produto é exclusivo para atletas.', 'gstore' );
+$description        = $restricted_catalog ? __( 'A seleção de produtos para atletas fica disponível apenas para contas aprovadas no Programa Atleta.', 'gstore' ) : __( 'Produtos selecionados ficam disponíveis apenas para contas aprovadas no Programa Atleta.', 'gstore' );
 ?><!doctype html>
 <html <?php language_attributes(); ?>>
 <head>
@@ -25,8 +28,8 @@ echo do_blocks( '<!-- wp:template-part {"slug":"header","area":"header"} /-->' )
 <main class="gstore-athlete-restricted-page">
 	<section class="gstore-athlete-restricted-card">
 		<span class="gstore-athlete-eyebrow gstore-athlete-eyebrow--dark"><?php esc_html_e( 'Acesso exclusivo', 'gstore' ); ?></span>
-		<h1><?php esc_html_e( 'Este produto é exclusivo para atletas.', 'gstore' ); ?></h1>
-		<p><?php esc_html_e( 'Produtos selecionados ficam disponíveis apenas para contas aprovadas no Programa Atleta.', 'gstore' ); ?></p>
+		<h1><?php echo esc_html( $title ); ?></h1>
+		<p><?php echo esc_html( $description ); ?></p>
 		<?php if ( $logged_in ) : ?>
 			<a class="button gstore-athlete-button" href="<?php echo esc_url( gstore_athlete_account_program_url() ); ?>"><?php esc_html_e( 'Ver Programa Atleta', 'gstore' ); ?></a>
 		<?php else : ?>

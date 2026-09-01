@@ -1,5 +1,6 @@
 .gstore-athlete-program-page,
-.gstore-athlete-restricted-page {
+.gstore-athlete-restricted-page,
+.gstore-athlete-products-page {
 	--gstore-athlete-accent: var(--gstore-color-accent, #b5a642);
 	--gstore-athlete-accent-hover: var(--gstore-color-accent-hover, #9f923a);
 	--gstore-athlete-accent-contrast: var(--gstore-color-accent-contrast, #101214);
@@ -638,6 +639,111 @@
 	margin: 0 0 28px;
 	color: var(--gstore-athlete-muted);
 	line-height: 1.6;
+}
+
+.gstore-athlete-products-hero {
+	padding: clamp(54px, 7vw, 90px) 0 clamp(42px, 6vw, 70px);
+	border-bottom: 1px solid var(--gstore-athlete-border);
+	background: linear-gradient(115deg, #090a0b 0%, #101214 100%);
+}
+
+.gstore-athlete-products-hero h1 {
+	max-width: 740px;
+	margin: 0;
+	color: var(--gstore-athlete-text);
+	font-size: clamp(2.25rem, 5vw, 4.3rem);
+	font-weight: 950;
+	letter-spacing: -.045em;
+	line-height: 1;
+	text-transform: uppercase;
+}
+
+.gstore-athlete-products-hero p {
+	max-width: 620px;
+	margin: 18px 0 0;
+	color: var(--gstore-athlete-muted);
+	font-size: 1rem;
+	line-height: 1.55;
+}
+
+.gstore-athlete-products-count {
+	display: inline-flex;
+	margin-top: 22px;
+	border: 1px solid var(--gstore-athlete-border);
+	border-radius: 999px;
+	padding: 8px 12px;
+	color: var(--gstore-athlete-text);
+	font-size: .82rem;
+	font-weight: 800;
+}
+
+.gstore-athlete-products-catalogue {
+	padding-top: clamp(42px, 6vw, 76px);
+	padding-bottom: clamp(62px, 8vw, 110px);
+}
+
+.gstore-athlete-products-page .Gstore-products-shell,
+.gstore-athlete-products-page .Gstore-products-grid {
+	background: var(--gstore-athlete-dark);
+}
+
+.gstore-athlete-products-page .Gstore-products-grid ul.products {
+	margin: 0;
+}
+
+.gstore-athlete-products-empty {
+	grid-column: 1 / -1;
+	margin: 0;
+	padding: 44px 24px;
+	border: 1px solid var(--gstore-athlete-border);
+	border-radius: 6px;
+	color: var(--gstore-athlete-muted);
+	text-align: center;
+}
+
+.gstore-athlete-products-page .woocommerce-pagination {
+	margin: 36px auto 0;
+	text-align: center;
+}
+
+.gstore-athlete-products-page .woocommerce-pagination ul {
+	display: inline-flex;
+	flex-wrap: wrap;
+	justify-content: center;
+	gap: 8px;
+	margin: 0;
+	border: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.gstore-athlete-products-page .woocommerce-pagination li {
+	border: 0;
+}
+
+.gstore-athlete-products-page .woocommerce-pagination a,
+.gstore-athlete-products-page .woocommerce-pagination span {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-width: 40px;
+	min-height: 40px;
+	border: 1px solid var(--gstore-athlete-border);
+	border-radius: 4px;
+	padding: 0 12px;
+	background: #101214;
+	color: var(--gstore-athlete-text);
+	font-size: .86rem;
+	font-weight: 700;
+	text-decoration: none;
+}
+
+.gstore-athlete-products-page .woocommerce-pagination .current,
+.gstore-athlete-products-page .woocommerce-pagination a:hover,
+.gstore-athlete-products-page .woocommerce-pagination a:focus-visible {
+	border-color: var(--gstore-athlete-accent);
+	background: var(--gstore-athlete-accent);
+	color: var(--gstore-athlete-accent-contrast);
 }
 
 .gstore-athlete-dialog {

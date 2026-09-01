@@ -5099,6 +5099,10 @@ function gstore_is_product_card_style_context() {
 		return false;
 	}
 
+	if ( get_query_var( 'gstore_athlete_products_page' ) ) {
+		return true;
+	}
+
 	if ( gstore_is_home_layout_context() || gstore_is_catalog_layout_context() ) {
 		return true;
 	}

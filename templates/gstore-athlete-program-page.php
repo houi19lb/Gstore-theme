@@ -136,6 +136,7 @@ echo do_blocks( '<!-- wp:template-part {"slug":"header","area":"header"} /-->' )
 					<span class="gstore-athlete-status is-approved"><?php esc_html_e( 'Aprovada', 'gstore' ); ?></span>
 					<h3><?php esc_html_e( 'Seu selo Atleta está ativo.', 'gstore' ); ?></h3>
 					<p><?php esc_html_e( 'Você já pode visualizar e comprar os produtos exclusivos para atletas.', 'gstore' ); ?></p>
+					<a class="button gstore-athlete-button" href="<?php echo esc_url( gstore_athlete_account_products_url() ); ?>"><?php esc_html_e( 'Ver produtos para atletas', 'gstore' ); ?></a>
 				<?php elseif ( is_array( $application ) ) : ?>
 					<span class="gstore-athlete-status is-<?php echo esc_attr( $public_application_status ); ?>"><?php echo esc_html( $public_application_label ); ?></span>
 					<h3><?php esc_html_e( 'Sua solicitação está registrada.', 'gstore' ); ?></h3>
