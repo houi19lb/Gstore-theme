@@ -104,6 +104,47 @@ if ( ! function_exists( 'gstore_athlete_account_template' ) ) {
 }
 add_filter( 'template_include', 'gstore_athlete_account_template', 20 );
 
+if ( ! function_exists( 'gstore_athlete_account_products_query' ) ) {
+	/**
+	 * Mantém a vitrine /para-atletas no mesmo shortcode de catálogo, exibindo
+	 * apenas produtos exclusivos que o atleta atual pode acessar.
+	 *
+	 * @param array<string,mixed> $query_args Argumentos do shortcode WooCommerce.
+	 * @return array<string,mixed>
+	 */
+	function gstore_athlete_account_products_query( $query_args ) {
+		if ( ! get_query_var( 'gstore_athlete_products_page' ) ) {
+			return $query_args;
+		}
+
+		$meta_query   = isset( $query_args['meta_query'] ) && is_array( $query_args['meta_query'] ) ? $query_args['meta_query'] : array();
+		$meta_query[] = array(
+			'key'     => '_gstore_athlete_exclusive',
+			'value'   => '1',
+			'compare' => '=',
+		);
+
+		if ( ! ( class_exists( '\\GStore\\Services\\VIP_Service' ) && \GStore\Services\VIP_Service::user_is_vip() ) ) {
+			$meta_query[] = array(
+				'relation' => 'OR',
+				array(
+					'key'     => '_gstore_vip_exclusive',
+					'compare' => 'NOT EXISTS',
+				),
+				array(
+					'key'     => '_gstore_vip_exclusive',
+					'value'   => '1',
+					'compare' => '!=',
+				),
+			);
+		}
+
+		$query_args['meta_query'] = $meta_query; // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
+		return $query_args;
+	}
+}
+add_filter( 'woocommerce_shortcode_products_query', 'gstore_athlete_account_products_query', 20 );
+
 if ( ! function_exists( 'gstore_athlete_account_document_title' ) ) {
 	function gstore_athlete_account_document_title( $title ) {
 		if ( get_query_var( 'gstore_athlete_program_page' ) ) {
@@ -122,7 +163,7 @@ add_filter( 'pre_get_document_title', 'gstore_athlete_account_document_title', 2
 
 if ( ! function_exists( 'gstore_athlete_account_enqueue_assets' ) ) {
 	function gstore_athlete_account_enqueue_assets() {
-		if ( ! get_query_var( 'gstore_athlete_program_page' ) && ! get_query_var( 'gstore_athlete_restricted_page' ) && ! get_query_var( 'gstore_athlete_products_page' ) ) {
+		if ( ! get_query_var( 'gstore_athlete_program_page' ) && ! get_query_var( 'gstore_athlete_restricted_page' ) ) {
 			return;
 		}
 		if ( function_exists( 'gstore_enqueue_theme_style' ) ) {
