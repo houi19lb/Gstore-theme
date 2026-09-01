@@ -120,7 +120,7 @@ echo do_blocks( '<!-- wp:template-part {"slug":"header","area":"header"} /-->' )
 			<div class="gstore-athlete-application__intro">
 				<span class="gstore-athlete-eyebrow"><?php esc_html_e( 'Sua conta', 'gstore' ); ?></span>
 				<h2><?php esc_html_e( 'Cadastro de atleta', 'gstore' ); ?></h2>
-				<p><?php esc_html_e( 'Preencha seus dados com atenção. A modalidade é o único dado esportivo obrigatório nesta etapa.', 'gstore' ); ?></p>
+				<p><?php esc_html_e( 'Preencha seus dados com atenção. O CR é obrigatório nesta etapa.', 'gstore' ); ?></p>
 				<ul class="gstore-athlete-application__highlights">
 					<li><i class="fa-solid fa-shield-halved" aria-hidden="true"></i><span><strong><?php esc_html_e( 'Seus dados estão seguros', 'gstore' ); ?></strong><?php esc_html_e( 'As informações são usadas somente na análise do programa.', 'gstore' ); ?></span></li>
 					<li><i class="fa-regular fa-user" aria-hidden="true"></i><span><strong><?php esc_html_e( 'Feito para atletas', 'gstore' ); ?></strong><?php esc_html_e( 'Uma inscrição simples, vinculada à sua conta da loja.', 'gstore' ); ?></span></li>
@@ -154,7 +154,7 @@ echo do_blocks( '<!-- wp:template-part {"slug":"header","area":"header"} /-->' )
 							<label><span><?php esc_html_e( 'Nome completo', 'gstore' ); ?></span><input required name="gstore_athlete_name" value="<?php echo esc_attr( $user->display_name ); ?>"></label>
 							<label><span><?php esc_html_e( 'CPF', 'gstore' ); ?></span><input required inputmode="numeric" name="gstore_athlete_cpf" value="<?php echo esc_attr( $get_meta( 'billing_cpf' ) ); ?>"></label>
 							<label><span><?php esc_html_e( 'Telefone', 'gstore' ); ?></span><input required type="tel" name="gstore_athlete_phone" value="<?php echo esc_attr( $get_meta( 'billing_phone' ) ); ?>"></label>
-							<label><span><?php esc_html_e( 'Modalidade esportiva', 'gstore' ); ?></span><input required name="gstore_athlete_modality" placeholder="<?php esc_attr_e( 'Ex.: tiro esportivo', 'gstore' ); ?>"></label>
+							<label><span><?php esc_html_e( 'CR', 'gstore' ); ?></span><input required inputmode="numeric" name="gstore_athlete_cr" placeholder="<?php esc_attr_e( 'Digite o número do seu CR', 'gstore' ); ?>"></label>
 							<label><span><?php esc_html_e( 'CEP', 'gstore' ); ?></span><input required inputmode="numeric" name="gstore_athlete_postcode" value="<?php echo esc_attr( $get_meta( 'billing_postcode' ) ); ?>"></label>
 							<label class="gstore-athlete-form-grid__wide"><span><?php esc_html_e( 'Endereço', 'gstore' ); ?></span><input required name="gstore_athlete_address_1" value="<?php echo esc_attr( $get_meta( 'billing_address_1' ) ); ?>"></label>
 							<label><span><?php esc_html_e( 'Número', 'gstore' ); ?></span><input required name="gstore_athlete_number" value="<?php echo esc_attr( $get_meta( 'billing_number' ) ); ?>"></label>
