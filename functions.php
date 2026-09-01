@@ -5123,6 +5123,33 @@ function gstore_is_product_card_style_context() {
 }
 
 /**
+ * Identifica o retorno seguro solicitado pelo fluxo de inscrição de atletas.
+ *
+ * @return bool
+ */
+function gstore_should_return_to_athlete_program_after_account_authentication() {
+	return isset( $_REQUEST['gstore_athlete_return'] ) && is_string( $_REQUEST['gstore_athlete_return'] ) && '1' === sanitize_key( wp_unslash( $_REQUEST['gstore_athlete_return'] ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+}
+
+/**
+ * Devolve o cliente ao Programa Atleta após entrar ou criar uma conta.
+ *
+ * O marcador aceita somente o valor fixo "1", sem receber URLs externas.
+ *
+ * @param string $redirect URL padrão do WooCommerce.
+ * @return string
+ */
+function gstore_redirect_athlete_account_authentication_to_program( $redirect ) {
+	if ( ! gstore_should_return_to_athlete_program_after_account_authentication() || ! function_exists( 'gstore_athlete_account_program_url' ) ) {
+		return $redirect;
+	}
+
+	return gstore_athlete_account_program_url();
+}
+add_filter( 'woocommerce_login_redirect', 'gstore_redirect_athlete_account_authentication_to_program', 20 );
+add_filter( 'woocommerce_registration_redirect', 'gstore_redirect_athlete_account_authentication_to_program', 20 );
+
+/**
  * Detecta carrinho/checkout/pedido para CSS pequeno de ajustes WooCommerce.
  *
  * @return bool

@@ -21,6 +21,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 do_action( 'woocommerce_before_customer_login_form' ); ?>
 
+<?php $gstore_athlete_return = isset( $_REQUEST['gstore_athlete_return'] ) && is_string( $_REQUEST['gstore_athlete_return'] ) && '1' === sanitize_key( wp_unslash( $_REQUEST['gstore_athlete_return'] ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended ?>
+
 <?php if ( 'yes' === get_option( 'woocommerce_enable_myaccount_registration' ) ) : ?>
 
 <div class="u-columns col2-set" id="customer_login">
@@ -32,6 +34,9 @@ do_action( 'woocommerce_before_customer_login_form' ); ?>
 		<h2><?php esc_html_e( 'Login', 'woocommerce' ); ?></h2>
 
 		<form class="woocommerce-form woocommerce-form-login login" method="post" novalidate>
+			<?php if ( $gstore_athlete_return ) : ?>
+				<input type="hidden" name="gstore_athlete_return" value="1" />
+			<?php endif; ?>
 
 			<?php do_action( 'woocommerce_login_form_start' ); ?>
 
@@ -74,6 +79,9 @@ do_action( 'woocommerce_before_customer_login_form' ); ?>
 		<h2><?php esc_html_e( 'Register', 'woocommerce' ); ?></h2>
 
 		<form method="post" class="woocommerce-form woocommerce-form-register register" <?php do_action( 'woocommerce_register_form_tag' ); ?> >
+			<?php if ( $gstore_athlete_return ) : ?>
+				<input type="hidden" name="gstore_athlete_return" value="1" />
+			<?php endif; ?>
 
 			<?php do_action( 'woocommerce_register_form_start' ); ?>
 
