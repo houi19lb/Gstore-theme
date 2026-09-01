@@ -613,32 +613,130 @@
 }
 
 .gstore-athlete-restricted-page {
+	position: relative;
+	isolation: isolate;
 	display: grid;
-	min-height: 55vh;
+	min-height: clamp(470px, 62vh, 690px);
 	place-items: center;
-	padding: 64px 20px;
+	overflow: hidden;
+	padding: clamp(48px, 7vw, 96px) 20px;
+	background:
+		radial-gradient(circle at 50% 0%, color-mix(in srgb, var(--gstore-athlete-accent) 20%, transparent), transparent 42%),
+		linear-gradient(135deg, #08090a 0%, #111315 100%);
+}
+
+.gstore-athlete-restricted-page::before,
+.gstore-athlete-restricted-page::after {
+	position: absolute;
+	z-index: -1;
+	border-radius: 50%;
+	content: '';
+}
+
+.gstore-athlete-restricted-page::before {
+	top: -220px;
+	left: -190px;
+	width: 470px;
+	height: 470px;
+	border: 1px solid color-mix(in srgb, var(--gstore-athlete-accent) 28%, transparent);
+}
+
+.gstore-athlete-restricted-page::after {
+	right: -160px;
+	bottom: -190px;
+	width: 360px;
+	height: 360px;
+	background: color-mix(in srgb, var(--gstore-athlete-accent) 7%, transparent);
 }
 
 .gstore-athlete-restricted-card {
-	max-width: 590px;
-	border: 1px solid var(--gstore-athlete-border);
-	border-radius: 6px;
-	padding: clamp(28px, 6vw, 60px);
-	background: var(--gstore-athlete-panel);
+	width: min(100%, 720px);
+	box-sizing: border-box;
+	border: 1px solid color-mix(in srgb, var(--gstore-athlete-text) 18%, transparent);
+	border-radius: 12px;
+	padding: clamp(32px, 5vw, 58px);
+	background: rgba(16, 18, 20, .9);
+	box-shadow: 0 28px 70px rgba(0, 0, 0, .34), inset 0 1px 0 rgba(255, 255, 255, .06);
 	text-align: center;
 }
 
+.gstore-athlete-restricted-icon {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 58px;
+	height: 58px;
+	margin-bottom: 18px;
+	border: 1px solid color-mix(in srgb, var(--gstore-athlete-accent) 62%, transparent);
+	border-radius: 50%;
+	background: color-mix(in srgb, var(--gstore-athlete-accent) 12%, transparent);
+	color: var(--gstore-athlete-accent);
+}
+
+.gstore-athlete-restricted-icon svg {
+	width: 28px;
+	height: 28px;
+}
+
 .gstore-athlete-restricted-card h1 {
-	margin: 0 0 18px;
+	max-width: 570px;
+	margin: 0 auto 16px;
 	color: var(--gstore-athlete-text);
-	font-size: clamp(2rem, 4vw, 3rem);
-	line-height: 1.08;
+	font-size: clamp(2rem, 4vw, 3.35rem);
+	font-weight: 900;
+	letter-spacing: -.035em;
+	line-height: 1.04;
 }
 
 .gstore-athlete-restricted-card p {
-	margin: 0 0 28px;
+	max-width: 560px;
+	margin: 0 auto;
 	color: var(--gstore-athlete-muted);
 	line-height: 1.6;
+}
+
+.gstore-athlete-restricted-actions {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: center;
+	gap: 12px;
+	margin-top: 30px;
+}
+
+.gstore-athlete-restricted-actions .gstore-athlete-button,
+.gstore-athlete-restricted-actions .gstore-athlete-link {
+	min-width: 190px;
+}
+
+.gstore-athlete-restricted-steps {
+	display: grid;
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+	gap: 12px;
+	margin-top: 38px;
+	padding-top: 24px;
+	border-top: 1px solid var(--gstore-athlete-border);
+}
+
+.gstore-athlete-restricted-steps span {
+	display: grid;
+	justify-items: center;
+	gap: 8px;
+	color: var(--gstore-athlete-muted);
+	font-size: .76rem;
+	font-weight: 700;
+	line-height: 1.35;
+}
+
+.gstore-athlete-restricted-steps b {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 26px;
+	height: 26px;
+	border-radius: 50%;
+	background: var(--gstore-athlete-accent);
+	color: var(--gstore-athlete-accent-contrast);
+	font-size: .72rem;
 }
 
 .gstore-athlete-products-hero {
@@ -824,6 +922,37 @@
 }
 
 @media (max-width: 620px) {
+	.gstore-athlete-restricted-page {
+		min-height: 500px;
+		padding: 46px 14px;
+	}
+
+	.gstore-athlete-restricted-card {
+		padding: 34px 24px;
+	}
+
+	.gstore-athlete-restricted-actions,
+	.gstore-athlete-restricted-actions > * {
+		width: 100%;
+	}
+
+	.gstore-athlete-restricted-actions .gstore-athlete-link {
+		justify-content: center;
+	}
+
+	.gstore-athlete-restricted-steps {
+		grid-template-columns: 1fr;
+		gap: 14px;
+		text-align: left;
+	}
+
+	.gstore-athlete-restricted-steps span {
+		grid-template-columns: 26px minmax(0, 1fr);
+		align-items: center;
+		justify-items: start;
+		gap: 10px;
+	}
+
 	.gstore-athlete-container,
 	.gstore-athlete-hero > .gstore-athlete-container {
 		width: min(100% - 28px, 1220px);

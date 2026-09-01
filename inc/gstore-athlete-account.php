@@ -163,7 +163,7 @@ add_filter( 'pre_get_document_title', 'gstore_athlete_account_document_title', 2
 
 if ( ! function_exists( 'gstore_athlete_account_enqueue_assets' ) ) {
 	function gstore_athlete_account_enqueue_assets() {
-		if ( ! get_query_var( 'gstore_athlete_program_page' ) && ! get_query_var( 'gstore_athlete_restricted_page' ) ) {
+		if ( ! get_query_var( 'gstore_athlete_program_page' ) && ! get_query_var( 'gstore_athlete_restricted_page' ) && ! get_query_var( 'gstore_athlete_products_page' ) ) {
 			return;
 		}
 		if ( function_exists( 'gstore_enqueue_theme_style' ) ) {
