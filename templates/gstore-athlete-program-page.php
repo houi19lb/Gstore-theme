@@ -131,7 +131,7 @@ echo do_blocks( '<!-- wp:template-part {"slug":"header","area":"header"} /-->' )
 				<?php if ( ! $logged_in ) : ?>
 					<h3><?php esc_html_e( 'Entre ou crie sua conta para continuar', 'gstore' ); ?></h3>
 					<p><?php esc_html_e( 'O Programa Atleta só aceita inscrições vinculadas a uma conta existente.', 'gstore' ); ?></p>
-					<button class="button gstore-athlete-button" type="button" data-gstore-athlete-dialog-open><?php esc_html_e( 'Entrar ou criar conta', 'gstore' ); ?></button>
+					<a class="button gstore-athlete-button" href="<?php echo esc_url( $account_url ); ?>"><?php esc_html_e( 'Entrar ou criar conta', 'gstore' ); ?></a>
 				<?php elseif ( $is_athlete ) : ?>
 					<span class="gstore-athlete-status is-approved"><?php esc_html_e( 'Aprovada', 'gstore' ); ?></span>
 					<h3><?php esc_html_e( 'Seu selo Atleta está ativo.', 'gstore' ); ?></h3>
