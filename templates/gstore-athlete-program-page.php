@@ -13,7 +13,8 @@ $application = $logged_in && function_exists( 'gstore_athlete_get_latest_applica
 	? gstore_athlete_get_latest_application( get_current_user_id() )
 	: null;
 $is_athlete = $logged_in && function_exists( 'gstore_athlete_user_is_athlete' ) && gstore_athlete_user_is_athlete( get_current_user_id() );
-$account_url = function_exists( 'wc_get_page_permalink' ) ? wc_get_page_permalink( 'myaccount' ) : wp_login_url( gstore_athlete_account_program_url() );
+$athlete_application_url = gstore_athlete_account_program_url() . '#gstore-athlete-application';
+$account_url = function_exists( 'wc_get_page_permalink' ) ? wc_get_page_permalink( 'myaccount' ) : wp_login_url( $athlete_application_url );
 $account_url = add_query_arg( 'gstore_athlete_return', '1', $account_url );
 $status = isset( $_GET['athlete_application'] ) ? sanitize_key( wp_unslash( $_GET['athlete_application'] ) ) : '';
 $message = isset( $_GET['athlete_application_message'] ) ? sanitize_text_field( wp_unslash( $_GET['athlete_application_message'] ) ) : '';

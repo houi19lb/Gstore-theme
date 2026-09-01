@@ -5144,7 +5144,7 @@ function gstore_redirect_athlete_account_authentication_to_program( $redirect ) 
 		return $redirect;
 	}
 
-	return gstore_athlete_account_program_url();
+	return gstore_athlete_account_program_url() . '#gstore-athlete-application';
 }
 add_filter( 'woocommerce_login_redirect', 'gstore_redirect_athlete_account_authentication_to_program', 20 );
 add_filter( 'woocommerce_registration_redirect', 'gstore_redirect_athlete_account_authentication_to_program', 20 );
