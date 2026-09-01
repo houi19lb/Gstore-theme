@@ -29,7 +29,7 @@ $catalog_markup = preg_replace(
 if ( function_exists( 'wp_body_open' ) ) {
 	wp_body_open();
 }
-echo do_blocks( $catalog_markup ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+echo do_shortcode( do_blocks( $catalog_markup ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 wp_footer();
 ?>
 </body>

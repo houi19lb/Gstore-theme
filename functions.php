@@ -5013,6 +5013,10 @@ function gstore_is_home_layout_context() {
  * @return bool
  */
 function gstore_is_catalog_layout_context() {
+	if ( get_query_var( 'gstore_athlete_products_page' ) ) {
+		return true;
+	}
+
 	if ( function_exists( 'is_page' ) ) {
 		$catalog_pages = array( 'catalogo', 'ofertas', 'ofertas-relampago', 'favoritos', 'loja' );
 		if ( is_page( $catalog_pages ) ) {
@@ -7449,6 +7453,9 @@ function gstore_enqueue_scripts() {
 		// Também verifica se é uma página de shop/archive do WooCommerce
 		if ( ! $is_catalog_page && function_exists( 'is_shop' ) ) {
 			$is_catalog_page = is_shop() || is_product_category() || is_product_tag();
+		}
+		if ( ! $is_catalog_page && function_exists( 'gstore_is_catalog_layout_context' ) ) {
+			$is_catalog_page = gstore_is_catalog_layout_context();
 		}
 
 		if ( $is_catalog_page ) {
