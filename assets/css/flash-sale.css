@@ -1025,6 +1025,10 @@ body:has(.Gstore-flash-sale-page) .wp-site-blocks > .wp-block-group:not(header):
   }
 }
 
+.gstore-flash-sale-floating[hidden] {
+  display: none;
+}
+
 .gstore-flash-sale-floating {
   position: fixed;
   z-index: 900;

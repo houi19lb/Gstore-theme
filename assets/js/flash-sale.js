@@ -1,4 +1,24 @@
 (function () {
+  function getDismissStorageKey(card) {
+    var campaignKey = card.getAttribute('data-gstore-flash-sale-key');
+    return campaignKey ? 'gstore_flash_sale_dismissed:' + campaignKey : '';
+  }
+
+  function restoreFloatingCards() {
+    document.querySelectorAll('.gstore-flash-sale-floating').forEach(function (card) {
+      var storageKey = getDismissStorageKey(card);
+      try {
+        if (storageKey && window.sessionStorage.getItem(storageKey) === '1') {
+          card.remove();
+          return;
+        }
+      } catch (error) {
+        // O card continua utilizável quando o navegador bloqueia o armazenamento.
+      }
+      card.hidden = false;
+    });
+  }
+
   function parseDate(value) {
     if (!value) return NaN;
     return new Date(value.replace(' ', 'T')).getTime();
@@ -101,8 +121,27 @@
     var close = event.target.closest('[data-gstore-flash-sale-close]');
     if (!close) return;
     var card = close.closest('.gstore-flash-sale-floating');
-    if (card) card.remove();
+    if (!card) return;
+    var storageKey = getDismissStorageKey(card);
+    try {
+      if (storageKey) window.sessionStorage.setItem(storageKey, '1');
+    } catch (error) {
+      // Mesmo sem armazenamento, o botão deve fechar a oferta nesta página.
+    }
+    card.remove();
   });
+
+  // O wp_footer imprime o cartão depois dos scripts; aguarde o HTML completo.
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function () {
+      restoreFloatingCards();
+      updateTimers();
+      fitProductNames();
+    }, { once: true });
+  } else {
+    restoreFloatingCards();
+  }
+  window.addEventListener('pageshow', restoreFloatingCards);
 
   updateTimers();
   updateUpcomingFlashSales();

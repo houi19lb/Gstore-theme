@@ -13883,30 +13883,42 @@ function gstore_render_flash_sale_catalog_upcoming( $campaign ) {
 }
 
 /**
- * Para uma oferta com item único, exibe um cartão discreto no canto da home.
+ * Retorna o produto elegível para o cartão flutuante de uma oferta com item único.
+ *
+ * @param array|null $campaign Campanha ativa.
+ * @return WC_Product|null
+ */
+function gstore_theme_get_floating_flash_sale_product( $campaign ) {
+	$items = is_array( $campaign['items'] ?? null ) ? $campaign['items'] : array();
+	if ( ! function_exists( 'wc_get_product' ) || 1 !== count( $items ) || empty( $campaign['ends_at'] ) ) {
+		return null;
+	}
+
+	$product = wc_get_product( absint( $items[0]['product_id'] ?? 0 ) );
+	return $product && $product->is_visible() && $product->is_in_stock() ? $product : null;
+}
+
+/**
+ * Para uma oferta com item único, exibe o cartão na home e nas páginas de produto.
  *
  * @return void
  */
 function gstore_render_single_flash_sale_floating_card() {
-	if ( ! is_front_page() || ! function_exists( 'wc_get_product' ) ) {
+	if ( ! is_front_page() && ! ( function_exists( 'is_product' ) && is_product() ) ) {
 		return;
 	}
 	$campaign = gstore_theme_get_active_flash_sale();
-	$items    = is_array( $campaign['items'] ?? null ) ? $campaign['items'] : array();
-	if ( 1 !== count( $items ) || empty( $campaign['ends_at'] ) ) {
-		return;
-	}
-
-	$product = wc_get_product( absint( $items[0]['product_id'] ?? 0 ) );
-	if ( ! $product || ! $product->is_visible() || ! $product->is_in_stock() ) {
+	$product  = gstore_theme_get_floating_flash_sale_product( $campaign );
+	if ( ! $product ) {
 		return;
 	}
 	$price         = (float) $product->get_price();
 	$regular_price = (float) $product->get_regular_price();
 	$show_regular  = $regular_price > $price;
 	$product_url   = $product->get_permalink();
+	$dismiss_key   = $product->get_id() . ':' . (string) $campaign['ends_at'];
 	?>
-	<aside class="gstore-flash-sale-floating" aria-label="<?php echo esc_attr__( 'Oferta relâmpago em destaque', 'gstore' ); ?>">
+	<aside class="gstore-flash-sale-floating" hidden data-gstore-flash-sale-key="<?php echo esc_attr( $dismiss_key ); ?>" aria-label="<?php echo esc_attr__( 'Oferta relâmpago em destaque', 'gstore' ); ?>">
 		<a class="gstore-flash-sale-floating__card-link" href="<?php echo esc_url( $product_url ); ?>" aria-label="<?php echo esc_attr( sprintf( __( 'Ver oferta: %s', 'gstore' ), $product->get_name() ) ); ?>"></a>
 		<button type="button" class="gstore-flash-sale-floating__close" data-gstore-flash-sale-close aria-label="<?php echo esc_attr__( 'Fechar oferta', 'gstore' ); ?>">×</button>
 		<div class="gstore-flash-sale-floating__top"><i class="fa-solid fa-bolt" aria-hidden="true"></i><span><?php esc_html_e( 'Oferta relâmpago', 'gstore' ); ?></span></div>
@@ -13935,22 +13947,24 @@ function gstore_render_single_flash_sale_floating_card() {
 add_action( 'wp_footer', 'gstore_render_single_flash_sale_floating_card', 35 );
 
 /**
- * Carrega o visual somente quando há uma oferta ativa na página inicial.
+ * Carrega os assets das vitrines, do contador do produto e do cartão flutuante.
  *
  * @return void
  */
 function gstore_enqueue_flash_sale_assets() {
 	$is_flash_sale_page = function_exists( 'is_page' ) && is_page( 'ofertas-relampago' );
 	$is_flash_sale_product = false;
+	$has_floating_offer = false;
 	if ( function_exists( 'is_product' ) && is_product() ) {
 		$is_flash_sale_product = ! empty( gstore_theme_get_product_flash_sale_campaign( get_queried_object_id() ) );
+		$has_floating_offer = (bool) gstore_theme_get_floating_flash_sale_product( gstore_theme_get_active_flash_sale() );
 	}
 
-	if ( ! is_front_page() && ! $is_flash_sale_page && ! $is_flash_sale_product ) {
+	if ( ! is_front_page() && ! $is_flash_sale_page && ! $is_flash_sale_product && ! $has_floating_offer ) {
 		return;
 	}
 	$version = wp_get_theme()->get( 'Version' );
-	if ( ! $is_flash_sale_product ) {
+	if ( ! $is_flash_sale_product || $has_floating_offer ) {
 		wp_enqueue_style( 'gstore-flash-sale', gstore_theme_asset_uri( 'assets/css/flash-sale.css' ), array( 'gstore-main' ), gstore_theme_asset_version( 'assets/css/flash-sale.css', $version ) );
 	}
 	wp_enqueue_script( 'gstore-flash-sale', gstore_theme_asset_uri( 'assets/js/flash-sale.js' ), array(), gstore_theme_asset_version( 'assets/js/flash-sale.js', $version ), true );
