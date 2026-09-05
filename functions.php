@@ -15771,8 +15771,8 @@ function gstore_replace_header_logo_html( $content ) {
 		return $content;
 	}
 
-	// Evita processar se já contém uma imagem de logo
-	if ( preg_match( '/<a[^>]*class="[^"]*Gstore-header__logo[^"]*"[^>]*>.*?<img[^>]*>/is', $content ) ) {
+	// Procura a imagem apenas dentro do link da logo, sem capturar o avatar da conta.
+	if ( preg_match( '/<a[^>]*class="[^"]*Gstore-header__logo[^"]*"[^>]*>(?:(?!<\/a>).)*?<img\b[^>]*>/is', $content ) ) {
 		return $content;
 	}
 
@@ -15819,7 +15819,7 @@ function gstore_replace_header_logo_html( $content ) {
 	if ( preg_match( '/(<div[^>]*class="[^"]*Gstore-header__content[^"]*"[^>]*>)(.*?)(<\/div>)/is', $content, $header_content_match ) ) {
 		$header_content = $header_content_match[2];
 		// Padrão que captura o link completo incluindo elementos filhos (span, etc)
-		$pattern2 = '/<a\s+[^>]*class="[^"]*Gstore-header__logo[^"]*"[^>]*>(?!.*?<img)(?:[^<]|<(?!\/a>))*?<\/a>/is';
+		$pattern2 = '/<a\s+[^>]*class="[^"]*Gstore-header__logo[^"]*"[^>]*>(?:(?!<\/?a\b|<img\b).)*<\/a>/is';
 		$header_content_new = preg_replace( $pattern2, $logo_html, $header_content, 1 );
 		if ( $header_content_new !== $header_content ) {
 			$content = str_replace( $header_content_match[0], $header_content_match[1] . $header_content_new . $header_content_match[3], $content );
@@ -15830,7 +15830,7 @@ function gstore_replace_header_logo_html( $content ) {
 		// Apenas dentro de elementos com classe Gstore-header para evitar substituir outros links
 		if ( strpos( $content, 'Gstore-header' ) !== false ) {
 			// Padrão que captura o link completo incluindo elementos filhos (span, etc)
-			$pattern2b = '/<a\s+[^>]*class="[^"]*Gstore-header__logo[^"]*"[^>]*>(?!.*?<img)(?:[^<]|<(?!\/a>))*?<\/a>/is';
+			$pattern2b = '/<a\s+[^>]*class="[^"]*Gstore-header__logo[^"]*"[^>]*>(?:(?!<\/?a\b|<img\b).)*<\/a>/is';
 			$content = preg_replace( $pattern2b, $logo_html, $content, 1 );
 		}
 	}
