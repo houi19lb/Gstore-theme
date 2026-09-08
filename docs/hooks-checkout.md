@@ -28,6 +28,14 @@ Estas funções estão localizadas principalmente no arquivo `functions.php` e g
 | `woocommerce_billing_fields` | `gstore_add_cpf_field` | Adiciona o campo de CPF ao formulário de cobrança. |
 | `woocommerce_validate_postcode` | `gstore_validate_postcode_optional` | Torna o CEP opcional no pré-checkout quando usando Blu Checkout. |
 
+### Cotações de frete e Melhor Envio
+
+O checkout consulta a ação AJAX `gstore_calculate_shipping` do plugin, também usada pelas demais transportadoras. O JavaScript em `assets/js/checkout-steps.js` distribui as cotações do Melhor Envio pelos itens do pacote.
+
+Em `functions.php`, `gstore_sync_cart_shipping_modes` persiste as opções na sessão durante as atualizações do carrinho e do checkout. `gstore_normalize_shipping_mode` deve reconhecer `melhor_envio`, e `gstore_normalize_cart_rates` deve preservar os prazos, o identificador do pacote e os itens atendidos. Caso contrário, a atualização do resumo descarta as opções ou perde o agrupamento. O plugin continua responsável pelo recálculo do valor cobrado.
+
+Regressão: `php tests/melhor-envio-checkout.php` e `npm test -- --runInBand tests/melhor-envio-shipping.test.js`.
+
 ### Pagamento e Parcelamento (Blu)
 | Hook | Função | Descrição |
 | :--- | :--- | :--- |

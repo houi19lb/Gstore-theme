@@ -11327,6 +11327,9 @@ if ( ! function_exists( 'gstore_get_cart_item_freight_context' ) ) {
 if ( ! function_exists( 'gstore_get_cart_item_shipping_label' ) ) {
 	function gstore_get_cart_item_shipping_label( $mode ) {
 		$mode = gstore_normalize_shipping_mode( $mode );
+		if ( 'melhor_envio' === $mode ) {
+			return __( 'Melhor Envio', 'gstore' );
+		}
 		if ( 'air' === $mode ) {
 			return __( 'Aéreo', 'gstore' );
 		}
@@ -11343,6 +11346,9 @@ if ( ! function_exists( 'gstore_get_cart_item_shipping_label' ) ) {
 if ( ! function_exists( 'gstore_normalize_shipping_mode' ) ) {
 	function gstore_normalize_shipping_mode( $mode ) {
 		$mode = strtolower( trim( (string) $mode ) );
+		if ( in_array( $mode, array( 'melhor_envio', 'melhor-envio' ), true ) ) {
+			return 'melhor_envio';
+		}
 		if ( in_array( $mode, array( 'air', 'aereo', 'aéreo' ), true ) ) {
 			return 'air';
 		}
@@ -11469,6 +11475,22 @@ if ( ! function_exists( 'gstore_normalize_cart_rates' ) ) {
 				'cost'           => $cost,
 				'cost_formatted' => $cost_formatted,
 			);
+			// Keep the quote's display/grouping metadata through cart session and checkout refreshes.
+			// These fields describe the quote; the plugin still recalculates its payable cost.
+			foreach ( array( 'provider', 'rate_kind', 'pricing_type', 'package_key' ) as $field ) {
+				if ( isset( $rate[ $field ] ) || isset( $meta[ $field ] ) ) {
+					$normalized_rate[ $field ] = sanitize_text_field( (string) ( $rate[ $field ] ?? $meta[ $field ] ) );
+				}
+			}
+			foreach ( array( 'delivery_time_min', 'delivery_time_max' ) as $field ) {
+				if ( isset( $rate[ $field ] ) || isset( $meta[ $field ] ) ) {
+					$normalized_rate[ $field ] = absint( $rate[ $field ] ?? $meta[ $field ] );
+				}
+			}
+			$applicable_keys = $rate['applicable_cart_item_keys'] ?? $meta['applicable_cart_item_keys'] ?? null;
+			if ( is_array( $applicable_keys ) ) {
+				$normalized_rate['applicable_cart_item_keys'] = array_values( array_filter( array_map( 'sanitize_text_field', $applicable_keys ) ) );
+			}
 			if ( ! $quote_value_enabled || '' !== $quote_notice_message || '' !== $quote_notice_html ) {
 				$normalized_rate['quote_value_enabled'] = $quote_value_enabled;
 				$normalized_rate['quote_notice_message'] = $quote_notice_message;
