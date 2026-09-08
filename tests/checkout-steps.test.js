@@ -49,10 +49,8 @@ describe('Checkout: quatro etapas visuais com contrato original', () => {
 		expect($('form.checkout input[name="gstore_selected_shipping_rate[item-a]"]').val()).toBe('gstore_custom_shipping:air');
 		expect($(selector)).toHaveLength(rates.length);
 	});
-	test('espelha os totais sem cálculo adicional e permite editar CEP sem perder dados', () => {
+	test('permite editar CEP sem perder dados', () => {
 		api.setActiveStep(2, false);
-		expect($('[data-gstore-shipping-step-totals]').html()).toBe($('[data-gstore-shipping-totals]').html());
-		expect($('[data-gstore-shipping-step-total]').html()).toBe($('.Gstore-checkout-summary-top__total-amount').html());
 		$('[data-gstore-shipping-edit-address]').trigger('click');
 		expect(active()).toBe('contact');
 		expect(document.activeElement.id).toBe('billing_postcode');

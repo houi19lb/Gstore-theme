@@ -85,3 +85,10 @@ qualquer promoção/deploy, incluindo cotação real, cupons e parcelas.
   exibiam valores diferentes. A correção de layout não altera essas fontes
   de cálculo; conciliar valores exige investigação separada.
 - 48 testes em 6 suites, build dos assets e checagem do escopo CSS passaram.
+
+## Ajuste solicitado: somente frete
+
+Removidos o resumo lateral do pedido e o total fixo mobile da etapa Frete.
+Destino e controles de entrega ocupam uma coluna, com Voltar e Continuar.
+Os calculos e o resumo geral do checkout permanecem nos componentes originais.
+48 testes, build e verificacoes de assets/CSS passaram.

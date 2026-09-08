@@ -1831,7 +1831,6 @@ const subtotal = decodeHtmlEntities(stripHtmlText(it.subtotal || ''));
 		if (!isLast) {
 			actionsHtml = `
 				<div class="Gstore-checkout-step__actions">
-					${isShipping ? '<div class="Gstore-shipping-step__mobile-total"><span>Total do pedido</span><strong data-gstore-shipping-step-total aria-live="polite">—</strong></div>' : ''}
 					${index > 0 ? '<button type="button" class="Gstore-btn Gstore-btn--back" data-action="prev"><i class="fa-solid fa-arrow-left"></i> Voltar</button>' : '<div></div>'}
 					<button type="button" class="Gstore-btn Gstore-btn--continue" data-action="next">
 						Continuar
@@ -1868,10 +1867,6 @@ const subtotal = decodeHtmlEntities(stripHtmlText(it.subtotal || ''));
 						</div>
 						<div data-gstore-shipping-step-items></div>
 					</div>
-					<aside class="Gstore-shipping-step__summary" aria-label="Resumo do pedido">
-						<h3>Seu pedido</h3><p class="Gstore-summary-items-count">Carregando...</p>
-						<div data-gstore-shipping-step-totals aria-live="polite"></div>
-					</aside>
 				</div>` : ''}
 				${actionsHtml}
 				${isLast ? '<div class="Gstore-checkout-step__payment-container"><div class="Gstore-checkout-step__coupon-slot"></div><div class="Gstore-checkout-step__order-review-slot"></div><div class="Gstore-blu-installments-slot"></div></div>' : ''}
@@ -4543,8 +4538,6 @@ function getInstallmentDisplayTotals(summaryData) {
 		}
 
 		$totals.html(totalsHtml);
-		// Espelha apenas a apresentação dos totais existentes; não recalcula valores.
-		$('[data-gstore-shipping-step-totals]').html(totalsHtml);
 		updateShippingStepView();
 	}
 
@@ -4554,7 +4547,6 @@ function getInstallmentDisplayTotals(summaryData) {
 		$('[data-gstore-shipping-step-destination]').text(
 			cep ? `CEP ${cep}${destination ? ' · ' + destination : ''}` : 'Informe o CEP em Dados Básicos'
 		);
-		$('[data-gstore-shipping-step-total]').html($('.Gstore-checkout-summary-top__total-amount').first().html() || '—');
 	}
 
 	function updateOrderReviewTotals() {
