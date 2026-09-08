@@ -58,3 +58,30 @@ Build de assets, verificação dos minificados e escopo de CSS passaram.
 
 Próxima validação operacional: checkout integrado em homologação antes de
 qualquer promoção/deploy, incluindo cotação real, cupons e parcelas.
+
+## Correção após inspeção da loja de teste (2026-09-08)
+
+- Percorrido o fluxo do capacete no Chrome: pagamento por cartão, dados e
+  seleção do frete. Nenhum pedido enviado.
+- O ambiente real restringia o checkout a 720px. A etapa Frete agora tem
+  limite de 1040px, mantendo as demais etapas e os estados de backend.
+- Corrigido conflito com a regra antiga `grid-template-columns: ... !important`
+  nos radios: três colunas explícitas para controle, nome e preço/prazo.
+- Modalidades recebem cabeçalho consistente; destino e resumo ganham
+  superfícies delimitadas; espaços excessivos e linhas decorativas removidos.
+- Mobile mantém preço à direita, área de toque de 48px no Continuar e menos
+  espaço vazio ao final. Verificado em 390px e 320px, sem overflow dos controles.
+- Correção restrita ao CSS e seu minificado. Nomes, cotações, cálculos,
+  validação e persistência não foram modificados.
+- Validação visual local usa DOM e cascata CSS capturados nesta visita,
+  incluindo estilos do WordPress e plugin; o preview anterior isolado não
+  reproduzia a restrição de largura nem todos os conflitos da cascata.
+- Evidências locais: `${hub.root}/local/checkout-frete-fix-2026-09-08/`.
+  Capturas `03-frete-antes.jpg`, `03-frete-mobile-antes.jpg`,
+  `04-frete-desktop-depois.jpg`, `05-frete-mobile-depois.jpg` e
+  `06-frete-320-depois.jpg`. A reprodução visual é estática; não substitui
+  homologação das integrações após deploy.
+- Observação preexistente nesta visita: total superior e resumo de frete
+  exibiam valores diferentes. A correção de layout não altera essas fontes
+  de cálculo; conciliar valores exige investigação separada.
+- 48 testes em 6 suites, build dos assets e checagem do escopo CSS passaram.
