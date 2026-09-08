@@ -1,5 +1,32 @@
 # Arquitetura do Checkout - Gstore
 
+## Atualização visual: quatro etapas (2026-09-08, alpha)
+
+O fluxo visual agora é **Pagamento → Dados Básicos → Frete → Finalizar**.
+A etapa Frete apresenta os mesmos radios por item antes exibidos no resumo
+superior, preservando os nomes retornados pelas cotações, IDs, seleção salva,
+grupos de envio, preços, prazos e avisos. Os campos e as validações de Dados
+Básicos permanecem iguais, incluindo as diferenças entre Pix e cartão.
+
+O contrato interno do plugin continua com três estados (`0`, `1`, `2`).
+`getBackendCheckoutStep()` envia `0` em Pagamento, `1` em Dados Básicos e Frete,
+e `2` somente em Finalizar. Não enviar o índice visual diretamente: isso
+anteciparia taxas de parcelamento durante a escolha do frete.
+
+O resumo lateral e o total junto à ação mobile espelham os valores já
+renderizados; não calculam frete nem taxas. Alterar o destino retorna ao CEP
+existente em Dados Básicos. Alterar o frete na revisão retorna à etapa Frete.
+O retorno de rascunhos Blu continua identificando a última etapa por seu papel.
+
+Validação: `npm test -- --runInBand`, `npm run build:assets`,
+`npm run check:assets`, `npm run check:css-scope`.
+Preview local: `node scripts/preview-checkout.cjs` (porta 4187, dados fictícios,
+sem conexão com WordPress ou criação de pedidos). O preview usa o JS e CSS
+reais com respostas simuladas; não substitui teste integrado em homologação.
+
+As seções abaixo documentam a arquitetura original de três etapas lógicas;
+onde mencionam “Etapa 3: Finalizar”, leia “Etapa visual 4: Finalizar”.
+
 ## Contexto rápido (LLMs/novos devs)
 - Documento de arquitetura do checkout (tema + plugin).
 - **Tema** = UI/fluxo visual; **Plugin** = regras de negócio e integrações.

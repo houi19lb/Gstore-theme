@@ -1,10 +1,11 @@
 /**
- * Checkout em 3 Etapas - Gstore
+ * Checkout em 4 Etapas - Gstore
  * 
  * Fluxo simplificado:
  * - Etapa 1: Escolha do método de pagamento (Cartão ou PIX)
  * - Etapa 2: Dados básicos (nome, CEP, celular e email)
- * - Etapa 3: Finalizar pedido
+ * - Etapa 3: Conferência e escolha do frete já calculado
+ * - Etapa 4: Finalizar pedido
  * 
  * O mesmo fluxo para Cartão e PIX - simplificado e consistente.
  */
@@ -12,7 +13,7 @@
 (function($) {
 	'use strict';
 
-	// Configuração única de etapas - sempre 3 etapas
+	// Etapas visuais; o contrato de etapas do backend continua sendo 0, 1, 2.
 	const STEPS = [
 		{
 			id: 'payment-method',
@@ -36,6 +37,14 @@
 			]
 		},
 		{
+			id: 'shipping',
+			name: 'Frete',
+			icon: 'fa-truck',
+			title: 'Escolha o frete',
+			description: 'Confira o destino e selecione a opção de entrega para seu pedido.',
+			fields: []
+		},
+		{
 			id: 'payment',
 			name: 'Finalizar',
 			icon: 'fa-check',
@@ -46,6 +55,10 @@
 	];
 
 	let currentStep = 0;
+	function getBackendCheckoutStep() {
+		const step = STEPS[currentStep];
+		return step && step.id === 'payment' ? 2 : step && step.id !== 'payment-method' ? 1 : 0;
+	}
 	let $checkoutForm = null;
 	let $stepsContainer = null;
 	let initialized = false;
@@ -1740,10 +1753,19 @@ const subtotal = decodeHtmlEntities(stripHtmlText(it.subtotal || ''));
 	}
 
 	function openShippingSummaryDetails(shouldScroll = true) {
-		setSummaryDetailsOpen(true);
+		const shippingIndex = STEPS.findIndex(step => step.id === 'shipping');
+		if (currentStep < shippingIndex) {
+			// Mantém as validações existentes antes de sair de Pagamento/Dados.
+			nextStep();
+			return;
+		}
+		if (currentStep !== shippingIndex) {
+			setActiveStep(shippingIndex, shouldScroll);
+			$(document.body).trigger('update_checkout');
+		}
 
-		const $summaryTop = $('.Gstore-checkout-summary-top').first();
-		const $shippingSummary = $('[data-gstore-shipping-summary]').first();
+		const $summaryTop = $('[data-step="shipping"]').first();
+		const $shippingSummary = $('[data-gstore-shipping-step-items]').first();
 		if (!$summaryTop.length || !$shippingSummary.length) {
 			return;
 		}
@@ -1803,11 +1825,13 @@ const subtotal = decodeHtmlEntities(stripHtmlText(it.subtotal || ''));
 	 */
 	function buildStepPanel(step, index) {
 		const isLast = index === STEPS.length - 1;
+		const isShipping = step.id === 'shipping';
 		
 		let actionsHtml = '';
 		if (!isLast) {
 			actionsHtml = `
 				<div class="Gstore-checkout-step__actions">
+					${isShipping ? '<div class="Gstore-shipping-step__mobile-total"><span>Total do pedido</span><strong data-gstore-shipping-step-total aria-live="polite">—</strong></div>' : ''}
 					${index > 0 ? '<button type="button" class="Gstore-btn Gstore-btn--back" data-action="prev"><i class="fa-solid fa-arrow-left"></i> Voltar</button>' : '<div></div>'}
 					<button type="button" class="Gstore-btn Gstore-btn--continue" data-action="next">
 						Continuar
@@ -1836,6 +1860,19 @@ const subtotal = decodeHtmlEntities(stripHtmlText(it.subtotal || ''));
 					<p class="Gstore-checkout-step__description">${step.description}</p>
 				</div>
 				<div class="Gstore-checkout-step__fields"></div>
+				${isShipping ? `<div class="Gstore-shipping-step">
+					<div class="Gstore-shipping-step__choices">
+						<div class="Gstore-shipping-step__destination">
+							<div><span>Destino informado</span><strong data-gstore-shipping-step-destination></strong></div>
+							<button type="button" class="Gstore-shipping-change-btn" data-gstore-shipping-edit-address>Alterar</button>
+						</div>
+						<div data-gstore-shipping-step-items></div>
+					</div>
+					<aside class="Gstore-shipping-step__summary" aria-label="Resumo do pedido">
+						<h3>Seu pedido</h3><p class="Gstore-summary-items-count">Carregando...</p>
+						<div data-gstore-shipping-step-totals aria-live="polite"></div>
+					</aside>
+				</div>` : ''}
 				${actionsHtml}
 				${isLast ? '<div class="Gstore-checkout-step__payment-container"><div class="Gstore-checkout-step__coupon-slot"></div><div class="Gstore-checkout-step__order-review-slot"></div><div class="Gstore-blu-installments-slot"></div></div>' : ''}
 			</div>
@@ -4506,6 +4543,18 @@ function getInstallmentDisplayTotals(summaryData) {
 		}
 
 		$totals.html(totalsHtml);
+		// Espelha apenas a apresentação dos totais existentes; não recalcula valores.
+		$('[data-gstore-shipping-step-totals]').html(totalsHtml);
+		updateShippingStepView();
+	}
+
+	function updateShippingStepView() {
+		const cep = String($('#billing_postcode').val() || '').trim();
+		const destination = getDestinationLabel(lastCalculatedDestination);
+		$('[data-gstore-shipping-step-destination]').text(
+			cep ? `CEP ${cep}${destination ? ' · ' + destination : ''}` : 'Informe o CEP em Dados Básicos'
+		);
+		$('[data-gstore-shipping-step-total]').html($('.Gstore-checkout-summary-top__total-amount').first().html() || '—');
 	}
 
 	function updateOrderReviewTotals() {
@@ -4947,9 +4996,10 @@ function getInstallmentDisplayTotals(summaryData) {
 
 		currentStep = index;
 
-		// Atualiza campo enviado ao backend para só carregar taxa de parcelamento na etapa 3
+		// A nova etapa de frete usa o estado intermediário antigo: taxas só na finalização.
 		const $stepInput = $('#gstore_checkout_step');
-		if ($stepInput.length) $stepInput.val(index);
+		if ($stepInput.length) $stepInput.val(getBackendCheckoutStep());
+		updateShippingStepView();
 
 		// Garante que o método de pagamento persista entre etapas
 		persistSelectedPaymentMethod(resolveSelectedPaymentMethod($checkoutForm));
@@ -4965,6 +5015,8 @@ function getInstallmentDisplayTotals(summaryData) {
 		// Atualiza stepper
 		$('.Gstore-checkout-stepper__step').each(function(i) {
 			$(this).removeClass('is-active is-complete');
+			$(this).attr('aria-current', i === index ? 'step' : null);
+			$(this).attr('aria-disabled', i > index + 1 ? 'true' : 'false');
 			if (i === index) {
 				$(this).addClass('is-active');
 			} else if (i < index) {
@@ -5361,7 +5413,7 @@ function getInstallmentDisplayTotals(summaryData) {
 				nonce: nonce,
 				payment_method: paymentMethod,
 				gstore_blu_installments: installmentsValue,
-				gstore_checkout_step: (typeof currentStep !== 'undefined' && Number.isFinite(currentStep)) ? currentStep : 0,
+				gstore_checkout_step: getBackendCheckoutStep(),
 				post_data: postData
 			},
 			success: function(response) {
@@ -5414,6 +5466,7 @@ function getInstallmentDisplayTotals(summaryData) {
 
 		// Renderiza itens
 		let itemsHtml = '';
+		let shippingItemsHtml = '';
 		if (data.items && data.items.length) {
 			data.items.forEach(item => {
 				const cartItemKey = item.key || item.cart_item_key || item.cartItemKey || '';
@@ -5425,12 +5478,16 @@ function getInstallmentDisplayTotals(summaryData) {
 							<span>Qtd: ${item.quantity}</span>
 						</div>
 						<span class="Gstore-summary-item__price">${item.subtotal}</span>
-						<div class="Gstore-summary-item__shipping" data-gstore-item-shipping></div>
 					</div>
 				`;
+				shippingItemsHtml += `<section class="Gstore-summary-item Gstore-shipping-step__item" data-cart-item-key="${escapeHtml(cartItemKey)}">
+					<h3>${escapeHtml(item.name)} <small>· Qtd: ${escapeHtml(item.quantity)}</small></h3>
+					<div class="Gstore-summary-item__shipping" data-gstore-item-shipping></div>
+				</section>`;
 			});
 		}
 		$('.Gstore-checkout-summary-top__items').html(itemsHtml);
+		$('[data-gstore-shipping-step-items]').html(shippingItemsHtml);
 
 		// Sincroniza frete e renderiza resumo ANTES de montar totalsHtml
 		// para que lastSummaryTotals esteja disponível em getInstallmentDisplayTotals
@@ -5629,6 +5686,11 @@ function getInstallmentDisplayTotals(summaryData) {
 		$(document).on('click', '[data-gstore-shipping-change]', function(e) {
 			e.preventDefault();
 			openShippingSummaryDetails(true);
+		});
+		$(document).on('click', '[data-gstore-shipping-edit-address]', function() {
+			setActiveStep(STEPS.findIndex(step => step.id === 'contact'));
+			$(document.body).trigger('update_checkout');
+			$('#billing_postcode').trigger('focus');
 		});
 
 		// Remove erro do checkbox de contrato quando marcado
@@ -7104,7 +7166,7 @@ function getInstallmentDisplayTotals(summaryData) {
 				$stepInput = $('<input>', { type: 'hidden', name: 'gstore_checkout_step', id: 'gstore_checkout_step' });
 				$checkoutForm.append($stepInput);
 			}
-			$stepInput.val(typeof currentStep !== 'undefined' ? currentStep : 0);
+			$stepInput.val(getBackendCheckoutStep());
 
 			// Se não existe campo global, tenta obter do último modo selecionado
 			if ($checkoutForm.find('input[name="gstore_shipping_mode"]').length === 0) {

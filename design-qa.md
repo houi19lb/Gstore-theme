@@ -65,3 +65,10 @@
 10. [x] Mobile em 390 px sem wrap, overflow ou truncamento dos rótulos usados na validação.
 
 final result: passed
+
+
+## Checkout: quatro etapas (2026-09-08)
+
+final result: passed
+
+Validacao local restrita ao checkout com respostas simuladas. Relatorio completo: [checkout-design-qa.md](docs/checkout-design-qa.md). Integracao em homologacao ainda nao validada.
