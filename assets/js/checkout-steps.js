@@ -4125,6 +4125,12 @@ function getInstallmentDisplayTotals(summaryData) {
 		synchronizeSharedShippingSelections(items, false);
 	}
 
+	function renderShippingGroupTitle(mode, label) {
+		const icons = { land: 'fa-truck-fast', air: 'fa-plane', melhor_envio: 'fa-boxes-stacked', pickup: 'fa-store' };
+		const icon = icons[mode] || 'fa-box';
+		return `<span class="Gstore-checkout-item-shipping-group__icon" aria-hidden="true"><i class="fa-solid ${icon}"></i></span><span>${escapeHtml(label)}</span>`;
+	}
+
 	function renderItemShippingOptions(data) {
 		const items = data && Array.isArray(data.items) ? data.items : [];
 		items.forEach((item) => {
@@ -4179,7 +4185,7 @@ function getInstallmentDisplayTotals(summaryData) {
 
 					return `
 						<div class="Gstore-checkout-item-shipping-group Gstore-checkout-item-shipping-group--${group.mode}">
-							<div class="Gstore-checkout-item-shipping-group__title">${escapeHtml(group.label)}</div>
+							<div class="Gstore-checkout-item-shipping-group__title">${renderShippingGroupTitle(group.mode, group.label)}</div>
 							<div class="Gstore-checkout-item-shipping-group__options">
 								${groupOptionsHtml}
 							</div>
@@ -4188,7 +4194,7 @@ function getInstallmentDisplayTotals(summaryData) {
 				}).join('')
 				: `
 					<div class="Gstore-checkout-item-shipping-group Gstore-checkout-item-shipping-group--land">
-						<div class="Gstore-checkout-item-shipping-group__title">Terrestre</div>
+						<div class="Gstore-checkout-item-shipping-group__title">${renderShippingGroupTitle('land', 'Terrestre')}</div>
 						<div class="Gstore-checkout-item-shipping-group__options">
 							<label class="Gstore-checkout-item-shipping-option${selectedMode === 'land' ? ' is-selected' : ''}">
 								<input type="radio" name="gstore_checkout_shipping_mode[${cartItemKey}]" data-cart-item-key="${cartItemKey}" value="land" ${selectedMode === 'land' ? 'checked' : ''} />
@@ -4198,7 +4204,7 @@ function getInstallmentDisplayTotals(summaryData) {
 						</div>
 					</div>
 					<div class="Gstore-checkout-item-shipping-group Gstore-checkout-item-shipping-group--air">
-						<div class="Gstore-checkout-item-shipping-group__title">Aéreo</div>
+						<div class="Gstore-checkout-item-shipping-group__title">${renderShippingGroupTitle('air', 'Aéreo')}</div>
 						<div class="Gstore-checkout-item-shipping-group__options">
 							<label class="Gstore-checkout-item-shipping-option${selectedMode === 'air' ? ' is-selected' : ''}">
 								<input type="radio" name="gstore_checkout_shipping_mode[${cartItemKey}]" data-cart-item-key="${cartItemKey}" value="air" ${selectedMode === 'air' ? 'checked' : ''} />
@@ -4208,7 +4214,7 @@ function getInstallmentDisplayTotals(summaryData) {
 						</div>
 					</div>
 					<div class="Gstore-checkout-item-shipping-group Gstore-checkout-item-shipping-group--pickup">
-						<div class="Gstore-checkout-item-shipping-group__title">Retirada na loja</div>
+						<div class="Gstore-checkout-item-shipping-group__title">${renderShippingGroupTitle('pickup', 'Retirada na loja')}</div>
 						<div class="Gstore-checkout-item-shipping-group__options">
 							<label class="Gstore-checkout-item-shipping-option${selectedMode === 'pickup' ? ' is-selected' : ''}">
 								<input type="radio" name="gstore_checkout_shipping_mode[${cartItemKey}]" data-cart-item-key="${cartItemKey}" value="pickup" ${selectedMode === 'pickup' ? 'checked' : ''} />
