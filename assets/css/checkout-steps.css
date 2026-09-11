@@ -3655,7 +3655,6 @@ body.gstore-contract-modal-open {
 .Gstore-shipping-step .Gstore-checkout-item-shipping-option__deadline { font-size: 0.8125rem; font-weight: 400; }
 .Gstore-shipping-step .Gstore-summary-item .Gstore-checkout-item-shipping-option.is-selected { background: var(--gstore-base); box-shadow: inset 3px 0 var(--gstore-brass-dark); }
 .Gstore-shipping-step .Gstore-summary-item .Gstore-checkout-item-shipping-option:hover { background: var(--gstore-base); }
-.Gstore-checkout-step[data-step="shipping"] .Gstore-checkout-step__actions { margin-top: 28px; padding-top: 24px; }
 .Gstore-shipping-step .Gstore-checkout-item-shipping-option:focus-within,
 .Gstore-checkout-stepper__step:focus-visible { outline: 2px solid var(--gstore-brass-dark); outline-offset: -2px; }
 .Gstore-checkout-stepper__step { min-height: 44px; }
@@ -3680,8 +3679,4 @@ body.gstore-contract-modal-open {
 	.Gstore-shipping-step__destination strong { font-size: 0.875rem; }
 	.Gstore-shipping-step .Gstore-checkout-item-shipping-group__title { padding: 8px 12px; }
 	.Gstore-shipping-step .Gstore-checkout-item-shipping-option__label { grid-column: 2; }
-	.Gstore-checkout-step[data-step="shipping"] { padding-bottom: calc(88px + env(safe-area-inset-bottom)); }
-	.Gstore-checkout-step[data-step="shipping"] .Gstore-checkout-step__actions { position: fixed; left: 0; right: 0; bottom: 0; z-index: 100; display: grid; grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr); gap: 4px 12px; align-items: center; margin: 0; padding: 12px 16px max(8px, env(safe-area-inset-bottom)); border-top: 1px solid var(--gstore-muted); background: var(--gstore-card-bg); }
-	[data-step="shipping"] .Gstore-btn--continue { grid-column: 2; grid-row: 1; width: 100%; min-height: 48px; padding: 12px; }
-	[data-step="shipping"] .Gstore-btn--back { grid-column: 1; grid-row: 1; justify-self: start; min-height: 48px; padding: 8px 16px; border: 0; }
 }
