@@ -9823,13 +9823,15 @@ function gstore_filter_home_products_by_stock( $query_args ) {
 		return $query_args;
 	}
 
-	// Marca as vitrines da home para priorizar produtos "Destaque".
+	// Estoque precede destaque, inclusive quando a vitrine precisa de fallback.
+	$query_args['gstore_instock_first'] = 1;
 	$query_args['gstore_featured_first'] = 1;
+	$query_args['gstore_unavailable_campaign_ids'] = gstore_catalog_get_unavailable_campaign_ids();
 
 	// Prepara args base para as consultas de pré-verificação:
-	// remove gstore_featured_first, ativa modo rápido e limpa _stock_status herdado do shortcode.
+	// remove prioridades, ativa modo rápido e limpa _stock_status herdado do shortcode.
 	$base_args = $query_args;
-	unset( $base_args['gstore_featured_first'] );
+	unset( $base_args['gstore_featured_first'], $base_args['gstore_instock_first'] );
 	$base_args['fields']                 = 'ids';
 	$base_args['no_found_rows']          = true;
 	$base_args['update_post_meta_cache'] = false;
@@ -18443,17 +18445,47 @@ function gstore_catalog_default_orderby_popularity( $default_orderby ) {
 }
 
 /**
- * Controla a ordenacao SQL customizada do catalogo.
+ * Controla a prioridade adicional de destaques no catalogo.
  *
- * A implementacao antiga faz LEFT JOIN em wp_postmeta para estoque e vendas,
- * seguida de ORDER BY com CASE. Na base atual isso provoca filesort caro e
- * timeouts. Fica desativada por padrao ate ser reimplementada sobre a tabela
- * de lookup do WooCommerce.
+ * Mantem o opt-in legado. A prioridade de estoque usa o lookup do WooCommerce
+ * e independe deste filtro para nao voltar a misturar produtos indisponiveis.
  *
  * @return bool
  */
 function gstore_catalog_custom_sql_order_enabled() {
 	return (bool) apply_filters( 'gstore_catalog_custom_sql_order_enabled', false );
+}
+
+/**
+ * IDs cujo estoque efetivo foi esgotado pela campanha ativa do plugin.
+ * Consulta somente os itens da campanha, nunca todos os produtos do catalogo.
+ * Os IDs entram nos argumentos para participar da chave de cache do shortcode.
+ *
+ * @return int[]
+ */
+function gstore_catalog_get_unavailable_campaign_ids() {
+	if ( ! class_exists( 'GStore\\Services\\Flash_Sale_Service' ) ) {
+		return array();
+	}
+
+	$service = \GStore\Services\Flash_Sale_Service::get_instance();
+	if ( ! $service ) {
+		return array();
+	}
+	$campaign = $service->get_campaign();
+	if ( ! $service->is_campaign_active( $campaign ) ) {
+		return array();
+	}
+
+	$ids = array();
+	foreach ( $campaign['items'] as $item ) {
+		$product_id = absint( $item['product_id'] ?? 0 );
+		$product    = $product_id ? wc_get_product( $product_id ) : false;
+		if ( $product && 'outofstock' === $product->get_stock_status() ) {
+			$ids[] = $product_id;
+		}
+	}
+	return array_values( array_unique( $ids ) );
 }
 
 /**
@@ -18464,13 +18496,14 @@ function gstore_catalog_mark_shortcode_stock_priority( $query_args, $attr, $type
 	if ( ! gstore_is_catalog_context() ) {
 		return $query_args;
 	}
+	$query_args['gstore_instock_first'] = 1;
+	$query_args['gstore_unavailable_campaign_ids'] = gstore_catalog_get_unavailable_campaign_ids();
 	if ( ! gstore_catalog_custom_sql_order_enabled() ) {
 		return $query_args;
 	}
 
 	$has_catalog_search = function_exists( 'gstore_get_catalog_search_request_term' ) && '' !== gstore_get_catalog_search_request_term();
 
-	$query_args['gstore_instock_first'] = 1;
 	if ( ! $has_catalog_search && ! gstore_catalog_has_requested_orderby() ) {
 		$query_args['gstore_featured_first'] = 1;
 	}
@@ -18486,13 +18519,14 @@ function gstore_catalog_mark_main_query_stock_priority( $query ) {
 	if ( ! gstore_is_catalog_context() ) {
 		return;
 	}
+	$query->set( 'gstore_instock_first', 1 );
+	$query->set( 'gstore_unavailable_campaign_ids', gstore_catalog_get_unavailable_campaign_ids() );
 	if ( ! gstore_catalog_custom_sql_order_enabled() ) {
 		return;
 	}
 
 	$has_catalog_search = function_exists( 'gstore_get_catalog_search_request_term' ) && '' !== gstore_get_catalog_search_request_term();
 
-	$query->set( 'gstore_instock_first', 1 );
 	if ( ! $has_catalog_search && ! gstore_catalog_has_requested_orderby() ) {
 		$query->set( 'gstore_featured_first', 1 );
 	}
@@ -18525,6 +18559,13 @@ function gstore_catalog_order_by_stock_first( $clauses, $query ) {
 	global $wpdb;
 	$order_parts = array();
 
+	// Reutiliza o JOIN nativo de preco/popularidade quando ele ja existe.
+	$lookup_alias = preg_match( '/\\bwc_product_meta_lookup\\b/', $clauses['join'] ) ? 'wc_product_meta_lookup' : 'gstore_catalog_lookup';
+	if ( 'gstore_catalog_lookup' === $lookup_alias && false === strpos( $clauses['join'], $lookup_alias ) ) {
+		$clauses['join'] .= " LEFT JOIN {$wpdb->prefix}wc_product_meta_lookup AS {$lookup_alias}
+			ON ({$wpdb->posts}.ID = {$lookup_alias}.product_id)";
+	}
+
 	if ( $apply_featured_priority ) {
 		static $featured_term_taxonomy_id = null;
 		if ( null === $featured_term_taxonomy_id ) {
@@ -18542,14 +18583,8 @@ function gstore_catalog_order_by_stock_first( $clauses, $query ) {
 					ON ({$wpdb->posts}.ID = {$featured_alias}.object_id AND {$featured_alias}.term_taxonomy_id = {$featured_term_taxonomy_id})";
 			}
 
-			$featured_sales_alias = 'gstore_featured_sales_meta';
-			if ( strpos( $clauses['join'], $featured_sales_alias ) === false ) {
-				$clauses['join'] .= " LEFT JOIN {$wpdb->postmeta} AS {$featured_sales_alias}
-					ON ({$wpdb->posts}.ID = {$featured_sales_alias}.post_id AND {$featured_sales_alias}.meta_key = 'total_sales')";
-			}
-
 			$featured_priority_sql   = "CASE WHEN {$featured_alias}.object_id IS NULL THEN 1 ELSE 0 END";
-			$featured_popularity_sql = "CASE WHEN {$featured_alias}.object_id IS NULL THEN -1 ELSE CAST(COALESCE(NULLIF({$featured_sales_alias}.meta_value, ''), '0') AS UNSIGNED) END";
+			$featured_popularity_sql = "CASE WHEN {$featured_alias}.object_id IS NULL THEN -1 ELSE COALESCE({$lookup_alias}.total_sales, 0) END";
 			$featured_title_sql      = "CASE WHEN {$featured_alias}.object_id IS NULL THEN '' ELSE {$wpdb->posts}.post_title END";
 
 			$order_parts[] = $featured_priority_sql . ' ASC';
@@ -18559,22 +18594,19 @@ function gstore_catalog_order_by_stock_first( $clauses, $query ) {
 	}
 
 	if ( $apply_stock_priority ) {
-		$meta_alias = 'gstore_stock_order_meta';
-		if ( strpos( $clauses['join'], $meta_alias ) === false ) {
-			$clauses['join'] .= " LEFT JOIN {$wpdb->postmeta} AS {$meta_alias}
-				ON ({$wpdb->posts}.ID = {$meta_alias}.post_id AND {$meta_alias}.meta_key = '_stock_status')";
-		}
-
+		$unavailable_ids = array_filter( array_map( 'absint', (array) $query->get( 'gstore_unavailable_campaign_ids' ) ) );
+		$campaign_sql = $unavailable_ids ? " OR {$wpdb->posts}.ID IN (" . implode( ',', $unavailable_ids ) . ')' : '';
 		$stock_priority_sql = "CASE
-			WHEN {$wpdb->posts}.post_status = 'draft' THEN 2
-			ELSE CASE {$meta_alias}.meta_value
+			WHEN {$wpdb->posts}.post_status = 'draft'{$campaign_sql} THEN 2
+			ELSE CASE {$lookup_alias}.stock_status
 				WHEN 'instock' THEN 0
 				WHEN 'onbackorder' THEN 1
 				WHEN 'outofstock' THEN 2
 				ELSE 1
 			END
 		END";
-		$order_parts[] = $stock_priority_sql . ' ASC';
+		// Estoque deve preceder inclusive os destaques e a ordem manual.
+		array_unshift( $order_parts, $stock_priority_sql . ' ASC' );
 	}
 
 	$current_orderby = isset( $clauses['orderby'] ) ? trim( (string) $clauses['orderby'] ) : '';
@@ -18583,6 +18615,8 @@ function gstore_catalog_order_by_stock_first( $clauses, $query ) {
 	} else {
 		$order_parts[] = "{$wpdb->posts}.post_title ASC";
 	}
+	// Desempate estavel evita repeticoes entre paginas com valores iguais.
+	$order_parts[] = "{$wpdb->posts}.ID ASC";
 	$clauses['orderby'] = implode( ', ', $order_parts );
 
 	return $clauses;
