@@ -63,6 +63,34 @@ class WP_Query {
 foreach ( array( 'gstore_is_catalog_context', 'gstore_catalog_custom_sql_order_enabled', 'gstore_catalog_mark_shortcode_stock_priority', 'gstore_catalog_mark_main_query_stock_priority', 'gstore_catalog_order_by_stock_first', 'gstore_filter_home_products_by_stock' ) as $callback ) {
 	load_callback( $callback );
 }
+// Model the legacy MU-plugin registration without loading a store or mutating data.
+$stock_hooks = array();
+function add_filter( $hook, $callback, $priority = 10, $accepted_args = 1 ) {
+	$GLOBALS['stock_hooks'][ $hook ][ $priority ][ $callback ] = $accepted_args;
+}
+function add_action( $hook, $callback, $priority = 10, $accepted_args = 1 ) {
+	add_filter( $hook, $callback, $priority, $accepted_args );
+}
+function remove_filter( $hook, $callback, $priority = 10 ) {
+	$exists = isset( $GLOBALS['stock_hooks'][ $hook ][ $priority ][ $callback ] );
+	unset( $GLOBALS['stock_hooks'][ $hook ][ $priority ][ $callback ] );
+	return $exists;
+}
+load_callback( 'gstore_catalog_retire_legacy_order_hotfix' );
+check( str_contains( $source, "add_action( 'wp_loaded', 'gstore_catalog_retire_legacy_order_hotfix', 20 );" ), 'Retire the old hotfix after its after_setup_theme registration.' );
+gstore_catalog_retire_legacy_order_hotfix();
+check( empty( $stock_hooks['send_headers'] ), 'No legacy hotfix: do not add a diagnostic header.' );
+add_filter( 'posts_clauses', 'armastore_catalog_emergency_skip_custom_order', 19, 2 );
+add_filter( 'posts_clauses', 'gstore_catalog_order_by_stock_first', 20, 2 );
+add_filter( 'posts_clauses', 'unrelated_plugin_callback', 19, 2 );
+gstore_catalog_retire_legacy_order_hotfix();
+check( empty( $stock_hooks['posts_clauses'][19]['armastore_catalog_emergency_skip_custom_order'] ), 'Legacy MU-plugin cannot zero stock flags.' );
+check( isset( $stock_hooks['posts_clauses'][19]['unrelated_plugin_callback'], $stock_hooks['posts_clauses'][20]['gstore_catalog_order_by_stock_first'] ), 'Preserve unrelated hooks and current stock sorting.' );
+check( isset( $stock_hooks['send_headers'][PHP_INT_MAX]['gstore_catalog_lookup_order_hotfix_header'] ), 'Replace the legacy diagnostic header after its callback.' );
+$hooks_after_retirement = $stock_hooks;
+gstore_catalog_retire_legacy_order_hotfix();
+check( $hooks_after_retirement === $stock_hooks, 'Legacy retirement is idempotent.' );
+
 // This fails against the pre-fix callbacks, before the new helper is required.
 if ( false !== strpos( $source, 'function gstore_catalog_get_unavailable_campaign_ids(' ) ) {
 	load_callback( 'gstore_catalog_get_unavailable_campaign_ids' );
@@ -70,6 +98,10 @@ if ( false !== strpos( $source, 'function gstore_catalog_get_unavailable_campaig
 $marked = gstore_catalog_mark_shortcode_stock_priority( array( 'post_type' => 'product' ), array(), 'products' );
 check( 1 === ( $marked['gstore_instock_first'] ?? 0 ), 'Default catalog must prioritize stock even when legacy SQL ordering is disabled.' );
 check( empty( $marked['gstore_featured_first'] ), 'Do not silently enable catalog featured ordering.' );
+$legacy_cache_args = $marked;
+unset( $legacy_cache_args['gstore_stock_order_version'] );
+check( 2 === ( $marked['gstore_stock_order_version'] ?? 0 ), 'Version the shortcode cache after retiring the hotfix.' );
+check( md5( json_encode( $legacy_cache_args ) . 'products' ) !== md5( json_encode( $marked ) . 'products' ), 'WooCommerce shortcode cache key differs from the blocked version.' );
 check( array() === gstore_catalog_get_unavailable_campaign_ids(), 'Theme works without the flash sale plugin.' );
 
 class StockTestCampaign {

@@ -18497,6 +18497,8 @@ function gstore_catalog_mark_shortcode_stock_priority( $query_args, $attr, $type
 		return $query_args;
 	}
 	$query_args['gstore_instock_first'] = 1;
+	// Invalida resultados de shortcode gravados enquanto o hotfix legado zerava a prioridade.
+	$query_args['gstore_stock_order_version'] = 2;
 	$query_args['gstore_unavailable_campaign_ids'] = gstore_catalog_get_unavailable_campaign_ids();
 	if ( ! gstore_catalog_custom_sql_order_enabled() ) {
 		return $query_args;
@@ -18530,6 +18532,24 @@ function gstore_catalog_mark_main_query_stock_priority( $query ) {
 	if ( ! $has_catalog_search && ! gstore_catalog_has_requested_orderby() ) {
 		$query->set( 'gstore_featured_first', 1 );
 	}
+}
+
+/**
+ * O MU-plugin emergencial de 28/08/2026 zerava as flags para evitar o SQL antigo
+ * com postmeta. A ordenacao atual usa o lookup do WooCommerce e substitui essa
+ * protecao. Remove apenas o callback conhecido, depois de after_setup_theme.
+ */
+add_action( 'wp_loaded', 'gstore_catalog_retire_legacy_order_hotfix', 20 );
+function gstore_catalog_retire_legacy_order_hotfix() {
+	if ( ! remove_filter( 'posts_clauses', 'armastore_catalog_emergency_skip_custom_order', 19 ) ) {
+		return;
+	}
+	add_action( 'send_headers', 'gstore_catalog_lookup_order_hotfix_header', PHP_INT_MAX );
+}
+
+/** Atualiza o cabecalho de diagnostico deixado pelo MU-plugin legado. */
+function gstore_catalog_lookup_order_hotfix_header() {
+	header( 'X-Arma-Catalog-Hotfix: lookup-stock-order' );
 }
 
 /**
