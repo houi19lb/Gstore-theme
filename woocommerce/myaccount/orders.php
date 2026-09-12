@@ -281,6 +281,22 @@ if ( $has_orders ) :
 								<span class="gstore-orders-status gstore-orders-status--<?php echo esc_attr( $order->get_status() ); ?>">
 									<?php echo esc_html( $status_label ); ?>
 								</span>
+								<?php
+								$document_stage = (string) $order->get_meta( '_gstore_fulfillment_stage' );
+								$document_stage_labels = array(
+									'aguardando_documentacao' => 'Aguardando documentação',
+									'processando_documentacao' => 'Verificando documentação',
+									'documentacao_negada' => 'Documentação negada',
+									'preparando_entrega' => 'Preparando entrega',
+								);
+								if ( isset( $document_stage_labels[ $document_stage ] ) && ! in_array( $order->get_status(), array( 'cancelled', 'refunded', 'failed', 'completed' ), true ) ) : ?>
+									<p class="gstore-orders-documentation<?php echo 'documentacao_negada' === $document_stage ? ' is-rejected' : ''; ?>">
+										<a href="<?php echo esc_url( $order->get_view_order_url() ); ?>"><?php echo esc_html( $document_stage_labels[ $document_stage ] ); ?></a>
+										<?php if ( 'documentacao_negada' === $document_stage ) : ?>
+											<small>Entre em contato com o atendente para entender por que sua documentação foi negada.</small>
+										<?php endif; ?>
+									</p>
+								<?php endif; ?>
 							<?php elseif ( 'order-tracking' === $column_id ) : ?>
 								<?php $tracking = $get_order_tracking( $order ); ?>
 								<?php if ( is_array( $tracking ) && ! empty( $tracking['label'] ) ) : ?>

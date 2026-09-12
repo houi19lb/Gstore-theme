@@ -605,3 +605,27 @@
 		padding: 20px 16px;
 	}
 }
+
+/* A recusa ocupa a etapa de verificação, sem criar uma etapa obrigatória. */
+.gstore-fulfillment-timeline__step.is-rejected .gstore-fulfillment-timeline__icon {
+	background: #b42318;
+	border-color: #b42318;
+	box-shadow: 0 0 0 4px #fee4e2;
+}
+.gstore-fulfillment-timeline__step.is-rejected .gstore-fulfillment-timeline__label {
+	color: #b42318;
+}
+.gstore-fulfillment-timeline__step.is-rejected .gstore-fulfillment-timeline__pulse {
+	animation: none;
+}
+.gstore-fulfillment-message {
+	padding: 14px 16px;
+	margin-bottom: 18px;
+	border: 1px solid #d0d5dd;
+	border-radius: 8px;
+}
+.gstore-fulfillment-message.is-rejected {
+	color: #b42318;
+	background: #fff1f0;
+	border-color: #fecdca;
+}

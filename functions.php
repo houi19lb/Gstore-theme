@@ -25909,6 +25909,9 @@ function gstore_get_order_fulfillment_documents( $order ) {
 	if ( ! $order instanceof WC_Order ) {
 		return array();
 	}
+	if ( class_exists( '\GStore\Services\Fulfillment_Service' ) ) {
+		return \GStore\Services\Fulfillment_Service::get_documents( $order->get_id() );
+	}
 	$raw = $order->get_meta( '_gstore_fulfillment_documents' );
 	if ( is_string( $raw ) && '' !== $raw ) {
 		$decoded = json_decode( $raw, true );

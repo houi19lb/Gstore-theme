@@ -46,13 +46,25 @@ $stages = array(
 	'processando_pagamento'    => 'Processando Pagamento',
 	'pagamento_confirmado'     => 'Pagamento Confirmado',
 	'aguardando_documentacao'  => 'Aguardando Documentação',
-	'processando_documentacao' => 'Processando Documentação',
+	'processando_documentacao' => 'Verificando documentação',
 	'preparando_entrega'       => 'Preparando Entrega',
 	'enviado'                  => 'Enviado',
 );
 
+// Usa as mesmas etapas do painel, inclusive a ramificação de retirada.
+if ( class_exists( '\GStore\Services\Fulfillment_Service' ) ) {
+	$fulfillment_data = \GStore\Services\Fulfillment_Service::get_fulfillment_data( $order_id );
+	$stages = $fulfillment_data['stages'];
+}
+unset( $stages['documentacao_negada'] );
+$documentation_rejected = 'documentacao_negada' === $fulfillment_stage;
+if ( $documentation_rejected ) {
+	$stages['processando_documentacao'] = 'Documentação negada';
+}
+$can_manage_documents = in_array( $fulfillment_stage, array( 'aguardando_documentacao', 'processando_documentacao', 'documentacao_negada' ), true );
+$timeline_stage = $documentation_rejected ? 'processando_documentacao' : $fulfillment_stage;
 $stage_keys   = array_keys( $stages );
-$current_idx  = $has_fulfillment ? array_search( $fulfillment_stage, $stage_keys, true ) : -1;
+$current_idx  = $has_fulfillment ? array_search( $timeline_stage, $stage_keys, true ) : -1;
 
 // Documentos já enviados agrupados por tipo (múltiplos por tipo permitidos).
 $uploaded_by_type = array();
@@ -78,6 +90,9 @@ $can_upload_more = $total_docs_count < $max_docs;
 			$is_completed = $i < $current_idx;
 			$is_current   = $i === $current_idx;
 			$state_class  = $is_completed ? 'is-completed' : ( $is_current ? 'is-current' : 'is-pending' );
+			if ( $is_current && $documentation_rejected ) {
+				$state_class .= ' is-rejected';
+			}
 			?>
 			<div class="gstore-fulfillment-timeline__step <?php echo esc_attr( $state_class ); ?>" data-stage="<?php echo esc_attr( $slug ); ?>">
 				<div class="gstore-fulfillment-timeline__icon">
@@ -100,8 +115,18 @@ $can_upload_more = $total_docs_count < $max_docs;
 		?>
 	</div>
 
+	<p id="gstore-fulfillment-message" class="gstore-fulfillment-message<?php echo $documentation_rejected ? ' is-rejected' : ''; ?>" role="status" <?php echo ! in_array( $fulfillment_stage, array( 'processando_documentacao', 'documentacao_negada', 'preparando_entrega' ), true ) ? 'hidden' : ''; ?>>
+		<?php if ( $documentation_rejected ) : ?>
+			Documentação negada. Entre em contato com o atendente para entender por que sua documentação foi negada.
+		<?php elseif ( 'processando_documentacao' === $fulfillment_stage ) : ?>
+			Recebemos seus documentos e estamos verificando a documentação. Você pode enviar os demais arquivos necessários abaixo.
+		<?php elseif ( 'preparando_entrega' === $fulfillment_stage ) : ?>
+			Documentação aprovada. Estamos preparando a entrega do seu pedido.
+		<?php endif; ?>
+	</p>
+
 	<!-- ════════════ Upload de Documentos ════════════ -->
-	<?php if ( 'aguardando_documentacao' === $fulfillment_stage ) : ?>
+	<?php if ( $can_manage_documents ) : ?>
 	<div class="gstore-fulfillment-upload" id="gstore-fulfillment-upload"
 	     data-order-id="<?php echo esc_attr( $order_id ); ?>"
 	     data-max-docs="<?php echo esc_attr( $max_docs ); ?>"
@@ -121,7 +146,7 @@ $can_upload_more = $total_docs_count < $max_docs;
 	<?php endif; ?>
 
 	<!-- Documentos já enviados (visível em todas as etapas, se houver) -->
-	<?php if ( $has_fulfillment && ! empty( $fulfillment_documents ) && 'aguardando_documentacao' !== $fulfillment_stage ) : ?>
+	<?php if ( $has_fulfillment && ! empty( $fulfillment_documents ) && ! $can_manage_documents ) : ?>
 	<div class="gstore-fulfillment-docs-summary">
 		<h3>Documentos Enviados</h3>
 		<div class="gstore-fulfillment-docs-summary__list">
@@ -129,7 +154,7 @@ $can_upload_more = $total_docs_count < $max_docs;
 				$status_labels = array(
 					'pending'  => 'Pendente',
 					'approved' => 'Aprovado',
-					'rejected' => 'Rejeitado',
+					'rejected' => 'Negado',
 				);
 				?>
 				<div class="gstore-fulfillment-docs-summary__item">

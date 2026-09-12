@@ -6212,3 +6212,8 @@ a.gstore-orders-tracking:hover {
 		animation-duration: 1ms !important;
 	}
 }
+
+.gstore-orders-documentation { margin: 8px 0 0; font-size: 0.8rem; }
+.gstore-orders-documentation small { display: block; margin-top: 4px; max-width: 280px; }
+.gstore-orders-documentation.is-rejected,
+.gstore-orders-documentation.is-rejected a { color: #b42318; }

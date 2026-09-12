@@ -57,7 +57,7 @@
 	var statusLabels = {
 		pending: 'Pendente',
 		approved: 'Aprovado',
-		rejected: 'Rejeitado'
+		rejected: 'Negado'
 	};
 
 	function escapeHtml(str) {
@@ -145,8 +145,8 @@
 				icons.eye + '</button>';
 		}
 
-		// Delete button (only for pending docs).
-		if (doc.status === 'pending') {
+		// Documentos pendentes ou negados podem ser corrigidos.
+		if (doc.status === 'pending' || doc.status === 'rejected') {
 			html += '<button type="button" class="gstore-fulfillment-upload__btn gstore-fulfillment-upload__btn--delete" ' +
 				'data-action="delete" data-doc-id="' + escapeHtml(doc.id) + '" title="Excluir">' +
 				icons.trash + '</button>';
@@ -278,6 +278,7 @@
 					var res = JSON.parse(xhr.responseText);
 					if (res.success && res.data && res.data.documents) {
 						docs = res.data.documents;
+						updateStage(res.data.stage);
 						render();
 						return;
 					}
@@ -368,6 +369,7 @@
 					var res = JSON.parse(xhr.responseText);
 					if (res.success && res.data && res.data.documents) {
 						docs = res.data.documents;
+						updateStage(res.data.stage);
 						render();
 						return;
 					}
@@ -394,6 +396,50 @@
 		});
 
 		xhr.send();
+	}
+
+	// Reflete imediatamente a etapa devolvida pela API após envio ou exclusão.
+	function updateStage(stage) {
+		var timeline = document.querySelector('.gstore-fulfillment-timeline');
+		if (!timeline || !stage) return;
+		timeline.setAttribute('data-current-stage', stage);
+		var rejected = stage === 'documentacao_negada';
+		var target = rejected ? 'processando_documentacao' : stage;
+		var steps = timeline.querySelectorAll('[data-stage]');
+		var currentIndex = -1;
+		for (var i = 0; i < steps.length; i++) {
+			if (steps[i].getAttribute('data-stage') === target) currentIndex = i;
+		}
+		if (currentIndex < 0) return;
+		for (var j = 0; j < steps.length; j++) {
+			var step = steps[j];
+			var completed = j < currentIndex;
+			var current = j === currentIndex;
+			step.classList.toggle('is-completed', completed);
+			step.classList.toggle('is-current', current);
+			step.classList.toggle('is-pending', j > currentIndex);
+			step.classList.toggle('is-rejected', current && rejected);
+			step.querySelector('.gstore-fulfillment-timeline__icon').innerHTML = completed
+				? '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>'
+				: '<span class="gstore-fulfillment-timeline__' + (current ? 'pulse' : 'dot') + '"></span>';
+			var connector = step.querySelector('.gstore-fulfillment-timeline__connector');
+			if (connector) connector.classList.toggle('is-filled', completed);
+			if (step.getAttribute('data-stage') === 'processando_documentacao') {
+				step.querySelector('.gstore-fulfillment-timeline__label').textContent = rejected ? 'Documentação negada' : 'Verificando documentação';
+			}
+		}
+		var message = document.getElementById('gstore-fulfillment-message');
+		if (message) {
+			var messages = {
+				processando_documentacao: 'Recebemos seus documentos e estamos verificando a documentação. Você pode enviar os demais arquivos necessários abaixo.',
+				documentacao_negada: 'Documentação negada. Entre em contato com o atendente para entender por que sua documentação foi negada.',
+				preparando_entrega: 'Documentação aprovada. Estamos preparando a entrega do seu pedido.'
+			};
+			message.textContent = messages[stage] || '';
+			message.hidden = !messages[stage];
+			message.classList.toggle('is-rejected', rejected);
+		}
+		if (container) container.hidden = ['aguardando_documentacao', 'processando_documentacao', 'documentacao_negada'].indexOf(stage) === -1;
 	}
 
 	/* ───────── Global Error ───────── */
