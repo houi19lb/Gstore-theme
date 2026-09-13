@@ -11,6 +11,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 $current_user = wp_get_current_user();
+preg_match( '/^./us', trim( $current_user->display_name ), $name_initial );
 $partner_view = isset( $_GET['view'] ) ? sanitize_key( wp_unslash( $_GET['view'] ) ) : 'painel';
 $partner_view = in_array( $partner_view, array( 'painel', 'vendas', 'creditos', 'contrato' ), true ) ? $partner_view : 'painel';
 if ( function_exists( 'gstore_partner_account_is_visible' ) && function_exists( 'gstore_partner_account_contract_is_accepted' ) && gstore_partner_account_is_visible() && ! gstore_partner_account_contract_is_accepted( get_current_user_id() ) ) {
@@ -19,11 +20,11 @@ if ( function_exists( 'gstore_partner_account_is_visible' ) && function_exists( 
 ?>
 
 <nav class="gstore-myaccount-nav" aria-label="<?php esc_attr_e( 'Navegação da conta', 'gstore' ); ?>">
-	
+
 	<!-- User Profile Card -->
 	<div class="gstore-myaccount-nav__user">
 		<div class="gstore-myaccount-nav__avatar">
-			<?php echo get_avatar( $current_user->ID, 64, '', $current_user->display_name ); ?>
+			<span class="gstore-account-initial" aria-hidden="true"><?php echo esc_html( $name_initial[0] ?? '' ); ?></span>
 		</div>
 		<div class="gstore-myaccount-nav__user-info">
 			<span class="gstore-myaccount-nav__user-name"><?php echo esc_html( $current_user->display_name ); ?></span>
@@ -36,11 +37,14 @@ if ( function_exists( 'gstore_partner_account_is_visible' ) && function_exists( 
 		<?php foreach ( wc_get_account_menu_items() as $endpoint => $label ) : ?>
 			<?php
 			$icon = function_exists( 'gstore_get_myaccount_icon' ) ? gstore_get_myaccount_icon( $endpoint ) : '';
-			$is_current = wc_is_current_account_menu_item( $endpoint );
+			$is_current = gstore_account_menu_is_current( $endpoint );
+			if ( 'atendimento' === $endpoint ) {
+				$icon = '<i class="fa-solid fa-headset" aria-hidden="true"></i>';
+			}
 			?>
 			<li class="gstore-myaccount-nav__item <?php echo $is_current ? 'is-active' : ''; ?>">
-				<a 
-					href="<?php echo esc_url( wc_get_account_endpoint_url( $endpoint ) ); ?>" 
+				<a
+					href="<?php echo esc_url( 'atendimento' === $endpoint ? gstore_account_support_url() : wc_get_account_endpoint_url( $endpoint ) ); ?>"
 					class="gstore-myaccount-nav__link"
 					<?php echo $is_current ? 'aria-current="page"' : ''; ?>
 				>

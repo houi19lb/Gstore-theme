@@ -36,6 +36,7 @@ if ( file_exists( $gstore_armastore_migration_config ) ) {
 
 require_once get_theme_file_path( 'inc/gstore-product-upsells.php' );
 require_once get_theme_file_path( 'inc/gstore-product-image-badges.php' );
+require_once get_theme_file_path( 'inc/gstore-account-dashboard.php' );
 
 /**
  * Configurações iniciais do tema filho.
@@ -5557,6 +5558,9 @@ function gstore_enqueue_styles() {
 		|| $gstore_is_partner_program_page
 	) {
 		gstore_enqueue_theme_style( 'gstore-my-account-css', 'assets/css/my-account.css', array( 'gstore-style' ), $theme_version );
+		if ( is_user_logged_in() && function_exists( 'is_account_page' ) && is_account_page() ) {
+			gstore_enqueue_theme_style( 'gstore-account-dashboard-css', 'assets/css/account-dashboard.css', array( 'gstore-my-account-css' ), $theme_version );
+		}
 
 		// Fulfillment timeline (apenas na página de detalhes do pedido).
 		if ( function_exists( 'is_wc_endpoint_url' ) && is_wc_endpoint_url( 'view-order' ) ) {
