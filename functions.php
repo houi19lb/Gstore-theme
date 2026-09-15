@@ -5583,7 +5583,7 @@ function gstore_enqueue_styles() {
 		gstore_enqueue_theme_style( 'gstore-sobre-nos-css', 'assets/css/sobre-nos.css', array( 'gstore-style' ), $theme_version );
 	}
 
-	if ( ( function_exists( 'is_privacy_policy' ) && is_privacy_policy() ) || is_page( 'politica-de-privacidade' ) ) {
+	if ( ( function_exists( 'is_privacy_policy' ) && is_privacy_policy() ) || is_page( array( 'politica-de-privacidade', 'termos-de-uso' ) ) ) {
 		gstore_enqueue_theme_style( 'gstore-privacy-policy-css', 'assets/css/privacy-policy.css', array( 'gstore-style' ), $theme_version );
 	}
 
@@ -20184,7 +20184,7 @@ function gstore_get_required_pages() {
 		'termos-de-uso' => array(
 			'title'       => 'Termos de Uso',
 			'slug'        => 'termos-de-uso',
-			'template'    => '',
+			'template'    => 'page-termos-de-uso',
 			'content'     => '<!-- wp:heading {"level":1} --><h1 class="wp-block-heading">Termos de Uso</h1><!-- /wp:heading --><!-- wp:paragraph --><p>Ao utilizar nosso site, você concorda com os termos e condições descritos nesta página.</p><!-- /wp:paragraph -->',
 			'description' => 'Página com os termos e condições de uso.',
 			'wc_option'   => 'woocommerce_terms_page_id',
