@@ -17,8 +17,8 @@ function is_user_logged_in() { return get_current_user_id() > 0; }
 function get_current_user_id() { return $GLOBALS['customer_id'] ?? 7; }
 function is_wc_endpoint_url( $endpoint = '' ) { return $endpoint ? $endpoint === ( $GLOBALS['endpoint'] ?? '' ) : ! empty( $GLOBALS['endpoint'] ); }
 function wc_is_current_account_menu_item( $endpoint ) { return $endpoint === ( $GLOBALS['endpoint'] ?: 'dashboard' ); }
-function wc_get_account_endpoint_url( $endpoint ) { return 'https://example.test/account/' . ( 'dashboard' === $endpoint ? '' : $endpoint . '/' ); }
-function add_query_arg( $key, $value, $url ) { return $url . '?' . $key . '=' . $value; }
+function wc_get_account_endpoint_url( $endpoint ) { if ( ! empty( $GLOBALS['preview_mode'] ) ) { return '/' . ( array( 'dashboard' => 'inicio', 'edit-account' => 'dados', 'edit-address' => 'enderecos' )[ $endpoint ] ?? $endpoint ) . '.html'; } return 'https://example.test/account/' . ( 'dashboard' === $endpoint ? '' : $endpoint . '/' ); }
+function add_query_arg( $key, $value, $url ) { if ( ! empty( $GLOBALS['preview_mode'] ) && 'gstore_account_view' === $key ) { return '/atendimento.html'; } return $url . '?' . $key . '=' . $value; }
 function home_url( $path ) { return 'https://example.test' . $path; }
 function gstore_get_catalog_url() { return home_url( '/catalogo/' ); }
 function wp_get_current_user() { return (object) array( 'ID' => 7, 'first_name' => 'Cliente', 'display_name' => 'Cliente Exemplo', 'user_email' => 'cliente@example.test' ); }
@@ -26,6 +26,7 @@ function wc_get_customer_order_count( $id ) { return count( $GLOBALS['orders'] )
 function wc_get_orders( $args ) { $GLOBALS['queries'][] = $args; return ! empty( $args['paginate'] ) ? (object) array( 'total' => count( array_filter( $GLOBALS['orders'], static fn( $order ) => in_array( $order->status, $args['status'], true ) ) ) ) : $GLOBALS['orders']; }
 function wc_format_datetime( $date ) { return $date->format( 'd/m/Y' ); }
 function wc_get_order_status_name( $s ) { return array( 'cancelled' => 'Cancelado', 'refunded' => 'Reembolsado', 'failed' => 'Falhou' )[ $s ] ?? $s; }
+function gstore_my_account_get_orders_tab_status_label( $order ) { return 'cancelled' === $order->status && $order->paid ? 'Pago/Confirmado' : wc_get_order_status_name( $order->status ); }
 function gstore_get_order_fulfillment_stage( $order ) { return $order->stage; }
 function gstore_store_info() { return new class { function get_value( $key, $fallback = '' ) { return $GLOBALS['store'][ $key ] ?? $fallback; } }; }
 function gstore_get_whatsapp_link() { return $GLOBALS['store']['whatsapp_url'] ?? ''; }
@@ -35,12 +36,12 @@ function gstore_get_social_link( $network ) { return $GLOBALS['store'][ $network
 function gstore_get_phone( $format ) { return $GLOBALS['store']['phone'] ?? ''; }
 function wc_get_template( $name, $args = array() ) { extract( $args ); include dirname( __DIR__ ) . '/woocommerce/' . $name; }
 function wc_get_account_menu_items() { return gstore_account_dashboard_menu( array( 'dashboard' => 'Painel', 'orders' => 'Pedidos', 'edit-account' => 'Dados', 'customer-logout' => 'Sair' ) ); }
-function do_action( $name, ...$args ) { if ( 'woocommerce_account_navigation' === $name ) { wc_get_template( 'myaccount/navigation.php' ); } elseif ( 'woocommerce_account_content' === $name ) { wc_get_template( 'myaccount/dashboard.php' ); } }
+function do_action( $name, ...$args ) { if ( 'woocommerce_account_navigation' === $name ) { wc_get_template( 'myaccount/navigation.php' ); } elseif ( 'woocommerce_account_content' === $name ) { if ( ! empty( $GLOBALS['preview_form'] ) ) { echo $GLOBALS['preview_form']; } else { wc_get_template( 'myaccount/dashboard.php' ); } } }
 class AccountDate extends DateTime { function date( $format ) { return $this->format( $format ); } }
 class WC_Order {
-	public $stage = 'preparando_entrega'; public $status = 'processing';
-	function get_id() { return 42; }
-	function get_order_number() { return '10482'; }
+	public $stage = 'preparando_entrega'; public $status = 'processing'; public $paid = false; public $id = 42;
+	function get_id() { return $this->id; }
+	function get_order_number() { return (string) ( 10440 + $this->id ); }
 	function get_status() { return $this->status; }
 	function get_date_created() { return new AccountDate( '2026-09-11' ); }
 	function get_formatted_order_total() { return 'R$ 250,00'; }
@@ -69,9 +70,13 @@ foreach ( $stage_keys as $i => $stage ) {
 $order->stage = 'documentacao_negada'; $p = gstore_account_order_progress( $order );
 check( 3 === $p['index'] && $p['rejected'] && 'Documentação negada' === $p['label'], 'Rejected document needs attention at review step' );
 foreach ( array( 'cancelled', 'refunded', 'failed' ) as $status ) { $order->status = $status; check( ! gstore_account_order_progress( $order )['show_timeline'], 'Stopped orders must not suggest progress' ); }
+$order->status = 'cancelled'; $order->paid = true; $p = gstore_account_order_progress( $order );
+check( 'Pago/Confirmado' === $p['label'] && ! $p['show_timeline'] && 'cancelled' === $order->status, 'Honor existing order-list label without changing order status or inventing fulfillment progress' ); $order->paid = false;
 $order->status = 'processing'; $order->stage = 'unknown'; check( ! gstore_account_order_progress( $order )['show_timeline'], 'Unknown stage must not pretend payment is current' );
 $store = array( 'contact.contact_primary_link' => 'https://example.test/contato', 'contact.whatsapp_label' => 'Teleatendimento', 'contact.telegram_label' => 'Comunidade', 'telegram_url' => 'https://t.me/example', 'email_url' => 'mailto:ajuda@example.test' );
 $channels = gstore_account_contact_channels(); check( 3 === count( $channels ) && 'Teleatendimento' === $channels[0]['label'] && $channels[0]['url'] === $store['contact.contact_primary_link'] && 'Comunidade' === $channels[2]['label'], 'Configured channels and labels' );
+$store += array( 'facebook_url' => 'https://example.test/facebook', 'instagram_url' => 'https://example.test/instagram', 'youtube_url' => 'https://example.test/youtube', 'twitter_url' => 'https://example.test/twitter', 'tiktok_url' => 'https://example.test/tiktok', 'phone' => '551100000000' );
+check( $channels === gstore_account_contact_channels(), 'Public social profiles and separate phone must never become account support cards' );
 $store = array( 'contact.contact_primary_link' => 'javascript:alert(1)' ); check( array() === gstore_account_contact_channels(), 'Unsafe or absent links hidden' );
 $order->stage = 'preparando_entrega';
 ob_start(); wc_get_template( 'myaccount/dashboard.php' ); $html = ob_get_clean();
@@ -85,15 +90,8 @@ echo "PASS: account routing, menus, customer isolation, states, channels and nat
 
 // Optional synthetic screenshot fixtures; generated output stays local.
 foreach ( $argv as $arg ) {
-	if ( ! str_starts_with( $arg, '--render=' ) ) { continue; }
-	$dir = substr( $arg, 9 ); if ( ! is_dir( $dir ) ) { mkdir( $dir, 0777, true ); }
-	$plugin_stages = array_combine( $stage_keys, array( 'Processando pagamento', 'Pagamento confirmado', 'Aguardando documentação', 'Processando documentação', 'Preparando entrega', 'Enviado' ) );
-	$order->stage = 'preparando_entrega';
-	$store = array( 'contact.contact_primary_link' => 'https://example.test/contato', 'contact.whatsapp_label' => 'Teleatendimento', 'telegram_url' => 'https://t.me/example', 'email_url' => 'mailto:ajuda@example.test' );
-	foreach ( array( 'inicio', 'atendimento' ) as $page ) {
-		$_GET = 'atendimento' === $page ? array( 'gstore_account_view' => 'atendimento' ) : array();
-		ob_start(); wc_get_template( 'myaccount/my-account.php' ); $content = ob_get_clean();
-		$css = file_get_contents( dirname( __DIR__ ) . '/assets/css/my-account.css' ) . file_get_contents( dirname( __DIR__ ) . '/assets/css/account-dashboard.css' );
-		file_put_contents( $dir . '/' . $page . '.html', '<!doctype html><html lang="pt-BR"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Fixture sintética — Minha conta</title><style>body{margin:0;padding:40px;font-family:Arial,sans-serif;background:#f5f5f2}*{box-sizing:border-box}@media(max-width:600px){body{padding:20px}}</style><style>' . $css . '</style><body>' . $content . '</body></html>' );
+	if ( str_starts_with( $arg, '--render=' ) ) {
+		$dir = substr( $arg, 9 );
+		require __DIR__ . '/fixtures/account-dashboard-preview.php';
 	}
 }

@@ -7,7 +7,7 @@ A área principal da conta usa o painel aprovado: acolhimento em texto, pedido m
 - Menu principal: Início, Pedidos, Meus dados e Atendimento. Sair mantém a URL nativa do WooCommerce. Endpoints de programas e extensões continuam no menu; Downloads e o item separado de Endereços saem da navegação.
 - Meus dados agrupa os endpoints nativos `edit-account` e `edit-address`, com duas páginas. O WooCommerce continua responsável pelos campos, senha atual/nova/confirmação, nonces, validações e salvamento. Nenhum formulário de demonstração foi incorporado.
 - Atendimento usa `?gstore_account_view=atendimento` no dashboard nativo. Não requer flush de permalinks e não intercepta endpoints de pedido, dados ou pagamento. Apenas exibe links externos; não cria tickets ou mensagens internas.
-- Canais usam os mesmos campos de `gstore_store_info()` e helpers da página `/atendimento`: link principal e nomenclatura configurada (WhatsApp/Teleatendimento), e-mail, Telegram, redes sociais e telefone disponíveis. Campos vazios ou links inseguros não criam botões.
+- Canais usam os mesmos campos de `gstore_store_info()` e helpers da página `/atendimento`: link principal e nomenclatura configurada (WhatsApp/Teleatendimento), e-mail, Telegram, sem redes sociais de divulgação ou telefone adicional. Campos vazios ou links inseguros não criam botões.
 - As consultas de pedidos usam exclusivamente o usuário autenticado, com limites e APIs compatíveis com HPOS. Os contadores de andamento consideram pagamento pendente, em espera e processamento; concluídos usam o status `completed`.
 - O painel aponta para `WC_Order::get_view_order_url()`. `view-order.php`, `orders.php`, JavaScript de fulfillment e APIs de documentos permanecem intactos, incluindo upload, revisão, correção, rastreamento, ações e informações do pedido.
 - A sequência padrão é: Processando pagamento → Pagamento confirmado → Aguardando documentação → Processando documentação → Preparando entrega → Enviado. Enviado não significa entregue. As ramificações retornadas pelo serviço do plugin, como retirada, continuam válidas. Recusa de documentação é uma ocorrência na etapa de revisão; cancelados, reembolsados, falhos e etapas desconhecidas não recebem um progresso enganoso.
@@ -24,6 +24,20 @@ npm run check:assets
 
 `tests/account-dashboard.php --render=<diretorio-local>` pode gerar HTML sintético dos templates PHP para revisão; os arquivos gerados não devem ser versionados. O teste cobre isolamento por cliente, consultas limitadas, menu, roteamento, canais, seis etapas, estados excepcionais, ramificação de retirada, ausência de payloads de documentos e conta sem pedidos.
 
-Pendências para homologação visual: a ferramenta de navegador bloqueou a abertura dos arquivos locais de teste durante esta implementação. A integração ainda precisa ser vista em WordPress/WooCommerce na alpha, em 1440, 1024, 768, 390 e 320 px, inclusive zoom de 200%, navegação por teclado, nomes longos, ausência de pedidos/canais, cores claras/escuras de diferentes lojas, dados e senha, ambos os endereços e pedido com documentos. O CSS empilha o painel em telas menores e torna a linha de etapas vertical no celular; essa disposição ainda não foi conferida visualmente na integração.
+## Revisão visual de 15/09/2026
+
+A conta real foi inspecionada no Chrome autenticado (Início, Atendimento, Pedidos e Meus dados, além da navegação em tela estreita). Evidências com dados reais ficam apenas no armazenamento local, fora do Git.
+
+Achados corrigidos:
+
+1. Início: um ancestral `.woocommerce` limitava o conteúdo a 1.000 px. O ancestral agora aceita até 1.360 px somente quando contém a conta autenticada. A base branca é contínua dentro de `main`; header, footer e login não são afetados.
+2. Início: a coluna lateral mais alta empurrava os indicadores, criando um vão de aproximadamente 300 px sob um pedido cancelado. Pedido, indicadores e atalhos agora pertencem à mesma coluna. A lateral usa divisórias, sem caixas e sombras redundantes.
+3. Atendimento: a listagem incluía perfis públicos e telefone adicional. Só e-mail, WhatsApp/Teleatendimento e Telegram são elegíveis; nomes e URLs continuam vindo da configuração da loja. Os cartões se distribuem em até três colunas e empilham no celular.
+4. Meus dados: nome e sobrenome agora dividem a linha no desktop. Em telas estreitas todos os campos usam uma coluna. Nonces, formulários e salvamento continuam nativos; a alteração de senha permanece disponível.
+5. Pedidos: o histórico permanece intacto. O painel passa a respeitar o rótulo já usado no histórico para estados interrompidos, inclusive o caso legado de cancelamento com evidência de pagamento (`Pago/Confirmado`). Isso não altera pagamento, status persistido ou fulfillment.
+
+A prévia dos templates PHP usa fixtures anônimas para pedido cancelado, em andamento, conta vazia, atendimento, dados e endereços. Em 320, 768, 1.024 e 1.440 CSS px, a medição do painel em andamento não apresentou overflow horizontal; o espaço após o pedido foi de 20 px e as seis etapas foram mantidas, em coluna no celular. Os dados foram conferidos também a 390 px.
+
+Limites: a prévia não é uma instalação WordPress e não testa envio de formulários, plugins de terceiros ou alterações reais de senha/documentos. O header do site foi observado, mas não reimplementado na fixture. A revisão não equivale a uma certificação de acessibilidade. Conferir a versão integrada na loja de homologação antes de promover além da alpha.
 
 Os testes de documentação usam arquivos fictícios. Não testar upload, exclusão ou mudança de senha na conta real de um cliente sem um cenário de homologação autorizado.

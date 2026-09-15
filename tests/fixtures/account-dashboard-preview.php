@@ -1,0 +1,46 @@
+<?php
+/** Loaded only by the CLI regression test with --render. Synthetic presentation, no saving. */
+if ( PHP_SAPI !== 'cli' || ! defined( 'ABSPATH' ) ) { exit; }
+if ( ! is_dir( $dir ) ) { mkdir( $dir, 0777, true ); }
+$preview_mode = true;
+function gstore_get_myaccount_icon( $endpoint ) {
+	$icons = array( 'dashboard' => 'fa-house', 'orders' => 'fa-box', 'edit-account' => 'fa-user', 'customer-logout' => 'fa-arrow-right-from-bracket' );
+	return isset( $icons[ $endpoint ] ) ? '<i class="fa-solid ' . $icons[ $endpoint ] . '" aria-hidden="true"></i>' : '';
+}
+$plugin_stages = array_combine( $stage_keys, array( 'Processando pagamento', 'Pagamento confirmado', 'Aguardando documentação', 'Processando documentação', 'Preparando entrega', 'Enviado' ) );
+$store = array( 'contact.contact_primary_link' => 'https://example.test/contato', 'contact.whatsapp_label' => 'Teleatendimento', 'telegram_url' => 'https://t.me/example', 'email_url' => 'mailto:ajuda@example.test' );
+$root = dirname( __DIR__, 2 );
+$css = file_get_contents( $root . '/assets/css/tokens.css' ) . file_get_contents( $root . '/assets/css/my-account.css' ) . file_get_contents( $root . '/assets/css/account-dashboard.css' );
+foreach ( array( 'css', 'webfonts' ) as $folder ) {
+	if ( ! is_dir( $dir . '/fontawesome/' . $folder ) ) { mkdir( $dir . '/fontawesome/' . $folder, 0777, true ); }
+	foreach ( glob( $root . '/assets/vendor/fontawesome/6.5.1/' . $folder . '/*' ) as $asset ) { if ( is_file( $asset ) ) { copy( $asset, $dir . '/fontawesome/' . $folder . '/' . basename( $asset ) ); } }
+}
+foreach ( array( 'inicio', 'andamento', 'vazio', 'atendimento', 'dados', 'enderecos' ) as $page ) {
+	$_GET = 'atendimento' === $page ? array( 'gstore_account_view' => 'atendimento' ) : array();
+	$endpoint = array( 'dados' => 'edit-account', 'enderecos' => 'edit-address' )[ $page ] ?? '';
+	$order = new WC_Order(); $order->status = 'andamento' === $page ? 'processing' : 'cancelled';
+	$orders = array( $order, clone $order, clone $order ); $orders[1]->id = 41; $orders[2]->id = 40;
+	if ( 'vazio' === $page ) { $orders = array(); }
+	$preview_form = '';
+	if ( 'dados' === $page ) {
+		$preview_form = '<form class="woocommerce-EditAccountForm edit-account" onsubmit="return false">';
+		foreach ( array( 'first_name' => array( 'Nome', 'Cliente', 'first' ), 'last_name' => array( 'Sobrenome', 'Exemplo', 'last' ), 'display_name' => array( 'Nome de exibição', 'Cliente Exemplo', 'wide' ), 'email' => array( 'Endereço de e-mail', 'cliente@example.test', 'wide' ) ) as $key => $field ) {
+			$preview_form .= '<p class="woocommerce-form-row form-row form-row-' . $field[2] . '"><label for="account_' . $key . '">' . $field[0] . '</label><input class="input-text" id="account_' . $key . '" type="' . ( 'email' === $key ? 'email' : 'text' ) . '" value="' . $field[1] . '"></p>';
+		}
+		$preview_form .= '<fieldset><legend>Alteração de senha</legend>';
+		foreach ( array( 'current' => 'Senha atual', 'new' => 'Nova senha', 'confirm' => 'Confirmar nova senha' ) as $key => $label ) {
+			$preview_form .= '<p class="form-row form-row-wide"><label for="password_' . $key . '">' . $label . '</label><span class="password-input"><input class="input-text" id="password_' . $key . '" type="password" autocomplete="off"></span></p>';
+		}
+		$preview_form .= '</fieldset><p>Formulário ilustrativo. O salvamento permanece no WooCommerce.</p></form>';
+	}
+	if ( 'enderecos' === $page ) {
+		$preview_form = '<div class="woocommerce-Addresses">';
+		foreach ( array( 'Cobrança', 'Entrega' ) as $label ) { $preview_form .= '<section class="woocommerce-Address"><h2>Endereço de ' . $label . '</h2><p>Cliente Exemplo<br>Endereço fictício para revisão visual.</p></section>'; }
+		$preview_form .= '</div>';
+	}
+	ob_start(); wc_get_template( 'myaccount/my-account.php' ); $content = ob_get_clean();
+	// This preview has no account backend; unsupported actions point to its visible scope note.
+	$content = preg_replace( '#href="(?:/orders\.html|/customer-logout\.html|https://example\.test[^" ]*|https://t\.me/example|mailto:ajuda@example\.test)"#', 'href="#preview-scope"', $content );
+	$html = '<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Minha conta — prévia da revisão</title><link rel="stylesheet" href="/fontawesome/css/all.min.css"><style>body{margin:0;font-family:Arial,sans-serif;--gstore-color-accent-contrast:#111}*{box-sizing:border-box}.entry-content>.woocommerce{max-width:1000px;margin:auto}.preview-note{margin:0;padding:12px 24px;background:#f4f5f6;font-size:12px;line-height:1.8}.preview-note a{color:inherit;margin-right:14px}form label{display:block;margin-bottom:8px}input{min-height:44px;width:100%}</style><style>' . $css . '</style></head><body class="woocommerce-account logged-in"><p id="preview-scope" class="preview-note">Prévia visual · dados fictícios · ações de pedidos e salvamento continuam no WooCommerce<br><a href="/inicio.html">Pedido cancelado</a><a href="/andamento.html">Em andamento</a><a href="/vazio.html">Sem pedidos</a><a href="/atendimento.html">Atendimento</a><a href="/dados.html">Meus dados</a><a href="/enderecos.html">Endereços</a></p><main class="wp-block-group is-layout-constrained"><div class="entry-content"><div class="woocommerce">' . $content . '</div></div></main></body></html>';
+	file_put_contents( $dir . '/' . $page . '.html', $html );
+}

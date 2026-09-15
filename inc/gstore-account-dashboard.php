@@ -49,13 +49,7 @@ function gstore_account_contact_channels() {
 		array( 'label' => __( 'E-mail', 'gstore' ), 'url' => gstore_get_store_email_link(), 'icon' => 'fa-regular fa-envelope' ),
 		array( 'label' => $info->get_value( 'contact.telegram_label', 'Telegram' ), 'url' => gstore_get_telegram_link(), 'icon' => 'fa-brands fa-telegram' ),
 	);
-	foreach ( array( 'instagram' => 'Instagram', 'facebook' => 'Facebook', 'youtube' => 'YouTube', 'twitter' => 'Twitter', 'tiktok' => 'TikTok' ) as $network => $label ) {
-		$channels[] = array( 'label' => $info->get_value( 'contact.' . $network . '_label', $label ), 'url' => gstore_get_social_link( $network ), 'icon' => 'fa-brands fa-' . $network );
-	}
-	$phone = preg_replace( '/\D/', '', (string) gstore_get_phone( 'raw' ) );
-	if ( $phone ) {
-		$channels[] = array( 'label' => $info->get_value( 'contact.phone_label', __( 'Telefone', 'gstore' ) ), 'url' => 'tel:+' . $phone, 'icon' => 'fa-solid fa-phone' );
-	}
+	// Only direct support channels belong here. Social profiles stay in the site footer.
 	return array_values( array_filter( $channels, static function ( $channel ) {
 		return '' !== trim( (string) $channel['label'] ) && '' !== esc_url( $channel['url'] );
 	} ) );
@@ -110,7 +104,9 @@ function gstore_account_order_progress( $order ) {
 	$inactive = in_array( $order->get_status(), array( 'cancelled', 'refunded', 'failed' ), true );
 	$label = $rejected ? __( 'Documentação negada', 'gstore' ) : ( $stages[ $stage ] ?? wc_get_order_status_name( $order->get_status() ) );
 	if ( $inactive ) {
-		$label = wc_get_order_status_name( $order->get_status() );
+		$label = function_exists( 'gstore_my_account_get_orders_tab_status_label' )
+			? gstore_my_account_get_orders_tab_status_label( $order )
+			: wc_get_order_status_name( $order->get_status() );
 	}
 	$messages = array(
 		'processando_pagamento' => __( 'Acompanhe a confirmação e os detalhes do pagamento no seu pedido.', 'gstore' ),
