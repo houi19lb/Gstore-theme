@@ -4,7 +4,7 @@ const path = require('path');
 
 test('upload and correction update the visible customer stage from API responses', () => {
   const keys = ['processando_pagamento', 'pagamento_confirmado', 'aguardando_documentacao', 'processando_documentacao', 'preparando_entrega', 'enviado'];
-  document.body.innerHTML = `<div class="gstore-fulfillment-timeline">${keys.map(key => `<div class="gstore-fulfillment-timeline__step" data-stage="${key}"><div class="gstore-fulfillment-timeline__icon"></div><span class="gstore-fulfillment-timeline__label"></span><div class="gstore-fulfillment-timeline__connector"></div></div>`).join('')}</div><p id="gstore-fulfillment-message" hidden></p><div id="gstore-fulfillment-upload" data-docs="[]"><div id="gstore-fulfillment-docs-list"></div><div id="gstore-fulfillment-dropzone-area"></div></div>`;
+  document.body.innerHTML = `<div class="gstore-fulfillment-timeline">${keys.map(key => `<div class="gstore-fulfillment-timeline__step" data-stage="${key}"><div class="gstore-fulfillment-timeline__icon"></div><span class="gstore-fulfillment-timeline__label"></span><div class="gstore-fulfillment-timeline__connector"></div></div>`).join('')}</div><p id="gstore-fulfillment-message" hidden></p><a id="gstore-fulfillment-support" hidden>Atendimento</a><div id="gstore-fulfillment-upload" data-docs="[]"><div id="gstore-fulfillment-docs-list"></div><div id="gstore-fulfillment-dropzone-area"></div></div>`;
   window.gstoreFulfillment = { orderId: 42, nonce: 'fixture' };
   const requests = [];
   class XHR {
@@ -31,13 +31,18 @@ test('upload and correction update the visible customer stage from API responses
   expect(document.getElementById('gstore-fulfillment-message').hidden).toBe(false);
   expect(document.getElementById('gstore-file-input')).not.toBeNull();
   sendFile();
-  requests.at(-1).respond('documentacao_negada', [{id:'a', status:'rejected', filename:'synthetic.pdf', review_note:'<script>bad()</script>'}, {id:'b', status:'pending'}]);
+  requests.at(-1).respond('documentacao_negada', [{id:'a', status:'rejected', filename:'synthetic.pdf', label:'documento_geral', review_note:'<script>bad()</script>'}, {id:'b', status:'pending'}]);
   expect(document.querySelector('.is-current').classList.contains('is-rejected')).toBe(true);
   expect(document.getElementById('gstore-fulfillment-message').textContent).toContain('Entre em contato com o atendente');
   expect(document.querySelector('#gstore-fulfillment-docs-list script')).toBeNull();
+  expect(document.getElementById('gstore-fulfillment-support').hidden).toBe(false);
+  expect(document.querySelector('[aria-current="step"]').dataset.stage).toBe('processando_documentacao');
+  expect(document.querySelector('.gstore-fulfillment-upload__counter').textContent).toContain('1 de 5 vagas utilizadas');
+  expect(document.querySelector('.gstore-fulfillment-upload__filename').textContent).toBe('synthetic.pdf');
   document.querySelector('[data-action="delete"][data-doc-id="a"]').click();
   expect(requests.at(-1).method).toBe('DELETE');
   requests.at(-1).respond('processando_documentacao', [{id:'b',status:'pending'}]);
   expect(document.querySelector('.is-current').classList.contains('is-rejected')).toBe(false);
   expect(document.getElementById('gstore-fulfillment-message').textContent).toContain('verificando');
+  expect(document.getElementById('gstore-fulfillment-support').hidden).toBe(true);
 });

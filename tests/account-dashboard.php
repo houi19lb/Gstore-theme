@@ -36,7 +36,7 @@ function gstore_get_social_link( $network ) { return $GLOBALS['store'][ $network
 function gstore_get_phone( $format ) { return $GLOBALS['store']['phone'] ?? ''; }
 function wc_get_template( $name, $args = array() ) { extract( $args ); include dirname( __DIR__ ) . '/woocommerce/' . $name; }
 function wc_get_account_menu_items() { return gstore_account_dashboard_menu( array( 'dashboard' => 'Painel', 'orders' => 'Pedidos', 'edit-account' => 'Dados', 'customer-logout' => 'Sair' ) ); }
-function do_action( $name, ...$args ) { if ( 'woocommerce_account_navigation' === $name ) { wc_get_template( 'myaccount/navigation.php' ); } elseif ( 'woocommerce_account_content' === $name ) { if ( ! empty( $GLOBALS['preview_form'] ) ) { echo $GLOBALS['preview_form']; } else { wc_get_template( 'myaccount/dashboard.php' ); } } }
+function do_action( $name, ...$args ) { if ( 'woocommerce_view_order' === $name && ! empty( $GLOBALS['preview_mode'] ) ) { echo $GLOBALS['preview_order_details'] ?? ''; } if ( 'woocommerce_account_navigation' === $name ) { wc_get_template( 'myaccount/navigation.php' ); } elseif ( 'woocommerce_account_content' === $name ) { if ( ! empty( $GLOBALS['preview_form'] ) ) { echo $GLOBALS['preview_form']; } else { wc_get_template( 'myaccount/dashboard.php' ); } } }
 class AccountDate extends DateTime { function date( $format ) { return $this->format( $format ); } }
 class WC_Order {
 	public $stage = 'preparando_entrega'; public $status = 'processing'; public $paid = false; public $id = 42;

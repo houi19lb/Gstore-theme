@@ -80,9 +80,16 @@ $can_upload_more = $total_docs_count < $max_docs;
 ?>
 
 <div class="gstore-view-order">
+	<header class="gstore-view-order__header">
+		<a class="gstore-view-order__back" href="<?php echo esc_url( wc_get_account_endpoint_url( 'orders' ) ); ?>">← Voltar aos pedidos</a>
+		<h1>Pedido #<?php echo esc_html( $order->get_order_number() ); ?></h1>
+		<p>Acompanhe as etapas, a documentação e os detalhes do seu pedido.</p>
+	</header>
 
 	<?php if ( $has_fulfillment ) : ?>
 	<!-- ════════════ Timeline ════════════ -->
+	<section class="gstore-view-order__tracking" aria-labelledby="gstore-tracking-title">
+	<h2 id="gstore-tracking-title">Etapas do pedido</h2>
 	<div class="gstore-fulfillment-timeline" data-current-stage="<?php echo esc_attr( $fulfillment_stage ); ?>">
 		<?php
 		$i = 0;
@@ -94,8 +101,8 @@ $can_upload_more = $total_docs_count < $max_docs;
 				$state_class .= ' is-rejected';
 			}
 			?>
-			<div class="gstore-fulfillment-timeline__step <?php echo esc_attr( $state_class ); ?>" data-stage="<?php echo esc_attr( $slug ); ?>">
-				<div class="gstore-fulfillment-timeline__icon">
+			<div class="gstore-fulfillment-timeline__step <?php echo esc_attr( $state_class ); ?>" data-stage="<?php echo esc_attr( $slug ); ?>" <?php echo $is_current ? 'aria-current="step"' : ''; ?>>
+				<div class="gstore-fulfillment-timeline__icon" aria-hidden="true">
 					<?php if ( $is_completed ) : ?>
 						<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
 					<?php elseif ( $is_current ) : ?>
@@ -117,13 +124,15 @@ $can_upload_more = $total_docs_count < $max_docs;
 
 	<p id="gstore-fulfillment-message" class="gstore-fulfillment-message<?php echo $documentation_rejected ? ' is-rejected' : ''; ?>" role="status" <?php echo ! in_array( $fulfillment_stage, array( 'processando_documentacao', 'documentacao_negada', 'preparando_entrega' ), true ) ? 'hidden' : ''; ?>>
 		<?php if ( $documentation_rejected ) : ?>
-			Documentação negada. Entre em contato com o atendente para entender por que sua documentação foi negada.
+			Sua documentação precisa de atenção. Confira abaixo os arquivos que precisam de correção. Entre em contato com o atendente se precisar de orientação.
 		<?php elseif ( 'processando_documentacao' === $fulfillment_stage ) : ?>
 			Recebemos seus documentos e estamos verificando a documentação. Você pode enviar os demais arquivos necessários abaixo.
 		<?php elseif ( 'preparando_entrega' === $fulfillment_stage ) : ?>
 			Documentação aprovada. Estamos preparando a entrega do seu pedido.
 		<?php endif; ?>
 	</p>
+	<a id="gstore-fulfillment-support" class="gstore-view-order__support" href="<?php echo esc_url( gstore_account_support_url() ); ?>" <?php echo ! $documentation_rejected ? 'hidden' : ''; ?>>Falar com o atendimento <span aria-hidden="true">→</span></a>
+	</section>
 
 	<!-- ════════════ Upload de Documentos ════════════ -->
 	<?php if ( $can_manage_documents ) : ?>

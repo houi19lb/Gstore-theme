@@ -9,7 +9,7 @@ A área principal da conta usa o painel aprovado: acolhimento em texto, pedido m
 - Atendimento usa `?gstore_account_view=atendimento` no dashboard nativo. Não requer flush de permalinks e não intercepta endpoints de pedido, dados ou pagamento. Apenas exibe links externos; não cria tickets ou mensagens internas.
 - Canais usam os mesmos campos de `gstore_store_info()` e helpers da página `/atendimento`: link principal e nomenclatura configurada (WhatsApp/Teleatendimento), e-mail, Telegram, sem redes sociais de divulgação ou telefone adicional. Campos vazios ou links inseguros não criam botões.
 - As consultas de pedidos usam exclusivamente o usuário autenticado, com limites e APIs compatíveis com HPOS. Os contadores de andamento consideram pagamento pendente, em espera e processamento; concluídos usam o status `completed`.
-- O painel aponta para `WC_Order::get_view_order_url()`. `view-order.php`, `orders.php`, JavaScript de fulfillment e APIs de documentos permanecem intactos, incluindo upload, revisão, correção, rastreamento, ações e informações do pedido.
+- O painel aponta para `WC_Order::get_view_order_url()`. O detalhe mantém o hook nativo `woocommerce_view_order`, os seletores e APIs de documentos, incluindo upload, revisão, correção, rastreamento, ações e informações do pedido. A revisão visual do detalhe descrita abaixo altera sua apresentação e as mensagens, sem modificar essas operações.
 - A sequência padrão é: Processando pagamento → Pagamento confirmado → Aguardando documentação → Processando documentação → Preparando entrega → Enviado. Enviado não significa entregue. As ramificações retornadas pelo serviço do plugin, como retirada, continuam válidas. Recusa de documentação é uma ocorrência na etapa de revisão; cancelados, reembolsados, falhos e etapas desconhecidas não recebem um progresso enganoso.
 
 ## Validação
@@ -41,3 +41,17 @@ A prévia dos templates PHP usa fixtures anônimas para pedido cancelado, em and
 Limites: a prévia não é uma instalação WordPress e não testa envio de formulários, plugins de terceiros ou alterações reais de senha/documentos. O header do site foi observado, mas não reimplementado na fixture. A revisão não equivale a uma certificação de acessibilidade. Conferir a versão integrada na loja de homologação antes de promover além da alpha.
 
 Os testes de documentação usam arquivos fictícios. Não testar upload, exclusão ou mudança de senha na conta real de um cliente sem um cenário de homologação autorizado.
+
+
+## Detalhe do pedido: etapas sem rolagem
+
+A inspeção do detalhe encontrou uma timeline de 1.106 px com conteúdo de 1.136 px. O último item usava `flex: 0 0 auto`, enquanto os conectores pressupunham colunas iguais. Remover a assimetria resolve a causa; não se usa corte de conteúdo para esconder a barra.
+
+- As colunas horizontais têm a mesma largura. Abaixo de 760 px disponíveis no pedido, uma container query transforma as etapas em sequência vertical. Assim, a lateral também entra no cálculo. Há fallback por viewport para navegadores sem container queries.
+- O detalhe identifica o número do pedido e oferece retorno ao histórico. Etapas, mensagens e documentos usam espaçamento consistente, sem margens acumuladas ou sombras sobrepostas.
+- A recusa explica a próxima ação e oferece acesso ao atendimento configurado na conta. O JavaScript atualiza esse acesso e `aria-current` após respostas da API. O movimento da etapa atual respeita a preferência por movimento reduzido.
+- O contador explicita vagas utilizadas e que documentos negados não ocupam vagas. O nome do arquivo pode quebrar linha, os botões têm 44 px e nomes acessíveis, e o motivo de recusa perde o itálico pequeno.
+
+A fixture CLI também gera `pedido-negado.html`, `pedido-analise.html`, `pedido-enviado.html` e `pedido-retirada.html` com os assets minificados reais. Apenas os detalhes do pedido fornecidos pelo hook são ilustrativos; o template, a timeline e a renderização da lista de documentos são do tema. Entradas e botões de documentos ficam desabilitados, e a política da fixture bloqueia conexões e submissões.
+
+Validação: em 320, 390, 768, 1.024 e 1.440 CSS px, todas as etapas, rótulos e conectores permaneceram contidos, sem overflow horizontal da página ou da timeline. Os quatro estados foram conferidos novamente a 320 e 1.440 px usando os minificados. Testes PHP e Jest preservam o fluxo de envio, recusa e correção, a ramificação de retirada e a exclusão de campos privados dos documentos. As capturas antes/depois ficam fora do Git. A revisão segue limitada à alpha até homologação real solicitada.

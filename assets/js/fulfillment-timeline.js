@@ -90,7 +90,8 @@
 
 		// Counter.
 		html += '<p class="gstore-fulfillment-upload__counter">' +
-			activeCount + ' de ' + maxDocs + ' documentos enviados</p>';
+			activeCount + ' de ' + maxDocs + ' vagas utilizadas' +
+			(docs.length > activeCount ? ' · Arquivos negados não ocupam vagas.' : '') + '</p>';
 
 		if (docs.length > 0) {
 			html += '<div class="gstore-fulfillment-upload__files">';
@@ -128,7 +129,7 @@
 
 		// Info.
 		html += '<div class="gstore-fulfillment-upload__file-info">';
-		html += '<span class="gstore-fulfillment-upload__filename">' + escapeHtml(doc.label || doc.filename) + '</span>';
+		html += '<span class="gstore-fulfillment-upload__filename">' + escapeHtml(doc.filename || (doc.label === 'documento_geral' ? 'Documento enviado' : doc.label) || 'Documento enviado') + '</span>';
 		html += '</div>';
 
 		// Status badge.
@@ -141,14 +142,14 @@
 		// View button.
 		if (doc.id) {
 			html += '<button type="button" class="gstore-fulfillment-upload__btn gstore-fulfillment-upload__btn--view" ' +
-				'data-action="view" data-doc-id="' + escapeHtml(doc.id) + '" title="Visualizar">' +
+				'data-action="view" data-doc-id="' + escapeHtml(doc.id) + '" aria-label="Visualizar documento" title="Visualizar">' +
 				icons.eye + '</button>';
 		}
 
 		// Documentos pendentes ou negados podem ser corrigidos.
 		if (doc.status === 'pending' || doc.status === 'rejected') {
 			html += '<button type="button" class="gstore-fulfillment-upload__btn gstore-fulfillment-upload__btn--delete" ' +
-				'data-action="delete" data-doc-id="' + escapeHtml(doc.id) + '" title="Excluir">' +
+				'data-action="delete" data-doc-id="' + escapeHtml(doc.id) + '" aria-label="Excluir documento" title="Excluir">' +
 				icons.trash + '</button>';
 		}
 
@@ -178,7 +179,7 @@
 		dropzoneAreaEl.innerHTML =
 			'<div class="gstore-fulfillment-upload__dropzone" id="gstore-dropzone">' +
 				'<input type="file" class="gstore-fulfillment-upload__input" id="gstore-file-input" ' +
-					'accept=".pdf,.png,.jpg,.jpeg" />' +
+					'accept=".pdf,.png,.jpg,.jpeg" aria-label="Selecionar documento para envio" />' +
 				'<div class="gstore-fulfillment-upload__dropzone-content">' +
 					icons.upload +
 					'<span>Arraste e solte seu arquivo aqui ou <strong>clique para selecionar</strong></span>' +
@@ -417,6 +418,8 @@
 			var current = j === currentIndex;
 			step.classList.toggle('is-completed', completed);
 			step.classList.toggle('is-current', current);
+			if (current) step.setAttribute('aria-current', 'step');
+			else step.removeAttribute('aria-current');
 			step.classList.toggle('is-pending', j > currentIndex);
 			step.classList.toggle('is-rejected', current && rejected);
 			step.querySelector('.gstore-fulfillment-timeline__icon').innerHTML = completed
@@ -428,11 +431,13 @@
 				step.querySelector('.gstore-fulfillment-timeline__label').textContent = rejected ? 'Documentação negada' : 'Verificando documentação';
 			}
 		}
+		var support = document.getElementById('gstore-fulfillment-support');
+		if (support) support.hidden = !rejected;
 		var message = document.getElementById('gstore-fulfillment-message');
 		if (message) {
 			var messages = {
 				processando_documentacao: 'Recebemos seus documentos e estamos verificando a documentação. Você pode enviar os demais arquivos necessários abaixo.',
-				documentacao_negada: 'Documentação negada. Entre em contato com o atendente para entender por que sua documentação foi negada.',
+				documentacao_negada: 'Sua documentação precisa de atenção. Confira abaixo os arquivos que precisam de correção. Entre em contato com o atendente se precisar de orientação.',
 				preparando_entrega: 'Documentação aprovada. Estamos preparando a entrega do seu pedido.'
 			};
 			message.textContent = messages[stage] || '';
