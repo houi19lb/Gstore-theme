@@ -42,7 +42,7 @@ if ( function_exists( 'gstore_partner_account_is_visible' ) && function_exists( 
 				$icon = '<i class="fa-solid fa-headset" aria-hidden="true"></i>';
 			}
 			?>
-			<li class="gstore-myaccount-nav__item <?php echo $is_current ? 'is-active' : ''; ?>">
+			<li class="gstore-myaccount-nav__item <?php echo $is_current ? 'is-active' : ''; ?><?php echo 'customer-logout' === $endpoint ? ' gstore-myaccount-nav__item--logout' : ''; ?>">
 				<a
 					href="<?php echo esc_url( 'atendimento' === $endpoint ? gstore_account_support_url() : wc_get_account_endpoint_url( $endpoint ) ); ?>"
 					class="gstore-myaccount-nav__link"

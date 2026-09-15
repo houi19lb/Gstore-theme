@@ -3,7 +3,6 @@ defined( 'ABSPATH' ) || exit;
 $address_page = is_wc_endpoint_url( 'edit-address' );
 ?>
 <div class="gstore-account-heading">
-	<p class="gstore-account-eyebrow"><?php esc_html_e( 'Sua conta', 'gstore' ); ?></p>
 	<h1><?php echo esc_html( $is_data_page ? __( 'Meus dados', 'gstore' ) : __( 'Seus pedidos', 'gstore' ) ); ?></h1>
 	<p><?php echo esc_html( $is_data_page ? __( 'Consulte e atualize suas informações e endereços.', 'gstore' ) : __( 'Acompanhe as etapas, a documentação e os detalhes de cada pedido.', 'gstore' ) ); ?></p>
 </div>

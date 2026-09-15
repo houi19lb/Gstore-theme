@@ -83,6 +83,12 @@ $can_upload_more = $total_docs_count < $max_docs;
 	<header class="gstore-view-order__header">
 		<a class="gstore-view-order__back" href="<?php echo esc_url( wc_get_account_endpoint_url( 'orders' ) ); ?>">← Voltar aos pedidos</a>
 		<h1>Pedido #<?php echo esc_html( $order->get_order_number() ); ?></h1>
+		<?php $account_progress = gstore_account_order_progress( $order ); ?>
+		<p class="gstore-view-order__meta">
+			<span class="gstore-account-status gstore-account-tone--<?php echo esc_attr( $account_progress['tone'] ); ?>"><?php echo esc_html( $account_progress['label'] ); ?></span>
+			<?php if ( $order->get_date_created() ) : ?><time datetime="<?php echo esc_attr( $order->get_date_created()->date( 'c' ) ); ?>"><?php echo esc_html( wc_format_datetime( $order->get_date_created() ) ); ?></time><?php endif; ?>
+			<span><?php echo wp_kses_post( $order->get_formatted_order_total() ); ?></span>
+		</p>
 		<p>Acompanhe as etapas, a documentação e os detalhes do seu pedido.</p>
 	</header>
 

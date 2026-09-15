@@ -8,7 +8,7 @@ function absint( $value ) { return abs( (int) $value ); }
 function has_action( $name ) { return false; }
 function _x( $value, ...$args ) { return $value; }
 function _n( $single, $plural, $count, ...$args ) { return 1 === $count ? $single : $plural; }
-function wc_get_account_orders_actions( $order ) { return 'pending' === $order->status ? array( 'pay' => array( 'url' => 'https://example.test/pay', 'name' => 'Pagar' ), 'view' => array( 'url' => '/pedido-negado.html', 'name' => 'Visualizar' ), 'cancel' => array( 'url' => 'https://example.test/cancel', 'name' => 'Cancelar' ) ) : array( 'view' => array( 'url' => '/pedido-negado.html', 'name' => 'Visualizar' ), 'order-again' => array( 'url' => 'https://example.test/reorder', 'name' => 'Refazer compra' ) ); }
+function wc_get_account_orders_actions( $order ) { return 'pending' === $order->status ? array( 'pay' => array( 'url' => 'https://example.test/pay', 'name' => 'Pagar' ), 'view' => array( 'url' => $order->get_view_order_url(), 'name' => 'Visualizar' ), 'cancel' => array( 'url' => 'https://example.test/cancel', 'name' => 'Cancelar' ) ) : array( 'view' => array( 'url' => $order->get_view_order_url(), 'name' => 'Visualizar' ), 'order-again' => array( 'url' => 'https://example.test/reorder', 'name' => 'Refazer compra' ) ); }
 
 function gstore_get_myaccount_icon( $endpoint ) {
 	$icons = array( 'dashboard' => 'fa-house', 'orders' => 'fa-box', 'edit-account' => 'fa-user', 'customer-logout' => 'fa-arrow-right-from-bracket' );
@@ -26,11 +26,15 @@ foreach ( array( 'css', 'webfonts' ) as $folder ) {
 	if ( ! is_dir( $dir . '/fontawesome/' . $folder ) ) { mkdir( $dir . '/fontawesome/' . $folder, 0777, true ); }
 	foreach ( glob( $root . '/assets/vendor/fontawesome/6.5.1/' . $folder . '/*' ) as $asset ) { if ( is_file( $asset ) ) { copy( $asset, $dir . '/fontawesome/' . $folder . '/' . basename( $asset ) ); } }
 }
-foreach ( array( 'inicio', 'andamento', 'concluido', 'vazio', 'atendimento', 'dados', 'enderecos', 'orders', 'pedido-negado', 'pedido-analise', 'pedido-enviado', 'pedido-retirada' ) as $page ) {
+foreach ( array( 'inicio', 'andamento', 'concluido', 'vazio', 'atendimento', 'dados', 'enderecos', 'orders', 'pedido-negado', 'pedido-analise', 'pedido-enviado', 'pedido-preparando', 'pedido-pagamento', 'pedido-cancelado', 'pedido-retirada' ) as $page ) {
 	$_GET = 'atendimento' === $page ? array( 'gstore_account_view' => 'atendimento' ) : array();
 	$endpoint = array( 'dados' => 'edit-account', 'enderecos' => 'edit-address', 'orders' => 'orders' )[ $page ] ?? '';
 	$order = new WC_Order(); $order->status = 'andamento' === $page ? 'processing' : 'cancelled';
-	$orders = array( $order, clone $order, clone $order ); $orders[1]->id = 41; $orders[2]->id = 40;
+	$orders = array( $order, clone $order, clone $order, clone $order, clone $order );
+	$orders[1]->id = 41; $orders[1]->status = 'processing'; $orders[1]->stage = 'documentacao_negada';
+	$orders[2]->id = 40; $orders[2]->status = 'completed'; $orders[2]->stage = 'enviado';
+	$orders[3]->id = 43; $orders[3]->status = 'pending'; $orders[3]->stage = 'processando_pagamento';
+	$orders[4]->id = 44; $orders[4]->status = 'processing'; $orders[4]->stage = 'processando_documentacao';
 	if ( 'concluido' === $page ) { $order->status = 'completed'; $order->stage = 'enviado'; }
 	if ( 'vazio' === $page ) { $orders = array(); }
 	$preview_form = '';
@@ -43,7 +47,7 @@ foreach ( array( 'inicio', 'andamento', 'concluido', 'vazio', 'atendimento', 'da
 		foreach ( array( 'current' => 'Senha atual', 'new' => 'Nova senha', 'confirm' => 'Confirmar nova senha' ) as $key => $label ) {
 			$preview_form .= '<p class="form-row form-row-wide"><label for="password_' . $key . '">' . $label . '</label><span class="password-input"><input class="input-text" id="password_' . $key . '" type="password" autocomplete="off"></span></p>';
 		}
-		$preview_form .= '</fieldset><p>Formulário ilustrativo. O salvamento permanece no WooCommerce.</p></form>';
+		$preview_form .= '</fieldset></form>';
 	}
 	if ( 'enderecos' === $page ) {
 		$preview_form = '<div class="woocommerce-Addresses">';
@@ -51,17 +55,13 @@ foreach ( array( 'inicio', 'andamento', 'concluido', 'vazio', 'atendimento', 'da
 		$preview_form .= '</div>';
 	}
 	if ( 'orders' === $page ) {
-		$orders[0]->status = 'cancelled'; $orders[0]->paid = true;
-		$orders[1]->status = 'processing'; $orders[1]->stage = 'documentacao_negada';
-		$orders[2]->status = 'pending'; $orders[2]->stage = 'processando_pagamento';
-		$orders[] = clone $order; $orders[3]->id = 43; $orders[3]->status = 'completed'; $orders[3]->stage = 'enviado';
-		$orders[] = clone $order; $orders[4]->id = 44; $orders[4]->status = 'cancelled'; $orders[4]->paid = false;
 		ob_start(); wc_get_template( 'myaccount/orders.php', array( 'has_orders' => true, 'customer_orders' => (object) array( 'orders' => $orders, 'max_num_pages' => 1 ), 'current_page' => 1 ) ); $preview_form = ob_get_clean();
 	}
 	$is_detail = str_starts_with( $page, 'pedido-' );
 	if ( $is_detail ) {
 		$endpoint = 'view-order';
-		$order->stage = array( 'pedido-negado' => 'documentacao_negada', 'pedido-analise' => 'processando_documentacao', 'pedido-enviado' => 'enviado', 'pedido-retirada' => 'pronto_retirada' )[ $page ];
+		$order->stage = array( 'pedido-negado' => 'documentacao_negada', 'pedido-analise' => 'processando_documentacao', 'pedido-enviado' => 'enviado', 'pedido-retirada' => 'pronto_retirada', 'pedido-preparando' => 'preparando_entrega', 'pedido-pagamento' => 'processando_pagamento', 'pedido-cancelado' => '' )[ $page ];
+		$order->status = 'pedido-cancelado' === $page ? 'cancelled' : ( 'pedido-enviado' === $page ? 'completed' : 'processing' );
 		if ( 'pedido-retirada' === $page ) { $plugin_stages = array( 'processando_pagamento' => 'Processando pagamento', 'pagamento_confirmado' => 'Pagamento confirmado', 'pronto_retirada' => 'Pronto para retirada na loja', 'retirado' => 'Retirado' ); }
 		$preview_order_details = '<section class="woocommerce-order-details"><h2 class="woocommerce-order-details__title">Detalhes do pedido</h2><table class="woocommerce-table woocommerce-table--order-details"><thead><tr><th>Produto</th><th>Total</th></tr></thead><tbody><tr><td>Produto de exemplo × 1</td><td>R$ 250,00</td></tr></tbody><tfoot><tr><th>Total</th><td>R$ 250,00</td></tr></tfoot></table><p>Dados fictícios. No site, esta seção mantém os detalhes e as ações do WooCommerce.</p></section>';
 		ob_start(); wc_get_template( 'myaccount/view-order.php', array( 'order' => $order ) ); $preview_form = ob_get_clean();
@@ -76,5 +76,8 @@ foreach ( array( 'inicio', 'andamento', 'concluido', 'vazio', 'atendimento', 'da
 		$html = str_replace( '</head>', '<meta http-equiv="Content-Security-Policy" content="connect-src &apos;none&apos;; form-action &apos;none&apos;"></head>', $html );
 		$html = str_replace( '</body>', $script . '</body>', $html );
 	}
+	// Local-only interaction layer. Native network operations remain blocked by CSP.
+	$html = str_replace( '</head>', '<meta http-equiv="Content-Security-Policy" content="connect-src &apos;none&apos;; form-action &apos;none&apos;"></head>', $html );
+	$html = str_replace( '</body>', '<script>' . file_get_contents( __DIR__ . '/account-preview-interactions.js' ) . '</script></body>', $html );
 	file_put_contents( $dir . '/' . $page . '.html', $html );
 }

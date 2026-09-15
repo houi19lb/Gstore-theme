@@ -23,7 +23,7 @@ function home_url( $path ) { return 'https://example.test' . $path; }
 function gstore_get_catalog_url() { return home_url( '/catalogo/' ); }
 function wp_get_current_user() { return (object) array( 'ID' => 7, 'first_name' => 'Cliente', 'display_name' => 'Cliente Exemplo', 'user_email' => 'cliente@example.test' ); }
 function wc_get_customer_order_count( $id ) { return count( $GLOBALS['orders'] ); }
-function wc_get_orders( $args ) { $GLOBALS['queries'][] = $args; return ! empty( $args['paginate'] ) ? (object) array( 'total' => count( array_filter( $GLOBALS['orders'], static fn( $order ) => in_array( $order->status, $args['status'], true ) ) ) ) : $GLOBALS['orders']; }
+function wc_get_orders( $args ) { $GLOBALS['queries'][] = $args; return ! empty( $args['paginate'] ) ? (object) array( 'total' => count( array_filter( $GLOBALS['orders'], static fn( $order ) => in_array( $order->status, $args['status'], true ) ) ) ) : array_slice( $GLOBALS['orders'], 0, $args['limit'] ?? null ); }
 function wc_format_datetime( $date ) { return $date->format( 'd/m/Y' ); }
 function wc_get_order_status_name( $s ) { return array( 'pending' => 'Aguardando pagamento', 'processing' => 'Processando', 'completed' => 'Concluído', 'on-hold' => 'Em espera', 'cancelled' => 'Cancelado', 'refunded' => 'Reembolsado', 'failed' => 'Falhou' )[ $s ] ?? $s; }
 function gstore_my_account_get_orders_tab_status_label( $order ) { return 'cancelled' === $order->status && $order->paid ? 'Pago/Confirmado' : wc_get_order_status_name( $order->status ); }
@@ -48,7 +48,12 @@ class WC_Order {
 	function get_status() { return $this->status; }
 	function get_date_created() { return new AccountDate( '2026-09-11' ); }
 	function get_formatted_order_total() { return 'R$ 250,00'; }
-	function get_view_order_url() { return 'https://example.test/account/view-order/42/'; }
+	function get_view_order_url() {
+		if ( empty( $GLOBALS['preview_mode'] ) ) { return 'https://example.test/account/view-order/42/'; }
+		$page = array( 'documentacao_negada' => 'negado', 'processando_documentacao' => 'analise', 'enviado' => 'enviado', 'pronto_retirada' => 'retirada', 'processando_pagamento' => 'pagamento' )[ $this->stage ] ?? 'preparando';
+		if ( 'cancelled' === $this->status ) { $page = 'cancelado'; }
+		return '/pedido-' . $page . '.html?pedido=' . $this->get_order_number();
+	}
 }
 require dirname( __DIR__ ) . '/inc/gstore-account-dashboard.php';
 $endpoint = '';

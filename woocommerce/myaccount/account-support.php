@@ -3,7 +3,6 @@ defined( 'ABSPATH' ) || exit;
 $channels = gstore_account_contact_channels();
 ?>
 <div class="gstore-account-heading">
-	<p class="gstore-account-eyebrow"><?php esc_html_e( 'Estamos com você', 'gstore' ); ?></p>
 	<h1><?php esc_html_e( 'Como podemos ajudar?', 'gstore' ); ?></h1>
 	<p><?php esc_html_e( 'Escolha o melhor canal para falar com a nossa equipe.', 'gstore' ); ?></p>
 </div>
