@@ -148,6 +148,10 @@ function gstore_account_email_verification_translation( $translation, $text ) {
 	$messages = array(
 		'Confirm your email address to check for past orders and link them to your account.' => 'Confirme seu e-mail para buscar pedidos anteriores e vinculá-los à sua conta.',
 		'Confirm email address' => 'Confirmar e-mail',
+		'Confirm your email address' => 'Confirme seu e-mail',
+		'Confirm your email address for {site_title}' => 'Confirme seu e-mail em {site_title}',
+		"Once you've confirmed that %s is your email address, we'll link any past orders to your account." => 'Após confirmar que %s é seu e-mail, vincularemos à sua conta os pedidos anteriores feitos com esse endereço, se houver.',
+		"If you didn't request this email, there's nothing to worry about, and you can safely ignore it." => 'Se você não solicitou este e-mail, não se preocupe. Pode ignorar esta mensagem com segurança.',
 		'Confirm your email address to check for past orders. A confirmation link was sent recently — please check your inbox.' => 'Confirme seu e-mail para buscar pedidos anteriores. Enviamos um link de confirmação recentemente. Verifique sua caixa de entrada.',
 		'A confirmation link has been sent to your email address. Please check your inbox.' => 'Enviamos um link de confirmação para seu e-mail. Verifique sua caixa de entrada.',
 		'A confirmation link was sent recently. Please check your inbox, or wait a moment before requesting a new one.' => 'Enviamos um link de confirmação recentemente. Verifique sua caixa de entrada ou aguarde um momento antes de solicitar outro.',

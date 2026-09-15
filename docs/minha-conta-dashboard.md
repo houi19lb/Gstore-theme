@@ -93,3 +93,13 @@ O aviso “Confirm your email address to check for past orders and link them to 
 O fallback `gettext_woocommerce` traduz o aviso, botão e mensagens específicas de envio, confirmação e expiração apenas em `pt_BR` e somente quando o catálogo ainda devolve o original. Traduções existentes, outros idiomas e textos não relacionados são preservados. Nenhum hook de verificação foi removido; nonces, URLs, envio de e-mail e associação de pedidos continuam nativos. A pendência de tradução identificada na auditoria visual fica resolvida na alpha.
 
 Referência: [WooCommerce 11.0.1 — VerificationController](https://github.com/woocommerce/woocommerce/blob/11.0.1/plugins/woocommerce/src/Internal/CustomerEmailVerification/VerificationController.php). A inspeção não acionou o botão de confirmação nem alterou a conta. Validação: lint PHP, regressão da conta e smoke test de fallback para pt-BR, tradução já existente e idioma inglês.
+
+### Complemento: conteúdo do e-mail de confirmação
+
+A primeira tradução cobria o aviso na conta e o botão compartilhado. O e-mail nativo usa outras chaves para assunto, título, texto sobre associação de pedidos e orientação para ignorar uma solicitação não reconhecida. Essas quatro chaves agora também têm fallback em pt-BR, preservando traduções já instaladas e os placeholders `%s` e `{site_title}`. Nenhuma cópia do template WooCommerce foi criada.
+
+A inspeção somente de leitura em WooCommerce > Configurações > E-mails > Confirmar e-mail mostrou assunto e cabeçalho vazios, com placeholders padrão em inglês. O conteúdo adicional já estava em português e os templates HTML/texto simples eram os originais do plugin, sem substituição no tema. A falha observada é de tradução dos textos padrão; não foi encontrado assunto ou cabeçalho personalizado em inglês nesse envio. Nenhuma configuração foi salva. Conteúdos adicionais, rodapé, identidade visual e outros e-mails editados manualmente ficam preservados; o mapa não inclui frases genéricas de encerramento usadas por outros e-mails.
+
+A mensagem já recebida não é alterada. O ajuste vale para novos envios depois de atualizar o tema na loja. Não foram solicitados envios reais nem abertos links de confirmação. Validação local: lint, regressão da conta, texto com e-mail fictício, substituição do nome da loja, preservação de traduções existentes e de outros idiomas.
+
+Referências: [template HTML](https://github.com/woocommerce/woocommerce/blob/11.0.1/plugins/woocommerce/templates/emails/customer-verify-email.php) e [classe do e-mail](https://github.com/woocommerce/woocommerce/blob/11.0.1/plugins/woocommerce/src/Internal/CustomerEmailVerification/Emails/CustomerVerifyEmail.php).
