@@ -85,3 +85,11 @@ A fixture acrescenta concluído/enviado e os cinco estados do histórico; simula
 Referências: [Baymard — contas e autoatendimento](https://baymard.com/blog/current-state-accounts-selfservice), [NN/g — estados e hierarquia de botões](https://www.nngroup.com/articles/button-states-communicate-interaction/), [W3C — uso de cor](https://www.w3.org/WAI/WCAG22/Understanding/use-of-color.html).
 
 Pendências observadas nesta auditoria: um pedido cancelado no painel ainda mostra processamento de pagamento e aviso Pix no detalhe; os ativos não têm acesso filtrado no início; o aviso de confirmação de e-mail aparece em inglês; o widget flutuante ocupa parte dos atalhos no celular. São tarefas separadas desta apresentação visual; não corrigir status financeiro por inferência. Capturas reais e relatório completo ficam apenas no armazenamento local, fora do Git.
+
+## Tradução da confirmação de e-mail (alpha, 15/09/2026)
+
+O aviso “Confirm your email address to check for past orders and link them to your account.” foi observado no histórico autenticado. A origem é o `VerificationController` do WooCommerce, registrado em `woocommerce_before_account_orders`. Ele solicita confirmação de posse do e-mail antes de vincular possíveis pedidos anteriores de visitante; a presença do aviso não comprova que esses pedidos existam.
+
+O fallback `gettext_woocommerce` traduz o aviso, botão e mensagens específicas de envio, confirmação e expiração apenas em `pt_BR` e somente quando o catálogo ainda devolve o original. Traduções existentes, outros idiomas e textos não relacionados são preservados. Nenhum hook de verificação foi removido; nonces, URLs, envio de e-mail e associação de pedidos continuam nativos. A pendência de tradução identificada na auditoria visual fica resolvida na alpha.
+
+Referência: [WooCommerce 11.0.1 — VerificationController](https://github.com/woocommerce/woocommerce/blob/11.0.1/plugins/woocommerce/src/Internal/CustomerEmailVerification/VerificationController.php). A inspeção não acionou o botão de confirmação nem alterou a conta. Validação: lint PHP, regressão da conta e smoke test de fallback para pt-BR, tradução já existente e idioma inglês.

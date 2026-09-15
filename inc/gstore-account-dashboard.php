@@ -139,3 +139,23 @@ function gstore_account_order_progress( $order ) {
 		'message' => $inactive ? __( 'Consulte os detalhes e as opções disponíveis no seu pedido.', 'gstore' ) : ( $messages[ $stage ] ?? __( 'Consulte as orientações e os próximos passos no seu pedido.', 'gstore' ) ),
 	);
 }
+
+/** Fill gaps in the pt-BR WooCommerce catalog without replacing installed translations. */
+function gstore_account_email_verification_translation( $translation, $text ) {
+	if ( $translation !== $text || 'pt_BR' !== determine_locale() ) {
+		return $translation;
+	}
+	$messages = array(
+		'Confirm your email address to check for past orders and link them to your account.' => 'Confirme seu e-mail para buscar pedidos anteriores e vinculá-los à sua conta.',
+		'Confirm email address' => 'Confirmar e-mail',
+		'Confirm your email address to check for past orders. A confirmation link was sent recently — please check your inbox.' => 'Confirme seu e-mail para buscar pedidos anteriores. Enviamos um link de confirmação recentemente. Verifique sua caixa de entrada.',
+		'A confirmation link has been sent to your email address. Please check your inbox.' => 'Enviamos um link de confirmação para seu e-mail. Verifique sua caixa de entrada.',
+		'A confirmation link was sent recently. Please check your inbox, or wait a moment before requesting a new one.' => 'Enviamos um link de confirmação recentemente. Verifique sua caixa de entrada ou aguarde um momento antes de solicitar outro.',
+		'Your email address has been confirmed.' => 'Seu e-mail foi confirmado.',
+		'This confirmation link is invalid or has expired. Please request a new one.' => 'Este link de confirmação é inválido ou expirou. Solicite um novo link.',
+		'Unable to confirm this email while you are logged in to a different account. Please log out and open the link again.' => 'Não é possível confirmar este e-mail enquanto você estiver conectado a outra conta. Saia da conta e abra o link novamente.',
+		'You need to be logged in to confirm your email address.' => 'Entre na sua conta para confirmar seu e-mail.',
+	);
+	return $messages[ $text ] ?? $translation;
+}
+add_filter( 'gettext_woocommerce', 'gstore_account_email_verification_translation', 20, 2 );
