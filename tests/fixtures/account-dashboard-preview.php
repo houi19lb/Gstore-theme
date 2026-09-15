@@ -3,6 +3,13 @@
 if ( PHP_SAPI !== 'cli' || ! defined( 'ABSPATH' ) ) { exit; }
 if ( ! is_dir( $dir ) ) { mkdir( $dir, 0777, true ); }
 $preview_mode = true;
+function wc_clean( $value ) { return $value; }
+function absint( $value ) { return abs( (int) $value ); }
+function has_action( $name ) { return false; }
+function _x( $value, ...$args ) { return $value; }
+function _n( $single, $plural, $count, ...$args ) { return 1 === $count ? $single : $plural; }
+function wc_get_account_orders_actions( $order ) { return 'pending' === $order->status ? array( 'pay' => array( 'url' => 'https://example.test/pay', 'name' => 'Pagar' ), 'view' => array( 'url' => '/pedido-negado.html', 'name' => 'Visualizar' ), 'cancel' => array( 'url' => 'https://example.test/cancel', 'name' => 'Cancelar' ) ) : array( 'view' => array( 'url' => '/pedido-negado.html', 'name' => 'Visualizar' ), 'order-again' => array( 'url' => 'https://example.test/reorder', 'name' => 'Refazer compra' ) ); }
+
 function gstore_get_myaccount_icon( $endpoint ) {
 	$icons = array( 'dashboard' => 'fa-house', 'orders' => 'fa-box', 'edit-account' => 'fa-user', 'customer-logout' => 'fa-arrow-right-from-bracket' );
 	return isset( $icons[ $endpoint ] ) ? '<i class="fa-solid ' . $icons[ $endpoint ] . '" aria-hidden="true"></i>' : '';
@@ -14,14 +21,14 @@ function gstore_get_order_fulfillment_documents( $order ) { return array( array(
 function gstore_get_order_required_documents( $order ) { return array(); }
 function gstore_get_order_doc_profile( $order ) { return 'none'; }
 $root = dirname( __DIR__, 2 );
-$css = file_get_contents( $root . '/assets/css/tokens.css' ) . file_get_contents( $root . '/assets/css/my-account.css' ) . file_get_contents( $root . '/assets/css/account-dashboard.css' ) . file_get_contents( $root . '/assets/css/fulfillment-timeline.min.css' );
+$css = file_get_contents( $root . '/assets/css/tokens.css' ) . file_get_contents( $root . '/assets/css/my-account.css' ) . file_get_contents( $root . '/assets/css/account-dashboard.min.css' ) . file_get_contents( $root . '/assets/css/fulfillment-timeline.min.css' );
 foreach ( array( 'css', 'webfonts' ) as $folder ) {
 	if ( ! is_dir( $dir . '/fontawesome/' . $folder ) ) { mkdir( $dir . '/fontawesome/' . $folder, 0777, true ); }
 	foreach ( glob( $root . '/assets/vendor/fontawesome/6.5.1/' . $folder . '/*' ) as $asset ) { if ( is_file( $asset ) ) { copy( $asset, $dir . '/fontawesome/' . $folder . '/' . basename( $asset ) ); } }
 }
-foreach ( array( 'inicio', 'andamento', 'vazio', 'atendimento', 'dados', 'enderecos', 'pedido-negado', 'pedido-analise', 'pedido-enviado', 'pedido-retirada' ) as $page ) {
+foreach ( array( 'inicio', 'andamento', 'vazio', 'atendimento', 'dados', 'enderecos', 'orders', 'pedido-negado', 'pedido-analise', 'pedido-enviado', 'pedido-retirada' ) as $page ) {
 	$_GET = 'atendimento' === $page ? array( 'gstore_account_view' => 'atendimento' ) : array();
-	$endpoint = array( 'dados' => 'edit-account', 'enderecos' => 'edit-address' )[ $page ] ?? '';
+	$endpoint = array( 'dados' => 'edit-account', 'enderecos' => 'edit-address', 'orders' => 'orders' )[ $page ] ?? '';
 	$order = new WC_Order(); $order->status = 'andamento' === $page ? 'processing' : 'cancelled';
 	$orders = array( $order, clone $order, clone $order ); $orders[1]->id = 41; $orders[2]->id = 40;
 	if ( 'vazio' === $page ) { $orders = array(); }
@@ -39,8 +46,14 @@ foreach ( array( 'inicio', 'andamento', 'vazio', 'atendimento', 'dados', 'endere
 	}
 	if ( 'enderecos' === $page ) {
 		$preview_form = '<div class="woocommerce-Addresses">';
-		foreach ( array( 'Cobrança', 'Entrega' ) as $label ) { $preview_form .= '<section class="woocommerce-Address"><h2>Endereço de ' . $label . '</h2><p>Cliente Exemplo<br>Endereço fictício para revisão visual.</p></section>'; }
+		foreach ( array( 'Cobrança', 'Entrega' ) as $label ) { $preview_form .= '<section class="woocommerce-Address"><header class="woocommerce-Address-title title"><h2>Endereço de ' . $label . '</h2><a class="edit" href="https://example.test/edit-address">Editar</a></header><address>Cliente Exemplo<br>Endereço fictício para revisão visual.</address></section>'; }
 		$preview_form .= '</div>';
+	}
+	if ( 'orders' === $page ) {
+		$orders[0]->status = 'cancelled'; $orders[0]->paid = true;
+		$orders[1]->status = 'processing'; $orders[1]->stage = 'documentacao_negada';
+		$orders[2]->status = 'pending'; $orders[2]->stage = 'processando_pagamento';
+		ob_start(); wc_get_template( 'myaccount/orders.php', array( 'has_orders' => true, 'customer_orders' => (object) array( 'orders' => $orders, 'max_num_pages' => 1 ), 'current_page' => 1 ) ); $preview_form = ob_get_clean();
 	}
 	$is_detail = str_starts_with( $page, 'pedido-' );
 	if ( $is_detail ) {
@@ -52,8 +65,8 @@ foreach ( array( 'inicio', 'andamento', 'vazio', 'atendimento', 'dados', 'endere
 	}
 	ob_start(); wc_get_template( 'myaccount/my-account.php' ); $content = ob_get_clean();
 	// This preview has no account backend; unsupported actions point to its visible scope note.
-	$content = preg_replace( '#href="(?:/orders\.html|/customer-logout\.html|https://example\.test[^" ]*|https://t\.me/example|mailto:ajuda@example\.test)"#', 'href="#preview-scope"', $content );
-	$html = '<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Minha conta — prévia da revisão</title><link rel="stylesheet" href="/fontawesome/css/all.min.css"><style>body{margin:0;font-family:Arial,sans-serif;--gstore-color-accent-contrast:#111}*{box-sizing:border-box}.entry-content>.woocommerce{max-width:1000px;margin:auto}.preview-note{margin:0;padding:12px 24px;background:#f4f5f6;font-size:12px;line-height:1.8}.preview-note a{color:inherit;margin-right:14px}form label{display:block;margin-bottom:8px}input{min-height:44px;width:100%}</style><style>' . $css . '</style></head><body class="woocommerce-account logged-in"><p id="preview-scope" class="preview-note">Prévia visual · dados fictícios · ações de pedidos e salvamento continuam no WooCommerce<br><a href="/inicio.html">Pedido cancelado</a><a href="/andamento.html">Em andamento</a><a href="/vazio.html">Sem pedidos</a><a href="/atendimento.html">Atendimento</a><a href="/dados.html">Meus dados</a><a href="/enderecos.html">Endereços</a><a href="/pedido-negado.html">Pedido: documentação negada</a><a href="/pedido-analise.html">Em análise</a><a href="/pedido-enviado.html">Enviado</a><a href="/pedido-retirada.html">Retirada</a></p><main class="wp-block-group is-layout-constrained"><div class="entry-content"><div class="woocommerce">' . $content . '</div></div></main></body></html>';
+	$content = preg_replace( '#href="(?:/customer-logout\.html|https://example\.test[^" ]*|https://t\.me/example|mailto:ajuda@example\.test)"#', 'href="#preview-scope"', $content );
+	$html = '<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Minha conta — prévia da revisão</title><link rel="stylesheet" href="/fontawesome/css/all.min.css"><style>body{margin:0;font-family:Arial,sans-serif;--gstore-color-accent-contrast:#111}*{box-sizing:border-box}.entry-content>.woocommerce{max-width:1000px;margin:auto}.preview-note{margin:0;padding:12px 24px;background:#f4f5f6;font-size:12px;line-height:1.8}.preview-note a{color:inherit;margin-right:14px}.woocommerce form .form-row::before,.woocommerce form .form-row::after,.woocommerce-Address-title::before,.woocommerce-Address-title::after{content:" ";display:table}form label{display:block;margin-bottom:8px}input{min-height:44px;width:100%}</style><style>' . $css . '</style></head><body class="woocommerce-account logged-in"><p id="preview-scope" class="preview-note">Prévia visual · dados fictícios · ações de pedidos e salvamento continuam no WooCommerce<br><a href="/inicio.html">Pedido cancelado</a><a href="/andamento.html">Em andamento</a><a href="/vazio.html">Sem pedidos</a><a href="/atendimento.html">Atendimento</a><a href="/dados.html">Meus dados</a><a href="/enderecos.html">Endereços</a><a href="/orders.html">Histórico de pedidos</a><a href="/pedido-negado.html">Pedido: documentação negada</a><a href="/pedido-analise.html">Em análise</a><a href="/pedido-enviado.html">Enviado</a><a href="/pedido-retirada.html">Retirada</a></p><main class="wp-block-group is-layout-constrained"><div class="entry-content"><div class="woocommerce">' . $content . '</div></div></main></body></html>';
 	if ( $is_detail ) {
 		// Render the real upload UI, but prevent all document operations in this static fixture.
 		$script = '<script>window.gstoreFulfillment={orderId:42};</script><script>' . file_get_contents( $root . '/assets/js/fulfillment-timeline.min.js' ) . '</script><script>document.addEventListener("DOMContentLoaded",function(){document.querySelectorAll(".gstore-view-order input,.gstore-view-order button").forEach(function(el){el.disabled=true;el.title="Prévia visual: ação indisponível";});});</script>';

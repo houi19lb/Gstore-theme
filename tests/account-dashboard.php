@@ -18,14 +18,14 @@ function get_current_user_id() { return $GLOBALS['customer_id'] ?? 7; }
 function is_wc_endpoint_url( $endpoint = '' ) { return $endpoint ? $endpoint === ( $GLOBALS['endpoint'] ?? '' ) : ! empty( $GLOBALS['endpoint'] ); }
 function wc_is_current_account_menu_item( $endpoint ) { return $endpoint === ( $GLOBALS['endpoint'] ?: 'dashboard' ); }
 function wc_get_account_endpoint_url( $endpoint ) { if ( ! empty( $GLOBALS['preview_mode'] ) ) { return '/' . ( array( 'dashboard' => 'inicio', 'edit-account' => 'dados', 'edit-address' => 'enderecos' )[ $endpoint ] ?? $endpoint ) . '.html'; } return 'https://example.test/account/' . ( 'dashboard' === $endpoint ? '' : $endpoint . '/' ); }
-function add_query_arg( $key, $value, $url ) { if ( ! empty( $GLOBALS['preview_mode'] ) && 'gstore_account_view' === $key ) { return '/atendimento.html'; } return $url . '?' . $key . '=' . $value; }
+function add_query_arg( $key, $value = null, $url = "" ) { if ( is_array( $key ) ) { return "/orders.html?" . http_build_query( $key ); } if ( ! empty( $GLOBALS['preview_mode'] ) && 'gstore_account_view' === $key ) { return '/atendimento.html'; } return $url . '?' . $key . '=' . $value; }
 function home_url( $path ) { return 'https://example.test' . $path; }
 function gstore_get_catalog_url() { return home_url( '/catalogo/' ); }
 function wp_get_current_user() { return (object) array( 'ID' => 7, 'first_name' => 'Cliente', 'display_name' => 'Cliente Exemplo', 'user_email' => 'cliente@example.test' ); }
 function wc_get_customer_order_count( $id ) { return count( $GLOBALS['orders'] ); }
 function wc_get_orders( $args ) { $GLOBALS['queries'][] = $args; return ! empty( $args['paginate'] ) ? (object) array( 'total' => count( array_filter( $GLOBALS['orders'], static fn( $order ) => in_array( $order->status, $args['status'], true ) ) ) ) : $GLOBALS['orders']; }
 function wc_format_datetime( $date ) { return $date->format( 'd/m/Y' ); }
-function wc_get_order_status_name( $s ) { return array( 'cancelled' => 'Cancelado', 'refunded' => 'Reembolsado', 'failed' => 'Falhou' )[ $s ] ?? $s; }
+function wc_get_order_status_name( $s ) { return array( 'pending' => 'Aguardando pagamento', 'processing' => 'Processando', 'cancelled' => 'Cancelado', 'refunded' => 'Reembolsado', 'failed' => 'Falhou' )[ $s ] ?? $s; }
 function gstore_my_account_get_orders_tab_status_label( $order ) { return 'cancelled' === $order->status && $order->paid ? 'Pago/Confirmado' : wc_get_order_status_name( $order->status ); }
 function gstore_get_order_fulfillment_stage( $order ) { return $order->stage; }
 function gstore_store_info() { return new class { function get_value( $key, $fallback = '' ) { return $GLOBALS['store'][ $key ] ?? $fallback; } }; }
@@ -41,6 +41,9 @@ class AccountDate extends DateTime { function date( $format ) { return $this->fo
 class WC_Order {
 	public $stage = 'preparando_entrega'; public $status = 'processing'; public $paid = false; public $id = 42;
 	function get_id() { return $this->id; }
+	function get_item_count() { return 1; }
+	function get_item_count_refunded() { return 0; }
+	function get_meta( $key, $single = true ) { return '_gstore_fulfillment_stage' === $key ? $this->stage : ''; }
 	function get_order_number() { return (string) ( 10440 + $this->id ); }
 	function get_status() { return $this->status; }
 	function get_date_created() { return new AccountDate( '2026-09-11' ); }

@@ -323,6 +323,9 @@ if ( $has_orders ) :
 								<?php
 								$actions = wc_get_account_orders_actions( $order );
 								if ( ! empty( $actions ) ) :
+									?>
+									<div class="gstore-orders-actions">
+									<?php
 									foreach ( $actions as $key => $action ) :
 										?>
 										<a href="<?php echo esc_url( $action['url'] ); ?>" class="woocommerce-button button <?php echo esc_attr( $key ); ?>">
@@ -330,6 +333,9 @@ if ( $has_orders ) :
 										</a>
 										<?php
 									endforeach;
+									?>
+									</div>
+									<?php
 								endif;
 								?>
 							<?php endif; ?>
