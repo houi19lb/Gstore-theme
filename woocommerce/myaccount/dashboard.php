@@ -13,9 +13,8 @@ $name = $current_user->first_name ?: $current_user->display_name;
 ?>
 <div class="gstore-account-dashboard">
 	<div class="gstore-account-heading">
-		<p class="gstore-account-eyebrow"><?php esc_html_e( 'Sua conta', 'gstore' ); ?></p>
-		<h1><?php printf( esc_html__( 'Bom ter você por aqui, %s.', 'gstore' ), esc_html( $name ) ); ?></h1>
-		<p><?php esc_html_e( 'Tudo sobre sua conta, em um só lugar.', 'gstore' ); ?></p>
+		<h1><?php esc_html_e( 'Minha conta', 'gstore' ); ?></h1>
+		<p><?php printf( esc_html__( 'Bom ter você por aqui, %s.', 'gstore' ), esc_html( $name ) ); ?></p>
 	</div>
 	<div class="gstore-account-dashboard-grid">
 		<div class="gstore-account-primary">

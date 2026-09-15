@@ -29,6 +29,11 @@ body.woocommerce-account main .woocommerce:has(> .gstore-account-shell) { width:
 .gstore-account-shell .gstore-account-heading h1 { color: var(--account-text); margin: 8px 0 10px; font-size: clamp(22px, 2.2vw, 28px); line-height: 1.25; letter-spacing: -.6px; font-weight: 700; }
 .gstore-account-shell .gstore-account-heading p { margin: 0; color: var(--account-muted); font-size: 15px; line-height: 1.6; }
 .gstore-account-shell .gstore-account-heading .gstore-account-eyebrow { font-size: 11px; letter-spacing: 1.4px; text-transform: uppercase; font-weight: 700; }
+/* Share the card's text inset, including its border, with the dashboard heading. */
+.gstore-account-shell .gstore-account-dashboard { --account-dashboard-card-padding: 24px; }
+.gstore-account-shell .gstore-account-dashboard > .gstore-account-heading { padding-inline: calc(var(--account-dashboard-card-padding) + 1px); }
+.gstore-account-shell .gstore-account-dashboard > .gstore-account-heading h1 { margin: 0 0 6px; }
+.gstore-account-shell .gstore-account-dashboard .gstore-account-latest { padding: var(--account-dashboard-card-padding); }
 .gstore-account-shell .gstore-account-dashboard-grid { display: grid; grid-template-columns: minmax(0, 1fr) 280px; gap: 28px; align-items: start; }
 .gstore-account-shell .gstore-account-card { min-width: 0; padding: 24px; background: var(--account-surface); border: 1px solid var(--account-border); border-radius: 10px; box-shadow: none; }
 .gstore-account-shell .gstore-account-card h2 { margin: 0; color: var(--account-text); font-size: 17px; line-height: 1.4; font-weight: 600; }
@@ -104,6 +109,7 @@ body.woocommerce-account main .woocommerce:has(> .gstore-account-shell) { width:
 	.gstore-account-shell .gstore-account-help { padding-top: 0 !important; border-top: 0 !important; }
 }
 @media (max-width: 780px) {
+	.gstore-account-shell .gstore-account-dashboard { --account-dashboard-card-padding: 18px; }
 	.gstore-account-shell .gstore-myaccount__layout { grid-template-columns: minmax(0, 1fr); gap: 16px; }
 	.gstore-account-shell .gstore-myaccount__sidebar { position: static; padding: 0 0 8px; border-right: 0; border-bottom: 1px solid var(--account-border); }
 	.gstore-account-shell .gstore-myaccount-nav { position: static; }

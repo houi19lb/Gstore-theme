@@ -103,3 +103,11 @@ A inspeção somente de leitura em WooCommerce > Configurações > E-mails > Con
 A mensagem já recebida não é alterada. O ajuste vale para novos envios depois de atualizar o tema na loja. Não foram solicitados envios reais nem abertos links de confirmação. Validação local: lint, regressão da conta, texto com e-mail fictício, substituição do nome da loja, preservação de traduções existentes e de outros idiomas.
 
 Referências: [template HTML](https://github.com/woocommerce/woocommerce/blob/11.0.1/plugins/woocommerce/templates/emails/customer-verify-email.php) e [classe do e-mail](https://github.com/woocommerce/woocommerce/blob/11.0.1/plugins/woocommerce/src/Internal/CustomerEmailVerification/Emails/CustomerVerifyEmail.php).
+
+## Alinhamento do título do início (alpha, 15/09/2026)
+
+O título “Minha conta” e a saudação passam a compartilhar o eixo horizontal de “Seu pedido mais recente” e do número do pedido. Uma variável local controla o padding do cartão (24 px no desktop, 18 px até 780 px); o cabeçalho acrescenta o pixel da borda ao mesmo recuo. A apresentação inicial usa título e saudação, removendo o rótulo e a descrição redundantes.
+
+O ajuste fica no início da conta, incluindo o estado sem pedidos. Os cabeçalhos de dados, histórico e atendimento mantêm seu alinhamento próprio. Outros pedidos continuam à direita no desktop. Esta entrega não implementa os demais refinamentos das imagens exploratórias; header e footer da loja, formulários, pedidos e traduções permanecem nos fluxos existentes.
+
+Validação: lint PHP, regressão existente da conta, escopo do CSS e verificação dos 92 assets minificados aprovados. Na prévia local com dados fictícios e CSS minificado, as larguras de 320, 390 e 1440 px mantiveram título, saudação e textos do cartão no mesmo eixo (diferença inferior a 1 px), sem overflow horizontal na página medida. Essa verificação não substitui a conferência após a atualização do tema na loja.
