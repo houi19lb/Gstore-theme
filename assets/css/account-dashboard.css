@@ -209,3 +209,38 @@ body.woocommerce-account main .woocommerce:has(> .gstore-account-shell) { width:
 	.gstore-account-shell .gstore-myaccount__content table.woocommerce-orders-table th:has(a) { display: block; }
 	.gstore-account-shell .gstore-myaccount__content table.woocommerce-orders-table th a { display: inline-flex; align-items: center; min-height: 44px; padding: 8px 12px; }
 }
+
+/* Semantic status colors use shared store tokens; text always names the state. */
+.gstore-account-shell .gstore-account-tone--neutral { --status-text: var(--account-muted); --status-bg: var(--gstore-color-bg-light, #f6f6f4); --status-border: var(--account-border); }
+.gstore-account-shell .gstore-account-tone--success { --status-text: var(--gstore-color-success-text, #065f46); --status-bg: var(--gstore-color-success-bg, #ecfdf5); --status-border: var(--gstore-color-success-border, #a7f3d0); }
+.gstore-account-shell .gstore-account-tone--danger { --status-text: var(--gstore-color-error-text, #991b1b); --status-bg: var(--gstore-color-error-bg, #fef2f2); --status-border: var(--gstore-color-error-border, #fecaca); }
+.gstore-account-shell .gstore-account-tone--info { --status-text: var(--gstore-color-info-text, #312e81); --status-bg: var(--gstore-color-info-bg, #eef2ff); --status-border: var(--gstore-color-info-border, #c7d2fe); }
+.gstore-account-shell .gstore-account-tone--warning { --status-text: var(--gstore-color-warning-text, #854d0e); --status-bg: var(--gstore-color-warning-bg, #fffbeb); --status-border: var(--gstore-color-warning-border, #fde68a); }
+.gstore-account-shell .gstore-account-status,
+.gstore-account-shell .gstore-orders-status { display: inline-flex; align-items: center; max-width: 100%; padding: 5px 9px; border: 1px solid var(--status-border, var(--account-border)); border-radius: 6px; color: var(--status-text, var(--account-text)); background: var(--status-bg, var(--account-tint)); font-size: 13px; font-weight: 600; line-height: 1.4; white-space: normal; }
+.gstore-account-shell .gstore-account-update .gstore-account-status { display: inline-flex; margin-top: 6px; font-size: 12px; color: var(--status-text, var(--account-text)); }
+.gstore-account-shell .gstore-account-note[class*="gstore-account-tone--"] { background: var(--status-bg); border-left: 3px solid var(--status-border); }
+.gstore-account-shell .gstore-account-note[class*="gstore-account-tone--"] p { margin: 0; color: var(--status-text); font-size: 14px; }
+.gstore-account-shell .gstore-account-progress .is-complete .gstore-account-step-dot { background: var(--gstore-color-success-bg, #ecfdf5); color: var(--gstore-color-success-text, #065f46); border-color: var(--gstore-color-success-border, #a7f3d0); }
+.gstore-account-shell .gstore-account-progress .is-current { color: var(--status-text, var(--account-text)); }
+.gstore-account-shell .gstore-account-progress .is-current .gstore-account-step-dot { border-color: var(--status-text, var(--account-accent)); color: var(--status-text, var(--account-text)); box-shadow: 0 0 0 4px var(--status-bg, var(--account-tint)); }
+.gstore-account-shell .gstore-account-order-meta { font-size: 14px; }
+.gstore-account-shell .gstore-account-stats .gstore-account-stat--active dd { color: var(--gstore-color-info-text, #312e81); }
+.gstore-account-shell .gstore-account-stats .gstore-account-stat--completed dd { color: var(--gstore-color-success-text, #065f46); }
+.gstore-account-shell .gstore-account-contact--email .gstore-account-icon,
+.gstore-account-shell .gstore-account-contact--telegram .gstore-account-icon { background: var(--gstore-color-info-bg, #eef2ff); color: var(--gstore-color-info-text, #312e81); }
+.gstore-account-shell .gstore-account-contact p { margin: 0; }
+.gstore-account-shell .gstore-account-update:hover strong,
+.gstore-account-shell .gstore-account-shortcut:hover strong { text-decoration: underline; text-underline-offset: 3px; }
+.gstore-account-shell .gstore-account-button--secondary:hover { background: var(--account-tint); border-color: var(--account-accent); filter: none; }
+.gstore-account-shell :is(a, button, input, select, textarea):focus-visible { outline: 2px solid var(--account-text); outline-offset: 3px; }
+@media (min-width: 1101px) {
+	/* Reset all four sides: WooCommerce can add a dark top border independently. */
+	.gstore-account-shell .gstore-myaccount__content table.woocommerce-orders-table th,
+	.gstore-account-shell .gstore-myaccount__content table.woocommerce-orders-table td { border: 0 !important; border-bottom: 1px solid var(--account-border) !important; }
+	.gstore-account-shell .gstore-myaccount__content table.woocommerce-orders-table tbody tr:last-child td { border-bottom: 0 !important; }
+}
+
+.gstore-account-shell .gstore-fulfillment-timeline__step.is-completed .gstore-fulfillment-timeline__label { color: var(--gstore-color-success-text, #065f46); }
+.gstore-account-shell .gstore-fulfillment-timeline__step.is-current:not(.is-rejected) .gstore-fulfillment-timeline__label { color: var(--account-text); }
+.gstore-account-shell .gstore-fulfillment-timeline__step.is-pending .gstore-fulfillment-timeline__label { color: var(--account-muted); }

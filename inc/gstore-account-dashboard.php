@@ -45,9 +45,9 @@ function gstore_account_contact_channels() {
 	$info = gstore_store_info();
 	$primary = trim( (string) $info->get_value( 'contact.contact_primary_link', '' ) );
 	$channels = array(
-		array( 'label' => $info->get_value( 'contact.whatsapp_label', 'WhatsApp' ), 'url' => $primary ?: gstore_get_whatsapp_link(), 'icon' => 'fa-solid fa-headset' ),
-		array( 'label' => __( 'E-mail', 'gstore' ), 'url' => gstore_get_store_email_link(), 'icon' => 'fa-regular fa-envelope' ),
-		array( 'label' => $info->get_value( 'contact.telegram_label', 'Telegram' ), 'url' => gstore_get_telegram_link(), 'icon' => 'fa-brands fa-telegram' ),
+		array( 'kind' => 'primary', 'description' => __( 'Fale com a equipe pelo canal de atendimento da loja.', 'gstore' ), 'label' => $info->get_value( 'contact.whatsapp_label', 'WhatsApp' ), 'url' => $primary ?: gstore_get_whatsapp_link(), 'icon' => 'fa-solid fa-headset' ),
+		array( 'kind' => 'email', 'description' => __( 'Envie sua dúvida por e-mail. Se for sobre um pedido, informe o número.', 'gstore' ), 'label' => __( 'E-mail', 'gstore' ), 'url' => gstore_get_store_email_link(), 'icon' => 'fa-regular fa-envelope' ),
+		array( 'kind' => 'telegram', 'description' => __( 'Acesse o contato da loja no Telegram para receber orientações.', 'gstore' ), 'label' => $info->get_value( 'contact.telegram_label', 'Telegram' ), 'url' => gstore_get_telegram_link(), 'icon' => 'fa-brands fa-telegram' ),
 	);
 	// Only direct support channels belong here. Social profiles stay in the site footer.
 	return array_values( array_filter( $channels, static function ( $channel ) {
@@ -76,6 +76,17 @@ function gstore_account_order_counts() {
 		$counts[ $key ] = (int) $result->total;
 	}
 	return $counts;
+}
+
+/** Presentation only: never infer payment or shipment from a color. */
+function gstore_account_order_tone( $order ) {
+	$status = $order->get_status();
+	// A legacy/custom label may differ from the persisted state (e.g. paid cancellation).
+	if ( function_exists( 'gstore_my_account_get_orders_tab_status_label' )
+		&& gstore_my_account_get_orders_tab_status_label( $order ) !== wc_get_order_status_name( $status ) ) {
+		return 'neutral';
+	}
+	return array( 'cancelled' => 'danger', 'failed' => 'danger', 'completed' => 'success', 'processing' => 'info', 'pending' => 'warning', 'on-hold' => 'warning' )[ $status ] ?? 'neutral';
 }
 
 function gstore_account_order_progress( $order ) {
@@ -117,7 +128,12 @@ function gstore_account_order_progress( $order ) {
 		'preparando_entrega' => __( 'Seu pedido está sendo preparado para envio. Acompanhe os detalhes por aqui.', 'gstore' ),
 		'enviado' => __( 'Seu pedido foi enviado. Consulte os detalhes e o rastreamento disponível no pedido.', 'gstore' ),
 	);
+	$tone = gstore_account_order_tone( $order );
+	if ( ! $inactive ) {
+		$tone = array( 'documentacao_negada' => 'danger', 'aguardando_documentacao' => 'warning', 'processando_pagamento' => 'warning', 'pagamento_confirmado' => 'info', 'processando_documentacao' => 'info', 'preparando_entrega' => 'info', 'enviado' => 'success', 'pronto_retirada' => 'info', 'retirado' => 'success' )[ $stage ] ?? $tone;
+	}
 	return array(
+		'tone' => $tone,
 		'stages' => $stages, 'index' => $index, 'show_timeline' => ! $inactive && false !== $index,
 		'label' => $label, 'rejected' => $rejected,
 		'message' => $inactive ? __( 'Consulte os detalhes e as opções disponíveis no seu pedido.', 'gstore' ) : ( $messages[ $stage ] ?? __( 'Consulte as orientações e os próximos passos no seu pedido.', 'gstore' ) ),

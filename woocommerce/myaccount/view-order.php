@@ -131,7 +131,7 @@ $can_upload_more = $total_docs_count < $max_docs;
 			Documentação aprovada. Estamos preparando a entrega do seu pedido.
 		<?php endif; ?>
 	</p>
-	<a id="gstore-fulfillment-support" class="gstore-view-order__support" href="<?php echo esc_url( gstore_account_support_url() ); ?>" <?php echo ! $documentation_rejected ? 'hidden' : ''; ?>>Falar com o atendimento <span aria-hidden="true">→</span></a>
+	<a id="gstore-fulfillment-support" class="gstore-view-order__support" href="<?php echo esc_url( gstore_account_support_url() ); ?>" <?php echo ! $documentation_rejected ? 'hidden' : ''; ?>>Falar com o atendimento</a>
 	</section>
 
 	<!-- ════════════ Upload de Documentos ════════════ -->

@@ -278,7 +278,7 @@ if ( $has_orders ) :
 									? gstore_my_account_get_orders_tab_status_label( $order )
 									: wc_get_order_status_name( $order->get_status() );
 								?>
-								<span class="gstore-orders-status gstore-orders-status--<?php echo esc_attr( $order->get_status() ); ?>">
+								<span class="gstore-orders-status gstore-orders-status--<?php echo esc_attr( $order->get_status() ); ?> gstore-account-tone--<?php echo esc_attr( gstore_account_order_tone( $order ) ); ?>">
 									<?php echo esc_html( $status_label ); ?>
 								</span>
 								<?php
@@ -329,7 +329,7 @@ if ( $has_orders ) :
 									foreach ( $actions as $key => $action ) :
 										?>
 										<a href="<?php echo esc_url( $action['url'] ); ?>" class="woocommerce-button button <?php echo esc_attr( $key ); ?>">
-											<?php echo esc_html( $action['name'] ); ?>
+											<?php echo esc_html( 'view' === $key ? __( 'Ver pedido', 'gstore' ) : $action['name'] ); ?>
 										</a>
 										<?php
 									endforeach;

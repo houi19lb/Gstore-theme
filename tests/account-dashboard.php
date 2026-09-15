@@ -25,7 +25,7 @@ function wp_get_current_user() { return (object) array( 'ID' => 7, 'first_name' 
 function wc_get_customer_order_count( $id ) { return count( $GLOBALS['orders'] ); }
 function wc_get_orders( $args ) { $GLOBALS['queries'][] = $args; return ! empty( $args['paginate'] ) ? (object) array( 'total' => count( array_filter( $GLOBALS['orders'], static fn( $order ) => in_array( $order->status, $args['status'], true ) ) ) ) : $GLOBALS['orders']; }
 function wc_format_datetime( $date ) { return $date->format( 'd/m/Y' ); }
-function wc_get_order_status_name( $s ) { return array( 'pending' => 'Aguardando pagamento', 'processing' => 'Processando', 'cancelled' => 'Cancelado', 'refunded' => 'Reembolsado', 'failed' => 'Falhou' )[ $s ] ?? $s; }
+function wc_get_order_status_name( $s ) { return array( 'pending' => 'Aguardando pagamento', 'processing' => 'Processando', 'completed' => 'Concluído', 'on-hold' => 'Em espera', 'cancelled' => 'Cancelado', 'refunded' => 'Reembolsado', 'failed' => 'Falhou' )[ $s ] ?? $s; }
 function gstore_my_account_get_orders_tab_status_label( $order ) { return 'cancelled' === $order->status && $order->paid ? 'Pago/Confirmado' : wc_get_order_status_name( $order->status ); }
 function gstore_get_order_fulfillment_stage( $order ) { return $order->stage; }
 function gstore_store_info() { return new class { function get_value( $key, $fallback = '' ) { return $GLOBALS['store'][ $key ] ?? $fallback; } }; }
@@ -89,6 +89,18 @@ $orders = array(); ob_start(); wc_get_template( 'myaccount/dashboard.php' ); $em
 class AccountPluginFixture { static function get_fulfillment_data( $id ) { return array( 'stages' => $GLOBALS['plugin_stages'] ?? array( 'processando_pagamento' => 'Processando pagamento', 'pronto_retirada' => 'Pronto para retirada', 'retirado' => 'Retirado' ), 'documents' => array( 'storage_path' => 'SECRET' ) ); } }
 class_alias( AccountPluginFixture::class, 'GStore\\Services\\Fulfillment_Service' );
 $order->stage = 'pronto_retirada'; $p = gstore_account_order_progress( $order ); check( 1 === $p['index'] && 'Pronto para retirada' === $p['label'] && ! isset( $p['documents'] ), 'Plugin branches preserved; document data excluded' );
+// Guard semantic presentation against misleading success/error colors.
+foreach ( array( 'cancelled' => 'danger', 'completed' => 'success', 'processing' => 'info', 'pending' => 'warning', 'on-hold' => 'warning', 'refunded' => 'neutral', 'failed' => 'danger', 'custom' => 'neutral' ) as $status => $tone ) {
+	$order->status = $status; $order->paid = false;
+	check( $tone === gstore_account_order_tone( $order ), 'Semantic order tone: ' . $status );
+}
+$order->status = 'cancelled'; $order->paid = true;
+check( 'neutral' === gstore_account_order_tone( $order ) && 'neutral' === gstore_account_order_progress( $order )['tone'], 'Legacy paid label must not look cancelled or fulfilled' );
+$order->paid = false; $order->status = 'processing'; $order->stage = 'documentacao_negada';
+check( 'danger' === gstore_account_order_progress( $order )['tone'], 'Document correction is an attention state' );
+$order->stage = 'enviado';
+check( 'success' === gstore_account_order_progress( $order )['tone'], 'Sent state is visually complete without claiming delivery' );
+$order->stage = 'preparando_entrega';
 echo "PASS: account routing, menus, customer isolation, states, channels and native detail links.\n";
 
 // Optional synthetic screenshot fixtures; generated output stays local.

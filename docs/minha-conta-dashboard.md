@@ -68,3 +68,20 @@ A revisão dimensiona o conteúdo por tarefa: títulos de página entre 22 e 28 
 A fixture passa a renderizar também o template real do histórico, com documentação negada, pagamento pendente, duas ou três ações e dados fictícios. Os formulários e endereços continuam sendo representações sintéticas. A revisão final usa o CSS minificado e cobre histórico, dados, endereços, início em andamento, detalhe negado e atendimento em 320, 1.024 e 1.440 CSS px. Não houve overflow horizontal nas páginas medidas; botões com duas linhas crescem junto com os demais da mesma linha. Verificações intermediárias também cobriram 390 e 768 px.
 
 Validação: lint PHP, testes PHP da conta e fulfillment, regressão Jest da timeline, escopo CSS e os 92 assets gerados. Não foram executadas alterações reais de senha, documentos ou pedidos. Este refinamento trata dimensões e organização visual, sem alterar as regras de status, canais ou salvamento.
+
+## Cores e clareza (alpha, 15/09/2026)
+
+A nova inspeção da Armastore encontrou status com a cor da marca ou cinza indistinto, repetição de status no cartão, setas decorativas nos botões e divisórias escuras no histórico. O refinamento usa os tokens semânticos existentes (sucesso, erro e informação), com fallbacks de atenção sobrescrevíveis. Estado e texto permanecem juntos; a cor não substitui rótulos.
+
+- Cancelamento/falha usam vermelho suave, concluído/enviado verde, espera âmbar e processamento informação. O helper de apresentação não altera status, pagamento ou fulfillment. Rótulos personalizados/legados diferentes do estado nativo mantêm tom neutro, evitando declarar sucesso ou cancelamento pela cor.
+- Painel e histórico usam os mesmos tons. No painel, a etapa de fulfillment pode especificar atenção, revisão ou envio. Enviado continua significando enviado, não entregue.
+- Botões usam Ver pedido sem seta decorativa; o acesso a suporte também perde a seta. Indicadores direcionais de navegação, ordenação e retorno permanecem.
+- O aviso do pedido perde o título de status repetido; o atalho Histórico de pedidos não repete o contador. Dados de criação/valor usam 14 px. A cor destaca os contadores de andamento e conclusão sem criar novas categorias.
+- Divisórias da tabela redefinem os quatro lados para evitar a borda superior escura herdada do WooCommerce. O foco de teclado usa o texto principal da loja. Textos de etapas completas e pendentes ganham contraste.
+- Atendimento preserva os canais, URLs e nomenclaturas cadastrados, mas apresenta uma orientação específica por tipo de contato.
+
+A fixture acrescenta concluído/enviado e os cinco estados do histórico; simula a borda superior nativa para validar sua correção. Os testes cobrem os tons de estados conhecidos, fallback de estado personalizado, cancelamento com rótulo legado e recusa de documentos. Revisão responsiva em 320, 768 e 1.440 CSS px, sem overflow horizontal. Contraste observado nos badges padrão: 5,33:1 a 10,22:1, sem alegação de conformidade integral. Lint PHP, testes da conta e fulfillment, Jest, escopo CSS e assets passaram.
+
+Referências: [Baymard — contas e autoatendimento](https://baymard.com/blog/current-state-accounts-selfservice), [NN/g — estados e hierarquia de botões](https://www.nngroup.com/articles/button-states-communicate-interaction/), [W3C — uso de cor](https://www.w3.org/WAI/WCAG22/Understanding/use-of-color.html).
+
+Pendências observadas nesta auditoria: um pedido cancelado no painel ainda mostra processamento de pagamento e aviso Pix no detalhe; os ativos não têm acesso filtrado no início; o aviso de confirmação de e-mail aparece em inglês; o widget flutuante ocupa parte dos atalhos no celular. São tarefas separadas desta apresentação visual; não corrigir status financeiro por inferência. Capturas reais e relatório completo ficam apenas no armazenamento local, fora do Git.
