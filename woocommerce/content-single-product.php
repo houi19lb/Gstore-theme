@@ -829,16 +829,29 @@ if ( ! function_exists( 'gstore_get_contact_entries' ) ) :
 	 * @return array
 	 */
 	function gstore_get_contact_entries() {
-		$support_email_link = function_exists( 'gstore_get_store_email_link' ) ? gstore_get_store_email_link() : '';
-		$my_account_url     = function_exists( 'wc_get_page_permalink' ) ? wc_get_page_permalink( 'myaccount' ) : '';
+		$support_link = '';
+		if ( is_callable( array( '\GStore\Services\Chatwoot_Service', 'get_quick_action_frontend_config' ) ) ) {
+			$quick_action = \GStore\Services\Chatwoot_Service::get_quick_action_frontend_config();
+			// O flutuante também entrega o WhatsApp selecionado em telegramUrl.
+			// Com chat principal, usa o primeiro canal externo: Telegram, depois WhatsApp.
+			$support_link = ! empty( $quick_action['telegramUrl'] )
+				? $quick_action['telegramUrl']
+				: ( $quick_action['whatsappUrl'] ?? '' );
+		} else {
+			$support_link = function_exists( 'gstore_get_telegram_link' ) ? gstore_get_telegram_link() : '';
+			if ( ! $support_link && function_exists( 'gstore_get_whatsapp_link' ) ) {
+				$support_link = gstore_get_whatsapp_link();
+			}
+		}
+		$my_account_url = function_exists( 'wc_get_page_permalink' ) ? wc_get_page_permalink( 'myaccount' ) : '';
 
 		$entries = array(
 			array(
 				'icon'  => 'fa-headset',
 				'label' => __( 'Atendimento dedicado', 'gstore' ),
-				'value' => __( 'Nosso time responde em até 2h úteis via WhatsApp ou e-mail.', 'gstore' ),
-				'cta'   => $support_email_link ? __( 'Enviar mensagem', 'gstore' ) : '',
-				'href'  => $support_email_link,
+				'value' => __( 'Nosso time responde em até 2h úteis pelo canal de atendimento da loja.', 'gstore' ),
+				'cta'   => $support_link ? __( 'Enviar mensagem', 'gstore' ) : '',
+				'href'  => $support_link,
 			),
 			array(
 				'icon'  => 'fa-user-shield',
