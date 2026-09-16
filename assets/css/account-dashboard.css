@@ -332,3 +332,31 @@ body.woocommerce-account main .woocommerce:has(> .gstore-account-shell){max-widt
 .gstore-account-shell .gstore-account-contact .gstore-account-button--secondary{color:var(--contact-color);border-color:color-mix(in srgb,var(--contact-color) 40%,var(--account-border));background:var(--account-surface)}
 .gstore-account-shell .gstore-account-contact .gstore-account-button--secondary:hover{background:color-mix(in srgb,var(--contact-color) 9%,var(--account-surface));border-color:var(--contact-color)}
 @media(max-width:540px){.gstore-account-shell .gstore-account-aside{padding:18px}}
+
+/* Order detail: clear metadata and a single action group. */
+.gstore-account-shell .account-detail-heading{padding-bottom:24px;margin-bottom:24px}
+.gstore-account-shell .account-detail-back{display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:10px 14px;margin:0 0 20px;border:1px solid var(--account-border);border-radius:6px;background:var(--account-surface);color:var(--account-text);font-size:14px;font-weight:600;text-decoration:none;box-sizing:border-box}
+.gstore-account-shell .account-detail-back:hover{background:var(--account-tint);border-color:var(--account-accent)}
+.gstore-account-shell .account-detail-heading h1{margin:0 0 20px;font-size:28px;line-height:1.25}
+.gstore-account-shell .account-detail-summary{display:grid;grid-template-columns:1.2fr 1fr 1fr;gap:0;margin:0;padding:20px;border:1px solid var(--account-border);border-radius:10px;background:var(--gstore-color-bg-gray-50,#f9fafb)}
+.gstore-account-shell .account-detail-summary>div{min-width:0;padding:0 20px;border-left:1px solid var(--account-border)}
+.gstore-account-shell .account-detail-summary>div:first-child{padding-left:0;border-left:0}
+.gstore-account-shell .account-detail-summary dt{margin:0 0 8px;font-size:13px;line-height:1.4;color:var(--account-muted);font-weight:400}
+.gstore-account-shell .account-detail-summary dd{margin:0;font-size:15px;line-height:1.5;color:var(--account-text);font-weight:600}
+.gstore-account-shell .account-detail-summary .account-detail-total{font-size:20px}
+.gstore-account-shell .account-detail-actions{display:flex;align-items:center;justify-content:space-between;gap:20px;padding:20px;margin:24px 0;border:1px solid var(--account-border);border-radius:8px;background:var(--gstore-color-bg-gray-50,#f9fafb)}
+.gstore-account-shell .account-detail-actions h2{margin:0 0 6px!important;font-size:17px!important}
+.gstore-account-shell .account-detail-actions p{margin:0;font-size:14px;color:var(--account-muted)}
+.gstore-account-shell .account-detail-actions-buttons{display:flex;flex-wrap:wrap;gap:12px}
+.gstore-account-shell .account-detail-actions .gstore-account-button{margin:0;min-height:44px;white-space:nowrap}
+@media(max-width:600px){
+ .gstore-account-shell .account-detail-heading h1{font-size:24px}
+ .gstore-account-shell .account-detail-summary{grid-template-columns:1fr 1fr;padding:16px;gap:16px}
+ .gstore-account-shell .account-detail-summary>div{padding:0;border:0}
+ .gstore-account-shell .account-detail-summary>div:first-child{grid-column:1/-1;padding-bottom:16px;border-bottom:1px solid var(--account-border)}
+ .gstore-account-shell .account-detail-actions{align-items:stretch;flex-direction:column;padding:16px}
+ .gstore-account-shell .account-detail-actions-buttons{display:grid;grid-template-columns:minmax(0,1fr)}
+}
+.gstore-account-shell .account-detail-heading{padding-bottom:0}
+.gstore-account-shell .account-detail-actions .gstore-account-button{width:auto;min-width:144px}
+@media(max-width:600px){.gstore-account-shell .account-detail-actions .gstore-account-button{width:100%}}

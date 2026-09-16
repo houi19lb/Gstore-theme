@@ -80,17 +80,16 @@ $can_upload_more = $total_docs_count < $max_docs;
 ?>
 
 <div class="gstore-view-order">
-	<header class="gstore-view-order__header">
-		<a class="gstore-view-order__back" href="<?php echo esc_url( wc_get_account_endpoint_url( 'orders' ) ); ?>">← Voltar aos pedidos</a>
-		<h1>Pedido #<?php echo esc_html( $order->get_order_number() ); ?></h1>
-		<?php $account_progress = gstore_account_order_progress( $order ); ?>
-		<p class="gstore-view-order__meta">
-			<span class="gstore-account-status gstore-account-tone--<?php echo esc_attr( $account_progress['tone'] ); ?>"><?php echo esc_html( $account_progress['label'] ); ?></span>
-			<?php if ( $order->get_date_created() ) : ?><time datetime="<?php echo esc_attr( $order->get_date_created()->date( 'c' ) ); ?>"><?php echo esc_html( wc_format_datetime( $order->get_date_created() ) ); ?></time><?php endif; ?>
-			<span><?php echo wp_kses_post( $order->get_formatted_order_total() ); ?></span>
-		</p>
-		<p>Acompanhe as etapas, a documentação e os detalhes do seu pedido.</p>
-	</header>
+	<header class="gstore-view-order__header account-detail-heading">
+        <a class="gstore-view-order__back account-detail-back" href="<?php echo esc_url( wc_get_account_endpoint_url( 'orders' ) ); ?>"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 19-7-7 7-7"/><path d="M5 12h14"/></svg><?php esc_html_e( 'Voltar aos pedidos', 'gstore' ); ?></a>
+        <h1><?php printf( esc_html__( 'Pedido #%s', 'gstore' ), esc_html( $order->get_order_number() ) ); ?></h1>
+        <?php $account_progress = gstore_account_order_progress( $order ); ?>
+        <dl class="account-detail-summary">
+            <div><dt><?php esc_html_e( 'Status do pedido', 'gstore' ); ?></dt><dd><span class="gstore-account-status gstore-account-tone--<?php echo esc_attr( $account_progress['tone'] ); ?>"><?php echo esc_html( $account_progress['label'] ); ?></span></dd></div>
+            <?php if ( $order->get_date_created() ) : ?><div><dt><?php esc_html_e( 'Data do pedido', 'gstore' ); ?></dt><dd><time datetime="<?php echo esc_attr( $order->get_date_created()->date( 'c' ) ); ?>"><?php echo esc_html( wc_format_datetime( $order->get_date_created(), 'd/m/Y' ) ); ?></time></dd></div><?php endif; ?>
+            <div><dt><?php esc_html_e( 'Total do pedido', 'gstore' ); ?></dt><dd class="account-detail-total"><?php echo wp_kses_post( $order->get_formatted_order_total() ); ?></dd></div>
+        </dl>
+    </header>
 
 	<?php if ( $has_fulfillment ) : ?>
 	<!-- ════════════ Timeline ════════════ -->

@@ -12407,6 +12407,11 @@ add_filter( 'woocommerce_my_account_my_orders_actions', 'gstore_remove_default_o
  * @return array Ações atualizadas.
  */
 function gstore_add_refazer_compra_button_to_order_actions( $actions, $order ) {
+	// The detail screen already renders WooCommerce's native order-again button.
+	if ( is_wc_endpoint_url( 'view-order' ) ) {
+		return $actions;
+	}
+
 	if ( ! $order instanceof WC_Order ) {
 		return $actions;
 	}

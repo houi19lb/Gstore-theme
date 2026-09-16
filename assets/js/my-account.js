@@ -569,3 +569,54 @@ document.addEventListener('DOMContentLoaded', () => {
     window.addEventListener('resize', updateAccountOffset, { passive: true });
   }
 });
+
+// Move existing controls, preserving contract listeners, order keys and native action URLs.
+(function () {
+  function arrangeOrderActions() {
+    const details = document.querySelector('.gstore-view-order__details');
+    if (!details || details.querySelector('.account-detail-actions')) return;
+    const contract = details.querySelector('.gstore-contract-trigger-wrap .gstore-contract-open');
+    const repeat = details.querySelector('.order-again a');
+    const row = details.querySelector('.order-actions--heading')?.closest('tr');
+    const actions = row ? Array.from(row.querySelectorAll('a.order-actions-button')) : [];
+    if (!contract && !repeat && !actions.length) return;
+
+    const panel = document.createElement('section');
+    panel.className = 'account-detail-actions';
+    panel.setAttribute('aria-labelledby', 'account-actions-title');
+    const intro = document.createElement('div');
+    const title = document.createElement('h2');
+    title.id = 'account-actions-title';
+    title.textContent = contract ? 'Contrato e ações' : 'Ações do pedido';
+    intro.append(title);
+    if (contract) {
+      const description = document.createElement('p');
+      description.textContent = 'Consulte o contrato vinculado a este pedido.';
+      intro.append(description);
+    }
+    const controls = document.createElement('div');
+    controls.className = 'account-detail-actions-buttons';
+    panel.append(intro, controls);
+    const wrappers = [contract?.closest('.gstore-contract-trigger-wrap'), repeat?.closest('.order-again')];
+    if (contract) {
+      contract.classList.add('gstore-account-button', 'gstore-account-button--secondary');
+      controls.append(contract);
+    }
+    actions.forEach(action => {
+      action.classList.add('gstore-account-button');
+      controls.append(action);
+    });
+    if (repeat) {
+      repeat.textContent = 'Refazer compra';
+      repeat.classList.add('gstore-account-button');
+      controls.append(repeat);
+    }
+    wrappers.forEach(wrapper => { if (wrapper && !wrapper.children.length && !wrapper.textContent.trim()) wrapper.remove(); });
+    if (row && !row.querySelector('td')?.textContent.trim()) row.remove();
+    const addresses = details.querySelector('.woocommerce-customer-details');
+    if (addresses) addresses.before(panel);
+    else details.append(panel);
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', arrangeOrderActions);
+  else arrangeOrderActions();
+})();
