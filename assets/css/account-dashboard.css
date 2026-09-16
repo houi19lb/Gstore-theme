@@ -219,7 +219,7 @@ body.woocommerce-account main .woocommerce:has(> .gstore-account-shell) { width:
 	.gstore-account-shell .woocommerce-orders-table__cell-order-status { grid-column: 1 / -1; grid-row: 2; }
 	.gstore-account-shell .woocommerce-orders-table__cell-order-date { grid-column: 2; grid-row: 1; }
 	.gstore-account-shell .woocommerce-orders-table__cell-order-total { grid-column: 1; grid-row: 3; }
-	.gstore-account-shell .woocommerce-orders-table__cell-order-tracking { grid-column: 2; grid-row: 3; }
+	.gstore-account-shell .woocommerce-orders-table__cell-order-documentation { grid-column: 2; grid-row: 3; }
 	.gstore-account-shell .woocommerce-orders-table__cell-order-actions { grid-column: 1 / -1; grid-row: 4; }
 	.gstore-account-shell .gstore-myaccount__content table.woocommerce-orders-table .woocommerce-orders-table__cell-order-actions::before { content: none; }
 	.gstore-account-shell .gstore-myaccount__content table.woocommerce-orders-table .woocommerce-orders-table__cell-order-status { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
@@ -272,3 +272,63 @@ body.woocommerce-account main .woocommerce:has(> .gstore-account-shell) { width:
 .gstore-account-shell .gstore-fulfillment-timeline__step.is-completed .gstore-fulfillment-timeline__label { color: var(--gstore-color-success-text, #065f46); }
 .gstore-account-shell .gstore-fulfillment-timeline__step.is-current:not(.is-rejected) .gstore-fulfillment-timeline__label { color: var(--account-text); }
 .gstore-account-shell .gstore-fulfillment-timeline__step.is-pending .gstore-fulfillment-timeline__label { color: var(--account-muted); }
+
+/* Approved account layout refinements; scoped to customer account. */
+@media(min-width:901px){.gstore-account-shell .gstore-myaccount-nav{top:var(--account-header-clearance,calc(var(--gstore-sticky-offset,110px) + 20px))}}
+.gstore-account-shell .woocommerce-customer-details .woocommerce-columns--addresses{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:24px;align-items:start}
+.gstore-account-shell .woocommerce-customer-details .woocommerce-columns--addresses::before,
+.gstore-account-shell .woocommerce-customer-details .woocommerce-columns--addresses::after{content:none;display:none}
+.gstore-account-shell .woocommerce-customer-details .woocommerce-columns--addresses > .woocommerce-column{float:none;width:auto!important;min-width:0;margin:0}
+.gstore-account-shell .gstore-account-card.gstore-account-latest{background:color-mix(in srgb,var(--account-accent) 4%,var(--gstore-color-surface-card,#fff));border:1px solid color-mix(in srgb,var(--account-accent) 26%,var(--gstore-color-border,#e6e6e6));box-shadow:0 3px 12px rgb(0 0 0 / 5%)}
+.gstore-account-shell .gstore-partner-application-cta--account{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:20px;padding:20px;box-sizing:border-box}
+.gstore-account-shell .gstore-partner-application-cta--account p{margin:6px 0 0}
+.gstore-account-shell .gstore-partner-application-cta--account .button{display:inline-flex;align-items:center;justify-content:center;min-height:44px;margin:0;padding:12px 20px;border:1px solid transparent;border-radius:6px;background:var(--gstore-color-action-bg);color:var(--gstore-color-action-text);font-weight:600;line-height:1.4;text-align:center;box-sizing:border-box;white-space:normal}
+.gstore-account-shell .gstore-partner-application-cta--account .button:hover{background:var(--gstore-color-action-hover);color:var(--gstore-color-action-text)}
+@media(max-width:600px){
+ .gstore-account-shell .woocommerce-customer-details .woocommerce-columns--addresses{grid-template-columns:minmax(0,1fr);gap:24px}
+ .gstore-account-shell .gstore-partner-application-cta--account{grid-template-columns:minmax(0,1fr);gap:16px;padding:18px}
+ .gstore-account-shell .gstore-partner-application-cta--account .button{width:100%}
+}
+.gstore-account-shell .gstore-myaccount__content :is(a,button,input.input-text,select):focus-visible{outline:2px solid var(--account-text)!important;outline-offset:3px}
+.gstore-account-shell .woocommerce-EditAccountForm.edit-account > .clear:empty{display:none}
+.gstore-account-shell .woocommerce-Address address{padding:14px 0 0!important;margin:0!important;min-height:0!important;background:transparent!important}
+.gstore-account-shell .woocommerce-Address{padding:20px!important}
+.gstore-account-shell .woocommerce-Address-title{gap:12px!important;padding-bottom:12px!important;margin-bottom:0!important}
+body.woocommerce-account main .woocommerce:has(> .gstore-account-shell){max-width:1280px!important}
+.gstore-account-shell .gstore-myaccount__layout{grid-template-columns:200px minmax(0,1fr);gap:28px}
+.gstore-account-shell .gstore-account-dashboard{--account-dashboard-card-padding:20px}
+.gstore-account-shell .gstore-account-dashboard-grid{gap:24px}
+.gstore-account-shell .gstore-account-order-title{margin-top:16px;gap:12px}
+.gstore-account-shell .gstore-account-order-meta{margin-bottom:16px}
+.gstore-account-shell .account-order-footer{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:16px;align-items:center;margin-top:18px}
+.gstore-account-shell .account-order-footer .gstore-account-note{margin:0;padding:12px 14px}
+.gstore-account-shell .account-order-footer .gstore-account-button{min-width:136px;width:auto;margin:0}
+.gstore-account-shell .gstore-account-stats{margin-top:16px;padding-block:14px}
+.gstore-account-shell .gstore-account-shortcuts{gap:12px;margin-top:16px}
+.gstore-account-shell .gstore-account-shortcut{padding:14px;gap:12px}
+.gstore-account-shell .gstore-account-aside{padding-left:24px;gap:20px}
+.gstore-account-shell .gstore-account-update{padding-block:14px}
+@media(max-width:1180px){.gstore-account-shell .gstore-account-aside{padding-left:0}}
+@media(max-width:900px){.gstore-account-shell .gstore-myaccount__layout{grid-template-columns:minmax(0,1fr);gap:16px}.gstore-account-shell .gstore-account-dashboard{--account-dashboard-card-padding:18px}}
+@media(max-width:600px){.gstore-account-shell .account-order-footer{grid-template-columns:minmax(0,1fr);gap:12px}.gstore-account-shell .account-order-footer .gstore-account-button{width:100%}}
+@media(max-width:540px){
+ .gstore-account-shell .gstore-account-progress{margin:20px 0}
+ .gstore-account-shell .gstore-account-progress li{gap:12px;padding-bottom:12px}
+ .gstore-account-shell .gstore-account-progress li:last-child{padding-bottom:0}
+ .gstore-account-shell .gstore-account-step-dot{width:28px;height:28px}
+ .gstore-account-shell .gstore-account-progress li:not(:last-child)::after{left:13px;top:28px;height:12px}
+}
+.gstore-account-shell .account-arrow{display:block;width:18px;height:18px;flex-shrink:0;align-self:center;color:var(--account-muted)}
+.gstore-account-shell .woocommerce-orders-table__cell-order-documentation .gstore-orders-documentation{margin:0!important;font-size:13px;line-height:1.5}
+.gstore-account-shell .account-documentation-empty{color:var(--account-muted)}
+@media(min-width:1101px){.gstore-account-shell .woocommerce-orders-table td{vertical-align:middle}.gstore-account-shell .woocommerce-orders-table__cell-order-documentation{min-width:150px}}
+/* Complete enclosure for the secondary column; primary order remains dominant. */
+.gstore-account-shell .gstore-account-aside{padding:20px;border:1px solid var(--account-border);border-radius:10px;background:var(--account-surface);gap:20px}
+.gstore-account-shell .gstore-account-contact{--contact-color:var(--account-accent);border-top:3px solid var(--contact-color);background:color-mix(in srgb,var(--contact-color) 3%,var(--account-surface))}
+.gstore-account-shell .gstore-account-contact--whatsapp{--contact-color:#167345}
+.gstore-account-shell .gstore-account-contact--email{--contact-color:#4f46a5}
+.gstore-account-shell .gstore-account-contact--telegram{--contact-color:#086e9b}
+.gstore-account-shell .gstore-account-contact .gstore-account-icon{color:var(--contact-color);background:color-mix(in srgb,var(--contact-color) 10%,var(--account-surface))}
+.gstore-account-shell .gstore-account-contact .gstore-account-button--secondary{color:var(--contact-color);border-color:color-mix(in srgb,var(--contact-color) 40%,var(--account-border));background:var(--account-surface)}
+.gstore-account-shell .gstore-account-contact .gstore-account-button--secondary:hover{background:color-mix(in srgb,var(--contact-color) 9%,var(--account-surface));border-color:var(--contact-color)}
+@media(max-width:540px){.gstore-account-shell .gstore-account-aside{padding:18px}}

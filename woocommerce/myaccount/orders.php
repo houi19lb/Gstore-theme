@@ -15,7 +15,7 @@ if ( $has_orders ) :
 		'order-number'   => __( 'Pedido', 'gstore' ),
 		'order-date'     => __( 'Data', 'gstore' ),
 		'order-status'   => __( 'Status', 'gstore' ),
-		'order-tracking' => __( 'Rastreio', 'gstore' ),
+		'order-documentation' => __( 'Documentação', 'gstore' ),
 		'order-total'    => __( 'Total', 'gstore' ),
 		'order-actions'  => __( 'Ações', 'gstore' ),
 	);
@@ -100,74 +100,6 @@ if ( $has_orders ) :
 		}
 	};
 
-	$get_order_tracking = static function( WC_Order $order ) {
-		$tracking_meta_keys = array(
-			'_wc_shipment_tracking_items',
-			'_tracking_number',
-			'tracking_number',
-			'_tracking_code',
-			'tracking_code',
-			'_correios_tracking_code',
-			'_correios_tracking_number',
-			'_codigo_rastreio',
-			'codigo_rastreio',
-			'_melhor_envio_tracking',
-			'_melhor_envio_tracking_code',
-			'_aftership_tracking_number',
-		);
-
-		foreach ( $tracking_meta_keys as $meta_key ) {
-			$raw_value = $order->get_meta( $meta_key, true );
-
-			if ( empty( $raw_value ) ) {
-				continue;
-			}
-
-			if ( is_array( $raw_value ) ) {
-				foreach ( $raw_value as $item ) {
-					if ( ! is_array( $item ) ) {
-						continue;
-					}
-
-					$tracking_number = '';
-					if ( ! empty( $item['tracking_number'] ) ) {
-						$tracking_number = (string) $item['tracking_number'];
-					} elseif ( ! empty( $item['tracking_code'] ) ) {
-						$tracking_number = (string) $item['tracking_code'];
-					}
-
-					$tracking_number = trim( wp_strip_all_tags( $tracking_number ) );
-					if ( '' === $tracking_number ) {
-						continue;
-					}
-
-					$tracking_url = '';
-					if ( ! empty( $item['custom_tracking_link'] ) ) {
-						$tracking_url = (string) $item['custom_tracking_link'];
-					} elseif ( ! empty( $item['tracking_link'] ) ) {
-						$tracking_url = (string) $item['tracking_link'];
-					}
-
-					return array(
-						'label' => $tracking_number,
-						'url'   => esc_url_raw( $tracking_url ),
-					);
-				}
-
-				continue;
-			}
-
-			$tracking_number = trim( wp_strip_all_tags( (string) $raw_value ) );
-			if ( '' !== $tracking_number ) {
-				return array(
-					'label' => $tracking_number,
-					'url'   => '',
-				);
-			}
-		}
-
-		return false;
-	};
 
 	if ( count( $display_order_rows ) > 1 ) {
 		usort(
@@ -257,7 +189,6 @@ if ( $has_orders ) :
 				if ( ! $order instanceof WC_Order ) {
 					continue;
 				}
-				$item_count = $order->get_item_count() - $order->get_item_count_refunded();
 				?>
 				<tr class="woocommerce-orders-table__row woocommerce-orders-table__row--status-<?php echo esc_attr( $order->get_status() ); ?> order">
 					<?php foreach ( $account_orders_columns as $column_id => $column_name ) : ?>
@@ -281,45 +212,20 @@ if ( $has_orders ) :
 								<span class="gstore-orders-status gstore-orders-status--<?php echo esc_attr( $order->get_status() ); ?> gstore-account-tone--<?php echo esc_attr( gstore_account_order_tone( $order ) ); ?>">
 									<?php echo esc_html( $status_label ); ?>
 								</span>
-								<?php
-								$document_stage = (string) $order->get_meta( '_gstore_fulfillment_stage' );
-								$document_stage_labels = array(
-									'aguardando_documentacao' => 'Aguardando documentação',
-									'processando_documentacao' => 'Verificando documentação',
-									'documentacao_negada' => 'Documentação negada',
-									'preparando_entrega' => 'Preparando entrega',
-								);
-								if ( isset( $document_stage_labels[ $document_stage ] ) && ! in_array( $order->get_status(), array( 'cancelled', 'refunded', 'failed', 'completed' ), true ) ) : ?>
-									<p class="gstore-orders-documentation<?php echo 'documentacao_negada' === $document_stage ? ' is-rejected' : ''; ?>">
-										<a href="<?php echo esc_url( $order->get_view_order_url() ); ?>"><?php echo esc_html( $document_stage_labels[ $document_stage ] ); ?></a>
-										<?php if ( 'documentacao_negada' === $document_stage ) : ?>
-											<small>Entre em contato com o atendente para entender por que sua documentação foi negada.</small>
-										<?php endif; ?>
-									</p>
-								<?php endif; ?>
-							<?php elseif ( 'order-tracking' === $column_id ) : ?>
-								<?php $tracking = $get_order_tracking( $order ); ?>
-								<?php if ( is_array( $tracking ) && ! empty( $tracking['label'] ) ) : ?>
-									<?php if ( ! empty( $tracking['url'] ) ) : ?>
-										<a class="gstore-orders-tracking" href="<?php echo esc_url( $tracking['url'] ); ?>" target="_blank" rel="noopener">
-											<?php echo esc_html( $tracking['label'] ); ?>
-										</a>
-									<?php else : ?>
-										<span class="gstore-orders-tracking"><?php echo esc_html( $tracking['label'] ); ?></span>
-									<?php endif; ?>
-								<?php else : ?>
-									<span class="gstore-orders-tracking is-empty"><?php esc_html_e( 'Não Disponível', 'gstore' ); ?></span>
-								<?php endif; ?>
-							<?php elseif ( 'order-total' === $column_id ) : ?>
-								<?php
-								printf(
-									/* translators: 1: formatted order total 2: total order items */
-									esc_html( _n( '%1$s de %2$s item', '%1$s de %2$s itens', $item_count, 'woocommerce' ) ),
-									wp_kses_post( $order->get_formatted_order_total() ),
-									esc_html( $item_count )
-								);
-								?>
-							<?php elseif ( 'order-actions' === $column_id ) : ?>
+                            <?php elseif ( 'order-documentation' === $column_id ) : ?>
+                                <?php
+                                $document_stage = (string) $order->get_meta( '_gstore_fulfillment_stage' );
+                                $document_stage_labels = array(
+                                    'aguardando_documentacao' => __( 'Aguardando envio', 'gstore' ),
+                                    'processando_documentacao' => __( 'Em análise', 'gstore' ),
+                                    'documentacao_negada' => __( 'Negada', 'gstore' ),
+                                );
+                                if ( isset( $document_stage_labels[ $document_stage ] ) && ! in_array( $order->get_status(), array( 'cancelled', 'refunded', 'failed', 'completed' ), true ) ) : ?>
+                                    <p class="gstore-orders-documentation<?php echo 'documentacao_negada' === $document_stage ? ' is-rejected' : ''; ?>"><a href="<?php echo esc_url( $order->get_view_order_url() ); ?>"><?php echo esc_html( $document_stage_labels[ $document_stage ] ); ?></a></p>
+                                <?php else : ?><span class="account-documentation-empty">—</span><?php endif; ?>
+                            <?php elseif ( 'order-total' === $column_id ) : ?>
+                                <?php echo wp_kses_post( $order->get_formatted_order_total() ); ?>
+                            <?php elseif ( 'order-actions' === $column_id ) : ?>
 								<?php
 								$actions = wc_get_account_orders_actions( $order );
 								if ( ! empty( $actions ) ) :

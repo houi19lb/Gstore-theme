@@ -551,3 +551,21 @@
 		init();
 	}
 })();
+
+// Keep the customer identity below the store header.
+document.addEventListener('DOMContentLoaded', () => {
+  const shell = document.querySelector('.gstore-account-shell');
+  const header = document.querySelector('.Gstore-header-shell');
+  if (shell && header) {
+    const updateAccountOffset = () => {
+      const style = getComputedStyle(header);
+      const height = ['fixed', 'sticky'].includes(style.position)
+        ? header.getBoundingClientRect().height + (parseFloat(style.top) || 0)
+        : 0;
+      shell.style.setProperty('--account-header-clearance', `${Math.ceil(height) + 20}px`);
+    };
+    updateAccountOffset();
+    if ('ResizeObserver' in window) new ResizeObserver(updateAccountOffset).observe(header);
+    window.addEventListener('resize', updateAccountOffset, { passive: true });
+  }
+});

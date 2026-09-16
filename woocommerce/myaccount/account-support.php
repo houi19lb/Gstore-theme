@@ -7,8 +7,11 @@ $channels = gstore_account_contact_channels();
 	<p><?php esc_html_e( 'Escolha o melhor canal para falar com a nossa equipe.', 'gstore' ); ?></p>
 </div>
 <div class="gstore-account-contacts">
-	<?php foreach ( $channels as $channel ) : ?>
-	<section class="gstore-account-card gstore-account-contact gstore-account-contact--<?php echo esc_attr( $channel['kind'] ); ?>">
+	<?php foreach ( $channels as $channel ) :
+        $contact_host = strtolower( (string) wp_parse_url( $channel['url'], PHP_URL_HOST ) );
+        $is_whatsapp = in_array( $contact_host, array( 'wa.me', 'api.whatsapp.com', 'web.whatsapp.com', 'whatsapp.com', 'www.whatsapp.com' ), true );
+    ?>
+	<section class="gstore-account-card gstore-account-contact gstore-account-contact--<?php echo esc_attr( $channel['kind'] ); ?><?php echo $is_whatsapp ? ' gstore-account-contact--whatsapp' : ''; ?>">
 		<span class="gstore-account-icon" aria-hidden="true"><i class="<?php echo esc_attr( $channel['icon'] ); ?>"></i></span>
 		<h2><?php echo esc_html( $channel['label'] ); ?></h2>
 		<p><?php echo esc_html( $channel['description'] ); ?></p>

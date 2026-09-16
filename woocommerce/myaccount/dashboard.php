@@ -30,8 +30,8 @@ $name = $current_user->first_name ?: $current_user->display_name;
 						<?php ++$i; endforeach; ?>
 					</ol>
 					<?php endif; ?>
-					<div class="gstore-account-note gstore-account-tone--<?php echo esc_attr( $progress['tone'] ); ?>"><p><?php echo esc_html( $progress['message'] ); ?></p></div>
-					<a class="gstore-account-button" href="<?php echo esc_url( $latest->get_view_order_url() ); ?>"><?php esc_html_e( 'Ver pedido', 'gstore' ); ?></a>
+					<div class="account-order-footer"><div class="gstore-account-note gstore-account-tone--<?php echo esc_attr( $progress['tone'] ); ?>"><p><?php echo esc_html( $progress['message'] ); ?></p></div>
+					<a class="gstore-account-button" href="<?php echo esc_url( $latest->get_view_order_url() ); ?>"><?php esc_html_e( 'Ver pedido', 'gstore' ); ?></a></div>
 				<?php else : ?>
 					<div class="gstore-account-empty"><span class="gstore-account-icon" aria-hidden="true"><i class="fa-solid fa-box-open"></i></span><h3><?php esc_html_e( 'Seus pedidos vão aparecer aqui', 'gstore' ); ?></h3><p><?php esc_html_e( 'Quando você fizer um pedido, poderá acompanhar cada etapa nesta área.', 'gstore' ); ?></p></div>
 					<a class="gstore-account-button" href="<?php echo esc_url( gstore_get_catalog_url() ); ?>"><?php esc_html_e( 'Explorar a loja', 'gstore' ); ?></a>
@@ -43,14 +43,14 @@ $name = $current_user->first_name ?: $current_user->display_name;
 				<?php endforeach; ?>
 			</dl>
 			<div class="gstore-account-shortcuts">
-				<a class="gstore-account-card gstore-account-shortcut" href="<?php echo esc_url( wc_get_account_endpoint_url( 'orders' ) ); ?>"><span class="gstore-account-icon" aria-hidden="true"><i class="fa-solid fa-box"></i></span><span><strong><?php esc_html_e( 'Histórico de pedidos', 'gstore' ); ?></strong><small><?php esc_html_e( 'Veja seu histórico completo', 'gstore' ); ?></small></span><span aria-hidden="true">→</span></a>
-				<a class="gstore-account-card gstore-account-shortcut" href="<?php echo esc_url( wc_get_account_endpoint_url( 'edit-account' ) ); ?>"><span class="gstore-account-icon" aria-hidden="true"><i class="fa-regular fa-user"></i></span><span><strong><?php esc_html_e( 'Meus dados', 'gstore' ); ?></strong><small><?php esc_html_e( 'Informações, senha e endereços', 'gstore' ); ?></small></span><span aria-hidden="true">→</span></a>
+				<a class="gstore-account-card gstore-account-shortcut" href="<?php echo esc_url( wc_get_account_endpoint_url( 'orders' ) ); ?>"><span class="gstore-account-icon" aria-hidden="true"><i class="fa-solid fa-box"></i></span><span><strong><?php esc_html_e( 'Histórico de pedidos', 'gstore' ); ?></strong><small><?php esc_html_e( 'Veja seu histórico completo', 'gstore' ); ?></small></span><svg class="account-arrow lucide lucide-arrow-right" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></a>
+				<a class="gstore-account-card gstore-account-shortcut" href="<?php echo esc_url( wc_get_account_endpoint_url( 'edit-account' ) ); ?>"><span class="gstore-account-icon" aria-hidden="true"><i class="fa-regular fa-user"></i></span><span><strong><?php esc_html_e( 'Meus dados', 'gstore' ); ?></strong><small><?php esc_html_e( 'Informações, senha e endereços', 'gstore' ); ?></small></span><svg class="account-arrow lucide lucide-arrow-right" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></a>
 			</div>
 		</div>
 		<div class="gstore-account-aside">
 			<section class="gstore-account-card"><div class="gstore-account-card-top"><h2><?php esc_html_e( 'Seus últimos pedidos', 'gstore' ); ?></h2><a href="<?php echo esc_url( wc_get_account_endpoint_url( 'orders' ) ); ?>"><?php esc_html_e( 'Ver todos', 'gstore' ); ?></a></div>
 				<?php foreach ( $orders as $recent ) : $recent_progress = $recent->get_id() === ( $latest ? $latest->get_id() : 0 ) ? $progress : gstore_account_order_progress( $recent ); ?>
-				<a class="gstore-account-update" href="<?php echo esc_url( $recent->get_view_order_url() ); ?>"><i class="fa-solid fa-box" aria-hidden="true"></i><span><strong><?php printf( esc_html__( 'Pedido #%s', 'gstore' ), esc_html( $recent->get_order_number() ) ); ?></strong><small class="gstore-account-status gstore-account-tone--<?php echo esc_attr( $recent_progress['tone'] ); ?>"><?php echo esc_html( $recent_progress['label'] ); ?></small></span><span aria-hidden="true">→</span></a>
+				<a class="gstore-account-update" href="<?php echo esc_url( $recent->get_view_order_url() ); ?>"><i class="fa-solid fa-box" aria-hidden="true"></i><span><strong><?php printf( esc_html__( 'Pedido #%s', 'gstore' ), esc_html( $recent->get_order_number() ) ); ?></strong><small class="gstore-account-status gstore-account-tone--<?php echo esc_attr( $recent_progress['tone'] ); ?>"><?php echo esc_html( $recent_progress['label'] ); ?></small></span><svg class="account-arrow lucide lucide-arrow-right" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></a>
 				<?php endforeach; ?>
 				<?php if ( ! $orders ) : ?><p><?php esc_html_e( 'Você ainda não tem pedidos.', 'gstore' ); ?></p><?php endif; ?>
 			</section>

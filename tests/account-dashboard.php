@@ -9,6 +9,7 @@ function esc_url( $s ) { return preg_match( '/^(https?:|mailto:|tel:|\/)/', (str
 function esc_html__( $s, ...$args ) { return esc_html( $s ); }
 function esc_html_e( $s, ...$args ) { echo esc_html( $s ); }
 function esc_attr_e( $s, ...$args ) { echo esc_attr( $s ); }
+function wp_parse_url( $url, $component = -1 ) { return parse_url( $url, $component ); }
 function wp_kses_post( $s ) { return $s; }
 function add_filter( ...$args ) {}
 function sanitize_key( $s ) { return preg_replace( '/[^a-z0-9_-]/', '', strtolower( $s ) ); }
