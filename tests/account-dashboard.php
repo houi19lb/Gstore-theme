@@ -67,7 +67,7 @@ check( gstore_account_is_support() && ! gstore_account_menu_is_current( 'dashboa
 $endpoint = 'view-order'; check( ! gstore_account_is_support(), 'Support cannot hijack order endpoint' );
 $endpoint = 'edit-address'; check( gstore_account_menu_is_current( 'edit-account' ), 'Address grouped under data' );
 $endpoint = ''; $_GET = array( 'customer_id' => 999 );
-gstore_account_dashboard_orders(); check( end( $queries )['customer_id'] === 7 && end( $queries )['limit'] === 3, 'Scoped bounded query' );
+gstore_account_dashboard_orders(); check( end( $queries )['customer_id'] === 7 && end( $queries )['limit'] === 4, 'Scoped bounded query' );
 $counts = gstore_account_order_counts(); check( array( 'total' => 1, 'active' => 1, 'completed' => 0 ) === $counts && end( $queries )['customer_id'] === 7 && end( $queries )['limit'] === 1, 'Counts use customer-scoped HPOS queries' );
 $customer_id = 0; $count = count( $queries ); check( array() === gstore_account_dashboard_orders() && count( $queries ) === $count, 'Guest cannot query orders' ); $customer_id = 7;
 $stage_keys = array( 'processando_pagamento', 'pagamento_confirmado', 'aguardando_documentacao', 'processando_documentacao', 'preparando_entrega', 'enviado' );

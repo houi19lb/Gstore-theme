@@ -620,3 +620,137 @@ document.addEventListener('DOMContentLoaded', () => {
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', arrangeOrderActions);
   else arrangeOrderActions();
 })();
+
+// Account layout refinements: move existing nodes without replacing native handlers.
+document.addEventListener('DOMContentLoaded', () => {
+  const shell = document.querySelector('.gstore-account-shell');
+  if (!shell || shell.classList.contains('account-refined')) return;
+  shell.classList.add('account-refined');
+  const dataTabs = shell.querySelector('.gstore-account-pages');
+  if (dataTabs) {
+    const panel = document.createElement('section');
+    panel.className = 'account-refined-data-panel';
+    panel.setAttribute('aria-label', 'Informações da conta');
+    const content = dataTabs.parentElement;
+    const children = [...content.children];
+    dataTabs.before(panel);
+    children.slice(children.indexOf(dataTabs)).forEach(child => panel.append(child));
+    panel.querySelectorAll('.gstore-account-pagination a').forEach(link => {
+      const previous = /Anterior/.test(link.textContent);
+      link.textContent = previous ? 'Anterior' : 'Próxima';
+      // Reuse the Lucide arrow already present in the local theme preview.
+      const icon = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      icon.setAttribute('viewBox', '0 0 24 24');
+      icon.setAttribute('width', '18'); icon.setAttribute('height', '18');
+      icon.setAttribute('fill', 'none'); icon.setAttribute('stroke', 'currentColor');
+      icon.setAttribute('stroke-width', '1.8'); icon.setAttribute('stroke-linecap', 'round');
+      icon.setAttribute('stroke-linejoin', 'round'); icon.setAttribute('aria-hidden', 'true');
+      icon.classList.add('account-refined-pagination-arrow');
+      const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      path.setAttribute('d', previous ? 'm12 19-7-7 7-7 M5 12h14' : 'M5 12h14 m-7-7 7 7-7 7');
+      icon.append(path);
+      if (previous) link.prepend(icon); else link.append(icon);
+    });
+  }
+  const order = shell.querySelector('.gstore-view-order');
+  if (order) {
+    order.classList.add('account-refined-order');
+    const header = order.querySelector('.account-detail-heading');
+    const tracking = order.querySelector('.gstore-view-order__tracking');
+    const upload = order.querySelector('.gstore-fulfillment-upload');
+    const sent = order.querySelector('.gstore-fulfillment-docs-summary');
+    const actions = order.querySelector('.account-detail-actions');
+    const contract = [...(actions?.querySelectorAll('a, button') || [])].find(a => /contrato/i.test(a.textContent));
+    const documents = document.createElement('section');
+    documents.className = 'account-refined-documents account-refined-panel'; documents.id = 'documentos-do-pedido';
+    documents.setAttribute('aria-labelledby', 'account-refined-doc-title');
+    const docHeader = document.createElement('div'); docHeader.className = 'account-refined-section-heading';
+    docHeader.innerHTML = '<div><h2 id="account-refined-doc-title">Documentação do pedido</h2><p>Consulte os arquivos enviados e acompanhe a análise.</p></div>';
+    documents.append(docHeader);
+    if (upload) documents.append(upload);
+    if (sent) documents.append(sent);
+    if (upload || sent) (tracking || header).after(documents);
+    if (actions) {
+      if (!actions.querySelector('a, button')) actions.remove();
+      else {
+        actions.querySelector('h2').textContent = contract ? 'Contrato do pedido' : 'Outras ações';
+        if (!contract) actions.querySelector('p')?.remove();
+      }
+    }
+    const notice = order.querySelector('#gstore-fulfillment-message');
+    const support = order.querySelector('#gstore-fulfillment-support');
+    if (notice && !notice.hidden && notice.textContent.trim()) {
+      const next = document.createElement('section'); next.className = 'account-refined-next';
+      const isRejected = notice.classList.contains('is-rejected');
+      next.classList.toggle('account-refined-next--attention', isRejected);
+      const title = document.createElement('h2');
+      title.textContent = isRejected ? 'Sua documentação precisa de atenção' : !!upload ? 'Acompanhe a análise dos documentos' : 'Andamento do pedido';
+      next.append(title, notice);
+      if (upload || sent) {
+        const link = document.createElement('a'); link.href = '#documentos-do-pedido';
+        link.className = 'gstore-account-button' + (isRejected ? '' : ' gstore-account-button--secondary');
+        link.textContent = isRejected ? 'Revisar documentação' : 'Ver documentação'; next.append(link);
+      }
+      if (support && !support.hidden) { support.className = 'account-refined-support-link'; next.append(support); }
+      header.after(next);
+    }
+    const details = order.querySelector('.woocommerce-order-details');
+    const table = details?.querySelector('table');
+    const foot = table?.querySelector('tfoot');
+    if (foot && [...foot.rows].every(row => row.cells.length === 2 && !row.querySelector('button, input, .order-actions-button'))) {
+      const payment = document.createElement('section'); payment.className = 'account-refined-panel account-refined-payment';
+      payment.innerHTML = '<h2>Resumo do pagamento</h2>';
+      const summary = document.createElement('dl');
+      [...foot.rows].forEach(row => {
+        const group = document.createElement('div'); const dt = document.createElement('dt'); const dd = document.createElement('dd');
+        dt.append(...row.cells[0].childNodes); dd.append(...row.cells[1].childNodes);
+        group.append(dt, dd); summary.append(group);
+      });
+      payment.append(summary); foot.remove(); details.after(payment);
+      const group = document.createElement('div'); group.className = 'account-refined-purchase-grid';
+      details.before(group); group.append(details, payment);
+    }
+    details?.classList.add('account-refined-panel');
+    const detailsTitle = details?.querySelector('h2'); if (detailsTitle) detailsTitle.textContent = 'Itens do pedido';
+    const customer = order.querySelector('.woocommerce-customer-details');
+    if (customer) customer.classList.add('account-refined-addresses');
+  }
+  const dashboard = shell.querySelector('.gstore-account-dashboard');
+  if (dashboard) {
+    const latest = dashboard.querySelector('.gstore-account-latest');
+    // Detailed six-stage tracking remains available inside each order.
+    latest?.querySelector('.gstore-account-progress')?.remove();
+    const note = latest?.querySelector('.gstore-account-note');
+    const status = latest?.querySelector('.gstore-account-status');
+    if (note && status) {
+      const title = document.createElement('strong');
+      title.textContent = status.textContent.trim();
+      note.prepend(title);
+    }
+    const grid = dashboard.querySelector('.gstore-account-dashboard-grid');
+    const stats = dashboard.querySelector('.gstore-account-stats');
+    if (stats) grid.after(stats);
+    const shortcuts = dashboard.querySelector('.gstore-account-shortcuts');
+    if (shortcuts) shortcuts.remove(); // Same destinations remain in persistent navigation.
+    const help = dashboard.querySelector('.gstore-account-help');
+    if (help) { help.classList.add('account-refined-help'); (stats || grid).after(help); }
+    const aside = dashboard.querySelector('.gstore-account-aside');
+    const title = aside?.querySelector('h2');
+    if (title) title.textContent = 'Outros pedidos';
+
+  }
+  const nav = shell.querySelector('.gstore-myaccount-nav');
+  const list = nav?.querySelector('.gstore-myaccount-nav__list');
+  if (list) {
+    list.id = 'account-refined-account-menu';
+    const toggle = document.createElement('button');
+    toggle.className = 'account-refined-menu-toggle'; toggle.type = 'button';
+    toggle.textContent = (list.querySelector('[aria-current] .gstore-myaccount-nav__label')?.textContent || 'Minha conta') + ' · Menu da conta';
+    toggle.setAttribute('aria-controls', list.id); toggle.setAttribute('aria-expanded', 'false');
+    toggle.addEventListener('click', () => {
+      const open = toggle.getAttribute('aria-expanded') !== 'true';
+      toggle.setAttribute('aria-expanded', String(open)); nav.classList.toggle('account-refined-menu-open', open);
+    });
+    list.before(toggle);
+  }
+});

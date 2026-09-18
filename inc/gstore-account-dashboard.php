@@ -61,7 +61,7 @@ function gstore_account_dashboard_orders() {
 	if ( ! $customer_id ) {
 		return array();
 	}
-	return wc_get_orders( array( 'customer_id' => $customer_id, 'limit' => 3, 'orderby' => 'date', 'order' => 'DESC' ) );
+	return wc_get_orders( array( 'customer_id' => $customer_id, 'limit' => 4, 'orderby' => 'date', 'order' => 'DESC' ) );
 }
 
 function gstore_account_order_counts() {

@@ -22,7 +22,7 @@ $name = $current_user->first_name ?: $current_user->display_name;
 				<div class="gstore-account-card-top"><h2><?php esc_html_e( 'Seu pedido mais recente', 'gstore' ); ?></h2></div>
 				<?php if ( $latest ) : $progress = gstore_account_order_progress( $latest ); ?>
 					<div class="gstore-account-order-title"><h3><?php printf( esc_html__( 'Pedido #%s', 'gstore' ), esc_html( $latest->get_order_number() ) ); ?></h3><span class="gstore-account-status gstore-account-tone--<?php echo esc_attr( $progress['tone'] ); ?>"><?php echo esc_html( $progress['label'] ); ?></span></div>
-					<p class="gstore-account-order-meta"><?php if ( $latest->get_date_created() ) : ?><time datetime="<?php echo esc_attr( $latest->get_date_created()->date( 'c' ) ); ?>"><?php echo esc_html( wc_format_datetime( $latest->get_date_created() ) ); ?></time> · <?php endif; ?><?php echo wp_kses_post( $latest->get_formatted_order_total() ); ?></p>
+					<dl class="account-refined-order-meta"><div><dt><?php esc_html_e( 'Data do pedido', 'gstore' ); ?></dt><dd><?php if ( $latest->get_date_created() ) : ?><time datetime="<?php echo esc_attr( $latest->get_date_created()->date( 'c' ) ); ?>"><?php echo esc_html( wc_format_datetime( $latest->get_date_created(), 'd/m/Y' ) ); ?></time><?php else : ?>—<?php endif; ?></dd></div><div><dt><?php esc_html_e( 'Total', 'gstore' ); ?></dt><dd><?php echo wp_kses_post( $latest->get_formatted_order_total() ); ?></dd></div></dl>
 					<?php if ( $progress['show_timeline'] ) : ?>
 					<ol class="gstore-account-progress gstore-account-tone--<?php echo esc_attr( $progress['tone'] ); ?>" aria-label="<?php esc_attr_e( 'Etapas do pedido', 'gstore' ); ?>">
 						<?php $i = 0; foreach ( $progress['stages'] as $stage_label ) : $current = $i === $progress['index']; ?>
@@ -49,10 +49,10 @@ $name = $current_user->first_name ?: $current_user->display_name;
 		</div>
 		<div class="gstore-account-aside">
 			<section class="gstore-account-card"><div class="gstore-account-card-top"><h2><?php esc_html_e( 'Seus últimos pedidos', 'gstore' ); ?></h2><a href="<?php echo esc_url( wc_get_account_endpoint_url( 'orders' ) ); ?>"><?php esc_html_e( 'Ver todos', 'gstore' ); ?></a></div>
-				<?php foreach ( $orders as $recent ) : $recent_progress = $recent->get_id() === ( $latest ? $latest->get_id() : 0 ) ? $progress : gstore_account_order_progress( $recent ); ?>
+				<?php foreach ( array_slice( $orders, 1, 3 ) as $recent ) : $recent_progress = $recent->get_id() === ( $latest ? $latest->get_id() : 0 ) ? $progress : gstore_account_order_progress( $recent ); ?>
 				<a class="gstore-account-update" href="<?php echo esc_url( $recent->get_view_order_url() ); ?>"><i class="fa-solid fa-box" aria-hidden="true"></i><span><strong><?php printf( esc_html__( 'Pedido #%s', 'gstore' ), esc_html( $recent->get_order_number() ) ); ?></strong><small class="gstore-account-status gstore-account-tone--<?php echo esc_attr( $recent_progress['tone'] ); ?>"><?php echo esc_html( $recent_progress['label'] ); ?></small></span><svg class="account-arrow lucide lucide-arrow-right" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></a>
 				<?php endforeach; ?>
-				<?php if ( ! $orders ) : ?><p><?php esc_html_e( 'Você ainda não tem pedidos.', 'gstore' ); ?></p><?php endif; ?>
+				<?php if ( count( $orders ) <= 1 ) : ?><p><?php esc_html_e( 'Você não tem outros pedidos.', 'gstore' ); ?></p><?php endif; ?>
 			</section>
 			<section class="gstore-account-card gstore-account-help"><span class="gstore-account-icon" aria-hidden="true"><i class="fa-solid fa-headset"></i></span><h2><?php esc_html_e( 'Precisa de ajuda?', 'gstore' ); ?></h2><p><?php esc_html_e( 'Escolha um dos canais da loja. Nossa equipe está aqui para ajudar.', 'gstore' ); ?></p><a class="gstore-account-button gstore-account-button--secondary" href="<?php echo esc_url( gstore_account_support_url() ); ?>"><?php esc_html_e( 'Falar com atendimento', 'gstore' ); ?></a></section>
 		</div>
