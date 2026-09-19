@@ -901,7 +901,7 @@ if ( ! function_exists( 'gstore_partner_account_render_dashboard_application' ) 
 		gstore_partner_account_render_application_cta( 'account' );
 	}
 }
-add_action( 'woocommerce_account_dashboard', 'gstore_partner_account_render_dashboard_application', 18 );
+// Account navigation is reserved for registered partners; applications stay on the program page.
 
 if ( ! function_exists( 'gstore_partner_account_render_application_page' ) ) {
 	function gstore_partner_account_render_application_page() {

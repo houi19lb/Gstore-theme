@@ -9,7 +9,7 @@ foreach ( array( false, true ) as $program_enabled ) {
  foreach ( array( false, true ) as $is_partner ) {
   $menu = gstore_account_dashboard_menu( gstore_partner_account_add_menu_item( array( 'dashboard' => 'Inicio', 'customer-logout' => 'Sair' ) ) );
   check( isset( $menu['revendedor'] ) === $is_partner, 'Existing partner panel visibility preserved' );
-  check( isset( $menu['seja-revendedor'] ) === ( $program_enabled && ! $is_partner ), 'Application entry only for eligible non-partners' );
+  check( ! isset( $menu['seja-revendedor'] ), 'No application entry in account navigation' );
   check( array_key_last( $menu ) === 'customer-logout', 'Logout stays last' );
  }
 }

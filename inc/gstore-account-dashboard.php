@@ -19,9 +19,6 @@ function gstore_account_dashboard_menu( $items ) {
 		'edit-account' => __( 'Meus dados', 'gstore' ),
 		'atendimento' => __( 'Atendimento', 'gstore' ),
 	);
-	if ( ! isset( $items['revendedor'] ) && function_exists( 'gstore_partner_account_can_show_application' ) && gstore_partner_account_can_show_application() ) {
-		$base['seja-revendedor'] = __( 'Seja um revendedor', 'gstore' );
-	}
 	// Keep program/extension endpoints and the nonce-protected logout link.
 	$logout = $items['customer-logout'] ?? null;
 	unset( $items['customer-logout'] );
