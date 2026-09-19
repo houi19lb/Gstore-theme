@@ -36,15 +36,16 @@ if ( function_exists( 'gstore_partner_account_is_visible' ) && function_exists( 
 	<ul class="gstore-myaccount-nav__list">
 		<?php foreach ( wc_get_account_menu_items() as $endpoint => $label ) : ?>
 			<?php
-			$icon = function_exists( 'gstore_get_myaccount_icon' ) ? gstore_get_myaccount_icon( $endpoint ) : '';
+			$icon = function_exists( 'gstore_get_myaccount_icon' ) ? gstore_get_myaccount_icon( 'seja-revendedor' === $endpoint ? 'revendedor' : $endpoint ) : '';
 			$is_current = gstore_account_menu_is_current( $endpoint );
+			$item_url = 'atendimento' === $endpoint ? gstore_account_support_url() : ( 'seja-revendedor' === $endpoint ? gstore_partner_account_application_page_url() : wc_get_account_endpoint_url( $endpoint ) );
 			if ( 'atendimento' === $endpoint ) {
 				$icon = '<i class="fa-solid fa-headset" aria-hidden="true"></i>';
 			}
 			?>
 			<li class="gstore-myaccount-nav__item <?php echo $is_current ? 'is-active' : ''; ?><?php echo 'customer-logout' === $endpoint ? ' gstore-myaccount-nav__item--logout' : ''; ?>">
 				<a
-					href="<?php echo esc_url( 'atendimento' === $endpoint ? gstore_account_support_url() : wc_get_account_endpoint_url( $endpoint ) ); ?>"
+					href="<?php echo esc_url( $item_url ); ?>"
 					class="gstore-myaccount-nav__link"
 					<?php echo $is_current ? 'aria-current="page"' : ''; ?>
 				>
