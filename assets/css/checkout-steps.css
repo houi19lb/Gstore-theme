@@ -3650,10 +3650,10 @@ body.gstore-contract-modal-open {
 }
 .Gstore-shipping-step .Gstore-checkout-item-shipping-option + .Gstore-checkout-item-shipping-option { border-top: 1px solid var(--gstore-muted); }
 .Gstore-shipping-step .Gstore-summary-item .Gstore-checkout-item-shipping-option input[type="radio"] { width: 20px; height: 20px; margin: 0; accent-color: var(--gstore-brass-dark); }
-.Gstore-shipping-step .Gstore-summary-item .Gstore-checkout-item-shipping-option__label { font-size: 0.9375rem; font-weight: 400; color: var(--gstore-foreground); min-width: 0; overflow-wrap: anywhere; white-space: normal; }
-.Gstore-shipping-step .Gstore-summary-item .Gstore-checkout-item-shipping-option.is-selected .Gstore-checkout-item-shipping-option__label { font-weight: 400; }
-.Gstore-shipping-step .Gstore-summary-item .Gstore-checkout-item-shipping-option__price { grid-column: 3; grid-row: 1; font-size: 0.9375rem; font-weight: 400; text-align: right; white-space: normal; overflow-wrap: anywhere; }
-.Gstore-shipping-step .Gstore-summary-item .Gstore-checkout-item-shipping-option__price--quote-notice { grid-column: 2 / -1; grid-row: 2; text-align: left; }
+.Gstore-shipping-step .Gstore-summary-item .Gstore-checkout-item-shipping-option__label { font-size: 0.9375rem; font-weight: 600; color: var(--gstore-foreground); min-width: 0; overflow-wrap: anywhere; white-space: normal; }
+.Gstore-shipping-step .Gstore-summary-item .Gstore-checkout-item-shipping-option.is-selected .Gstore-checkout-item-shipping-option__label { font-weight: 600; }
+.Gstore-shipping-step .Gstore-summary-item .Gstore-checkout-item-shipping-option__price { grid-column: 3; grid-row: 1; font-size: 0.9375rem; font-weight: 600; text-align: right; white-space: normal; overflow-wrap: anywhere; }
+.Gstore-shipping-step .Gstore-summary-item .Gstore-checkout-item-shipping-option__price--quote-notice { grid-column: 2 / -1; grid-row: 2; font-weight: 400; text-align: left; }
 .Gstore-shipping-step .Gstore-checkout-item-shipping-option__deadline { font-size: 0.8125rem; font-weight: 400; }
 .Gstore-shipping-step .Gstore-summary-item .Gstore-checkout-item-shipping-option.is-selected { background: var(--gstore-base); box-shadow: inset 3px 0 var(--gstore-brass-dark); }
 .Gstore-shipping-step .Gstore-summary-item .Gstore-checkout-item-shipping-option:hover { background: var(--gstore-base); }
