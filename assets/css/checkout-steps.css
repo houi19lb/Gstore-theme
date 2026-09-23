@@ -3677,6 +3677,7 @@ body.gstore-contract-modal-open {
 	.Gstore-shipping-step .Gstore-summary-item .Gstore-checkout-item-shipping-option { padding: 12px 12px 12px 20px; grid-template-columns: 20px minmax(0, 1fr) minmax(76px, auto) !important; gap: 8px 20px; }
 	.Gstore-shipping-step .Gstore-summary-item .Gstore-checkout-item-shipping-option--quote-notice { grid-template-columns: 20px minmax(0, 1fr) !important; }
 	.Gstore-shipping-step .Gstore-summary-item .Gstore-checkout-item-shipping-option__price { grid-column: 3; grid-row: 1; text-align: right; font-size: 0.875rem; }
+	.Gstore-shipping-step .Gstore-summary-item .Gstore-checkout-item-shipping-option__price--quote-notice { grid-column: 1 / -1; grid-row: 2; text-align: left; }
 	.Gstore-shipping-step .Gstore-summary-item .Gstore-checkout-item-shipping-option__label { font-size: 0.9375rem; }
 	.Gstore-shipping-step__destination { padding: 12px; gap: 8px; margin-bottom: 20px; }
 	.Gstore-shipping-step__destination strong { font-size: 0.875rem; }
