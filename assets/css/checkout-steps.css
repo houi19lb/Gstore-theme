@@ -3628,7 +3628,7 @@ body.gstore-contract-modal-open {
 .Gstore-shipping-step__item h3 small { font-size: 0.8125rem; display: block; color: var(--gstore-text-muted); font-weight: 400; margin-top: 4px; }
 .Gstore-shipping-step .Gstore-summary-item [data-gstore-item-shipping] { display: flex; flex-direction: column; gap: 16px; border: 0; padding: 0; margin: 0; }
 .Gstore-shipping-step .Gstore-checkout-item-shipping-group { margin: 0; border: 1px solid var(--gstore-muted); border-radius: 6px; overflow: hidden; }
-.Gstore-shipping-step .Gstore-checkout-item-shipping-group__title { display: flex; align-items: center; gap: 12px; width: 100%; margin: 0; padding: 12px 16px; background: var(--gstore-base); border-bottom: 1px solid var(--gstore-muted); font-size: 1rem; font-weight: 600; line-height: 1.4; }
+.Gstore-shipping-step .Gstore-checkout-item-shipping-group__title { display: flex; align-items: center; gap: 12px; width: 100%; margin: 0; padding: 12px 16px; background: var(--gstore-base); border-bottom: 1px solid var(--gstore-muted); font-size: 1.125rem; font-weight: 700; line-height: 1.4; }
 .Gstore-checkout-item-shipping-group__icon { display: none; }
 .Gstore-shipping-step .Gstore-checkout-item-shipping-group__icon { display: inline-flex; flex: 0 0 36px; width: 36px; height: 36px; align-items: center; justify-content: center; border: 1px solid var(--gstore-muted); border-radius: 8px; background: var(--gstore-card-bg); color: var(--gstore-brass-dark); font-size: 17px; }
 .Gstore-shipping-step .Gstore-checkout-item-shipping-group:has(input:checked) { border-color: var(--gstore-brass-dark); }
@@ -3642,7 +3642,7 @@ body.gstore-contract-modal-open {
 	min-width: 0;
 	min-height: 60px;
 	box-sizing: border-box;
-	padding: 12px 16px;
+	padding: 12px clamp(24px, 12%, 96px) 12px 48px;
 	border: 0;
 	border-radius: 0;
 	white-space: normal;
@@ -3650,8 +3650,9 @@ body.gstore-contract-modal-open {
 }
 .Gstore-shipping-step .Gstore-checkout-item-shipping-option + .Gstore-checkout-item-shipping-option { border-top: 1px solid var(--gstore-muted); }
 .Gstore-shipping-step .Gstore-summary-item .Gstore-checkout-item-shipping-option input[type="radio"] { width: 20px; height: 20px; margin: 0; accent-color: var(--gstore-brass-dark); }
-.Gstore-shipping-step .Gstore-summary-item .Gstore-checkout-item-shipping-option__label { font-size: 1rem; color: var(--gstore-foreground); min-width: 0; overflow-wrap: anywhere; white-space: normal; }
-.Gstore-shipping-step .Gstore-summary-item .Gstore-checkout-item-shipping-option__price { grid-column: 3; grid-row: 1; font-size: 1rem; text-align: right; white-space: normal; overflow-wrap: anywhere; }
+.Gstore-shipping-step .Gstore-summary-item .Gstore-checkout-item-shipping-option__label { font-size: 0.9375rem; font-weight: 600; color: var(--gstore-foreground); min-width: 0; overflow-wrap: anywhere; white-space: normal; }
+.Gstore-shipping-step .Gstore-summary-item .Gstore-checkout-item-shipping-option__price { grid-column: 3; grid-row: 1; font-size: 0.9375rem; font-weight: 400; text-align: right; white-space: normal; overflow-wrap: anywhere; }
+.Gstore-shipping-step .Gstore-summary-item .Gstore-checkout-item-shipping-option__price--quote-notice { grid-column: 2 / -1; grid-row: 2; text-align: left; }
 .Gstore-shipping-step .Gstore-checkout-item-shipping-option__deadline { font-size: 0.8125rem; font-weight: 400; }
 .Gstore-shipping-step .Gstore-summary-item .Gstore-checkout-item-shipping-option.is-selected { background: var(--gstore-base); box-shadow: inset 3px 0 var(--gstore-brass-dark); }
 .Gstore-shipping-step .Gstore-summary-item .Gstore-checkout-item-shipping-option:hover { background: var(--gstore-base); }
@@ -3672,9 +3673,9 @@ body.gstore-contract-modal-open {
 	.Gstore-checkout-summary-top__total-amount { font-size: 1.125rem; }
 	.Gstore-checkout-summary-top__toggle { min-height: 44px; padding: 8px; }
 	.Gstore-shipping-step { grid-template-columns: minmax(0, 1fr); gap: 16px; }
-	.Gstore-shipping-step .Gstore-summary-item .Gstore-checkout-item-shipping-option { padding: 12px; grid-template-columns: 20px minmax(0, 1fr) minmax(76px, auto) !important; gap: 8px; }
+	.Gstore-shipping-step .Gstore-summary-item .Gstore-checkout-item-shipping-option { padding: 12px clamp(24px, 12%, 96px) 12px 44px; grid-template-columns: 20px minmax(0, 1fr) minmax(76px, auto) !important; gap: 8px; }
 	.Gstore-shipping-step .Gstore-summary-item .Gstore-checkout-item-shipping-option__price { grid-column: 3; grid-row: 1; text-align: right; font-size: 0.875rem; }
-	.Gstore-shipping-step .Gstore-summary-item .Gstore-checkout-item-shipping-option__label { font-size: 0.875rem; }
+	.Gstore-shipping-step .Gstore-summary-item .Gstore-checkout-item-shipping-option__label { font-size: 0.9375rem; }
 	.Gstore-shipping-step__destination { padding: 12px; gap: 8px; margin-bottom: 20px; }
 	.Gstore-shipping-step__destination strong { font-size: 0.875rem; }
 	.Gstore-shipping-step .Gstore-checkout-item-shipping-group__title { padding: 8px 12px; }
