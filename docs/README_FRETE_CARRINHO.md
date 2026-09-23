@@ -69,6 +69,34 @@ Como o AJAX de frete retorna apenas JSON, o `checked` não vem do servidor. A pe
 
 ## Como testar
 
+### Escolha compartilhada entre munições
+
+Ao trocar o frete de uma munição, o carrinho aplica o mesmo ID de serviço às
+demais munições que possuem essa opção na cotação. A classificação usa
+`data-shipping-is-ammo`, preenchido pelo perfil de frete do plugin. Armas e
+acessórios mantêm suas escolhas independentes.
+
+O tema sincroniza os radios, os campos enviados no formulário e a preferência
+salva por item. Também reaplica a última escolha se uma cotação assíncrona
+iniciada antes da troca terminar depois dela. Não copia preços entre itens:
+as faixas de valor e as regras de cada transportadora continuam no plugin.
+Serviços indisponíveis para outro item não são adicionados à sua cotação.
+
+Validação automatizada: `npm test -- --runInBand tests/ammunition-shipping.test.js
+tests/melhor-envio-shipping.test.js tests/checkout-steps.test.js`.
+
+Validação na loja de testes:
+
+1. Adicione duas munições diferentes e calcule o frete para um destino atendido.
+2. Escolha Express na segunda munição e confira Express nas duas.
+3. Escolha RPA na primeira e confira RPA nas duas e o total recalculado.
+4. Altere a quantidade, recalcule o CEP e siga para o checkout; confira a
+   transportadora escolhida e a cobrança conforme a faixa configurada.
+5. Em um carrinho com outros tipos de produto, confira que a troca de frete
+   de munição preserva as escolhas dos demais tipos.
+
+### Cálculo e atualização do carrinho
+
 1. No carrinho, clique em **Calcular frete**.
 2. Selecione **Frete Aéreo**.
 3. Aguarde o update AJAX do carrinho.

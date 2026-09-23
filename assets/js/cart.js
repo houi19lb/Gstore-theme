@@ -10,6 +10,7 @@
 	let shippingChoicesDelegated = false;
 	let initialRatesHydrated = false;
 	let mixedCartActionsDelegated = false;
+	let ammunitionSelection = null;
 	let cartLevelRates = [];
 	let cartLevelRatesCep = '';
 	const CART_CEP_STORAGE_KEY = 'gstore_cart_cep';
@@ -1182,6 +1183,30 @@
 		ensureSelectionHiddenInputs(shippingBlock, cartItemKey, rateId, mode);
 	}
 
+	function synchronizeAmmunitionSelection(rate, sourceCartItemKey) {
+		const items = Array.from(document.querySelectorAll('[data-cart-item-key]'));
+		const sourceItem = items.find((item) => item.dataset.cartItemKey === sourceCartItemKey);
+		if (!rate || !rate.rate_id || !sourceItem || !isTruthyShippingFlag(sourceItem.dataset.shippingIsAmmo)) {
+			return;
+		}
+		if (!getRatesForItem(sourceCartItemKey).some((candidate) => candidate.rate_id === rate.rate_id)) {
+			return;
+		}
+
+		// Compartilha a escolha exata; preços e faixas continuam vindo de cada cotação.
+		ammunitionSelection = { rate_id: rate.rate_id, sourceCartItemKey };
+		items.forEach((item) => {
+			if (!isTruthyShippingFlag(item.dataset.shippingIsAmmo)) {
+				return;
+			}
+			const cartItemKey = item.dataset.cartItemKey;
+			const matchingRate = getRatesForItem(cartItemKey).find((candidate) => candidate.rate_id === rate.rate_id);
+			if (matchingRate) {
+				selectRateInShippingBlock(cartItemKey, matchingRate);
+			}
+		});
+	}
+
 	function synchronizeMelhorEnvioSelection(rate) {
 		if (!isMelhorEnvioRate(rate)) {
 			return;
@@ -1475,6 +1500,9 @@
 
 		Promise.allSettled(requests).then(() => {
 			applyCartLevelMelhorEnvioRates(shippingBlocks, preferredSelections);
+			if (ammunitionSelection) {
+				synchronizeAmmunitionSelection(ammunitionSelection, ammunitionSelection.sourceCartItemKey);
+			}
 			ratesSyncInProgress = false;
 			updateCartTotalsSummary();
 			setCalculatedShippingFlag(true);
@@ -1823,6 +1851,7 @@
 				synchronizeMelhorEnvioSelection(selectedRate);
 			} else {
 				leaveMelhorEnvioPackage(previousRate, cartItemKey);
+				synchronizeAmmunitionSelection(selectedRate, cartItemKey);
 			}
 
 			updateCartTotalsSummary();
