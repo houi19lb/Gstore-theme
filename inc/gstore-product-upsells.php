@@ -161,7 +161,7 @@ function gstore_get_product_upsell_discount_label( $rule ) {
 		return sprintf( __( '%s%% de desconto ao comprar junto', 'gstore' ), $value );
 	}
 
-	return sprintf( __( '%s de desconto ao comprar junto', 'gstore' ), wc_price( (float) $rule['value'] ) );
+	return sprintf( __( '%s de desconto ao comprar junto', 'gstore' ), wp_strip_all_tags( wc_price( (float) $rule['value'] ) ) );
 }
 
 /**
