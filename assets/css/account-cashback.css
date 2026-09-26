@@ -1,0 +1,22 @@
+.gstore-cashback-account{display:grid;gap:20px;max-width:980px;margin:0 auto;color:var(--gstore-color-text-primary,#25342b)}
+.gstore-cashback-account__heading h1{font-size:clamp(25px,3vw,34px);margin:5px 0}
+.gstore-cashback-account__heading p{margin:0;color:var(--gstore-color-text-secondary,#667568)}
+.gstore-cashback-account__eyebrow{font-size:11px;font-weight:700;letter-spacing:.11em;text-transform:uppercase;color:var(--gstore-color-accent-readable,#37865b)}
+.gstore-cashback-account__balance{display:flex;align-items:center;justify-content:space-between;gap:20px;padding:28px;border:1px solid var(--gstore-color-border-accent,#dceade);border-radius:16px;background:linear-gradient(125deg,var(--gstore-color-accent-10,#edf8f0),var(--gstore-color-surface-card,#f9fcfa))}
+.gstore-cashback-account__balance>div{display:grid;gap:5px}
+.gstore-cashback-account__balance span{font-size:13px;color:var(--gstore-color-text-secondary,#4b7058)}
+.gstore-cashback-account__balance strong{font-size:clamp(27px,4vw,42px);line-height:1.1;color:var(--gstore-color-accent-readable,#216c42)}
+.gstore-cashback-account__balance small{font-size:13px;color:var(--gstore-color-text-secondary,#607566)}
+.gstore-cashback-account__expiry{margin:0;padding:13px 16px;border:1px solid #f1e3bc;border-radius:10px;background:#fffcf2;color:#715b2b;font-size:13px}
+.gstore-cashback-account__history{padding:22px;border:1px solid var(--gstore-color-border,#e3eae4);border-radius:14px;background:var(--gstore-color-surface-card,#fff)}
+.gstore-cashback-account__history h2{font-size:18px;margin:0 0 15px}
+.gstore-cashback-account__history>p{margin:0;color:var(--gstore-color-text-secondary,#68776c)}
+.gstore-cashback-account__history ol{list-style:none;margin:0;padding:0}
+.gstore-cashback-account__history li{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:13px 0;border-top:1px solid var(--gstore-color-border-light,#edf1ed)}
+.gstore-cashback-account__history li span{display:grid;gap:3px}
+.gstore-cashback-account__history li strong{font-size:13px;font-weight:600}
+.gstore-cashback-account__history li small{font-size:11px;color:var(--gstore-color-text-muted,#718076)}
+.gstore-cashback-account__history li b{white-space:nowrap;font-size:14px}
+.gstore-cashback-account__history .is-positive{color:var(--gstore-color-success,#1d7547)}
+.gstore-cashback-account__history .is-negative{color:#9d5145}
+@media(max-width:600px){.gstore-cashback-account__balance{align-items:flex-start;flex-direction:column;padding:21px}.gstore-cashback-account__history{padding:18px}}
