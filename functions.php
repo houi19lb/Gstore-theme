@@ -37,6 +37,7 @@ if ( file_exists( $gstore_armastore_migration_config ) ) {
 require_once get_theme_file_path( 'inc/gstore-product-upsells.php' );
 require_once get_theme_file_path( 'inc/gstore-product-image-badges.php' );
 require_once get_theme_file_path( 'inc/gstore-account-dashboard.php' );
+require_once get_theme_file_path( 'inc/gstore-cashback-account.php' );
 
 /**
  * Configurações iniciais do tema filho.
@@ -5560,6 +5561,7 @@ function gstore_enqueue_styles() {
 		gstore_enqueue_theme_style( 'gstore-my-account-css', 'assets/css/my-account.css', array( 'gstore-style' ), $theme_version );
 		if ( is_user_logged_in() && function_exists( 'is_account_page' ) && is_account_page() ) {
 			gstore_enqueue_theme_style( 'gstore-account-dashboard-css', 'assets/css/account-dashboard.css', array( 'gstore-my-account-css' ), $theme_version );
+			gstore_enqueue_theme_style( 'gstore-account-cashback-css', 'assets/css/account-cashback.css', array( 'gstore-account-dashboard-css' ), $theme_version );
 		}
 
 		// Fulfillment timeline (apenas na página de detalhes do pedido).
@@ -10716,6 +10718,19 @@ function gstore_enqueue_checkout_assets() {
 			filemtime( get_theme_file_path( 'assets/js/checkout-steps.js' ) ),
 			true
 		);
+		if ( class_exists( '\GStore\Services\Cashback_Service' ) && gstore_cashback_service_available() ) {
+			$cashback_rules = \GStore\Services\Cashback_Rules::get();
+			if ( $cashback_rules['enabled'] ) {
+				gstore_enqueue_theme_style( 'gstore-cashback-checkout', 'assets/css/cashback-checkout.css', array( 'gstore-checkout-steps' ), $theme_version );
+				wp_enqueue_script( 'gstore-cashback-checkout', gstore_theme_asset_uri( 'assets/js/cashback-checkout.js' ), array( 'jquery', 'gstore-checkout-steps' ), filemtime( get_theme_file_path( 'assets/js/cashback-checkout.js' ) ), true );
+				wp_localize_script( 'gstore-cashback-checkout', 'gstoreCashback', array(
+					'ajaxUrl' => admin_url( 'admin-ajax.php' ),
+					'nonce' => wp_create_nonce( 'gstore_cashback_checkout' ),
+					'quote' => \GStore\Services\Cashback_Service::get_checkout_quote(),
+					'loginUrl' => wc_get_page_permalink( 'myaccount' ),
+				) );
+			}
+		}
 
 		$quote_notice_script_path = get_theme_file_path( 'assets/js/freight-quote-notice.js' );
 		if ( file_exists( $quote_notice_script_path ) ) {
@@ -12338,6 +12353,7 @@ function gstore_get_myaccount_icon( $endpoint ) {
 	$icons = array(
 		'dashboard'       => '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>',
 		'orders'          => '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path><line x1="3" y1="6" x2="21" y2="6"></line><path d="M16 10a4 4 0 0 1-8 0"></path></svg>',
+		'minhas-moedas'  => '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><path d="M12 6v12M15 9.5c-.7-.8-1.7-1.2-3-1.2-1.8 0-3 .7-3 2 0 3 6 1 6 4 0 1.3-1.2 2-3 2-1.3 0-2.3-.4-3-1.2"></path></svg>',
 		'downloads'       => '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>',
 		'edit-address'    => '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>',
 		'edit-account'    => '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>',
