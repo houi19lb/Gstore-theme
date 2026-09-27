@@ -465,12 +465,14 @@ body.woocommerce-account main .woocommerce:has(> .gstore-account-shell){max-widt
  .account-refined .gstore-myaccount__sidebar{align-self:start;height:auto;min-height:0}
  .account-refined .gstore-myaccount-nav{height:auto;min-height:0}
  .account-refined .gstore-myaccount-nav__user{padding:0 0 14px}
- .account-refined .account-refined-menu-toggle{display:flex;align-items:center;justify-content:space-between;width:100%;padding:12px 14px;min-height:62px;border:1px solid var(--account-border);border-radius:8px;background:white;color:var(--account-text);font-family:inherit;text-align:left;cursor:pointer}
+ .account-refined .account-refined-menu-toggle{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;padding:10px 12px;min-height:68px;border:1px solid var(--account-accent);border-radius:8px;background:var(--account-tint);color:var(--account-text);font-family:inherit;text-align:left;cursor:pointer}
  .account-refined .account-refined-menu-toggle:focus-visible{outline:2px solid var(--account-accent);outline-offset:2px}
- .account-refined .account-refined-menu-copy{display:grid;gap:3px;min-width:0}
- .account-refined .account-refined-menu-caption{font-size:11px;font-weight:600;color:var(--account-muted)}
- .account-refined .account-refined-menu-current{font-size:15px;font-weight:700;line-height:1.25}
- .account-refined .account-refined-menu-chevron{width:9px;height:9px;margin:0 5px 4px 12px;border-right:2px solid var(--account-accent);border-bottom:2px solid var(--account-accent);transform:rotate(45deg);flex:none}
+ .account-refined .account-refined-menu-icon{display:grid;align-content:center;justify-items:center;gap:4px;width:32px;height:32px;flex:none;border-radius:6px;background:var(--account-accent)}
+ .account-refined .account-refined-menu-icon i{display:block;width:15px;height:2px;border-radius:2px;background:#fff}
+ .account-refined .account-refined-menu-copy{display:grid;gap:4px;min-width:0;flex:1}
+ .account-refined .account-refined-menu-action{font-size:14px;font-weight:700;line-height:1.2}
+ .account-refined .account-refined-menu-current{font-size:11px;font-weight:400;line-height:1.2;color:var(--account-muted)}
+ .account-refined .account-refined-menu-chevron{width:9px;height:9px;margin:0 4px 4px;border-right:2px solid var(--account-accent);border-bottom:2px solid var(--account-accent);transform:rotate(45deg);flex:none}
  .account-refined .account-refined-menu-open .account-refined-menu-chevron{transform:rotate(225deg);margin-bottom:0}
  .gstore-account-shell.account-refined .gstore-myaccount-nav__list{display:none}
  .gstore-account-shell.account-refined .account-refined-menu-open .gstore-myaccount-nav__list{display:grid;grid-template-columns:minmax(0,1fr);gap:2px;padding:8px 0 0;overflow:visible}

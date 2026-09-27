@@ -39,12 +39,14 @@ test('mobile account menu keeps the reseller destination accessible and opens on
  run(); run();
  const toggle = document.querySelector('.account-refined-menu-toggle');
  expect(document.querySelectorAll('.account-refined-menu-toggle')).toHaveLength(1);
- expect(toggle.textContent).toBe('Menu da contaRevendedor');
+ expect(toggle.textContent).toBe('Abrir menu da contaPágina atual: Revendedor');
  expect(toggle.getAttribute('aria-expanded')).toBe('false');
  toggle.click();
  expect(toggle.getAttribute('aria-expanded')).toBe('true');
+ expect(toggle.textContent).toBe('Fechar menu da contaPágina atual: Revendedor');
  expect(document.querySelector('.gstore-myaccount-nav').classList.contains('account-refined-menu-open')).toBe(true);
  expect(document.querySelector('.gstore-myaccount-nav__item.is-active > a').getAttribute('href')).toBe('/minha-conta/revendedor/');
  toggle.click();
  expect(toggle.getAttribute('aria-expanded')).toBe('false');
+ expect(toggle.textContent).toBe('Abrir menu da contaPágina atual: Revendedor');
 });

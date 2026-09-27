@@ -746,24 +746,30 @@ document.addEventListener('DOMContentLoaded', () => {
     const toggle = document.createElement('button');
     toggle.className = 'account-refined-menu-toggle'; toggle.type = 'button';
     const currentPage = list.querySelector('.gstore-myaccount-nav__item.is-active > .gstore-myaccount-nav__link .gstore-myaccount-nav__label')?.textContent?.trim() || 'Início';
+    const icon = document.createElement('span');
+    icon.className = 'account-refined-menu-icon';
+    icon.setAttribute('aria-hidden', 'true');
+    for (let line = 0; line < 3; line++) icon.append(document.createElement('i'));
     const copy = document.createElement('span');
     copy.className = 'account-refined-menu-copy';
-    const caption = document.createElement('span');
-    caption.className = 'account-refined-menu-caption';
-    caption.textContent = 'Menu da conta';
-    const current = document.createElement('strong');
+    const action = document.createElement('strong');
+    action.className = 'account-refined-menu-action';
+    action.textContent = 'Abrir menu da conta';
+    const current = document.createElement('span');
     current.className = 'account-refined-menu-current';
-    current.textContent = currentPage;
+    current.textContent = `Página atual: ${currentPage}`;
     const chevron = document.createElement('span');
     chevron.className = 'account-refined-menu-chevron';
     chevron.setAttribute('aria-hidden', 'true');
-    copy.append(caption, current);
-    toggle.append(copy, chevron);
-    toggle.setAttribute('aria-label', `Menu da conta. Área atual: ${currentPage}`);
+    copy.append(action, current);
+    toggle.append(icon, copy, chevron);
+    toggle.setAttribute('aria-label', `Abrir menu da conta. Página atual: ${currentPage}`);
     toggle.setAttribute('aria-controls', list.id); toggle.setAttribute('aria-expanded', 'false');
     toggle.addEventListener('click', () => {
       const open = toggle.getAttribute('aria-expanded') !== 'true';
       toggle.setAttribute('aria-expanded', String(open)); nav.classList.toggle('account-refined-menu-open', open);
+      action.textContent = `${open ? 'Fechar' : 'Abrir'} menu da conta`;
+      toggle.setAttribute('aria-label', `${open ? 'Fechar' : 'Abrir'} menu da conta. Página atual: ${currentPage}`);
     });
     list.before(toggle);
   }
