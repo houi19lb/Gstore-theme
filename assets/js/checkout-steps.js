@@ -1898,11 +1898,12 @@ const subtotal = decodeHtmlEntities(stripHtmlText(it.subtotal || ''));
 			$slot.html(`
 				<div class="Gstore-checkout-coupon-card">
 					<div class="Gstore-checkout-coupon-card__header">
+						<span class="Gstore-checkout-coupon-card__icon" aria-hidden="true"><i class="fa-solid fa-ticket"></i></span>
 						<div>
 							<span class="Gstore-checkout-coupon-card__eyebrow">Cupom</span>
 							<h3>Tem cupom de desconto?</h3>
+							<p>Digite o código do seu cupom para aplicar o desconto nesta compra.</p>
 						</div>
-						<i class="fa-solid fa-ticket" aria-hidden="true"></i>
 					</div>
 					<div class="Gstore-checkout-coupon-card__body"></div>
 				</div>
