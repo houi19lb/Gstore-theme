@@ -745,7 +745,21 @@ document.addEventListener('DOMContentLoaded', () => {
     list.id = 'account-refined-account-menu';
     const toggle = document.createElement('button');
     toggle.className = 'account-refined-menu-toggle'; toggle.type = 'button';
-    toggle.textContent = (list.querySelector('[aria-current] .gstore-myaccount-nav__label')?.textContent || 'Minha conta') + ' · Menu da conta';
+    const currentPage = list.querySelector('.gstore-myaccount-nav__item.is-active > .gstore-myaccount-nav__link .gstore-myaccount-nav__label')?.textContent?.trim() || 'Início';
+    const copy = document.createElement('span');
+    copy.className = 'account-refined-menu-copy';
+    const caption = document.createElement('span');
+    caption.className = 'account-refined-menu-caption';
+    caption.textContent = 'Menu da conta';
+    const current = document.createElement('strong');
+    current.className = 'account-refined-menu-current';
+    current.textContent = currentPage;
+    const chevron = document.createElement('span');
+    chevron.className = 'account-refined-menu-chevron';
+    chevron.setAttribute('aria-hidden', 'true');
+    copy.append(caption, current);
+    toggle.append(copy, chevron);
+    toggle.setAttribute('aria-label', `Menu da conta. Área atual: ${currentPage}`);
     toggle.setAttribute('aria-controls', list.id); toggle.setAttribute('aria-expanded', 'false');
     toggle.addEventListener('click', () => {
       const open = toggle.getAttribute('aria-expanded') !== 'true';

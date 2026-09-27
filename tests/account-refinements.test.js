@@ -33,3 +33,18 @@ test('does not fabricate document sections or actions on unavailable states', ()
  document.body.innerHTML = '<div class="gstore-account-shell"><div class="gstore-view-order"><header class="account-detail-heading"></header></div></div>';
  run(); expect(document.querySelector('.account-refined-documents')).toBeNull(); expect(document.querySelector('.account-refined-next')).toBeNull();
 });
+
+test('mobile account menu keeps the reseller destination accessible and opens once', () => {
+ document.body.innerHTML = '<div class="gstore-account-shell"><nav class="gstore-myaccount-nav"><div class="gstore-myaccount-nav__user">Cliente</div><ul class="gstore-myaccount-nav__list"><li class="gstore-myaccount-nav__item"><a class="gstore-myaccount-nav__link" href="/minha-conta/"><span class="gstore-myaccount-nav__label">Início</span></a></li><li class="gstore-myaccount-nav__item is-active"><a class="gstore-myaccount-nav__link" href="/minha-conta/revendedor/" aria-current="page"><span class="gstore-myaccount-nav__label">Revendedor</span></a><ul class="gstore-myaccount-nav__children"><li><a href="?view=contrato">Contrato</a></li></ul></li></ul></nav></div>';
+ run(); run();
+ const toggle = document.querySelector('.account-refined-menu-toggle');
+ expect(document.querySelectorAll('.account-refined-menu-toggle')).toHaveLength(1);
+ expect(toggle.textContent).toBe('Menu da contaRevendedor');
+ expect(toggle.getAttribute('aria-expanded')).toBe('false');
+ toggle.click();
+ expect(toggle.getAttribute('aria-expanded')).toBe('true');
+ expect(document.querySelector('.gstore-myaccount-nav').classList.contains('account-refined-menu-open')).toBe(true);
+ expect(document.querySelector('.gstore-myaccount-nav__item.is-active > a').getAttribute('href')).toBe('/minha-conta/revendedor/');
+ toggle.click();
+ expect(toggle.getAttribute('aria-expanded')).toBe('false');
+});

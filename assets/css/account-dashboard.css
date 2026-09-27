@@ -462,10 +462,23 @@ body.woocommerce-account main .woocommerce:has(> .gstore-account-shell){max-widt
  .account-refined .gstore-partner-application-cta--account{order:5}
  .account-refined .gstore-account-heading h1{font-size:25px}
  .account-refined .gstore-account-dashboard>.gstore-account-heading{margin-bottom:20px}
+ .account-refined .gstore-myaccount__sidebar{align-self:start;height:auto;min-height:0}
+ .account-refined .gstore-myaccount-nav{height:auto;min-height:0}
  .account-refined .gstore-myaccount-nav__user{padding:0 0 14px}
- .account-refined .account-refined-menu-toggle{display:flex;align-items:center;justify-content:space-between;width:100%;padding:12px 14px;min-height:46px;border:1px solid var(--account-border);border-radius:8px;background:white;color:var(--account-text);font-family:inherit;font-size:14px;font-weight:600;text-align:left}
- .account-refined .gstore-myaccount-nav__list{display:none}
- .account-refined .account-refined-menu-open .gstore-myaccount-nav__list{display:grid;grid-template-columns:1fr 1fr;gap:4px;padding-top:8px}
+ .account-refined .account-refined-menu-toggle{display:flex;align-items:center;justify-content:space-between;width:100%;padding:12px 14px;min-height:62px;border:1px solid var(--account-border);border-radius:8px;background:white;color:var(--account-text);font-family:inherit;text-align:left;cursor:pointer}
+ .account-refined .account-refined-menu-toggle:focus-visible{outline:2px solid var(--account-accent);outline-offset:2px}
+ .account-refined .account-refined-menu-copy{display:grid;gap:3px;min-width:0}
+ .account-refined .account-refined-menu-caption{font-size:11px;font-weight:600;color:var(--account-muted)}
+ .account-refined .account-refined-menu-current{font-size:15px;font-weight:700;line-height:1.25}
+ .account-refined .account-refined-menu-chevron{width:9px;height:9px;margin:0 5px 4px 12px;border-right:2px solid var(--account-accent);border-bottom:2px solid var(--account-accent);transform:rotate(45deg);flex:none}
+ .account-refined .account-refined-menu-open .account-refined-menu-chevron{transform:rotate(225deg);margin-bottom:0}
+ .gstore-account-shell.account-refined .gstore-myaccount-nav__list{display:none}
+ .gstore-account-shell.account-refined .account-refined-menu-open .gstore-myaccount-nav__list{display:grid;grid-template-columns:minmax(0,1fr);gap:2px;padding:8px 0 0;overflow:visible}
+ .account-refined .account-refined-menu-open .gstore-myaccount-nav__item{min-width:0}
+ .account-refined .account-refined-menu-open .gstore-myaccount-nav__link{display:flex;flex-direction:row;align-items:center;gap:12px;min-height:48px;padding:10px 12px;text-align:left;white-space:normal}
+ .account-refined .account-refined-menu-open .gstore-myaccount-nav__badge{position:static;margin-left:auto}
+ .account-refined .gstore-myaccount-nav__children{display:none}
+ .account-refined .gstore-myaccount-nav__item--logout{position:static;justify-self:stretch}
  .account-refined .gstore-myaccount-nav__item:last-child{margin:0;padding:0;border:0}
  .account-refined .gstore-account-dashboard-grid{gap:16px}
  .account-refined .gstore-account-card.gstore-account-latest,.account-refined .gstore-account-aside{padding:20px}
