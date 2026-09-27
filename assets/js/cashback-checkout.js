@@ -23,7 +23,7 @@
     let $card = $slot.find('.gstore-cashback-checkout').first();
     if (!$card.length) {
       $card = $('<section class="gstore-cashback-checkout" aria-labelledby="gstore-cashback-checkout-title">' +
-        '<div class="gstore-cashback-checkout__heading"><span class="gstore-cashback-checkout__icon" aria-hidden="true"><i class="fa-solid fa-coins"></i></span><div class="gstore-cashback-checkout__heading-copy"><h3 id="gstore-cashback-checkout-title">Usar minhas moedas</h3><p>Use seu saldo para reduzir o valor desta compra.</p></div><strong class="gstore-cashback-checkout__balance" hidden></strong></div>' +
+        '<div class="gstore-cashback-checkout__heading"><span class="gstore-cashback-checkout__icon" aria-hidden="true"><i class="fa-solid fa-coins"></i></span><div class="gstore-cashback-checkout__heading-copy"><h3 id="gstore-cashback-checkout-title">Usar moedas</h3><p>Ganhe desconto com suas moedas.</p></div><strong class="gstore-cashback-checkout__balance" hidden><span data-cashback-balance-number></span> <span>moedas disponíveis</span></strong></div>' +
         '<div class="gstore-cashback-checkout__body"></div>' +
         '<p class="gstore-cashback-checkout__message" role="status" aria-live="polite"></p>' +
         '</section>');
@@ -58,13 +58,14 @@
       $body.empty().append($('<p>').text('Suas moedas não podem ser usadas nos produtos desta compra.'));
       return;
     }
-    $card.find('.gstore-cashback-checkout__balance').text(formatCoins(available) + ' moedas disponíveis').prop('hidden', false);
-    $body.html('<label class="gstore-cashback-checkout__toggle"><input type="checkbox" data-cashback-toggle><span class="gstore-cashback-checkout__switch" aria-hidden="true"></span><span>Usar moedas nesta compra</span></label>' +
-      '<div class="gstore-cashback-checkout__details"><div class="gstore-cashback-checkout__control"><label for="gstore-cashback-coins">Quantidade de moedas</label><input id="gstore-cashback-coins" type="number" inputmode="numeric" min="1" step="1" data-cashback-amount><small data-cashback-limit></small></div>' +
-      '<div class="gstore-cashback-checkout__discount"><span>Desconto aplicado</span><strong data-cashback-discount></strong></div></div>');
+    $card.find('[data-cashback-balance-number]').text(formatCoins(available));
+    $card.find('.gstore-cashback-checkout__balance').prop('hidden', false);
+    $body.html('<div class="gstore-cashback-checkout__details"><label class="gstore-cashback-checkout__toggle"><input type="checkbox" data-cashback-toggle><span class="gstore-cashback-checkout__switch" aria-hidden="true"></span><span>Usar nesta compra</span></label>' +
+      '<div class="gstore-cashback-checkout__control"><label for="gstore-cashback-coins">Moedas para usar</label><input id="gstore-cashback-coins" type="number" inputmode="numeric" min="1" step="1" data-cashback-amount><small data-cashback-limit></small></div>' +
+      '<div class="gstore-cashback-checkout__discount"><span>Seu desconto</span><strong data-cashback-discount></strong></div></div>');
     $body.find('[data-cashback-toggle]').prop('checked', applied > 0).prop('disabled', saving);
     $body.find('[data-cashback-amount]').attr('max', maximum).val(applied || maximum).prop('disabled', !applied || saving);
-    $body.find('[data-cashback-limit]').text('Máximo nesta compra: ' + formatCoins(maximum) + ' moedas');
+    $body.find('[data-cashback-limit]').text('Até ' + formatCoins(maximum) + ' moedas');
     $body.find('[data-cashback-discount]').text(applied ? '− ' + formatMoney(quote.discountCents) : formatMoney(0));
   }
 

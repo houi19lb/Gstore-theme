@@ -40,16 +40,16 @@
 .Gstore-checkout-coupon-card {
 	background: var(--gstore-color-surface-card, #fff);
 	border: 1px solid var(--gstore-color-border-card, #d1d5db);
-	border-radius: 14px;
-	margin-bottom: 22px;
-	padding: 24px;
+	border-radius: 12px;
+	margin-bottom: 16px;
+	padding: 17px 18px;
 }
 
 .Gstore-checkout-coupon-card__header {
 	display: flex;
 	align-items: center;
-	gap: 14px;
-	margin-bottom: 20px;
+	gap: 10px;
+	margin-bottom: 14px;
 }
 
 .Gstore-checkout-coupon-card__icon {
@@ -57,35 +57,28 @@
 	align-items: center;
 	justify-content: center;
 	flex: none;
-	width: 52px;
-	height: 52px;
-	border-radius: 14px;
-	background: var(--gstore-color-accent-10, #f5ebd7);
+	width: 38px;
+	height: 38px;
+	border-radius: 10px;
+	background: var(--gstore-color-accent-12, #f5ebd7);
 	color: var(--gstore-color-accent-readable, #877c31);
-	font-size: 23px;
+	font-size: 17px;
 }
 
 .Gstore-checkout-coupon-card__eyebrow {
 	color: var(--gstore-brass-dark);
 	display: block;
-	font-size: var(--gstore-font-size-xs, 0.75rem);
-	font-weight: 700;
-	margin-bottom: 4px;
+	font-size: 10px;
+	font-weight: 800;
+	margin-bottom: 0;
 	text-transform: uppercase;
 }
 
 .Gstore-checkout-coupon-card h3 {
 	color: var(--gstore-color-text-primary, #1a1a1a);
-	font-size: 22px;
-	line-height: 1.25;
+	font-size: 17px;
+	line-height: 1.2;
 	margin: 0;
-}
-
-.Gstore-checkout-coupon-card__header p {
-	margin: 5px 0 0;
-	color: var(--gstore-color-text-secondary, #6b6b6b);
-	font-size: 14px;
-	line-height: 1.4;
 }
 
 .Gstore-checkout-coupon-form {
@@ -122,11 +115,11 @@
 .Gstore-checkout-coupon-form input[name="coupon_code"] {
 	background: #fff;
 	border: 1px solid var(--gstore-color-border-input, #cbd5f5);
-	border-radius: 8px;
+	border-radius: 7px;
 	color: var(--gstore-foreground);
 	flex: 1 1 auto;
 	font-size: var(--gstore-font-size-sm, 0.875rem);
-	min-height: 48px;
+	min-height: 42px;
 	min-width: 0;
 	padding: 0 12px;
 	width: 100%;
@@ -137,11 +130,11 @@
 .Gstore-checkout-coupon-form input[name="apply_coupon"] {
 	background: var(--gstore-green) !important;
 	border: 0 !important;
-	border-radius: 8px !important;
+	border-radius: 7px !important;
 	color: #fff !important;
 	cursor: pointer;
 	font-weight: 700 !important;
-	min-height: 48px;
+	min-height: 42px;
 	padding: 0 18px !important;
 	white-space: nowrap;
 }
@@ -153,19 +146,26 @@
 }
 
 @media (max-width: 640px) {
-	.Gstore-checkout-coupon-card { padding: 19px; }
-	.Gstore-checkout-coupon-card h3 { font-size: 19px; }
-	.Gstore-checkout-coupon-card__header { align-items: flex-start; }
-	.Gstore-checkout-coupon-card__icon { width: 44px; height: 44px; }
+	.Gstore-checkout-coupon-card { padding: 15px; margin-bottom: 12px; }
+	.Gstore-checkout-coupon-card__header { align-items: center; }
 	.Gstore-checkout-coupon-form {
-		grid-template-columns: 1fr;
+		gap: 7px;
+		grid-template-columns: minmax(0, 1fr) auto;
 	}
 
 	.Gstore-checkout-coupon-form__button,
 	.Gstore-checkout-coupon-form button[name="apply_coupon"],
 	.Gstore-checkout-coupon-form input[name="apply_coupon"] {
-		width: 100%;
+		padding: 0 10px !important;
+		font-size: 12px !important;
 	}
+}
+
+@media (max-width: 340px) {
+	.Gstore-checkout-coupon-form { grid-template-columns: 1fr; }
+	.Gstore-checkout-coupon-form__button,
+	.Gstore-checkout-coupon-form button[name="apply_coupon"],
+	.Gstore-checkout-coupon-form input[name="apply_coupon"] { width: 100%; }
 }
 
 /* ===========================================
@@ -911,9 +911,9 @@ body.woocommerce-checkout .Gstore-checkout-steps-shell {
 /* Slot do resumo do pedido dentro da etapa 3 */
 .Gstore-checkout-step[data-step="payment"] .Gstore-checkout-step__order-review-slot {
 	margin-top: 0;
-	padding: 22px;
+	padding: 18px;
 	border: 1px solid var(--gstore-color-border-card, #d1d5db);
-	border-radius: 14px;
+	border-radius: 12px;
 	background: var(--gstore-color-surface-card, #fff);
 }
 
@@ -923,11 +923,11 @@ body.woocommerce-checkout .Gstore-checkout-steps-shell {
 	align-items: baseline;
 	justify-content: space-between;
 	gap: 12px;
-	margin: 0 0 10px;
+	margin: 0 0 14px;
 }
 
 .Gstore-checkout-step[data-step="payment"] .Gstore-checkout-step__order-review-slot .Gstore-order-review-header__title {
-	font-size: var(--gstore-font-size-095);
+	font-size: 15px;
 	font-weight: var(--gstore-font-weight-bold);
 	color: var(--gstore-foreground);
 	letter-spacing: var(--gstore-letter-spacing-02);
@@ -950,7 +950,7 @@ body.woocommerce-checkout .Gstore-checkout-steps-shell {
 
 .Gstore-checkout-step[data-step="payment"] .Gstore-checkout-step__order-review-slot #order_review table.shop_table th,
 .Gstore-checkout-step[data-step="payment"] .Gstore-checkout-step__order-review-slot #order_review table.shop_table td {
-	padding: 14px 0;
+	padding: 11px 8px;
 	border: none;
 	border-bottom: 1px solid var(--gstore-muted);
 	vertical-align: top;
@@ -958,8 +958,9 @@ body.woocommerce-checkout .Gstore-checkout-steps-shell {
 
 /* Cabeçalho da tabela */
 .Gstore-checkout-step[data-step="payment"] .Gstore-checkout-step__order-review-slot #order_review table.shop_table thead th {
-	padding-top: 6px;
-	padding-bottom: 12px;
+	padding-top: 11px;
+	padding-bottom: 11px;
+	background: var(--gstore-color-bg-muted, #f6f7f8);
 	font-size: var(--gstore-font-size-xs);
 	font-weight: var(--gstore-font-weight-semibold);
 	color: var(--gstore-text-muted);

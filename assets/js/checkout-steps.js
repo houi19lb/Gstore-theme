@@ -48,8 +48,8 @@
 			id: 'payment',
 			name: 'Finalizar',
 			icon: 'fa-check',
-			title: 'Finalizar Pedido',
-			description: 'Clique no botão abaixo para finalizar seu pedido.',
+			title: 'Finalizar pedido',
+			description: '',
 			fields: []
 		}
 	];
@@ -1856,7 +1856,7 @@ const subtotal = decodeHtmlEntities(stripHtmlText(it.subtotal || ''));
 						Etapa ${index + 1} de ${STEPS.length}
 					</span>
 					<h2 class="Gstore-checkout-step__title">${step.title}</h2>
-					<p class="Gstore-checkout-step__description">${step.description}</p>
+					${step.description ? `<p class="Gstore-checkout-step__description">${step.description}</p>` : ''}
 				</div>
 				<div class="Gstore-checkout-step__fields"></div>
 				${isShipping ? `<div class="Gstore-shipping-step">
@@ -1902,7 +1902,6 @@ const subtotal = decodeHtmlEntities(stripHtmlText(it.subtotal || ''));
 						<div>
 							<span class="Gstore-checkout-coupon-card__eyebrow">Cupom</span>
 							<h3>Tem cupom de desconto?</h3>
-							<p>Digite o código do seu cupom para aplicar o desconto nesta compra.</p>
 						</div>
 					</div>
 					<div class="Gstore-checkout-coupon-card__body"></div>

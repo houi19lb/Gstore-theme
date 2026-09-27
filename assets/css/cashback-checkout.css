@@ -1,30 +1,57 @@
-.gstore-cashback-checkout { margin: 0 0 22px; padding: 24px; border: 1px solid var(--gstore-color-border-accent-light, #f0e6b8); border-radius: 14px; background: var(--gstore-color-accent-08, #fbf7ec); color: var(--gstore-color-text-primary, #1a1a1a); }
-.gstore-cashback-checkout__heading { display: flex; align-items: center; gap: 14px; margin-bottom: 22px; }
+.gstore-cashback-checkout {
+  margin: 0 0 16px;
+  padding: 17px 18px;
+  border: 1px solid var(--gstore-color-accent-20, #f4d3bd);
+  border-radius: 12px;
+  background: var(--gstore-color-accent-08, #fff3eb);
+  color: var(--gstore-color-text-primary, #111827);
+}
+
+.gstore-cashback-checkout__heading { display: flex; align-items: center; gap: 10px; }
 .gstore-cashback-checkout__heading-copy { min-width: 0; }
-.gstore-cashback-checkout__heading h3 { margin: 0; font-size: 22px; line-height: 1.25; font-weight: 700; }
-.gstore-cashback-checkout__heading p { margin: 5px 0 0; font-size: 14px; line-height: 1.4; color: var(--gstore-color-text-secondary, #6b6b6b); }
-.gstore-cashback-checkout__icon { display: flex; align-items: center; justify-content: center; flex: none; width: 52px; height: 52px; border-radius: 14px; background: var(--gstore-color-accent-12, #f5ebd7); color: var(--gstore-color-accent-readable, #8b5b18); font-size: 24px; }
-.gstore-cashback-checkout__balance { margin-left: auto; padding: 11px 16px; border-radius: 12px; background: var(--gstore-color-accent-12, #f5ebd7); color: var(--gstore-color-accent-readable, #8b5b18); font-size: 15px; line-height: 1.3; white-space: nowrap; }
+.gstore-cashback-checkout__heading h3 { margin: 0; font-size: 17px; line-height: 1.2; font-weight: 700; }
+.gstore-cashback-checkout__heading p { margin: 3px 0 0; color: var(--gstore-color-text-secondary, #687385); font-size: 12px; line-height: 1.4; white-space: nowrap; }
+.gstore-cashback-checkout__icon { display: flex; align-items: center; justify-content: center; flex: none; width: 38px; height: 38px; border-radius: 10px; background: var(--gstore-color-accent-12, #fce8da); color: var(--gstore-color-accent-readable, #b33d03); font-size: 17px; }
+.gstore-cashback-checkout__balance { margin-left: auto; padding: 7px 10px; border-radius: 8px; background: var(--gstore-color-accent-12, #fce8da); color: var(--gstore-color-accent-readable, #b33d03); font-size: 13px; line-height: 1.15; white-space: nowrap; }
+.gstore-cashback-checkout__balance span:last-child { font-size: 11px; font-weight: 600; }
 .gstore-cashback-checkout__balance[hidden] { display: none; }
-.gstore-cashback-checkout__body > p { margin: 0; font-size: 14px; line-height: 1.5; color: var(--gstore-color-text-secondary, #6b6b6b); }
-.gstore-cashback-checkout__toggle { display: inline-flex !important; align-items: center; gap: 12px; margin: 0 !important; cursor: pointer; font-size: 15px !important; font-weight: 600 !important; color: var(--gstore-color-text-primary, #1a1a1a) !important; }
+
+.gstore-cashback-checkout__body > p { margin: 14px 0 0; color: var(--gstore-color-text-secondary, #687385); font-size: 13px; line-height: 1.45; }
+.gstore-cashback-checkout__details { display: grid; grid-template-columns: minmax(155px, 1fr) minmax(125px, .7fr) minmax(115px, .58fr); align-items: center; gap: 15px; margin-top: 15px; padding-top: 15px; border-top: 1px solid var(--gstore-color-accent-20, #f4d3bd); }
+.gstore-cashback-checkout__toggle { display: inline-flex !important; align-items: center; gap: 9px; margin: 0 !important; color: var(--gstore-color-text-primary, #111827) !important; font-size: 12px !important; font-weight: 700 !important; white-space: nowrap; cursor: pointer; }
 .gstore-cashback-checkout__toggle input { position: absolute; width: 1px; height: 1px; opacity: 0; }
-.gstore-cashback-checkout__switch { position: relative; flex: none; width: 44px; height: 26px; border-radius: 99px; background: var(--gstore-color-border-card, #d1d5db); transition: background .2s; }
-.gstore-cashback-checkout__switch::after { content: ''; position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 50%; background: #fff; transition: transform .2s; }
-.gstore-cashback-checkout__toggle input:checked + .gstore-cashback-checkout__switch { background: var(--gstore-color-accent, #b5a642); }
-.gstore-cashback-checkout__toggle input:checked + .gstore-cashback-checkout__switch::after { transform: translateX(18px); }
-.gstore-cashback-checkout__toggle input:focus-visible + .gstore-cashback-checkout__switch { outline: 2px solid var(--gstore-color-accent-readable, #877c31); outline-offset: 3px; }
+.gstore-cashback-checkout__switch { position: relative; flex: none; width: 38px; height: 23px; border-radius: 20px; background: var(--gstore-color-border-card, #bbc4cc); transition: background .18s; }
+.gstore-cashback-checkout__switch::after { content: ''; position: absolute; top: 3px; left: 3px; width: 17px; height: 17px; border-radius: 50%; background: #fff; transition: transform .18s; }
+.gstore-cashback-checkout__toggle input:checked + .gstore-cashback-checkout__switch { background: var(--gstore-color-accent, #f76511); }
+.gstore-cashback-checkout__toggle input:checked + .gstore-cashback-checkout__switch::after { transform: translateX(15px); }
+.gstore-cashback-checkout__toggle input:focus-visible + .gstore-cashback-checkout__switch { outline: 2px solid var(--gstore-color-accent-readable, #b33d03); outline-offset: 3px; }
 .gstore-cashback-checkout__toggle input:disabled + .gstore-cashback-checkout__switch { opacity: .55; }
-.gstore-cashback-checkout__details { display: grid; grid-template-columns: minmax(0, 1fr) minmax(170px, .45fr); align-items: center; gap: 24px; margin-top: 22px; }
-.gstore-cashback-checkout__control { display: grid; gap: 7px; min-width: 0; }
-.gstore-cashback-checkout__control label { margin: 0 !important; font-size: 13px !important; font-weight: 600 !important; }
-.gstore-cashback-checkout__control input { box-sizing: border-box; width: 100%; min-height: 48px; border: 1px solid var(--gstore-color-border-input, #cbd5f5); border-radius: 8px; padding: 8px 12px; background: var(--gstore-color-surface-card, #fff); color: var(--gstore-color-text-primary, #1a1a1a); font-size: 16px; }
-.gstore-cashback-checkout__control input:disabled { opacity: .6; }
-.gstore-cashback-checkout__control small { font-size: 12px; color: var(--gstore-color-text-secondary, #6b6b6b); }
-.gstore-cashback-checkout__discount { display: grid; gap: 4px; align-content: center; min-height: 82px; margin: 0; border-left: 1px solid var(--gstore-color-border-accent-light, #f0e6b8); padding-left: 24px; color: var(--gstore-color-accent-readable, #877c31); }
-.gstore-cashback-checkout__discount span { font-size: 14px; font-weight: 600; }
-.gstore-cashback-checkout__discount strong { font-size: 28px; line-height: 1.15; white-space: nowrap; }
-.gstore-cashback-checkout__message { margin: 0; font-size: 12px; color: var(--gstore-color-text-secondary, #6b6b6b); }
-.gstore-cashback-checkout__message:not(:empty) { margin-top: 15px; }
-.gstore-cashback-checkout__link { display: inline-flex; margin-top: 10px; color: var(--gstore-color-accent-readable, #877c31); font-size: 13px; font-weight: 600; text-decoration: underline; }
-@media (max-width: 700px) { .gstore-cashback-checkout { padding: 19px; } .gstore-cashback-checkout__heading { flex-wrap: wrap; margin-bottom: 18px; } .gstore-cashback-checkout__heading h3 { font-size: 19px; } .gstore-cashback-checkout__balance { margin: 0; width: 100%; box-sizing: border-box; text-align: center; } .gstore-cashback-checkout__details { grid-template-columns: 1fr; gap: 16px; margin-top: 18px; } .gstore-cashback-checkout__discount { min-height: 0; border-left: 0; border-top: 1px solid var(--gstore-color-border-accent-light, #f0e6b8); padding: 15px 0 0; } .gstore-cashback-checkout__discount strong { font-size: 24px; } }
+.gstore-cashback-checkout__control { display: grid; gap: 3px; min-width: 0; }
+.gstore-cashback-checkout__control label, .gstore-cashback-checkout__discount span { margin: 0 !important; color: var(--gstore-color-text-secondary, #596574) !important; font-size: 11px !important; font-weight: 600 !important; }
+.gstore-cashback-checkout__control input { box-sizing: border-box; width: 100%; min-width: 0; height: 38px; min-height: 38px; padding: 0 12px; border: 1px solid var(--gstore-color-border-input, #cfd7e1); border-radius: 7px; background: var(--gstore-color-surface-card, #fff); color: var(--gstore-color-text-primary, #111827); font-size: 14px; }
+.gstore-cashback-checkout__control input:focus-visible { outline: 2px solid var(--gstore-color-accent-12, #fce8da); border-color: var(--gstore-color-accent, #f76511); }
+.gstore-cashback-checkout__control input:disabled { opacity: .5; }
+.gstore-cashback-checkout__control small { color: var(--gstore-color-text-secondary, #687385); font-size: 10px; }
+.gstore-cashback-checkout__discount { display: grid; gap: 5px; align-content: center; min-height: 64px; margin: 0; padding-left: 15px; border-left: 1px solid var(--gstore-color-accent-20, #f4d3bd); }
+.gstore-cashback-checkout__discount strong { color: var(--gstore-color-accent-readable, #b33d03); font-size: 19px; line-height: 1; white-space: nowrap; }
+.gstore-cashback-checkout__message { margin: 0; color: var(--gstore-color-text-secondary, #687385); font-size: 11px; }
+.gstore-cashback-checkout__message:not(:empty) { margin-top: 10px; }
+.gstore-cashback-checkout__link { display: inline-flex; margin-top: 10px; color: var(--gstore-color-accent-readable, #b33d03); font-size: 12px; font-weight: 600; text-decoration: underline; }
+
+@media (max-width: 600px) {
+  .gstore-cashback-checkout { padding: 15px; margin-bottom: 12px; }
+  .gstore-cashback-checkout__heading { flex-wrap: wrap; column-gap: 9px; row-gap: 8px; }
+  .gstore-cashback-checkout__heading h3 { font-size: 16px; }
+  .gstore-cashback-checkout__heading p { font-size: 11px; }
+  .gstore-cashback-checkout__balance { margin-left: 47px; font-size: 12px; }
+  .gstore-cashback-checkout__balance span:last-child { font-size: 10px; }
+  .gstore-cashback-checkout__details { grid-template-columns: minmax(0, 1fr) minmax(105px, .65fr); gap: 11px; margin-top: 12px; padding-top: 12px; }
+  .gstore-cashback-checkout__toggle { grid-column: 1 / -1; }
+  .gstore-cashback-checkout__discount { min-height: 62px; padding-left: 10px; }
+  .gstore-cashback-checkout__discount strong { font-size: 16px; }
+}
+
+@media (max-width: 340px) {
+  .gstore-cashback-checkout__heading p { white-space: normal; }
+  .gstore-cashback-checkout__balance { margin-left: 0; }
+}
