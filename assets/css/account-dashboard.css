@@ -496,3 +496,59 @@ body.woocommerce-account main .woocommerce:has(> .gstore-account-shell){max-widt
  .account-refined .gstore-account-stats dd{font-size:22px}
  .account-refined .gstore-account-card.account-refined-help{padding:20px!important}
 }
+
+/* Subnavigation inside the reseller account stays aligned and on one row. */
+.gstore-account-shell .gstore-partner-tabs {
+	box-sizing: border-box;
+	display: grid;
+	grid-template-columns: repeat(4, minmax(max-content, 1fr));
+	align-items: stretch;
+	gap: 5px;
+	width: 100%;
+	margin: 0 0 18px;
+	padding: 6px;
+	border: 1px solid var(--account-border);
+	border-radius: 8px;
+	background: var(--gstore-color-bg-base, #f7f7f7);
+	overflow-x: auto;
+	scrollbar-width: thin;
+}
+.gstore-account-shell .gstore-partner-tabs a {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	box-sizing: border-box;
+	min-width: max-content;
+	min-height: 40px;
+	padding: 0 9px;
+	border: 1px solid var(--account-border);
+	border-radius: 5px;
+	background: var(--account-surface);
+	color: var(--account-muted);
+	font-size: 12px;
+	line-height: 1.2;
+	text-align: center;
+	white-space: nowrap;
+}
+.gstore-account-shell .gstore-partner-tabs a::after { display: none; }
+.gstore-account-shell .gstore-partner-tabs a.is-active,
+.gstore-account-shell .gstore-partner-tabs a:hover,
+.gstore-account-shell .gstore-partner-tabs a:focus-visible {
+	border-color: var(--account-accent);
+	background: var(--account-tint);
+	color: var(--account-text);
+}
+.gstore-account-shell .gstore-partner-tabs a:focus-visible { outline: 2px solid var(--account-accent); outline-offset: 1px; }
+@media (max-width: 780px) {
+	.gstore-account-shell .gstore-partner-tabs {
+		width: calc(100% - 24px);
+		margin-inline: 12px;
+		gap: 3px;
+		padding: 4px;
+	}
+	.gstore-account-shell .gstore-partner-tabs a {
+		min-height: 38px;
+		padding-inline: 4px;
+		font-size: clamp(10px, 2.8vw, 12px);
+	}
+}
