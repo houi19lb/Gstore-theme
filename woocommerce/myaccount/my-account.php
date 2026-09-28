@@ -11,7 +11,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 ?>
 
-<div class="gstore-myaccount <?php echo is_user_logged_in() ? 'gstore-account-shell' : ''; ?>">
+<div class="gstore-myaccount <?php echo is_user_logged_in() ? 'gstore-account-shell account-refined' : ''; ?>">
 	
 	<?php if ( is_user_logged_in() ) : ?>
 		

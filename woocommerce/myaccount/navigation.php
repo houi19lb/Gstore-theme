@@ -17,6 +17,13 @@ $partner_view = in_array( $partner_view, array( 'painel', 'vendas', 'creditos', 
 if ( function_exists( 'gstore_partner_account_is_visible' ) && function_exists( 'gstore_partner_account_contract_is_accepted' ) && gstore_partner_account_is_visible() && ! gstore_partner_account_contract_is_accepted( get_current_user_id() ) ) {
 	$partner_view = 'contrato';
 }
+$current_page = __( 'Início', 'gstore' );
+foreach ( wc_get_account_menu_items() as $endpoint => $label ) {
+	if ( gstore_account_menu_is_current( $endpoint ) ) {
+		$current_page = $label;
+		break;
+	}
+}
 ?>
 
 <nav class="gstore-myaccount-nav" aria-label="<?php esc_attr_e( 'Navegação da conta', 'gstore' ); ?>">
@@ -32,8 +39,14 @@ if ( function_exists( 'gstore_partner_account_is_visible' ) && function_exists( 
 		</div>
 	</div>
 
+	<button class="account-refined-menu-toggle" type="button" aria-label="<?php echo esc_attr( sprintf( 'Abrir menu da conta. Página atual: %s', $current_page ) ); ?>" aria-controls="account-refined-account-menu" aria-expanded="false">
+		<span class="account-refined-menu-icon" aria-hidden="true"><i></i><i></i><i></i></span>
+		<span class="account-refined-menu-copy"><strong class="account-refined-menu-action">Abrir menu da conta</strong><span class="account-refined-menu-current"><?php echo esc_html( sprintf( 'Página atual: %s', $current_page ) ); ?></span></span>
+		<span class="account-refined-menu-chevron" aria-hidden="true"></span>
+	</button>
+
 	<!-- Navigation Links -->
-	<ul class="gstore-myaccount-nav__list">
+	<ul class="gstore-myaccount-nav__list" id="account-refined-account-menu">
 		<?php foreach ( wc_get_account_menu_items() as $endpoint => $label ) : ?>
 			<?php
 			$icon = function_exists( 'gstore_get_myaccount_icon' ) ? gstore_get_myaccount_icon( $endpoint ) : '';

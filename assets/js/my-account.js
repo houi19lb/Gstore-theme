@@ -142,6 +142,7 @@
 	function initMobileNavigation() {
 		const nav = document.querySelector('.gstore-myaccount-nav');
 		if (!nav) return;
+		if (nav.closest('.account-refined')) return;
 
 		const navList = nav.querySelector('.gstore-myaccount-nav__list');
 		const activeItem = nav.querySelector('.gstore-myaccount-nav__item.is-active');
@@ -624,7 +625,8 @@ document.addEventListener('DOMContentLoaded', () => {
 // Account layout refinements: move existing nodes without replacing native handlers.
 document.addEventListener('DOMContentLoaded', () => {
   const shell = document.querySelector('.gstore-account-shell');
-  if (!shell || shell.classList.contains('account-refined')) return;
+  if (!shell || shell.dataset.accountRefinedReady === 'true') return;
+  shell.dataset.accountRefinedReady = 'true';
   shell.classList.add('account-refined');
   const dataTabs = shell.querySelector('.gstore-account-pages');
   if (dataTabs) {
@@ -742,35 +744,15 @@ document.addEventListener('DOMContentLoaded', () => {
   const nav = shell.querySelector('.gstore-myaccount-nav');
   const list = nav?.querySelector('.gstore-myaccount-nav__list');
   if (list) {
-    list.id = 'account-refined-account-menu';
-    const toggle = document.createElement('button');
-    toggle.className = 'account-refined-menu-toggle'; toggle.type = 'button';
+    const toggle = nav.querySelector('.account-refined-menu-toggle');
+    const action = toggle?.querySelector('.account-refined-menu-action');
     const currentPage = list.querySelector('.gstore-myaccount-nav__item.is-active > .gstore-myaccount-nav__link .gstore-myaccount-nav__label')?.textContent?.trim() || 'Início';
-    const icon = document.createElement('span');
-    icon.className = 'account-refined-menu-icon';
-    icon.setAttribute('aria-hidden', 'true');
-    for (let line = 0; line < 3; line++) icon.append(document.createElement('i'));
-    const copy = document.createElement('span');
-    copy.className = 'account-refined-menu-copy';
-    const action = document.createElement('strong');
-    action.className = 'account-refined-menu-action';
-    action.textContent = 'Abrir menu da conta';
-    const current = document.createElement('span');
-    current.className = 'account-refined-menu-current';
-    current.textContent = `Página atual: ${currentPage}`;
-    const chevron = document.createElement('span');
-    chevron.className = 'account-refined-menu-chevron';
-    chevron.setAttribute('aria-hidden', 'true');
-    copy.append(action, current);
-    toggle.append(icon, copy, chevron);
-    toggle.setAttribute('aria-label', `Abrir menu da conta. Página atual: ${currentPage}`);
-    toggle.setAttribute('aria-controls', list.id); toggle.setAttribute('aria-expanded', 'false');
+    if (!toggle || !action) return;
     toggle.addEventListener('click', () => {
       const open = toggle.getAttribute('aria-expanded') !== 'true';
       toggle.setAttribute('aria-expanded', String(open)); nav.classList.toggle('account-refined-menu-open', open);
       action.textContent = `${open ? 'Fechar' : 'Abrir'} menu da conta`;
       toggle.setAttribute('aria-label', `${open ? 'Fechar' : 'Abrir'} menu da conta. Página atual: ${currentPage}`);
     });
-    list.before(toggle);
   }
 });
