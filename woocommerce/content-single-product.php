@@ -1575,12 +1575,12 @@ $gstore_tab_next_cta_labels = array(
 
 						<?php if ( ! empty( $hero_meta_cards ) ) : ?>
 							<div class="Gstore-single-product__buybox-meta-strip" aria-label="<?php esc_attr_e( 'Destaques', 'gstore' ); ?>">
-								<?php foreach ( $hero_meta_cards as $card_index => $card ) : ?>
+								<?php foreach ( $hero_meta_cards as $card ) : ?>
 									<div class="Gstore-single-product__buybox-meta-chip">
 										<div class="Gstore-single-product__buybox-meta-chip-label">
 											<?php echo esc_html( $card['label'] ); ?>
 										</div>
-										<div class="Gstore-single-product__buybox-meta-chip-text"<?php echo 0 === $card_index ? ' data-gstore-availability-summary' : ''; ?>>
+										<div class="Gstore-single-product__buybox-meta-chip-text">
 											<?php
 											if ( ! empty( $card['allow_html'] ) ) {
 												echo wp_kses_post( $card['text'] );
