@@ -1056,7 +1056,9 @@ $has_discount      = $price_source_product->is_on_sale() && $regular_price > 0 &
 $display_price     = $has_discount ? $sale_price : ( $current_price > 0 ? $current_price : $regular_price );
 $discount_percent  = $has_discount ? round( ( ( $regular_price - $display_price ) / $regular_price ) * 100 ) : 0;
 $installments     = (int) apply_filters( 'armastore_single_product_installments', 21, $product );
-$installment_preview = gstore_get_product_installment_preview_data( $product, $installments, 1, 'single' );
+// Parcelas seguem a mesma visibilidade do preço, inclusive quando falta estoque.
+$show_installment_price = ! $hide_price && ! $is_public_draft_product && $display_price > 0 && ( ! $is_out_of_stock || $show_price_oos );
+$installment_preview = $show_installment_price ? gstore_get_product_installment_preview_data( $product, $installments, 1, 'single' ) : array();
 $formatted_installment = ! empty( $installment_preview['installments'] ) && ! empty( $installment_preview['per_installment_html'] )
 	? sprintf(
 		/* translators: 1: número de parcelas, 2: valor da parcela */
@@ -1071,7 +1073,7 @@ $formatted_installment = ! empty( $installment_preview['installments'] ) && ! em
 		$installments
 	)
 	: '' );
-if ( $hide_price || $is_public_draft_product ) {
+if ( ! $show_installment_price ) {
 	$formatted_installment = '';
 }
 
@@ -1113,9 +1115,10 @@ $benefit_items = array(
 );
 
 $hero_meta_cards   = gstore_get_hero_meta_cards( $stock_label, $formatted_installment );
-if ( $hide_price && isset( $hero_meta_cards[1] ) && is_array( $hero_meta_cards[1] ) ) {
-	$hero_meta_cards[1]['text']       = __( 'O valor continua disponível nas áreas liberadas para este produto.', 'gstore' );
-	$hero_meta_cards[1]['allow_html'] = false;
+if ( ! $show_installment_price ) {
+	$hero_meta_cards = array_filter( $hero_meta_cards, function ( $card ) {
+		return empty( $card['is_installment'] );
+	} );
 }
 $brand_buybox_data = gstore_get_single_product_brand_buybox_data( $product );
 $show_buybox_price_panel      = $hide_price || ! $is_out_of_stock || $show_price_oos;
@@ -1321,13 +1324,13 @@ $gstore_tab_next_cta_labels = array(
 							<?php if ( ! empty( $hero_meta_cards ) ) : ?>
 								<div class="Gstore-single-product__info-cards Gstore-single-product__info-cards--gallery">
 									<?php foreach ( $hero_meta_cards as $card ) : ?>
-										<div class="Gstore-single-product__info-card">
+										<div class="Gstore-single-product__info-card"<?php echo ! empty( $card['is_installment'] ) ? ' data-gstore-installment-card' : ''; ?>>
 											<div class="Gstore-single-product__info-title">
 												<?php echo esc_html( $card['label'] ); ?>
 											</div>
 											<div
 												class="Gstore-single-product__info-sub"
-												<?php if ( ! $hide_price && ! empty( $card['is_installment'] ) ) : ?>
+												<?php if ( $show_installment_price && ! empty( $card['is_installment'] ) ) : ?>
 													data-gstore-installment-target="1"
 													data-product-id="<?php echo esc_attr( (string) gstore_get_product_id( $product ) ); ?>"
 													data-max-installments="<?php echo esc_attr( $installments ); ?>"
@@ -1576,7 +1579,7 @@ $gstore_tab_next_cta_labels = array(
 						<?php if ( ! empty( $hero_meta_cards ) ) : ?>
 							<div class="Gstore-single-product__buybox-meta-strip" aria-label="<?php esc_attr_e( 'Destaques', 'gstore' ); ?>">
 								<?php foreach ( $hero_meta_cards as $card ) : ?>
-									<div class="Gstore-single-product__buybox-meta-chip">
+									<div class="Gstore-single-product__buybox-meta-chip"<?php echo ! empty( $card['is_installment'] ) ? ' data-gstore-installment-card' : ''; ?>>
 										<div class="Gstore-single-product__buybox-meta-chip-label">
 											<?php echo esc_html( $card['label'] ); ?>
 										</div>

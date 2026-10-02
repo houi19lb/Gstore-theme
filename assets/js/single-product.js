@@ -236,6 +236,13 @@ document.addEventListener('DOMContentLoaded', () => {
 		select.style.display = 'block';
 	};
 
+	const canShowProductInstallments = () => {
+		const header = document.querySelector('[data-gstore-price-header]');
+		if (header?.dataset?.gstoreHidePrice === '1') return false;
+		const isOos = document.querySelector('.buybox')?.classList.contains('is-out-of-stock');
+		return !isOos || header?.dataset?.gstoreOosPriceMode === 'show';
+	};
+
 	const initProductInstallmentQuotes = () => {
 		const targets = Array.from(document.querySelectorAll('[data-gstore-installment-target="1"]'));
 		if (!targets.length) {
@@ -271,6 +278,7 @@ document.addEventListener('DOMContentLoaded', () => {
 		};
 
 		const applyText = (text) => {
+			if (!canShowProductInstallments()) text = '';
 			targets.forEach((target) => {
 				target.textContent = text;
 				target.hidden = !text;
@@ -278,6 +286,10 @@ document.addEventListener('DOMContentLoaded', () => {
 		};
 
 		const applyFallback = () => {
+			if (!canShowProductInstallments()) {
+				applyText('');
+				return;
+			}
 			targets.forEach((target) => {
 				const fallback = String(target.dataset.initialText || '').trim();
 				if (fallback) {
@@ -318,7 +330,12 @@ document.addEventListener('DOMContentLoaded', () => {
 			});
 		};
 
-		const requestQuotes = async () => {			if (!currentProductId) {				applyFallback();
+		const requestQuotes = async () => {
+			if (!canShowProductInstallments()) {
+				applyText('');
+				return;
+			}
+			if (!currentProductId) {				applyFallback();
 				return;
 			}
 
@@ -959,6 +976,9 @@ document.addEventListener('DOMContentLoaded', () => {
 		};
 
 		const setOutOfStockState = (isOos) => {
+			document.querySelectorAll('[data-gstore-installment-card]').forEach((card) => {
+				card.hidden = isOos && oosPriceMode !== 'show';
+			});
 			const syncPriceHeaderState = (stateIsOos) => {
 				if (!priceHeader) {
 					return;
