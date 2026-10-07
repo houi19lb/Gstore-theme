@@ -57,7 +57,6 @@ function gstore_region_fields( $id ) {
 				<option value="<?php echo esc_attr( $uf ); ?>"><?php echo esc_html( $name . ' (' . $uf . ')' ); ?></option>
 			<?php endforeach; ?>
 		</select>
-		<p>Os preços podem variar por estado. Na finalização, vale o destino da entrega; para retirada, o estado da loja.</p>
 		<p class="Gstore-region-status" data-gstore-region-status role="status" aria-live="polite"></p>
 	</div>
 	<?php

@@ -62,7 +62,7 @@ describe.each(['gstore-regional-pricing.js', 'gstore-regional-pricing.min.js'])(
     w.fetch.mockRejectedValue(new Error('offline'));
     w.gstoreRegion.initAge(age, false);
     await tick();
-    expect(age.querySelector('[data-gstore-region-status]').textContent).toContain('indisponível');
+    expect(age.querySelector('[data-gstore-region-status]').textContent).toBe('');
     await expect(w.gstoreRegion.confirmAge(age)).resolves.toBe(false);
   });
   test('selected state is posted, then stale cart fragments are removed', async () => {

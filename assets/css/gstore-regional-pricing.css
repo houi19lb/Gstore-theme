@@ -45,6 +45,7 @@
 }
 .Gstore-region-fields p { margin: 10px 0 0; font-size: 13px; line-height: 1.5; color: #555; }
 .Gstore-region-fields .Gstore-region-status { min-height: 1.5em; font-weight: 600; }
+.Gstore-region-fields .Gstore-region-status:empty { display: none; }
 .gstore-age-modal .Gstore-region-fields label { color: #fff; }
 .gstore-age-modal .Gstore-region-fields p { color: #c8c8c8; }
 .gstore-age-modal__content:has(.Gstore-region-fields) { box-sizing: border-box; max-height: calc(100dvh - 24px); overflow-y: auto; }

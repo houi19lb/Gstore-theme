@@ -39,15 +39,13 @@
     select.dataset.prepared = 'yes';
     var touched = false;
     select.addEventListener('change', function () { touched = true; status.textContent = ''; });
-    status.textContent = 'Sugerindo seu estado…';
     context().then(function (data) {
       if (touched || select.disabled) return;
       if (Object.prototype.hasOwnProperty.call(config.states, data.suggested_state)) {
         select.value = data.suggested_state;
-        status.textContent = 'Estado sugerido pelo IP. Confirme ou corrija acima.';
-      } else { status.textContent = 'Selecione seu estado ou continue sem informar.'; }
+      }
     }).catch(function () {
-      if (!touched) status.textContent = 'A localização automática está indisponível. Você pode escolher seu estado.';
+      // Keep manual selection available without explanatory text.
     });
   }
 
@@ -57,7 +55,7 @@
     var status = container.querySelector('[data-gstore-region-status]');
     if ((selected() === (state || 'none'))) return Promise.resolve(false);
     select.disabled = true;
-    status.textContent = 'Atualizando os preços…';
+    status.textContent = 'Salvando…';
     return context().then(function (data) {
       return request({ method: 'POST', headers: { 'Content-Type': 'application/json', 'X-GStore-Region-Nonce': data.nonce }, body: JSON.stringify({ state: state }) });
     }).then(function () {
