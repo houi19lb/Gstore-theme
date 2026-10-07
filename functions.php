@@ -38,6 +38,7 @@ require_once get_theme_file_path( 'inc/gstore-product-upsells.php' );
 require_once get_theme_file_path( 'inc/gstore-product-image-badges.php' );
 require_once get_theme_file_path( 'inc/gstore-account-dashboard.php' );
 require_once get_theme_file_path( 'inc/gstore-cashback-account.php' );
+require_once get_theme_file_path( 'inc/gstore-regional-pricing.php' );
 
 /**
  * Configurações iniciais do tema filho.
@@ -18016,7 +18017,7 @@ function gstore_get_archive_comparison_table_html( $term = null ) {
 	// v4: tabela so in-stock, sem coluna disponibilidade; fallback de texto do calibre acima da tabela. O sufixo de versao
 	// descarta caches de versoes anteriores automaticamente — bump sempre que o
 	// HTML gerado mudar.
-	$cache_key = 'gstore_cmptbl_v4_' . $term->taxonomy . '_' . (int) $term->term_id;
+	$cache_key = gstore_regional_price_cache_key( 'gstore_cmptbl_v4_' . $term->taxonomy . '_' . (int) $term->term_id );
 	$cached    = get_transient( $cache_key );
 	if ( is_string( $cached ) ) {
 		return $cached;
@@ -18247,6 +18248,7 @@ function gstore_get_archive_guide_block_html( $term, $count, $brand_names, $pric
  * @return void
  */
 function gstore_flush_comparison_table_cache( $product_id ) {
+	gstore_regional_invalidate_display_prices();
 	if ( is_object( $product_id ) && method_exists( $product_id, 'get_id' ) ) {
 		$product_id = $product_id->get_id();
 	}
@@ -18760,7 +18762,7 @@ function gstore_handle_search_suggest( WP_REST_Request $request ) {
 		);
 	}
 
-	$cache_key = 'gstore_search_suggest_v4_' . md5( strtolower( remove_accents( $term ) ) );
+	$cache_key = gstore_regional_price_cache_key( 'gstore_search_suggest_v4_' . md5( strtolower( remove_accents( $term ) ) ) );
 	$cached    = get_transient( $cache_key );
 	if ( is_array( $cached ) ) {
 		return new WP_REST_Response( $cached, 200 );
@@ -24891,6 +24893,7 @@ function gstore_age_verification_modal() {
 				Este site cont&eacute;m produtos destinados exclusivamente para maiores de 18 anos.
 			</p>
 			<p class="gstore-age-modal__question">Voc&#234; tem 18 anos ou mais?</p>
+			<?php do_action( 'gstore_age_region_fields' ); ?>
 			<div class="gstore-age-modal__actions">
 				<button type="button" id="gstore-age-confirm" class="gstore-age-modal__btn gstore-age-modal__btn--confirm">
 					<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -25287,8 +25290,12 @@ function gstore_age_verification_modal() {
 		}
 
 		function init() {
+			var verified = isVerified();
+			if (window.gstoreRegion) {
+				window.gstoreRegion.initAge(document.getElementById('gstore-age-modal'), verified);
+			}
 			// Se já verificado, não mostra o modal
-			if (isVerified()) {
+			if (verified) {
 				var modal = document.getElementById('gstore-age-modal');
 				if (modal) {
 					modal.remove();
@@ -25304,9 +25311,11 @@ function gstore_age_verification_modal() {
 			var confirmBtn = document.getElementById('gstore-age-confirm');
 			var denyBtn = document.getElementById('gstore-age-deny');
 			var closeBtn = modal ? modal.querySelector('.gstore-age-modal__close') : null;
+			var ageCancelled = false;
 
 			if (closeBtn) {
 				closeBtn.addEventListener('click', function() {
+					ageCancelled = true;
 					// Ao fechar sem responder, redireciona para fora do site
 					window.location.href = 'https://www.google.com';
 				});
@@ -25314,19 +25323,24 @@ function gstore_age_verification_modal() {
 
 			if (confirmBtn) {
 				confirmBtn.addEventListener('click', function() {
-					setVerified();
-					hideModal();
-
-					// Remove o modal apos a animacao
-					setTimeout(function() {
-						var modal = document.getElementById('gstore-age-modal');
-						if (modal) modal.remove();
-					}, 500);
+					if (confirmBtn.disabled) return;
+					confirmBtn.disabled = true;
+					var confirmation = window.gstoreRegion ? window.gstoreRegion.confirmAge(modal) : Promise.resolve(false);
+					confirmation.then(function(changed) {
+						if (ageCancelled) return;
+						setVerified();
+						hideModal();
+						if (changed) { window.location.reload(); return; }
+						setTimeout(function() { if (modal) modal.remove(); }, 500);
+					}).catch(function() {
+						// The region field displays the error; age is not recorded until confirmation succeeds.
+					}).finally(function() { confirmBtn.disabled = false; });
 				});
 			}
 
 			if (denyBtn) {
 				denyBtn.addEventListener('click', function() {
+					ageCancelled = true;
 					showBlockedScreen();
 				});
 			}

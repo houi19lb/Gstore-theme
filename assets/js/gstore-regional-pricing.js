@@ -1,0 +1,126 @@
+(function () {
+  'use strict';
+  var config = window.gstoreRegionalConfig;
+  if (!config) return;
+  var contextPromise;
+  var dialog;
+  var returnFocus;
+  var saving = false;
+
+  function selected() {
+    var match = document.cookie.match(/(?:^|;\s*)gstore_region=([^;]*)/);
+    var value = match ? match[1] : '';
+    return value === 'none' || Object.prototype.hasOwnProperty.call(config.states, value) ? value : '';
+  }
+
+  function request(options) {
+    var controller = new AbortController();
+    var timeout = setTimeout(function () { controller.abort(); }, 5000);
+    return fetch(config.endpoint, Object.assign({ credentials: 'same-origin', cache: 'no-store', signal: controller.signal }, options))
+      .then(function (response) {
+        if (!response.ok) throw new Error('Não foi possível atualizar a região. Tente novamente.');
+        return response.json();
+      }).finally(function () { clearTimeout(timeout); });
+  }
+
+  function context() {
+    if (!contextPromise) {
+      contextPromise = request().catch(function (error) { contextPromise = null; throw error; });
+    }
+    return contextPromise;
+  }
+
+  function prepare(container) {
+    var select = container.querySelector('[data-gstore-region-select]');
+    var status = container.querySelector('[data-gstore-region-status]');
+    var known = selected();
+    select.value = known === 'none' ? '' : known;
+    if (known || select.dataset.prepared) return;
+    select.dataset.prepared = 'yes';
+    var touched = false;
+    select.addEventListener('change', function () { touched = true; status.textContent = ''; });
+    status.textContent = 'Sugerindo seu estado…';
+    context().then(function (data) {
+      if (touched || select.disabled) return;
+      if (Object.prototype.hasOwnProperty.call(config.states, data.suggested_state)) {
+        select.value = data.suggested_state;
+        status.textContent = 'Estado sugerido pelo IP. Confirme ou corrija acima.';
+      } else { status.textContent = 'Selecione seu estado ou continue sem informar.'; }
+    }).catch(function () {
+      if (!touched) status.textContent = 'A localização automática está indisponível. Você pode escolher seu estado.';
+    });
+  }
+
+  function save(container) {
+    var select = container.querySelector('[data-gstore-region-select]');
+    var state = select.value;
+    var status = container.querySelector('[data-gstore-region-status]');
+    if ((selected() === (state || 'none'))) return Promise.resolve(false);
+    select.disabled = true;
+    status.textContent = 'Atualizando os preços…';
+    return context().then(function (data) {
+      return request({ method: 'POST', headers: { 'Content-Type': 'application/json', 'X-GStore-Region-Nonce': data.nonce }, body: JSON.stringify({ state: state }) });
+    }).then(function () {
+      if (selected() !== (state || 'none')) throw new Error('Permita cookies para salvar sua região.');
+      status.textContent = '';
+      // Cart fragments belong to the previous region and must not survive the reload.
+      try {
+        Object.keys(sessionStorage).forEach(function (key) {
+          if (key.indexOf('wc_fragments_') === 0) sessionStorage.removeItem(key);
+        });
+      } catch (error) { /* Storage may be unavailable. */ }
+      return true;
+    }).catch(function (error) {
+      contextPromise = null;
+      // Age confirmation must remain available if localization fails and no UF was requested.
+      if (!state && !selected()) return false;
+      status.textContent = error.message || 'Não foi possível salvar. Tente novamente.';
+      throw error;
+    }).finally(function () { select.disabled = false; });
+  }
+
+  function open(trigger) {
+    if (!dialog || saving) return;
+    returnFocus = trigger || document.activeElement;
+    prepare(dialog);
+    if (!dialog.open) dialog.showModal();
+    dialog.querySelector('select').focus();
+  }
+
+  window.gstoreRegion = {
+    initAge: function (modal, verified) {
+      if (verified) {
+        if (!selected()) open();
+      } else if (modal) {
+        prepare(modal);
+      }
+    },
+    confirmAge: function (modal) { return save(modal); }
+  };
+
+  function init() {
+    dialog = document.getElementById('gstore-region-dialog');
+    if (!dialog) return;
+    document.addEventListener('click', function (event) {
+      var trigger = event.target.closest('[data-gstore-region-trigger]');
+      if (trigger) { event.preventDefault(); open(trigger); }
+    });
+    dialog.querySelector('[data-gstore-region-close]').addEventListener('click', function () { if (!saving) dialog.close(); });
+    dialog.addEventListener('cancel', function (event) { if (saving) event.preventDefault(); });
+    dialog.addEventListener('close', function () { if (returnFocus && returnFocus.isConnected) returnFocus.focus(); });
+    dialog.querySelector('form').addEventListener('submit', function (event) {
+      event.preventDefault();
+      if (saving) return;
+      saving = true;
+      var button = dialog.querySelector('[type="submit"]');
+      button.disabled = true;
+      save(dialog).then(function (changed) {
+        dialog.close();
+        if (changed) window.location.reload();
+      }).catch(function () { /* The error is shown next to the select. */ })
+        .finally(function () { saving = false; button.disabled = false; });
+    });
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+  else init();
+})();
