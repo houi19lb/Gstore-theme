@@ -13971,12 +13971,12 @@ function gstore_theme_get_floating_flash_sale_products( $campaign ) {
  * @return void
  */
 function gstore_render_single_flash_sale_floating_card() {
-	if ( is_front_page() ) {
+	$campaign = gstore_theme_get_active_flash_sale();
+	$configured_count = absint( $campaign['configured_item_count'] ?? count( $campaign['items'] ?? array() ) );
+	if ( is_front_page() && 1 !== $configured_count ) {
 		return;
 	}
-	$campaign = gstore_theme_get_active_flash_sale();
 	$products = gstore_theme_get_floating_flash_sale_products( $campaign );
-	$configured_count = absint( $campaign['configured_item_count'] ?? count( $campaign['items'] ?? array() ) );
 	if ( ! $products ) {
 		return;
 	}
