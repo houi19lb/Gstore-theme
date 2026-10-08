@@ -3592,6 +3592,81 @@ body.single-product .onsale {
 	font-size: var(--gstore-font-size-base);
 }
 
+.buybox .stock.has-availability-help {
+	position: relative;
+}
+
+.buybox .stock.has-availability-help .stock-title,
+.buybox .stock.has-availability-help .stock-sub {
+	padding-right: 42px;
+}
+
+.buybox .stock-availability-help summary {
+	position: absolute;
+	top: 14px;
+	right: 12px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 32px;
+	height: 32px;
+	border: 1px solid #16a34a;
+	border-radius: 50%;
+	color: #15803d;
+	background: #fff;
+	font-size: 18px;
+	font-weight: 700;
+	line-height: 1;
+	list-style: none;
+	cursor: pointer;
+}
+
+.buybox .stock-availability-help summary::-webkit-details-marker {
+	display: none;
+}
+
+.buybox .stock-availability-help summary:focus-visible {
+	outline: 2px solid #15803d;
+	outline-offset: 3px;
+}
+
+.buybox .stock-availability-help__content {
+	margin-top: 12px;
+	padding-top: 12px;
+	border-top: 1px solid #bbf7d0;
+	font-size: 13px;
+	line-height: 1.5;
+	color: #14532d;
+}
+
+.buybox .stock-availability-help__content p {
+	margin: 0 0 8px;
+}
+
+.buybox .stock-availability-help__content a {
+	color: #15803d;
+	font-weight: 600;
+	text-decoration: underline;
+}
+
+.buybox.is-on-order .stock-availability-help summary {
+	border-color: #ea580c;
+	color: #9a3412;
+}
+
+.buybox.is-on-order .stock-availability-help__content {
+	border-color: #fed7aa;
+	color: #7c2d12;
+}
+
+.buybox.is-on-order .stock-availability-help__content a {
+	color: #9a3412;
+}
+
+.buybox .stock.is-out-of-stock .stock-availability-help {
+	display: none;
+}
+
 .buybox.is-in-stock .stock-sub {
 	color: #14532d;
 }

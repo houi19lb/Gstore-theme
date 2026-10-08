@@ -218,11 +218,28 @@ if ( ! function_exists( 'gstore_render_single_product_buybox_stock_block' ) ) :
 	 * @param string $buybox_stock_class Classe do estado de estoque.
 	 * @param string $stock_title        Titulo exibido.
 	 * @param string $stock_subtitle     Subtitulo exibido.
+	 * @param string $availability_slug  Modalidade de disponibilidade configurada.
 	 * @return void
 	 */
-	function gstore_render_single_product_buybox_stock_block( $buybox_stock_class, $stock_title, $stock_subtitle ) {
+	function gstore_render_single_product_buybox_stock_block( $buybox_stock_class, $stock_title, $stock_subtitle, $availability_slug = '' ) {
+		$help_content = array(
+			'pre-order' => array(
+				'option'  => 'gstore_availability_help_preorder_enabled',
+				'label'   => __( 'Pré-venda', 'gstore' ),
+				'message' => __( 'A compra é feita antes da chegada do produto ao estoque. O envio começa depois que a loja recebe o lote e conclui as etapas necessárias. A previsão pode mudar.', 'gstore' ),
+			),
+			'on-demand' => array(
+				'option'  => 'gstore_availability_help_ondemand_enabled',
+				'label'   => __( 'Encomenda', 'gstore' ),
+				'message' => __( 'O produto é solicitado para atender ao pedido. A disponibilidade e o prazo dependem da confirmação do fornecedor e da chegada do item à loja. Confirme a previsão com nossa equipe antes de comprar.', 'gstore' ),
+			),
+		);
+		$help = isset( $help_content[ $availability_slug ] ) && 'is-out-of-stock' !== $buybox_stock_class
+			&& 'yes' === get_option( $help_content[ $availability_slug ]['option'], 'no' )
+			? $help_content[ $availability_slug ]
+			: null;
 		?>
-		<div class="stock <?php echo esc_attr( $buybox_stock_class ); ?>"
+		<div class="stock <?php echo esc_attr( $buybox_stock_class ); ?><?php echo $help ? ' has-availability-help' : ''; ?>"
 			data-gstore-stock-block
 			data-availability
 			data-default-class="<?php echo esc_attr( $buybox_stock_class ); ?>"
@@ -236,6 +253,16 @@ if ( ! function_exists( 'gstore_render_single_product_buybox_stock_block' ) ) :
 			<div class="stock-sub" data-gstore-stock-subtitle>
 				<?php echo esc_html( $stock_subtitle ); ?>
 			</div>
+			<?php if ( $help ) : ?>
+				<details class="stock-availability-help">
+					<?php /* translators: %s: availability mode, such as pre-order or on-demand. */ ?>
+					<summary aria-label="<?php echo esc_attr( sprintf( __( 'O que significa %s?', 'gstore' ), $help['label'] ) ); ?>">?</summary>
+					<div class="stock-availability-help__content">
+						<p><?php echo esc_html( $help['message'] ); ?></p>
+						<a href="<?php echo esc_url( home_url( '/informativo/#Gstore-informativo-availability-title' ) ); ?>"><?php esc_html_e( 'Entenda as modalidades', 'gstore' ); ?> <span aria-hidden="true">→</span></a>
+					</div>
+				</details>
+			<?php endif; ?>
 		</div>
 		<?php
 	}
@@ -1562,7 +1589,7 @@ $gstore_tab_next_cta_labels = array(
 								<?php endif; ?>
 
 								<?php if ( $show_buybox_stock_in_header ) : ?>
-									<?php gstore_render_single_product_buybox_stock_block( $buybox_stock_class, $stock_title, $stock_subtitle ); ?>
+									<?php gstore_render_single_product_buybox_stock_block( $buybox_stock_class, $stock_title, $stock_subtitle, $slug_disponibilidade ); ?>
 								<?php endif; ?>
 
 								<?php gstore_render_single_product_brand_buybox_lockup( $brand_buybox_data ); ?>
@@ -1599,7 +1626,7 @@ $gstore_tab_next_cta_labels = array(
 
 						<!-- Disponibilidade -->
 						<?php if ( ! $show_buybox_stock_in_header ) : ?>
-							<?php gstore_render_single_product_buybox_stock_block( $buybox_stock_class, $stock_title, $stock_subtitle ); ?>
+							<?php gstore_render_single_product_buybox_stock_block( $buybox_stock_class, $stock_title, $stock_subtitle, $slug_disponibilidade ); ?>
 						<?php endif; ?>
 
 						<!-- Variações + Quantidade + CTA -->
