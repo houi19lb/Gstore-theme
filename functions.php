@@ -21344,6 +21344,61 @@ function gstore_blog_posts_page_per_page( $query ) {
 add_action( 'pre_get_posts', 'gstore_blog_posts_page_per_page', 20 );
 
 /**
+ * Coloca os artigos destacados no inicio das listagens publicas do blog.
+ * A marca e o instante de ativacao sao salvos pelo editor de artigos do GSTORE.
+ */
+function gstore_blog_featured_main_query( $query ) {
+	if ( is_admin() || ! $query instanceof WP_Query || ! $query->is_main_query() ) {
+		return;
+	}
+
+	$post_type = $query->get( 'post_type' );
+	if ( $post_type && 'post' !== $post_type ) {
+		return;
+	}
+
+	if ( $query->is_home() || $query->is_category() || $query->is_tag() || $query->is_author() || $query->is_date() ) {
+		$query->set( 'gstore_featured_articles_first', true );
+		$query->set( 'ignore_sticky_posts', true );
+	}
+}
+add_action( 'pre_get_posts', 'gstore_blog_featured_main_query', 21 );
+
+/** Aplica a mesma ordem aos Query Loops da home e do blog. */
+function gstore_blog_featured_block_query( $query, $block ) {
+	if ( is_admin() ) {
+		return $query;
+	}
+
+	$parsed    = $block instanceof WP_Block ? $block->parsed_block : (array) $block;
+	$class_name = isset( $parsed['attrs']['className'] ) ? (string) $parsed['attrs']['className'] : '';
+	if ( false === strpos( $class_name, 'Gstore-blog-query' ) && false === strpos( $class_name, 'Gstore-home-blog__query' ) ) {
+		return $query;
+	}
+
+	$query['gstore_featured_articles_first'] = true;
+	$query['ignore_sticky_posts'] = true;
+	return $query;
+}
+add_filter( 'query_loop_block_query_vars', 'gstore_blog_featured_block_query', 10, 2 );
+
+/** Ordena no banco antes da paginacao, sem repetir artigos entre paginas. */
+function gstore_blog_featured_posts_orderby( $orderby, $query ) {
+	if ( is_admin() || ! $query->get( 'gstore_featured_articles_first' ) ) {
+		return $orderby;
+	}
+
+	global $wpdb;
+	$featured_at = $wpdb->prepare(
+		"(SELECT MAX(CAST(featured_meta.meta_value AS DECIMAL(16,6))) FROM {$wpdb->postmeta} AS featured_meta WHERE featured_meta.post_id = {$wpdb->posts}.ID AND featured_meta.meta_key = %s)",
+		'_gstore_blog_featured_at'
+	);
+
+	return "COALESCE({$featured_at}, 0) DESC, {$wpdb->posts}.post_date DESC, {$wpdb->posts}.ID DESC";
+}
+add_filter( 'posts_orderby', 'gstore_blog_featured_posts_orderby', 20, 2 );
+
+/**
  * Faz o Query Loop principal do /blog herdar a query nativa da pagina de posts.
  *
  * Isso preserva URLs como /blog/page/2/ mesmo quando o template page-blog.html

@@ -38,6 +38,7 @@ if ( ! function_exists( 'gstore_home_blog_v1_render' ) ) {
 			'post_status'         => 'publish',
 			'posts_per_page'      => $posts_total,
 			'ignore_sticky_posts' => true,
+			'gstore_featured_articles_first' => true,
 			'no_found_rows'       => true,
 		);
 
