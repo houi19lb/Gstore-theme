@@ -340,10 +340,6 @@ main.Gstore-informativo-shell .wp-block-group.is-layout-constrained {
 	font-weight: 700;
 }
 
-.Gstore-informativo-arms-block .Gstore-informativo-block-title {
-	padding-left: clamp(28px, 4vw, 44px);
-}
-
 .Gstore-informativo-section h2.Gstore-informativo-block-title {
 	color: var(--gstore-color-accent);
 }
@@ -861,7 +857,6 @@ main.Gstore-informativo-shell .wp-block-group.is-layout-constrained {
 	font-size: 1rem;
 	line-height: 1.6;
 	margin: 0 0 20px;
-	padding-left: clamp(28px, 4vw, 44px);
 }
 
 .Gstore-informativo-freight-block {
@@ -873,7 +868,6 @@ main.Gstore-informativo-shell .wp-block-group.is-layout-constrained {
 .Gstore-informativo-freight-block > .Gstore-informativo-block-title {
 	color: var(--gstore-color-accent);
 	margin-bottom: 8px;
-	padding-left: clamp(28px, 4vw, 44px);
 }
 
 .Gstore-informativo-freight-intro {
@@ -881,7 +875,6 @@ main.Gstore-informativo-shell .wp-block-group.is-layout-constrained {
 	font-size: 1rem;
 	line-height: 1.6;
 	margin: 0 0 20px;
-	padding-left: clamp(28px, 4vw, 44px);
 }
 
 .Gstore-informativo-faq__items {
