@@ -13933,42 +13933,59 @@ function gstore_render_flash_sale_catalog_upcoming( $campaign ) {
 }
 
 /**
- * Retorna o produto elegível para o cartão flutuante de uma oferta com item único.
+ * Retorna os produtos elegíveis para o cartão flutuante da campanha ativa.
  *
  * @param array|null $campaign Campanha ativa.
- * @return WC_Product|null
+ * @return WC_Product[]
  */
-function gstore_theme_get_floating_flash_sale_product( $campaign ) {
+function gstore_theme_get_floating_flash_sale_products( $campaign ) {
 	$items = is_array( $campaign['items'] ?? null ) ? $campaign['items'] : array();
-	if ( ! function_exists( 'wc_get_product' ) || 1 !== count( $items ) || empty( $campaign['ends_at'] ) ) {
-		return null;
+	$configured_count = absint( $campaign['configured_item_count'] ?? count( $items ) );
+	if ( ! function_exists( 'wc_get_product' ) || empty( $items ) || empty( $campaign['ends_at'] ) ) {
+		return array();
 	}
-
-	$product = wc_get_product( absint( $items[0]['product_id'] ?? 0 ) );
-	return $product && $product->is_visible() && $product->is_in_stock() ? $product : null;
+	if ( $configured_count > 1 ) {
+		if ( 'simultaneous' !== ( $campaign['mode'] ?? '' ) || empty( $campaign['floating_popup_enabled'] ) ) {
+			return array();
+		}
+		if ( 'random' !== ( $campaign['floating_popup_mode'] ?? '' ) ) {
+			$selected_id = absint( $campaign['floating_popup_product_id'] ?? 0 );
+			$items = array_values( array_filter( $items, static function ( $item ) use ( $selected_id ) {
+				return $selected_id > 0 && absint( $item['product_id'] ?? 0 ) === $selected_id;
+			} ) );
+		}
+	}
+	$products = array();
+	foreach ( $items as $item ) {
+		$product = wc_get_product( absint( $item['product_id'] ?? 0 ) );
+		if ( $product && $product->is_visible() && $product->is_in_stock() ) {
+			$products[] = $product;
+		}
+	}
+	return $products;
 }
 
 /**
- * Para uma oferta com item único, exibe o cartão na home e nas páginas de produto.
+ * Exibe o cartão da oferta única ou o destaque configurado da oferta simultânea.
  *
  * @return void
  */
 function gstore_render_single_flash_sale_floating_card() {
-	if ( ! is_front_page() && ! ( function_exists( 'is_product' ) && is_product() ) ) {
-		return;
-	}
 	$campaign = gstore_theme_get_active_flash_sale();
-	$product  = gstore_theme_get_floating_flash_sale_product( $campaign );
-	if ( ! $product ) {
+	$products = gstore_theme_get_floating_flash_sale_products( $campaign );
+	$configured_count = absint( $campaign['configured_item_count'] ?? count( $campaign['items'] ?? array() ) );
+	if ( ! $products || ( 1 === $configured_count && ! is_front_page() && ! ( function_exists( 'is_product' ) && is_product() ) ) ) {
 		return;
 	}
+	$random_mode = $configured_count > 1 && 'random' === ( $campaign['floating_popup_mode'] ?? '' );
+	foreach ( $products as $product ) {
 	$price         = (float) $product->get_price();
 	$regular_price = (float) $product->get_regular_price();
 	$show_regular  = $regular_price > $price;
 	$product_url   = $product->get_permalink();
 	$dismiss_key   = $product->get_id() . ':' . (string) $campaign['ends_at'];
 	?>
-	<aside class="gstore-flash-sale-floating" hidden data-gstore-flash-sale-key="<?php echo esc_attr( $dismiss_key ); ?>" aria-label="<?php echo esc_attr__( 'Oferta relâmpago em destaque', 'gstore' ); ?>">
+	<aside class="gstore-flash-sale-floating" hidden data-gstore-flash-sale-key="<?php echo esc_attr( $dismiss_key ); ?>" data-gstore-flash-sale-campaign="<?php echo esc_attr( (string) $campaign['id'] ); ?>" data-gstore-flash-sale-product="<?php echo esc_attr( (string) $product->get_id() ); ?>" data-gstore-flash-sale-random="<?php echo $random_mode ? '1' : '0'; ?>" aria-label="<?php echo esc_attr__( 'Oferta relâmpago em destaque', 'gstore' ); ?>">
 		<a class="gstore-flash-sale-floating__card-link" href="<?php echo esc_url( $product_url ); ?>" aria-label="<?php echo esc_attr( sprintf( __( 'Ver oferta: %s', 'gstore' ), $product->get_name() ) ); ?>"></a>
 		<button type="button" class="gstore-flash-sale-floating__close" data-gstore-flash-sale-close aria-label="<?php echo esc_attr__( 'Fechar oferta', 'gstore' ); ?>">×</button>
 		<div class="gstore-flash-sale-floating__top"><i class="fa-solid fa-bolt" aria-hidden="true"></i><span><?php esc_html_e( 'Oferta relâmpago', 'gstore' ); ?></span></div>
@@ -13993,6 +14010,7 @@ function gstore_render_single_flash_sale_floating_card() {
 		</div>
 	</aside>
 	<?php
+	}
 }
 add_action( 'wp_footer', 'gstore_render_single_flash_sale_floating_card', 35 );
 
@@ -14004,10 +14022,12 @@ add_action( 'wp_footer', 'gstore_render_single_flash_sale_floating_card', 35 );
 function gstore_enqueue_flash_sale_assets() {
 	$is_flash_sale_page = function_exists( 'is_page' ) && is_page( 'ofertas-relampago' );
 	$is_flash_sale_product = false;
-	$has_floating_offer = false;
+	$campaign = gstore_theme_get_active_flash_sale();
+	$configured_count = absint( $campaign['configured_item_count'] ?? count( $campaign['items'] ?? array() ) );
+	$has_floating_offer = ( $configured_count > 1 || is_front_page() || ( function_exists( 'is_product' ) && is_product() ) )
+		&& (bool) gstore_theme_get_floating_flash_sale_products( $campaign );
 	if ( function_exists( 'is_product' ) && is_product() ) {
 		$is_flash_sale_product = ! empty( gstore_theme_get_product_flash_sale_campaign( get_queried_object_id() ) );
-		$has_floating_offer = (bool) gstore_theme_get_floating_flash_sale_product( gstore_theme_get_active_flash_sale() );
 	}
 
 	if ( ! is_front_page() && ! $is_flash_sale_page && ! $is_flash_sale_product && ! $has_floating_offer ) {

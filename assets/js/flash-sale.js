@@ -5,7 +5,20 @@
   }
 
   function restoreFloatingCards() {
-    document.querySelectorAll('.gstore-flash-sale-floating').forEach(function (card) {
+    var cards = Array.prototype.slice.call(document.querySelectorAll('.gstore-flash-sale-floating'));
+    var randomCards = cards.filter(function (card) { return card.getAttribute('data-gstore-flash-sale-random') === '1'; });
+    if (randomCards.length && !randomCards.some(function (card) { return !card.hidden; })) {
+      var campaign = randomCards[0].getAttribute('data-gstore-flash-sale-campaign') || '';
+      var lastKey = 'gstore_flash_sale_last:' + campaign + ':' + (randomCards[0].getAttribute('data-gstore-flash-sale-key') || '').split(':').slice(1).join(':');
+      var lastProduct = '';
+      try { lastProduct = window.sessionStorage.getItem(lastKey) || ''; } catch (error) { /* Armazenamento opcional. */ }
+      var alternatives = randomCards.filter(function (card) { return card.getAttribute('data-gstore-flash-sale-product') !== lastProduct; });
+      var pool = alternatives.length ? alternatives : randomCards;
+      var chosen = pool[Math.floor(Math.random() * pool.length)];
+      chosen.hidden = false;
+      try { window.sessionStorage.setItem(lastKey, chosen.getAttribute('data-gstore-flash-sale-product') || ''); } catch (error) { /* Armazenamento opcional. */ }
+    }
+    cards.filter(function (card) { return card.getAttribute('data-gstore-flash-sale-random') !== '1'; }).forEach(function (card) {
       var storageKey = getDismissStorageKey(card);
       try {
         if (storageKey && window.sessionStorage.getItem(storageKey) === '1') {
@@ -122,7 +135,7 @@
     if (!close) return;
     var card = close.closest('.gstore-flash-sale-floating');
     if (!card) return;
-    var storageKey = getDismissStorageKey(card);
+    var storageKey = card.getAttribute('data-gstore-flash-sale-random') === '1' ? '' : getDismissStorageKey(card);
     try {
       if (storageKey) window.sessionStorage.setItem(storageKey, '1');
     } catch (error) {

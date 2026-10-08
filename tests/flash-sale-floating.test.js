@@ -105,3 +105,34 @@ describe.each(['flash-sale.js', 'flash-sale.min.js'])('floating offer session: %
     expect(window.document.querySelector('[data-gstore-flash-sale-clock]')).not.toBeNull();
   });
 });
+
+describe.each(['flash-sale.js', 'flash-sale.min.js'])('simultaneous floating offer rotation: %s', (asset) => {
+  const script = fs.readFileSync(path.join(root, 'assets', 'js', asset), 'utf8');
+  const cards = [42, 43, 44].map((id) => `<aside class="gstore-flash-sale-floating" hidden data-gstore-flash-sale-key="${id}:2026-09-05 23:59:59" data-gstore-flash-sale-campaign="campaign-1" data-gstore-flash-sale-product="${id}" data-gstore-flash-sale-random="1"><button data-gstore-flash-sale-close>Fechar</button></aside>`).join('');
+
+  function page(saved = {}) {
+    const dom = new JSDOM(cards, { url: 'https://store.example/category/', runScripts: 'outside-only' });
+    const { window } = dom;
+    window.setInterval = jest.fn();
+    Object.defineProperty(window.document, 'readyState', { configurable: true, value: 'complete' });
+    Object.entries(saved).forEach(([name, value]) => window.sessionStorage.setItem(name, value));
+    window.eval(script);
+    return dom;
+  }
+
+  test('shows one card and changes product after closing and visiting another page', () => {
+    const first = page();
+    const visible = first.window.document.querySelectorAll('.gstore-flash-sale-floating:not([hidden])');
+    expect(visible).toHaveLength(1);
+    const firstId = visible[0].getAttribute('data-gstore-flash-sale-product');
+    visible[0].querySelector('button').click();
+    expect(first.window.document.querySelectorAll('.gstore-flash-sale-floating:not([hidden])')).toHaveLength(0);
+    const saved = Object.fromEntries(Object.keys(first.window.sessionStorage).map((key) => [key, first.window.sessionStorage.getItem(key)]));
+    first.window.close();
+    const second = page(saved);
+    const next = second.window.document.querySelectorAll('.gstore-flash-sale-floating:not([hidden])');
+    expect(next).toHaveLength(1);
+    expect(next[0].getAttribute('data-gstore-flash-sale-product')).not.toBe(firstId);
+    second.window.close();
+  });
+});
