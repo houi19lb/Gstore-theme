@@ -21372,7 +21372,7 @@ function gstore_blog_featured_block_query( $query, $block ) {
 
 	$parsed    = $block instanceof WP_Block ? $block->parsed_block : (array) $block;
 	$class_name = isset( $parsed['attrs']['className'] ) ? (string) $parsed['attrs']['className'] : '';
-	if ( false === strpos( $class_name, 'Gstore-blog-query' ) && false === strpos( $class_name, 'Gstore-home-blog__query' ) ) {
+	if ( false === strpos( ' ' . $class_name . ' ', ' Gstore-featured-post-template ' ) ) {
 		return $query;
 	}
 

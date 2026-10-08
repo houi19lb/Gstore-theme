@@ -68,8 +68,14 @@ $product = new WP_Query( 'home', array( 'post_type' => 'product' ) );
 gstore_blog_featured_main_query( $product );
 check_blog( null === $product->get( 'gstore_featured_articles_first' ), 'Product order changed' );
 
-$block_query = gstore_blog_featured_block_query( array( 'post_type' => 'post' ), new WP_Block( 'Gstore-home-blog__query' ) );
-check_blog( true === $block_query['gstore_featured_articles_first'], 'Home cards lack featured order' );
+foreach ( array( 'parts/home-blog.html', 'templates/home.html', 'templates/page-blog.html' ) as $template ) {
+	$markup = file_get_contents( dirname( __DIR__ ) . '/' . $template );
+	check_blog( 1 === preg_match( '/<!-- wp:post-template (\{[^\n]*\}) -->/', $markup, $matches ), "Missing post template in {$template}" );
+	$attrs = json_decode( $matches[1], true );
+	$block_query = gstore_blog_featured_block_query( array( 'post_type' => 'post' ), new WP_Block( $attrs['className'] ?? '' ) );
+	check_blog( true === ( $block_query['gstore_featured_articles_first'] ?? false ), "Featured order missing in {$template}" );
+}
+check_blog( array() === gstore_blog_featured_block_query( array(), new WP_Block( 'Gstore-home-blog__query' ) ), 'Parent query class should not trigger the post template filter' );
 check_blog( array() === gstore_blog_featured_block_query( array(), new WP_Block( 'other-query' ) ), 'Unrelated block changed' );
 
 $orderby = gstore_blog_featured_posts_orderby( 'original', new WP_Query( 'home', array( 'gstore_featured_articles_first' => true ) ) );
