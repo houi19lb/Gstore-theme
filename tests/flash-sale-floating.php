@@ -56,15 +56,16 @@ if ( in_array( '--render', $argv, true ) ) {
 	exit;
 }
 $cases = array(
-	'homepage' => array( array( 'page' => 'home' ), true, true, true ),
+	'homepage without popup' => array( array( 'page' => 'home' ), false, true, true ),
 	'promoted product' => array( array( 'inline' => true ), true, true, true ),
 	'other product' => array( array(), true, true, true ),
-	'catalog unchanged' => array( array( 'page' => 'catalog' ), false, true, true ),
-	'checkout excluded' => array( array( 'page' => 'checkout' ), false, false, false ),
+	'catalog shows single offer' => array( array( 'page' => 'catalog' ), true, true, true ),
+	'checkout shows single offer' => array( array( 'page' => 'checkout' ), true, true, true ),
 	'no active campaign' => array( array( 'campaign' => null ), false, false, false ),
 	'multiple products' => array( array( 'campaign' => array( 'items' => array( array( 'product_id' => 42 ), array( 'product_id' => 43 ) ), 'ends_at' => $campaign['ends_at'] ) ), false, false, false ),
 	'multiple products inline timer preserved' => array( array( 'inline' => true, 'campaign' => array( 'items' => array( array( 'product_id' => 42 ), array( 'product_id' => 43 ) ), 'ends_at' => $campaign['ends_at'] ) ), false, false, true ),
 	'fixed product on category' => array( array( 'page' => 'catalog', 'campaign' => array( 'id' => 'test', 'mode' => 'simultaneous', 'configured_item_count' => 2, 'items' => array( array( 'product_id' => 42 ), array( 'product_id' => 43 ) ), 'ends_at' => $campaign['ends_at'], 'floating_popup_enabled' => true, 'floating_popup_mode' => 'fixed', 'floating_popup_product_id' => 43 ) ), true, true, true ),
+	'fixed multi offer hidden on home' => array( array( 'page' => 'home', 'campaign' => array( 'id' => 'test', 'mode' => 'simultaneous', 'configured_item_count' => 2, 'items' => array( array( 'product_id' => 42 ), array( 'product_id' => 43 ) ), 'ends_at' => $campaign['ends_at'], 'floating_popup_enabled' => true, 'floating_popup_mode' => 'fixed', 'floating_popup_product_id' => 43 ) ), false, true, true ),
 	'random products on checkout' => array( array( 'page' => 'checkout', 'campaign' => array( 'id' => 'test', 'mode' => 'simultaneous', 'configured_item_count' => 2, 'items' => array( array( 'product_id' => 42 ), array( 'product_id' => 43 ) ), 'ends_at' => $campaign['ends_at'], 'floating_popup_enabled' => true, 'floating_popup_mode' => 'random' ) ), true, true, true ),
 	'cyclic excluded' => array( array( 'campaign' => array( 'id' => 'test', 'mode' => 'cyclic', 'configured_item_count' => 2, 'items' => array( array( 'product_id' => 42 ) ), 'ends_at' => $campaign['ends_at'], 'floating_popup_enabled' => true ) ), false, false, false ),
 	'no deadline' => array( array( 'campaign' => array( 'items' => $campaign['items'] ) ), false, false, false ),
@@ -87,6 +88,9 @@ foreach ( $cases as $name => [ $overrides, $card, $css, $js ] ) {
 	}
 	if ( 'fixed product on category' === $name && ( ! str_contains( $html, 'data-gstore-flash-sale-product="43"' ) || str_contains( $html, 'data-gstore-flash-sale-product="42"' ) ) ) {
 		throw new RuntimeException( 'Fixed mode did not select the configured product.' );
+	}
+	if ( 'fixed product on category' === $name && ! str_contains( $html, 'data-gstore-flash-sale-key="test:2026-09-05 23:59:59"' ) ) {
+		throw new RuntimeException( 'Simultaneous offers must share a campaign dismissal key.' );
 	}
 	if ( 'random products on checkout' === $name && 2 !== substr_count( $html, '<aside ' ) ) {
 		throw new RuntimeException( 'Random mode did not expose both eligible products.' );

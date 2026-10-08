@@ -13971,10 +13971,13 @@ function gstore_theme_get_floating_flash_sale_products( $campaign ) {
  * @return void
  */
 function gstore_render_single_flash_sale_floating_card() {
+	if ( is_front_page() ) {
+		return;
+	}
 	$campaign = gstore_theme_get_active_flash_sale();
 	$products = gstore_theme_get_floating_flash_sale_products( $campaign );
 	$configured_count = absint( $campaign['configured_item_count'] ?? count( $campaign['items'] ?? array() ) );
-	if ( ! $products || ( 1 === $configured_count && ! is_front_page() && ! ( function_exists( 'is_product' ) && is_product() ) ) ) {
+	if ( ! $products ) {
 		return;
 	}
 	$random_mode = $configured_count > 1 && 'random' === ( $campaign['floating_popup_mode'] ?? '' );
@@ -13983,7 +13986,7 @@ function gstore_render_single_flash_sale_floating_card() {
 	$regular_price = (float) $product->get_regular_price();
 	$show_regular  = $regular_price > $price;
 	$product_url   = $product->get_permalink();
-	$dismiss_key   = $product->get_id() . ':' . (string) $campaign['ends_at'];
+	$dismiss_key   = ( $configured_count > 1 ? (string) $campaign['id'] : (string) $product->get_id() ) . ':' . (string) $campaign['ends_at'];
 	?>
 	<aside class="gstore-flash-sale-floating" hidden data-gstore-flash-sale-key="<?php echo esc_attr( $dismiss_key ); ?>" data-gstore-flash-sale-campaign="<?php echo esc_attr( (string) $campaign['id'] ); ?>" data-gstore-flash-sale-product="<?php echo esc_attr( (string) $product->get_id() ); ?>" data-gstore-flash-sale-random="<?php echo $random_mode ? '1' : '0'; ?>" aria-label="<?php echo esc_attr__( 'Oferta relâmpago em destaque', 'gstore' ); ?>">
 		<a class="gstore-flash-sale-floating__card-link" href="<?php echo esc_url( $product_url ); ?>" aria-label="<?php echo esc_attr( sprintf( __( 'Ver oferta: %s', 'gstore' ), $product->get_name() ) ); ?>"></a>
@@ -14023,8 +14026,7 @@ function gstore_enqueue_flash_sale_assets() {
 	$is_flash_sale_page = function_exists( 'is_page' ) && is_page( 'ofertas-relampago' );
 	$is_flash_sale_product = false;
 	$campaign = gstore_theme_get_active_flash_sale();
-	$configured_count = absint( $campaign['configured_item_count'] ?? count( $campaign['items'] ?? array() ) );
-	$has_floating_offer = ( $configured_count > 1 || is_front_page() || ( function_exists( 'is_product' ) && is_product() ) )
+	$has_floating_offer = ! is_front_page()
 		&& (bool) gstore_theme_get_floating_flash_sale_products( $campaign );
 	if ( function_exists( 'is_product' ) && is_product() ) {
 		$is_flash_sale_product = ! empty( gstore_theme_get_product_flash_sale_campaign( get_queried_object_id() ) );
