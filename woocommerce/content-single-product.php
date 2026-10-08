@@ -231,7 +231,7 @@ if ( ! function_exists( 'gstore_render_single_product_buybox_stock_block' ) ) :
 			'on-demand' => array(
 				'option'  => 'gstore_availability_help_ondemand_enabled',
 				'label'   => __( 'Encomenda', 'gstore' ),
-				'message' => __( 'O produto é solicitado para atender ao pedido. A disponibilidade e o prazo dependem da confirmação do fornecedor e da chegada do item à loja. Confirme a previsão com nossa equipe antes de comprar.', 'gstore' ),
+				'message' => __( 'O produto é solicitado para atender a um pedido específico. A disponibilidade e o prazo dependem da confirmação do fornecedor e da chegada do item à loja.', 'gstore' ),
 			),
 		);
 		$help = isset( $help_content[ $availability_slug ] ) && 'is-out-of-stock' !== $buybox_stock_class
