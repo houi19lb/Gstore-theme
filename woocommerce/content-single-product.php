@@ -223,6 +223,11 @@ if ( ! function_exists( 'gstore_render_single_product_buybox_stock_block' ) ) :
 	 */
 	function gstore_render_single_product_buybox_stock_block( $buybox_stock_class, $stock_title, $stock_subtitle, $availability_slug = '' ) {
 		$help_content = array(
+			'ready' => array(
+				'option'  => 'gstore_availability_help_ready_enabled',
+				'label'   => __( 'Pronta entrega', 'gstore' ),
+				'message' => __( 'O produto já está disponível no estoque da loja. Após a confirmação do pedido e, quando necessária, a liberação da documentação, ele pode seguir para separação e envio.', 'gstore' ),
+			),
 			'pre-order' => array(
 				'option'  => 'gstore_availability_help_preorder_enabled',
 				'label'   => __( 'Pré-venda', 'gstore' ),
@@ -234,7 +239,11 @@ if ( ! function_exists( 'gstore_render_single_product_buybox_stock_block' ) ) :
 				'message' => __( 'O produto é solicitado para atender a um pedido específico. A disponibilidade e o prazo dependem da confirmação do fornecedor e da chegada do item à loja.', 'gstore' ),
 			),
 		);
+		if ( 'is-in-stock' === $buybox_stock_class && ! isset( $help_content[ $availability_slug ] ) ) {
+			$availability_slug = 'ready';
+		}
 		$help = isset( $help_content[ $availability_slug ] ) && 'is-out-of-stock' !== $buybox_stock_class
+			&& ( 'ready' !== $availability_slug || 'is-in-stock' === $buybox_stock_class )
 			&& 'yes' === get_option( $help_content[ $availability_slug ]['option'], 'no' )
 			? $help_content[ $availability_slug ]
 			: null;
@@ -255,7 +264,7 @@ if ( ! function_exists( 'gstore_render_single_product_buybox_stock_block' ) ) :
 			</div>
 			<?php if ( $help ) : ?>
 				<details class="stock-availability-help">
-					<?php /* translators: %s: availability mode, such as pre-order or on-demand. */ ?>
+					<?php /* translators: %s: availability mode, such as ready stock, pre-order or on-demand. */ ?>
 					<summary aria-label="<?php echo esc_attr( sprintf( __( 'O que significa %s?', 'gstore' ), $help['label'] ) ); ?>">?</summary>
 					<div class="stock-availability-help__content">
 						<p><?php echo esc_html( $help['message'] ); ?></p>
