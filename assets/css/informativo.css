@@ -847,11 +847,21 @@ main.Gstore-informativo-shell .wp-block-group.is-layout-constrained {
 
 .Gstore-informativo-arms-block {
 	border-top: 1px solid var(--gstore-institutional-border);
+	gap: 0;
 	padding-top: clamp(26px, 4vw, 42px);
 }
 
 .Gstore-informativo-arms-block > .Gstore-informativo-block-title {
-	margin-bottom: 16px;
+	color: var(--gstore-color-accent);
+	margin-bottom: 8px;
+}
+
+.Gstore-informativo-arms-intro {
+	color: var(--gstore-institutional-text-muted);
+	font-size: 1rem;
+	line-height: 1.6;
+	margin: 0 0 20px;
+	padding-left: clamp(28px, 4vw, 44px);
 }
 
 .Gstore-informativo-faq__items {
