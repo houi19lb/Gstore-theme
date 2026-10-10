@@ -68,7 +68,9 @@ $cases = array(
 	'fixed multi offer hidden on home' => array( array( 'page' => 'home', 'campaign' => array( 'id' => 'test', 'mode' => 'simultaneous', 'configured_item_count' => 2, 'items' => array( array( 'product_id' => 42 ), array( 'product_id' => 43 ) ), 'ends_at' => $campaign['ends_at'], 'floating_popup_enabled' => true, 'floating_popup_mode' => 'fixed', 'floating_popup_product_id' => 43 ) ), false, true, true ),
 	'multi offer with one eligible item hidden on home' => array( array( 'page' => 'home', 'campaign' => array( 'id' => 'test', 'mode' => 'simultaneous', 'configured_item_count' => 2, 'items' => array( array( 'product_id' => 42 ) ), 'ends_at' => $campaign['ends_at'], 'floating_popup_enabled' => true, 'floating_popup_mode' => 'random' ) ), false, true, true ),
 	'random products on checkout' => array( array( 'page' => 'checkout', 'campaign' => array( 'id' => 'test', 'mode' => 'simultaneous', 'configured_item_count' => 2, 'items' => array( array( 'product_id' => 42 ), array( 'product_id' => 43 ) ), 'ends_at' => $campaign['ends_at'], 'floating_popup_enabled' => true, 'floating_popup_mode' => 'random' ) ), true, true, true ),
-	'cyclic excluded' => array( array( 'campaign' => array( 'id' => 'test', 'mode' => 'cyclic', 'configured_item_count' => 2, 'items' => array( array( 'product_id' => 42 ) ), 'ends_at' => $campaign['ends_at'], 'floating_popup_enabled' => true ) ), false, false, false ),
+	'cyclic current item on category' => array( array( 'page' => 'catalog', 'campaign' => array( 'id' => 'test', 'mode' => 'cyclic', 'configured_item_count' => 3, 'items' => array( array( 'product_id' => 42 ) ), 'ends_at' => $campaign['ends_at'], 'floating_popup_enabled' => false ) ), true, true, true ),
+	'cyclic current item on home' => array( array( 'page' => 'home', 'campaign' => array( 'id' => 'test', 'mode' => 'cyclic', 'configured_item_count' => 3, 'items' => array( array( 'product_id' => 42 ) ), 'ends_at' => $campaign['ends_at'] ) ), true, true, true ),
+	'cyclic interval has no popup' => array( array( 'page' => 'checkout', 'campaign' => array( 'id' => 'test', 'mode' => 'cyclic', 'configured_item_count' => 3, 'items' => array(), 'ends_at' => $campaign['ends_at'] ) ), false, false, false ),
 	'no deadline' => array( array( 'campaign' => array( 'items' => $campaign['items'] ) ), false, false, false ),
 	'out of stock' => array( array( 'stock' => false ), false, false, false ),
 	'hidden product' => array( array( 'visible' => false ), false, false, false ),
@@ -95,6 +97,9 @@ foreach ( $cases as $name => [ $overrides, $card, $css, $js ] ) {
 	}
 	if ( 'random products on checkout' === $name && 2 !== substr_count( $html, '<aside ' ) ) {
 		throw new RuntimeException( 'Random mode did not expose both eligible products.' );
+	}
+	if ( str_starts_with( $name, 'cyclic current item' ) && ( 1 !== substr_count( $html, '<aside ' ) || ! str_contains( $html, 'data-gstore-flash-sale-key="test:2026-09-05 23:59:59"' ) ) ) {
+		throw new RuntimeException( 'Cyclic mode must show only the current item with a slot-specific dismissal key.' );
 	}
 	echo 'PASS ' . $name . PHP_EOL;
 }

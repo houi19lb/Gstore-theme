@@ -13944,7 +13944,11 @@ function gstore_theme_get_floating_flash_sale_products( $campaign ) {
 	if ( ! function_exists( 'wc_get_product' ) || empty( $items ) || empty( $campaign['ends_at'] ) ) {
 		return array();
 	}
-	if ( $configured_count > 1 ) {
+	if ( 'cyclic' === ( $campaign['mode'] ?? '' ) ) {
+		// The service exposes only the item in the current slot, even when the
+		// configured campaign contains several products.
+		$items = array_slice( $items, 0, 1 );
+	} elseif ( $configured_count > 1 ) {
 		if ( 'simultaneous' !== ( $campaign['mode'] ?? '' ) || empty( $campaign['floating_popup_enabled'] ) ) {
 			return array();
 		}
@@ -13973,14 +13977,14 @@ function gstore_theme_get_floating_flash_sale_products( $campaign ) {
 function gstore_render_single_flash_sale_floating_card() {
 	$campaign = gstore_theme_get_active_flash_sale();
 	$configured_count = absint( $campaign['configured_item_count'] ?? count( $campaign['items'] ?? array() ) );
-	if ( is_front_page() && 1 !== $configured_count ) {
+	if ( is_front_page() && 1 !== $configured_count && 'cyclic' !== ( $campaign['mode'] ?? '' ) ) {
 		return;
 	}
 	$products = gstore_theme_get_floating_flash_sale_products( $campaign );
 	if ( ! $products ) {
 		return;
 	}
-	$random_mode = $configured_count > 1 && 'random' === ( $campaign['floating_popup_mode'] ?? '' );
+	$random_mode = 'simultaneous' === ( $campaign['mode'] ?? '' ) && $configured_count > 1 && 'random' === ( $campaign['floating_popup_mode'] ?? '' );
 	foreach ( $products as $product ) {
 	$price         = (float) $product->get_price();
 	$regular_price = (float) $product->get_regular_price();
