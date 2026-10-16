@@ -2034,6 +2034,23 @@ const subtotal = decodeHtmlEntities(stripHtmlText(it.subtotal || ''));
 		
 		const $bluCheckout = getNativeBluPaymentMethods('.payment_method_blu_checkout');
 		const $bluPix = getNativeBluPaymentMethods('.payment_method_blu_pix');
+		const $boleto = $('#payment .payment_methods > .payment_method_gstore_boleto').first();
+
+		// Mantém o mesmo card visual quando o boleto é o único método disponível.
+		if (!$bluCheckout.length && !$bluPix.length && $boleto.length) {
+			const $unified = $('<li class="payment_method_blu_unified Gstore-blu-payment-unified Gstore-blu-payment-unified--single"></li>');
+			$unified.append('<div class="Gstore-blu-payment-unified__title">Pagamento via Blu</div>');
+			$unified.append('<div class="Gstore-blu-payment-options"></div>');
+			$unified.append('<div class="Gstore-blu-payment-unified__content"></div>');
+			$unified.append('<div class="Gstore-blu-trust-badges-simple"><span class="Gstore-blu-trust-badge-simple"><i class="fa-solid fa-shield-halved"></i> Pagamento seguro</span></div>');
+			$boleto.parent().prepend($unified);
+			lastSelectedPaymentMethod = 'gstore_boleto';
+			syncBoletoUnifiedOption();
+			persistSelectedPaymentMethod('gstore_boleto');
+			toggleBillingFieldsForPaymentMethod(true);
+			syncBluInstallmentsVisibility('gstore_boleto');
+			return;
+		}
 
 		// Quando a regra do produto deixa apenas um método Blu disponível, mantém o
 		// mesmo card unificado para evitar o layout nativo quebrado do WooCommerce.

@@ -106,6 +106,21 @@ describe('Checkout: quatro etapas visuais com contrato original', () => {
 		$('.Gstore-blu-payment-unified .Gstore-blu-payment-option').first().find('label').trigger('click');
 		expect($('form.checkout').serializeArray().filter(field => field.name === 'payment_method')).toEqual([{ name: 'payment_method', value: 'blu_pix' }]);
 	});
+	test('boleto sozinho mantém o card visual de pagamento com apenas essa opção', () => {
+		$('#payment .payment_methods').html('<li class="payment_method_gstore_boleto"><input type="hidden" name="payment_method" value="gstore_boleto"><label>Boleto bancário</label><div class="payment_box">Solicite a emissão do boleto.</div></li>');
+		$(document.body).trigger('updated_checkout');
+		jest.advanceTimersByTime(250);
+
+		const $card = $('#payment .Gstore-blu-payment-unified');
+		expect($card).toHaveLength(1);
+		expect($card.find('.Gstore-blu-payment-unified__title').text()).toBe('Pagamento via Blu');
+		expect($card.find('.Gstore-blu-payment-option')).toHaveLength(1);
+		expect($card.find('.Gstore-blu-payment-option--boleto input').is(':checked')).toBe(true);
+		expect($card.find('.fa-file-invoice')).toHaveLength(1);
+		expect($card.find('.Gstore-blu-trust-badges-simple').text()).toContain('Pagamento seguro');
+		expect($('#payment .payment_method_gstore_boleto').hasClass('gstore-hidden-for-unified')).toBe(true);
+		expect($('form.checkout').serializeArray().filter(field => field.name === 'payment_method')).toEqual([{ name: 'payment_method', value: 'gstore_boleto' }]);
+	});
 	test('boleto prepara uma nova guia no clique e a envia ao WhatsApp após criar o pedido', () => {
 		$('#payment .payment_methods').append('<li class="payment_method_gstore_boleto"><input type="radio" name="payment_method" value="gstore_boleto"><label>Boleto bancário</label></li>');
 		$(document.body).trigger('updated_checkout');
