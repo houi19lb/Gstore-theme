@@ -318,7 +318,7 @@
 			var target = findIntentTarget(event.target);
 			if (!target) return;
 
-			if (isQuickActionTarget(target) && !loaded) {
+			if (isQuickActionTarget(target) && !loaded && !(chatBridgeConfig.quickAction && chatBridgeConfig.quickAction.effectiveChannel === 'both')) {
 				event.preventDefault();
 				showStatus(config.loadingText);
 				openChatAfterLoad().then(function (opened) {

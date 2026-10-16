@@ -204,7 +204,7 @@
 	}
 
 	function syncQuickActionConfigFromBridge() {
-		var qa = getBridgeQuickActionConfig();
+		var qa = getBridgeQuickActionConfig() || (window.gstoreChatwootBridgeConfig && window.gstoreChatwootBridgeConfig.quickAction);
 		if (!qa || typeof qa !== 'object') return false;
 
 		state.quickActionConfig = qa;
@@ -457,6 +457,7 @@
 		modal.id = SELECTOR_MODAL_ID;
 		modal.className = 'Gstore-support-modal';
 		modal.setAttribute('aria-hidden', 'true');
+		var bothChannels = getEffectiveQuickActionChannel() === 'both';
 		modal.innerHTML =
 			'<div class="Gstore-support-modal__backdrop" data-action="close"></div>' +
 			'<div class="Gstore-support-modal__panel" role="dialog" aria-modal="true" aria-labelledby="gstore-support-selector-title">' +
@@ -464,12 +465,12 @@
 			'<div class="Gstore-support-modal__body">' +
 			'<p class="Gstore-support-modal__eyebrow">' + text('selectorEyebrow', 'Atendimento') + '</p>' +
 			'<h3 id="gstore-support-selector-title" class="Gstore-support-modal__title">' + text('selectorTitle', 'Como prefere falar com a gente?') + '</h3>' +
-			'<p class="Gstore-support-modal__text">' + text('selectorText', 'Escolha o canal. Se optar pelo chat do site, o botão passa a abrir o chat direto.') + '</p>' +
+			'<p class="Gstore-support-modal__text">' + (bothChannels ? text('selectorExternalText', 'Escolha WhatsApp ou Telegram para falar com a gente.') : text('selectorText', 'Escolha o canal. Se optar pelo chat do site, o botão passa a abrir o chat direto.')) + '</p>' +
 			'<div class="Gstore-support-modal__options">' +
-			'<button type="button" class="Gstore-support-option" data-channel="chat">' +
+			(bothChannels ? '<button type="button" class="Gstore-support-option" data-channel="whatsapp"><span class="Gstore-support-option__title">WhatsApp</span><span class="Gstore-support-option__desc">Abrir conversa no WhatsApp</span></button>' : '<button type="button" class="Gstore-support-option" data-channel="chat">' +
 			'<span class="Gstore-support-option__title">' + text('chatTitle', 'Chat do site') + '</span>' +
 			'<span class="Gstore-support-option__desc" data-chat-status></span>' +
-			'</button>' +
+			'</button>') +
 			'<button type="button" class="Gstore-support-option" data-channel="telegram">' +
 			'<span class="Gstore-support-option__title">' + text('telegramTitle', 'Telegram') + '</span>' +
 			'<span class="Gstore-support-option__desc">' + text('telegramDesc', 'Abrir grupo oficial no Telegram') + '</span>' +
@@ -540,6 +541,11 @@
 			handleSelectTelegram();
 			return;
 		}
+		if (channel === 'whatsapp') {
+			event.preventDefault();
+			handleSelectWhatsApp();
+			return;
+		}
 
 		if (action === 'close') {
 			event.preventDefault();
@@ -584,7 +590,7 @@
 
 		var labelEl = button.querySelector('.Gstore-support-float__label');
 		var iconWrapEl = button.querySelector('.Gstore-support-float__icon-wrap');
-		var isDirectChat = state.preferredChannel === CHAT_PREF_VALUE;
+		var isDirectChat = state.preferredChannel === CHAT_PREF_VALUE && getEffectiveQuickActionChannel() !== 'both';
 		var effectiveType = getEffectiveQuickActionType();
 		var effectiveChannel = getEffectiveQuickActionChannel();
 		var iconKind = getQuickActionIconKind();
@@ -673,7 +679,7 @@
 
 		// Trigger SDK pre-load so the chat option becomes available while the
 		// user is looking at the selector (lazy load: SDK only loads on demand).
-		if (!state.chatReady) {
+		if (getEffectiveQuickActionChannel() !== 'both' && !state.chatReady) {
 			callBridge(['prepareSdk'], []);
 			// Poll until SDK is ready so we can enable the "Chat do site" button.
 			var readyPoll = window.setInterval(function () {
@@ -782,6 +788,20 @@
 		closeSelectorModal(true);
 		emitEvent('gstore:support:channel-selected', { channel: 'telegram' });
 		openTelegramLink();
+	}
+
+	function handleSelectWhatsApp() {
+		var qa = getEffectiveQuickActionConfig();
+		var href = qa && qa.whatsappUrl;
+		if (!isValidHref(href)) return;
+		persistPreferredChannel(null);
+		closeSelectorModal(true);
+		emitEvent('gstore:support:channel-selected', { channel: 'whatsapp' });
+		try {
+			window.open(href, '_blank', 'noopener');
+		} catch (e) {
+			window.location.href = href;
+		}
 	}
 
 	function handleChangeChannel() {
@@ -1147,7 +1167,7 @@
 		var src = findTelegramAnchor();
 		if (!src) return false;
 
-		if (!applyTelegramLinkFromSource(src)) return false;
+		if (getEffectiveQuickActionChannel() !== 'both' && !applyTelegramLinkFromSource(src)) return false;
 
 		ensureQuickActionButton();
 		document.body.classList.add('gstore-support-quick-action-mounted');
