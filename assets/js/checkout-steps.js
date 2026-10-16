@@ -5440,14 +5440,21 @@ function getInstallmentDisplayTotals(summaryData) {
 		const $checkoutForm = $('form.checkout');
 		if (!$checkoutForm.length) return;
 		const $hidden = $checkoutForm.find('input[name="payment_method"][type="hidden"]');
-		const $radio = $checkoutForm
-			.find('input[name="payment_method"]')
+		const $radio = $('input[name="payment_method"][type="radio"]')
 			.filter(function() {
 				return $(this).val() === method;
 			});
-		if ($radio.length) $radio.prop('checked', true);
+		if ($radio.length) {
+			const $visual = $radio.filter(function() {
+				return $(this).closest('.Gstore-blu-payment-unified').length > 0;
+			});
+			($visual.length ? $visual.first() : $radio.first()).prop('checked', true);
+		}
+		// Os rádios visuais podem ser movidos para fora de form.checkout. Nesse
+		// caso, o campo oculto é o único payment_method serializado pelo Woo.
 		if ($hidden.length) {
-			$hidden.val(method);
+			$hidden.val(method).prop('checked', false);
+			$hidden.slice(1).filter('[data-gstore-fallback="1"]').remove();
 		} else {
 			$checkoutForm.append(
 				$('<input>', {
@@ -5876,18 +5883,8 @@ function getInstallmentDisplayTotals(summaryData) {
 		$(document.body).on('updated_checkout', function() {
 			// Restaura seleção antes de carregar o resumo (evita default do Woo após fragments)
 			if (lastSelectedPaymentMethod) {
-				const $radio = $('input[name="payment_method"]').filter(function() {
-					return $(this).val() === lastSelectedPaymentMethod;
-				});
-				if ($radio.length && !$radio.is(':checked')) {
-					$radio.prop('checked', true);
-				}
-				const $hiddenPayment = $('form.checkout')
-					.find('input[name="payment_method"][type="hidden"]')
-					.first();
-				if ($hiddenPayment.length && $hiddenPayment.val() !== lastSelectedPaymentMethod) {
-					$hiddenPayment.val(lastSelectedPaymentMethod);
-				}
+				persistSelectedPaymentMethod(lastSelectedPaymentMethod);
+				syncBoletoFinalNotice();
 			}
 			loadCartSummary();
 			// O WooCommerce pode re-renderizar fragments; garante que o DOM continue dentro das etapas
@@ -7219,10 +7216,8 @@ function getInstallmentDisplayTotals(summaryData) {
 	
 	// Armazena a seleção antes do update e garante campos hidden de frete
 	$(document.body).on('update_checkout', function() {
-		const $selected = $('input[name="payment_method"]:checked');
-		if ($selected.length) {
-			lastSelectedPaymentMethod = $selected.val();
-		}
+		const $selected = $('input[name="payment_method"][type="radio"]:checked').first();
+		const selectedMethod = lastSelectedPaymentMethod || ($selected.length ? $selected.val() : '');
 		
 		// CORREÇÃO CRÍTICA: Garante que os campos de frete estejam no form
 		// ANTES do WooCommerce serializar o form para update_order_review
@@ -7232,25 +7227,7 @@ function getInstallmentDisplayTotals(summaryData) {
 		if ($checkoutForm.length) {
 			// Garante que o método de pagamento esteja presente no POST,
 			// mesmo quando o rádio não está disponível/selecionado.
-			const $selectedRadio = $checkoutForm.find('input[name="payment_method"]:checked');
-			const $hiddenPayment = $checkoutForm.find('input[name="payment_method"][type="hidden"]');
-			if ($selectedRadio.length) {
-				persistSelectedPaymentMethod($selectedRadio.val());
-			} else if (lastSelectedPaymentMethod) {
-				if ($hiddenPayment.length) {
-					$hiddenPayment.val(lastSelectedPaymentMethod);
-				} else {
-					$checkoutForm.append(
-						$('<input>', {
-							type: 'hidden',
-							name: 'payment_method',
-							id: 'gstore_payment_method_fallback',
-							'data-gstore-fallback': '1',
-							value: lastSelectedPaymentMethod
-						})
-					);
-				}
-			}
+			if (selectedMethod) persistSelectedPaymentMethod(selectedMethod);
 
 			// Etapa atual do checkout (0, 1, 2) para o backend só aplicar taxa de parcelamento na etapa 3
 			if (getEffectivePaymentMethod($checkoutForm) !== 'blu_checkout') {
@@ -7293,13 +7270,8 @@ function getInstallmentDisplayTotals(summaryData) {
 		// Restaura a seleção após o update
 		if (lastSelectedPaymentMethod) {
 			setTimeout(function() {
-				const $radio = $('input[name="payment_method"]').filter(function() {
-					return $(this).val() === lastSelectedPaymentMethod;
-				});
-				if ($radio.length && !$radio.is(':checked')) {
-					// Não dispara change para evitar loops
-					$radio.prop('checked', true);
-				}
+				persistSelectedPaymentMethod(lastSelectedPaymentMethod);
+				syncBoletoFinalNotice();
 			}, 50);
 		}
 		

@@ -82,6 +82,7 @@ describe('Checkout: quatro etapas visuais com contrato original', () => {
 	});
 	test('boleto aparece no card Blu e mantém a seleção após atualizar o checkout', () => {
 		$('#payment .payment_methods').append('<li class="payment_method_gstore_boleto"><input type="radio" name="payment_method" id="payment_method_gstore_boleto" value="gstore_boleto"><label for="payment_method_gstore_boleto">Boleto bancário</label></li>');
+		$('form.checkout').prepend('<input type="hidden" name="payment_method" data-gstore-fallback="1" value="blu_pix" checked>');
 		$(document.body).trigger('updated_checkout');
 		jest.advanceTimersByTime(120);
 		const $option = $('.Gstore-blu-payment-unified .Gstore-blu-payment-option--boleto');
@@ -90,12 +91,20 @@ describe('Checkout: quatro etapas visuais com contrato original', () => {
 		expect($('.payment_method_gstore_boleto').hasClass('gstore-hidden-for-unified')).toBe(true);
 		$option.find('input').prop('checked', true).trigger('change');
 		expect($option.find('input').is(':checked')).toBe(true);
-		expect($('form.checkout input[type="hidden"][name="payment_method"]').val()).toBe('gstore_boleto');
+		expect($('form.checkout input[data-gstore-fallback="1"][name="payment_method"]')).toHaveLength(1);
+		expect($('form.checkout').serializeArray().filter(field => field.name === 'payment_method')).toEqual([{ name: 'payment_method', value: 'gstore_boleto' }]);
+		$(document.body).trigger('update_checkout');
+		expect($option.find('input').is(':checked')).toBe(true);
+		$('.Gstore-blu-payment-unified input[value="blu_pix"]').prop('checked', true);
 		$(document.body).trigger('updated_checkout');
 		jest.advanceTimersByTime(120);
 		expect($('.Gstore-blu-payment-unified .Gstore-blu-payment-option--boleto input').is(':checked')).toBe(true);
+		api.setActiveStep(3, false);
+		expect($('.Gstore-boleto-final-notice').text()).toContain('pagamento integral do boleto');
+		expect($('#place_order').text()).toContain('solicitar boleto');
+		expect($('form.checkout').serializeArray().filter(field => field.name === 'payment_method')).toEqual([{ name: 'payment_method', value: 'gstore_boleto' }]);
 		$('.Gstore-blu-payment-unified .Gstore-blu-payment-option').first().find('label').trigger('click');
-		expect($('form.checkout input[type="hidden"][name="payment_method"]').val()).toBe('blu_pix');
+		expect($('form.checkout').serializeArray().filter(field => field.name === 'payment_method')).toEqual([{ name: 'payment_method', value: 'blu_pix' }]);
 	});
 	test('aceite do contrato continua obrigatório na etapa final', () => {
 		api.setActiveStep(3, false);
