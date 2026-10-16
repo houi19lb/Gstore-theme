@@ -6575,6 +6575,28 @@ function getInstallmentDisplayTotals(summaryData) {
 		$('body').addClass('gstore-contract-modal-open');
 
 		var contentToRender = isCardRoute ? cardNotice + fallbackBodyHtml : fallbackBodyHtml;
+		const preview = (typeof gstoreCheckout !== 'undefined' && gstoreCheckout.contractPreview) || {};
+		if (preview.ajaxUrl && preview.nonce && preview.action) {
+			$.ajax({
+				url: preview.ajaxUrl,
+				type: 'POST',
+				dataType: 'json',
+				data: {
+					action: preview.action,
+					nonce: preview.nonce,
+					post_data: $('form.checkout').first().serialize()
+				}
+			}).done(function(response) {
+				if (response && response.success && response.data && response.data.html) {
+					renderContractModalContent($modal, (isCardRoute ? cardNotice : '') + response.data.html, false);
+				} else {
+					renderContractModalContent($modal, contentToRender, isCardRoute);
+				}
+			}).fail(function() {
+				renderContractModalContent($modal, contentToRender, isCardRoute);
+			});
+			return;
+		}
 		renderContractModalContent($modal, contentToRender, isCardRoute);
 	}
 

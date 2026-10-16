@@ -87,6 +87,18 @@ describe('Checkout: quatro etapas visuais com contrato original', () => {
 		expect($('.woocommerce-notice').text()).toContain('aceitar os termos');
 		expect($('#gstore_contract_terms').prop('checked')).toBe(false);
 	});
+	test('modal mostra a prévia retornada pelo plugin para contratos por categoria', () => {
+		const preview = $.Deferred();
+		$.ajax.mockReturnValue(preview.promise());
+		window.gstoreCheckout.contractPreview = { ajaxUrl: '/wp-admin/admin-ajax.php', nonce: 'nonce-teste', action: 'gstore_contract_preview' };
+		api.setActiveStep(3, false);
+		$('.gstore-contract-open-modal').first().trigger('click');
+		const request = $.ajax.mock.calls.at(-1)[0];
+		expect(request.data.action).toBe('gstore_contract_preview');
+		expect(request.data.post_data).toContain('shipping_method');
+		preview.resolve({ success: true, data: { html: '<div class="gstore-contract-page"><div>Contrato da empresa parceira</div></div>' } });
+		expect($('.Gstore-contract-modal__iframe').attr('srcdoc')).toContain('Contrato da empresa parceira');
+	});
 	test('rascunho antigo de retorno Blu continua abrindo Finalizar, não Frete', () => {
 		localStorage.setItem('gstore_blu_resume_checkout:draft:v1:/', JSON.stringify({
 			step: 2, fields: { billing_email: 'retorno@example.com' }, updated_at: Date.now(), reason: 'blu_payment_waiting'
