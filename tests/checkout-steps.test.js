@@ -106,6 +106,31 @@ describe('Checkout: quatro etapas visuais com contrato original', () => {
 		$('.Gstore-blu-payment-unified .Gstore-blu-payment-option').first().find('label').trigger('click');
 		expect($('form.checkout').serializeArray().filter(field => field.name === 'payment_method')).toEqual([{ name: 'payment_method', value: 'blu_pix' }]);
 	});
+	test('boleto prepara uma nova guia no clique e a envia ao WhatsApp após criar o pedido', () => {
+		$('#payment .payment_methods').append('<li class="payment_method_gstore_boleto"><input type="radio" name="payment_method" value="gstore_boleto"><label>Boleto bancário</label></li>');
+		$(document.body).trigger('updated_checkout');
+		jest.advanceTimersByTime(120);
+		$('.Gstore-blu-payment-unified .Gstore-blu-payment-option--boleto input').prop('checked', true).trigger('change');
+		api.setActiveStep(3, false);
+		$('#gstore_contract_terms').prop('checked', true);
+		const popup = { closed: false, opener: window, document: { title: '', body: { textContent: '' } }, location: { replace: jest.fn() }, close: jest.fn() };
+		const open = jest.spyOn(window, 'open').mockReturnValue(popup);
+		$('#place_order').trigger('click');
+		expect(open).toHaveBeenCalledWith('about:blank', '_blank');
+		expect(popup.document.body.textContent).toContain('Registrando seu pedido');
+		const priorBlock = $.fn.block;
+		$.fn.block = jest.fn();
+		window.wc_checkout_params = { checkout_url: '/?wc-ajax=checkout' };
+		jest.advanceTimersByTime(200);
+		const checkoutRequest = $.ajax.mock.calls.map(call => call[0]).find(request => request.url === '/?wc-ajax=checkout');
+		expect(checkoutRequest).toBeDefined();
+		checkoutRequest.success({ result: 'success', redirect: '/checkout/order-received/15046/', gstore_boleto_whatsapp_url: 'https://wa.me/5511999999999?text=Pedido%20%2315046' });
+		expect(popup.location.replace).toHaveBeenCalledWith('https://wa.me/5511999999999?text=Pedido%20%2315046');
+		expect(popup.opener).toBeNull();
+		$.fn.block = priorBlock;
+		delete window.wc_checkout_params;
+		open.mockRestore();
+	});
 	test('aceite do contrato continua obrigatório na etapa final', () => {
 		api.setActiveStep(3, false);
 		$('[data-step="payment"]').append('<input type="checkbox" id="gstore_contract_terms">');

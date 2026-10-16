@@ -26,7 +26,7 @@ function markup(payment = 'blu_checkout') {
 function instrument(source) {
 	return source.replace(/\}\)\(jQuery\);\s*$/, `window.checkoutFixture = {
 		init, setActiveStep, nextStep, prevStep, renderSummary, loadCartSummary,
-		getBackendCheckoutStep, restoreCheckoutDraftState,
+		getBackendCheckoutStep, restoreCheckoutDraftState, reserveBoletoWhatsappWindow, openBoletoWhatsappWindow,
 		primeShipping() { calculatedShipping = { rates: [] }; lastCalculatedShippingCep = '01001000'; lastCalculatedDestination = { city: 'São Paulo', state: 'SP' }; },
 		seedSummary(data) { lastCartSummaryData = data; renderSummary(data); }
 	}; })(jQuery);`);

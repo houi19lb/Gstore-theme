@@ -99,6 +99,7 @@
 	let bluResumePollTimer = null;
 	let bluResumePollInFlight = false;
 	let reservedBluPaymentWindow = null;
+	let reservedBoletoWhatsappWindow = null;
 	let checkoutDraftRestoreDone = false;
 	let cpfPurchaseLimitDebounceTimer = null;
 	let cpfPurchaseLimitState = {
@@ -136,7 +137,12 @@
 		}
 		const settings = window.gstoreCheckoutBoleto || {};
 		const title = escapeHtml(settings.title || 'Solicite seu boleto pelo WhatsApp');
-		const description = escapeHtml(settings.text || 'Ao concluir o pedido, você poderá abrir o WhatsApp para solicitar a emissão do boleto.');
+		const oldBoletoTexts = [
+			'Ao concluir o pedido, você poderá abrir o WhatsApp para solicitar a emissão do boleto.',
+			'Ao concluir o pedido, você poderá abrir o WhatsApp para solicitar a emissão do boleto e receber as instruções de pagamento.'
+		];
+		const fallbackText = 'Após registrar o pedido, o WhatsApp será aberto em uma nova guia. Se isso não acontecer, use o botão na página do pedido.';
+		const description = escapeHtml(oldBoletoTexts.includes(String(settings.text || '').trim()) ? fallbackText : (settings.text || fallbackText));
 		if (!$existing.length) {
 			$final.prepend(`<div class="Gstore-boleto-final-notice" role="note"><h3>${title}</h3><p>${description}</p><p class="Gstore-boleto-final-notice__warning"><strong>Pagamento antes da entrega:</strong> a entrega ou retirada do armamento só será liberada após a confirmação do pagamento integral do boleto.</p></div>`);
 		}
@@ -6169,6 +6175,9 @@ function getInstallmentDisplayTotals(summaryData) {
 			}
 			
 			e.preventDefault();
+			if (getEffectivePaymentMethod($checkoutForm) === 'gstore_boleto') {
+				reserveBoletoWhatsappWindow();
+			}
 			
 			if (typeof showProcessingModal === 'function') {
 				showProcessingModal();
@@ -6263,9 +6272,10 @@ function getInstallmentDisplayTotals(summaryData) {
 		function showProcessingSuccess() {
 			updateProcessingStep(4); // Marca todos como completos
 			const isBluPayment = typeof isBluCheckoutSelected === 'function' && isBluCheckoutSelected();
+			const isBoletoPayment = getEffectivePaymentMethod($('form.checkout').first()) === 'gstore_boleto';
 			
 			$('.Gstore-processing-modal__text h3').text(isBluPayment ? 'Link Blu gerado com sucesso!' : 'Pedido criado com sucesso!');
-			$('.Gstore-processing-modal__text p').text(isBluPayment ? 'Enviando você para a tela de pagamento...' : 'Redirecionando para o pagamento seguro...');
+			$('.Gstore-processing-modal__text p').text(isBoletoPayment ? 'Abrindo o WhatsApp em uma nova guia e os detalhes do pedido nesta guia...' : (isBluPayment ? 'Enviando você para a tela de pagamento...' : 'Redirecionando para o pagamento seguro...'));
 			$('.Gstore-processing-modal__spinner .Gstore-spinner').replaceWith(
 				'<i class="fa-solid fa-circle-check Gstore-success-icon"></i>'
 			);
@@ -6539,6 +6549,9 @@ function getInstallmentDisplayTotals(summaryData) {
 					updateProcessingStep(3);
 					
 						if (response && response.result === 'success') {
+							if (selectedPaymentMethodForSubmit === 'gstore_boleto') {
+								openBoletoWhatsappWindow(response.gstore_boleto_whatsapp_url);
+							}
 							if (isBluCheckoutSelected()) {
 								saveCheckoutDraftState('blu_payment_waiting');
 							} else {
@@ -6558,6 +6571,7 @@ function getInstallmentDisplayTotals(summaryData) {
 								setTimeout(function() { handleBluCheckoutRedirect(response.redirect); }, 1500);
 							}
 					} else if (response && response.result === 'failure') {
+						closeReservedBoletoWhatsappWindow();
 						closeReservedBluPaymentWindow();
 						hideProcessingModal();
 						$form.removeClass('processing').unblock();
@@ -6588,6 +6602,7 @@ function getInstallmentDisplayTotals(summaryData) {
 							showCheckoutSubmitError();
 						}
 					} else {
+						closeReservedBoletoWhatsappWindow();
 						closeReservedBluPaymentWindow();
 						hideProcessingModal();
 						$form.removeClass('processing').unblock();
@@ -6595,6 +6610,7 @@ function getInstallmentDisplayTotals(summaryData) {
 					}
 				},
 				error: function(xhr, statusText, errorThrown) {
+					closeReservedBoletoWhatsappWindow();
 					closeReservedBluPaymentWindow();
 					debugCheckout('checkout_error', {
 						status: xhr && xhr.status,
@@ -6738,6 +6754,55 @@ function getInstallmentDisplayTotals(summaryData) {
 
 	function resetBluRedirectGuard() {
 		bluRedirectInProgress = false;
+	}
+
+	function reserveBoletoWhatsappWindow() {
+		if (reservedBoletoWhatsappWindow && !reservedBoletoWhatsappWindow.closed) return;
+		try {
+			reservedBoletoWhatsappWindow = window.open('about:blank', '_blank');
+			if (reservedBoletoWhatsappWindow) {
+				reservedBoletoWhatsappWindow.opener = null;
+				try {
+					reservedBoletoWhatsappWindow.document.title = 'Abrindo WhatsApp';
+					reservedBoletoWhatsappWindow.document.body.textContent = 'Registrando seu pedido e preparando o WhatsApp...';
+				} catch (e) {}
+			}
+		} catch (e) {
+			reservedBoletoWhatsappWindow = null;
+		}
+	}
+
+	function closeReservedBoletoWhatsappWindow() {
+		if (!reservedBoletoWhatsappWindow) return;
+		try {
+			if (!reservedBoletoWhatsappWindow.closed) reservedBoletoWhatsappWindow.close();
+		} catch (e) {}
+		reservedBoletoWhatsappWindow = null;
+	}
+
+	function openBoletoWhatsappWindow(url) {
+		let target;
+		try {
+			target = new URL(String(url || ''));
+			if (target.protocol !== 'https:' || target.hostname !== 'wa.me' || !/^\/\d+$/.test(target.pathname)) throw new Error('Invalid WhatsApp URL');
+		} catch (e) {
+			closeReservedBoletoWhatsappWindow();
+			return false;
+		}
+		if (reservedBoletoWhatsappWindow && !reservedBoletoWhatsappWindow.closed) {
+			try {
+				reservedBoletoWhatsappWindow.location.replace(target.href);
+				reservedBoletoWhatsappWindow = null;
+				return true;
+			} catch (e) {
+				closeReservedBoletoWhatsappWindow();
+			}
+		}
+		try {
+			return !!window.open(target.href, '_blank', 'noopener');
+		} catch (e) {
+			return false;
+		}
 	}
 
 	function reserveBluPaymentWindow() {
