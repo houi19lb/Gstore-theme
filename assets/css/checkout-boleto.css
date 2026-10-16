@@ -43,6 +43,14 @@ body.gstore-boleto-selected .Gstore-checkout-step[data-step="contact"] .Gstore-c
 }
 .Gstore-boleto-final-notice__warning { margin-bottom: 0 !important; }
 .gstore-boleto-instructions { margin: 24px 0; }
+body.woocommerce-order-received .gstore-boleto-instructions > p {
+	font-size: 14px !important;
+	line-height: 1.6;
+}
+body.woocommerce-order-received .gstore-boleto-instructions > .gstore-boleto-instructions__button.button {
+	font-size: 14px !important;
+	line-height: 1.4;
+}
 .gstore-boleto-instructions__button.button {
 	display: inline-flex;
 	align-items: center;
