@@ -10702,6 +10702,7 @@ function gstore_enqueue_checkout_assets() {
 
 		// CSS do checkout em 3 etapas
 		gstore_enqueue_theme_style( 'gstore-checkout-steps', 'assets/css/checkout-steps.css', array( 'gstore-checkout' ), $theme_version );
+		gstore_enqueue_theme_style( 'gstore-checkout-boleto', 'assets/css/checkout-boleto.css', array( 'gstore-checkout-steps' ), $theme_version );
 
 		wp_enqueue_script(
 			'gstore-checkout-cleanup',
@@ -10719,6 +10720,13 @@ function gstore_enqueue_checkout_assets() {
 			filemtime( get_theme_file_path( 'assets/js/checkout-steps.js' ) ),
 			true
 		);
+		$boleto_settings = get_option( 'woocommerce_gstore_boleto_settings', array() );
+		if ( is_array( $boleto_settings ) && 'yes' === ( $boleto_settings['enabled'] ?? 'no' ) ) {
+			wp_add_inline_script( 'gstore-checkout-steps', 'window.gstoreCheckoutBoleto = ' . wp_json_encode( array(
+				'title' => sanitize_text_field( $boleto_settings['final_title'] ?? 'Solicite seu boleto pelo WhatsApp' ),
+				'text'  => sanitize_textarea_field( $boleto_settings['final_text'] ?? 'Ao concluir o pedido, você poderá abrir o WhatsApp para solicitar a emissão do boleto.' ),
+			) ) . ';', 'before' );
+		}
 		if ( class_exists( '\GStore\Services\Cashback_Service' ) && gstore_cashback_service_available() ) {
 			$cashback_rules = \GStore\Services\Cashback_Rules::get();
 			if ( $cashback_rules['enabled'] ) {
@@ -10887,6 +10895,7 @@ function gstore_enqueue_checkout_assets() {
 	// CSS do Pix também na página de obrigado e visualização do pedido
 	if ( ( function_exists( 'is_order_received_page' ) && is_order_received_page() ) || ( function_exists( 'is_view_order_page' ) && is_view_order_page() ) ) {
 		gstore_enqueue_theme_style( 'gstore-checkout-pix', 'assets/css/checkout-pix.css', array( 'gstore-style' ), $theme_version );
+		gstore_enqueue_theme_style( 'gstore-checkout-boleto', 'assets/css/checkout-boleto.css', array( 'gstore-style' ), $theme_version );
 
 		// JavaScript do Pix para página de obrigado e visualização do pedido
 		wp_enqueue_script(

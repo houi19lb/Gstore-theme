@@ -119,6 +119,30 @@
 			.replace(/'/g, '&#039;');
 	}
 
+	function isFullContactPayment(method) {
+		return method === 'blu_pix' || method === 'gstore_boleto';
+	}
+
+	function syncBoletoFinalNotice() {
+		const $final = $('[data-step="payment"] .Gstore-checkout-step__payment-container').first();
+		if (!$final.length) return;
+		const selected = getEffectivePaymentMethod($checkoutForm);
+		$('body').toggleClass('gstore-boleto-selected', selected === 'gstore_boleto');
+		const $existing = $final.find('.Gstore-boleto-final-notice');
+		if (selected !== 'gstore_boleto') {
+			$existing.remove();
+			$('#place_order').html('<i class="fa-solid fa-lock" aria-hidden="true"></i> Finalizar pedido').val('Finalizar pedido').attr('data-value', 'Finalizar pedido');
+			return;
+		}
+		const settings = window.gstoreCheckoutBoleto || {};
+		const title = escapeHtml(settings.title || 'Solicite seu boleto pelo WhatsApp');
+		const description = escapeHtml(settings.text || 'Ao concluir o pedido, você poderá abrir o WhatsApp para solicitar a emissão do boleto.');
+		if (!$existing.length) {
+			$final.prepend(`<div class="Gstore-boleto-final-notice" role="note"><h3>${title}</h3><p>${description}</p><p class="Gstore-boleto-final-notice__warning"><strong>Pagamento antes da entrega:</strong> a entrega ou retirada do armamento só será liberada após a confirmação do pagamento integral do boleto.</p></div>`);
+		}
+		$('#place_order').html('<i class="fa-brands fa-whatsapp" aria-hidden="true"></i> Registrar pedido e solicitar boleto').val('Registrar pedido e solicitar boleto').attr('data-value', 'Registrar pedido e solicitar boleto');
+	}
+
 	function getCpfPurchaseLimitConfig() {
 		return (window.gstoreCheckout && window.gstoreCheckout.cpfPurchaseLimit)
 			? window.gstoreCheckout.cpfPurchaseLimit
@@ -1946,13 +1970,17 @@ const subtotal = decodeHtmlEntities(stripHtmlText(it.subtotal || ''));
 	}
 
 	function unifyBluPaymentMethods() {
+		if (!lastSelectedPaymentMethod) {
+			const initialMethod = $('input[name="payment_method"]:checked').first().val();
+			if (initialMethod === 'gstore_boleto') lastSelectedPaymentMethod = initialMethod;
+		}
 		// Verifica se já existe o card unificado
 		const $existingUnified = $('.Gstore-blu-payment-unified');
 		if ($existingUnified.length) {
 			hideNativeBluPaymentMethodsForUnified();
 			// Se já existe, apenas sincroniza a seleção
 			const $selected = $('input[name="payment_method"]:checked');
-			if ($selected.length) {
+			if ($selected.length && lastSelectedPaymentMethod !== 'gstore_boleto') {
 				const selectedValue = $selected.val();
 				const $option = $existingUnified.find(`input[type="radio"][value="${selectedValue}"]`);
 				if ($option.length && !$option.is(':checked')) {
@@ -2003,6 +2031,7 @@ const subtotal = decodeHtmlEntities(stripHtmlText(it.subtotal || ''));
 			$bluUnified.append($optionsContainer);
 
 			function syncSingleBluMethod() {
+				if (lastSelectedPaymentMethod === 'gstore_boleto') return;
 				const $liveSourceInput = getNativeBluPaymentMethods(`.payment_method_${method}`)
 					.find('input[name="payment_method"]')
 					.first();
@@ -2132,6 +2161,7 @@ const subtotal = decodeHtmlEntities(stripHtmlText(it.subtotal || ''));
 			 * Função usada apenas para sincronização interna
 			 */
 			function updatePaymentContent() {
+				if (lastSelectedPaymentMethod === 'gstore_boleto') return;
 				// Usa lastSelectedPaymentMethod como fonte de verdade (evita race conditions)
 				const method = lastSelectedPaymentMethod || 'blu_checkout';
 				const isCheckout = method === 'blu_checkout';
@@ -2213,6 +2243,7 @@ const subtotal = decodeHtmlEntities(stripHtmlText(it.subtotal || ''));
 			
 			// Usa lastSelectedPaymentMethod como fonte de verdade (evita race conditions com radios)
 			setTimeout(function() {
+				if (lastSelectedPaymentMethod === 'gstore_boleto') return;
 				const method = lastSelectedPaymentMethod || 'blu_checkout';
 				const isCheckout = method === 'blu_checkout';
 
@@ -2242,6 +2273,7 @@ const subtotal = decodeHtmlEntities(stripHtmlText(it.subtotal || ''));
 			
 		// Mostra conteúdo inicial usando lastSelectedPaymentMethod como fonte de verdade
 		setTimeout(function() {
+			if (lastSelectedPaymentMethod === 'gstore_boleto') return;
 			const method = lastSelectedPaymentMethod || 'blu_checkout';
 			const isCheckout = method === 'blu_checkout';
 
@@ -2564,7 +2596,7 @@ const subtotal = decodeHtmlEntities(stripHtmlText(it.subtotal || ''));
 			
 			// Atualiza descrição da etapa
 			const $stepDescription = $('[data-step="contact"] .Gstore-checkout-step__description');
-			$stepDescription.text('Preencha seus dados completos para finalizar o pedido via Pix.');
+			$stepDescription.text(getEffectivePaymentMethod($checkoutForm) === 'gstore_boleto' ? 'Preencha seus dados completos para solicitar o boleto.' : 'Preencha seus dados completos para finalizar o pedido via Pix.');
 		} else {
 			// CARTÃO selecionado: Mostra apenas nome, CEP, celular e email
 			const shouldShowCpfForLimit = hasCpfPurchaseLimitProducts();
@@ -2629,7 +2661,9 @@ const subtotal = decodeHtmlEntities(stripHtmlText(it.subtotal || ''));
 				}
 			});
 			ensureCpfPurchaseLimitFieldVisibility();
-			syncContactRequiredFields(getEffectivePaymentMethod($checkoutForm) === 'blu_pix');
+			const contactMethod = getEffectivePaymentMethod($checkoutForm);
+			toggleBillingFieldsForPaymentMethod(isFullContactPayment(contactMethod));
+			syncContactRequiredFields(isFullContactPayment(contactMethod));
 		}
 
 		// Etapa 3: Footer de finalização (termos + privacidade + CTA)
@@ -2687,6 +2721,7 @@ const subtotal = decodeHtmlEntities(stripHtmlText(it.subtotal || ''));
 				</div>
 			`);
 		}
+		syncBoletoFinalNotice();
 
 		// Etapa 3: Move o resumo do pedido (order review) para dentro do container principal da última etapa
 		const $orderReviewSlot = $('[data-step="payment"] .Gstore-checkout-step__order-review-slot');
@@ -5109,7 +5144,7 @@ function getInstallmentDisplayTotals(summaryData) {
 			}
 		}
 
-		const isPixPayment = getEffectivePaymentMethod($checkoutForm) === 'blu_pix';
+		const isPixPayment = isFullContactPayment(getEffectivePaymentMethod($checkoutForm));
 		const fieldsToValidate = step.id === 'contact'
 			? getContactRequiredFields(isPixPayment).slice()
 			: step.fields.slice();
@@ -7123,6 +7158,8 @@ function getInstallmentDisplayTotals(summaryData) {
 		const method = $(this).val();
 		if (method) {
 			persistSelectedPaymentMethod(method);
+			toggleBillingFieldsForPaymentMethod(isFullContactPayment(method));
+			syncBoletoFinalNotice();
 			syncBluInstallmentsVisibility(method);
 			scheduleBluInstallmentsVisibilitySync();
 			setTimeout(loadCartSummary, 150);
