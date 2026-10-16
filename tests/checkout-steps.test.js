@@ -80,6 +80,23 @@ describe('Checkout: quatro etapas visuais com contrato original', () => {
 		api.nextStep(); expect(active()).toBe('payment');
 		expect($('#gstore_checkout_step').val()).toBe('2');
 	});
+	test('boleto aparece no card Blu e mantém a seleção após atualizar o checkout', () => {
+		$('#payment .payment_methods').append('<li class="payment_method_gstore_boleto"><input type="radio" name="payment_method" id="payment_method_gstore_boleto" value="gstore_boleto"><label for="payment_method_gstore_boleto">Boleto bancário</label></li>');
+		$(document.body).trigger('updated_checkout');
+		jest.advanceTimersByTime(120);
+		const $option = $('.Gstore-blu-payment-unified .Gstore-blu-payment-option--boleto');
+		expect($option).toHaveLength(1);
+		expect($option.find('.fa-file-invoice')).toHaveLength(1);
+		expect($('.payment_method_gstore_boleto').hasClass('gstore-hidden-for-unified')).toBe(true);
+		$option.find('input').prop('checked', true).trigger('change');
+		expect($option.find('input').is(':checked')).toBe(true);
+		expect($('form.checkout input[type="hidden"][name="payment_method"]').val()).toBe('gstore_boleto');
+		$(document.body).trigger('updated_checkout');
+		jest.advanceTimersByTime(120);
+		expect($('.Gstore-blu-payment-unified .Gstore-blu-payment-option--boleto input').is(':checked')).toBe(true);
+		$('.Gstore-blu-payment-unified .Gstore-blu-payment-option').first().find('label').trigger('click');
+		expect($('form.checkout input[type="hidden"][name="payment_method"]').val()).toBe('blu_pix');
+	});
 	test('aceite do contrato continua obrigatório na etapa final', () => {
 		api.setActiveStep(3, false);
 		$('[data-step="payment"]').append('<input type="checkbox" id="gstore_contract_terms">');

@@ -1969,6 +1969,41 @@ const subtotal = decodeHtmlEntities(stripHtmlText(it.subtotal || ''));
 		return $methods;
 	}
 
+	function syncBoletoUnifiedOption() {
+		const $unified = $('.Gstore-blu-payment-unified').first();
+		if (!$unified.length) return;
+		const $source = $('#payment .payment_methods > .payment_method_gstore_boleto').first();
+		let $option = $unified.find('.Gstore-blu-payment-option--boleto');
+		if (!$source.length) {
+			$option.remove();
+			return;
+		}
+		$source.addClass('gstore-hidden-for-unified');
+		if (!$option.length) {
+			$option = $('<div class="Gstore-blu-payment-option Gstore-blu-payment-option--boleto"></div>');
+			const $radio = $('<input>', {
+				type: 'radio', name: 'payment_method', id: 'payment_method_gstore_boleto_unified', value: 'gstore_boleto'
+			});
+			$option.append($radio).append(
+				'<label for="payment_method_gstore_boleto_unified" class="Gstore-blu-payment-option__label"><i class="fa-solid fa-file-invoice" aria-hidden="true"></i><span>Boleto bancário</span></label>'
+			);
+			$unified.find('.Gstore-blu-payment-options').append($option);
+			$radio.on('change', function() {
+				if (!this.checked) return;
+				persistSelectedPaymentMethod('gstore_boleto');
+				$unified.find('.Gstore-blu-payment-unified__content').empty();
+				toggleBillingFieldsForPaymentMethod(true);
+				syncBluInstallmentsVisibility('gstore_boleto');
+				$(document.body).trigger('update_checkout');
+				setTimeout(loadCartSummary, 150);
+			});
+		}
+		if (lastSelectedPaymentMethod === 'gstore_boleto') {
+			$option.find('input[type="radio"]').prop('checked', true);
+			$unified.find('.Gstore-blu-payment-unified__content').empty();
+		}
+	}
+
 	function unifyBluPaymentMethods() {
 		if (!lastSelectedPaymentMethod) {
 			const initialMethod = $('input[name="payment_method"]:checked').first().val();
@@ -1978,6 +2013,7 @@ const subtotal = decodeHtmlEntities(stripHtmlText(it.subtotal || ''));
 		const $existingUnified = $('.Gstore-blu-payment-unified');
 		if ($existingUnified.length) {
 			hideNativeBluPaymentMethodsForUnified();
+			syncBoletoUnifiedOption();
 			// Se já existe, apenas sincroniza a seleção
 			const $selected = $('input[name="payment_method"]:checked');
 			if ($selected.length && lastSelectedPaymentMethod !== 'gstore_boleto') {
@@ -2030,8 +2066,8 @@ const subtotal = decodeHtmlEntities(stripHtmlText(it.subtotal || ''));
 			$optionsContainer.append($option);
 			$bluUnified.append($optionsContainer);
 
-			function syncSingleBluMethod() {
-				if (lastSelectedPaymentMethod === 'gstore_boleto') return;
+			function syncSingleBluMethod(forceSelection) {
+				if (lastSelectedPaymentMethod === 'gstore_boleto' && !forceSelection) return;
 				const $liveSourceInput = getNativeBluPaymentMethods(`.payment_method_${method}`)
 					.find('input[name="payment_method"]')
 					.first();
@@ -2053,7 +2089,8 @@ const subtotal = decodeHtmlEntities(stripHtmlText(it.subtotal || ''));
 			$option.find('label').on('click', function(e) {
 				e.preventDefault();
 				e.stopPropagation();
-				syncSingleBluMethod();
+				syncSingleBluMethod(true);
+				$(document.body).trigger('update_checkout');
 			});
 
 			$(document.body).off('updated_checkout.gstore-unify-single').on('updated_checkout.gstore-unify-single', function() {
@@ -2080,6 +2117,7 @@ const subtotal = decodeHtmlEntities(stripHtmlText(it.subtotal || ''));
 			}
 
 			setTimeout(syncSingleBluMethod, 100);
+			syncBoletoUnifiedOption();
 			return;
 		}
 		
@@ -2310,6 +2348,7 @@ const subtotal = decodeHtmlEntities(stripHtmlText(it.subtotal || ''));
 					$paymentSection.prepend($newPaymentMethods);
 				}
 			}
+			syncBoletoUnifiedOption();
 		}
 	}
 
