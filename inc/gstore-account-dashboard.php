@@ -81,11 +81,6 @@ function gstore_account_order_counts() {
 /** Presentation only: never infer payment or shipment from a color. */
 function gstore_account_order_tone( $order ) {
 	$status = $order->get_status();
-	// A legacy/custom label may differ from the persisted state (e.g. paid cancellation).
-	if ( function_exists( 'gstore_my_account_get_orders_tab_status_label' )
-		&& gstore_my_account_get_orders_tab_status_label( $order ) !== wc_get_order_status_name( $status ) ) {
-		return 'neutral';
-	}
 	return array( 'cancelled' => 'danger', 'failed' => 'danger', 'completed' => 'success', 'processing' => 'info', 'pending' => 'warning', 'on-hold' => 'warning' )[ $status ] ?? 'neutral';
 }
 

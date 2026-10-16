@@ -34,7 +34,7 @@ Achados corrigidos:
 2. Início: a coluna lateral mais alta empurrava os indicadores, criando um vão de aproximadamente 300 px sob um pedido cancelado. Pedido, indicadores e atalhos agora pertencem à mesma coluna. A lateral usa divisórias, sem caixas e sombras redundantes.
 3. Atendimento: a listagem incluía perfis públicos e telefone adicional. Só e-mail, WhatsApp/Teleatendimento e Telegram são elegíveis; nomes e URLs continuam vindo da configuração da loja. Os cartões se distribuem em até três colunas e empilham no celular.
 4. Meus dados: nome e sobrenome agora dividem a linha no desktop. Em telas estreitas todos os campos usam uma coluna. Nonces, formulários e salvamento continuam nativos; a alteração de senha permanece disponível.
-5. Pedidos: o histórico permanece intacto. O painel passa a respeitar o rótulo já usado no histórico para estados interrompidos, inclusive o caso legado de cancelamento com evidência de pagamento (`Pago/Confirmado`). Isso não altera pagamento, status persistido ou fulfillment.
+5. Pedidos: o histórico permanece intacto. Na revisão de setembro, o painel passou a reutilizar o rótulo do histórico para estados interrompidos, inclusive o antigo caso de cancelamento com evidência de pagamento (`Pago/Confirmado`). A correção de outubro abaixo substitui esse comportamento pelo status atual do WooCommerce.
 
 A prévia dos templates PHP usa fixtures anônimas para pedido cancelado, em andamento, conta vazia, atendimento, dados e endereços. Em 320, 768, 1.024 e 1.440 CSS px, a medição do painel em andamento não apresentou overflow horizontal; o espaço após o pedido foi de 20 px e as seis etapas foram mantidas, em coluna no celular. Os dados foram conferidos também a 390 px.
 
@@ -111,3 +111,9 @@ O título “Minha conta” e a saudação passam a compartilhar o eixo horizont
 O ajuste fica no início da conta, incluindo o estado sem pedidos. Os cabeçalhos de dados, histórico e atendimento mantêm seu alinhamento próprio. Outros pedidos continuam à direita no desktop. Esta entrega não implementa os demais refinamentos das imagens exploratórias; header e footer da loja, formulários, pedidos e traduções permanecem nos fluxos existentes.
 
 Validação: lint PHP, regressão existente da conta, escopo do CSS e verificação dos 92 assets minificados aprovados. Na prévia local com dados fictícios e CSS minificado, as larguras de 320, 390 e 1440 px mantiveram título, saudação e textos do cartão no mesmo eixo (diferença inferior a 1 px), sem overflow horizontal na página medida. Essa verificação não substitui a conferência após a atualização do tema na loja.
+
+## Status atual do pedido na conta (alpha, 16/10/2026)
+
+A lista de pedidos, o painel inicial e o cabeçalho do detalhe exibem o status atual retornado pelo WooCommerce. Histórico de pagamento, data de pagamento, ID da transação e registros antigos do gateway não substituem `cancelled` por `Pago/Confirmado`. Um pedido alterado de `processing` para `cancelled` volta a aparecer como `Cancelado`, com tom de cancelamento e sem etapas de pagamento ou entrega marcadas como ativas. O detalhe preserva a lista de documentos já enviados, mas oculta a linha de progresso e o envio de novos documentos em pedidos cancelados, reembolsados ou falhos. A ordenação por status também trata cancelados como cancelados.
+
+Este ajuste é de apresentação. Ele não altera o status, o registro financeiro nem o histórico do pedido. Validação: `php tests/account-dashboard.php` e `php tests/fulfillment-view.php` com dados sintéticos.

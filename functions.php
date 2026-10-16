@@ -12551,13 +12551,7 @@ function gstore_my_account_order_has_payment_evidence( WC_Order $order ) {
  * @return string
  */
 function gstore_my_account_get_orders_tab_status_label( WC_Order $order ) {
-	$order_status = $order->get_status();
-
-	if ( 'cancelled' === $order_status && gstore_my_account_order_has_payment_evidence( $order ) ) {
-		return __( 'Pago/Confirmado', 'gstore' );
-	}
-
-	return wc_get_order_status_name( $order_status );
+	return wc_get_order_status_name( $order->get_status() );
 }
 
 /**

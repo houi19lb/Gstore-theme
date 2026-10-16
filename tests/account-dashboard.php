@@ -27,7 +27,7 @@ function wc_get_customer_order_count( $id ) { return count( $GLOBALS['orders'] )
 function wc_get_orders( $args ) { $GLOBALS['queries'][] = $args; return ! empty( $args['paginate'] ) ? (object) array( 'total' => count( array_filter( $GLOBALS['orders'], static fn( $order ) => in_array( $order->status, $args['status'], true ) ) ) ) : array_slice( $GLOBALS['orders'], 0, $args['limit'] ?? null ); }
 function wc_format_datetime( $date ) { return $date->format( 'd/m/Y' ); }
 function wc_get_order_status_name( $s ) { return array( 'pending' => 'Aguardando pagamento', 'processing' => 'Processando', 'completed' => 'Concluído', 'on-hold' => 'Em espera', 'cancelled' => 'Cancelado', 'refunded' => 'Reembolsado', 'failed' => 'Falhou' )[ $s ] ?? $s; }
-function gstore_my_account_get_orders_tab_status_label( $order ) { return 'cancelled' === $order->status && $order->paid ? 'Pago/Confirmado' : wc_get_order_status_name( $order->status ); }
+function gstore_my_account_get_orders_tab_status_label( $order ) { return wc_get_order_status_name( $order->status ); }
 function gstore_get_order_fulfillment_stage( $order ) { return $order->stage; }
 function gstore_store_info() { return new class { function get_value( $key, $fallback = '' ) { return $GLOBALS['store'][ $key ] ?? $fallback; } }; }
 function gstore_get_whatsapp_link() { return $GLOBALS['store']['whatsapp_url'] ?? ''; }
@@ -79,8 +79,10 @@ foreach ( $stage_keys as $i => $stage ) {
 $order->stage = 'documentacao_negada'; $p = gstore_account_order_progress( $order );
 check( 3 === $p['index'] && $p['rejected'] && 'Documentação negada' === $p['label'], 'Rejected document needs attention at review step' );
 foreach ( array( 'cancelled', 'refunded', 'failed' ) as $status ) { $order->status = $status; check( ! gstore_account_order_progress( $order )['show_timeline'], 'Stopped orders must not suggest progress' ); }
+$order->status = 'processing'; $order->stage = 'pagamento_confirmado';
+check( 'Pagamento confirmado' === gstore_account_order_progress( $order )['label'], 'Active paid order shows payment progress' );
 $order->status = 'cancelled'; $order->paid = true; $p = gstore_account_order_progress( $order );
-check( 'Pago/Confirmado' === $p['label'] && ! $p['show_timeline'] && 'cancelled' === $order->status, 'Honor existing order-list label without changing order status or inventing fulfillment progress' ); $order->paid = false;
+check( 'Cancelado' === $p['label'] && 'danger' === $p['tone'] && ! $p['show_timeline'], 'Cancelled status overrides stale payment evidence and progress' ); $order->paid = false;
 $order->status = 'processing'; $order->stage = 'unknown'; check( ! gstore_account_order_progress( $order )['show_timeline'], 'Unknown stage must not pretend payment is current' );
 $store = array( 'contact.contact_primary_link' => 'https://example.test/contato', 'contact.whatsapp_label' => 'Teleatendimento', 'contact.telegram_label' => 'Comunidade', 'telegram_url' => 'https://t.me/example', 'email_url' => 'mailto:ajuda@example.test' );
 $channels = gstore_account_contact_channels(); check( 3 === count( $channels ) && 'Teleatendimento' === $channels[0]['label'] && $channels[0]['url'] === $store['contact.contact_primary_link'] && 'Comunidade' === $channels[2]['label'], 'Configured channels and labels' );
@@ -101,7 +103,7 @@ foreach ( array( 'cancelled' => 'danger', 'completed' => 'success', 'processing'
 	check( $tone === gstore_account_order_tone( $order ), 'Semantic order tone: ' . $status );
 }
 $order->status = 'cancelled'; $order->paid = true;
-check( 'neutral' === gstore_account_order_tone( $order ) && 'neutral' === gstore_account_order_progress( $order )['tone'], 'Legacy paid label must not look cancelled or fulfilled' );
+check( 'danger' === gstore_account_order_tone( $order ) && 'danger' === gstore_account_order_progress( $order )['tone'], 'Cancelled order keeps cancelled tone despite previous payment' );
 $order->paid = false; $order->status = 'processing'; $order->stage = 'documentacao_negada';
 check( 'danger' === gstore_account_order_progress( $order )['tone'], 'Document correction is an attention state' );
 $order->stage = 'enviado';

@@ -40,6 +40,7 @@ foreach ( is_array( $fulfillment_documents ) ? $fulfillment_documents : array() 
 $fulfillment_documents = $safe_fulfillment_documents;
 
 $has_fulfillment = ! empty( $fulfillment_stage );
+$show_fulfillment_timeline = $has_fulfillment && ! in_array( $order->get_status(), array( 'cancelled', 'refunded', 'failed' ), true );
 
 // Definição das etapas.
 $stages = array(
@@ -61,7 +62,7 @@ $documentation_rejected = 'documentacao_negada' === $fulfillment_stage;
 if ( $documentation_rejected ) {
 	$stages['processando_documentacao'] = 'Documentação negada';
 }
-$can_manage_documents = in_array( $fulfillment_stage, array( 'aguardando_documentacao', 'processando_documentacao', 'documentacao_negada' ), true );
+$can_manage_documents = $show_fulfillment_timeline && in_array( $fulfillment_stage, array( 'aguardando_documentacao', 'processando_documentacao', 'documentacao_negada' ), true );
 $timeline_stage = $documentation_rejected ? 'processando_documentacao' : $fulfillment_stage;
 $stage_keys   = array_keys( $stages );
 $current_idx  = $has_fulfillment ? array_search( $timeline_stage, $stage_keys, true ) : -1;
@@ -92,6 +93,7 @@ $can_upload_more = $total_docs_count < $max_docs;
     </header>
 
 	<?php if ( $has_fulfillment ) : ?>
+	<?php if ( $show_fulfillment_timeline ) : ?>
 	<!-- ════════════ Timeline ════════════ -->
 	<section class="gstore-view-order__tracking" aria-labelledby="gstore-tracking-title">
 	<h2 id="gstore-tracking-title">Etapas do pedido</h2>
@@ -138,6 +140,7 @@ $can_upload_more = $total_docs_count < $max_docs;
 	</p>
 	<a id="gstore-fulfillment-support" class="gstore-view-order__support" href="<?php echo esc_url( gstore_account_support_url() ); ?>" <?php echo ! $documentation_rejected ? 'hidden' : ''; ?>>Falar com o atendimento</a>
 	</section>
+	<?php endif; ?>
 
 	<!-- ════════════ Upload de Documentos ════════════ -->
 	<?php if ( $can_manage_documents ) : ?>

@@ -76,10 +76,6 @@ if ( $has_orders ) :
 	$get_status_priority = static function( WC_Order $order ) {
 		$status = $order->get_status();
 
-		if ( 'cancelled' === $status && function_exists( 'gstore_my_account_order_has_payment_evidence' ) && gstore_my_account_order_has_payment_evidence( $order ) ) {
-			return 95; // "Pago/Confirmado" (cancelled com evidência) fica próximo dos pagos.
-		}
-
 		switch ( $status ) {
 			case 'processing':
 				return 100;
