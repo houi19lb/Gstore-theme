@@ -12093,6 +12093,31 @@ function gstore_rename_account_menu_items( $items ) {
 add_filter( 'woocommerce_account_menu_items', 'gstore_rename_account_menu_items' );
 
 /**
+ * Traduz o aviso de senha temporaria exibido pelo WooCommerce na Minha Conta.
+ * Mantem intacto o link seguro de reenvio montado pelo proprio WooCommerce.
+ *
+ * @param string $translation Traducao atual.
+ * @param string $text        Texto original.
+ * @param string $domain      Dominio de traducao.
+ * @return string
+ */
+function gstore_translate_account_temporary_password_notice( $translation, $text, $domain ) {
+	if ( 'woocommerce' !== $domain ) {
+		return $translation;
+	}
+
+	switch ( $text ) {
+		case '%1$sResend%2$s':
+			return '%1$sReenviar%2$s';
+		case 'Your account is using a temporary password. We emailed you a link to change your password.':
+			return 'Sua conta está usando uma senha temporária. Enviamos um link por e-mail para você alterar sua senha.';
+	}
+
+	return $translation;
+}
+add_filter( 'gettext_woocommerce', 'gstore_translate_account_temporary_password_notice', 10, 3 );
+
+/**
  * Adiciona classe body customizada para a página minha conta.
  *
  * @param array $classes Classes do body.
