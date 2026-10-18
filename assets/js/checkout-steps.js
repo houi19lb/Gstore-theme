@@ -120,8 +120,12 @@
 			.replace(/'/g, '&#039;');
 	}
 
+	function isWhatsappPayment(method) {
+		return method === 'gstore_boleto' || method === 'gstore_cash_card';
+	}
+
 	function isFullContactPayment(method) {
-		return method === 'blu_pix' || method === 'gstore_boleto';
+		return method === 'blu_pix' || isWhatsappPayment(method);
 	}
 
 	function syncBoletoFinalNotice() {
@@ -129,24 +133,33 @@
 		if (!$final.length) return;
 		const selected = getEffectivePaymentMethod($checkoutForm);
 		$('body').toggleClass('gstore-boleto-selected', selected === 'gstore_boleto');
+		$('body').toggleClass('gstore-whatsapp-selected', isWhatsappPayment(selected));
 		const $existing = $final.find('.Gstore-boleto-final-notice');
-		if (selected !== 'gstore_boleto') {
+		if (!isWhatsappPayment(selected)) {
 			$existing.remove();
 			$('#place_order').html('<i class="fa-solid fa-lock" aria-hidden="true"></i> Finalizar pedido').val('Finalizar pedido').attr('data-value', 'Finalizar pedido');
 			return;
 		}
-		const settings = window.gstoreCheckoutBoleto || {};
-		const title = escapeHtml(settings.title || 'Solicite seu boleto pelo WhatsApp');
+		const cashCard = selected === 'gstore_cash_card';
+		const settings = cashCard ? (window.gstoreCheckoutCashCard || {}) : (window.gstoreCheckoutBoleto || {});
+		const title = escapeHtml(settings.title || (cashCard ? 'Combine seu pagamento pelo WhatsApp' : 'Solicite seu boleto pelo WhatsApp'));
 		const oldBoletoTexts = [
 			'Ao concluir o pedido, você poderá abrir o WhatsApp para solicitar a emissão do boleto.',
 			'Ao concluir o pedido, você poderá abrir o WhatsApp para solicitar a emissão do boleto e receber as instruções de pagamento.'
 		];
-		const fallbackText = 'Após registrar o pedido, o WhatsApp será aberto em uma nova guia. Se isso não acontecer, use o botão na página do pedido.';
-		const description = escapeHtml(oldBoletoTexts.includes(String(settings.text || '').trim()) ? fallbackText : (settings.text || fallbackText));
-		if (!$existing.length) {
-			$final.prepend(`<div class="Gstore-boleto-final-notice" role="note"><h3>${title}</h3><p>${description}</p><p class="Gstore-boleto-final-notice__warning"><strong>Pagamento antes da entrega:</strong> a entrega ou retirada do armamento só será liberada após a confirmação do pagamento integral do boleto.</p></div>`);
+		const fallbackText = cashCard
+			? 'Após registrar o pedido, o WhatsApp abrirá em uma nova guia para combinar os valores em dinheiro e no cartão. Se isso não acontecer, use o botão na página do pedido.'
+			: 'Após registrar o pedido, o WhatsApp será aberto em uma nova guia. Se isso não acontecer, use o botão na página do pedido.';
+		const description = escapeHtml(!cashCard && oldBoletoTexts.includes(String(settings.text || '').trim()) ? fallbackText : (settings.text || fallbackText));
+		const warning = cashCard
+			? 'A entrega ou retirada do armamento só será liberada após a confirmação do pagamento integral combinado.'
+			: 'A entrega ou retirada do armamento só será liberada após a confirmação do pagamento integral do boleto.';
+		if (!$existing.length || $existing.attr('data-payment-method') !== selected) {
+			$existing.remove();
+			$final.prepend(`<div class="Gstore-boleto-final-notice" data-payment-method="${selected}" role="note"><h3>${title}</h3><p>${description}</p><p class="Gstore-boleto-final-notice__warning"><strong>Pagamento antes da entrega:</strong> ${warning}</p></div>`);
 		}
-		$('#place_order').html('<i class="fa-brands fa-whatsapp" aria-hidden="true"></i> Registrar pedido e solicitar boleto').val('Registrar pedido e solicitar boleto').attr('data-value', 'Registrar pedido e solicitar boleto');
+		const buttonText = cashCard ? 'Registrar pedido e combinar pagamento' : 'Registrar pedido e solicitar boleto';
+		$('#place_order').html(`<i class="fa-brands fa-whatsapp" aria-hidden="true"></i> ${buttonText}`).val(buttonText).attr('data-value', buttonText);
 	}
 
 	function getCpfPurchaseLimitConfig() {
@@ -1975,54 +1988,60 @@ const subtotal = decodeHtmlEntities(stripHtmlText(it.subtotal || ''));
 		return $methods;
 	}
 
-	function syncBoletoUnifiedOption() {
+	function syncWhatsappUnifiedOption(method, label, icon) {
 		const $unified = $('.Gstore-blu-payment-unified').first();
 		if (!$unified.length) return;
-		const $source = $('#payment .payment_methods > .payment_method_gstore_boleto').first();
-		let $option = $unified.find('.Gstore-blu-payment-option--boleto');
+		const $source = $(`#payment .payment_methods > .payment_method_${method}`).first();
+		let $option = $unified.find(`.Gstore-blu-payment-option--${method}`);
 		if (!$source.length) {
 			$option.remove();
+			if (lastSelectedPaymentMethod === method) lastSelectedPaymentMethod = null;
 			return;
 		}
 		$source.addClass('gstore-hidden-for-unified');
 		if (!$option.length) {
-			$option = $('<div class="Gstore-blu-payment-option Gstore-blu-payment-option--boleto"></div>');
+			$option = $(`<div class="Gstore-blu-payment-option Gstore-blu-payment-option--${method}${method === 'gstore_boleto' ? ' Gstore-blu-payment-option--boleto' : ''}"></div>`);
 			const $radio = $('<input>', {
-				type: 'radio', name: 'payment_method', id: 'payment_method_gstore_boleto_unified', value: 'gstore_boleto'
+				type: 'radio', name: 'payment_method', id: `payment_method_${method}_unified`, value: method
 			});
 			$option.append($radio).append(
-				'<label for="payment_method_gstore_boleto_unified" class="Gstore-blu-payment-option__label"><i class="fa-solid fa-file-invoice" aria-hidden="true"></i><span>Boleto bancário</span></label>'
+				`<label for="payment_method_${method}_unified" class="Gstore-blu-payment-option__label"><i class="fa-solid ${icon}" aria-hidden="true"></i><span>${label}</span></label>`
 			);
 			$unified.find('.Gstore-blu-payment-options').append($option);
 			$radio.on('change', function() {
 				if (!this.checked) return;
-				persistSelectedPaymentMethod('gstore_boleto');
+				persistSelectedPaymentMethod(method);
 				$unified.find('.Gstore-blu-payment-unified__content').empty();
 				toggleBillingFieldsForPaymentMethod(true);
-				syncBluInstallmentsVisibility('gstore_boleto');
+				syncBluInstallmentsVisibility(method);
 				$(document.body).trigger('update_checkout');
 				setTimeout(loadCartSummary, 150);
 			});
 		}
-		if (lastSelectedPaymentMethod === 'gstore_boleto') {
+		if (lastSelectedPaymentMethod === method) {
 			$option.find('input[type="radio"]').prop('checked', true);
 			$unified.find('.Gstore-blu-payment-unified__content').empty();
 		}
 	}
 
+	function syncWhatsappUnifiedOptions() {
+		syncWhatsappUnifiedOption('gstore_boleto', 'Boleto bancário', 'fa-file-invoice');
+		syncWhatsappUnifiedOption('gstore_cash_card', 'Dinheiro + cartão', 'fa-money-bill-wave');
+	}
+
 	function unifyBluPaymentMethods() {
 		if (!lastSelectedPaymentMethod) {
 			const initialMethod = $('input[name="payment_method"]:checked').first().val();
-			if (initialMethod === 'gstore_boleto') lastSelectedPaymentMethod = initialMethod;
+			if (isWhatsappPayment(initialMethod)) lastSelectedPaymentMethod = initialMethod;
 		}
 		// Verifica se já existe o card unificado
 		const $existingUnified = $('.Gstore-blu-payment-unified');
 		if ($existingUnified.length) {
 			hideNativeBluPaymentMethodsForUnified();
-			syncBoletoUnifiedOption();
+			syncWhatsappUnifiedOptions();
 			// Se já existe, apenas sincroniza a seleção
 			const $selected = $('input[name="payment_method"]:checked');
-			if ($selected.length && lastSelectedPaymentMethod !== 'gstore_boleto') {
+			if ($selected.length && !isWhatsappPayment(lastSelectedPaymentMethod)) {
 				const selectedValue = $selected.val();
 				const $option = $existingUnified.find(`input[type="radio"][value="${selectedValue}"]`);
 				if ($option.length && !$option.is(':checked')) {
@@ -2034,21 +2053,24 @@ const subtotal = decodeHtmlEntities(stripHtmlText(it.subtotal || ''));
 		
 		const $bluCheckout = getNativeBluPaymentMethods('.payment_method_blu_checkout');
 		const $bluPix = getNativeBluPaymentMethods('.payment_method_blu_pix');
-		const $boleto = $('#payment .payment_methods > .payment_method_gstore_boleto').first();
+		const $whatsappMethod = $('#payment .payment_methods > .payment_method_gstore_boleto, #payment .payment_methods > .payment_method_gstore_cash_card').first();
 
-		// Mantém o mesmo card visual quando o boleto é o único método disponível.
-		if (!$bluCheckout.length && !$bluPix.length && $boleto.length) {
+		// Mantém o card visual quando só restam métodos combinados pelo WhatsApp.
+		if (!$bluCheckout.length && !$bluPix.length && $whatsappMethod.length) {
 			const $unified = $('<li class="payment_method_blu_unified Gstore-blu-payment-unified Gstore-blu-payment-unified--single"></li>');
 			$unified.append('<div class="Gstore-blu-payment-unified__title">Pagamento via Blu</div>');
 			$unified.append('<div class="Gstore-blu-payment-options"></div>');
 			$unified.append('<div class="Gstore-blu-payment-unified__content"></div>');
 			$unified.append('<div class="Gstore-blu-trust-badges-simple"><span class="Gstore-blu-trust-badge-simple"><i class="fa-solid fa-shield-halved"></i> Pagamento seguro</span></div>');
-			$boleto.parent().prepend($unified);
-			lastSelectedPaymentMethod = 'gstore_boleto';
-			syncBoletoUnifiedOption();
-			persistSelectedPaymentMethod('gstore_boleto');
+			$whatsappMethod.parent().prepend($unified);
+			const availableMethod = $whatsappMethod.hasClass('payment_method_gstore_boleto') ? 'gstore_boleto' : 'gstore_cash_card';
+			if (!isWhatsappPayment(lastSelectedPaymentMethod) || !$('#payment .payment_methods > .payment_method_' + lastSelectedPaymentMethod).length) {
+				lastSelectedPaymentMethod = availableMethod;
+			}
+			syncWhatsappUnifiedOptions();
+			persistSelectedPaymentMethod(lastSelectedPaymentMethod);
 			toggleBillingFieldsForPaymentMethod(true);
-			syncBluInstallmentsVisibility('gstore_boleto');
+			syncBluInstallmentsVisibility(lastSelectedPaymentMethod);
 			return;
 		}
 
@@ -2090,7 +2112,7 @@ const subtotal = decodeHtmlEntities(stripHtmlText(it.subtotal || ''));
 			$bluUnified.append($optionsContainer);
 
 			function syncSingleBluMethod(forceSelection) {
-				if (lastSelectedPaymentMethod === 'gstore_boleto' && !forceSelection) return;
+				if (isWhatsappPayment(lastSelectedPaymentMethod) && !forceSelection) return;
 				const $liveSourceInput = getNativeBluPaymentMethods(`.payment_method_${method}`)
 					.find('input[name="payment_method"]')
 					.first();
@@ -2140,7 +2162,7 @@ const subtotal = decodeHtmlEntities(stripHtmlText(it.subtotal || ''));
 			}
 
 			setTimeout(syncSingleBluMethod, 100);
-			syncBoletoUnifiedOption();
+			syncWhatsappUnifiedOptions();
 			return;
 		}
 		
@@ -2222,7 +2244,7 @@ const subtotal = decodeHtmlEntities(stripHtmlText(it.subtotal || ''));
 			 * Função usada apenas para sincronização interna
 			 */
 			function updatePaymentContent() {
-				if (lastSelectedPaymentMethod === 'gstore_boleto') return;
+				if (isWhatsappPayment(lastSelectedPaymentMethod)) return;
 				// Usa lastSelectedPaymentMethod como fonte de verdade (evita race conditions)
 				const method = lastSelectedPaymentMethod || 'blu_checkout';
 				const isCheckout = method === 'blu_checkout';
@@ -2304,7 +2326,7 @@ const subtotal = decodeHtmlEntities(stripHtmlText(it.subtotal || ''));
 			
 			// Usa lastSelectedPaymentMethod como fonte de verdade (evita race conditions com radios)
 			setTimeout(function() {
-				if (lastSelectedPaymentMethod === 'gstore_boleto') return;
+				if (isWhatsappPayment(lastSelectedPaymentMethod)) return;
 				const method = lastSelectedPaymentMethod || 'blu_checkout';
 				const isCheckout = method === 'blu_checkout';
 
@@ -2334,7 +2356,7 @@ const subtotal = decodeHtmlEntities(stripHtmlText(it.subtotal || ''));
 			
 		// Mostra conteúdo inicial usando lastSelectedPaymentMethod como fonte de verdade
 		setTimeout(function() {
-			if (lastSelectedPaymentMethod === 'gstore_boleto') return;
+			if (isWhatsappPayment(lastSelectedPaymentMethod)) return;
 			const method = lastSelectedPaymentMethod || 'blu_checkout';
 			const isCheckout = method === 'blu_checkout';
 
@@ -2371,7 +2393,7 @@ const subtotal = decodeHtmlEntities(stripHtmlText(it.subtotal || ''));
 					$paymentSection.prepend($newPaymentMethods);
 				}
 			}
-			syncBoletoUnifiedOption();
+			syncWhatsappUnifiedOptions();
 		}
 	}
 
@@ -2658,7 +2680,10 @@ const subtotal = decodeHtmlEntities(stripHtmlText(it.subtotal || ''));
 			
 			// Atualiza descrição da etapa
 			const $stepDescription = $('[data-step="contact"] .Gstore-checkout-step__description');
-			$stepDescription.text(getEffectivePaymentMethod($checkoutForm) === 'gstore_boleto' ? 'Preencha seus dados completos para solicitar o boleto.' : 'Preencha seus dados completos para finalizar o pedido via Pix.');
+			const method = getEffectivePaymentMethod($checkoutForm);
+			$stepDescription.text(method === 'gstore_boleto'
+				? 'Preencha seus dados completos para solicitar o boleto.'
+				: (method === 'gstore_cash_card' ? 'Preencha seus dados completos para combinar o pagamento.' : 'Preencha seus dados completos para finalizar o pedido via Pix.'));
 		} else {
 			// CARTÃO selecionado: Mostra apenas nome, CEP, celular e email
 			const shouldShowCpfForLimit = hasCpfPurchaseLimitProducts();
@@ -6192,7 +6217,7 @@ function getInstallmentDisplayTotals(summaryData) {
 			}
 			
 			e.preventDefault();
-			if (getEffectivePaymentMethod($checkoutForm) === 'gstore_boleto') {
+			if (isWhatsappPayment(getEffectivePaymentMethod($checkoutForm))) {
 				reserveBoletoWhatsappWindow();
 			}
 			
@@ -6289,10 +6314,10 @@ function getInstallmentDisplayTotals(summaryData) {
 		function showProcessingSuccess() {
 			updateProcessingStep(4); // Marca todos como completos
 			const isBluPayment = typeof isBluCheckoutSelected === 'function' && isBluCheckoutSelected();
-			const isBoletoPayment = getEffectivePaymentMethod($('form.checkout').first()) === 'gstore_boleto';
+			const isWhatsappOrder = isWhatsappPayment(getEffectivePaymentMethod($('form.checkout').first()));
 			
 			$('.Gstore-processing-modal__text h3').text(isBluPayment ? 'Link Blu gerado com sucesso!' : 'Pedido criado com sucesso!');
-			$('.Gstore-processing-modal__text p').text(isBoletoPayment ? 'Abrindo o WhatsApp em uma nova guia e os detalhes do pedido nesta guia...' : (isBluPayment ? 'Enviando você para a tela de pagamento...' : 'Redirecionando para o pagamento seguro...'));
+			$('.Gstore-processing-modal__text p').text(isWhatsappOrder ? 'Abrindo o WhatsApp em uma nova guia e os detalhes do pedido nesta guia...' : (isBluPayment ? 'Enviando você para a tela de pagamento...' : 'Redirecionando para o pagamento seguro...'));
 			$('.Gstore-processing-modal__spinner .Gstore-spinner').replaceWith(
 				'<i class="fa-solid fa-circle-check Gstore-success-icon"></i>'
 			);
@@ -6566,8 +6591,11 @@ function getInstallmentDisplayTotals(summaryData) {
 					updateProcessingStep(3);
 					
 						if (response && response.result === 'success') {
-							if (selectedPaymentMethodForSubmit === 'gstore_boleto') {
-								openBoletoWhatsappWindow(response.gstore_boleto_whatsapp_url);
+							if (isWhatsappPayment(selectedPaymentMethodForSubmit)) {
+								const whatsappUrl = selectedPaymentMethodForSubmit === 'gstore_boleto'
+									? response.gstore_boleto_whatsapp_url
+									: response.gstore_cash_card_whatsapp_url;
+								openBoletoWhatsappWindow(whatsappUrl);
 							}
 							if (isBluCheckoutSelected()) {
 								saveCheckoutDraftState('blu_payment_waiting');

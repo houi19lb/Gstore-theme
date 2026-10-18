@@ -2221,7 +2221,8 @@ body.woocommerce-checkout .Gstore-checkout-steps-shell {
 /* Esconde métodos Blu originais quando o card unificado existe */
 .payment_methods:has(.Gstore-blu-payment-unified) > .payment_method_blu_checkout:not(.Gstore-blu-payment-unified),
 .payment_methods:has(.Gstore-blu-payment-unified) > .payment_method_blu_pix:not(.Gstore-blu-payment-unified),
-.payment_methods:has(.Gstore-blu-payment-unified) > .payment_method_gstore_boleto {
+.payment_methods:has(.Gstore-blu-payment-unified) > .payment_method_gstore_boleto,
+.payment_methods:has(.Gstore-blu-payment-unified) > .payment_method_gstore_cash_card {
 	position: absolute !important;
 	left: -9999px !important;
 	opacity: 0 !important;
@@ -2232,7 +2233,8 @@ body.woocommerce-checkout .Gstore-checkout-steps-shell {
 /* Fallback para browsers sem :has() - esconde via classe */
 .payment_method_blu_checkout.gstore-hidden-for-unified,
 .payment_method_blu_pix.gstore-hidden-for-unified,
-.payment_method_gstore_boleto.gstore-hidden-for-unified {
+.payment_method_gstore_boleto.gstore-hidden-for-unified,
+.payment_method_gstore_cash_card.gstore-hidden-for-unified {
 	position: absolute !important;
 	left: -9999px !important;
 	opacity: 0 !important;

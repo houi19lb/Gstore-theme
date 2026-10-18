@@ -10727,6 +10727,13 @@ function gstore_enqueue_checkout_assets() {
 				'text'  => sanitize_textarea_field( $boleto_settings['final_text'] ?? 'Ao concluir o pedido, você poderá abrir o WhatsApp para solicitar a emissão do boleto.' ),
 			) ) . ';', 'before' );
 		}
+		$cash_card_settings = get_option( 'woocommerce_gstore_cash_card_settings', array() );
+		if ( is_array( $cash_card_settings ) && 'yes' === ( $cash_card_settings['enabled'] ?? 'no' ) ) {
+			wp_add_inline_script( 'gstore-checkout-steps', 'window.gstoreCheckoutCashCard = ' . wp_json_encode( array(
+				'title' => sanitize_text_field( $cash_card_settings['final_title'] ?? 'Combine seu pagamento pelo WhatsApp' ),
+				'text'  => sanitize_textarea_field( $cash_card_settings['final_text'] ?? 'Após registrar o pedido, o WhatsApp abrirá em uma nova guia para combinar os valores em dinheiro e no cartão.' ),
+			) ) . ';', 'before' );
+		}
 		if ( class_exists( '\GStore\Services\Cashback_Service' ) && gstore_cashback_service_available() ) {
 			$cashback_rules = \GStore\Services\Cashback_Rules::get();
 			if ( $cashback_rules['enabled'] ) {

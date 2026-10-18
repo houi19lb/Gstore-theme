@@ -121,6 +121,57 @@ describe('Checkout: quatro etapas visuais com contrato original', () => {
 		expect($('#payment .payment_method_gstore_boleto').hasClass('gstore-hidden-for-unified')).toBe(true);
 		expect($('form.checkout').serializeArray().filter(field => field.name === 'payment_method')).toEqual([{ name: 'payment_method', value: 'gstore_boleto' }]);
 	});
+	test('dinheiro e cartão aparecem no mesmo card e mantêm a escolha na atualização', () => {
+		$('#payment .payment_methods').append('<li class="payment_method_gstore_cash_card"><input type="radio" name="payment_method" value="gstore_cash_card"><label>Dinheiro + cartão</label></li>');
+		$(document.body).trigger('updated_checkout');
+		jest.advanceTimersByTime(120);
+		const $option = $('.Gstore-blu-payment-unified .Gstore-blu-payment-option--gstore_cash_card');
+		expect($option).toHaveLength(1);
+		expect($option.find('.fa-money-bill-wave')).toHaveLength(1);
+		$option.find('input').prop('checked', true).trigger('change');
+		expect($('form.checkout').serializeArray().filter(field => field.name === 'payment_method')).toEqual([{ name: 'payment_method', value: 'gstore_cash_card' }]);
+		$(document.body).trigger('updated_checkout');
+		jest.advanceTimersByTime(120);
+		expect($('.Gstore-blu-payment-option--gstore_cash_card input').is(':checked')).toBe(true);
+		api.setActiveStep(3, false);
+		expect($('.Gstore-boleto-final-notice').text()).toContain('dinheiro e no cartão');
+		expect($('#place_order').text()).toContain('combinar pagamento');
+	});
+	test('dinheiro e cartão sozinho usa o card visual e abre WhatsApp ao registrar pedido', () => {
+		$('#payment .payment_methods').html('<li class="payment_method_gstore_cash_card"><input type="hidden" name="payment_method" value="gstore_cash_card"><label>Dinheiro + cartão</label></li>');
+		$(document.body).trigger('updated_checkout');
+		jest.advanceTimersByTime(250);
+		const $card = $('#payment .Gstore-blu-payment-unified');
+		expect($card.find('.Gstore-blu-payment-option--gstore_cash_card input').is(':checked')).toBe(true);
+		expect($card.find('.Gstore-blu-trust-badges-simple').text()).toContain('Pagamento seguro');
+		expect($('form.checkout').serializeArray().filter(field => field.name === 'payment_method')).toEqual([{ name: 'payment_method', value: 'gstore_cash_card' }]);
+		api.setActiveStep(3, false);
+		$('#gstore_contract_terms').prop('checked', true);
+		const popup = { closed: false, opener: window, document: { title: '', body: { textContent: '' } }, location: { replace: jest.fn() }, close: jest.fn() };
+		const open = jest.spyOn(window, 'open').mockReturnValue(popup);
+		$('#place_order').trigger('click');
+		expect(open).toHaveBeenCalledWith('about:blank', '_blank');
+		const priorBlock = $.fn.block;
+		$.fn.block = jest.fn();
+		window.wc_checkout_params = { checkout_url: '/?wc-ajax=checkout' };
+		jest.advanceTimersByTime(200);
+		const checkoutRequest = $.ajax.mock.calls.map(call => call[0]).find(request => request.url === '/?wc-ajax=checkout');
+		expect(checkoutRequest).toBeDefined();
+		checkoutRequest.success({ result: 'success', redirect: '/checkout/order-received/15046/', gstore_cash_card_whatsapp_url: 'https://wa.me/5511999999999?text=Pedido%20%2315046' });
+		expect(popup.location.replace).toHaveBeenCalledWith('https://wa.me/5511999999999?text=Pedido%20%2315046');
+		$.fn.block = priorBlock;
+		delete window.wc_checkout_params;
+		open.mockRestore();
+	});
+	test('boleto e dinheiro com cartão continuam como duas opções no card sem Pix ou link', () => {
+		$('#payment .payment_methods').html('<li class="payment_method_gstore_boleto"><input type="radio" name="payment_method" value="gstore_boleto" checked></li><li class="payment_method_gstore_cash_card"><input type="radio" name="payment_method" value="gstore_cash_card"></li>');
+		$(document.body).trigger('updated_checkout');
+		jest.advanceTimersByTime(250);
+		const $card = $('#payment .Gstore-blu-payment-unified');
+		expect($card.find('.Gstore-blu-payment-option')).toHaveLength(2);
+		$card.find('input[value="gstore_cash_card"]').prop('checked', true).trigger('change');
+		expect($('form.checkout').serializeArray().filter(field => field.name === 'payment_method')).toEqual([{ name: 'payment_method', value: 'gstore_cash_card' }]);
+	});
 	test('boleto prepara uma nova guia no clique e a envia ao WhatsApp após criar o pedido', () => {
 		$('#payment .payment_methods').append('<li class="payment_method_gstore_boleto"><input type="radio" name="payment_method" value="gstore_boleto"><label>Boleto bancário</label></li>');
 		$(document.body).trigger('updated_checkout');

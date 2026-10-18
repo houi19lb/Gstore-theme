@@ -1,20 +1,24 @@
 /* Boleto usa a mesma estrutura de etapas e campos do checkout GStore. */
-body.gstore-boleto-selected .Gstore-checkout-step[data-step="contact"] .Gstore-checkout-step__fields .form-row {
+body.gstore-boleto-selected .Gstore-checkout-step[data-step="contact"] .Gstore-checkout-step__fields .form-row,
+body.gstore-whatsapp-selected .Gstore-checkout-step[data-step="contact"] .Gstore-checkout-step__fields .form-row {
 	width: 100%;
 	max-width: 100%;
 	float: none;
 }
 
-.Gstore-checkout-step #payment .payment_methods li.payment_method_gstore_boleto {
+.Gstore-checkout-step #payment .payment_methods li.payment_method_gstore_boleto,
+.Gstore-checkout-step #payment .payment_methods li.payment_method_gstore_cash_card {
 	border: 1px solid #bddbc7;
 	background: #fff;
 	margin-top: 12px;
 }
-.Gstore-checkout-step #payment .payment_methods li.payment_method_gstore_boleto:has(input:checked) {
+.Gstore-checkout-step #payment .payment_methods li.payment_method_gstore_boleto:has(input:checked),
+.Gstore-checkout-step #payment .payment_methods li.payment_method_gstore_cash_card:has(input:checked) {
 	border-color: #26764b;
 	box-shadow: 0 0 0 2px #26764b20;
 }
-.Gstore-checkout-step #payment .payment_methods li.payment_method_gstore_boleto label {
+.Gstore-checkout-step #payment .payment_methods li.payment_method_gstore_boleto label,
+.Gstore-checkout-step #payment .payment_methods li.payment_method_gstore_cash_card label {
 	padding: 16px 20px;
 	color: #19482e;
 }
