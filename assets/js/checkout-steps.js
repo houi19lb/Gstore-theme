@@ -148,7 +148,7 @@
 			'Ao concluir o pedido, você poderá abrir o WhatsApp para solicitar a emissão do boleto e receber as instruções de pagamento.'
 		];
 		const fallbackText = cashCard
-			? 'Após registrar o pedido, o WhatsApp abrirá em uma nova guia para combinar os valores em dinheiro e no cartão. Se isso não acontecer, use o botão na página do pedido.'
+			? 'Após registrar o pedido, o WhatsApp abrirá em uma nova guia para combinar quanto será pago via Pix e quanto no cartão. Se isso não acontecer, use o botão na página do pedido.'
 			: 'Após registrar o pedido, o WhatsApp será aberto em uma nova guia. Se isso não acontecer, use o botão na página do pedido.';
 		const description = escapeHtml(!cashCard && oldBoletoTexts.includes(String(settings.text || '').trim()) ? fallbackText : (settings.text || fallbackText));
 		const warning = cashCard
@@ -2026,7 +2026,7 @@ const subtotal = decodeHtmlEntities(stripHtmlText(it.subtotal || ''));
 
 	function syncWhatsappUnifiedOptions() {
 		syncWhatsappUnifiedOption('gstore_boleto', 'Boleto bancário', 'fa-file-invoice');
-		syncWhatsappUnifiedOption('gstore_cash_card', 'Dinheiro + cartão', 'fa-money-bill-wave');
+		syncWhatsappUnifiedOption('gstore_cash_card', 'Pix + cartão', 'fa-wallet');
 	}
 
 	function unifyBluPaymentMethods() {

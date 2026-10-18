@@ -121,24 +121,24 @@ describe('Checkout: quatro etapas visuais com contrato original', () => {
 		expect($('#payment .payment_method_gstore_boleto').hasClass('gstore-hidden-for-unified')).toBe(true);
 		expect($('form.checkout').serializeArray().filter(field => field.name === 'payment_method')).toEqual([{ name: 'payment_method', value: 'gstore_boleto' }]);
 	});
-	test('dinheiro e cartão aparecem no mesmo card e mantêm a escolha na atualização', () => {
-		$('#payment .payment_methods').append('<li class="payment_method_gstore_cash_card"><input type="radio" name="payment_method" value="gstore_cash_card"><label>Dinheiro + cartão</label></li>');
+	test('Pix e cartão aparecem no mesmo card e mantêm a escolha na atualização', () => {
+		$('#payment .payment_methods').append('<li class="payment_method_gstore_cash_card"><input type="radio" name="payment_method" value="gstore_cash_card"><label>Pix + cartão</label></li>');
 		$(document.body).trigger('updated_checkout');
 		jest.advanceTimersByTime(120);
 		const $option = $('.Gstore-blu-payment-unified .Gstore-blu-payment-option--gstore_cash_card');
 		expect($option).toHaveLength(1);
-		expect($option.find('.fa-money-bill-wave')).toHaveLength(1);
+		expect($option.find('.fa-wallet')).toHaveLength(1);
 		$option.find('input').prop('checked', true).trigger('change');
 		expect($('form.checkout').serializeArray().filter(field => field.name === 'payment_method')).toEqual([{ name: 'payment_method', value: 'gstore_cash_card' }]);
 		$(document.body).trigger('updated_checkout');
 		jest.advanceTimersByTime(120);
 		expect($('.Gstore-blu-payment-option--gstore_cash_card input').is(':checked')).toBe(true);
 		api.setActiveStep(3, false);
-		expect($('.Gstore-boleto-final-notice').text()).toContain('dinheiro e no cartão');
+		expect($('.Gstore-boleto-final-notice').text()).toContain('via Pix e quanto no cartão');
 		expect($('#place_order').text()).toContain('combinar pagamento');
 	});
-	test('dinheiro e cartão sozinho usa o card visual e abre WhatsApp ao registrar pedido', () => {
-		$('#payment .payment_methods').html('<li class="payment_method_gstore_cash_card"><input type="hidden" name="payment_method" value="gstore_cash_card"><label>Dinheiro + cartão</label></li>');
+	test('Pix e cartão sozinho usa o card visual e abre WhatsApp ao registrar pedido', () => {
+		$('#payment .payment_methods').html('<li class="payment_method_gstore_cash_card"><input type="hidden" name="payment_method" value="gstore_cash_card"><label>Pix + cartão</label></li>');
 		$(document.body).trigger('updated_checkout');
 		jest.advanceTimersByTime(250);
 		const $card = $('#payment .Gstore-blu-payment-unified');
@@ -163,7 +163,7 @@ describe('Checkout: quatro etapas visuais com contrato original', () => {
 		delete window.wc_checkout_params;
 		open.mockRestore();
 	});
-	test('boleto e dinheiro com cartão continuam como duas opções no card sem Pix ou link', () => {
+	test('boleto e Pix com cartão continuam como duas opções no card sem Pix ou link', () => {
 		$('#payment .payment_methods').html('<li class="payment_method_gstore_boleto"><input type="radio" name="payment_method" value="gstore_boleto" checked></li><li class="payment_method_gstore_cash_card"><input type="radio" name="payment_method" value="gstore_cash_card"></li>');
 		$(document.body).trigger('updated_checkout');
 		jest.advanceTimersByTime(250);
