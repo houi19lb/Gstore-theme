@@ -10731,7 +10731,7 @@ function gstore_enqueue_checkout_assets() {
 		if ( is_array( $cash_card_settings ) && 'yes' === ( $cash_card_settings['enabled'] ?? 'no' ) ) {
 			wp_add_inline_script( 'gstore-checkout-steps', 'window.gstoreCheckoutCashCard = ' . wp_json_encode( array(
 				'title' => sanitize_text_field( $cash_card_settings['final_title'] ?? 'Combine seu pagamento pelo WhatsApp' ),
-				'text'  => sanitize_textarea_field( $cash_card_settings['final_text'] ?? 'Após registrar o pedido, o WhatsApp abrirá em uma nova guia para combinar quanto será pago via Pix e quanto no cartão.' ),
+				'text'  => sanitize_textarea_field( $cash_card_settings['final_text'] ?? 'Após carregar a página do pedido, o WhatsApp será aberto em uma nova guia para combinar quanto será pago via Pix e quanto no cartão.' ),
 			) ) . ';', 'before' );
 		}
 		if ( class_exists( '\GStore\Services\Cashback_Service' ) && gstore_cashback_service_available() ) {
@@ -10892,7 +10892,6 @@ function gstore_enqueue_checkout_assets() {
 			$theme_version,
 			true
 		);
-
 	}
 
 	if ( function_exists( 'is_cart' ) && is_cart() ) {
@@ -10912,6 +10911,15 @@ function gstore_enqueue_checkout_assets() {
 			$theme_version,
 			true
 		);
+		if ( function_exists( 'is_order_received_page' ) && is_order_received_page() ) {
+			wp_enqueue_script(
+				'gstore-checkout-whatsapp-after-order',
+				gstore_theme_asset_uri( 'assets/js/checkout-whatsapp-after-order.js' ),
+				array(),
+				filemtime( get_theme_file_path( 'assets/js/checkout-whatsapp-after-order.js' ) ),
+				true
+			);
+		}
 
 	}
 

@@ -99,7 +99,6 @@
 	let bluResumePollTimer = null;
 	let bluResumePollInFlight = false;
 	let reservedBluPaymentWindow = null;
-	let reservedBoletoWhatsappWindow = null;
 	let checkoutDraftRestoreDone = false;
 	let cpfPurchaseLimitDebounceTimer = null;
 	let cpfPurchaseLimitState = {
@@ -145,12 +144,18 @@
 		const title = escapeHtml(settings.title || (cashCard ? 'Combine seu pagamento pelo WhatsApp' : 'Solicite seu boleto pelo WhatsApp'));
 		const oldBoletoTexts = [
 			'Ao concluir o pedido, você poderá abrir o WhatsApp para solicitar a emissão do boleto.',
-			'Ao concluir o pedido, você poderá abrir o WhatsApp para solicitar a emissão do boleto e receber as instruções de pagamento.'
+			'Ao concluir o pedido, você poderá abrir o WhatsApp para solicitar a emissão do boleto e receber as instruções de pagamento.',
+			'Após registrar o pedido, o WhatsApp será aberto em uma nova guia. Se isso não acontecer, use o botão na página do pedido.'
+		];
+		const oldCashCardTexts = [
+			'Após registrar o pedido, o WhatsApp abrirá em uma nova guia para combinar os valores em dinheiro e no cartão. Se isso não acontecer, use o botão na página do pedido.',
+			'Após registrar o pedido, o WhatsApp abrirá em uma nova guia para combinar quanto será pago via Pix e quanto no cartão. Se isso não acontecer, use o botão na página do pedido.'
 		];
 		const fallbackText = cashCard
-			? 'Após registrar o pedido, o WhatsApp abrirá em uma nova guia para combinar quanto será pago via Pix e quanto no cartão. Se isso não acontecer, use o botão na página do pedido.'
-			: 'Após registrar o pedido, o WhatsApp será aberto em uma nova guia. Se isso não acontecer, use o botão na página do pedido.';
-		const description = escapeHtml(!cashCard && oldBoletoTexts.includes(String(settings.text || '').trim()) ? fallbackText : (settings.text || fallbackText));
+			? 'Após carregar a página do pedido, o WhatsApp será aberto em uma nova guia para combinar quanto será pago via Pix e quanto no cartão. Se isso não acontecer, use o botão na página do pedido.'
+			: 'Após carregar a página do pedido, o WhatsApp será aberto em uma nova guia. Se isso não acontecer, use o botão na página do pedido.';
+		const oldDefaults = cashCard ? oldCashCardTexts : oldBoletoTexts;
+		const description = escapeHtml(oldDefaults.includes(String(settings.text || '').trim()) ? fallbackText : (settings.text || fallbackText));
 		const warning = cashCard
 			? 'A entrega ou retirada do armamento só será liberada após a confirmação do pagamento integral combinado.'
 			: 'A entrega ou retirada do armamento só será liberada após a confirmação do pagamento integral do boleto.';
@@ -6217,9 +6222,6 @@ function getInstallmentDisplayTotals(summaryData) {
 			}
 			
 			e.preventDefault();
-			if (isWhatsappPayment(getEffectivePaymentMethod($checkoutForm))) {
-				reserveBoletoWhatsappWindow();
-			}
 			
 			if (typeof showProcessingModal === 'function') {
 				showProcessingModal();
@@ -6237,6 +6239,7 @@ function getInstallmentDisplayTotals(summaryData) {
 			// Remove modal existente se houver
 			$('.Gstore-processing-modal').remove();
 			const isBluPayment = typeof isBluCheckoutSelected === 'function' && isBluCheckoutSelected();
+			const isWhatsappOrder = isWhatsappPayment(getEffectivePaymentMethod($checkoutForm));
 			
 			const modalHtml = `
 				<div class="Gstore-processing-modal">
@@ -6251,8 +6254,8 @@ function getInstallmentDisplayTotals(summaryData) {
 							<div class="Gstore-spinner"></div>
 						</div>
 						<div class="Gstore-processing-modal__text">
-							<h3>${isBluPayment ? 'Gerando pagamento Blu...' : 'Processando seu pedido...'}</h3>
-							<p>${isBluPayment ? 'Aguarde enquanto criamos seu link seguro de pagamento.' : 'Aguarde enquanto preparamos seu pagamento seguro.'}</p>
+							<h3>${isBluPayment ? 'Gerando pagamento Blu...' : (isWhatsappOrder ? 'Registrando seu pedido...' : 'Processando seu pedido...')}</h3>
+							<p>${isBluPayment ? 'Aguarde enquanto criamos seu link seguro de pagamento.' : (isWhatsappOrder ? 'Aguarde enquanto carregamos os detalhes do pedido.' : 'Aguarde enquanto preparamos seu pagamento seguro.')}</p>
 						</div>
 						<div class="Gstore-processing-modal__steps">
 							<div class="Gstore-processing-step is-active" data-step="1">
@@ -6265,7 +6268,7 @@ function getInstallmentDisplayTotals(summaryData) {
 							</div>
 							<div class="Gstore-processing-step" data-step="3">
 								<i class="fa-solid fa-circle"></i>
-								<span>${isBluPayment ? 'Abrindo pagamento' : 'Redirecionando para pagamento'}</span>
+								<span>${isBluPayment ? 'Abrindo pagamento' : (isWhatsappOrder ? 'Carregando pedido recebido' : 'Redirecionando para pagamento')}</span>
 							</div>
 						</div>
 					</div>
@@ -6317,7 +6320,7 @@ function getInstallmentDisplayTotals(summaryData) {
 			const isWhatsappOrder = isWhatsappPayment(getEffectivePaymentMethod($('form.checkout').first()));
 			
 			$('.Gstore-processing-modal__text h3').text(isBluPayment ? 'Link Blu gerado com sucesso!' : 'Pedido criado com sucesso!');
-			$('.Gstore-processing-modal__text p').text(isWhatsappOrder ? 'Abrindo o WhatsApp em uma nova guia e os detalhes do pedido nesta guia...' : (isBluPayment ? 'Enviando você para a tela de pagamento...' : 'Redirecionando para o pagamento seguro...'));
+			$('.Gstore-processing-modal__text p').text(isWhatsappOrder ? 'Carregando os detalhes do pedido. O WhatsApp abrirá depois dessa página.' : (isBluPayment ? 'Enviando você para a tela de pagamento...' : 'Redirecionando para o pagamento seguro...'));
 			$('.Gstore-processing-modal__spinner .Gstore-spinner').replaceWith(
 				'<i class="fa-solid fa-circle-check Gstore-success-icon"></i>'
 			);
@@ -6592,10 +6595,7 @@ function getInstallmentDisplayTotals(summaryData) {
 					
 						if (response && response.result === 'success') {
 							if (isWhatsappPayment(selectedPaymentMethodForSubmit)) {
-								const whatsappUrl = selectedPaymentMethodForSubmit === 'gstore_boleto'
-									? response.gstore_boleto_whatsapp_url
-									: response.gstore_cash_card_whatsapp_url;
-								openBoletoWhatsappWindow(whatsappUrl);
+								rememberWhatsappAfterOrder(response.redirect);
 							}
 							if (isBluCheckoutSelected()) {
 								saveCheckoutDraftState('blu_payment_waiting');
@@ -6616,7 +6616,6 @@ function getInstallmentDisplayTotals(summaryData) {
 								setTimeout(function() { handleBluCheckoutRedirect(response.redirect); }, 1500);
 							}
 					} else if (response && response.result === 'failure') {
-						closeReservedBoletoWhatsappWindow();
 						closeReservedBluPaymentWindow();
 						hideProcessingModal();
 						$form.removeClass('processing').unblock();
@@ -6647,7 +6646,6 @@ function getInstallmentDisplayTotals(summaryData) {
 							showCheckoutSubmitError();
 						}
 					} else {
-						closeReservedBoletoWhatsappWindow();
 						closeReservedBluPaymentWindow();
 						hideProcessingModal();
 						$form.removeClass('processing').unblock();
@@ -6655,7 +6653,6 @@ function getInstallmentDisplayTotals(summaryData) {
 					}
 				},
 				error: function(xhr, statusText, errorThrown) {
-					closeReservedBoletoWhatsappWindow();
 					closeReservedBluPaymentWindow();
 					debugCheckout('checkout_error', {
 						status: xhr && xhr.status,
@@ -6801,53 +6798,17 @@ function getInstallmentDisplayTotals(summaryData) {
 		bluRedirectInProgress = false;
 	}
 
-	function reserveBoletoWhatsappWindow() {
-		if (reservedBoletoWhatsappWindow && !reservedBoletoWhatsappWindow.closed) return;
+	function rememberWhatsappAfterOrder(redirectUrl) {
+		const storage = getStorageObject('sessionStorage');
+		if (!storage) return;
 		try {
-			reservedBoletoWhatsappWindow = window.open('about:blank', '_blank');
-			if (reservedBoletoWhatsappWindow) {
-				reservedBoletoWhatsappWindow.opener = null;
-				try {
-					reservedBoletoWhatsappWindow.document.title = 'Abrindo WhatsApp';
-					reservedBoletoWhatsappWindow.document.body.textContent = 'Registrando seu pedido e preparando o WhatsApp...';
-				} catch (e) {}
-			}
-		} catch (e) {
-			reservedBoletoWhatsappWindow = null;
-		}
-	}
-
-	function closeReservedBoletoWhatsappWindow() {
-		if (!reservedBoletoWhatsappWindow) return;
-		try {
-			if (!reservedBoletoWhatsappWindow.closed) reservedBoletoWhatsappWindow.close();
+			const target = new URL(String(redirectUrl || ''), window.location.href);
+			if (target.origin !== window.location.origin || target.pathname === window.location.pathname) return;
+			storage.setItem('gstore_whatsapp_after_order:v1', JSON.stringify({
+				path: target.pathname,
+				createdAt: Date.now()
+			}));
 		} catch (e) {}
-		reservedBoletoWhatsappWindow = null;
-	}
-
-	function openBoletoWhatsappWindow(url) {
-		let target;
-		try {
-			target = new URL(String(url || ''));
-			if (target.protocol !== 'https:' || target.hostname !== 'wa.me' || !/^\/\d+$/.test(target.pathname)) throw new Error('Invalid WhatsApp URL');
-		} catch (e) {
-			closeReservedBoletoWhatsappWindow();
-			return false;
-		}
-		if (reservedBoletoWhatsappWindow && !reservedBoletoWhatsappWindow.closed) {
-			try {
-				reservedBoletoWhatsappWindow.location.replace(target.href);
-				reservedBoletoWhatsappWindow = null;
-				return true;
-			} catch (e) {
-				closeReservedBoletoWhatsappWindow();
-			}
-		}
-		try {
-			return !!window.open(target.href, '_blank', 'noopener');
-		} catch (e) {
-			return false;
-		}
 	}
 
 	function reserveBluPaymentWindow() {

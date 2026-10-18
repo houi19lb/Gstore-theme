@@ -11,6 +11,7 @@ describe('Checkout: quatro etapas visuais com contrato original', () => {
 		jest.useFakeTimers();
 		$(document).off(); $(document.body).off();
 		localStorage.clear();
+		sessionStorage.clear();
 		document.body.innerHTML = markup();
 		window.jQuery = $; window.$ = $;
 		window.gstoreCheckout = { contract: { enabled: false } };
@@ -137,7 +138,7 @@ describe('Checkout: quatro etapas visuais com contrato original', () => {
 		expect($('.Gstore-boleto-final-notice').text()).toContain('via Pix e quanto no cartão');
 		expect($('#place_order').text()).toContain('combinar pagamento');
 	});
-	test('Pix e cartão sozinho usa o card visual e abre WhatsApp ao registrar pedido', () => {
+	test('Pix e cartão sozinho aguarda a página do pedido para abrir WhatsApp', () => {
 		$('#payment .payment_methods').html('<li class="payment_method_gstore_cash_card"><input type="hidden" name="payment_method" value="gstore_cash_card"><label>Pix + cartão</label></li>');
 		$(document.body).trigger('updated_checkout');
 		jest.advanceTimersByTime(250);
@@ -147,10 +148,9 @@ describe('Checkout: quatro etapas visuais com contrato original', () => {
 		expect($('form.checkout').serializeArray().filter(field => field.name === 'payment_method')).toEqual([{ name: 'payment_method', value: 'gstore_cash_card' }]);
 		api.setActiveStep(3, false);
 		$('#gstore_contract_terms').prop('checked', true);
-		const popup = { closed: false, opener: window, document: { title: '', body: { textContent: '' } }, location: { replace: jest.fn() }, close: jest.fn() };
-		const open = jest.spyOn(window, 'open').mockReturnValue(popup);
+		const open = jest.spyOn(window, 'open').mockReturnValue(null);
 		$('#place_order').trigger('click');
-		expect(open).toHaveBeenCalledWith('about:blank', '_blank');
+		expect(open).not.toHaveBeenCalled();
 		const priorBlock = $.fn.block;
 		$.fn.block = jest.fn();
 		window.wc_checkout_params = { checkout_url: '/?wc-ajax=checkout' };
@@ -158,7 +158,8 @@ describe('Checkout: quatro etapas visuais com contrato original', () => {
 		const checkoutRequest = $.ajax.mock.calls.map(call => call[0]).find(request => request.url === '/?wc-ajax=checkout');
 		expect(checkoutRequest).toBeDefined();
 		checkoutRequest.success({ result: 'success', redirect: '/checkout/order-received/15046/', gstore_cash_card_whatsapp_url: 'https://wa.me/5511999999999?text=Pedido%20%2315046' });
-		expect(popup.location.replace).toHaveBeenCalledWith('https://wa.me/5511999999999?text=Pedido%20%2315046');
+		expect(JSON.parse(sessionStorage.getItem('gstore_whatsapp_after_order:v1')).path).toBe('/checkout/order-received/15046/');
+		expect(open).not.toHaveBeenCalled();
 		$.fn.block = priorBlock;
 		delete window.wc_checkout_params;
 		open.mockRestore();
@@ -172,18 +173,16 @@ describe('Checkout: quatro etapas visuais com contrato original', () => {
 		$card.find('input[value="gstore_cash_card"]').prop('checked', true).trigger('change');
 		expect($('form.checkout').serializeArray().filter(field => field.name === 'payment_method')).toEqual([{ name: 'payment_method', value: 'gstore_cash_card' }]);
 	});
-	test('boleto prepara uma nova guia no clique e a envia ao WhatsApp após criar o pedido', () => {
+	test('boleto aguarda a página do pedido antes de abrir WhatsApp', () => {
 		$('#payment .payment_methods').append('<li class="payment_method_gstore_boleto"><input type="radio" name="payment_method" value="gstore_boleto"><label>Boleto bancário</label></li>');
 		$(document.body).trigger('updated_checkout');
 		jest.advanceTimersByTime(120);
 		$('.Gstore-blu-payment-unified .Gstore-blu-payment-option--boleto input').prop('checked', true).trigger('change');
 		api.setActiveStep(3, false);
 		$('#gstore_contract_terms').prop('checked', true);
-		const popup = { closed: false, opener: window, document: { title: '', body: { textContent: '' } }, location: { replace: jest.fn() }, close: jest.fn() };
-		const open = jest.spyOn(window, 'open').mockReturnValue(popup);
+		const open = jest.spyOn(window, 'open').mockReturnValue(null);
 		$('#place_order').trigger('click');
-		expect(open).toHaveBeenCalledWith('about:blank', '_blank');
-		expect(popup.document.body.textContent).toContain('Registrando seu pedido');
+		expect(open).not.toHaveBeenCalled();
 		const priorBlock = $.fn.block;
 		$.fn.block = jest.fn();
 		window.wc_checkout_params = { checkout_url: '/?wc-ajax=checkout' };
@@ -191,8 +190,8 @@ describe('Checkout: quatro etapas visuais com contrato original', () => {
 		const checkoutRequest = $.ajax.mock.calls.map(call => call[0]).find(request => request.url === '/?wc-ajax=checkout');
 		expect(checkoutRequest).toBeDefined();
 		checkoutRequest.success({ result: 'success', redirect: '/checkout/order-received/15046/', gstore_boleto_whatsapp_url: 'https://wa.me/5511999999999?text=Pedido%20%2315046' });
-		expect(popup.location.replace).toHaveBeenCalledWith('https://wa.me/5511999999999?text=Pedido%20%2315046');
-		expect(popup.opener).toBeNull();
+		expect(JSON.parse(sessionStorage.getItem('gstore_whatsapp_after_order:v1')).path).toBe('/checkout/order-received/15046/');
+		expect(open).not.toHaveBeenCalled();
 		$.fn.block = priorBlock;
 		delete window.wc_checkout_params;
 		open.mockRestore();
