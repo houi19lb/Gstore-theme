@@ -434,6 +434,7 @@ class GStore_Store_Info {
 			'contact' => array(
 				'phone'           => '',
 				'phone_raw'       => '',
+				'show_phone_in_header' => '0',
 				'whatsapp'        => '',
 				'whatsapp_display' => '',
 				'telegram'        => '',
