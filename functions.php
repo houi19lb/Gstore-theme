@@ -24481,8 +24481,18 @@ function gstore_build_store_info_placeholders_map() {
 	}
 	$email      = gstore_get_store_email();
 	$phone_raw  = trim( (string) gstore_get_phone( 'raw' ) );
+	$phone_display = trim( wp_strip_all_tags( (string) gstore_get_phone() ) );
 	$email_link = gstore_get_store_email_link();
 	$phone_link = '' !== $phone_raw ? 'tel:+' . preg_replace( '/\D/', '', $phone_raw ) : '';
+	$header_phone_contact = '';
+	if ( '1' === (string) gstore_store_info()->get_value( 'contact.show_phone_in_header', '0' ) && '' !== $phone_display ) {
+		$header_phone_digits = preg_replace( '/\D+/', '', '' !== $phone_raw ? $phone_raw : $phone_display );
+		if ( strlen( $header_phone_digits ) >= 8 ) {
+			$header_phone_contact = '<a class="Gstore-top-bar__link Gstore-top-bar__link--phone" href="' . esc_url( 'tel:+' . $header_phone_digits ) . '" aria-label="' . esc_attr( sprintf( __( 'Ligar para %s', 'gstore' ), $phone_display ) ) . '">'
+				. '<svg class="Gstore-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false"><path d="M6.62 10.79a15.05 15.05 0 0 0 6.59 6.59l2.2-2.2a1 1 0 0 1 1.01-.24c1.12.37 2.33.56 3.58.56a1 1 0 0 1 1 1V20a1 1 0 0 1-1 1C10.61 21 3 13.39 3 4a1 1 0 0 1 1-1h3.5a1 1 0 0 1 1 1c0 1.25.19 2.46.56 3.58a1 1 0 0 1-.25 1.01l-2.19 2.2z"/></svg>'
+				. '<span>' . esc_html( $phone_display ) . ' • ' . esc_html__( 'Ligue', 'gstore' ) . '</span></a>';
+		}
+	}
 	// Preenchido sob demanda no processamento (ver gstore_process_store_info_placeholders).
 	$footer_category_brand_summary = '';
 	$home_seo_h1 = trim( wp_strip_all_tags( (string) gstore_store_info()->get_value( 'meta.home_h1', '' ) ) );
@@ -24539,6 +24549,7 @@ function gstore_build_store_info_placeholders_map() {
 
 		// Phone link (tel:)
 		'{{phone_link}}'      => $phone_link,
+		'{{header_phone_contact}}' => $header_phone_contact,
 
 		// Contact primary link (header/footer): usa o valor do JSON ou fallback para whatsapp_link
 		'{{contact_primary_link}}' => $contact_primary_link,
