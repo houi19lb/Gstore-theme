@@ -93,6 +93,7 @@
 	let installmentQuotes = null;
 	let isLoadingInstallmentQuotes = false;
 	let lastInstallmentQuotesSignature = '';
+	let installmentQuotesTimer = null;
 	let lastBluOrderPaymentUrl = null; // URL do pagamento Blu do último pedido criado (para exibir aviso quando modal fecha)
 	let bluRedirectInProgress = false; // Evita abrir modal/redirect da Blu em duplicidade (ex.: submit + ajaxComplete)
 	let bluResumeState = null; // Estado persistente do link Blu para retomada no mobile/checkout
@@ -2459,6 +2460,12 @@ const subtotal = decodeHtmlEntities(stripHtmlText(it.subtotal || ''));
 	}
 
 	function maybeFetchInstallmentQuotes() {
+		clearTimeout(installmentQuotesTimer);
+		installmentQuotesTimer = setTimeout(fetchInstallmentQuotesIfNeeded, 150);
+	}
+
+	function fetchInstallmentQuotesIfNeeded() {
+		installmentQuotesTimer = null;
 		const $installments = $('.Gstore-blu-installments').first();
 		if (!$installments.length) return;
 
@@ -2508,9 +2515,11 @@ const subtotal = decodeHtmlEntities(stripHtmlText(it.subtotal || ''));
 						updateInstallmentsPreview(lastCartSummaryData);
 					}
 				}
+				maybeFetchInstallmentQuotes();
 			},
 			error: function() {
 				isLoadingInstallmentQuotes = false;
+				maybeFetchInstallmentQuotes();
 			}
 		});
 	}

@@ -23,6 +23,26 @@ describe('Checkout: quatro etapas visuais com contrato original', () => {
 	});
 	afterEach(() => { jest.clearAllTimers(); jest.useRealTimers(); });
 	const active = () => $('.Gstore-checkout-step.is-active').attr('data-step');
+	test('agrupa simulações de parcelas e consulta o total mais recente após uma resposta pendente', () => {
+		$('form.checkout').append('<div class="Gstore-blu-installments" data-allow="1" data-max="21"></div>');
+		api.seedSummary({ ...summary, installments: { selected: 1 } });
+		const requests = [];
+		$.ajax = jest.fn(options => { requests.push(options); return $.Deferred().promise(); });
+		jest.clearAllTimers();
+		api.maybeFetchInstallmentQuotes();
+		api.maybeFetchInstallmentQuotes();
+		jest.advanceTimersByTime(149);
+		expect(requests).toHaveLength(0);
+		jest.advanceTimersByTime(1);
+		expect(requests.filter(request => request.data?.action === 'gstore_blu_get_installment_quotes')).toHaveLength(1);
+		api.seedSummary({ ...summary, total: 'R$ 249,90', installments: { selected: 2 } });
+		api.maybeFetchInstallmentQuotes();
+		jest.advanceTimersByTime(150);
+		expect(requests.filter(request => request.data?.action === 'gstore_blu_get_installment_quotes')).toHaveLength(1);
+		requests[0].success({ success: true, data: { quotes: {} } });
+		jest.advanceTimersByTime(150);
+		expect(requests.filter(request => request.data?.action === 'gstore_blu_get_installment_quotes')).toHaveLength(2);
+	});
 	test('avança pelas quatro telas sem antecipar a etapa de parcelamento do backend', () => {
 		expect($('.Gstore-checkout-stepper__label').map((_, el) => el.textContent).get()).toEqual(['Pagamento', 'Dados Básicos', 'Frete', 'Finalizar']);
 		expect(active()).toBe('payment-method');
