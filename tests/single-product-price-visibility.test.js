@@ -7,10 +7,12 @@ const $ = require('jquery');
 describe.each(['single-product.js', 'single-product.min.js'])('%s', filename => {
 	const script = fs.readFileSync(path.join(__dirname, '..', 'assets/js', filename), 'utf8');
 
-	function boot({ oos = false, mode = 'hide', hidden = false } = {}) {
+	function boot({ oos = false, mode = 'hide', hidden = false, preloaded = false } = {}) {
 		document.body.innerHTML = `
-			<div data-gstore-installment-card><span data-gstore-installment-target="1" data-product-id="11" data-max-installments="21" data-initial-text="ou 21x de R$209,05">ou 21x de R$209,05</span></div>
+			<div data-gstore-installment-card><span data-gstore-installment-target="1" data-gstore-installment-scope="single" data-product-id="11" data-max-installments="21" data-initial-text="ou 21x de R$209,05">ou 21x de R$209,05</span></div>
 			<div data-gstore-installment-card>ou 21x de R$209,05</div>
+			<div class="related"><span data-gstore-installment-target="1" data-gstore-installment-scope="card" data-product-id="22" data-initial-text="ou 21x de R$50,49">ou 21x de R$50,49</span></div>
+			<div data-gstore-installment-wrapper><span data-gstore-installment-target="1" data-gstore-installment-scope="single" data-product-id="11" data-max-installments="21" data-initial-text="ou 21x de R$209,05">ou 21x de R$209,05</span><select data-gstore-installment-select ${preloaded ? 'data-gstore-initial-quotes=\'{"21":{"installments":21,"per_installment_text":"R$209,05"}}\'' : ''}>${preloaded ? '<option value="">Selecione as parcelas</option><option value="21">21x de R$209,05</option>' : '<option>Carregando...</option>'}</select></div>
 			<div class="buybox ${oos ? 'is-out-of-stock' : 'is-in-stock'}">
 				<div data-gstore-price-header data-gstore-hide-price="${hidden ? '1' : '0'}" data-gstore-oos-price-mode="${mode}"><div data-gstore-price-panel></div></div>
 				<div data-gstore-stock-block data-default-class="is-in-stock"></div>
@@ -107,5 +109,27 @@ describe.each(['single-product.js', 'single-product.min.js'])('%s', filename => 
 		await flush();
 		expect(window.fetch).toHaveBeenCalledTimes(3);
 		expect(new URLSearchParams(window.fetch.mock.calls[2][1].body).get('product_id')).toBe('12');
+	});
+
+	test('preloaded installments need no initial AJAX and related cards keep their own quote', async () => {
+		boot({ preloaded: true });
+		await flush();
+		expect(window.fetch).not.toHaveBeenCalled();
+		expect(document.querySelector('[data-gstore-installment-select]').options).toHaveLength(2);
+		const related = document.querySelector('.related [data-gstore-installment-target]');
+		expect(related.textContent).toBe('ou 21x de R$50,49');
+		const qty = document.querySelector('input.qty');
+		qty.value = '2';
+		qty.dispatchEvent(new Event('input', { bubbles: true }));
+		jest.advanceTimersByTime(200);
+		await flush();
+		expect(window.fetch).toHaveBeenCalledTimes(1);
+		expect(related.textContent).toBe('ou 21x de R$50,49');
+		qty.value = '1';
+		qty.dispatchEvent(new Event('input', { bubbles: true }));
+		jest.advanceTimersByTime(200);
+		await flush();
+		expect(window.fetch).toHaveBeenCalledTimes(1);
+		expect(related.textContent).toBe('ou 21x de R$50,49');
 	});
 });

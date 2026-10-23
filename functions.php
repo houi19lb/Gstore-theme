@@ -9634,9 +9634,10 @@ function gstore_get_preferred_installment_quote( $quotes, $preferred_installment
  * @param int        $max_installments Parcelas máximas.
  * @param int        $quantity Quantidade.
  * @param string     $context Contexto desejado.
+ * @param bool       $include_all_quotes Inclui a tabela completa na pagina de produto.
  * @return array
  */
-function gstore_get_product_installment_preview_data( $product, $max_installments = 21, $quantity = 1, $context = 'auto' ) {
+function gstore_get_product_installment_preview_data( $product, $max_installments = 21, $quantity = 1, $context = 'auto', $include_all_quotes = false ) {
 	$data = array(
 		'product_id'            => 0,
 		'installments'          => 0,
@@ -9644,6 +9645,7 @@ function gstore_get_product_installment_preview_data( $product, $max_installment
 		'per_installment_text'  => '',
 		'total_html'            => '',
 		'total_text'            => '',
+		'quotes'                => array(),
 	);
 
 	if ( ! $product instanceof WC_Product ) {
@@ -9659,12 +9661,15 @@ function gstore_get_product_installment_preview_data( $product, $max_installment
 	$data['product_id']  = $product_id;
 
 	if ( $product_id > 0 && function_exists( 'gstore_blu_get_product_installment_quotes_data' ) ) {
-		// 4o argumento: o preview exibe uma unica cotacao (a maior), entao pede so ela
-		// em vez da tabela 1..21 (que custava ~84 formatacoes de moeda por card).
+		// Cards pedem somente a maior cotacao; o produto pede a tabela completa
+		// para entregar o seletor pronto no HTML sem uma segunda consulta AJAX.
 		// Plugins antigos sem o parametro ignoram o argumento extra e devolvem a tabela
 		// completa, que o gstore_get_preferred_installment_quote resolve do mesmo jeito.
-		$quotes_data = gstore_blu_get_product_installment_quotes_data( $product_id, $quantity, $max_installments, $max_installments );
+		$quotes_data = gstore_blu_get_product_installment_quotes_data( $product_id, $quantity, $max_installments, $include_all_quotes ? 0 : $max_installments );
 		if ( ! is_wp_error( $quotes_data ) && ! empty( $quotes_data['quotes'] ) && is_array( $quotes_data['quotes'] ) ) {
+			if ( $include_all_quotes ) {
+				$data['quotes'] = $quotes_data['quotes'];
+			}
 			$preferred_quote = gstore_get_preferred_installment_quote( $quotes_data['quotes'], $max_installments );
 			if ( ! empty( $preferred_quote['installments'] ) && ! empty( $preferred_quote['per_installment'] ) ) {
 				$data['installments']         = (int) $preferred_quote['installments'];

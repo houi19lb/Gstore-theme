@@ -1094,7 +1094,11 @@ $discount_percent  = $has_discount ? round( ( ( $regular_price - $display_price 
 $installments     = (int) apply_filters( 'armastore_single_product_installments', 21, $product );
 // Parcelas seguem a mesma visibilidade do preço, inclusive quando falta estoque.
 $show_installment_price = ! $hide_price && ! $is_public_draft_product && $display_price > 0 && ( ! $is_out_of_stock || $show_price_oos );
-$installment_preview = $show_installment_price ? gstore_get_product_installment_preview_data( $product, $installments, 1, 'single' ) : array();
+$installment_preview = $show_installment_price ? gstore_get_product_installment_preview_data( $product, $installments, 1, 'single', true ) : array();
+$installment_quotes = ! empty( $installment_preview['quotes'] ) && is_array( $installment_preview['quotes'] ) ? $installment_preview['quotes'] : array();
+$installment_quote_keys = array_map( 'absint', array_keys( $installment_quotes ) );
+$installment_quote_keys = array_filter( $installment_quote_keys );
+rsort( $installment_quote_keys, SORT_NUMERIC );
 $formatted_installment = ! empty( $installment_preview['installments'] ) && ! empty( $installment_preview['per_installment_html'] )
 	? sprintf(
 		/* translators: 1: número de parcelas, 2: valor da parcela */
@@ -1368,7 +1372,8 @@ $gstore_tab_next_cta_labels = array(
 												class="Gstore-single-product__info-sub"
 												<?php if ( $show_installment_price && ! empty( $card['is_installment'] ) ) : ?>
 													data-gstore-installment-target="1"
-													data-product-id="<?php echo esc_attr( (string) gstore_get_product_id( $product ) ); ?>"
+													data-gstore-installment-scope="single"
+													data-product-id="<?php echo esc_attr( (string) ( ! empty( $installment_preview['product_id'] ) ? $installment_preview['product_id'] : gstore_resolve_installment_product_id( $product ) ) ); ?>"
 													data-max-installments="<?php echo esc_attr( $installments ); ?>"
 													data-initial-text="<?php echo esc_attr( wp_strip_all_tags( (string) $card['text'] ) ); ?>"
 												<?php endif; ?>
@@ -1577,6 +1582,7 @@ $gstore_tab_next_cta_labels = array(
 												<div
 													class="price-sub"
 													data-gstore-installment-target="1"
+													data-gstore-installment-scope="single"
 													data-product-id="<?php echo esc_attr( (string) ( ! empty( $installment_preview['product_id'] ) ? $installment_preview['product_id'] : gstore_resolve_installment_product_id( $product ) ) ); ?>"
 													data-max-installments="<?php echo esc_attr( $installments ); ?>"
 													data-initial-text="<?php echo esc_attr( wp_strip_all_tags( (string) $formatted_installment ) ); ?>"
@@ -1586,10 +1592,19 @@ $gstore_tab_next_cta_labels = array(
 												<select
 													class="price-sub-installments-select"
 													data-gstore-installment-select
+													<?php if ( $installment_quote_keys ) : ?>data-gstore-initial-quotes="<?php echo esc_attr( wp_json_encode( $installment_quotes ) ); ?>"<?php endif; ?>
 													aria-label="<?php esc_attr_e( 'Selecione o número de parcelas', 'gstore' ); ?>"
-													style="display: none;"
+													style="display: <?php echo $installment_quote_keys ? 'block' : 'none'; ?>;"
 												>
-													<option value=""><?php esc_html_e( 'Carregando...', 'gstore' ); ?></option>
+													<option value=""><?php echo $installment_quote_keys ? esc_html__( 'Selecione as parcelas', 'gstore' ) : esc_html__( 'Carregando...', 'gstore' ); ?></option>
+													<?php foreach ( $installment_quote_keys as $installment_count ) :
+														$installment_quote = $installment_quotes[ (string) $installment_count ];
+														if ( empty( $installment_quote['per_installment_text'] ) ) {
+															continue;
+														}
+														?>
+														<option value="<?php echo esc_attr( (string) $installment_count ); ?>"<?php selected( $installment_count, (int) $installment_preview['installments'] ); ?>><?php echo esc_html( $installment_count . 'x de ' . $installment_quote['per_installment_text'] ); ?></option>
+													<?php endforeach; ?>
 												</select>
 											</div>
 										<?php endif; ?>

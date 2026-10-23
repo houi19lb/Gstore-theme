@@ -246,7 +246,7 @@ document.addEventListener('DOMContentLoaded', () => {
 	};
 
 	const initProductInstallmentQuotes = () => {
-		const targets = Array.from(document.querySelectorAll('[data-gstore-installment-target="1"]'));
+		const targets = Array.from(document.querySelectorAll('[data-gstore-installment-target="1"][data-gstore-installment-scope="single"]'));
 		if (!targets.length) {
 			return;
 		}
@@ -447,7 +447,22 @@ document.addEventListener('DOMContentLoaded', () => {
 					scheduleRequest();
 				});
 			}
-		}		requestQuotes();
+		}
+		const initialSelect = document.querySelector('[data-gstore-installment-select][data-gstore-initial-quotes]');
+		if (initialSelect && currentProductId && getQuantity() === 1) {
+			try {
+				const initialQuotes = JSON.parse(initialSelect.dataset.gstoreInitialQuotes);
+				const preferredQuote = chooseQuote(initialQuotes, String(getMaxInstallments()));
+				if (preferredQuote?.installments && preferredQuote?.per_installment_text) {
+					const signature = `${currentProductId}|1|${getMaxInstallments()}`;
+					gstoreInstallmentCache.set(signature, `ou ${preferredQuote.installments}x de ${preferredQuote.per_installment_text}`);
+					gstoreInstallmentQuotesCache.set(signature, initialQuotes);
+				}
+			} catch (error) {
+				// HTML inicial permanece visível; a consulta normal cobre dados inválidos.
+			}
+		}
+		requestQuotes();
 	};
 
 	/**
