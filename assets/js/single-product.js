@@ -236,9 +236,11 @@ document.addEventListener('DOMContentLoaded', () => {
 		select.style.display = 'block';
 	};
 
+	let selectedVariationUnavailable = false;
 	const canShowProductInstallments = () => {
 		const header = document.querySelector('[data-gstore-price-header]');
 		if (header?.dataset?.gstoreHidePrice === '1') return false;
+		if (selectedVariationUnavailable && header?.dataset?.gstoreOosPriceMode !== 'show') return false;
 		const isOos = document.querySelector('.buybox')?.classList.contains('is-out-of-stock');
 		return !isOos || header?.dataset?.gstoreOosPriceMode === 'show';
 	};
@@ -263,7 +265,7 @@ document.addEventListener('DOMContentLoaded', () => {
 		const getQuantity = () => {
 			const input = getQtyInput();
 			if (!input) return 1;
-			const raw = parseFloat(String(input.value || '1'));
+			const raw = parseInt(String(input.value || '1'), 10);
 			return Number.isFinite(raw) && raw > 0 ? raw : 1;
 		};
 
@@ -287,6 +289,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
 		const applyFallback = () => {
 			if (!canShowProductInstallments()) {
+				applyText('');
+				return;
+			}
+			if (currentProductId !== baseProductId || getQuantity() !== 1) {
 				applyText('');
 				return;
 			}
@@ -391,11 +397,15 @@ document.addEventListener('DOMContentLoaded', () => {
 					}
 					const text = `ou ${quote.installments}x de ${quote.per_installment_text}`;
 					gstoreInstallmentCache.set(signature, text);
-					gstoreInstallmentQuotesCache.set(signature, payload.data.quotes);					applyText(text);
-					populateInstallmentSelect(payload.data.quotes, quote.installments);
-					setupInstallmentSelectListeners();
+					gstoreInstallmentQuotesCache.set(signature, payload.data.quotes);
+					if (signature === `${currentProductId}|${getQuantity()}|${getMaxInstallments()}` && canShowProductInstallments()) {
+						applyText(text);
+						populateInstallmentSelect(payload.data.quotes, quote.installments);
+						setupInstallmentSelectListeners();
+					}
 				})
-				.catch((error) => {					applyFallback();
+				.catch((error) => {
+					if (signature === `${currentProductId}|${getQuantity()}|${getMaxInstallments()}`) applyFallback();
 				})
 				.finally(() => {
 					gstoreInstallmentInFlight.delete(signature);
@@ -412,8 +422,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
 		const qtyInput = getQtyInput();
 		if (qtyInput) {
-			qtyInput.addEventListener('change', scheduleRequest);
-			qtyInput.addEventListener('input', scheduleRequest);
+			qtyInput.addEventListener('change', () => { applyText(''); scheduleRequest(); });
+			qtyInput.addEventListener('input', () => { applyText(''); scheduleRequest(); });
 		}
 
 		if (typeof jQuery !== 'undefined') {
@@ -421,15 +431,19 @@ document.addEventListener('DOMContentLoaded', () => {
 			if ($form.length) {
 				$form.on('found_variation', (event, variation) => {
 					const variationId = variation?.variation_id ? String(variation.variation_id) : '';
+					selectedVariationUnavailable = variation?.is_in_stock === false || variation?.is_purchasable === false;
 					if (variationId) {
 						currentProductId = variationId;
 						updateTargetsProductId(variationId);
+						applyText('');
 						scheduleRequest();
 					}
 				});
 				$form.on('reset_data', () => {
+					selectedVariationUnavailable = false;
 					currentProductId = baseProductId;
 					updateTargetsProductId(baseProductId);
+					applyFallback();
 					scheduleRequest();
 				});
 			}

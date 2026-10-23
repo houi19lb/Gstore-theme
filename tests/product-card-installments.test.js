@@ -52,6 +52,16 @@ describe('GStore product card installment batches', () => {
 		jest.useRealTimers();
 	});
 
+	test('sem configuração, preserva parcelas diferentes dos cards sem chamar AJAX', () => {
+		document.body.innerHTML = card(11, 'ou 21x de R$ 397,99') + card(22, 'ou 21x de R$ 50,49');
+		Object.defineProperty(document, 'readyState', { configurable: true, value: 'complete' });
+		window.eval(script);
+		jest.advanceTimersByTime(1000);
+		expect(window.fetch).not.toHaveBeenCalled();
+		expect(document.querySelector('[data-product-id="11"]').textContent).toBe('ou 21x de R$ 397,99');
+		expect(document.querySelector('[data-product-id="22"]').textContent).toBe('ou 21x de R$ 50,49');
+	});
+
 	test('several visible cards generate one batch request after 100ms', async () => {
 		document.body.innerHTML = card(11) + card(22) + card(33);
 		window.fetch.mockImplementation(() => response({

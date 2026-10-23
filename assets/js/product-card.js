@@ -186,8 +186,8 @@
 
 	function resolveInstallmentMode() {
 		const config = typeof gstoreProductCardConfig !== 'undefined' ? gstoreProductCardConfig : {};
-		const configured = String(config?.mode || 'batch').toLowerCase();
-		const mode = ['batch', 'legacy', 'off'].includes(configured) ? configured : 'batch';
+		const configured = String(config?.mode || 'off').toLowerCase();
+		const mode = ['batch', 'legacy', 'off'].includes(configured) ? configured : 'off';
 
 		// A página de produto conserva o comportamento individual anterior. O lote
 		// é exclusivo de páginas de catálogo, home, busca e demais grades.

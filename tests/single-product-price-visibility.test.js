@@ -14,7 +14,7 @@ describe.each(['single-product.js', 'single-product.min.js'])('%s', filename => 
 			<div class="buybox ${oos ? 'is-out-of-stock' : 'is-in-stock'}">
 				<div data-gstore-price-header data-gstore-hide-price="${hidden ? '1' : '0'}" data-gstore-oos-price-mode="${mode}"><div data-gstore-price-panel></div></div>
 				<div data-gstore-stock-block data-default-class="is-in-stock"></div>
-				<form class="variations_form"><input class="qty" value="1"></form>
+				<form class="variations_form cart"><input class="qty" value="1"></form>
 				<div data-gstore-oos-card hidden></div>
 			</div>`;
 		window.jQuery = $;
@@ -88,5 +88,24 @@ describe.each(['single-product.js', 'single-product.min.js'])('%s', filename => 
 		await flush();
 		expect(document.querySelector('[data-gstore-installment-target]').textContent).toBe('');
 		expect(document.querySelector('[data-gstore-installment-target]').hidden).toBe(true);
+	});
+
+	test('uses one initial request and refreshes only for a changed quantity or variation', async () => {
+		boot();
+		await flush();
+		expect(window.fetch).toHaveBeenCalledTimes(1);
+		const qty = document.querySelector('input.qty');
+		qty.value = '2';
+		qty.dispatchEvent(new Event('input', { bubbles: true }));
+		qty.dispatchEvent(new Event('change', { bubbles: true }));
+		jest.advanceTimersByTime(200);
+		await flush();
+		expect(window.fetch).toHaveBeenCalledTimes(2);
+		expect(new URLSearchParams(window.fetch.mock.calls[1][1].body).get('quantity')).toBe('2');
+		$('.variations_form').trigger('found_variation', [{ variation_id: 12, is_in_stock: true }]);
+		jest.advanceTimersByTime(200);
+		await flush();
+		expect(window.fetch).toHaveBeenCalledTimes(3);
+		expect(new URLSearchParams(window.fetch.mock.calls[2][1].body).get('product_id')).toBe('12');
 	});
 });

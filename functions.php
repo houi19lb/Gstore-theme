@@ -7263,16 +7263,6 @@ function gstore_enqueue_scripts() {
 			true
 		);
 
-		$installment_mode = defined( 'GSTORE_BLU_PRODUCT_CARD_INSTALLMENTS_MODE' )
-			? sanitize_key( (string) GSTORE_BLU_PRODUCT_CARD_INSTALLMENTS_MODE )
-			: 'batch';
-		$installment_mode = sanitize_key(
-			(string) apply_filters( 'gstore_blu_product_card_installments_mode', $installment_mode )
-		);
-		if ( ! in_array( $installment_mode, array( 'batch', 'legacy', 'off' ), true ) ) {
-			$installment_mode = 'batch';
-		}
-
 		wp_localize_script(
 			'gstore-product-card',
 			'gstoreProductCardConfig',
@@ -7280,7 +7270,7 @@ function gstore_enqueue_scripts() {
 				'ajaxUrl'       => admin_url( 'admin-ajax.php' ),
 				'action'        => 'gstore_blu_get_product_installment_quotes',
 				'batchAction'   => 'gstore_blu_get_product_installment_quotes_batch',
-				'mode'          => $installment_mode,
+				'mode'          => 'off',
 				'isProductPage' => function_exists( 'is_product' ) && is_product(),
 				'batchSize'     => 20,
 				'batchDelay'    => 100,
