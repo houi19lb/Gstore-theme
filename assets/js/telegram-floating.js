@@ -13,6 +13,7 @@
 	var STORAGE_KEY = (CONFIG.storageKey || 'gstore_support_preference').toString();
 	var CHAT_PREF_VALUE = (CONFIG.chatPreferenceValue || 'chat_site').toString();
 	var CHAT_UI_STRATEGY = (CONFIG.uiStrategy || 'A').toString().toUpperCase();
+	var SITE_CONTACT_MESSAGE = (CONFIG.siteContactMessage || 'Olá, eu vim através do site e gostaria de mais informações.').toString();
 
 	var FLOAT_ID = 'gstore-support-float';
 	var FLOAT_CLASS = 'Gstore-support-float';
@@ -94,6 +95,26 @@
 		if (h.indexOf('javascript:') === 0) return false;
 		if (h.indexOf('{{') !== -1 || h.indexOf('}}') !== -1) return false;
 		return true;
+	}
+
+	function withSiteContactMessage(href, channel) {
+		if (!isValidHref(href)) return href;
+		try {
+			var url = new URL(href);
+			if (url.protocol !== 'https:') return href;
+			var host = url.hostname.toLowerCase();
+			if (channel === 'whatsapp') {
+				if (['wa.me', 'api.whatsapp.com', 'web.whatsapp.com'].indexOf(host) === -1) return href;
+			} else if (channel === 'telegram') {
+				if (['t.me', 'telegram.me'].indexOf(host) === -1 || !/^\/[a-zA-Z0-9_]+\/?$/.test(url.pathname)) return href;
+			} else {
+				return href;
+			}
+			url.searchParams.set('text', SITE_CONTACT_MESSAGE);
+			return url.toString();
+		} catch (e) {
+			return href;
+		}
 	}
 
 	function safeJsonParse(value) {
@@ -800,7 +821,7 @@
 
 	function handleSelectWhatsApp() {
 		var qa = getEffectiveQuickActionConfig();
-		var href = qa && qa.whatsappUrl;
+		var href = withSiteContactMessage(qa && qa.whatsappUrl, 'whatsapp');
 		if (!isValidHref(href)) return;
 		persistPreferredChannel(null);
 		closeSelectorModal(true);
@@ -820,7 +841,7 @@
 	}
 
 	function openTelegramLink() {
-		var href = state.telegramLink;
+		var href = withSiteContactMessage(state.telegramLink, 'telegram');
 		if (!isValidHref(href)) return;
 		try {
 			window.open(href, '_blank', 'noopener');

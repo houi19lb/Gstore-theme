@@ -7089,6 +7089,7 @@ function gstore_enqueue_scripts() {
 			'storageKey'          => 'gstore_support_preference',
 			'chatPreferenceValue' => 'chat_site',
 			'uiStrategy'          => 'A',
+			'siteContactMessage'  => gstore_get_site_contact_message(),
 			'texts'               => array(
 				'openSupport'      => __( 'Atendimento', 'gstore' ),
 				'openSupportShort' => __( 'Atendimento', 'gstore' ),
@@ -23518,6 +23519,47 @@ function gstore_get_whatsapp_link( $message = '' ) {
 	return $url;
 }
 
+/**
+ * Mensagem de origem usada nos contatos gerais iniciados pelo site.
+ *
+ * @return string
+ */
+function gstore_get_site_contact_message() {
+	return 'Olá, eu vim através do site e gostaria de mais informações.';
+}
+
+/**
+ * Preenche a mensagem apenas em links diretos de atendimento compatíveis.
+ *
+ * @param string $url Link original.
+ * @param string $channel whatsapp ou telegram.
+ * @return string
+ */
+function gstore_add_site_contact_message_to_link( $url, $channel ) {
+	$parts = wp_parse_url( $url );
+	if ( ! is_array( $parts ) || 'https' !== strtolower( $parts['scheme'] ?? '' ) ) {
+		return $url;
+	}
+
+	$host = strtolower( $parts['host'] ?? '' );
+	$path = $parts['path'] ?? '';
+	if ( 'whatsapp' === $channel ) {
+		if ( ! in_array( $host, array( 'wa.me', 'api.whatsapp.com', 'web.whatsapp.com' ), true ) ) {
+			return $url;
+		}
+	} elseif ( 'telegram' === $channel ) {
+		// Convites privados e links para mensagens não aceitam este rascunho.
+		if ( ! in_array( $host, array( 't.me', 'telegram.me' ), true )
+			|| ! preg_match( '#^/[a-zA-Z0-9_]+/?$#', $path ) ) {
+			return $url;
+		}
+	} else {
+		return $url;
+	}
+
+	return add_query_arg( 'text', rawurlencode( gstore_get_site_contact_message() ), $url );
+}
+
 /** Catalogue mode is controlled by the GStore account administration plugin. */
 function gstore_basic_catalog_enabled() {
 	return 'basic' === get_option( 'gstore_account_plan', 'standard' );
@@ -24600,7 +24642,7 @@ function gstore_build_store_info_placeholders_map() {
 		'{{header_phone_contact}}' => $header_phone_contact,
 
 		// Contact primary link (header/footer): usa o valor do JSON ou fallback para whatsapp_link
-		'{{contact_primary_link}}' => $contact_primary_link,
+		'{{contact_primary_link}}' => gstore_add_site_contact_message_to_link( $contact_primary_link, 'whatsapp' ),
 		'{{privacy_policy_url}}'   => function_exists( 'get_privacy_policy_url' ) ? get_privacy_policy_url() : home_url( '/politica-de-privacidade/' ),
 		'{{terms_of_use_url}}'     => ( (int) get_option( 'woocommerce_terms_page_id', 0 ) > 0 ) ? get_permalink( (int) get_option( 'woocommerce_terms_page_id', 0 ) ) : home_url( '/termos-de-uso/' ),
 
@@ -24610,7 +24652,7 @@ function gstore_build_store_info_placeholders_map() {
 		'{{facebook_link}}'       => gstore_get_social_link( 'facebook' ),
 		'{{youtube_link}}'        => gstore_get_social_link( 'youtube' ),
 		'{{telegram}}'            => gstore_get_telegram_username(),
-		'{{telegram_link}}'       => gstore_get_telegram_link(),
+		'{{telegram_link}}'       => gstore_add_site_contact_message_to_link( gstore_get_telegram_link(), 'telegram' ),
 
 		// Address
 		'{{address_street}}'      => gstore_get_address( 'street' ),
