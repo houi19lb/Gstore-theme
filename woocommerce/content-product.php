@@ -15,6 +15,23 @@ if ( empty( $product ) || ! $product->is_visible() ) {
 	return;
 }
 
+if ( function_exists( 'gstore_basic_catalog_enabled' ) && gstore_basic_catalog_enabled() ) {
+	if ( ! $product->is_type( 'simple' ) ) {
+		return;
+	}
+	$basic_url   = gstore_basic_product_whatsapp_url( $product );
+	$basic_price = $product->get_regular_price();
+	?>
+	<li <?php wc_product_class( 'Gstore-product-card gstore-basic-card', $product ); ?>>
+		<a class="gstore-basic-card__image" href="<?php echo esc_url( get_permalink( $product->get_id() ) ); ?>"><?php echo wp_kses_post( $product->get_image( 'woocommerce_thumbnail' ) ); ?></a>
+		<h2 class="gstore-basic-card__title"><a href="<?php echo esc_url( get_permalink( $product->get_id() ) ); ?>"><?php echo esc_html( $product->get_name() ); ?></a></h2>
+		<?php if ( '' !== (string) $basic_price ) : ?><div class="gstore-basic-card__price"><?php echo wp_kses_post( wc_price( (float) $basic_price ) ); ?></div><?php endif; ?>
+		<?php if ( $basic_url ) : ?><a class="gstore-basic-cta gstore-basic-card__cta" href="<?php echo esc_url( $basic_url ); ?>" target="_blank" rel="noopener noreferrer"><?php esc_html_e( 'Comprar agora pelo WhatsApp', 'gstore' ); ?></a><?php else : ?><span class="gstore-basic-card__cta"><?php esc_html_e( 'Contato temporariamente indisponível', 'gstore' ); ?></span><?php endif; ?>
+	</li>
+	<?php
+	return;
+}
+
 $is_variable_product   = $product->is_type( array( 'variable', 'variation' ) );
 $stock_status          = (string) $product->get_stock_status();
 $is_public_draft_product = function_exists( 'gstore_theme_is_public_draft_product' ) ? gstore_theme_is_public_draft_product( $product ) : false;
