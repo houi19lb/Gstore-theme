@@ -236,6 +236,15 @@
 		return getEffectiveQuickActionType();
 	}
 
+	function getEnabledChannels() {
+		var qa = getEffectiveQuickActionConfig();
+		if (qa && Array.isArray(qa.enabledChannels)) return qa.enabledChannels;
+		var channel = getEffectiveQuickActionChannel();
+		if (channel === 'both') return ['whatsapp', 'telegram'];
+		if (channel === 'chatwoot') return ['chatwoot', 'telegram'];
+		return channel === 'none' ? [] : [channel];
+	}
+
 	function getQuickActionDisplayMode() {
 		var qa = getEffectiveQuickActionConfig();
 		if (qa && qa.display === 'icon_only') return 'icon_only';
@@ -457,7 +466,10 @@
 		modal.id = SELECTOR_MODAL_ID;
 		modal.className = 'Gstore-support-modal';
 		modal.setAttribute('aria-hidden', 'true');
-		var bothChannels = getEffectiveQuickActionChannel() === 'both';
+		var channels = getEnabledChannels();
+		var hasChat = channels.indexOf('chatwoot') !== -1;
+		var hasWhatsApp = channels.indexOf('whatsapp') !== -1;
+		var hasTelegram = channels.indexOf('telegram') !== -1;
 		modal.innerHTML =
 			'<div class="Gstore-support-modal__backdrop" data-action="close"></div>' +
 			'<div class="Gstore-support-modal__panel" role="dialog" aria-modal="true" aria-labelledby="gstore-support-selector-title">' +
@@ -465,16 +477,17 @@
 			'<div class="Gstore-support-modal__body">' +
 			'<p class="Gstore-support-modal__eyebrow">' + text('selectorEyebrow', 'Atendimento') + '</p>' +
 			'<h3 id="gstore-support-selector-title" class="Gstore-support-modal__title">' + text('selectorTitle', 'Como prefere falar com a gente?') + '</h3>' +
-			'<p class="Gstore-support-modal__text">' + (bothChannels ? text('selectorExternalText', 'Escolha WhatsApp ou Telegram para falar com a gente.') : text('selectorText', 'Escolha o canal. Se optar pelo chat do site, o botão passa a abrir o chat direto.')) + '</p>' +
+			'<p class="Gstore-support-modal__text">' + (hasChat ? text('selectorText', 'Escolha o canal. Se optar pelo chat do site, o botão passa a abrir o chat direto.') : text('selectorExternalText', 'Escolha como prefere falar com a gente.')) + '</p>' +
 			'<div class="Gstore-support-modal__options">' +
-			(bothChannels ? '<button type="button" class="Gstore-support-option" data-channel="whatsapp"><span class="Gstore-support-option__title">WhatsApp</span><span class="Gstore-support-option__desc">Abrir conversa no WhatsApp</span></button>' : '<button type="button" class="Gstore-support-option" data-channel="chat">' +
+			(hasChat ? '<button type="button" class="Gstore-support-option" data-channel="chat">' +
 			'<span class="Gstore-support-option__title">' + text('chatTitle', 'Chat do site') + '</span>' +
 			'<span class="Gstore-support-option__desc" data-chat-status></span>' +
-			'</button>') +
-			'<button type="button" class="Gstore-support-option" data-channel="telegram">' +
+			'</button>' : '') +
+			(hasWhatsApp ? '<button type="button" class="Gstore-support-option" data-channel="whatsapp"><span class="Gstore-support-option__title">WhatsApp</span><span class="Gstore-support-option__desc">Abrir conversa no WhatsApp</span></button>' : '') +
+			(hasTelegram ? '<button type="button" class="Gstore-support-option" data-channel="telegram">' +
 			'<span class="Gstore-support-option__title">' + text('telegramTitle', 'Telegram') + '</span>' +
 			'<span class="Gstore-support-option__desc">' + text('telegramDesc', 'Abrir grupo oficial no Telegram') + '</span>' +
-			'</button>' +
+			'</button>' : '') +
 			'</div>' +
 			'</div>' +
 			'</div>';
@@ -576,10 +589,11 @@
 			return;
 		}
 
-		if (getEffectiveQuickActionType() === 'telegram') {
-			handleSelectTelegram();
-			return;
-		}
+		var channels = getEnabledChannels();
+		if (channels.length === 1 && channels[0] === 'whatsapp') return handleSelectWhatsApp();
+		if (channels.length === 1 && channels[0] === 'telegram') return handleSelectTelegram();
+		if (channels.length === 1 && channels[0] === 'chatwoot' && state.chatReady) return handleSelectChat();
+		if (!channels.length) return;
 
 		openSelectorModal();
 	}
@@ -590,14 +604,13 @@
 
 		var labelEl = button.querySelector('.Gstore-support-float__label');
 		var iconWrapEl = button.querySelector('.Gstore-support-float__icon-wrap');
-		var isDirectChat = state.preferredChannel === CHAT_PREF_VALUE && getEffectiveQuickActionChannel() !== 'both';
-		var effectiveType = getEffectiveQuickActionType();
-		var effectiveChannel = getEffectiveQuickActionChannel();
+		var channels = getEnabledChannels();
+		var isDirectChat = channels.length === 1 && channels[0] === 'chatwoot' && state.preferredChannel === CHAT_PREF_VALUE;
 		var iconKind = getQuickActionIconKind();
 		var displayMode = getQuickActionDisplayMode();
 		var configuredLabel = getQuickActionLabel();
-		var isDirectWhatsApp = effectiveChannel === 'whatsapp';
-		var isDirectTelegram = effectiveChannel === 'telegram' || (effectiveType === 'telegram' && !isDirectWhatsApp);
+		var isDirectWhatsApp = channels.length === 1 && channels[0] === 'whatsapp';
+		var isDirectTelegram = channels.length === 1 && channels[0] === 'telegram';
 
 		button.classList.toggle('is-direct-chat', !!isDirectChat);
 		button.classList.toggle('is-direct-telegram', !!isDirectTelegram);
@@ -645,7 +658,7 @@
 		var statusEl = modal.querySelector('[data-chat-status]');
 		if (!chatBtn || !statusEl) return;
 
-		if (getEffectiveQuickActionType() === 'telegram') {
+		if (getEnabledChannels().indexOf('chatwoot') === -1) {
 			chatBtn.disabled = true;
 			chatBtn.classList.add('is-disabled');
 			statusEl.textContent = text('chatDisabledDesc', 'Chat do site desativado no momento');
@@ -672,14 +685,9 @@
 	}
 
 	function openSelectorModal() {
-		if (getEffectiveQuickActionType() === 'telegram') {
-			handleSelectTelegram();
-			return;
-		}
-
 		// Trigger SDK pre-load so the chat option becomes available while the
 		// user is looking at the selector (lazy load: SDK only loads on demand).
-		if (getEffectiveQuickActionChannel() !== 'both' && !state.chatReady) {
+		if (getEnabledChannels().indexOf('chatwoot') !== -1 && !state.chatReady) {
 			callBridge(['prepareSdk'], []);
 			// Poll until SDK is ready so we can enable the "Chat do site" button.
 			var readyPoll = window.setInterval(function () {
@@ -822,6 +830,11 @@
 	}
 
 	function applyTelegramLinkFromSource(sourceAnchor) {
+		var qa = getEffectiveQuickActionConfig();
+		if (qa && isValidHref(qa.telegramUrl)) {
+			state.telegramLink = qa.telegramUrl;
+			return true;
+		}
 		if (!sourceAnchor) return false;
 		var href = sourceAnchor.getAttribute('href');
 		if (!isValidHref(href)) return false;
@@ -1165,9 +1178,8 @@
 		syncQuickActionConfigFromBridge();
 
 		var src = findTelegramAnchor();
-		if (!src) return false;
-
-		if (getEffectiveQuickActionChannel() !== 'both' && !applyTelegramLinkFromSource(src)) return false;
+		if (!getEnabledChannels().length) return false;
+		applyTelegramLinkFromSource(src);
 
 		ensureQuickActionButton();
 		document.body.classList.add('gstore-support-quick-action-mounted');
@@ -1183,7 +1195,7 @@
 		toggleQuickActionVisibility();
 
 		try {
-			if (!src.__gstoreTelegramObserved) {
+			if (src && !src.__gstoreTelegramObserved) {
 				var obs = new MutationObserver(function () {
 					applyTelegramLinkFromSource(src);
 				});
