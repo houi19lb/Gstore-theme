@@ -15,23 +15,6 @@ if ( empty( $product ) || ! $product->is_visible() ) {
 	return;
 }
 
-if ( function_exists( 'gstore_basic_catalog_enabled' ) && gstore_basic_catalog_enabled() ) {
-	if ( ! $product->is_type( 'simple' ) ) {
-		return;
-	}
-	$basic_url   = gstore_basic_product_whatsapp_url( $product );
-	$basic_price = $product->get_regular_price();
-	?>
-	<li <?php wc_product_class( 'Gstore-product-card gstore-basic-card', $product ); ?>>
-		<a class="gstore-basic-card__image" href="<?php echo esc_url( get_permalink( $product->get_id() ) ); ?>"><?php echo wp_kses_post( $product->get_image( 'woocommerce_thumbnail' ) ); ?></a>
-		<h2 class="gstore-basic-card__title"><a href="<?php echo esc_url( get_permalink( $product->get_id() ) ); ?>"><?php echo esc_html( $product->get_name() ); ?></a></h2>
-		<?php if ( '' !== (string) $basic_price ) : ?><div class="gstore-basic-card__price"><?php echo wp_kses_post( wc_price( (float) $basic_price ) ); ?></div><?php endif; ?>
-		<?php if ( $basic_url ) : ?><a class="gstore-basic-cta gstore-basic-card__cta" href="<?php echo esc_url( $basic_url ); ?>" target="_blank" rel="noopener noreferrer"><?php esc_html_e( 'Comprar agora pelo WhatsApp', 'gstore' ); ?></a><?php else : ?><span class="gstore-basic-card__cta"><?php esc_html_e( 'Contato temporariamente indisponível', 'gstore' ); ?></span><?php endif; ?>
-	</li>
-	<?php
-	return;
-}
-
 $is_variable_product   = $product->is_type( array( 'variable', 'variation' ) );
 $stock_status          = (string) $product->get_stock_status();
 $is_public_draft_product = function_exists( 'gstore_theme_is_public_draft_product' ) ? gstore_theme_is_public_draft_product( $product ) : false;
@@ -101,11 +84,20 @@ $pix_discount_price      = $pix_discount_active && function_exists( 'gstore_blu_
 $pix_discount_price_html = $pix_discount_price ? wc_price( $pix_discount_price ) : '';
 $pix_discount_percent    = $pix_discount_active ? (float) $pix_discount_config['percent'] : 0;
 
-$render_product_card_footer = static function() {
+$render_product_card_footer = static function() use ( $product ) {
 	?>
 	<div class="Gstore-product-card__footer">
 		<?php
-		woocommerce_template_loop_add_to_cart();
+		if ( function_exists( 'gstore_basic_catalog_enabled' ) && gstore_basic_catalog_enabled() ) {
+			$whatsapp_url = gstore_basic_product_whatsapp_url( $product );
+			if ( $whatsapp_url ) {
+				printf( '<a class="button product_type_simple" href="%s" target="_blank" rel="noopener noreferrer">%s</a>', esc_url( $whatsapp_url ), esc_html__( 'Comprar pelo WhatsApp', 'gstore' ) );
+			} else {
+				echo '<span class="button" aria-disabled="true">' . esc_html__( 'Contato indisponível', 'gstore' ) . '</span>';
+			}
+		} else {
+			woocommerce_template_loop_add_to_cart();
+		}
 		?>
 	</div>
 	<?php

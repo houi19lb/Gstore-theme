@@ -23533,7 +23533,7 @@ function gstore_basic_product_whatsapp_url( $product ) {
 		return '';
 	}
 	$message = sprintf( __( 'Olá! Tenho interesse no produto %s.', 'gstore' ), $product->get_name() );
-	$price = $product->get_regular_price();
+	$price = $product->get_price();
 	if ( '' !== (string) $price ) {
 		$message .= "\n" . sprintf( __( 'Preço anunciado: %s', 'gstore' ), wp_strip_all_tags( wc_price( (float) $price ) ) );
 	}
@@ -23554,15 +23554,6 @@ add_action( 'wp_head', static function() {
 	}
 	echo '<style id="gstore-basic-catalog-style">
 	.gstore-basic-catalog .wc-block-mini-cart,.gstore-basic-catalog .mini-cart,.gstore-basic-catalog .cart-contents,.gstore-basic-catalog a[href*="/carrinho"],.gstore-basic-catalog a[href*="/checkout"]{display:none!important}
-	.gstore-basic-card{height:100%;display:flex;flex-direction:column;gap:12px;padding:16px;border:1px solid #e5e7eb;border-radius:12px;background:#fff}
-	.gstore-basic-card__image img{width:100%;height:auto;aspect-ratio:1;object-fit:contain}
-	.gstore-basic-card__title{font-size:1.1rem;line-height:1.4;margin:0}
-	.gstore-basic-card__price{font-size:1.1rem;font-weight:700}
-	.gstore-basic-cta{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:10px 18px;border-radius:8px;background:#166534;color:#fff!important;text-decoration:none;font-weight:700}
-	.gstore-basic-card__cta{margin-top:auto}
-	.gstore-basic-product{max-width:1200px;margin:32px auto;padding:20px;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:32px}
-	.gstore-basic-product__image img{max-width:100%;height:auto}
-	@media(max-width:767px){.gstore-basic-product{grid-template-columns:1fr;margin:16px auto}}
 	</style>';
 } );
 

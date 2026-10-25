@@ -948,35 +948,6 @@ if ( ! $product instanceof WC_Product ) {
 	return;
 }
 
-if ( function_exists( 'gstore_basic_catalog_enabled' ) && gstore_basic_catalog_enabled() ) {
-	if ( ! $product->is_type( 'simple' ) ) {
-		return;
-	}
-	$basic_url   = gstore_basic_product_whatsapp_url( $product );
-	$basic_price = $product->get_regular_price();
-	?>
-	<article id="product-<?php echo esc_attr( $product->get_id() ); ?>" <?php wc_product_class( 'gstore-basic-product', $product ); ?>>
-		<div class="gstore-basic-product__image">
-			<?php echo wp_kses_post( $product->get_image( 'large' ) ); ?>
-			<?php foreach ( $product->get_gallery_image_ids() as $image_id ) : ?>
-				<?php echo wp_get_attachment_image( $image_id, 'medium' ); ?>
-			<?php endforeach; ?>
-		</div>
-		<div class="gstore-basic-product__content">
-			<h1><?php echo esc_html( $product->get_name() ); ?></h1>
-			<?php if ( '' !== (string) $basic_price ) : ?><p class="gstore-basic-card__price"><?php echo wp_kses_post( wc_price( (float) $basic_price ) ); ?></p><?php endif; ?>
-			<?php if ( $product->get_short_description() ) : ?><div class="woocommerce-product-details__short-description"><?php echo wp_kses_post( wpautop( $product->get_short_description() ) ); ?></div><?php endif; ?>
-			<?php if ( $basic_url ) : ?><p><a class="gstore-basic-cta" href="<?php echo esc_url( $basic_url ); ?>" target="_blank" rel="noopener noreferrer"><?php esc_html_e( 'Comprar agora pelo WhatsApp', 'gstore' ); ?></a></p><?php else : ?><p><?php esc_html_e( 'Contato temporariamente indisponível', 'gstore' ); ?></p><?php endif; ?>
-			<?php if ( $product->get_description() ) : ?><div class="gstore-basic-product__description"><?php echo wp_kses_post( wpautop( $product->get_description() ) ); ?></div><?php endif; ?>
-			<?php echo wp_kses_post( wc_get_product_category_list( $product->get_id(), ', ', '<p class="posted_in">', '</p>' ) ); ?>
-			<?php if ( taxonomy_exists( 'product_brand' ) ) : ?><?php echo wp_kses_post( wc_get_product_term_list( $product->get_id(), 'product_brand', ', ', '<p class="tagged_as">', '</p>' ) ); ?><?php endif; ?>
-		</div>
-	</article>
-	<?php
-	return;
-}
-
-
 // Remove hooks padrão do WooCommerce.
 remove_action( 'woocommerce_single_product_summary', 'woocommerce_template_single_title', 5 );
 remove_action( 'woocommerce_single_product_summary', 'woocommerce_template_single_rating', 10 );
@@ -1684,6 +1655,14 @@ $gstore_tab_next_cta_labels = array(
 						<!-- Variações + Quantidade + CTA -->
 						<div class="Gstore-single-product__add-to-cart">
 							<?php
+							if ( function_exists( 'gstore_basic_catalog_enabled' ) && gstore_basic_catalog_enabled() ) {
+								$whatsapp_url = gstore_basic_product_whatsapp_url( $product );
+								if ( $whatsapp_url ) {
+									printf( '<a class="btn-main Gstore-single-product__whatsapp" href="%s" target="_blank" rel="noopener noreferrer">%s</a>', esc_url( $whatsapp_url ), esc_html__( 'Comprar pelo WhatsApp', 'gstore' ) );
+								} else {
+									echo '<span class="btn-main" aria-disabled="true">' . esc_html__( 'Contato indisponível', 'gstore' ) . '</span>';
+								}
+							} else {
 							$att_page = get_page_by_path( 'atendimento' );
 							$att_url  = $att_page ? get_permalink( $att_page ) : home_url( '/atendimento/' );
 							$warning_text = $is_out_of_stock
@@ -1787,6 +1766,7 @@ $gstore_tab_next_cta_labels = array(
 							</div>
 							<?php
 						endif;
+							}
 						?>
 						</div>
 
