@@ -24495,7 +24495,7 @@ function gstore_build_store_info_placeholders_map() {
 		if ( strlen( $header_phone_digits ) >= 8 ) {
 			$header_phone_contact = '<a class="Gstore-top-bar__link Gstore-top-bar__link--phone" href="' . esc_url( 'tel:+' . $header_phone_digits ) . '" aria-label="' . esc_attr( sprintf( __( 'Ligar para %s', 'gstore' ), $phone_display ) ) . '">'
 				. '<svg class="Gstore-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false"><path d="M6.62 10.79a15.05 15.05 0 0 0 6.59 6.59l2.2-2.2a1 1 0 0 1 1.01-.24c1.12.37 2.33.56 3.58.56a1 1 0 0 1 1 1V20a1 1 0 0 1-1 1C10.61 21 3 13.39 3 4a1 1 0 0 1 1-1h3.5a1 1 0 0 1 1 1c0 1.25.19 2.46.56 3.58a1 1 0 0 1-.25 1.01l-2.19 2.2z"/></svg>'
-				. '<span>' . esc_html( $phone_display ) . ' • ' . esc_html__( 'Ligue', 'gstore' ) . '</span></a>';
+				. '<span>' . esc_html__( 'Televendas', 'gstore' ) . ' • ' . esc_html( $phone_display ) . '</span></a>';
 		}
 	}
 	// Preenchido sob demanda no processamento (ver gstore_process_store_info_placeholders).
