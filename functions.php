@@ -23532,12 +23532,16 @@ function gstore_basic_product_whatsapp_url( $product ) {
 	if ( ! preg_match( '/^[1-9][0-9]{9,14}$/', $number ) ) {
 		return '';
 	}
-	$message = sprintf( __( 'Olá! Tenho interesse no produto %s.', 'gstore' ), $product->get_name() );
+	$name = html_entity_decode( wp_strip_all_tags( $product->get_name() ), ENT_QUOTES | ENT_HTML5, 'UTF-8' );
+	$message = sprintf( __( "Olá! Tenho interesse neste produto:\n%s", 'gstore' ), $name );
 	$price = $product->get_price();
 	if ( '' !== (string) $price ) {
-		$message .= "\n" . sprintf( __( 'Preço anunciado: %s', 'gstore' ), wp_strip_all_tags( wc_price( (float) $price ) ) );
+		$price_text = html_entity_decode( wp_strip_all_tags( wc_price( (float) $price ) ), ENT_QUOTES | ENT_HTML5, 'UTF-8' );
+		$price_text = str_replace( "\xc2\xa0", ' ', $price_text );
+		$price_text = preg_replace( '/^(R\$)\s*/u', '$1 ', trim( $price_text ) );
+		$message .= "\n\n" . sprintf( __( 'Preço anunciado: %s', 'gstore' ), $price_text );
 	}
-	$message .= "\n" . get_permalink( $product->get_id() );
+	$message .= "\n\n" . sprintf( __( 'Link do produto: %s', 'gstore' ), get_permalink( $product->get_id() ) );
 	return 'https://wa.me/' . $number . '?text=' . rawurlencode( $message );
 }
 
