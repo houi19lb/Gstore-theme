@@ -121,7 +121,7 @@
 	}
 
 	function isWhatsappPayment(method) {
-		return method === 'gstore_boleto' || method === 'gstore_cash_card';
+		return method === 'gstore_boleto' || method === 'gstore_cash_card' || method === 'gstore_form_plan';
 	}
 
 	function isFullContactPayment(method) {
@@ -138,6 +138,13 @@
 		if (!isWhatsappPayment(selected)) {
 			$existing.remove();
 			$('#place_order').html('<i class="fa-solid fa-lock" aria-hidden="true"></i> Finalizar pedido').val('Finalizar pedido').attr('data-value', 'Finalizar pedido');
+			return;
+		}
+		if (selected === 'gstore_form_plan') {
+			$existing.remove();
+			$final.prepend('<div class="Gstore-boleto-final-notice" data-payment-method="gstore_form_plan" role="note"><h3>Combine o pagamento pelo WhatsApp</h3><p>Seu pedido será registrado como pagamento pendente. A preferência por Pix ou Link de pagamento será enviada à loja; nenhuma cobrança será gerada agora.</p></div>');
+			const buttonText = 'Registrar pedido e abrir WhatsApp';
+			$('#place_order').html(`<i class="fa-brands fa-whatsapp" aria-hidden="true"></i> ${buttonText}`).val(buttonText).attr('data-value', buttonText);
 			return;
 		}
 		const cashCard = selected === 'gstore_cash_card';
@@ -2036,6 +2043,12 @@ const subtotal = decodeHtmlEntities(stripHtmlText(it.subtotal || ''));
 	}
 
 	function unifyBluPaymentMethods() {
+		if ($('#payment .payment_methods > .payment_method_gstore_form_plan').length) {
+			lastSelectedPaymentMethod = 'gstore_form_plan';
+			$('input[name="payment_method"][value="gstore_form_plan"]').prop('checked', true);
+			persistSelectedPaymentMethod('gstore_form_plan');
+			return;
+		}
 		if (!lastSelectedPaymentMethod) {
 			const initialMethod = $('input[name="payment_method"]:checked').first().val();
 			if (isWhatsappPayment(initialMethod)) lastSelectedPaymentMethod = initialMethod;
@@ -2697,7 +2710,7 @@ const subtotal = decodeHtmlEntities(stripHtmlText(it.subtotal || ''));
 			const method = getEffectivePaymentMethod($checkoutForm);
 			$stepDescription.text(method === 'gstore_boleto'
 				? 'Preencha seus dados completos para solicitar o boleto.'
-				: (method === 'gstore_cash_card' ? 'Preencha seus dados completos para combinar o pagamento.' : 'Preencha seus dados completos para finalizar o pedido via Pix.'));
+				: (method === 'gstore_cash_card' || method === 'gstore_form_plan' ? 'Preencha seus dados completos para combinar o pagamento.' : 'Preencha seus dados completos para finalizar o pedido via Pix.'));
 		} else {
 			// CARTÃO selecionado: Mostra apenas nome, CEP, celular e email
 			const shouldShowCpfForLimit = hasCpfPurchaseLimitProducts();
@@ -6453,6 +6466,9 @@ function getInstallmentDisplayTotals(summaryData) {
 			
 			// 4. Coleta o nonce - procura em TODOS os lugares possíveis
 			const selectedPaymentMethodForSubmit = String(formDataObj['payment_method'] || getEffectivePaymentMethod($form) || '');
+			if (selectedPaymentMethodForSubmit === 'gstore_form_plan') {
+				formDataObj['gstore_form_plan_preference'] = $('input[name="gstore_form_plan_preference"]:checked').val() || '';
+			}
 			if (selectedPaymentMethodForSubmit !== 'blu_checkout') {
 				resetBluInstallmentsToSingle();
 			}

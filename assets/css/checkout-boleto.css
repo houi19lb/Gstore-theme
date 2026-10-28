@@ -7,21 +7,32 @@ body.gstore-whatsapp-selected .Gstore-checkout-step[data-step="contact"] .Gstore
 }
 
 .Gstore-checkout-step #payment .payment_methods li.payment_method_gstore_boleto,
-.Gstore-checkout-step #payment .payment_methods li.payment_method_gstore_cash_card {
+.Gstore-checkout-step #payment .payment_methods li.payment_method_gstore_cash_card,
+.Gstore-checkout-step #payment .payment_methods li.payment_method_gstore_form_plan {
 	border: 1px solid #bddbc7;
 	background: #fff;
 	margin-top: 12px;
 }
 .Gstore-checkout-step #payment .payment_methods li.payment_method_gstore_boleto:has(input:checked),
-.Gstore-checkout-step #payment .payment_methods li.payment_method_gstore_cash_card:has(input:checked) {
+.Gstore-checkout-step #payment .payment_methods li.payment_method_gstore_cash_card:has(input:checked),
+.Gstore-checkout-step #payment .payment_methods li.payment_method_gstore_form_plan:has(input:checked) {
 	border-color: #26764b;
 	box-shadow: 0 0 0 2px #26764b20;
 }
 .Gstore-checkout-step #payment .payment_methods li.payment_method_gstore_boleto label,
-.Gstore-checkout-step #payment .payment_methods li.payment_method_gstore_cash_card label {
+.Gstore-checkout-step #payment .payment_methods li.payment_method_gstore_cash_card label,
+.Gstore-checkout-step #payment .payment_methods li.payment_method_gstore_form_plan > label {
 	padding: 16px 20px;
 	color: #19482e;
 }
+
+.Gstore-checkout-step .gstore-form-plan-preference {
+	border: 0;
+	margin: 12px 0;
+	padding: 0;
+}
+.Gstore-checkout-step .gstore-form-plan-preference legend { font-weight: 700; }
+.Gstore-checkout-step .gstore-form-plan-preference label { padding: 6px 0; }
 
 .Gstore-boleto-final-notice,
 .gstore-boleto-instructions {
