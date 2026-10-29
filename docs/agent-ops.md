@@ -135,3 +135,23 @@ Trate como descartavel apenas quando o item:
 
 Se houver duvida, nao delete. Registre a duvida, preserve em branch/patch ou
 peca revisao humana.
+
+## Regressao do breadcrumb do catalogo
+
+```sh
+php tests/catalog-breadcrumbs.php
+php tests/catalog-breadcrumbs.php functions.php /path/to/gstore-plugin
+```
+
+As fixtures sao sinteticas e executam os callbacks reais de `functions.php`.
+Conferem categoria manual, hierarquia, desempates, exclusao de campanhas,
+familias ocultas, marca vazia e fallback quando a consulta em lote falha ou
+perde o identificador de associacao. O resultado inclui o hash do JSON-LD e
+contadores de consultas para comparar versoes sem acessar a loja.
+
+O primeiro argumento pode apontar para os callbacks da versao anterior. O
+segundo e opcional: sem plugin, o fallback do tema permanece coberto. Com o
+plugin atualizado, os termos sao passados ao seletor de categoria principal
+ja existente; com plugin anterior, o conteudo e preservado, mas o ganho de
+consultas depende de atualizar as duas partes. Nenhum cache persistente de
+visibilidade ou de SEO foi adicionado.

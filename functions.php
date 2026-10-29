@@ -17344,9 +17344,10 @@ function gstore_get_brand_published_product_ids_for_breadcrumb( $brand_term ) {
  *
  * @param int[] $main_category_ids IDs salvos em gstore_main_categories.
  * @param int   $product_id        ID do produto.
+ * @param WP_Term[]|null $category_terms Categorias ja consultadas, ou null para consultar.
  * @return int
  */
-function gstore_get_product_main_catalog_category_id_for_breadcrumb( $product_id, array $main_category_ids ) {
+function gstore_get_product_main_catalog_category_id_for_breadcrumb( $product_id, array $main_category_ids, $category_terms = null ) {
 	$product_id = absint( $product_id );
 	if ( $product_id <= 0 || empty( $main_category_ids ) ) {
 		return 0;
@@ -17361,7 +17362,7 @@ function gstore_get_product_main_catalog_category_id_for_breadcrumb( $product_id
 	}
 
 	if ( class_exists( '\GStore\Services\Primary_Category_Service' ) ) {
-		$primary_term = \GStore\Services\Primary_Category_Service::get_primary_term( $product_id );
+		$primary_term = \GStore\Services\Primary_Category_Service::get_primary_term( $product_id, $category_terms );
 		$resolved_id  = gstore_resolve_main_catalog_category_id_for_breadcrumb( $primary_term, $main_category_ids );
 		if ( $resolved_id > 0 ) {
 			$cache[ $cache_key ] = $resolved_id;
@@ -17369,7 +17370,7 @@ function gstore_get_product_main_catalog_category_id_for_breadcrumb( $product_id
 		}
 	}
 
-	$terms = wp_get_post_terms(
+	$terms = is_array( $category_terms ) ? $category_terms : wp_get_post_terms(
 		$product_id,
 		'product_cat',
 		array(
@@ -17413,9 +17414,30 @@ function gstore_get_brand_primary_category_scores_from_products_for_breadcrumb( 
 		return array();
 	}
 
+	// Fetch once per brand, retaining the same visibility filters and scoring.
+	update_meta_cache( 'post', $product_ids );
+	$terms_by_product = array();
+	$category_terms = wp_get_object_terms( $product_ids, 'product_cat', array( 'fields' => 'all_with_object_id', 'hide_empty' => false ) );
+	$bulk_usable = ! is_wp_error( $category_terms );
+	if ( $bulk_usable ) {
+		foreach ( $category_terms as $category_term ) {
+			if ( $category_term instanceof WP_Term ) {
+				if ( ! isset( $category_term->object_id ) ) {
+					$bulk_usable = false;
+					break;
+				}
+				$product_id = (int) $category_term->object_id;
+				$category_for_product = clone $category_term;
+				unset( $category_for_product->object_id );
+				$terms_by_product[ $product_id ][] = $category_for_product;
+			}
+		}
+	}
+
 	$counts = array();
 	foreach ( $product_ids as $product_id ) {
-		$main_category_id = gstore_get_product_main_catalog_category_id_for_breadcrumb( $product_id, $main_category_ids );
+		$terms = $bulk_usable ? ( $terms_by_product[ $product_id ] ?? array() ) : null;
+		$main_category_id = gstore_get_product_main_catalog_category_id_for_breadcrumb( $product_id, $main_category_ids, $terms );
 		if ( $main_category_id <= 0 ) {
 			continue;
 		}
