@@ -67,13 +67,13 @@ function gstore_cashback_render_account_endpoint() {
 	$balance = (int) $data['availableCoins'];
 	$real = $balance / max( 1, (int) $rules['coinsPerReal'] );
 	$labels = array(
-		'earn' => __( 'Moedas recebidas', 'gstore' ),
-		'reserve' => __( 'Usadas no pedido', 'gstore' ),
-		'return' => __( 'Moedas devolvidas', 'gstore' ),
-		'reverse' => __( 'Estorno de moedas', 'gstore' ),
+		'earn' => __( 'Cashback recebido', 'gstore' ),
+		'reserve' => __( 'Moedas reservadas', 'gstore' ),
+		'return' => __( 'Uso estornado', 'gstore' ),
+		'reverse' => __( 'Cashback estornado', 'gstore' ),
 		'expire' => __( 'Moedas vencidas', 'gstore' ),
-		'reclaim' => __( 'Moedas usadas após confirmação do pedido', 'gstore' ),
-		'reclaim_debt' => __( 'Saldo ajustado após confirmação do pedido', 'gstore' ),
+		'reclaim' => __( 'Uso reativado', 'gstore' ),
+		'reclaim_debt' => __( 'Ajuste por reativação', 'gstore' ),
 		'debt_release' => __( 'Ajuste devolvido', 'gstore' ),
 	);
 	?>
