@@ -67,14 +67,24 @@ function gstore_cashback_render_account_endpoint() {
 	$balance = (int) $data['availableCoins'];
 	$real = $balance / max( 1, (int) $rules['coinsPerReal'] );
 	$labels = array(
-		'earn' => __( 'Cashback recebido', 'gstore' ),
-		'reserve' => __( 'Moedas reservadas', 'gstore' ),
-		'return' => __( 'Uso estornado', 'gstore' ),
-		'reverse' => __( 'Cashback estornado', 'gstore' ),
+		'earn' => __( 'Moedas ganhas', 'gstore' ),
+		'reserve' => __( 'Moedas usadas', 'gstore' ),
+		'return' => __( 'Moedas devolvidas', 'gstore' ),
+		'reverse' => __( 'Moedas ganhas retiradas', 'gstore' ),
 		'expire' => __( 'Moedas vencidas', 'gstore' ),
-		'reclaim' => __( 'Uso reativado', 'gstore' ),
-		'reclaim_debt' => __( 'Ajuste por reativação', 'gstore' ),
-		'debt_release' => __( 'Ajuste devolvido', 'gstore' ),
+		'reclaim' => __( 'Moedas usadas novamente', 'gstore' ),
+		'reclaim_debt' => __( 'Moedas em falta', 'gstore' ),
+		'debt_release' => __( 'Saldo devolvido', 'gstore' ),
+	);
+	$descriptions = array(
+		'earn' => __( 'Moedas ganhas com este pedido após a confirmação do pagamento.', 'gstore' ),
+		'reserve' => __( 'Moedas separadas para o desconto deste pedido. Elas saem do saldo quando a compra é registrada.', 'gstore' ),
+		'return' => __( 'Moedas usadas neste pedido que voltaram ao saldo após cancelamento, falha ou reembolso.', 'gstore' ),
+		'reverse' => __( 'Moedas ganhas com este pedido que foram retiradas após cancelamento ou reembolso.', 'gstore' ),
+		'expire' => __( 'Moedas que saíram do saldo porque o prazo para usá-las terminou.', 'gstore' ),
+		'reclaim' => __( 'Moedas devolvidas anteriormente que foram descontadas de novo quando o pedido voltou a ser processado.', 'gstore' ),
+		'reclaim_debt' => __( 'Ajuste feito quando o pedido voltou a ser processado e não havia moedas suficientes para descontar.', 'gstore' ),
+		'debt_release' => __( 'Devolução de um ajuste de saldo após o pedido ser cancelado ou reembolsado.', 'gstore' ),
 	);
 	?>
 	<div class="gstore-cashback-account">
@@ -86,11 +96,14 @@ function gstore_cashback_render_account_endpoint() {
 		<?php if ( $balance > 0 && ! empty( $data['nextExpiry'] ) ) : ?>
 			<p class="gstore-cashback-account__expiry"><?php printf( esc_html__( '%1$s moedas vencem em %2$s.', 'gstore' ), esc_html( number_format_i18n( $data['nextExpiry']['coins'] ) ), esc_html( wp_date( 'd/m/Y', strtotime( $data['nextExpiry']['date'] . ' UTC' ) ) ) ); ?></p>
 		<?php endif; ?>
-		<section class="gstore-cashback-account__history" aria-labelledby="gstore-cashback-history-title"><h2 id="gstore-cashback-history-title"><?php esc_html_e( 'Histórico de moedas', 'gstore' ); ?></h2>
+		<section class="gstore-cashback-account__history" aria-labelledby="gstore-cashback-history-title"><h2 id="gstore-cashback-history-title"><?php esc_html_e( 'Histórico de moedas', 'gstore' ); ?></h2><p class="gstore-cashback-account__history-legend"><?php esc_html_e( '+ moedas que entram no saldo · − moedas que saem do saldo', 'gstore' ); ?></p>
 			<?php if ( empty( $data['events'] ) ) : ?><p><?php esc_html_e( 'Você ainda não tem movimentações de moedas.', 'gstore' ); ?></p>
 			<?php else : ?><ol>
-				<?php foreach ( $data['events'] as $event ) : ?>
-					<li><span><strong><?php echo esc_html( $labels[ $event['type'] ] ?? __( 'Movimentação', 'gstore' ) ); ?></strong><small><?php echo esc_html( wp_date( 'd/m/Y', strtotime( $event['created_at'] . ' UTC' ) ) ); ?> · <?php printf( esc_html__( 'Pedido #%d', 'gstore' ), (int) $event['order_id'] ); ?></small></span><b class="<?php echo (int) $event['coins'] < 0 ? 'is-negative' : 'is-positive'; ?>"><?php echo esc_html( sprintf( '%+d', (int) $event['coins'] ) ); ?></b></li>
+				<?php foreach ( $data['events'] as $event ) :
+					$label = $labels[ $event['type'] ] ?? __( 'Movimentação', 'gstore' );
+					$description = $descriptions[ $event['type'] ] ?? '';
+					?>
+					<li><div class="gstore-cashback-account__movement"><?php if ( $description ) : ?><details class="gstore-cashback-account__help"><summary><strong><?php echo esc_html( $label ); ?></strong><span aria-hidden="true">?</span></summary><p><?php echo esc_html( $description ); ?></p></details><?php else : ?><strong><?php echo esc_html( $label ); ?></strong><?php endif; ?><small><?php echo esc_html( wp_date( 'd/m/Y', strtotime( $event['created_at'] . ' UTC' ) ) ); ?> · <?php printf( esc_html__( 'Pedido #%d', 'gstore' ), (int) $event['order_id'] ); ?></small></div><b class="<?php echo (int) $event['coins'] < 0 ? 'is-negative' : 'is-positive'; ?>"><?php echo esc_html( sprintf( '%+d', (int) $event['coins'] ) ); ?></b></li>
 				<?php endforeach; ?>
 			</ol><?php endif; ?>
 		</section>
