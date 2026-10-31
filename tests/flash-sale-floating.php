@@ -5,9 +5,11 @@ if ( 'cli' !== PHP_SAPI ) {
 	exit;
 }
 $source = file_get_contents( dirname( __DIR__ ) . '/functions.php' );
+$helper_start = strpos( $source, 'function gstore_theme_flash_sale_title(' );
+$helper_end = strpos( $source, 'function gstore_theme_get_active_flash_sale(', $helper_start );
 $start  = strpos( $source, 'function gstore_theme_get_floating_flash_sale_products(' );
 $end    = strpos( $source, "add_action( 'wp_enqueue_scripts', 'gstore_enqueue_flash_sale_assets', 25 );", $start );
-if ( false === $start || false === $end ) {
+if ( false === $helper_start || false === $helper_end || false === $start || false === $end ) {
 	throw new RuntimeException( 'Flash sale callbacks not found.' );
 }
 
@@ -18,6 +20,8 @@ function is_product() { return 'product' === $GLOBALS['state']['page']; }
 function is_page( $slug ) { return 'catalog' === $GLOBALS['state']['page']; }
 function get_queried_object_id() { return 42; }
 function absint( $value ) { return abs( (int) $value ); }
+function sanitize_text_field( $value ) { return strip_tags( $value ); }
+function sanitize_key( $value ) { return preg_replace( '/[^a-z0-9_-]/', '', strtolower( $value ) ); }
 function gstore_theme_get_active_flash_sale() { return $GLOBALS['state']['campaign']; }
 function gstore_theme_get_product_flash_sale_campaign( $id ) { return $GLOBALS['state']['inline'] ? $GLOBALS['state']['campaign'] : null; }
 function wc_get_product( $id ) { return $id && $GLOBALS['state']['exists'] ? new FlashSaleTestProduct( $id ) : false; }
@@ -46,6 +50,7 @@ class FlashSaleTestProduct {
 	public function get_name() { return 'Produto de teste'; }
 	public function get_image( ...$args ) { return '<img alt="Produto de teste">'; }
 }
+eval( substr( $source, $helper_start, $helper_end - $helper_start ) );
 eval( substr( $source, $start, $end - $start ) );
 
 $campaign = array( 'id' => 'test', 'items' => array( array( 'product_id' => 42 ) ), 'ends_at' => '2026-09-05 23:59:59' );
@@ -56,6 +61,7 @@ if ( in_array( '--render', $argv, true ) ) {
 	exit;
 }
 $cases = array(
+	'custom campaign title and icon' => array( array( 'campaign' => array_merge( $campaign, array( 'display_title' => 'Black Friday', 'display_icon' => 'heart' ) ) ), true, true, true ),
 	'homepage shows single offer' => array( array( 'page' => 'home' ), true, true, true ),
 	'promoted product' => array( array( 'inline' => true ), true, true, true ),
 	'other product' => array( array(), true, true, true ),
@@ -88,6 +94,9 @@ foreach ( $cases as $name => [ $overrides, $card, $css, $js ] ) {
 	}
 	if ( $card && ( ! str_contains( $html, ' hidden ' ) || ! str_contains( $html, 'data-gstore-flash-sale-key="' ) ) ) {
 		throw new RuntimeException( $name . ': missing initial visibility/session key.' );
+	}
+	if ( 'custom campaign title and icon' === $name && ( ! str_contains( $html, 'Black Friday' ) || ! str_contains( $html, '<svg class="gstore-flash-sale-display-icon"' ) ) ) {
+		throw new RuntimeException( 'Custom title and icon did not render in the floating card.' );
 	}
 	if ( 'fixed product on category' === $name && ( ! str_contains( $html, 'data-gstore-flash-sale-product="43"' ) || str_contains( $html, 'data-gstore-flash-sale-product="42"' ) ) ) {
 		throw new RuntimeException( 'Fixed mode did not select the configured product.' );

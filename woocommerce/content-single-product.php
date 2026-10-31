@@ -1518,11 +1518,11 @@ $gstore_tab_next_cta_labels = array(
 
 				<div class="Gstore-single-product__summary">
 					<?php if ( '' !== $flash_sale_ends_at ) : ?>
-						<section class="Gstore-single-product__flash-sale" aria-label="<?php esc_attr_e( 'Oferta relâmpago: tempo restante', 'gstore' ); ?>" data-gstore-flash-sale-clock>
+						<section class="Gstore-single-product__flash-sale" aria-label="<?php echo esc_attr( gstore_theme_flash_sale_title( $flash_sale_campaign ) . ': tempo restante' ); ?>" data-gstore-flash-sale-clock>
 							<div class="Gstore-single-product__flash-sale-label">
-								<i class="fa-regular fa-clock" aria-hidden="true"></i>
+								<?php echo gstore_theme_flash_sale_icon_svg( $flash_sale_campaign ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- whitelisted SVG ?>
 								<span>
-									<strong><?php esc_html_e( 'Oferta relâmpago', 'gstore' ); ?></strong>
+									<strong><?php echo esc_html( gstore_theme_flash_sale_title( $flash_sale_campaign ) ); ?></strong>
 									<small><?php esc_html_e( 'Termina em', 'gstore' ); ?></small>
 								</span>
 							</div>

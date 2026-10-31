@@ -13641,6 +13641,44 @@ function gstore_normalize_home_section_output( $html ) {
 }
 
 /**
+ * Título público da campanha. O texto padrão mantém o plural histórico na faixa.
+ *
+ * @param array<string,mixed> $campaign Campanha pública.
+ * @param bool                $plural   Usar o plural no título padrão.
+ * @return string
+ */
+function gstore_theme_flash_sale_title( $campaign, $plural = false ) {
+	$title = is_scalar( $campaign['display_title'] ?? null ) ? trim( sanitize_text_field( (string) $campaign['display_title'] ) ) : '';
+	if ( '' === $title || 'Oferta relâmpago' === $title ) {
+		return $plural ? 'Ofertas relâmpago' : 'Oferta relâmpago';
+	}
+	return $title;
+}
+
+/**
+ * SVG seguro do ícone escolhido para a campanha.
+ *
+ * @param array<string,mixed> $campaign Campanha pública.
+ * @return string
+ */
+function gstore_theme_flash_sale_icon_svg( $campaign ) {
+	$paths = array(
+		'bolt' => '<path d="M13.6 2 4.6 13H11l-1.1 9 9.5-11h-6.5L13.6 2Z" fill="currentColor"/>',
+		'tag' => '<path d="M3 4.5h9.1L21 13.4 13.4 21 4.5 12.1V3Z"/><circle cx="8" cy="8" r="1.25" fill="currentColor"/><path d="m11 14 4-4"/>',
+		'heart' => '<path d="M20.5 8.6c0 4.2-8.5 10.4-8.5 10.4S3.5 12.8 3.5 8.6a4.6 4.6 0 0 1 8.5-2.5 4.6 4.6 0 0 1 8.5 2.5Z"/>',
+		'lightning' => '<path d="M12.5 2 4 13h6l-1 9 11-12h-7l-.5-8Z"/>',
+		'gift' => '<path d="M3.5 10.5h17v10h-17zM2.5 7h19v3.5h-19zM12 7v13.5M12 7C8.7 7 6.3 6.4 6.3 4.7a2.1 2.1 0 0 1 2.2-2c1.8 0 3.1 1.9 3.5 4.3Zm0 0c3.3 0 5.7-.6 5.7-2.3a2.1 2.1 0 0 0-2.2-2C13.7 2.7 12.4 4.6 12 7Z"/>',
+		'star' => '<path d="m12 2.5 2.9 6 6.6 1-4.8 4.7 1.1 6.7-5.8-3.2-5.8 3.2 1.1-6.7-4.8-4.7 6.6-1 2.9-6Z"/>',
+		'fire' => '<path d="M12.7 2.2c.7 3.1-1.5 4.4-1 6.7.1.8.6 1.4 1.2 1.8.7-1.2 1-2.6.8-4 3.7 2.5 5.7 5.6 5.7 8.5a7.4 7.4 0 0 1-14.8 0c0-3.5 2-6.3 5.2-9.2.1 2 0 3.5-1 5.1 3.2-1.5 4.7-4.7 3.9-8.9Z"/>',
+	);
+	$icon = is_scalar( $campaign['display_icon'] ?? null ) ? sanitize_key( (string) $campaign['display_icon'] ) : 'bolt';
+	if ( ! isset( $paths[ $icon ] ) ) {
+		$icon = 'bolt';
+	}
+	return '<svg class="gstore-flash-sale-display-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true" focusable="false">' . $paths[ $icon ] . '</svg>';
+}
+
+/**
  * Lê a campanha ativa do plugin sem duplicar regras no tema.
  *
  * @return array
@@ -13808,8 +13846,8 @@ function gstore_render_flash_sale_upcoming_section( $campaign ) {
 	}
 
 	return sprintf(
-		'<section class="gstore-flash-sale-upcoming" aria-label="%1$s" data-gstore-flash-sale-upcoming data-gstore-flash-sale-start="%2$s" data-gstore-flash-sale-announced="%3$s"><div class="gstore-flash-sale-upcoming__content"><header class="gstore-flash-sale-upcoming__brand"><i class="fa-solid fa-bolt" aria-hidden="true"></i><h2><span>%1$s</span><strong>%4$s</strong></h2></header><div class="gstore-flash-sale-upcoming__countdown"><p><i class="fa-regular fa-calendar" aria-hidden="true"></i><span>%5$s <time datetime="%2$s">%6$s</time></span></p><div class="gstore-flash-sale-upcoming__units" aria-live="polite"><div><strong data-gstore-flash-sale-countdown="days">00</strong><span>%7$s</span></div><div><strong data-gstore-flash-sale-countdown="hours">00</strong><span>%8$s</span></div><div><strong data-gstore-flash-sale-countdown="minutes">00</strong><span>%9$s</span></div><div><strong data-gstore-flash-sale-countdown="seconds">00</strong><span>%10$s</span></div></div></div><div class="gstore-flash-sale-upcoming__previews gstore-flash-sale-upcoming__previews--count-%11$d">%12$s</div></div><div class="gstore-flash-sale-upcoming__progress" role="progressbar" aria-label="%13$s" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span>%14$s</span><div><i></i></div><span>%15$s</span></div></section>',
-		esc_html__( 'Ofertas relâmpago', 'gstore' ),
+		'<section class="gstore-flash-sale-upcoming" aria-label="%1$s" data-gstore-flash-sale-upcoming data-gstore-flash-sale-start="%2$s" data-gstore-flash-sale-announced="%3$s"><div class="gstore-flash-sale-upcoming__content"><header class="gstore-flash-sale-upcoming__brand">%16$s<h2><span>%1$s</span><strong>%4$s</strong></h2></header><div class="gstore-flash-sale-upcoming__countdown"><p><i class="fa-regular fa-calendar" aria-hidden="true"></i><span>%5$s <time datetime="%2$s">%6$s</time></span></p><div class="gstore-flash-sale-upcoming__units" aria-live="polite"><div><strong data-gstore-flash-sale-countdown="days">00</strong><span>%7$s</span></div><div><strong data-gstore-flash-sale-countdown="hours">00</strong><span>%8$s</span></div><div><strong data-gstore-flash-sale-countdown="minutes">00</strong><span>%9$s</span></div><div><strong data-gstore-flash-sale-countdown="seconds">00</strong><span>%10$s</span></div></div></div><div class="gstore-flash-sale-upcoming__previews gstore-flash-sale-upcoming__previews--count-%11$d">%12$s</div></div><div class="gstore-flash-sale-upcoming__progress" role="progressbar" aria-label="%13$s" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span>%14$s</span><div><i></i></div><span>%15$s</span></div></section>',
+		esc_html( gstore_theme_flash_sale_title( $campaign, true ) ),
 		esc_attr( $starts_at ),
 		esc_attr( $announced_at ),
 		esc_html__( 'Em breve', 'gstore' ),
@@ -13823,7 +13861,8 @@ function gstore_render_flash_sale_upcoming_section( $campaign ) {
 		implode( '', $previews ),
 		esc_html__( 'Progresso até a abertura da oferta', 'gstore' ),
 		esc_html__( 'Anúncio', 'gstore' ),
-		esc_html__( 'Abertura', 'gstore' )
+		esc_html__( 'Abertura', 'gstore' ),
+		gstore_theme_flash_sale_icon_svg( $campaign )
 	);
 }
 
@@ -13862,12 +13901,13 @@ function gstore_render_flash_sale_home_section() {
 	);
 
 	return sprintf(
-		'<section class="gstore-flash-sale-section" aria-label="%1$s"><header class="gstore-flash-sale-heading"><div class="gstore-flash-sale-heading__intro"><h2><i class="fa-solid fa-bolt" aria-hidden="true"></i> %1$s</h2><p>Preços especiais por tempo limitado</p></div><div class="gstore-flash-sale-live"><i class="fa-solid fa-circle" aria-hidden="true"></i><span>%4$s</span></div><div class="gstore-flash-sale-clock"><i class="fa-regular fa-clock" aria-hidden="true"></i><span class="gstore-flash-sale-clock__label">Termina em</span><time data-gstore-flash-sale-end="%2$s">--:--:--</time><span class="gstore-flash-sale-clock__mobile-units" aria-live="polite"><span data-gstore-flash-sale-mobile-countdown="days">00</span><span data-gstore-flash-sale-mobile-countdown="hours">00</span><span data-gstore-flash-sale-mobile-countdown="minutes">00</span><span data-gstore-flash-sale-mobile-countdown="seconds">00</span></span></div></header><div class="Gstore-products-grid">%3$s</div>%5$s</section>',
-		esc_html__( 'Ofertas relâmpago', 'gstore' ),
+		'<section class="gstore-flash-sale-section" aria-label="%1$s"><header class="gstore-flash-sale-heading"><div class="gstore-flash-sale-heading__intro"><h2>%6$s %1$s</h2><p>Preços especiais por tempo limitado</p></div><div class="gstore-flash-sale-live"><i class="fa-solid fa-circle" aria-hidden="true"></i><span>%4$s</span></div><div class="gstore-flash-sale-clock"><i class="fa-regular fa-clock" aria-hidden="true"></i><span class="gstore-flash-sale-clock__label">Termina em</span><time data-gstore-flash-sale-end="%2$s">--:--:--</time><span class="gstore-flash-sale-clock__mobile-units" aria-live="polite"><span data-gstore-flash-sale-mobile-countdown="days">00</span><span data-gstore-flash-sale-mobile-countdown="hours">00</span><span data-gstore-flash-sale-mobile-countdown="minutes">00</span><span data-gstore-flash-sale-mobile-countdown="seconds">00</span></span></div></header><div class="Gstore-products-grid">%3$s</div>%5$s</section>',
+		esc_html( gstore_theme_flash_sale_title( $campaign, true ) ),
 		esc_attr( (string) $campaign['ends_at'] ),
 		do_shortcode( $shortcode ),
 		esc_html__( 'Ao vivo', 'gstore' ),
-		$view_all_link
+		$view_all_link,
+		gstore_theme_flash_sale_icon_svg( $campaign )
 	);
 }
 add_shortcode( 'gstore_flash_sale', 'gstore_render_flash_sale_home_section' );
@@ -13900,14 +13940,15 @@ function gstore_render_flash_sale_catalog() {
 	);
 
 	return sprintf(
-		'<section class="gstore-flash-sale-section gstore-flash-sale-section--catalog" aria-label="%1$s"><header class="gstore-flash-sale-heading"><div class="gstore-flash-sale-heading__intro"><h2><i class="fa-solid fa-bolt" aria-hidden="true"></i> %1$s</h2><p><span class="gstore-flash-sale-heading__subtitle-desktop">%2$s</span><span class="gstore-flash-sale-heading__subtitle-mobile">%7$s</span></p></div><div class="gstore-flash-sale-live"><i class="fa-solid fa-circle" aria-hidden="true"></i><span>%4$s</span></div><div class="gstore-flash-sale-clock"><i class="fa-regular fa-clock" aria-hidden="true"></i><span class="gstore-flash-sale-clock__label">%3$s</span><time data-gstore-flash-sale-end="%5$s">--:--:--</time><span class="gstore-flash-sale-clock__mobile-units" aria-live="polite"><span data-gstore-flash-sale-mobile-countdown="days">00</span><span data-gstore-flash-sale-mobile-countdown="hours">00</span><span data-gstore-flash-sale-mobile-countdown="minutes">00</span><span data-gstore-flash-sale-mobile-countdown="seconds">00</span></span></div></header><div class="Gstore-products-grid">%6$s</div></section>',
-		esc_html__( 'Ofertas relâmpago', 'gstore' ),
+		'<section class="gstore-flash-sale-section gstore-flash-sale-section--catalog" aria-label="%1$s"><header class="gstore-flash-sale-heading"><div class="gstore-flash-sale-heading__intro"><h2>%8$s %1$s</h2><p><span class="gstore-flash-sale-heading__subtitle-desktop">%2$s</span><span class="gstore-flash-sale-heading__subtitle-mobile">%7$s</span></p></div><div class="gstore-flash-sale-live"><i class="fa-solid fa-circle" aria-hidden="true"></i><span>%4$s</span></div><div class="gstore-flash-sale-clock"><i class="fa-regular fa-clock" aria-hidden="true"></i><span class="gstore-flash-sale-clock__label">%3$s</span><time data-gstore-flash-sale-end="%5$s">--:--:--</time><span class="gstore-flash-sale-clock__mobile-units" aria-live="polite"><span data-gstore-flash-sale-mobile-countdown="days">00</span><span data-gstore-flash-sale-mobile-countdown="hours">00</span><span data-gstore-flash-sale-mobile-countdown="minutes">00</span><span data-gstore-flash-sale-mobile-countdown="seconds">00</span></span></div></header><div class="Gstore-products-grid">%6$s</div></section>',
+		esc_html( gstore_theme_flash_sale_title( $campaign, true ) ),
 		esc_html__( 'Produtos selecionados com preços especiais por tempo limitado.', 'gstore' ),
 		esc_html__( 'Termina em', 'gstore' ),
 		esc_html__( 'Ao vivo', 'gstore' ),
 		esc_attr( (string) $campaign['ends_at'] ),
 		do_shortcode( $shortcode ),
-		esc_html__( 'Preços especiais por tempo limitado', 'gstore' )
+		esc_html__( 'Preços especiais por tempo limitado', 'gstore' ),
+		gstore_theme_flash_sale_icon_svg( $campaign )
 	);
 }
 add_shortcode( 'gstore_flash_sale_catalog', 'gstore_render_flash_sale_catalog' );
@@ -14031,10 +14072,10 @@ function gstore_render_single_flash_sale_floating_card() {
 	$product_url   = $product->get_permalink();
 	$dismiss_key   = ( $configured_count > 1 ? (string) $campaign['id'] : (string) $product->get_id() ) . ':' . (string) $campaign['ends_at'];
 	?>
-	<aside class="gstore-flash-sale-floating" hidden data-gstore-flash-sale-key="<?php echo esc_attr( $dismiss_key ); ?>" data-gstore-flash-sale-campaign="<?php echo esc_attr( (string) $campaign['id'] ); ?>" data-gstore-flash-sale-product="<?php echo esc_attr( (string) $product->get_id() ); ?>" data-gstore-flash-sale-random="<?php echo $random_mode ? '1' : '0'; ?>" aria-label="<?php echo esc_attr__( 'Oferta relâmpago em destaque', 'gstore' ); ?>">
+	<aside class="gstore-flash-sale-floating" hidden data-gstore-flash-sale-key="<?php echo esc_attr( $dismiss_key ); ?>" data-gstore-flash-sale-campaign="<?php echo esc_attr( (string) $campaign['id'] ); ?>" data-gstore-flash-sale-product="<?php echo esc_attr( (string) $product->get_id() ); ?>" data-gstore-flash-sale-random="<?php echo $random_mode ? '1' : '0'; ?>" aria-label="<?php echo esc_attr( gstore_theme_flash_sale_title( $campaign ) ); ?>">
 		<a class="gstore-flash-sale-floating__card-link" href="<?php echo esc_url( $product_url ); ?>" aria-label="<?php echo esc_attr( sprintf( __( 'Ver oferta: %s', 'gstore' ), $product->get_name() ) ); ?>"></a>
 		<button type="button" class="gstore-flash-sale-floating__close" data-gstore-flash-sale-close aria-label="<?php echo esc_attr__( 'Fechar oferta', 'gstore' ); ?>">×</button>
-		<div class="gstore-flash-sale-floating__top"><i class="fa-solid fa-bolt" aria-hidden="true"></i><span><?php esc_html_e( 'Oferta relâmpago', 'gstore' ); ?></span></div>
+		<div class="gstore-flash-sale-floating__top"><?php echo gstore_theme_flash_sale_icon_svg( $campaign ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- whitelisted SVG ?> <span><?php echo esc_html( gstore_theme_flash_sale_title( $campaign ) ); ?></span></div>
 		<div class="gstore-flash-sale-floating__body">
 			<div class="gstore-flash-sale-floating__image-frame">
 				<div class="gstore-flash-sale-floating__image-canvas">

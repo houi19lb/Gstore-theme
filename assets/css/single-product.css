@@ -523,6 +523,13 @@ body.single-product .onsale {
 	font-size: 24px;
 }
 
+.Gstore-single-product__flash-sale-label>.gstore-flash-sale-display-icon {
+	flex: 0 0 auto;
+	width: 24px;
+	height: 24px;
+	color: var(--gstore-color-accent, #b5a642);
+}
+
 .Gstore-single-product__flash-sale-label>span,
 .Gstore-single-product__flash-sale-unit {
 	display: flex;
@@ -595,6 +602,10 @@ body.single-product .onsale {
 	.Gstore-single-product__flash-sale-label>i {
 		font-size: 18px;
 	}
+	.Gstore-single-product__flash-sale-label>.gstore-flash-sale-display-icon {
+		width: 18px;
+		height: 18px;
+	}
 
 	.Gstore-single-product__flash-sale-label strong {
 		font-size: 10px;
@@ -632,6 +643,10 @@ body.single-product .onsale {
 	.Gstore-single-product__flash-sale-label>i {
 		font-size: 16px;
 	}
+	.Gstore-single-product__flash-sale-label>.gstore-flash-sale-display-icon {
+		width: 16px;
+		height: 16px;
+	}
 
 	.Gstore-single-product__flash-sale-label strong {
 		font-size: 9px;
@@ -650,6 +665,10 @@ body.single-product .onsale {
 
 	.Gstore-single-product__flash-sale-label>i {
 		font-size: 14px;
+	}
+	.Gstore-single-product__flash-sale-label>.gstore-flash-sale-display-icon {
+		width: 14px;
+		height: 14px;
 	}
 
 	.Gstore-single-product__flash-sale-label strong {

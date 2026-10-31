@@ -1227,6 +1227,26 @@ body:has(.Gstore-flash-sale-page) .wp-site-blocks > .wp-block-group:not(header):
   color: #111 !important;
 }
 
+/* Campaign theme icons follow the existing icon slots and colors. */
+.gstore-flash-sale-heading h2 .gstore-flash-sale-display-icon {
+  flex: 0 0 auto;
+  width: .9em;
+  height: .9em;
+}
+.gstore-flash-sale-upcoming__brand > .gstore-flash-sale-display-icon {
+  flex: 0 0 auto;
+  width: clamp(3.2rem, 5.4vw, 5.8rem);
+  height: clamp(3.2rem, 5.4vw, 5.8rem);
+  color: var(--gstore-flash-upcoming-gold);
+  filter: drop-shadow(0 0 12px rgba(255, 196, 56, .5));
+}
+.gstore-flash-sale-floating__top .gstore-flash-sale-display-icon {
+  flex: 0 0 auto;
+  width: 1.05em;
+  height: 1.05em;
+}
+.gstore-flash-sale-floating__top span { overflow-wrap: anywhere; }
+
 @media (max-width: 700px) {
   .gstore-flash-sale-section {
     margin: 20px 12px;
