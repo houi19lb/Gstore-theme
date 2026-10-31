@@ -193,6 +193,25 @@ describe('Checkout: quatro etapas visuais com contrato original', () => {
 		$card.find('input[value="gstore_cash_card"]').prop('checked', true).trigger('change');
 		expect($('form.checkout').serializeArray().filter(field => field.name === 'payment_method')).toEqual([{ name: 'payment_method', value: 'gstore_cash_card' }]);
 	});
+	test('Plano Formulário envia a preferência selecionada no pedido', () => {
+		$('#payment .payment_methods').html('<li class="payment_method_gstore_form_plan"><input type="radio" name="payment_method" value="gstore_form_plan" checked><label>Combinar pagamento pelo WhatsApp</label><div class="payment_box"><fieldset class="gstore-form-plan-preference"><label><input type="radio" name="gstore_form_plan_preference" value="pix" checked> Pix</label><label><input type="radio" name="gstore_form_plan_preference" value="link"> Link de pagamento</label></fieldset></div></li>');
+		$(document.body).trigger('updated_checkout');
+		jest.advanceTimersByTime(250);
+		$('input[name="gstore_form_plan_preference"][value="link"]').prop('checked', true).trigger('change');
+		api.setActiveStep(3, false);
+		$('#gstore_contract_terms').prop('checked', true);
+		const priorBlock = $.fn.block;
+		$.fn.block = jest.fn();
+		window.wc_checkout_params = { checkout_url: '/?wc-ajax=checkout' };
+		$('#place_order').trigger('click');
+		jest.advanceTimersByTime(200);
+		const request = $.ajax.mock.calls.map(call => call[0]).find(options => options.url === '/?wc-ajax=checkout');
+		expect(request).toBeDefined();
+		expect(new URLSearchParams(request.data).get('payment_method')).toBe('gstore_form_plan');
+		expect(new URLSearchParams(request.data).get('gstore_form_plan_preference')).toBe('link');
+		$.fn.block = priorBlock;
+		delete window.wc_checkout_params;
+	});
 	test('boleto aguarda a página do pedido antes de abrir WhatsApp', () => {
 		$('#payment .payment_methods').append('<li class="payment_method_gstore_boleto"><input type="radio" name="payment_method" value="gstore_boleto"><label>Boleto bancário</label></li>');
 		$(document.body).trigger('updated_checkout');

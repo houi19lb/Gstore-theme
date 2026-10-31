@@ -32,7 +32,32 @@ body.gstore-whatsapp-selected .Gstore-checkout-step[data-step="contact"] .Gstore
 	padding: 0;
 }
 .Gstore-checkout-step .gstore-form-plan-preference legend { font-weight: 700; }
-.Gstore-checkout-step .gstore-form-plan-preference label { padding: 6px 0; }
+.Gstore-checkout-step .gstore-form-plan-preference label {
+	display: flex !important;
+	align-items: center;
+	gap: 10px;
+	margin: 8px 0 !important;
+	padding: 10px 12px !important;
+	border: 1px solid #bddbc7;
+	border-radius: 8px;
+	background: #fff;
+}
+.Gstore-checkout-step #payment .payment_methods li .gstore-form-plan-preference input[type="radio"] {
+	display: inline-block !important;
+	flex: none;
+	width: 18px;
+	height: 18px;
+	margin: 0;
+	accent-color: #26764b;
+}
+.Gstore-checkout-step .gstore-form-plan-preference label:has(input:checked) {
+	border-color: #26764b;
+	background: #f6faf7;
+}
+.Gstore-checkout-step .gstore-form-plan-preference label:focus-within {
+	outline: 2px solid #26764b;
+	outline-offset: 2px;
+}
 
 .Gstore-boleto-final-notice,
 .gstore-boleto-instructions {

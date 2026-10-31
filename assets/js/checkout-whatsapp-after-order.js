@@ -1,4 +1,4 @@
-/* Abre o WhatsApp somente depois que a página do pedido recebido estiver carregada. */
+/* Direciona ao WhatsApp somente depois que a página do pedido recebido estiver carregada. */
 (function () {
 	'use strict';
 	const storageKey = 'gstore_whatsapp_after_order:v1';
@@ -23,7 +23,7 @@
 		try {
 			const target = new URL(button.href);
 			if (target.protocol === 'https:' && target.hostname === 'wa.me' && /^\/\d+$/.test(target.pathname)) {
-				window.open(target.href, '_blank', 'noopener,noreferrer');
+				window.location.assign(target.href);
 			}
 		} catch (e) {}
 	}
