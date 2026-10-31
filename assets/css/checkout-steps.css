@@ -2222,7 +2222,8 @@ body.woocommerce-checkout .Gstore-checkout-steps-shell {
 .payment_methods:has(.Gstore-blu-payment-unified) > .payment_method_blu_checkout:not(.Gstore-blu-payment-unified),
 .payment_methods:has(.Gstore-blu-payment-unified) > .payment_method_blu_pix:not(.Gstore-blu-payment-unified),
 .payment_methods:has(.Gstore-blu-payment-unified) > .payment_method_gstore_boleto,
-.payment_methods:has(.Gstore-blu-payment-unified) > .payment_method_gstore_cash_card {
+.payment_methods:has(.Gstore-blu-payment-unified) > .payment_method_gstore_cash_card,
+.payment_methods:has(.Gstore-form-plan-unified) > .payment_method_gstore_form_plan {
 	position: absolute !important;
 	left: -9999px !important;
 	opacity: 0 !important;
@@ -2234,7 +2235,8 @@ body.woocommerce-checkout .Gstore-checkout-steps-shell {
 .payment_method_blu_checkout.gstore-hidden-for-unified,
 .payment_method_blu_pix.gstore-hidden-for-unified,
 .payment_method_gstore_boleto.gstore-hidden-for-unified,
-.payment_method_gstore_cash_card.gstore-hidden-for-unified {
+.payment_method_gstore_cash_card.gstore-hidden-for-unified,
+.payment_method_gstore_form_plan.gstore-hidden-for-unified {
 	position: absolute !important;
 	left: -9999px !important;
 	opacity: 0 !important;
@@ -2534,6 +2536,37 @@ body.woocommerce-checkout .Gstore-checkout-steps-shell {
 /* Badges simplificados */
 .Gstore-blu-payment-unified .Gstore-blu-trust-badges-simple {
 	margin: 0 20px 16px;
+}
+
+.Gstore-checkout-step #payment .payment_methods .Gstore-form-plan-unified .Gstore-blu-payment-option__label {
+	display: flex;
+	align-items: center;
+	padding: 16px 20px 16px 52px;
+	background: #fff;
+}
+
+.Gstore-checkout-step #payment .payment_methods .Gstore-form-plan-unified .Gstore-blu-payment-option input[type="radio"] {
+	display: block;
+}
+
+.Gstore-form-plan-unified .Gstore-blu-payment-option__label i {
+	margin-left: 0;
+}
+
+.Gstore-checkout-step #payment .payment_methods .Gstore-form-plan-unified .Gstore-blu-payment-option input[type="radio"]:checked+.Gstore-blu-payment-option__label {
+	background: #fff;
+	color: var(--gstore-foreground);
+}
+
+.Gstore-form-plan-unified .Gstore-blu-payment-option input[type="radio"]:focus-visible+.Gstore-blu-payment-option__label {
+	outline: 2px solid var(--blu-primary);
+	outline-offset: -2px;
+}
+
+.Gstore-form-plan-unified .Gstore-blu-trust-badges-simple {
+	margin: 0;
+	padding: 20px;
+	border-top: 1px solid var(--gstore-muted);
 }
 
 /* Base styles for Pix payment method */

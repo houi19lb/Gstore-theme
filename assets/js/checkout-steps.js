@@ -2042,13 +2042,62 @@ const subtotal = decodeHtmlEntities(stripHtmlText(it.subtotal || ''));
 		syncWhatsappUnifiedOption('gstore_cash_card', 'Pix + cartão', 'fa-wallet');
 	}
 
-	function unifyBluPaymentMethods() {
-		if ($('#payment .payment_methods > .payment_method_gstore_form_plan').length) {
-			lastSelectedPaymentMethod = 'gstore_form_plan';
-			$('input[name="payment_method"][value="gstore_form_plan"]').prop('checked', true);
-			persistSelectedPaymentMethod('gstore_form_plan');
-			return;
+	let formPlanSelectedPreference = null;
+
+	function syncFormPlanUnifiedCard() {
+		const $methods = $('#payment .payment_methods').first();
+		const $source = $methods.children('.payment_method_gstore_form_plan').first();
+		const $card = $methods.children('.Gstore-form-plan-unified').first();
+		if (!$source.length) {
+			$card.remove();
+			formPlanSelectedPreference = null;
+			return false;
 		}
+
+		const $sourceOptions = $source.find('input[name="gstore_form_plan_preference"][type="radio"]');
+		if ($sourceOptions.length < 2) return false;
+
+		if (!formPlanSelectedPreference) {
+			formPlanSelectedPreference = $sourceOptions.filter(':checked').val() || 'pix';
+		}
+		$sourceOptions.filter(`[value="${formPlanSelectedPreference}"]`).prop('checked', true);
+		$source.find('input[name="payment_method"]').prop('checked', true);
+		$source.addClass('gstore-hidden-for-unified');
+
+		if (!$card.length) {
+			const $unified = $('<li class="payment_method_blu_unified Gstore-blu-payment-unified Gstore-form-plan-unified"></li>');
+			$unified.append('<div class="Gstore-blu-payment-unified__title">Pagamento via WhatsApp</div>');
+			const $options = $('<div class="Gstore-blu-payment-options"></div>');
+			for (const [value, label, icon] of [
+				['pix', 'Pix', 'fa-qrcode'],
+				['link', 'Cartão (Link de Pagamento)', 'fa-credit-card']
+			]) {
+				const id = `gstore_form_plan_preference_visual_${value}`;
+				const $option = $(`<div class="Gstore-blu-payment-option Gstore-form-plan-option--${value}"></div>`);
+				$option.append($('<input>', { type: 'radio', name: 'gstore_form_plan_preference_visual', id, value }));
+				$option.append(`<label for="${id}" class="Gstore-blu-payment-option__label"><i class="fa-solid ${icon}" aria-hidden="true"></i><span>${label}</span></label>`);
+				$options.append($option);
+			}
+			$unified.append($options);
+			$unified.append('<div class="Gstore-blu-trust-badges-simple"><span class="Gstore-blu-trust-badge-simple"><i class="fa-solid fa-shield-halved" aria-hidden="true"></i> Pagamento seguro</span></div>');
+			$unified.on('change', 'input[name="gstore_form_plan_preference_visual"]', function() {
+				if (!this.checked) return;
+				formPlanSelectedPreference = this.value;
+				$('#payment .payment_methods > .payment_method_gstore_form_plan input[name="gstore_form_plan_preference"]')
+					.filter(`[value="${this.value}"]`).prop('checked', true);
+			});
+			$methods.prepend($unified);
+		}
+
+		$methods.children('.Gstore-form-plan-unified')
+			.find('input[name="gstore_form_plan_preference_visual"]')
+			.filter(`[value="${formPlanSelectedPreference}"]`).prop('checked', true);
+		persistSelectedPaymentMethod('gstore_form_plan');
+		return true;
+	}
+
+	function unifyBluPaymentMethods() {
+		if (syncFormPlanUnifiedCard()) return;
 		if (!lastSelectedPaymentMethod) {
 			const initialMethod = $('input[name="payment_method"]:checked').first().val();
 			if (isWhatsappPayment(initialMethod)) lastSelectedPaymentMethod = initialMethod;
