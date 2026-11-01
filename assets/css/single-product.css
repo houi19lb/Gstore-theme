@@ -495,7 +495,7 @@ body.single-product .onsale {
 
 .Gstore-single-product__flash-sale {
 	display: grid;
-	grid-template-columns: minmax(210px, 1.6fr) repeat(4, minmax(54px, 0.7fr));
+	grid-template-columns: minmax(0, 1.6fr) repeat(4, minmax(54px, 0.7fr));
 	min-height: 68px;
 	background: #ffffff;
 	border: 1px solid var(--gstore-color-accent, #b5a642);
@@ -513,6 +513,7 @@ body.single-product .onsale {
 
 .Gstore-single-product__flash-sale-label {
 	justify-content: flex-start;
+	min-width: 0;
 	gap: 12px;
 	padding: 10px 18px;
 }
@@ -536,13 +537,18 @@ body.single-product .onsale {
 	flex-direction: column;
 }
 
+.Gstore-single-product__flash-sale-label>span {
+	min-width: 0;
+}
+
 .Gstore-single-product__flash-sale-label strong {
 	color: var(--gstore-color-accent-dark, #8c7a21);
 	font-size: 14px;
 	font-weight: 800;
 	line-height: 1.1;
 	text-transform: uppercase;
-	white-space: nowrap;
+	white-space: normal;
+	overflow-wrap: anywhere;
 }
 
 .Gstore-single-product__flash-sale-label small {
