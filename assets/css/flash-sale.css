@@ -1298,7 +1298,16 @@ body:has(.Gstore-flash-sale-page) .wp-site-blocks > .wp-block-group:not(header):
     padding: 2px 16px;
   }
   .gstore-flash-sale-heading__intro { grid-area: intro; }
-  .gstore-flash-sale-heading h2 { gap: 8px; font-size: clamp(1.15rem, 5.2vw, 1.4rem); white-space: nowrap; }
+  .gstore-flash-sale-heading h2 {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: start;
+    gap: 8px;
+    min-width: 0;
+    font-size: clamp(1.15rem, 5.2vw, 1.4rem);
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
   .gstore-flash-sale-heading p { margin: 5px 0 0; font-size: .74rem; }
   .gstore-flash-sale-live { grid-area: live; align-self: start; margin-top: 1px; padding: 8px 10px; font-size: .66rem; }
   .gstore-flash-sale-clock {
@@ -2081,6 +2090,7 @@ body:has(.Gstore-flash-sale-page) .Gstore-catalog-sidebar__inner.Gstore-catalog-
     gap: 8px;
     font-size: clamp(1.15rem, 5.2vw, 1.4rem);
     letter-spacing: -.04em;
+    white-space: normal;
   }
 
   .Gstore-flash-sale-page .gstore-flash-sale-section--catalog .gstore-flash-sale-heading p {
