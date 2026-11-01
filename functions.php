@@ -13656,26 +13656,23 @@ function gstore_theme_flash_sale_title( $campaign, $plural = false ) {
 }
 
 /**
- * SVG seguro do ícone escolhido para a campanha.
+ * SVG Lucide do ícone escolhido para a campanha.
  *
  * @param array<string,mixed> $campaign Campanha pública.
  * @return string
  */
 function gstore_theme_flash_sale_icon_svg( $campaign ) {
-	$paths = array(
-		'bolt' => '<path d="M13.6 2 4.6 13H11l-1.1 9 9.5-11h-6.5L13.6 2Z" fill="currentColor"/>',
-		'tag' => '<path d="M3 4.5h9.1L21 13.4 13.4 21 4.5 12.1V3Z"/><circle cx="8" cy="8" r="1.25" fill="currentColor"/><path d="m11 14 4-4"/>',
-		'heart' => '<path d="M20.5 8.6c0 4.2-8.5 10.4-8.5 10.4S3.5 12.8 3.5 8.6a4.6 4.6 0 0 1 8.5-2.5 4.6 4.6 0 0 1 8.5 2.5Z"/>',
-		'lightning' => '<path d="M12.5 2 4 13h6l-1 9 11-12h-7l-.5-8Z"/>',
-		'gift' => '<path d="M3.5 10.5h17v10h-17zM2.5 7h19v3.5h-19zM12 7v13.5M12 7C8.7 7 6.3 6.4 6.3 4.7a2.1 2.1 0 0 1 2.2-2c1.8 0 3.1 1.9 3.5 4.3Zm0 0c3.3 0 5.7-.6 5.7-2.3a2.1 2.1 0 0 0-2.2-2C13.7 2.7 12.4 4.6 12 7Z"/>',
-		'star' => '<path d="m12 2.5 2.9 6 6.6 1-4.8 4.7 1.1 6.7-5.8-3.2-5.8 3.2 1.1-6.7-4.8-4.7 6.6-1 2.9-6Z"/>',
-		'fire' => '<path d="M12.7 2.2c.7 3.1-1.5 4.4-1 6.7.1.8.6 1.4 1.2 1.8.7-1.2 1-2.6.8-4 3.7 2.5 5.7 5.6 5.7 8.5a7.4 7.4 0 0 1-14.8 0c0-3.5 2-6.3 5.2-9.2.1 2 0 3.5-1 5.1 3.2-1.5 4.7-4.7 3.9-8.9Z"/>',
-	);
+	$icons = array( 'bolt', 'tag', 'heart', 'lightning', 'gift', 'star', 'fire' );
 	$icon = is_scalar( $campaign['display_icon'] ?? null ) ? sanitize_key( (string) $campaign['display_icon'] ) : 'bolt';
-	if ( ! isset( $paths[ $icon ] ) ) {
+	if ( ! in_array( $icon, $icons, true ) ) {
 		$icon = 'bolt';
 	}
-	return '<svg class="gstore-flash-sale-display-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true" focusable="false">' . $paths[ $icon ] . '</svg>';
+	static $cache = array();
+	if ( ! isset( $cache[ $icon ] ) ) {
+		$file = get_template_directory() . '/assets/icons/flash-sale/' . $icon . '.svg';
+		$cache[ $icon ] = is_readable( $file ) ? (string) file_get_contents( $file ) : '';
+	}
+	return $cache[ $icon ];
 }
 
 /**

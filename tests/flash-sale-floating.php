@@ -20,6 +20,7 @@ function is_product() { return 'product' === $GLOBALS['state']['page']; }
 function is_page( $slug ) { return 'catalog' === $GLOBALS['state']['page']; }
 function get_queried_object_id() { return 42; }
 function absint( $value ) { return abs( (int) $value ); }
+function get_template_directory() { return dirname( __DIR__ ); }
 function sanitize_text_field( $value ) { return strip_tags( $value ); }
 function sanitize_key( $value ) { return preg_replace( '/[^a-z0-9_-]/', '', strtolower( $value ) ); }
 function gstore_theme_get_active_flash_sale() { return $GLOBALS['state']['campaign']; }
@@ -52,6 +53,12 @@ class FlashSaleTestProduct {
 }
 eval( substr( $source, $helper_start, $helper_end - $helper_start ) );
 eval( substr( $source, $start, $end - $start ) );
+
+foreach ( array( 'bolt' => 'zap', 'tag' => 'tag', 'heart' => 'heart', 'lightning' => 'zap', 'gift' => 'gift', 'star' => 'star', 'fire' => 'flame' ) as $choice => $lucide_name ) {
+	if ( ! str_contains( gstore_theme_flash_sale_icon_svg( array( 'display_icon' => $choice ) ), 'lucide-' . $lucide_name ) ) {
+		throw new RuntimeException( 'Missing Lucide SVG for ' . $choice );
+	}
+}
 
 $campaign = array( 'id' => 'test', 'items' => array( array( 'product_id' => 42 ) ), 'ends_at' => '2026-09-05 23:59:59' );
 $defaults = array( 'page' => 'product', 'campaign' => $campaign, 'inline' => false, 'visible' => true, 'stock' => true, 'exists' => true, 'css' => false, 'js' => false );
@@ -95,7 +102,7 @@ foreach ( $cases as $name => [ $overrides, $card, $css, $js ] ) {
 	if ( $card && ( ! str_contains( $html, ' hidden ' ) || ! str_contains( $html, 'data-gstore-flash-sale-key="' ) ) ) {
 		throw new RuntimeException( $name . ': missing initial visibility/session key.' );
 	}
-	if ( 'custom campaign title and icon' === $name && ( ! str_contains( $html, 'Black Friday' ) || ! str_contains( $html, '<svg class="gstore-flash-sale-display-icon"' ) ) ) {
+	if ( 'custom campaign title and icon' === $name && ( ! str_contains( $html, 'Black Friday' ) || ! str_contains( $html, 'lucide-heart gstore-flash-sale-display-icon' ) ) ) {
 		throw new RuntimeException( 'Custom title and icon did not render in the floating card.' );
 	}
 	if ( 'fixed product on category' === $name && ( ! str_contains( $html, 'data-gstore-flash-sale-product="43"' ) || str_contains( $html, 'data-gstore-flash-sale-product="42"' ) ) ) {
