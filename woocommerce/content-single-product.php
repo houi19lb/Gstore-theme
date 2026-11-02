@@ -1516,7 +1516,7 @@ $gstore_tab_next_cta_labels = array(
 
 				</div>
 
-				<div class="Gstore-single-product__summary">
+				<div class="Gstore-single-product__summary"<?php echo '' !== $flash_sale_ends_at ? gstore_theme_flash_sale_visual_attributes( $flash_sale_campaign ) : ''; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped in helper ?>>
 					<?php if ( '' !== $flash_sale_ends_at ) : ?>
 						<section class="Gstore-single-product__flash-sale" aria-label="<?php echo esc_attr( gstore_theme_flash_sale_title( $flash_sale_campaign ) . ': tempo restante' ); ?>" data-gstore-flash-sale-clock>
 							<div class="Gstore-single-product__flash-sale-label">

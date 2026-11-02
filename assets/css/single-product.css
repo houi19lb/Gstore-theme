@@ -4585,3 +4585,33 @@ body.single-product .onsale {
 		grid-column: 1 / -1;
 	}
 }
+
+/* The selected flash-sale palette is scoped to the active product summary. */
+.Gstore-single-product__summary[data-flash-theme] .Gstore-single-product__flash-sale {
+	border-color: var(--flash-border);
+}
+.Gstore-single-product__summary[data-flash-theme] .Gstore-single-product__flash-sale-label,
+.Gstore-single-product__summary[data-flash-theme] .Gstore-single-product__flash-sale-label > .gstore-flash-sale-display-icon {
+	color: var(--flash-timer);
+}
+.Gstore-single-product__summary[data-flash-theme] .Gstore-single-product__flash-sale-label strong,
+.Gstore-single-product__summary[data-flash-theme] .Gstore-single-product__flash-sale-unit strong {
+	color: var(--flash-timer);
+}
+.Gstore-single-product__summary[data-flash-theme] .Gstore-single-product__flash-sale-unit::before {
+	background: var(--flash-border);
+}
+.Gstore-single-product__summary[data-flash-theme] .Gstore-single-product__price-block .price,
+.Gstore-single-product__summary[data-flash-theme] .Gstore-single-product__price-block .price .woocommerce-Price-amount {
+	color: var(--flash-product-price);
+}
+.Gstore-single-product__summary[data-flash-theme] .Gstore-single-product__add-to-cart .single_add_to_cart_button,
+.Gstore-single-product__summary[data-flash-theme] .Gstore-single-product__add-to-cart .single_add_to_cart_button:hover:not(:disabled) {
+	background: var(--flash-product-button);
+	border-color: var(--flash-product-button);
+	color: var(--flash-product-button-ink);
+}
+.Gstore-single-product__summary[data-flash-theme] .Gstore-single-product__buy-now {
+	border-color: var(--flash-product-button);
+	color: var(--flash-product-button);
+}

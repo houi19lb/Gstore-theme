@@ -54,6 +54,11 @@ class FlashSaleTestProduct {
 eval( substr( $source, $helper_start, $helper_end - $helper_start ) );
 eval( substr( $source, $start, $end - $start ) );
 
+$visual_attributes = gstore_theme_flash_sale_visual_attributes( array( 'visual_theme' => 'natal', 'visual_palettes' => array( 'natal' => array( 'heading' => '#123456', 'button' => 'red' ) ) ) );
+if ( ! str_contains( $visual_attributes, 'data-flash-theme="natal"' ) || ! str_contains( $visual_attributes, '--flash-heading:#123456' ) || ! str_contains( $visual_attributes, '--flash-button:#e7c45e' ) || str_contains( $visual_attributes, 'red' ) ) {
+	throw new RuntimeException( 'Visual theme attributes were not sanitized.' );
+}
+
 foreach ( array( 'bolt' => 'zap', 'tag' => 'tag', 'heart' => 'heart', 'lightning' => 'zap', 'gift' => 'gift', 'star' => 'star', 'fire' => 'flame' ) as $choice => $lucide_name ) {
 	if ( ! str_contains( gstore_theme_flash_sale_icon_svg( array( 'display_icon' => $choice ) ), 'lucide-' . $lucide_name ) ) {
 		throw new RuntimeException( 'Missing Lucide SVG for ' . $choice );
