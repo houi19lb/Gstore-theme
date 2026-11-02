@@ -58,6 +58,10 @@ $visual_attributes = gstore_theme_flash_sale_visual_attributes( array( 'visual_t
 if ( ! str_contains( $visual_attributes, 'data-flash-theme="natal"' ) || ! str_contains( $visual_attributes, '--flash-heading:#123456' ) || ! str_contains( $visual_attributes, '--flash-button:#e7c45e' ) || str_contains( $visual_attributes, 'red' ) ) {
 	throw new RuntimeException( 'Visual theme attributes were not sanitized.' );
 }
+$base_attributes = gstore_theme_flash_sale_visual_attributes( array( 'visual_theme' => 'classic', 'visual_palettes' => array( 'classic' => array( 'base' => '#ffcc00', 'button' => '#123456' ) ) ) );
+if ( ! str_contains( $base_attributes, '--flash-heading:#ffcc00' ) || ! str_contains( $base_attributes, '--flash-timer:#8c7000' ) || ! str_contains( $base_attributes, '--flash-button:#123456' ) || ! str_contains( $base_attributes, '--flash-product-button:#123456' ) ) {
+	throw new RuntimeException( 'Base color or specific override was not applied.' );
+}
 
 foreach ( array( 'bolt' => 'zap', 'tag' => 'tag', 'heart' => 'heart', 'lightning' => 'zap', 'gift' => 'gift', 'star' => 'star', 'fire' => 'flame' ) as $choice => $lucide_name ) {
 	if ( ! str_contains( gstore_theme_flash_sale_icon_svg( array( 'display_icon' => $choice ) ), 'lucide-' . $lucide_name ) ) {

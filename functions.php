@@ -13677,6 +13677,16 @@ function gstore_theme_flash_sale_visual_attributes( $campaign ) {
 		$theme = 'classic';
 	}
 	$overrides = isset( $campaign['visual_palettes'][ $theme ] ) && is_array( $campaign['visual_palettes'][ $theme ] ) ? $campaign['visual_palettes'][ $theme ] : array();
+	$base = $overrides['base'] ?? null;
+	if ( is_string( $base ) && preg_match( '/^#[0-9a-fA-F]{6}$/D', $base ) ) {
+		$base = strtolower( $base );
+		$channels = array_map( 'hexdec', str_split( substr( $base, 1 ), 2 ) );
+		$dark = sprintf( '#%02x%02x%02x', (int) round( $channels[0] * 0.55 ), (int) round( $channels[1] * 0.55 ), (int) round( $channels[2] * 0.55 ) );
+		$ink = ( $channels[0] * 299 + $channels[1] * 587 + $channels[2] * 114 ) / 1000 >= 145 ? '#161616' : '#ffffff';
+		$presets[ $theme ] = array( $base, $base, $base, $ink, $dark, $dark, $base );
+	} else {
+		$base = null;
+	}
 	$styles = array();
 	$resolved = array();
 	foreach ( $keys as $index => $key ) {
@@ -13687,8 +13697,8 @@ function gstore_theme_flash_sale_visual_attributes( $campaign ) {
 		$resolved[ $key ] = strtolower( $color );
 		$styles[] = $properties[ $index ] . ':' . $resolved[ $key ];
 	}
-	$styles[] = '--flash-product-button:' . ( 'classic' === $theme && ! isset( $overrides['button'] ) ? '#299d42' : $resolved['button'] );
-	$styles[] = '--flash-product-button-ink:' . ( 'classic' === $theme && ! isset( $overrides['buttonInk'] ) ? '#ffffff' : $resolved['buttonInk'] );
+	$styles[] = '--flash-product-button:' . ( 'classic' === $theme && null === $base && ! isset( $overrides['button'] ) ? '#299d42' : $resolved['button'] );
+	$styles[] = '--flash-product-button-ink:' . ( 'classic' === $theme && null === $base && ! isset( $overrides['buttonInk'] ) ? '#ffffff' : $resolved['buttonInk'] );
 	return sprintf( ' data-flash-theme="%s" style="%s"', esc_attr( $theme ), esc_attr( implode( ';', $styles ) ) );
 }
 
