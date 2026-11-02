@@ -1233,6 +1233,10 @@ body:has(.Gstore-flash-sale-page) .wp-site-blocks > .wp-block-group:not(header):
   width: .9em;
   height: .9em;
 }
+.gstore-flash-sale-heading h2 .gstore-flash-sale-heading__title {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
 .gstore-flash-sale-upcoming__brand > .gstore-flash-sale-display-icon {
   flex: 0 0 auto;
   width: clamp(3.2rem, 5.4vw, 5.8rem);
@@ -2215,5 +2219,7 @@ body:has(.Gstore-flash-sale-page) .Gstore-catalog-sidebar__inner.Gstore-catalog-
 @media (max-width: 768px) {
   .gstore-flash-sale-section[data-flash-theme] .gstore-flash-sale-heading { grid-template-areas: "intro live" "clock clock"; }
   .gstore-flash-sale-section[data-flash-theme] .gstore-flash-sale-heading__intro { min-width: 0; }
-  .gstore-flash-sale-section[data-flash-theme] .gstore-flash-sale-heading h2 { white-space: normal; overflow-wrap: anywhere; }
+  .gstore-flash-sale-section[data-flash-theme] .gstore-flash-sale-heading h2 { display: grid; grid-template-columns: 1em minmax(0, 1fr); align-items: start; gap: 8px; white-space: normal; }
+  .gstore-flash-sale-section[data-flash-theme] .gstore-flash-sale-heading h2 .gstore-flash-sale-display-icon { display: block; width: 1em; height: 1em; }
+  .gstore-flash-sale-section[data-flash-theme] .gstore-flash-sale-live { align-self: start; }
 }
