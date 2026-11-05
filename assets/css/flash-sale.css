@@ -129,14 +129,8 @@ body:has(.Gstore-flash-sale-page) .wp-site-blocks > .wp-block-group:not(header):
   line-height: 0;
 }
 
-.gstore-flash-sale-upcoming__brand .gstore-flash-sale-artwork-heading picture {
-  display: flex;
-  justify-content: center;
-}
-
 .gstore-flash-sale-upcoming__brand .gstore-flash-sale-artwork {
   max-height: 200px;
-  object-position: center;
 }
 
 .gstore-flash-sale-upcoming__countdown {
@@ -380,10 +374,6 @@ body:has(.Gstore-flash-sale-page) .wp-site-blocks > .wp-block-group:not(header):
 
   .gstore-flash-sale-upcoming__brand h2 {
     font-size: 2rem;
-  }
-
-  .gstore-flash-sale-upcoming__brand .gstore-flash-sale-artwork {
-    max-height: 150px;
   }
 
   .gstore-flash-sale-upcoming__countdown > p {
@@ -2237,6 +2227,8 @@ body:has(.Gstore-flash-sale-page) .Gstore-catalog-sidebar__inner.Gstore-catalog-
 }
 @media (max-width:768px){
   .gstore-flash-sale-section--artwork .gstore-flash-sale-artwork{max-height:150px}
+  .gstore-flash-sale-upcoming__brand .gstore-flash-sale-artwork-heading picture{display:flex;justify-content:center}
+  .gstore-flash-sale-upcoming__brand .gstore-flash-sale-artwork{max-height:150px;object-position:center}
 }
 .gstore-flash-sale-floating[data-flash-theme] { border-color: var(--flash-border); }
 .gstore-flash-sale-floating[data-flash-theme]:not([data-flash-theme="classic"]) {
