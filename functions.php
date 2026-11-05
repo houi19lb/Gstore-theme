@@ -13909,7 +13909,7 @@ function gstore_render_flash_sale_upcoming_section( $campaign ) {
 	}
 
 	return sprintf(
-		'<section class="gstore-flash-sale-upcoming" aria-label="%1$s" data-gstore-flash-sale-upcoming data-gstore-flash-sale-start="%2$s" data-gstore-flash-sale-announced="%3$s"><div class="gstore-flash-sale-upcoming__content"><header class="gstore-flash-sale-upcoming__brand">%16$s<h2><span>%1$s</span><strong>%4$s</strong></h2></header><div class="gstore-flash-sale-upcoming__countdown"><p><i class="fa-regular fa-calendar" aria-hidden="true"></i><span>%5$s <time datetime="%2$s">%6$s</time></span></p><div class="gstore-flash-sale-upcoming__units" aria-live="polite"><div><strong data-gstore-flash-sale-countdown="days">00</strong><span>%7$s</span></div><div><strong data-gstore-flash-sale-countdown="hours">00</strong><span>%8$s</span></div><div><strong data-gstore-flash-sale-countdown="minutes">00</strong><span>%9$s</span></div><div><strong data-gstore-flash-sale-countdown="seconds">00</strong><span>%10$s</span></div></div></div><div class="gstore-flash-sale-upcoming__previews gstore-flash-sale-upcoming__previews--count-%11$d">%12$s</div></div><div class="gstore-flash-sale-upcoming__progress" role="progressbar" aria-label="%13$s" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span>%14$s</span><div><i></i></div><span>%15$s</span></div></section>',
+		'<section class="gstore-flash-sale-upcoming"%17$s aria-label="%1$s" data-gstore-flash-sale-upcoming data-gstore-flash-sale-start="%2$s" data-gstore-flash-sale-announced="%3$s"><div class="gstore-flash-sale-upcoming__content"><header class="gstore-flash-sale-upcoming__brand">%16$s<h2><span>%1$s</span><strong>%4$s</strong></h2></header><div class="gstore-flash-sale-upcoming__countdown"><p><i class="fa-regular fa-calendar" aria-hidden="true"></i><span>%5$s <time datetime="%2$s">%6$s</time></span></p><div class="gstore-flash-sale-upcoming__units" aria-live="polite"><div><strong data-gstore-flash-sale-countdown="days">00</strong><span>%7$s</span></div><div><strong data-gstore-flash-sale-countdown="hours">00</strong><span>%8$s</span></div><div><strong data-gstore-flash-sale-countdown="minutes">00</strong><span>%9$s</span></div><div><strong data-gstore-flash-sale-countdown="seconds">00</strong><span>%10$s</span></div></div></div><div class="gstore-flash-sale-upcoming__previews gstore-flash-sale-upcoming__previews--count-%11$d">%12$s</div></div><div class="gstore-flash-sale-upcoming__progress" role="progressbar" aria-label="%13$s" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span>%14$s</span><div><i></i></div><span>%15$s</span></div></section>',
 		esc_html( gstore_theme_flash_sale_title( $campaign, true ) ),
 		esc_attr( $starts_at ),
 		esc_attr( $announced_at ),
@@ -13925,7 +13925,8 @@ function gstore_render_flash_sale_upcoming_section( $campaign ) {
 		esc_html__( 'Progresso até a abertura da oferta', 'gstore' ),
 		esc_html__( 'Anúncio', 'gstore' ),
 		esc_html__( 'Abertura', 'gstore' ),
-		gstore_theme_flash_sale_icon_svg( $campaign )
+		gstore_theme_flash_sale_icon_svg( $campaign ),
+		gstore_theme_flash_sale_visual_attributes( $campaign )
 	);
 }
 
@@ -14057,7 +14058,7 @@ function gstore_render_flash_sale_catalog_upcoming( $campaign ) {
 	}
 
 	return sprintf(
-		'<section class="gstore-flash-sale-catalog gstore-flash-sale-catalog--upcoming" aria-label="%1$s" data-gstore-flash-sale-upcoming data-gstore-flash-sale-start="%2$s" data-gstore-flash-sale-announced="%3$s"><div class="gstore-flash-sale-catalog__upcoming"><header class="gstore-flash-sale-catalog__upcoming-brand"><i class="fa-solid fa-bolt" aria-hidden="true"></i><div><p class="gstore-flash-sale-catalog__upcoming-label">%1$s</p><h2>%4$s</h2><p class="gstore-flash-sale-catalog__upcoming-subtitle">%5$s</p></div></header><div class="gstore-flash-sale-catalog__upcoming-countdown"><p><i class="fa-regular fa-calendar" aria-hidden="true"></i><span>%6$s <time datetime="%2$s">%7$s</time></span></p><div class="gstore-flash-sale-catalog__upcoming-units" aria-live="polite"><div><strong data-gstore-flash-sale-countdown="days">00</strong><span>%8$s</span></div><div><strong data-gstore-flash-sale-countdown="hours">00</strong><span>%9$s</span></div><div><strong data-gstore-flash-sale-countdown="minutes">00</strong><span>%10$s</span></div><div><strong data-gstore-flash-sale-countdown="seconds">00</strong><span>%11$s</span></div></div></div><p class="gstore-flash-sale-catalog__upcoming-reveal">%12$s</p><div class="gstore-flash-sale-catalog__upcoming-products gstore-flash-sale-catalog__upcoming-products--count-%13$d">%14$s</div></div><div class="gstore-flash-sale-upcoming__progress" role="progressbar" aria-label="%15$s" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span>%16$s</span><div><i></i></div><span>%17$s</span></div></section>',
+		'<section class="gstore-flash-sale-catalog gstore-flash-sale-catalog--upcoming"%18$s aria-label="%1$s" data-gstore-flash-sale-upcoming data-gstore-flash-sale-start="%2$s" data-gstore-flash-sale-announced="%3$s"><div class="gstore-flash-sale-catalog__upcoming"><header class="gstore-flash-sale-catalog__upcoming-brand"><i class="fa-solid fa-bolt" aria-hidden="true"></i><div><p class="gstore-flash-sale-catalog__upcoming-label">%1$s</p><h2>%4$s</h2><p class="gstore-flash-sale-catalog__upcoming-subtitle">%5$s</p></div></header><div class="gstore-flash-sale-catalog__upcoming-countdown"><p><i class="fa-regular fa-calendar" aria-hidden="true"></i><span>%6$s <time datetime="%2$s">%7$s</time></span></p><div class="gstore-flash-sale-catalog__upcoming-units" aria-live="polite"><div><strong data-gstore-flash-sale-countdown="days">00</strong><span>%8$s</span></div><div><strong data-gstore-flash-sale-countdown="hours">00</strong><span>%9$s</span></div><div><strong data-gstore-flash-sale-countdown="minutes">00</strong><span>%10$s</span></div><div><strong data-gstore-flash-sale-countdown="seconds">00</strong><span>%11$s</span></div></div></div><p class="gstore-flash-sale-catalog__upcoming-reveal">%12$s</p><div class="gstore-flash-sale-catalog__upcoming-products gstore-flash-sale-catalog__upcoming-products--count-%13$d">%14$s</div></div><div class="gstore-flash-sale-upcoming__progress" role="progressbar" aria-label="%15$s" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span>%16$s</span><div><i></i></div><span>%17$s</span></div></section>',
 		esc_html__( 'Ofertas relâmpago', 'gstore' ),
 		esc_attr( $starts_at ),
 		esc_attr( $announced_at ),
@@ -14074,7 +14075,8 @@ function gstore_render_flash_sale_catalog_upcoming( $campaign ) {
 		implode( '', $previews ),
 		esc_html__( 'Progresso até a abertura da oferta', 'gstore' ),
 		esc_html__( 'Anúncio', 'gstore' ),
-		esc_html__( 'Abertura', 'gstore' )
+		esc_html__( 'Abertura', 'gstore' ),
+		gstore_theme_flash_sale_visual_attributes( $campaign )
 	);
 }
 
