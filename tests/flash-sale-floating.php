@@ -37,6 +37,8 @@ function esc_html_e( $text, $domain ) { echo htmlspecialchars( $text, ENT_QUOTES
 function esc_attr( $text ) { return htmlspecialchars( $text, ENT_QUOTES, 'UTF-8' ); }
 function esc_html( $text ) { return esc_attr( $text ); }
 function esc_url( $text ) { return esc_attr( $text ); }
+function wp_get_attachment_image( $id, ...$args ) { return 123 === $id ? '<img class="gstore-flash-sale-artwork" src="/desktop.png" alt="">' : ''; }
+function wp_get_attachment_image_url( $id, ...$args ) { return 456 === $id ? '/mobile.png' : false; }
 function wp_kses_post( $text ) { return $text; }
 function wc_price( $value ) { return 'R$ ' . $value; }
 class FlashSaleTestProduct {
@@ -67,6 +69,15 @@ foreach ( array( 'bolt' => 'zap', 'tag' => 'tag', 'heart' => 'heart', 'lightning
 	if ( ! str_contains( gstore_theme_flash_sale_icon_svg( array( 'display_icon' => $choice ) ), 'lucide-' . $lucide_name ) ) {
 		throw new RuntimeException( 'Missing Lucide SVG for ' . $choice );
 	}
+}
+
+$artwork_intro = gstore_theme_flash_sale_home_intro( array( 'display_title' => 'Black do Amor', 'artwork_desktop_id' => 123, 'artwork_mobile_id' => 456 ) );
+if ( ! str_contains( $artwork_intro, '/desktop.png' ) || ! str_contains( $artwork_intro, '/mobile.png' ) || ! str_contains( $artwork_intro, 'screen-reader-text">Black do Amor' ) || str_contains( $artwork_intro, 'Preços especiais' ) ) {
+	throw new RuntimeException( 'Responsive campaign artwork did not replace the visual heading.' );
+}
+$fallback_intro = gstore_theme_flash_sale_home_intro( array( 'artwork_desktop_id' => 999 ) );
+if ( ! str_contains( $fallback_intro, 'Ofertas relâmpago' ) || ! str_contains( $fallback_intro, 'Preços especiais' ) ) {
+	throw new RuntimeException( 'Missing campaign artwork did not fall back to the original heading.' );
 }
 
 $campaign = array( 'id' => 'test', 'items' => array( array( 'product_id' => 42 ) ), 'ends_at' => '2026-09-05 23:59:59' );

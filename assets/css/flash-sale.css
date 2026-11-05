@@ -2204,6 +2204,20 @@ body:has(.Gstore-flash-sale-page) .Gstore-catalog-sidebar__inner.Gstore-catalog-
 .gstore-flash-sale-section[data-flash-theme] .Gstore-product-card__footer .ajax_add_to_cart { background: var(--flash-button) !important; color: var(--flash-button-ink) !important; }
 .gstore-flash-sale-section[data-flash-theme] .Gstore-product-card__footer .button:hover,
 .gstore-flash-sale-section[data-flash-theme] .Gstore-product-card__footer .add_to_cart_button:hover { filter: brightness(1.08); }
+
+/* A arte opcional ocupa somente a identidade da faixa; o timer permanece dinâmico. */
+.gstore-flash-sale-artwork-heading{margin:0;line-height:0}
+.gstore-flash-sale-artwork-heading picture{display:block}
+.gstore-flash-sale-artwork{display:block;max-width:100%;max-height:240px;width:auto;height:auto;object-fit:contain;object-position:left center}
+@media (min-width:769px){
+  .gstore-flash-sale-section--artwork .gstore-flash-sale-heading{grid-template-areas:"intro live" "intro clock" "intro .";grid-template-rows:1fr auto 1fr}
+  .gstore-flash-sale-section--artwork .gstore-flash-sale-heading__intro{grid-area:intro;align-self:center}
+  .gstore-flash-sale-section--artwork .gstore-flash-sale-live{grid-area:live;align-self:start}
+  .gstore-flash-sale-section--artwork .gstore-flash-sale-clock{grid-area:clock;align-self:center}
+}
+@media (max-width:768px){
+  .gstore-flash-sale-section--artwork .gstore-flash-sale-artwork{max-height:150px}
+}
 .gstore-flash-sale-floating[data-flash-theme] { border-color: var(--flash-border); }
 .gstore-flash-sale-floating[data-flash-theme]:not([data-flash-theme="classic"]) {
   background-color: var(--flash-panel);

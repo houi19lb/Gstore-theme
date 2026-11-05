@@ -13723,6 +13723,25 @@ function gstore_theme_flash_sale_icon_svg( $campaign ) {
 }
 
 /**
+ * Renderiza a identidade da oferta na home; a arte e opcional por campanha.
+ *
+ * @param array<string,mixed> $campaign Campanha pública.
+ * @return string
+ */
+function gstore_theme_flash_sale_home_intro( $campaign ) {
+	$title      = gstore_theme_flash_sale_title( $campaign, true );
+	$desktop_id = absint( $campaign['artwork_desktop_id'] ?? 0 );
+	$desktop    = $desktop_id ? wp_get_attachment_image( $desktop_id, 'full', false, array( 'class' => 'gstore-flash-sale-artwork', 'alt' => '', 'loading' => 'lazy' ) ) : '';
+	if ( $desktop ) {
+		$mobile_id  = absint( $campaign['artwork_mobile_id'] ?? 0 );
+		$mobile_url = $mobile_id ? wp_get_attachment_image_url( $mobile_id, 'full' ) : '';
+		$source     = $mobile_url ? '<source media="(max-width: 768px)" srcset="' . esc_url( $mobile_url ) . '">' : '';
+		return '<h2 class="gstore-flash-sale-artwork-heading"><span class="screen-reader-text">' . esc_html( $title ) . '</span><picture>' . $source . $desktop . '</picture></h2>';
+	}
+	return '<h2>' . gstore_theme_flash_sale_icon_svg( $campaign ) . ' <span class="gstore-flash-sale-heading__title">' . esc_html( $title ) . '</span></h2><p>Preços especiais por tempo limitado</p>';
+}
+
+/**
  * Lê a campanha ativa do plugin sem duplicar regras no tema.
  *
  * @return array
@@ -13945,14 +13964,15 @@ function gstore_render_flash_sale_home_section() {
 	);
 
 	return sprintf(
-		'<section class="gstore-flash-sale-section"%7$s aria-label="%1$s"><header class="gstore-flash-sale-heading"><div class="gstore-flash-sale-heading__intro"><h2>%6$s <span class="gstore-flash-sale-heading__title">%1$s</span></h2><p>Preços especiais por tempo limitado</p></div><div class="gstore-flash-sale-live"><i class="fa-solid fa-circle" aria-hidden="true"></i><span>%4$s</span></div><div class="gstore-flash-sale-clock"><i class="fa-regular fa-clock" aria-hidden="true"></i><span class="gstore-flash-sale-clock__label">Termina em</span><time data-gstore-flash-sale-end="%2$s">--:--:--</time><span class="gstore-flash-sale-clock__mobile-units" aria-live="polite"><span data-gstore-flash-sale-mobile-countdown="days">00</span><span data-gstore-flash-sale-mobile-countdown="hours">00</span><span data-gstore-flash-sale-mobile-countdown="minutes">00</span><span data-gstore-flash-sale-mobile-countdown="seconds">00</span></span></div></header><div class="Gstore-products-grid">%3$s</div>%5$s</section>',
+		'<section class="gstore-flash-sale-section%8$s"%7$s aria-label="%1$s"><header class="gstore-flash-sale-heading"><div class="gstore-flash-sale-heading__intro">%6$s</div><div class="gstore-flash-sale-live"><i class="fa-solid fa-circle" aria-hidden="true"></i><span>%4$s</span></div><div class="gstore-flash-sale-clock"><i class="fa-regular fa-clock" aria-hidden="true"></i><span class="gstore-flash-sale-clock__label">Termina em</span><time data-gstore-flash-sale-end="%2$s">--:--:--</time><span class="gstore-flash-sale-clock__mobile-units" aria-live="polite"><span data-gstore-flash-sale-mobile-countdown="days">00</span><span data-gstore-flash-sale-mobile-countdown="hours">00</span><span data-gstore-flash-sale-mobile-countdown="minutes">00</span><span data-gstore-flash-sale-mobile-countdown="seconds">00</span></span></div></header><div class="Gstore-products-grid">%3$s</div>%5$s</section>',
 		esc_html( gstore_theme_flash_sale_title( $campaign, true ) ),
 		esc_attr( (string) $campaign['ends_at'] ),
 		do_shortcode( $shortcode ),
 		esc_html__( 'Ao vivo', 'gstore' ),
 		$view_all_link,
-		gstore_theme_flash_sale_icon_svg( $campaign ),
-		gstore_theme_flash_sale_visual_attributes( $campaign )
+		gstore_theme_flash_sale_home_intro( $campaign ),
+		gstore_theme_flash_sale_visual_attributes( $campaign ),
+		! empty( $campaign['artwork_desktop_id'] ) ? ' gstore-flash-sale-section--artwork' : ''
 	);
 }
 add_shortcode( 'gstore_flash_sale', 'gstore_render_flash_sale_home_section' );
