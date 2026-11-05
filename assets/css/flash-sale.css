@@ -129,8 +129,14 @@ body:has(.Gstore-flash-sale-page) .wp-site-blocks > .wp-block-group:not(header):
   line-height: 0;
 }
 
+.gstore-flash-sale-upcoming__brand .gstore-flash-sale-artwork-heading picture {
+  display: flex;
+  justify-content: center;
+}
+
 .gstore-flash-sale-upcoming__brand .gstore-flash-sale-artwork {
   max-height: 200px;
+  object-position: center;
 }
 
 .gstore-flash-sale-upcoming__countdown {
