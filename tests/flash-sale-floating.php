@@ -7,9 +7,11 @@ if ( 'cli' !== PHP_SAPI ) {
 $source = file_get_contents( dirname( __DIR__ ) . '/functions.php' );
 $helper_start = strpos( $source, 'function gstore_theme_flash_sale_title(' );
 $helper_end = strpos( $source, 'function gstore_theme_get_active_flash_sale(', $helper_start );
+$upcoming_start = strpos( $source, 'function gstore_theme_format_flash_sale_start(' );
+$upcoming_end = strpos( $source, 'function gstore_render_flash_sale_home_section(', $upcoming_start );
 $start  = strpos( $source, 'function gstore_theme_get_floating_flash_sale_products(' );
 $end    = strpos( $source, "add_action( 'wp_enqueue_scripts', 'gstore_enqueue_flash_sale_assets', 25 );", $start );
-if ( false === $helper_start || false === $helper_end || false === $start || false === $end ) {
+if ( false === $helper_start || false === $helper_end || false === $upcoming_start || false === $upcoming_end || false === $start || false === $end ) {
 	throw new RuntimeException( 'Flash sale callbacks not found.' );
 }
 
@@ -32,6 +34,7 @@ function gstore_theme_asset_version( $path, $version ) { return $version; }
 function wp_enqueue_style( ...$args ) { $GLOBALS['state']['css'] = true; }
 function wp_enqueue_script( ...$args ) { $GLOBALS['state']['js'] = true; }
 function __( $text, $domain ) { return $text; }
+function esc_html__( $text, $domain ) { return htmlspecialchars( $text, ENT_QUOTES, 'UTF-8' ); }
 function esc_attr__( $text, $domain ) { return htmlspecialchars( $text, ENT_QUOTES, 'UTF-8' ); }
 function esc_html_e( $text, $domain ) { echo htmlspecialchars( $text, ENT_QUOTES, 'UTF-8' ); }
 function esc_attr( $text ) { return htmlspecialchars( $text, ENT_QUOTES, 'UTF-8' ); }
@@ -54,6 +57,7 @@ class FlashSaleTestProduct {
 	public function get_image( ...$args ) { return '<img alt="Produto de teste">'; }
 }
 eval( substr( $source, $helper_start, $helper_end - $helper_start ) );
+eval( substr( $source, $upcoming_start, $upcoming_end - $upcoming_start ) );
 eval( substr( $source, $start, $end - $start ) );
 
 $visual_attributes = gstore_theme_flash_sale_visual_attributes( array( 'visual_theme' => 'natal', 'visual_palettes' => array( 'natal' => array( 'heading' => '#123456', 'button' => 'red' ) ) ) );
@@ -82,6 +86,16 @@ if ( ! str_contains( $fallback_intro, 'Ofertas relâmpago' ) || ! str_contains( 
 
 $campaign = array( 'id' => 'test', 'items' => array( array( 'product_id' => 42 ) ), 'ends_at' => '2026-09-05 23:59:59' );
 $defaults = array( 'page' => 'product', 'campaign' => $campaign, 'inline' => false, 'visible' => true, 'stock' => true, 'exists' => true, 'css' => false, 'js' => false );
+$state = $defaults;
+$upcoming = array_merge( $campaign, array( 'starts_at' => '2026-11-06 00:00:00', 'display_title' => 'Black Friday do Amor', 'display_icon' => 'heart', 'artwork_desktop_id' => 123, 'artwork_mobile_id' => 456 ) );
+$upcoming_artwork = gstore_render_flash_sale_upcoming_section( $upcoming );
+if ( ! str_contains( $upcoming_artwork, '<source media="(max-width: 768px)" srcset="/mobile.png">' ) || ! str_contains( $upcoming_artwork, 'src="/desktop.png"' ) || str_contains( $upcoming_artwork, 'lucide-heart' ) || ! str_contains( $upcoming_artwork, 'data-gstore-flash-sale-countdown="days"' ) ) {
+	throw new RuntimeException( 'Upcoming home banner did not show responsive artwork with a live countdown.' );
+}
+$upcoming_fallback = gstore_render_flash_sale_upcoming_section( array_merge( $upcoming, array( 'artwork_desktop_id' => 999 ) ) );
+if ( ! str_contains( $upcoming_fallback, 'lucide-heart' ) || ! str_contains( $upcoming_fallback, 'Em breve' ) ) {
+	throw new RuntimeException( 'Upcoming home banner did not retain its text fallback.' );
+}
 if ( in_array( '--render', $argv, true ) ) {
 	$state = $defaults;
 	gstore_render_single_flash_sale_floating_card();

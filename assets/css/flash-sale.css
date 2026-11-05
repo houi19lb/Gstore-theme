@@ -123,6 +123,16 @@ body:has(.Gstore-flash-sale-page) .wp-site-blocks > .wp-block-group:not(header):
   color: var(--gstore-flash-upcoming-gold);
 }
 
+.gstore-flash-sale-upcoming__brand .gstore-flash-sale-artwork-heading {
+  display: block;
+  width: 100%;
+  line-height: 0;
+}
+
+.gstore-flash-sale-upcoming__brand .gstore-flash-sale-artwork {
+  max-height: 200px;
+}
+
 .gstore-flash-sale-upcoming__countdown {
   min-width: 0;
 }
@@ -364,6 +374,10 @@ body:has(.Gstore-flash-sale-page) .wp-site-blocks > .wp-block-group:not(header):
 
   .gstore-flash-sale-upcoming__brand h2 {
     font-size: 2rem;
+  }
+
+  .gstore-flash-sale-upcoming__brand .gstore-flash-sale-artwork {
+    max-height: 150px;
   }
 
   .gstore-flash-sale-upcoming__countdown > p {

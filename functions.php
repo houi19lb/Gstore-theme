@@ -13723,12 +13723,12 @@ function gstore_theme_flash_sale_icon_svg( $campaign ) {
 }
 
 /**
- * Renderiza a identidade da oferta na home; a arte e opcional por campanha.
+ * Renderiza a arte responsiva da campanha quando a imagem de computador existe.
  *
  * @param array<string,mixed> $campaign Campanha pública.
  * @return string
  */
-function gstore_theme_flash_sale_home_intro( $campaign ) {
+function gstore_theme_flash_sale_artwork( $campaign ) {
 	$title      = gstore_theme_flash_sale_title( $campaign, true );
 	$desktop_id = absint( $campaign['artwork_desktop_id'] ?? 0 );
 	$desktop    = $desktop_id ? wp_get_attachment_image( $desktop_id, 'full', false, array( 'class' => 'gstore-flash-sale-artwork', 'alt' => '', 'loading' => 'lazy' ) ) : '';
@@ -13738,6 +13738,21 @@ function gstore_theme_flash_sale_home_intro( $campaign ) {
 		$source     = $mobile_url ? '<source media="(max-width: 768px)" srcset="' . esc_url( $mobile_url ) . '">' : '';
 		return '<h2 class="gstore-flash-sale-artwork-heading"><span class="screen-reader-text">' . esc_html( $title ) . '</span><picture>' . $source . $desktop . '</picture></h2>';
 	}
+	return '';
+}
+
+/**
+ * Renderiza a identidade da oferta na home; a arte e opcional por campanha.
+ *
+ * @param array<string,mixed> $campaign Campanha pública.
+ * @return string
+ */
+function gstore_theme_flash_sale_home_intro( $campaign ) {
+	$artwork = gstore_theme_flash_sale_artwork( $campaign );
+	if ( '' !== $artwork ) {
+		return $artwork;
+	}
+	$title = gstore_theme_flash_sale_title( $campaign, true );
 	return '<h2>' . gstore_theme_flash_sale_icon_svg( $campaign ) . ' <span class="gstore-flash-sale-heading__title">' . esc_html( $title ) . '</span></h2><p>Preços especiais por tempo limitado</p>';
 }
 
@@ -13908,8 +13923,13 @@ function gstore_render_flash_sale_upcoming_section( $campaign ) {
 		return '';
 	}
 
+	$brand = gstore_theme_flash_sale_artwork( $campaign );
+	if ( '' === $brand ) {
+		$brand = gstore_theme_flash_sale_icon_svg( $campaign ) . '<h2><span>' . esc_html( gstore_theme_flash_sale_title( $campaign, true ) ) . '</span><strong>' . esc_html__( 'Em breve', 'gstore' ) . '</strong></h2>';
+	}
+
 	return sprintf(
-		'<section class="gstore-flash-sale-upcoming"%17$s aria-label="%1$s" data-gstore-flash-sale-upcoming data-gstore-flash-sale-start="%2$s" data-gstore-flash-sale-announced="%3$s"><div class="gstore-flash-sale-upcoming__content"><header class="gstore-flash-sale-upcoming__brand">%16$s<h2><span>%1$s</span><strong>%4$s</strong></h2></header><div class="gstore-flash-sale-upcoming__countdown"><p><i class="fa-regular fa-calendar" aria-hidden="true"></i><span>%5$s <time datetime="%2$s">%6$s</time></span></p><div class="gstore-flash-sale-upcoming__units" aria-live="polite"><div><strong data-gstore-flash-sale-countdown="days">00</strong><span>%7$s</span></div><div><strong data-gstore-flash-sale-countdown="hours">00</strong><span>%8$s</span></div><div><strong data-gstore-flash-sale-countdown="minutes">00</strong><span>%9$s</span></div><div><strong data-gstore-flash-sale-countdown="seconds">00</strong><span>%10$s</span></div></div></div><div class="gstore-flash-sale-upcoming__previews gstore-flash-sale-upcoming__previews--count-%11$d">%12$s</div></div><div class="gstore-flash-sale-upcoming__progress" role="progressbar" aria-label="%13$s" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span>%14$s</span><div><i></i></div><span>%15$s</span></div></section>',
+		'<section class="gstore-flash-sale-upcoming"%17$s aria-label="%1$s" data-gstore-flash-sale-upcoming data-gstore-flash-sale-start="%2$s" data-gstore-flash-sale-announced="%3$s"><div class="gstore-flash-sale-upcoming__content"><header class="gstore-flash-sale-upcoming__brand">%16$s</header><div class="gstore-flash-sale-upcoming__countdown"><p><i class="fa-regular fa-calendar" aria-hidden="true"></i><span>%5$s <time datetime="%2$s">%6$s</time></span></p><div class="gstore-flash-sale-upcoming__units" aria-live="polite"><div><strong data-gstore-flash-sale-countdown="days">00</strong><span>%7$s</span></div><div><strong data-gstore-flash-sale-countdown="hours">00</strong><span>%8$s</span></div><div><strong data-gstore-flash-sale-countdown="minutes">00</strong><span>%9$s</span></div><div><strong data-gstore-flash-sale-countdown="seconds">00</strong><span>%10$s</span></div></div></div><div class="gstore-flash-sale-upcoming__previews gstore-flash-sale-upcoming__previews--count-%11$d">%12$s</div></div><div class="gstore-flash-sale-upcoming__progress" role="progressbar" aria-label="%13$s" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span>%14$s</span><div><i></i></div><span>%15$s</span></div></section>',
 		esc_html( gstore_theme_flash_sale_title( $campaign, true ) ),
 		esc_attr( $starts_at ),
 		esc_attr( $announced_at ),
@@ -13925,7 +13945,7 @@ function gstore_render_flash_sale_upcoming_section( $campaign ) {
 		esc_html__( 'Progresso até a abertura da oferta', 'gstore' ),
 		esc_html__( 'Anúncio', 'gstore' ),
 		esc_html__( 'Abertura', 'gstore' ),
-		gstore_theme_flash_sale_icon_svg( $campaign ),
+		$brand,
 		gstore_theme_flash_sale_visual_attributes( $campaign )
 	);
 }
