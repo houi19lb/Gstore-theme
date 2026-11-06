@@ -1033,3 +1033,93 @@
 	}
 }
 
+.Gstore-home-services {
+	padding: 48px 20px 64px;
+	background: #fff;
+}
+.Gstore-home-services__inner {
+	max-width: 1280px;
+	margin: 0 auto;
+}
+.Gstore-home-services h2 {
+	margin: 0 0 30px;
+	text-align: center;
+	font-size: clamp(1.4rem, 2vw, 2rem);
+	letter-spacing: .18em;
+	text-transform: uppercase;
+}
+.Gstore-home-services__grid {
+	display: grid;
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+	gap: 24px;
+}
+.Gstore-home-services__card {
+	position: relative;
+	min-height: 300px;
+	overflow: hidden;
+	border-radius: 14px;
+	background: #202426;
+	color: #fff;
+	isolation: isolate;
+}
+.Gstore-home-services__card::before {
+	content: "";
+	position: absolute;
+	inset: 0;
+	z-index: 0;
+	background: linear-gradient(180deg, rgba(0,0,0,.12) 22%, rgba(0,0,0,.8) 100%), var(--service-image) center / cover no-repeat;
+	transition: transform .3s ease;
+}
+.Gstore-home-services__card:hover::before { transform: scale(1.04); }
+.Gstore-home-services__button {
+	position: absolute;
+	z-index: 1;
+	top: 18px;
+	right: 18px;
+	padding: 11px 14px;
+	border-radius: 9px;
+	background: #0ab943;
+	color: #fff;
+	font-size: .8rem;
+	font-weight: 800;
+	text-decoration: none;
+	text-transform: uppercase;
+}
+.Gstore-home-services__button:hover,
+.Gstore-home-services__button:focus-visible { background: #078b34; color: #fff; }
+.Gstore-home-services__button:focus-visible { outline: 3px solid #fff; outline-offset: 3px; }
+.Gstore-home-services__content {
+	position: absolute;
+	z-index: 1;
+	right: 22px;
+	bottom: 20px;
+	left: 22px;
+	text-align: center;
+}
+.Gstore-home-services__content h3 {
+	margin: 0;
+	color: #fff;
+	font-size: clamp(1.1rem, 1.6vw, 1.55rem);
+	font-weight: 800;
+	line-height: 1.2;
+	text-transform: uppercase;
+}
+.Gstore-home-services__content p { margin: 10px 0 0; line-height: 1.4; }
+@media (max-width: 767px) {
+	.Gstore-home-services { padding: 36px 0 48px; }
+	.Gstore-home-services h2 { padding: 0 20px; }
+	.Gstore-home-services__grid {
+		display: flex;
+		gap: 14px;
+		overflow-x: auto;
+		scroll-snap-type: x mandatory;
+		scroll-padding-inline: 20px;
+		padding: 0 20px 16px;
+		-webkit-overflow-scrolling: touch;
+	}
+	.Gstore-home-services__card {
+		flex: 0 0 min(84vw, 360px);
+		min-height: 310px;
+		scroll-snap-align: start;
+	}
+}

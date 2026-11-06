@@ -14389,6 +14389,55 @@ function gstore_home_sections_shortcode() {
 add_shortcode( 'gstore_home_sections', 'gstore_home_sections_shortcode' );
 
 /**
+ * Cards de serviços opcionais configurados no plugin em Produtos > Serviços.
+ */
+function gstore_home_services_shortcode() {
+	$config = get_option( 'gstore_services_section', array() );
+	if ( ! is_array( $config ) || empty( $config['enabled'] ) || empty( $config['items'] ) || ! is_array( $config['items'] ) ) {
+		return '';
+	}
+	$whatsapp = gstore_get_whatsapp_link();
+	if ( ! $whatsapp ) {
+		return '';
+	}
+	$images = array(
+		'curso'       => 'assets/images/partners/partner-program-instrutores.jpg',
+		'certificado' => 'assets/images/partners/partner-program-process.jpg',
+		'treino'      => 'assets/images/athlete/athlete-program-benefits.webp',
+		'contato'     => 'assets/images/partners/partner-program-hero.jpg',
+		'manutencao'  => 'assets/images/partners/partner-program-lojistas.jpg',
+		'clube'       => 'assets/images/partners/partner-program-clubes.jpg',
+		'despachante' => 'assets/images/partners/partner-program-process.jpg',
+	);
+	$cards = '';
+	foreach ( $config['items'] as $item ) {
+		if ( ! is_array( $item ) || empty( $item['enabled'] ) || empty( $item['title'] ) ) {
+			continue;
+		}
+		$preset = sanitize_key( $item['preset'] ?? 'contato' );
+		$image = ! empty( $item['image_id'] ) ? wp_get_attachment_image_url( absint( $item['image_id'] ), 'large' ) : '';
+		if ( ! $image ) {
+			$image = get_theme_file_uri( $images[ $preset ] ?? $images['contato'] );
+		}
+		$title = sanitize_text_field( $item['title'] );
+		$text = sanitize_textarea_field( $item['text'] ?? '' );
+		$url = gstore_get_whatsapp_link( 'Olá! Gostaria de saber mais sobre ' . $title . '.' );
+		$cards .= '<article class="Gstore-home-services__card" style="--service-image:url(' . esc_url( $image ) . ')">';
+		$cards .= '<a class="Gstore-home-services__button" href="' . esc_url( $url ) . '" target="_blank" rel="noopener noreferrer" aria-label="' . esc_attr( 'Fale pelo WhatsApp sobre ' . $title ) . '">Fale pelo WhatsApp</a>';
+		$cards .= '<div class="Gstore-home-services__content"><h3>' . esc_html( $title ) . '</h3>';
+		if ( '' !== $text ) {
+			$cards .= '<p>' . esc_html( $text ) . '</p>';
+		}
+		$cards .= '</div></article>';
+	}
+	if ( '' === $cards ) {
+		return '';
+	}
+	return '<section class="Gstore-home-services Gstore-home-section" aria-labelledby="gstore-services-title"><div class="Gstore-home-services__inner"><h2 id="gstore-services-title">Nossos serviços</h2><div class="Gstore-home-services__grid">' . $cards . '</div></div></section>';
+}
+add_shortcode( 'gstore_home_services', 'gstore_home_services_shortcode' );
+
+/**
  * Renderiza uma seção de vitrine de produtos por categoria (product_cat) para a Home.
  *
  * @param int    $cat_id ID da categoria (term_id em product_cat).
