@@ -14416,6 +14416,12 @@ function gstore_home_services_shortcode() {
 		}
 		$preset = sanitize_key( $item['preset'] ?? 'contato' );
 		$image = ! empty( $item['image_id'] ) ? wp_get_attachment_image_url( absint( $item['image_id'] ), 'large' ) : '';
+		if ( ! $image && ! empty( $item['gallery_image'] ) && function_exists( 'gstore_services_gallery_image_url' ) ) {
+			$image = gstore_services_gallery_image_url( sanitize_key( $item['gallery_image'] ) );
+		}
+		if ( ! $image && function_exists( 'gstore_services_preset_image' ) ) {
+			$image = gstore_services_preset_image( $preset );
+		}
 		if ( ! $image ) {
 			$image = get_theme_file_uri( $images[ $preset ] ?? $images['contato'] );
 		}
