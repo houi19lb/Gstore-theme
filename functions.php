@@ -7090,6 +7090,7 @@ function gstore_enqueue_scripts() {
 			'chatPreferenceValue' => 'chat_site',
 			'uiStrategy'          => 'A',
 			'siteContactMessage'  => gstore_get_site_contact_message(),
+			'siteTelegramMessage' => gstore_get_site_contact_message( false ),
 			'texts'               => array(
 				'openSupport'      => __( 'Atendimento', 'gstore' ),
 				'openSupportShort' => __( 'Atendimento', 'gstore' ),
@@ -23673,10 +23674,45 @@ function gstore_get_whatsapp_link( $message = '' ) {
 /**
  * Mensagem de origem usada nos contatos gerais iniciados pelo site.
  *
+ * @param bool $include_context Se deve citar a página atual.
  * @return string
  */
-function gstore_get_site_contact_message() {
-	return 'Olá, eu vim através do site e gostaria de mais informações.';
+function gstore_get_site_contact_message( $include_context = true ) {
+	if ( ! $include_context ) {
+		return 'Olá, eu vim através do site e gostaria de mais informações.';
+	}
+
+	$context = '';
+	$label   = '';
+
+	if ( function_exists( 'is_product' ) && is_product() ) {
+		$context = get_the_title( get_queried_object_id() );
+		$label   = 'produto';
+	} elseif ( function_exists( 'is_product_category' ) && is_product_category() ) {
+		$term    = get_queried_object();
+		$context = $term instanceof WP_Term ? $term->name : '';
+		$label   = 'categoria';
+	} elseif ( function_exists( 'is_product_tag' ) && is_product_tag() ) {
+		$term    = get_queried_object();
+		$context = $term instanceof WP_Term ? $term->name : '';
+		$label   = 'categoria';
+	} elseif ( is_page() && ! is_front_page()
+		&& ! ( function_exists( 'is_cart' ) && is_cart() )
+		&& ! ( function_exists( 'is_checkout' ) && is_checkout() )
+		&& ! ( function_exists( 'is_account_page' ) && is_account_page() ) ) {
+		$context = get_the_title( get_queried_object_id() );
+		$label   = 'página';
+	}
+
+	$context = html_entity_decode( wp_strip_all_tags( (string) $context ), ENT_QUOTES | ENT_HTML5, 'UTF-8' );
+	$context = trim( (string) preg_replace( '/\s+/u', ' ', $context ) );
+	if ( '' === $context ) {
+		return 'Olá, eu vim através do site e gostaria de mais informações.';
+	}
+
+	$words   = preg_split( '/\s+/u', $context );
+	$context = implode( ' ', array_slice( $words, 0, 8 ) );
+	return sprintf( 'Olá, vim através do site, estava vendo %s %s e gostaria de mais informações.', 'produto' === $label ? 'o' : 'a', $label . ' ' . $context );
 }
 
 /**
@@ -23708,7 +23744,7 @@ function gstore_add_site_contact_message_to_link( $url, $channel ) {
 		return $url;
 	}
 
-	return add_query_arg( 'text', rawurlencode( gstore_get_site_contact_message() ), $url );
+	return add_query_arg( 'text', rawurlencode( gstore_get_site_contact_message( 'whatsapp' === $channel ) ), $url );
 }
 
 /** Catalogue mode is controlled by the GStore account administration plugin. */

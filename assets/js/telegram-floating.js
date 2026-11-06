@@ -14,6 +14,7 @@
 	var CHAT_PREF_VALUE = (CONFIG.chatPreferenceValue || 'chat_site').toString();
 	var CHAT_UI_STRATEGY = (CONFIG.uiStrategy || 'A').toString().toUpperCase();
 	var SITE_CONTACT_MESSAGE = (CONFIG.siteContactMessage || 'Olá, eu vim através do site e gostaria de mais informações.').toString();
+	var SITE_TELEGRAM_MESSAGE = (CONFIG.siteTelegramMessage || 'Olá, eu vim através do site e gostaria de mais informações.').toString();
 
 	var FLOAT_ID = 'gstore-support-float';
 	var FLOAT_CLASS = 'Gstore-support-float';
@@ -110,7 +111,7 @@
 			} else {
 				return href;
 			}
-			url.searchParams.set('text', SITE_CONTACT_MESSAGE);
+			url.searchParams.set('text', channel === 'whatsapp' ? SITE_CONTACT_MESSAGE : SITE_TELEGRAM_MESSAGE);
 			return url.toString();
 		} catch (e) {
 			return href;

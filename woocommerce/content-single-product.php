@@ -879,6 +879,9 @@ if ( ! function_exists( 'gstore_get_contact_entries' ) ) :
 				$support_link = gstore_get_whatsapp_link();
 			}
 		}
+		if ( $support_link && function_exists( 'gstore_add_site_contact_message_to_link' ) ) {
+			$support_link = gstore_add_site_contact_message_to_link( $support_link, 'whatsapp' );
+		}
 		$my_account_url = function_exists( 'wc_get_page_permalink' ) ? wc_get_page_permalink( 'myaccount' ) : '';
 
 		$entries = array(
