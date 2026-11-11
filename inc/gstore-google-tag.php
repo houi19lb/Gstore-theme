@@ -69,5 +69,50 @@ function gstore_print_google_tag() {
 		gtag('config', <?php echo wp_json_encode( $measurement_id ); ?>);
 	</script>
 	<?php
+	gstore_print_bigboar_floating_support_analytics( $measurement_id );
 }
 add_action( 'wp_head', 'gstore_print_google_tag', 1 );
+
+/**
+ * Tracks the floating support button and the channel selected on Big Boar.
+ *
+ * @param string $measurement_id Google tag configured for the storefront.
+ */
+function gstore_print_bigboar_floating_support_analytics( $measurement_id ) {
+	$host = wp_parse_url( home_url(), PHP_URL_HOST );
+	if ( ! in_array( $host, array( 'bigboar.com.br', 'www.bigboar.com.br' ), true ) ) {
+		return;
+	}
+	?>
+	<script id="gstore-floating-support-analytics">
+	(function () {
+		const destination = <?php echo wp_json_encode( array( 'send_to' => $measurement_id ) ); ?>;
+		const channelEvents = new Map([
+			['whatsapp', 'whatsapp_floating_click'],
+			['telegram', 'telegram_floating_click'],
+			['chat_site', 'chat_floating_click'],
+		]);
+
+		function track(name) {
+			if (typeof window.gtag === 'function') {
+				window.gtag('event', name, destination);
+			}
+		}
+
+		// Count the original user interaction before the support loader can replay it.
+		window.addEventListener('click', function (event) {
+			if (event.isTrusted && event.target?.closest?.('button#gstore-support-float')) {
+				track('support_floating_click');
+			}
+		}, { capture: true, passive: true });
+
+		window.addEventListener('gstore:support:channel-selected', function (event) {
+			const name = channelEvents.get(event.detail?.channel);
+			if (name) {
+				track(name);
+			}
+		});
+	}());
+	</script>
+	<?php
+}
