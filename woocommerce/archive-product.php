@@ -46,15 +46,29 @@ if ( woocommerce_product_loop() ) {
 
 	woocommerce_product_loop_start();
 
-	while ( have_posts() ) {
-		the_post();
+	$catalog_span = class_exists( 'Gstore_Slow_Request_Diagnostics', false )
+		&& method_exists( 'Gstore_Slow_Request_Diagnostics', 'begin_catalog_section' )
+		? Gstore_Slow_Request_Diagnostics::begin_catalog_section( 'category_cards' )
+		: null;
+	$catalog_cards = 0;
+	$catalog_completed = false;
+	try {
+		while ( have_posts() ) {
+			the_post();
 
-		/**
-		 * Hook: woocommerce_shop_loop.
-		 */
-		do_action( 'woocommerce_shop_loop' );
+			/**
+			 * Hook: woocommerce_shop_loop.
+			 */
+			do_action( 'woocommerce_shop_loop' );
 
-		wc_get_template_part( 'content', 'product' );
+			wc_get_template_part( 'content', 'product' );
+			++$catalog_cards;
+		}
+		$catalog_completed = true;
+	} finally {
+		if ( null !== $catalog_span ) {
+			Gstore_Slow_Request_Diagnostics::end_catalog_section( $catalog_span, $catalog_completed, $catalog_cards );
+		}
 	}
 
 	woocommerce_product_loop_end();

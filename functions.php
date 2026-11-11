@@ -26234,81 +26234,104 @@ function gstore_related_products_rank_by_relevance( $related_posts, $product_id,
 	// Produto que esgotar dentro da janela ainda e filtrado na renderizacao pelo
 	// wc_products_array_filter_visible, entao nao ha risco de exibir item oculto.
 	$cache_key = 'gstore_related_rank_' . $product_id . '_' . $limit;
-	$cached    = get_transient( $cache_key );
-	if ( is_array( $cached ) && ! empty( $cached ) ) {
+	$observe = class_exists( 'Gstore_Slow_Request_Diagnostics', false )
+		&& method_exists( 'Gstore_Slow_Request_Diagnostics', 'begin_catalog_section' );
+	$span = $observe ? Gstore_Slow_Request_Diagnostics::begin_catalog_section( 'related_cache_read' ) : null;
+	$read_completed = false;
+	$cache_hit = false;
+	try {
+		$cached = get_transient( $cache_key );
+		$cache_hit = is_array( $cached ) && ! empty( $cached );
+		$read_completed = true;
+	} finally {
+		if ( null !== $span ) {
+			Gstore_Slow_Request_Diagnostics::end_catalog_section( $span, $read_completed, $cache_hit );
+		}
+	}
+	if ( $cache_hit ) {
 		return array_map( 'absint', $cached );
 	}
 
-	$exclude_ids   = isset( $args['excluded_ids'] ) ? array_map( 'absint', (array) $args['excluded_ids'] ) : array();
-	$exclude_ids[] = $product_id;
-	$exclude_ids   = array_values( array_unique( array_filter( $exclude_ids ) ) );
+	$span = $observe ? Gstore_Slow_Request_Diagnostics::begin_catalog_section( 'related_rank' ) : null;
+	$completed = false;
+	try {
+		$exclude_ids   = isset( $args['excluded_ids'] ) ? array_map( 'absint', (array) $args['excluded_ids'] ) : array();
+		$exclude_ids[] = $product_id;
+		$exclude_ids   = array_values( array_unique( array_filter( $exclude_ids ) ) );
 
-	$category_ids          = gstore_related_products_get_term_ids( $product_id, 'product_cat' );
-	$specific_category_ids = gstore_related_products_get_specific_category_ids( $category_ids );
-	$broader_category_ids  = gstore_related_products_get_broader_category_ids( $category_ids, $specific_category_ids );
-	$tag_ids               = gstore_related_products_get_term_ids( $product_id, 'product_tag' );
+		$category_ids          = gstore_related_products_get_term_ids( $product_id, 'product_cat' );
+		$specific_category_ids = gstore_related_products_get_specific_category_ids( $category_ids );
+		$broader_category_ids  = gstore_related_products_get_broader_category_ids( $category_ids, $specific_category_ids );
+		$tag_ids               = gstore_related_products_get_term_ids( $product_id, 'product_tag' );
 
-	if ( empty( $related_posts ) && empty( $specific_category_ids ) && empty( $broader_category_ids ) && empty( $tag_ids ) ) {
-		return $related_posts;
-	}
-
-	// 24 candidatos por taxonomia bastam para preencher 4 slots com variedade;
-	// o valor antigo (64) gerava ~180 candidatos e dominava o custo da pagina.
-	$query_limit   = max( 24, $limit * 6 );
-	$candidate_ids = array_merge(
-		$related_posts,
-		gstore_related_products_query_candidate_ids( 'product_cat', $specific_category_ids, $exclude_ids, $query_limit, true ),
-		gstore_related_products_query_candidate_ids( 'product_cat', $broader_category_ids, $exclude_ids, $query_limit, true ),
-		gstore_related_products_query_candidate_ids( 'product_tag', $tag_ids, $exclude_ids, $query_limit, false )
-	);
-	$candidate_ids = array_values( array_diff( array_unique( array_map( 'absint', $candidate_ids ) ), $exclude_ids ) );
-
-	// Carrega posts, metas e termos de todos os candidatos em ~4 queries; sem isso,
-	// cada wc_get_product()/get_the_terms() do loop abaixo dispara queries proprias.
-	if ( ! empty( $candidate_ids ) ) {
-		_prime_post_caches( $candidate_ids, true, true );
-	}
-
-	$in_stock_specific = array();
-	$in_stock_category = array();
-	$in_stock_tags     = array();
-	$in_stock_fallback = array();
-	$out_of_stock      = array();
-
-	foreach ( $candidate_ids as $candidate_id ) {
-		$candidate = wc_get_product( $candidate_id );
-		if ( ! $candidate || ! wc_products_array_filter_visible( $candidate ) ) {
-			continue;
+		if ( empty( $related_posts ) && empty( $specific_category_ids ) && empty( $broader_category_ids ) && empty( $tag_ids ) ) {
+			$completed = true;
+			return $related_posts;
 		}
 
-		$candidate_category_ids = gstore_related_products_get_term_ids( $candidate_id, 'product_cat' );
-		$candidate_lineage_ids  = gstore_related_products_get_category_lineage_ids( $candidate_category_ids );
-		$candidate_tag_ids      = gstore_related_products_get_term_ids( $candidate_id, 'product_tag' );
+		// 24 candidatos por taxonomia bastam para preencher 4 slots com variedade;
+		// o valor antigo (64) gerava ~180 candidatos e dominava o custo da pagina.
+		$query_limit   = max( 24, $limit * 6 );
+		$candidate_ids = array_merge(
+			$related_posts,
+			gstore_related_products_query_candidate_ids( 'product_cat', $specific_category_ids, $exclude_ids, $query_limit, true ),
+			gstore_related_products_query_candidate_ids( 'product_cat', $broader_category_ids, $exclude_ids, $query_limit, true ),
+			gstore_related_products_query_candidate_ids( 'product_tag', $tag_ids, $exclude_ids, $query_limit, false )
+		);
+		$candidate_ids = array_values( array_diff( array_unique( array_map( 'absint', $candidate_ids ) ), $exclude_ids ) );
 
-		if ( ! $candidate->is_in_stock() ) {
-			$out_of_stock[] = $candidate_id;
-			continue;
+		// Carrega posts, metas e termos de todos os candidatos em ~4 queries; sem isso,
+		// cada wc_get_product()/get_the_terms() do loop abaixo dispara queries proprias.
+		if ( ! empty( $candidate_ids ) ) {
+			_prime_post_caches( $candidate_ids, true, true );
 		}
 
-		if ( array_intersect( $candidate_lineage_ids, $specific_category_ids ) ) {
-			$in_stock_specific[] = $candidate_id;
-		} elseif ( array_intersect( $candidate_lineage_ids, $broader_category_ids ) ) {
-			$in_stock_category[] = $candidate_id;
-		} elseif ( array_intersect( $candidate_tag_ids, $tag_ids ) ) {
-			$in_stock_tags[] = $candidate_id;
-		} else {
-			$in_stock_fallback[] = $candidate_id;
+		$in_stock_specific = array();
+		$in_stock_category = array();
+		$in_stock_tags     = array();
+		$in_stock_fallback = array();
+		$out_of_stock      = array();
+
+		foreach ( $candidate_ids as $candidate_id ) {
+			$candidate = wc_get_product( $candidate_id );
+			if ( ! $candidate || ! wc_products_array_filter_visible( $candidate ) ) {
+				continue;
+			}
+
+			$candidate_category_ids = gstore_related_products_get_term_ids( $candidate_id, 'product_cat' );
+			$candidate_lineage_ids  = gstore_related_products_get_category_lineage_ids( $candidate_category_ids );
+			$candidate_tag_ids      = gstore_related_products_get_term_ids( $candidate_id, 'product_tag' );
+
+			if ( ! $candidate->is_in_stock() ) {
+				$out_of_stock[] = $candidate_id;
+				continue;
+			}
+
+			if ( array_intersect( $candidate_lineage_ids, $specific_category_ids ) ) {
+				$in_stock_specific[] = $candidate_id;
+			} elseif ( array_intersect( $candidate_lineage_ids, $broader_category_ids ) ) {
+				$in_stock_category[] = $candidate_id;
+			} elseif ( array_intersect( $candidate_tag_ids, $tag_ids ) ) {
+				$in_stock_tags[] = $candidate_id;
+			} else {
+				$in_stock_fallback[] = $candidate_id;
+			}
+		}
+
+		$ranked = array_merge(
+			gstore_related_products_build_priority_mix( $in_stock_specific, $in_stock_category, $in_stock_tags, $in_stock_fallback, $limit ),
+			gstore_related_products_order_by_popularity( $out_of_stock )
+		);
+
+		set_transient( $cache_key, $ranked, 6 * HOUR_IN_SECONDS );
+
+		$completed = true;
+		return $ranked;
+	} finally {
+		if ( null !== $span ) {
+			Gstore_Slow_Request_Diagnostics::end_catalog_section( $span, $completed );
 		}
 	}
-
-	$ranked = array_merge(
-		gstore_related_products_build_priority_mix( $in_stock_specific, $in_stock_category, $in_stock_tags, $in_stock_fallback, $limit ),
-		gstore_related_products_order_by_popularity( $out_of_stock )
-	);
-
-	set_transient( $cache_key, $ranked, 6 * HOUR_IN_SECONDS );
-
-	return $ranked;
 }
 add_filter( 'woocommerce_related_products', 'gstore_related_products_rank_by_relevance', 10, 3 );
 
