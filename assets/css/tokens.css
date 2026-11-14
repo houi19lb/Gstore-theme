@@ -103,10 +103,10 @@
 	--gstore-color-header-action-surface: var(--gstore-color-action-bg);
 	--gstore-color-header-action-text: var(--gstore-color-action-text);
 	--gstore-color-benefits-surface: var(--gstore-benefits-bar-background);
-	--gstore-color-benefits-text: var(--gstore-color-text-light);
-	--gstore-color-benefits-muted: var(--gstore-color-white-80);
-	--gstore-color-benefits-icon: var(--gstore-color-accent-light);
-	--gstore-color-benefits-divider: var(--gstore-color-accent-light);
+	--gstore-color-benefits-text: var(--gstore-color-accent-contrast);
+	--gstore-color-benefits-muted: color-mix(in srgb, var(--gstore-color-benefits-text) 75%, transparent);
+	--gstore-color-benefits-icon: var(--gstore-color-benefits-text);
+	--gstore-color-benefits-divider: var(--gstore-color-benefits-text);
 	--gstore-color-action-bg: var(--gstore-color-accent);
 	--gstore-color-action-hover: var(--gstore-color-accent-hover);
 	--gstore-color-action-text: var(--gstore-color-accent-contrast);

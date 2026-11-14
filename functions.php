@@ -427,6 +427,8 @@ function gstore_build_store_design_token_overrides( $accent_color, $primary_colo
 	$accent_hover  = isset( $accent_tokens['--gstore-color-accent-hover'] ) ? $accent_tokens['--gstore-color-accent-hover'] : $accent_color;
 	$accent_light  = isset( $accent_tokens['--gstore-color-accent-light'] ) ? $accent_tokens['--gstore-color-accent-light'] : $accent_color;
 	$action_text   = isset( $accent_tokens['--gstore-color-accent-contrast'] ) ? $accent_tokens['--gstore-color-accent-contrast'] : gstore_get_contrast_color( $accent_color );
+	$benefits_text  = gstore_get_contrast_color( $accent_color );
+	$benefits_muted = '#000' === $benefits_text ? 'rgba(0, 0, 0, 0.75)' : 'rgba(255, 255, 255, 0.85)';
 
 	if ( 'light-technical' === $visual_preset ) {
 		$semantic_tokens = array(
@@ -476,10 +478,10 @@ function gstore_build_store_design_token_overrides( $accent_color, $primary_colo
 			'--gstore-color-header-action-surface'    => $accent_color,
 			'--gstore-color-header-action-text'       => $action_text,
 			'--gstore-color-benefits-surface'         => sprintf( 'linear-gradient(90deg, %s, %s)', $accent_color, $accent_light ),
-			'--gstore-color-benefits-text'            => '#f5f5f5',
-			'--gstore-color-benefits-muted'           => 'rgba(255, 255, 255, 0.85)',
-			'--gstore-color-benefits-icon'            => $accent_light,
-			'--gstore-color-benefits-divider'         => $accent_light,
+			'--gstore-color-benefits-text'            => $benefits_text,
+			'--gstore-color-benefits-muted'           => $benefits_muted,
+			'--gstore-color-benefits-icon'            => $benefits_text,
+			'--gstore-color-benefits-divider'         => $benefits_text,
 			'--gstore-color-action-bg'                => $accent_color,
 			'--gstore-color-action-hover'             => $accent_hover,
 			'--gstore-color-action-text'              => $action_text,
@@ -558,6 +560,11 @@ function gstore_get_design_token_overrides_css() {
 	if ( $benefits_bar_background ) {
 		$tokens['--gstore-benefits-bar-background'] = strtolower( $benefits_bar_background );
 	}
+	$benefits_text = gstore_get_contrast_color( $benefits_bar_background ? $benefits_bar_background : $accent_color );
+	$tokens['--gstore-color-benefits-text']    = $benefits_text;
+	$tokens['--gstore-color-benefits-muted']   = '#000' === $benefits_text ? 'rgba(0, 0, 0, 0.75)' : 'rgba(255, 255, 255, 0.85)';
+	$tokens['--gstore-color-benefits-icon']    = $benefits_text;
+	$tokens['--gstore-color-benefits-divider'] = $benefits_text;
 
 	if ( empty( $tokens ) ) {
 		return '';

@@ -179,13 +179,13 @@
 	width: 5px;
 	height: 5px;
 	border-radius: 999px;
-	background: var(--gstore-color-accent-light);
+	background: var(--gstore-color-benefits-divider, var(--gstore-color-benefits-text, #fff));
 	transform: translate(-50%, -50%);
 }
 
 .Gstore-home-benefits__icon {
 	font-size: var(--gstore-font-size-2xl);
-	color: var(--gstore-color-accent-light);
+	color: var(--gstore-color-benefits-icon, var(--gstore-color-benefits-text, #fff));
 	flex-shrink: 0;
 }
 
@@ -207,7 +207,7 @@
 	font-weight: var(--gstore-font-weight-bold);
 	text-transform: uppercase;
 	letter-spacing: var(--gstore-letter-spacing-wide);
-	color: var(--gstore-color-text-light);
+	color: var(--gstore-color-benefits-text, #fff);
 }
 
 .Gstore-home-benefits--floating .Gstore-home-benefits__title {
@@ -219,7 +219,7 @@
 .Gstore-home-benefits__subtitle {
 	margin: 0;
 	font-size: var(--gstore-font-size-sm);
-	color: rgba(255, 255, 255, 0.85);
+	color: var(--gstore-color-benefits-muted, rgba(255, 255, 255, 0.85));
 	text-transform: uppercase;
 	letter-spacing: var(--gstore-letter-spacing-wider);
 }
