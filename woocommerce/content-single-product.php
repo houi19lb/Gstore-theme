@@ -1591,30 +1591,6 @@ $gstore_tab_next_cta_labels = array(
 												>
 													<?php echo wp_kses_post( $formatted_installment ); ?>
 												</div>
-												<details class="price-sub-installments" data-gstore-installment-picker
-													<?php if ( $installment_quote_keys ) : ?>data-gstore-initial-quotes="<?php echo esc_attr( wp_json_encode( $installment_quotes ) ); ?>"<?php else : ?>hidden<?php endif; ?>
-												>
-													<summary class="price-sub-installments-select"><?php esc_html_e( 'Selecione as parcelas', 'gstore' ); ?></summary>
-													<div class="price-sub-installments__panel">
-														<div class="price-sub-installments__line price-sub-installments__head">
-															<span><?php esc_html_e( 'Parcelas', 'gstore' ); ?></span>
-															<span data-gstore-installment-total-label><?php esc_html_e( 'Total', 'gstore' ); ?></span>
-														</div>
-														<div data-gstore-installment-options>
-															<?php foreach ( $installment_quote_keys as $installment_count ) :
-																$installment_quote = $installment_quotes[ (string) $installment_count ];
-																if ( empty( $installment_quote['per_installment_text'] ) ) {
-																	continue;
-																}
-																?>
-																<button type="button" class="price-sub-installments__line" aria-pressed="<?php echo $installment_count === (int) $installment_preview['installments'] ? 'true' : 'false'; ?>">
-																	<span><?php echo esc_html( $installment_count . 'x de ' . $installment_quote['per_installment_text'] ); ?></span>
-																	<strong><?php echo esc_html( $installment_quote['total_text'] ?? '—' ); ?></strong>
-																</button>
-															<?php endforeach; ?>
-														</div>
-													</div>
-												</details>
 											</div>
 										<?php endif; ?>
 									<?php endif; ?>
@@ -1634,6 +1610,32 @@ $gstore_tab_next_cta_labels = array(
 									</div>
 								<?php endif; ?>
 							</div>
+							<?php if ( $show_buybox_price_panel && ! $hide_price && $formatted_installment ) : ?>
+								<details class="price-sub-installments" data-gstore-installment-picker
+									<?php if ( $installment_quote_keys ) : ?>data-gstore-initial-quotes="<?php echo esc_attr( wp_json_encode( $installment_quotes ) ); ?>"<?php else : ?>hidden<?php endif; ?>
+								>
+									<summary class="price-sub-installments-select"><?php esc_html_e( 'Selecione as parcelas', 'gstore' ); ?></summary>
+									<div class="price-sub-installments__panel">
+										<div class="price-sub-installments__line price-sub-installments__head">
+											<span><?php esc_html_e( 'Parcelas', 'gstore' ); ?></span>
+											<span data-gstore-installment-total-label><?php esc_html_e( 'Total', 'gstore' ); ?></span>
+										</div>
+										<div data-gstore-installment-options>
+											<?php foreach ( $installment_quote_keys as $installment_count ) :
+												$installment_quote = $installment_quotes[ (string) $installment_count ];
+												if ( empty( $installment_quote['per_installment_text'] ) ) {
+													continue;
+												}
+												?>
+												<button type="button" class="price-sub-installments__line" aria-pressed="<?php echo $installment_count === (int) $installment_preview['installments'] ? 'true' : 'false'; ?>">
+													<span><?php echo esc_html( $installment_count . 'x de ' . $installment_quote['per_installment_text'] ); ?></span>
+													<strong><?php echo esc_html( $installment_quote['total_text'] ?? '—' ); ?></strong>
+												</button>
+											<?php endforeach; ?>
+										</div>
+									</div>
+								</details>
+							<?php endif; ?>
 						<?php endif; ?>
 
 						<?php if ( ! empty( $hero_meta_cards ) ) : ?>
