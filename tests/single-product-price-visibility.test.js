@@ -12,7 +12,7 @@ describe.each(['single-product.js', 'single-product.min.js'])('%s', filename => 
 			<div data-gstore-installment-card><span data-gstore-installment-target="1" data-gstore-installment-scope="single" data-product-id="11" data-max-installments="21" data-initial-text="ou 21x de R$209,05">ou 21x de R$209,05</span></div>
 			<div data-gstore-installment-card>ou 21x de R$209,05</div>
 			<div class="related"><span data-gstore-installment-target="1" data-gstore-installment-scope="card" data-product-id="22" data-initial-text="ou 21x de R$50,49">ou 21x de R$50,49</span></div>
-			<div data-gstore-installment-wrapper><span data-gstore-installment-target="1" data-gstore-installment-scope="single" data-product-id="11" data-max-installments="21" data-initial-text="ou 21x de R$209,05">ou 21x de R$209,05</span><select data-gstore-installment-select ${preloaded ? 'data-gstore-initial-quotes=\'{"21":{"installments":21,"per_installment_text":"R$209,05"}}\'' : ''}>${preloaded ? '<option value="">Selecione as parcelas</option><option value="21">21x de R$209,05</option>' : '<option>Carregando...</option>'}</select></div>
+			<div data-gstore-installment-wrapper><span data-gstore-installment-target="1" data-gstore-installment-scope="single" data-product-id="11" data-max-installments="21" data-initial-text="ou 21x de R$209,05">ou 21x de R$209,05</span><details data-gstore-installment-picker hidden ${preloaded ? 'data-gstore-initial-quotes=\'{"21":{"installments":21,"per_installment_text":"R$209,05","total_text":"R$4.390,00"}}\'' : ''}><summary>Selecione as parcelas</summary><span data-gstore-installment-total-label>Total</span><div data-gstore-installment-options></div></details></div>
 			<div class="buybox ${oos ? 'is-out-of-stock' : 'is-in-stock'}">
 				<div data-gstore-price-header data-gstore-hide-price="${hidden ? '1' : '0'}" data-gstore-oos-price-mode="${mode}"><div data-gstore-price-panel></div></div>
 				<div data-gstore-stock-block data-default-class="is-in-stock"></div>
@@ -36,7 +36,7 @@ describe.each(['single-product.js', 'single-product.min.js'])('%s', filename => 
 		for (let i = 0; i < 12; i += 1) await Promise.resolve();
 	}
 
-	const quoteResponse = () => ({ ok: true, json: async () => ({ success: true, data: { max: 21, quotes: { 21: { installments: 21, per_installment_text: 'R$209,05' } } } }) });
+	const quoteResponse = () => ({ ok: true, json: async () => ({ success: true, data: { max: 21, quotes: { 21: { installments: 21, per_installment_text: 'R$209,05', total_text: 'R$8.780,00' } } } }) });
 
 	beforeEach(() => {
 		jest.useFakeTimers();
@@ -115,15 +115,24 @@ describe.each(['single-product.js', 'single-product.min.js'])('%s', filename => 
 		boot({ preloaded: true });
 		await flush();
 		expect(window.fetch).not.toHaveBeenCalled();
-		expect(document.querySelector('[data-gstore-installment-select]').options).toHaveLength(2);
+		const picker = document.querySelector('[data-gstore-installment-picker]');
+		expect(picker.hidden).toBe(false);
+		const row = picker.querySelector('[data-gstore-installment-options] button');
+		expect([...row.children].map(cell => cell.textContent)).toEqual(['21x de R$209,05', 'R$4.390,00']);
+		picker.open = true;
+		row.click();
+		expect(picker.open).toBe(false);
+		expect(row.getAttribute('aria-pressed')).toBe('true');
 		const related = document.querySelector('.related [data-gstore-installment-target]');
 		expect(related.textContent).toBe('ou 21x de R$50,49');
 		const qty = document.querySelector('input.qty');
 		qty.value = '2';
 		qty.dispatchEvent(new Event('input', { bubbles: true }));
+		expect(picker.hidden).toBe(true);
 		jest.advanceTimersByTime(200);
 		await flush();
 		expect(window.fetch).toHaveBeenCalledTimes(1);
+		expect(picker.querySelector('strong').textContent).toBe('R$8.780,00');
 		expect(related.textContent).toBe('ou 21x de R$50,49');
 		qty.value = '1';
 		qty.dispatchEvent(new Event('input', { bubbles: true }));

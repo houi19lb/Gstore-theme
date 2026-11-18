@@ -186,54 +186,61 @@ document.addEventListener('DOMContentLoaded', () => {
 		return quotes[String(keys[0])] || null;
 	};
 
-	const buildInstallmentSelect = (select, quotes, selectedInstallments) => {
-		if (!select) return;
+	const buildInstallmentPicker = (picker, quotes, selectedInstallments) => {
+		const options = picker.querySelector('[data-gstore-installment-options]');
+		const summary = picker.querySelector('summary');
+		const totalLabel = picker.querySelector('[data-gstore-installment-total-label]').textContent;
+		const rows = document.createDocumentFragment();
 
-		// Verificar se o select está dentro de um card - não criar dropdown nos cards
-		const wrapper = select.closest('[data-gstore-installment-wrapper]');
-		if (wrapper) {
-			const scope = wrapper.querySelector('[data-gstore-installment-scope="card"]');
-			if (scope) {
-				select.style.display = 'none';
-				return; // Não criar dropdown nos cards
-			}
-		}
+		Object.keys(quotes).map(Number).filter(Number.isInteger).sort((a, b) => b - a).forEach((installments) => {
+			const quote = quotes[installments];
+			if (!quote?.per_installment_text) return;
 
-		select.innerHTML = '';
+			const row = document.createElement('button');
+			row.type = 'button';
+			row.className = 'price-sub-installments__line';
+			const selected = Number(selectedInstallments) === installments;
+			row.setAttribute('aria-pressed', String(selected));
 
-		if (!quotes || typeof quotes !== 'object') {
-			select.style.display = 'none';
-			return;
-		}
+			const installment = document.createElement('span');
+			installment.textContent = installments + 'x de ' + quote.per_installment_text;
+			const total = document.createElement('strong');
+			const amount = quote.total_raw ?? quote.total;
+			const formattedAmount = amount != null && amount !== '' ? formatCurrency(Number(amount)) : '';
+			total.textContent = quote.total_text || formattedAmount || '—';
+			row.setAttribute('aria-label', installment.textContent + ', ' + totalLabel + ': ' + total.textContent);
 
-		const quoteKeys = Object.keys(quotes)
-			.map((key) => parseInt(key, 10))
-			.filter((key) => Number.isFinite(key))
-			.sort((a, b) => b - a);
-
-		if (!quoteKeys.length) {
-			select.style.display = 'none';
-			return;
-		}
-
-		const defaultOption = document.createElement('option');
-		defaultOption.value = '';
-		defaultOption.textContent = 'Selecione as parcelas';
-		select.appendChild(defaultOption);
-
-		quoteKeys.forEach((installments) => {
-			const quote = quotes[String(installments)];
-			if (!quote || !quote.per_installment_text) return;
-
-			const option = document.createElement('option');
-			option.value = String(installments);
-
-			option.textContent = `${installments}x de ${quote.per_installment_text}`;
-			option.selected = Number(selectedInstallments) === installments;
-			select.appendChild(option);
+			if (selected) summary.textContent = installment.textContent;
+			row.append(installment, total);
+			rows.append(row);
 		});
 
-		select.style.display = 'block';
+		picker.hidden = !rows.childElementCount;
+		options.replaceChildren(rows);
+	};
+
+	const initInstallmentPicker = (picker) => {
+		const summary = picker.querySelector('summary');
+		const options = picker.querySelector('[data-gstore-installment-options]');
+
+		options.addEventListener('click', (event) => {
+			const row = event.target.closest('button');
+			if (!row) return;
+			options.querySelector('[aria-pressed="true"]')?.setAttribute('aria-pressed', 'false');
+			row.setAttribute('aria-pressed', 'true');
+			summary.textContent = row.firstElementChild.textContent;
+			picker.open = false;
+			summary.focus();
+		});
+		picker.addEventListener('keydown', (event) => {
+			if (event.key !== 'Escape' || !picker.open) return;
+			event.preventDefault();
+			picker.open = false;
+			summary.focus();
+		});
+		document.addEventListener('click', (event) => {
+			if (!picker.contains(event.target)) picker.open = false;
+		});
 	};
 
 	let selectedVariationUnavailable = false;
@@ -312,33 +319,25 @@ document.addEventListener('DOMContentLoaded', () => {
 				target.dataset.productId = productId;
 			});
 		};
-		const populateInstallmentSelect = (quotes, selectedInstallments) => {
-			targets.forEach((target) => {
-				const wrapper = target.closest('[data-gstore-installment-wrapper]');
-				if (!wrapper) return;
+		const pickers = Array.from(document.querySelectorAll('[data-gstore-installment-picker]'));
+		pickers.forEach(initInstallmentPicker);
 
-				const select = wrapper.querySelector('[data-gstore-installment-select]');
-				if (!select) return;
-
-				buildInstallmentSelect(select, quotes, selectedInstallments);
+		const hideInstallmentPickers = () => {
+			pickers.forEach((picker) => {
+				picker.open = false;
+				picker.hidden = true;
 			});
 		};
 
-		const setupInstallmentSelectListeners = () => {
-			targets.forEach((target) => {
-				const wrapper = target.closest('[data-gstore-installment-wrapper]');
-				if (!wrapper) return;
-
-				const select = wrapper.querySelector('[data-gstore-installment-select]');
-				if (!select) return;
-
-				select.onchange = () => {};
-			});
+		const populateInstallmentPickers = (quotes, preferredMax) => {
+			const selected = chooseQuote(quotes, String(preferredMax))?.installments;
+			pickers.forEach((picker) => buildInstallmentPicker(picker, quotes, selected));
 		};
 
 		const requestQuotes = async () => {
 			if (!canShowProductInstallments()) {
 				applyText('');
+				hideInstallmentPickers();
 				return;
 			}
 			if (!currentProductId) {				applyFallback();
@@ -352,8 +351,7 @@ document.addEventListener('DOMContentLoaded', () => {
 				const cachedText = gstoreInstallmentCache.get(signature);				applyText(cachedText);
 				const cachedQuotes = gstoreInstallmentQuotesCache.get(signature);
 				if (cachedQuotes) {
-					populateInstallmentSelect(cachedQuotes);
-					setupInstallmentSelectListeners();
+					populateInstallmentPickers(cachedQuotes, max);
 				}
 				return;
 			}
@@ -400,8 +398,7 @@ document.addEventListener('DOMContentLoaded', () => {
 					gstoreInstallmentQuotesCache.set(signature, payload.data.quotes);
 					if (signature === `${currentProductId}|${getQuantity()}|${getMaxInstallments()}` && canShowProductInstallments()) {
 						applyText(text);
-						populateInstallmentSelect(payload.data.quotes, quote.installments);
-						setupInstallmentSelectListeners();
+						populateInstallmentPickers(payload.data.quotes, quote.installments);
 					}
 				})
 				.catch((error) => {
@@ -416,6 +413,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 		let qtyTimer = null;
 		const scheduleRequest = () => {
+			hideInstallmentPickers();
 			clearTimeout(qtyTimer);
 			qtyTimer = setTimeout(requestQuotes, 200);
 		};
@@ -448,10 +446,10 @@ document.addEventListener('DOMContentLoaded', () => {
 				});
 			}
 		}
-		const initialSelect = document.querySelector('[data-gstore-installment-select][data-gstore-initial-quotes]');
-		if (initialSelect && currentProductId && getQuantity() === 1) {
+		const initialPicker = pickers.find((picker) => picker.dataset.gstoreInitialQuotes);
+		if (initialPicker && currentProductId && getQuantity() === 1) {
 			try {
-				const initialQuotes = JSON.parse(initialSelect.dataset.gstoreInitialQuotes);
+				const initialQuotes = JSON.parse(initialPicker.dataset.gstoreInitialQuotes);
 				const preferredQuote = chooseQuote(initialQuotes, String(getMaxInstallments()));
 				if (preferredQuote?.installments && preferredQuote?.per_installment_text) {
 					const signature = `${currentProductId}|1|${getMaxInstallments()}`;

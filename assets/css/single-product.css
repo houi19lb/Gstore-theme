@@ -3455,8 +3455,16 @@ body.single-product .onsale {
 	margin-top: 6px;
 }
 
+.price-sub-installments {
+	position: relative;
+}
+
 .price-sub-installments-select {
-	width: 100%;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 6px;
+	list-style: none;
 	padding: 6px 8px;
 	font-size: var(--gstore-font-size-xs);
 	border: 1px solid var(--gstore-color-border-divider, #e5e7eb);
@@ -3475,6 +3483,87 @@ body.single-product .onsale {
 	outline: none;
 	border-color: var(--gstore-color-accent, #b5a642);
 	box-shadow: 0 0 0 3px rgba(181, 166, 66, 0.15);
+}
+
+.price-sub-installments-select::-webkit-details-marker {
+	display: none;
+}
+
+.price-sub-installments-select::after {
+	content: '';
+	flex: 0 0 6px;
+	height: 6px;
+	border-right: 1.5px solid currentColor;
+	border-bottom: 1.5px solid currentColor;
+	transform: translateY(-2px) rotate(45deg);
+}
+
+.price-sub-installments[open] .price-sub-installments-select::after {
+	transform: translateY(2px) rotate(225deg);
+}
+
+.price-sub-installments__panel {
+	position: absolute;
+	z-index: 5;
+	top: calc(100% + 4px);
+	left: 0;
+	width: max(100%, min(15rem, calc(100vw - 4rem)));
+	max-height: min(18rem, 50vh);
+	overflow-y: auto;
+	overscroll-behavior: contain;
+	border: 1px solid var(--gstore-color-border-input, #d0d5dd);
+	border-radius: 4px;
+	background: var(--gstore-color-bg-light, #fff);
+	color: var(--gstore-color-text-primary);
+	font-size: var(--gstore-font-size-xs, 12px);
+	font-variant-numeric: tabular-nums;
+}
+
+.price-sub-installments__line {
+	display: grid;
+	grid-template-columns: 1fr auto;
+	align-items: center;
+	gap: 6px;
+	width: 100%;
+	padding: 8px;
+	border: 0;
+	border-bottom: 1px solid var(--gstore-color-border-divider, #e5e7eb);
+	background: var(--gstore-color-bg-light, #fff);
+	color: inherit;
+	font: inherit;
+	text-align: left;
+	white-space: nowrap;
+}
+
+.price-sub-installments__line > :last-child {
+	text-align: right;
+}
+
+.price-sub-installments__head {
+	position: sticky;
+	top: 0;
+	font-weight: 600;
+}
+
+button.price-sub-installments__line {
+	min-height: 36px;
+	cursor: pointer;
+}
+
+button.price-sub-installments__line:hover,
+button.price-sub-installments__line[aria-pressed="true"] {
+	background: rgba(46, 155, 59, 0.12);
+}
+
+button.price-sub-installments__line:focus-visible {
+	outline: 2px solid currentColor;
+	outline-offset: -2px;
+}
+
+@media (pointer: coarse) {
+	button.price-sub-installments__line {
+		min-height: 44px;
+	}
 }
 
 .gstore-hidden-price {
