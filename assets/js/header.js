@@ -369,10 +369,11 @@
 		function handleScroll() {
 			var currentScrollTop = window.pageYOffset || document.documentElement.scrollTop;
 			
-			// Se estiver no topo, sempre mostra
-			if (currentScrollTop < scrollThreshold) {
+			// Mantém o header visível enquanto o padding reservado ainda está no viewport.
+			if (currentScrollTop < Math.max(scrollThreshold, Math.ceil(headerHeight))) {
 				headerShell.classList.add('is-visible');
 				headerShell.classList.remove('is-hidden');
+				isScrollingDown = false;
 				lastScrollTop = currentScrollTop;
 				return;
 			}
