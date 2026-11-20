@@ -24790,8 +24790,16 @@ function gstore_process_store_info_placeholders( $content ) {
 		$placeholders['{{footer_category_brand_summary}}'] = (string) gstore_get_footer_category_brand_summary();
 	}
 
+	// Existing header customizations may still use the phone marker as their only contact slot.
+	if ( false === strpos( $content, '{{header_extra_contact}}' ) && false !== strpos( $content, 'Gstore-top-bar__contacts' ) ) {
+		$content = str_replace( '{{header_phone_contact}}', '{{header_phone_contact}}{{header_extra_contact}}', $content );
+	}
+
 	// Substitui os placeholders
 	$content = str_replace( array_keys( $placeholders ), array_values( $placeholders ), $content );
+	if ( false !== strpos( $content, '{{header_extra_contact}}' ) ) {
+		$content = str_replace( '{{header_extra_contact}}', gstore_get_header_extra_contact(), $content );
+	}
 	// Remove paragrafos opcionais de rodape que sobrarem sem valor configurado.
 	$content = preg_replace( '/<p\b[^>]*>\s*\{\{footer_paragraph_\d+\}\}\s*<\/p>\s*/is', '', $content );
 	$content = preg_replace( '/<div\s+class="Gstore-about-data__row">\s*<span>[^<]*<\/span>\s*<strong>\s*<\/strong>\s*<\/div>\s*/is', '', $content );
@@ -24801,6 +24809,46 @@ function gstore_process_store_info_placeholders( $content ) {
 	$content = preg_replace( '/<a\b[^>]*href=""[^>]*>\s*<i\b[^>]*fa-brands[^>]*><\/i>\s*<\/a>\s*/is', '', $content );
 
 	return $content;
+}
+
+/**
+ * Returns the decorative SVG for a supported top bar contact icon.
+ */
+function gstore_top_bar_icon( $icon ) {
+	$paths = array(
+		'whatsapp'  => 'M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884',
+		'telegram'  => 'M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z',
+		'instagram' => 'M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z',
+		'phone'     => 'M6.62 10.79a15.05 15.05 0 0 0 6.59 6.59l2.2-2.2a1 1 0 0 1 1.01-.24c1.12.37 2.33.56 3.58.56a1 1 0 0 1 1 1V20a1 1 0 0 1-1 1C10.61 21 3 13.39 3 4a1 1 0 0 1 1-1h3.5a1 1 0 0 1 1 1c0 1.25.19 2.46.56 3.58a1 1 0 0 1-.25 1.01l-2.19 2.2z',
+	);
+
+	if ( ! is_string( $icon ) || ! isset( $paths[ $icon ] ) ) {
+		return '';
+	}
+
+	return '<svg class="Gstore-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false"><path d="' . $paths[ $icon ] . '"/></svg>';
+}
+
+/**
+ * Builds the optional extra link from public store settings.
+ */
+function gstore_get_header_extra_contact() {
+	$store_info = gstore_store_info();
+	$label = $store_info->get_value( 'contact.header_extra_label', '' );
+	$url   = $store_info->get_value( 'contact.header_extra_url', '' );
+	$icon  = gstore_top_bar_icon( $store_info->get_value( 'contact.header_extra_icon', '' ) );
+
+	if ( ! is_string( $label ) || '' === trim( $label ) || ! is_string( $url ) || '' === $icon ) {
+		return '';
+	}
+
+	$url = esc_url( $url, array( 'http', 'https', 'tel', 'mailto' ) );
+	if ( '' === $url ) {
+		return '';
+	}
+
+	return '<a class="Gstore-top-bar__link Gstore-top-bar__link--extra" href="' . $url . '">'
+		. $icon . '<span>' . esc_html( trim( $label ) ) . '</span></a>';
 }
 
 /**
@@ -24828,7 +24876,7 @@ function gstore_build_store_info_placeholders_map() {
 		$header_phone_digits = preg_replace( '/\D+/', '', '' !== $phone_raw ? $phone_raw : $phone_display );
 		if ( strlen( $header_phone_digits ) >= 8 ) {
 			$header_phone_contact = '<a class="Gstore-top-bar__link Gstore-top-bar__link--phone" href="' . esc_url( 'tel:+' . $header_phone_digits ) . '" aria-label="' . esc_attr( sprintf( __( 'Ligar para %s', 'gstore' ), $phone_display ) ) . '">'
-				. '<svg class="Gstore-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false"><path d="M6.62 10.79a15.05 15.05 0 0 0 6.59 6.59l2.2-2.2a1 1 0 0 1 1.01-.24c1.12.37 2.33.56 3.58.56a1 1 0 0 1 1 1V20a1 1 0 0 1-1 1C10.61 21 3 13.39 3 4a1 1 0 0 1 1-1h3.5a1 1 0 0 1 1 1c0 1.25.19 2.46.56 3.58a1 1 0 0 1-.25 1.01l-2.19 2.2z"/></svg>'
+				. gstore_top_bar_icon( 'phone' )
 				. '<span>' . esc_html__( 'Televendas', 'gstore' ) . ' • ' . esc_html( $phone_display ) . '</span></a>';
 		}
 	}
@@ -24889,6 +24937,9 @@ function gstore_build_store_info_placeholders_map() {
 		// Phone link (tel:)
 		'{{phone_link}}'      => $phone_link,
 		'{{header_phone_contact}}' => $header_phone_contact,
+		'{{top_bar_icon_whatsapp}}' => gstore_top_bar_icon( 'whatsapp' ),
+		'{{top_bar_icon_telegram}}' => gstore_top_bar_icon( 'telegram' ),
+		'{{top_bar_icon_instagram}}' => gstore_top_bar_icon( 'instagram' ),
 
 		// Contact primary link (header/footer): usa o valor do JSON ou fallback para whatsapp_link
 		'{{contact_primary_link}}' => gstore_add_site_contact_message_to_link( $contact_primary_link, 'whatsapp' ),

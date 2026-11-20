@@ -415,7 +415,7 @@
 			document.querySelector('.Gstore-top-bar');
 
 		if (!scope) return null;
-		var anchors = scope.querySelectorAll('a.Gstore-top-bar__link');
+		var anchors = scope.querySelectorAll('a.Gstore-top-bar__link:not(.Gstore-top-bar__link--extra)');
 		return pickTelegramLink(anchors);
 	}
 
