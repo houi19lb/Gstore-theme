@@ -9506,6 +9506,15 @@ add_filter( 'render_block_woocommerce/product-rating', 'gstore_always_show_ratin
  */
 
 /**
+ * Whether the storefront displays product installment amounts.
+ *
+ * @return bool
+ */
+function gstore_storefront_shows_installment_amounts() {
+	return 'yes' === get_option( 'gstore_show_storefront_installment_amounts', 'yes' );
+}
+
+/**
  * Calcula o valor da parcela por divisão simples.
  *
  * @param float $price        Valor total do produto.
@@ -9657,7 +9666,7 @@ function gstore_get_product_installment_preview_data( $product, $max_installment
 		'quotes'                => array(),
 	);
 
-	if ( ! $product instanceof WC_Product ) {
+	if ( ! $product instanceof WC_Product || ! gstore_storefront_shows_installment_amounts() ) {
 		return $data;
 	}
 	if ( gstore_product_hides_price( $product, $context ) ) {
@@ -9748,25 +9757,27 @@ function gstore_add_payment_info_to_price( $html, $block_content, $block ) {
 		return gstore_get_hidden_price_mask_html( 'block' );
 	}
 
-	// Busca o preview alinhado ao plugin/admin; se indisponível, cai no fallback simples.
-	$installment_value = 0;
-	$installment_text_content = 'ou em até 21x no cartão';
-
-	if ( $product && is_a( $product, 'WC_Product' ) ) {
-		$installment_preview = gstore_get_product_installment_preview_data( $product, 21, 1, 'card' );
-		if ( ! empty( $installment_preview['installments'] ) && ! empty( $installment_preview['per_installment_html'] ) ) {
-			$installment_text_content = sprintf(
-				'ou em até %1$dx de %2$s',
-				(int) $installment_preview['installments'],
-				$installment_preview['per_installment_html']
-			);
-		} else {
-			$price_value = gstore_get_installment_display_price( $product, 'card' );
-			if ( $price_value > 0 ) {
-				$installment_value = gstore_calculate_installment_amount( $price_value, 21 );
-				$installment_text_content = 'ou em até 21x de ' . wc_price( $installment_value );
+	$installment_text = '';
+	if ( gstore_storefront_shows_installment_amounts() ) {
+		// Usa a prévia de parcelas ou a estimativa quando não houver cotação.
+		$installment_text_content = 'ou em até 21x no cartão';
+		if ( $product instanceof WC_Product ) {
+			$installment_preview = gstore_get_product_installment_preview_data( $product, 21, 1, 'card' );
+			if ( ! empty( $installment_preview['installments'] ) && ! empty( $installment_preview['per_installment_html'] ) ) {
+				$installment_text_content = sprintf(
+					'ou em até %1$dx de %2$s',
+					(int) $installment_preview['installments'],
+					$installment_preview['per_installment_html']
+				);
+			} else {
+				$price_value = gstore_get_installment_display_price( $product, 'card' );
+				if ( $price_value > 0 ) {
+					$installment_value        = gstore_calculate_installment_amount( $price_value, 21 );
+					$installment_text_content = 'ou em até 21x de ' . wc_price( $installment_value );
+				}
 			}
 		}
+		$installment_text = '<div class="Gstore-installment-text">' . $installment_text_content . '</div>';
 	}
 
 	// Desconto Pix: substitui o preço exibido pelo preço com desconto (mesmo padrão del/ins).
@@ -9784,7 +9795,6 @@ function gstore_add_payment_info_to_price( $html, $block_content, $block ) {
 
 	// Cria os elementos de pagamento
 	$payment_label = '<div class="Gstore-payment-label">À VISTA NO PIX</div>';
-	$installment_text = '<div class="Gstore-installment-text">' . $installment_text_content . '</div>';
 
 	// Encontra a div interna com a classe wc-block-components-product-price
 	if ( strpos( $html, 'wc-block-components-product-price' ) !== false ) {
@@ -9806,13 +9816,15 @@ function gstore_add_payment_info_to_price( $html, $block_content, $block ) {
 			1
 		);
 
-		// Adiciona texto de parcelamento antes do fechamento das divs
-		$html = preg_replace(
-			'/(\s*<\/div>\s*<\/div>\s*)$/',
-			$installment_text . '$1',
-			$html,
-			1
-		);
+		if ( '' !== $installment_text ) {
+			// Adiciona texto de parcelamento antes do fechamento das divs.
+			$html = preg_replace(
+				'/(\s*<\/div>\s*<\/div>\s*)$/',
+				$installment_text . '$1',
+				$html,
+				1
+			);
+		}
 	}
 
 	return $html;

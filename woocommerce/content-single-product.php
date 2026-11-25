@@ -1095,7 +1095,11 @@ $display_price     = $has_discount ? $sale_price : ( $current_price > 0 ? $curre
 $discount_percent  = $has_discount ? round( ( ( $regular_price - $display_price ) / $regular_price ) * 100 ) : 0;
 $installments     = (int) apply_filters( 'armastore_single_product_installments', 21, $product );
 // Parcelas seguem a mesma visibilidade do preço, inclusive quando falta estoque.
-$show_installment_price = ! $hide_price && ! $is_public_draft_product && $display_price > 0 && ( ! $is_out_of_stock || $show_price_oos );
+$show_installment_price = gstore_storefront_shows_installment_amounts()
+	&& ! $hide_price
+	&& ! $is_public_draft_product
+	&& $display_price > 0
+	&& ( ! $is_out_of_stock || $show_price_oos );
 $installment_preview = $show_installment_price ? gstore_get_product_installment_preview_data( $product, $installments, 1, 'single', true ) : array();
 $installment_quotes = ! empty( $installment_preview['quotes'] ) && is_array( $installment_preview['quotes'] ) ? $installment_preview['quotes'] : array();
 $installment_quote_keys = array_map( 'absint', array_keys( $installment_quotes ) );
