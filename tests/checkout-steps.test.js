@@ -5,7 +5,7 @@ const $ = require('jquery');
 const { markup, summary, rates, instrument } = require('./fixtures/checkout');
 const source = fs.readFileSync(path.join(__dirname, '../assets/js/checkout-steps.js'), 'utf8');
 
-function startCheckout(paymentMarkup) {
+function startCheckout(paymentMarkup, checkoutScript = source) {
 	jest.useFakeTimers();
 	$(document).off(); $(document.body).off();
 	localStorage.clear();
@@ -16,7 +16,7 @@ function startCheckout(paymentMarkup) {
 	window.gstoreCheckout = { contract: { enabled: false } };
 	$.fx.off = true;
 	$.ajax = jest.fn(() => $.Deferred().promise());
-	window.eval(instrument(source));
+	window.eval(instrument(checkoutScript));
 	const api = window.checkoutFixture;
 	api.init(); api.primeShipping(); api.seedSummary(summary);
 	return api;
@@ -304,8 +304,9 @@ describe('Checkout: quatro etapas visuais com contrato original', () => {
 	});
 });
 
-test('WhatsApp direto começa pelo cadastro e registra o pedido sem escolha de pagamento', () => {
-	const api = startCheckout('<li class="payment_method_gstore_form_plan"><input type="radio" name="payment_method" value="gstore_form_plan" checked><p class="gstore-form-plan-direct">Combine pelo WhatsApp.</p></li>');
+test.each(['checkout-steps.js', 'checkout-steps.min.js'])('WhatsApp direto começa pelo cadastro e registra o pedido sem escolha de pagamento (%s)', (asset) => {
+	const checkoutScript = fs.readFileSync(path.join(__dirname, '../assets/js', asset), 'utf8');
+	const api = startCheckout('<li class="payment_method_gstore_form_plan"><input type="radio" name="payment_method" value="gstore_form_plan" checked><p class="gstore-form-plan-direct">Combine pelo WhatsApp.</p></li>', checkoutScript);
 	expect($('.Gstore-checkout-stepper__label').map((_, el) => el.textContent).get()).toEqual(['Dados Básicos', 'Frete', 'Finalizar']);
 	expect(active()).toBe('contact');
 	expect($('#gstore_checkout_step').val()).toBe('1');

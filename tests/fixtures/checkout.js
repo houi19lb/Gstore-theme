@@ -24,7 +24,7 @@ function markup(payment = 'blu_checkout') {
 }
 // Exposição somente na cópia executada pelo teste/preview; nenhum hook em produção.
 function instrument(source) {
-	return source.replace(/\}\)\(jQuery\);\s*$/, `window.checkoutFixture = {
+	return source.replace(/\}\)\(jQuery\);\s*$/, `;window.checkoutFixture = {
 		init, setActiveStep, nextStep, prevStep, renderSummary, loadCartSummary, maybeFetchInstallmentQuotes,
 		getBackendCheckoutStep, restoreCheckoutDraftState,
 		primeShipping() { calculatedShipping = { rates: [] }; lastCalculatedShippingCep = '01001000'; lastCalculatedDestination = { city: 'São Paulo', state: 'SP' }; },

@@ -10721,7 +10721,7 @@ function gstore_enqueue_checkout_assets() {
 			'gstore-checkout-steps',
 			gstore_theme_asset_uri( 'assets/js/checkout-steps.js' ),
 			array( 'jquery' ),
-			filemtime( get_theme_file_path( 'assets/js/checkout-steps.js' ) ),
+			gstore_theme_asset_version( 'assets/js/checkout-steps.js', $theme_version ),
 			true
 		);
 		$boleto_settings = get_option( 'woocommerce_gstore_boleto_settings', array() );
