@@ -54,6 +54,7 @@
 		}
 	];
 
+	let formPlanDirect = false;
 	let currentStep = 0;
 	function getBackendCheckoutStep() {
 		const step = STEPS[currentStep];
@@ -142,7 +143,10 @@
 		}
 		if (selected === 'gstore_form_plan') {
 			$existing.remove();
-			$final.prepend('<div class="Gstore-boleto-final-notice" data-payment-method="gstore_form_plan" role="note"><h3>Combine o pagamento pelo WhatsApp</h3><p>Seu pedido será registrado como pagamento pendente. A preferência por Pix ou Link de pagamento será enviada à loja; nenhuma cobrança será gerada agora.</p></div>');
+			const description = formPlanDirect
+				? 'Após registrar o pedido, você será direcionado ao WhatsApp para combinar a forma de pagamento com a loja.'
+				: 'Sua preferência de pagamento será registrada com o pedido. A loja passará as instruções pelo WhatsApp.';
+			$final.prepend(`<div class="Gstore-boleto-final-notice" data-payment-method="gstore_form_plan" role="note"><h3>Combine o pagamento pelo WhatsApp</h3><p>${description}</p></div>`);
 			const buttonText = 'Registrar pedido e abrir WhatsApp';
 			$('#place_order').html(`<i class="fa-brands fa-whatsapp" aria-hidden="true"></i> ${buttonText}`).val(buttonText).attr('data-value', buttonText);
 			return;
@@ -528,7 +532,7 @@
 			}
 		});
 
-		if (fields.payment_method) {
+		if (fields.payment_method && lastSelectedPaymentMethod !== 'gstore_form_plan') {
 			persistSelectedPaymentMethod(String(fields.payment_method));
 			const $radio = $('input[name="payment_method"]').filter(function() {
 				return String($(this).val()) === String(fields.payment_method);
@@ -561,7 +565,8 @@
 		checkoutDraftRestoreDone = true;
 		setTimeout(function() {
 			const params = new URLSearchParams((window.location && window.location.search) || '');
-			const shouldResumeBluCheckout = params.has('gstore_blu_resume_order') || params.has('gstore_blu_resumed') || draft.reason === 'blu_payment_waiting';
+			const shouldResumeBluCheckout = lastSelectedPaymentMethod !== 'gstore_form_plan'
+				&& (params.has('gstore_blu_resume_order') || params.has('gstore_blu_resumed') || draft.reason === 'blu_payment_waiting');
 			const targetStep = shouldResumeBluCheckout ? STEPS.length - 1 : 0;
 			setActiveStep(targetStep, false);
 			setTimeout(ensureShippingAutofilled, 0);
@@ -1642,6 +1647,9 @@ const subtotal = decodeHtmlEntities(stripHtmlText(it.subtotal || ''));
 			return;
 		}
 
+		formPlanDirect = $checkoutForm.find('#payment .payment_method_gstore_form_plan .gstore-form-plan-direct').length > 0;
+		if (formPlanDirect) STEPS.shift();
+
 		buildStepsUI();
 		bindEvents();
 		const shouldResetForBuyNow = shouldResetCheckoutStateForBuyNow();
@@ -1915,6 +1923,7 @@ const subtotal = decodeHtmlEntities(stripHtmlText(it.subtotal || ''));
 					${step.description ? `<p class="Gstore-checkout-step__description">${step.description}</p>` : ''}
 				</div>
 				<div class="Gstore-checkout-step__fields"></div>
+				${isLast && formPlanDirect ? '<div data-gstore-form-plan-payment hidden></div>' : ''}
 				${isShipping ? `<div class="Gstore-shipping-step">
 					<div class="Gstore-shipping-step__choices">
 						<div class="Gstore-shipping-step__destination">
@@ -2047,31 +2056,45 @@ const subtotal = decodeHtmlEntities(stripHtmlText(it.subtotal || ''));
 	function syncFormPlanUnifiedCard() {
 		const $methods = $('#payment .payment_methods').first();
 		const $source = $methods.children('.payment_method_gstore_form_plan').first();
-		const $card = $methods.children('.Gstore-form-plan-unified').first();
+		let $card = $methods.children('.Gstore-form-plan-unified').first();
 		if (!$source.length) {
 			$card.remove();
 			formPlanSelectedPreference = null;
 			return false;
 		}
 
-		const $sourceOptions = $source.find('input[name="gstore_form_plan_preference"][type="radio"]');
-		if ($sourceOptions.length < 2) return false;
+		$source.find('input[name="payment_method"]:radio').prop('checked', true);
+		persistSelectedPaymentMethod('gstore_form_plan');
 
-		if (!formPlanSelectedPreference) {
-			formPlanSelectedPreference = $sourceOptions.filter(':checked').val() || 'pix';
+		const $sourceOptions = $source.find('input[name="gstore_form_plan_preference"][type="radio"]');
+		if (!$sourceOptions.length) {
+			$card.remove();
+			formPlanSelectedPreference = null;
+			return true;
 		}
-		$sourceOptions.filter(`[value="${formPlanSelectedPreference}"]`).prop('checked', true);
-		$source.find('input[name="payment_method"]').prop('checked', true);
+
+		const available = $sourceOptions.map((_, option) => option.value).get();
+		if (!available.includes(formPlanSelectedPreference)) {
+			formPlanSelectedPreference = $sourceOptions.filter(':checked').val() || available[0];
+		}
+		$sourceOptions.filter((_, option) => option.value === formPlanSelectedPreference).prop('checked', true);
 		$source.addClass('gstore-hidden-for-unified');
 
+		const optionKey = available.join(',');
+		if ($card.attr('data-preferences') !== optionKey) {
+			$card.remove();
+			$card = $();
+		}
 		if (!$card.length) {
 			const $unified = $('<li class="payment_method_blu_unified Gstore-blu-payment-unified Gstore-form-plan-unified"></li>');
+			$unified.attr('data-preferences', optionKey);
 			$unified.append('<div class="Gstore-blu-payment-unified__title">Pagamento via WhatsApp</div>');
 			const $options = $('<div class="Gstore-blu-payment-options"></div>');
 			for (const [value, label, icon] of [
 				['pix', 'Pix', 'fa-qrcode'],
 				['link', 'Cartão (Link de Pagamento)', 'fa-credit-card']
 			]) {
+				if (!available.includes(value)) continue;
 				const id = `gstore_form_plan_preference_visual_${value}`;
 				const $option = $(`<div class="Gstore-blu-payment-option Gstore-form-plan-option--${value}"></div>`);
 				$option.append($('<input>', { type: 'radio', name: 'gstore_form_plan_preference_visual', id, value }));
@@ -2087,12 +2110,11 @@ const subtotal = decodeHtmlEntities(stripHtmlText(it.subtotal || ''));
 					.filter(`[value="${this.value}"]`).prop('checked', true);
 			});
 			$methods.prepend($unified);
+			$card = $unified;
 		}
 
-		$methods.children('.Gstore-form-plan-unified')
-			.find('input[name="gstore_form_plan_preference_visual"]')
-			.filter(`[value="${formPlanSelectedPreference}"]`).prop('checked', true);
-		persistSelectedPaymentMethod('gstore_form_plan');
+		$card.find('input[name="gstore_form_plan_preference_visual"]')
+			.filter((_, option) => option.value === formPlanSelectedPreference).prop('checked', true);
 		return true;
 	}
 
@@ -2799,14 +2821,15 @@ const subtotal = decodeHtmlEntities(stripHtmlText(it.subtotal || ''));
 	 * Organiza os campos nas etapas corretas
 	 */
 	function organizeFields() {
-		// Etapa 1: Move métodos de pagamento
-		const $paymentMethodStep = $('[data-step="payment-method"] .Gstore-checkout-step__fields');
-		if ($paymentMethodStep.length) {
+		const $paymentSlot = formPlanDirect
+			? $('[data-gstore-form-plan-payment]')
+			: $('[data-step="payment-method"] .Gstore-checkout-step__fields');
+		if ($paymentSlot.length) {
 			const $paymentSection = $('#payment');
 			if ($paymentSection.length) {
 				// Remove botão de finalizar (será recriado na última etapa)
 				$paymentSection.find('.place-order').remove();
-				$paymentMethodStep.append($paymentSection.detach());
+				$paymentSlot.append($paymentSection.detach());
 				hideNativeBluPaymentMethodsForUnified();
 				unifyBluPaymentMethods();
 				setTimeout(unifyBluPaymentMethods, 150);
@@ -2816,7 +2839,7 @@ const subtotal = decodeHtmlEntities(stripHtmlText(it.subtotal || ''));
 		// Etapa 2: Move campos de contato (nome, CEP, celular e email)
 		const $contactStep = $('[data-step="contact"] .Gstore-checkout-step__fields');
 		if ($contactStep.length) {
-			STEPS[1].fields.forEach(fieldId => {
+			STEPS.find(step => step.id === 'contact').fields.forEach(fieldId => {
 				const $field = $(`#${fieldId}_field`);
 				if ($field.length) {
 					$contactStep.append($field.detach());
@@ -6515,7 +6538,7 @@ function getInstallmentDisplayTotals(summaryData) {
 			
 			// 4. Coleta o nonce - procura em TODOS os lugares possíveis
 			const selectedPaymentMethodForSubmit = String(formDataObj['payment_method'] || getEffectivePaymentMethod($form) || '');
-			if (selectedPaymentMethodForSubmit === 'gstore_form_plan') {
+			if (selectedPaymentMethodForSubmit === 'gstore_form_plan' && !formPlanDirect) {
 				formDataObj['gstore_form_plan_preference'] = $('input[name="gstore_form_plan_preference"]:checked').val() || '';
 			}
 			if (selectedPaymentMethodForSubmit !== 'blu_checkout') {

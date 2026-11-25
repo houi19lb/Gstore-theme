@@ -5,24 +5,29 @@ const $ = require('jquery');
 const { markup, summary, rates, instrument } = require('./fixtures/checkout');
 const source = fs.readFileSync(path.join(__dirname, '../assets/js/checkout-steps.js'), 'utf8');
 
+function startCheckout(paymentMarkup) {
+	jest.useFakeTimers();
+	$(document).off(); $(document.body).off();
+	localStorage.clear();
+	sessionStorage.clear();
+	document.body.innerHTML = markup();
+	if (paymentMarkup) $('#payment .payment_methods').html(paymentMarkup);
+	window.jQuery = $; window.$ = $;
+	window.gstoreCheckout = { contract: { enabled: false } };
+	$.fx.off = true;
+	$.ajax = jest.fn(() => $.Deferred().promise());
+	window.eval(instrument(source));
+	const api = window.checkoutFixture;
+	api.init(); api.primeShipping(); api.seedSummary(summary);
+	return api;
+}
+
+afterEach(() => { jest.clearAllTimers(); jest.useRealTimers(); });
+const active = () => $('.Gstore-checkout-step.is-active').attr('data-step');
+
 describe('Checkout: quatro etapas visuais com contrato original', () => {
 	let api;
-	beforeEach(() => {
-		jest.useFakeTimers();
-		$(document).off(); $(document.body).off();
-		localStorage.clear();
-		sessionStorage.clear();
-		document.body.innerHTML = markup();
-		window.jQuery = $; window.$ = $;
-		window.gstoreCheckout = { contract: { enabled: false } };
-		$.fx.off = true;
-		$.ajax = jest.fn(() => $.Deferred().promise());
-		window.eval(instrument(source));
-		api = window.checkoutFixture;
-		api.init(); api.primeShipping(); api.seedSummary(summary);
-	});
-	afterEach(() => { jest.clearAllTimers(); jest.useRealTimers(); });
-	const active = () => $('.Gstore-checkout-step.is-active').attr('data-step');
+	beforeEach(() => { api = startCheckout(); });
 	test('agrupa simulações de parcelas e consulta o total mais recente após uma resposta pendente', () => {
 		$('form.checkout').append('<div class="Gstore-blu-installments" data-allow="1" data-max="21"></div>');
 		api.seedSummary({ ...summary, installments: { selected: 1 } });
@@ -224,6 +229,27 @@ describe('Checkout: quatro etapas visuais com contrato original', () => {
 		$.fn.block = priorBlock;
 		delete window.wc_checkout_params;
 	});
+	test('Plano Formulário oferece apenas a preferência disponível após atualizar', () => {
+		const payment = options => `<li class="payment_method_gstore_form_plan"><input type="radio" name="payment_method" value="gstore_form_plan" checked><fieldset>${options}</fieldset></li>`;
+		const pix = '<input type="radio" name="gstore_form_plan_preference" value="pix" checked>';
+		const card = '<input type="radio" name="gstore_form_plan_preference" value="link">';
+		$('#payment .payment_methods').html(payment(pix + card));
+		$(document.body).trigger('updated_checkout');
+		jest.advanceTimersByTime(250);
+		$('.Gstore-form-plan-unified input[value="link"]').prop('checked', true).trigger('change');
+
+		$('.payment_method_gstore_form_plan fieldset').html(pix);
+		$(document.body).trigger('updated_checkout');
+		jest.advanceTimersByTime(250);
+		expect($('.Gstore-form-plan-unified input').map((_, input) => input.value).get()).toEqual(['pix']);
+		expect($('.Gstore-form-plan-unified input:checked').val()).toBe('pix');
+
+		$('#payment .payment_methods').html(payment(card));
+		$(document.body).trigger('updated_checkout');
+		jest.advanceTimersByTime(250);
+		expect($('.Gstore-form-plan-unified input').map((_, input) => input.value).get()).toEqual(['link']);
+		expect($('input[name="gstore_form_plan_preference"]:checked').val()).toBe('link');
+	});
 	test('boleto aguarda a página do pedido antes de abrir WhatsApp', () => {
 		$('#payment .payment_methods').append('<li class="payment_method_gstore_boleto"><input type="radio" name="payment_method" value="gstore_boleto"><label>Boleto bancário</label></li>');
 		$(document.body).trigger('updated_checkout');
@@ -276,4 +302,43 @@ describe('Checkout: quatro etapas visuais com contrato original', () => {
 		expect(api.getBackendCheckoutStep()).toBe(2);
 		expect($('#billing_email').val()).toBe('retorno@example.com');
 	});
+});
+
+test('WhatsApp direto começa pelo cadastro e registra o pedido sem escolha de pagamento', () => {
+	const api = startCheckout('<li class="payment_method_gstore_form_plan"><input type="radio" name="payment_method" value="gstore_form_plan" checked><p class="gstore-form-plan-direct">Combine pelo WhatsApp.</p></li>');
+	expect($('.Gstore-checkout-stepper__label').map((_, el) => el.textContent).get()).toEqual(['Dados Básicos', 'Frete', 'Finalizar']);
+	expect(active()).toBe('contact');
+	expect($('#gstore_checkout_step').val()).toBe('1');
+	$('#billing_last_name').val('');
+	api.nextStep();
+	expect(active()).toBe('contact');
+	expect($('#billing_last_name_field').hasClass('woocommerce-invalid')).toBe(true);
+	$('#billing_last_name').val('Exemplo');
+	api.nextStep();
+	expect(active()).toBe('shipping');
+	api.nextStep();
+	expect(active()).toBe('payment');
+	expect($('#gstore_checkout_step').val()).toBe('2');
+	expect($('.Gstore-boleto-final-notice').text()).toContain('combinar a forma de pagamento com a loja');
+	expect($('#place_order').text()).toContain('abrir WhatsApp');
+	$('#gstore_contract_terms').prop('checked', true);
+
+	const priorBlock = $.fn.block;
+	$.fn.block = jest.fn();
+	window.wc_checkout_params = { checkout_url: '/?wc-ajax=checkout' };
+	try {
+		$('#place_order').trigger('click');
+		jest.advanceTimersByTime(200);
+		const request = $.ajax.mock.calls.map(call => call[0]).find(options => options.url === '/?wc-ajax=checkout');
+		expect(request).toBeDefined();
+		const data = new URLSearchParams(request.data);
+		expect(data.get('payment_method')).toBe('gstore_form_plan');
+		expect(data.get('billing_last_name')).toBe('Exemplo');
+		expect(data.has('gstore_form_plan_preference')).toBe(false);
+		request.success({ result: 'success', redirect: '/checkout/order-received/15046/' });
+		expect(JSON.parse(sessionStorage.getItem('gstore_whatsapp_after_order:v1')).path).toBe('/checkout/order-received/15046/');
+	} finally {
+		$.fn.block = priorBlock;
+		delete window.wc_checkout_params;
+	}
 });
