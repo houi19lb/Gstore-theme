@@ -298,7 +298,10 @@
 
 .pix-box--client-expired .pix-box__qr,
 .pix-box--client-expired .pix-box__code-group,
-.pix-box--client-expired .pix-box__copy {
+.pix-box--client-expired .pix-box__copy,
+.pix-box--client-expired .pix-box__subtitle,
+.pix-box--client-expired .pix-box__label,
+.pix-box--client-expired .pix-box__meta {
 	display: none !important;
 }
 
